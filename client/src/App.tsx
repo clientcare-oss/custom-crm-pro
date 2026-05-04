@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Contacts from "./pages/Contacts";
 import Leads from "./pages/Leads";
+import Projects from "./pages/Projects";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -31,7 +32,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/contacts" component={Contacts} />
           <Route path="/leads" component={Leads} />
-          <Route path="/projects" component={Home} />
+          <Route path="/projects" component={Projects} />
           <Route path="/invoices" component={Home} />
           <Route path="/contracts" component={Home} />
           <Route path="/appointments" component={Home} />

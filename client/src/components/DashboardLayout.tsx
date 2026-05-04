@@ -31,6 +31,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: Users, label: "Contacts", path: "/contacts" },
   { icon: TrendingUp, label: "Leads", path: "/leads" },
+  { icon: Briefcase, label: "Projects", path: "/projects" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
