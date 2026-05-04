@@ -1,17 +1,20 @@
 # Custom CRM Pro - Project TODO
 
 ## Phase 1: Database Schema & Design System
-- [ ] Design database schema (users, contacts, leads, projects, invoices, contracts, appointments, messages)
-- [ ] Define API structure and tRPC procedures
-- [ ] Establish design system (typography, colors, spacing, components)
+- [x] Design database schema (users, contacts, leads, projects, invoices, contracts, appointments, messages)
+- [x] Define API structure and tRPC procedures
+- [ ] Establish design system (typography, colors, spacing, components) - CSS build errors need fixing
 
 ## Phase 2: Database & Backend Infrastructure
-- [ ] Create Drizzle schema for all tables
-- [ ] Generate and apply database migrations
-- [ ] Build core query helpers in server/db.ts
-- [ ] Implement tRPC procedures for CRUD operations
-- [ ] Set up role-based access control (admin vs client)
+- [x] Create Drizzle schema for all tables
+- [x] Generate and apply database migrations
+- [x] Build core query helpers in server/db.ts
+- [x] Implement tRPC procedures for CRUD operations
+- [ ] Set up role-based access control (admin vs client) - needs stricter ownership checks
 - [ ] Write unit tests for auth and core procedures
+- [ ] Fix Tailwind CSS utility class registration errors
+- [ ] Complete full CRUD procedures for all resources (add missing delete operations)
+- [ ] Add ownership/resource-level authorization checks to all protected procedures
 
 ## Phase 3: Admin Dashboard & Core Features
 - [ ] Build admin dashboard layout with sidebar navigation
@@ -48,6 +51,12 @@
 - [ ] Test all features end-to-end
 - [ ] Optimize performance
 - [ ] Create checkpoint and prepare for deployment
+
+## Known Issues
+- Tailwind CSS: Cannot apply unknown utility class `card-base` in index.css
+- TypeScript: storageProxy.ts type error (template issue)
+- RBAC: Some procedures lack ownership verification
+- CRUD: Missing delete procedures for several resources
 
 ## Completed Items
 (None yet)

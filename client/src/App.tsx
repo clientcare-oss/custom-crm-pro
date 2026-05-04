@@ -6,6 +6,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Contacts from "./pages/Contacts";
+import Leads from "./pages/Leads";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -25,9 +28,9 @@ function Router() {
     return (
       <DashboardLayout>
         <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/contacts" component={Home} />
-          <Route path="/leads" component={Home} />
+          <Route path="/" component={Dashboard} />
+          <Route path="/contacts" component={Contacts} />
+          <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Home} />
           <Route path="/invoices" component={Home} />
           <Route path="/contracts" component={Home} />
