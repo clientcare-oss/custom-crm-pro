@@ -1,6 +1,21 @@
-import { eq } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, like, inArray, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import {
+  InsertUser,
+  users,
+  contacts,
+  leads,
+  projects,
+  projectTasks,
+  projectFiles,
+  invoices,
+  invoiceLineItems,
+  contracts,
+  appointments,
+  messages,
+  ownerAvailability,
+  webhooks,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +104,515 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ============ CONTACTS ============
+
+export async function getContactsByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(contacts)
+    .where(eq(contacts.ownerId, ownerId))
+    .orderBy(desc(contacts.createdAt));
+}
+
+export async function getContactById(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(contacts)
+    .where(and(eq(contacts.id, id), eq(contacts.ownerId, ownerId)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createContact(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(contacts).values({
+    ...data,
+    ownerId,
+  });
+
+  return result;
+}
+
+export async function updateContact(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(contacts)
+    .set(data)
+    .where(and(eq(contacts.id, id), eq(contacts.ownerId, ownerId)));
+}
+
+export async function deleteContact(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .delete(contacts)
+    .where(and(eq(contacts.id, id), eq(contacts.ownerId, ownerId)));
+}
+
+// ============ LEADS ============
+
+export async function getLeadsByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(leads)
+    .where(eq(leads.ownerId, ownerId))
+    .orderBy(desc(leads.createdAt));
+}
+
+export async function getLeadById(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(leads)
+    .where(and(eq(leads.id, id), eq(leads.ownerId, ownerId)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createLead(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(leads).values({
+    ...data,
+    ownerId,
+  });
+}
+
+export async function updateLead(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(leads)
+    .set(data)
+    .where(and(eq(leads.id, id), eq(leads.ownerId, ownerId)));
+}
+
+// ============ PROJECTS ============
+
+export async function getProjectsByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(projects)
+    .where(eq(projects.ownerId, ownerId))
+    .orderBy(desc(projects.createdAt));
+}
+
+export async function getProjectsByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(projects)
+    .where(eq(projects.clientId, clientId))
+    .orderBy(desc(projects.createdAt));
+}
+
+export async function getProjectById(id: number, userId: number, userRole: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const query =
+    userRole === "admin"
+      ? and(eq(projects.id, id), eq(projects.ownerId, userId))
+      : and(eq(projects.id, id), eq(projects.clientId, userId));
+
+  const result = await db.select().from(projects).where(query).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createProject(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(projects).values({
+    ...data,
+    ownerId,
+  });
+}
+
+export async function updateProject(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(projects)
+    .set(data)
+    .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
+}
+
+// ============ PROJECT TASKS ============
+
+export async function getTasksByProject(projectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(projectTasks)
+    .where(eq(projectTasks.projectId, projectId))
+    .orderBy(asc(projectTasks.dueDate));
+}
+
+export async function createTask(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(projectTasks).values(data);
+}
+
+export async function updateTask(id: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.update(projectTasks).set(data).where(eq(projectTasks.id, id));
+}
+
+// ============ PROJECT FILES ============
+
+export async function getFilesByProject(projectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(projectFiles)
+    .where(eq(projectFiles.projectId, projectId))
+    .orderBy(desc(projectFiles.createdAt));
+}
+
+export async function createProjectFile(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(projectFiles).values(data);
+}
+
+// ============ INVOICES ============
+
+export async function getInvoicesByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.ownerId, ownerId))
+    .orderBy(desc(invoices.createdAt));
+}
+
+export async function getInvoicesByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.clientId, clientId))
+    .orderBy(desc(invoices.createdAt));
+}
+
+export async function getInvoiceById(id: number, userId: number, userRole: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const query =
+    userRole === "admin"
+      ? and(eq(invoices.id, id), eq(invoices.ownerId, userId))
+      : and(eq(invoices.id, id), eq(invoices.clientId, userId));
+
+  const result = await db.select().from(invoices).where(query).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createInvoice(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(invoices).values({
+    ...data,
+    ownerId,
+  });
+}
+
+export async function updateInvoice(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(invoices)
+    .set(data)
+    .where(and(eq(invoices.id, id), eq(invoices.ownerId, ownerId)));
+}
+
+export async function getInvoiceLineItems(invoiceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(invoiceLineItems)
+    .where(eq(invoiceLineItems.invoiceId, invoiceId));
+}
+
+export async function createInvoiceLineItems(items: any[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(invoiceLineItems).values(items);
+}
+
+// ============ CONTRACTS ============
+
+export async function getContractsByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(contracts)
+    .where(eq(contracts.ownerId, ownerId))
+    .orderBy(desc(contracts.createdAt));
+}
+
+export async function getContractsByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(contracts)
+    .where(eq(contracts.clientId, clientId))
+    .orderBy(desc(contracts.createdAt));
+}
+
+export async function getContractById(id: number, userId: number, userRole: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const query =
+    userRole === "admin"
+      ? and(eq(contracts.id, id), eq(contracts.ownerId, userId))
+      : and(eq(contracts.id, id), eq(contracts.clientId, userId));
+
+  const result = await db.select().from(contracts).where(query).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createContract(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(contracts).values({
+    ...data,
+    ownerId,
+  });
+}
+
+export async function updateContract(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(contracts)
+    .set(data)
+    .where(and(eq(contracts.id, id), eq(contracts.ownerId, ownerId)));
+}
+
+// ============ APPOINTMENTS ============
+
+export async function getAppointmentsByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(appointments)
+    .where(eq(appointments.ownerId, ownerId))
+    .orderBy(asc(appointments.startTime));
+}
+
+export async function getAppointmentsByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(appointments)
+    .where(eq(appointments.clientId, clientId))
+    .orderBy(asc(appointments.startTime));
+}
+
+export async function createAppointment(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(appointments).values({
+    ...data,
+    ownerId,
+  });
+}
+
+export async function updateAppointment(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(appointments)
+    .set(data)
+    .where(and(eq(appointments.id, id), eq(appointments.ownerId, ownerId)));
+}
+
+// ============ MESSAGES ============
+
+export async function getMessagesBetween(userId1: number, userId2: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(messages)
+    .where(
+      or(
+        and(eq(messages.senderId, userId1), eq(messages.recipientId, userId2)),
+        and(eq(messages.senderId, userId2), eq(messages.recipientId, userId1))
+      )
+    )
+    .orderBy(asc(messages.createdAt));
+}
+
+export async function getUnreadMessages(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(messages)
+    .where(
+      and(
+        eq(messages.recipientId, userId),
+        eq(messages.isRead, false)
+      )
+    )
+    .orderBy(desc(messages.createdAt));
+}
+
+export async function createMessage(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(messages).values(data);
+}
+
+export async function markMessageAsRead(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(messages)
+    .set({ isRead: true })
+    .where(eq(messages.id, id));
+}
+
+// ============ OWNER AVAILABILITY ============
+
+export async function getOwnerAvailability(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(ownerAvailability)
+    .where(eq(ownerAvailability.ownerId, ownerId))
+    .orderBy(asc(ownerAvailability.dayOfWeek));
+}
+
+export async function updateOwnerAvailability(ownerId: number, data: any[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Delete existing and insert new
+  await db
+    .delete(ownerAvailability)
+    .where(eq(ownerAvailability.ownerId, ownerId));
+
+  if (data.length > 0) {
+    return await db.insert(ownerAvailability).values(
+      data.map((item) => ({
+        ...item,
+        ownerId,
+      }))
+    );
+  }
+}
+
+// ============ WEBHOOKS ============
+
+export async function getWebhooksByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(webhooks)
+    .where(eq(webhooks.ownerId, ownerId));
+}
+
+export async function createWebhook(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(webhooks).values({
+    ...data,
+    ownerId,
+  });
+}
+
+export async function updateWebhook(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(webhooks)
+    .set(data)
+    .where(and(eq(webhooks.id, id), eq(webhooks.ownerId, ownerId)));
+}
