@@ -25,7 +25,7 @@
 - [x] Create dashboard overview (revenue metrics, pipeline summary, activity feed)
 
 ## Phase 4: Invoicing, Contracts & Payments
-- [ ] Build invoice generation and tracking
+- [x] Build invoice generation and tracking
 - [ ] Implement contract template builder
 - [ ] Add e-signature support for contracts
 - [ ] Integrate Stripe payment processing

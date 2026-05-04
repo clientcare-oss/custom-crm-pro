@@ -32,6 +32,7 @@ const menuItems = [
   { icon: Users, label: "Contacts", path: "/contacts" },
   { icon: TrendingUp, label: "Leads", path: "/leads" },
   { icon: Briefcase, label: "Projects", path: "/projects" },
+  { icon: FileText, label: "Invoices", path: "/invoices" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
