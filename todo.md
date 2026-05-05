@@ -27,7 +27,10 @@
 ## Phase 4: Invoicing, Contracts & Payments
 - [x] Build invoice generation and tracking
 - [x] Implement contract management page
-- [ ] Add e-signature support for contracts
+- [x] Add e-signature support for contracts (SignaturePad component, S3 storage, contract signing flow)
+- [x] Wire client portal Contracts tab to clientList procedure (client-safe query)
+- [x] Add strict authorization in contracts.sign (only assigned client can sign)
+- [x] Add vitest for e-signature flow (authorized sign, unauthorized rejection)
 - [x] Integrate Stripe payment processing (checkout, billing portal, vault subscriptions)
 - [x] Wire invoice payment UI to Stripe checkout for end-to-end client payments
 - [x] Persist Stripe payment outcomes in webhook handler (update invoice status)

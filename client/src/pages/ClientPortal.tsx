@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Briefcase, DollarSign, MessageSquare, LogOut, Calendar, Clock, Upload, Trash2, File, Shield } from "lucide-react";
+import { FileText, Briefcase, DollarSign, MessageSquare, LogOut, Calendar, Clock, Upload, Trash2, File, Shield, PenTool } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import SignaturePad from "@/components/SignaturePad";
 
 const MEETING_TYPES = [
   "IEP Meeting",
@@ -59,7 +60,7 @@ export default function ClientPortal() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: clientContracts } = trpc.contracts.list.useQuery(undefined, {
+  const { data: clientContracts } = trpc.contracts.clientList.useQuery(undefined, {
     enabled: user?.role === "client",
   });
 
@@ -546,59 +547,7 @@ export default function ClientPortal() {
 
           {/* Contracts Tab */}
           <TabsContent value="contracts" className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Your Contracts
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Review and sign your contracts
-              </p>
-            </div>
-
-            {clientContracts && clientContracts.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                {clientContracts.map((contract) => (
-                  <Card
-                    key={contract.id}
-                    className="rounded-lg border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className="space-y-3">
-                      <h3 className="font-semibold text-foreground">
-                        {contract.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {contract.content}
-                      </p>
-                      <div className="flex items-center gap-2 pt-2 border-t border-border">
-                        <span
-                          className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
-                            contract.status === "Signed" || contract.status === "Executed"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                              : contract.status === "Draft"
-                              ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400"
-                              : contract.status === "Sent"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          }`}
-                        >
-                          {contract.status}
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed border-border bg-muted/30 p-12 text-center">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-sm font-semibold text-foreground mb-2">
-                  No contracts yet
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Your contracts will appear here
-                </p>
-              </div>
-            )}
+            <ContractsTabContent contracts={clientContracts} isPreview={isPreviewMode} />
           </TabsContent>
 
           {/* Files Tab */}
@@ -970,6 +919,112 @@ export default function ClientPortal() {
           </TabsContent>
         </Tabs>
       </div>
+    </div>
+  );
+}
+
+// Contracts Tab with E-Signature Support
+function ContractsTabContent({ contracts, isPreview }: { contracts: any[] | undefined; isPreview: boolean }) {
+  const [signingContractId, setSigningContractId] = useState<number | null>(null);
+  const utils = trpc.useUtils();
+
+  const signMutation = trpc.contracts.sign.useMutation({
+    onSuccess: () => {
+      toast.success("Contract signed successfully!");
+      setSigningContractId(null);
+      utils.contracts.clientList.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to sign contract"),
+  });
+
+  const handleSign = (signatureDataUrl: string) => {
+    if (signingContractId === null) return;
+    signMutation.mutate({ id: signingContractId, signatureData: signatureDataUrl });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Your Contracts</h2>
+        <p className="text-sm text-muted-foreground">Review and sign your contracts</p>
+      </div>
+
+      {contracts && contracts.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {contracts.map((contract: any) => (
+            <Card
+              key={contract.id}
+              className="rounded-lg border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="space-y-3">
+                <h3 className="font-semibold text-foreground">{contract.title}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-3">{contract.content}</p>
+                <div className="flex items-center justify-between pt-3 border-t border-border">
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      contract.status === "Signed" || contract.status === "Executed"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : contract.status === "Draft"
+                        ? "bg-slate-100 text-slate-700"
+                        : contract.status === "Sent"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {contract.status}
+                  </span>
+                  {contract.status === "Sent" && !isPreview && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => setSigningContractId(contract.id)}
+                      className="gap-1.5"
+                    >
+                      <PenTool className="h-3.5 w-3.5" />
+                      Sign Contract
+                    </Button>
+                  )}
+                  {contract.status === "Sent" && isPreview && (
+                    <Button size="sm" variant="default" className="gap-1.5" disabled>
+                      <PenTool className="h-3.5 w-3.5" />
+                      Sign Contract
+                    </Button>
+                  )}
+                  {(contract.status === "Signed" || contract.status === "Executed") && contract.signatureUrl && (
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+                      <PenTool className="h-3 w-3" />
+                      Signed {contract.signedDate ? new Date(contract.signedDate).toLocaleDateString() : ""}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-12 text-center">
+          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+          <p className="text-sm font-semibold text-foreground mb-2">No contracts yet</p>
+          <p className="text-xs text-muted-foreground">Your contracts will appear here</p>
+        </div>
+      )}
+
+      {/* Signature Dialog */}
+      <Dialog open={signingContractId !== null} onOpenChange={(open) => !open && setSigningContractId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sign Contract</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-4">
+            Draw your signature below to digitally sign this contract. This is legally binding.
+          </p>
+          <SignaturePad
+            onSave={handleSign}
+            onCancel={() => setSigningContractId(null)}
+            disabled={signMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
