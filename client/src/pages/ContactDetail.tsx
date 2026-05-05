@@ -126,169 +126,11 @@ export default function ContactDetail() {
       </div>
 
       {/* ═══════════════════════════════════════════════════
-          CASE COMPASS — FRONT AND CENTER
-      ═══════════════════════════════════════════════════ */}
-      <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-md overflow-hidden">
-        {/* Compass header bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-accent/20 bg-accent/10">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center">
-              <Compass className="h-7 w-7 text-accent animate-[spin_12s_linear_infinite]" />
-            </div>
-            <div>
-              <h2 className="font-bold text-foreground text-base">Waypoint Case Compass™</h2>
-              {(compass as any)?.updatedAt && (
-                <p className="text-xs text-muted-foreground">
-                  Last updated {new Date((compass as any).updatedAt).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowHistory(!showHistory)}
-              className="text-xs inline-flex items-center gap-1"
-            >
-              <Clock className="h-3 w-3" />
-              {showHistory ? "Hide History" : "View History"}
-              {showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </Button>
-            {!editingCompass && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditingCompass(true)}
-                className="text-xs inline-flex items-center gap-1"
-              >
-                <Pencil className="h-3 w-3" /> Edit
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Compass body — view or edit mode */}
-        {editingCompass ? (
-          /* ── EDIT MODE ── */
-          <div className="p-6 space-y-5">
-            <div className="grid gap-5 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <label className="block text-sm font-semibold text-foreground">Current Status</label>
-                <Textarea rows={2} value={compassForm.currentStatus}
-                  onChange={(e) => setCompassForm({ ...compassForm, currentStatus: e.target.value })}
-                  placeholder="Brief snapshot of where the case stands right now..." className="resize-none" />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="block text-sm font-semibold text-foreground">Summary of Last Meeting</label>
-                <Textarea rows={3} value={compassForm.lastMeetingSummary}
-                  onChange={(e) => setCompassForm({ ...compassForm, lastMeetingSummary: e.target.value })}
-                  placeholder="Key takeaways, decisions made, concerns raised..." className="resize-none" />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="block text-sm font-semibold text-foreground">Next Step</label>
-                <Textarea rows={2} value={compassForm.nextStep}
-                  onChange={(e) => setCompassForm({ ...compassForm, nextStep: e.target.value })}
-                  placeholder="The next action needed to move the case forward..." className="resize-none" />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="block text-sm font-semibold text-foreground">Who Has the Ball</label>
-                <Input value={compassForm.whoHasBall}
-                  onChange={(e) => setCompassForm({ ...compassForm, whoHasBall: e.target.value })}
-                  placeholder="e.g. School (update IEP goals), Parent (sign consent), Waypoint (review draft)" />
-                <p className="text-xs text-muted-foreground">Separate multiple parties with commas.</p>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-foreground">Next Meeting Date</label>
-                <Input type="datetime-local" value={compassForm.nextMeetingDate}
-                  onChange={(e) => setCompassForm({ ...compassForm, nextMeetingDate: e.target.value })} />
-              </div>
-            </div>
-            <div className="flex items-center gap-3 pt-2">
-              <Button onClick={handleCompassSave} disabled={compassUpsert.isPending}
-                className="inline-flex items-center gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
-                {compassUpsert.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save Compass
-              </Button>
-              <Button variant="outline" onClick={() => setEditingCompass(false)} className="inline-flex items-center gap-2">
-                <X className="h-4 w-4" /> Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          /* ── VIEW MODE ── */
-          compass && ((compass as any).currentStatus || (compass as any).lastMeetingSummary || (compass as any).nextStep || ballParties.length > 0) ? (
-            <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
-              {(compass as any).currentStatus && (
-                <div className="space-y-1 sm:col-span-2 lg:col-span-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</p>
-                  <p className="text-sm text-foreground leading-relaxed">{(compass as any).currentStatus}</p>
-                </div>
-              )}
-              {(compass as any).lastMeetingSummary && (
-                <div className="space-y-1 sm:col-span-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</p>
-                  <p className="text-sm text-foreground leading-relaxed">{(compass as any).lastMeetingSummary}</p>
-                </div>
-              )}
-              {(compass as any).nextStep && (
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
-                  <p className="text-sm text-foreground leading-relaxed">{(compass as any).nextStep}</p>
-                </div>
-              )}
-              {ballParties.length > 0 && (
-                <div className="space-y-2 sm:col-span-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</p>
-                  <div className="flex flex-wrap gap-2">
-                    {ballParties.map((party: string, i: number) => (
-                      <span key={i} className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">{party}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {(compass as any).nextMeetingDate && (
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting</p>
-                  <p className="text-sm font-semibold text-foreground">
-                    {new Date((compass as any).nextMeetingDate).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-6 text-center text-muted-foreground text-sm">
-              No compass data yet.{" "}
-              <button onClick={() => setEditingCompass(true)} className="text-accent font-semibold hover:underline">Click Edit to add it.</button>
-            </div>
-          )
-        )}
-
-        {/* History panel */}
-        {showHistory && (
-          <div className="border-t border-accent/20 bg-muted/20 px-6 py-4 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Compass History</p>
-            {compassHistory && (compassHistory as any[]).length > 0 ? (
-              (compassHistory as any[]).map((entry: any) => (
-                <div key={entry.id} className="rounded-lg border border-border bg-card p-4 space-y-2">
-                  <p className="text-xs text-muted-foreground">{new Date(entry.savedAt).toLocaleString()}</p>
-                  {entry.currentStatus && <p className="text-sm text-foreground"><span className="font-semibold">Status:</span> {entry.currentStatus}</p>}
-                  {entry.nextStep && <p className="text-sm text-foreground"><span className="font-semibold">Next Step:</span> {entry.nextStep}</p>}
-                  {entry.whoHasBall && <p className="text-sm text-foreground"><span className="font-semibold">Ball:</span> {entry.whoHasBall}</p>}
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-2">No history yet.</p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ═══════════════════════════════════════════════════
           TABS
       ═══════════════════════════════════════════════════ */}
-      <Tabs defaultValue="activity">
+      <Tabs defaultValue="compass">
         <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="compass" className="flex items-center gap-1.5"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
           <TabsTrigger value="activity" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Activity</TabsTrigger>
           <TabsTrigger value="files" className="flex items-center gap-1.5"><Folder className="h-3.5 w-3.5" />Files {files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>}</TabsTrigger>
           <TabsTrigger value="projects" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Cases {projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{projects.length}</span>}</TabsTrigger>
@@ -296,6 +138,131 @@ export default function ContactDetail() {
           <TabsTrigger value="appointments" className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />Appointments {appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{appointments.length}</span>}</TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-1.5"><Info className="h-3.5 w-3.5" />Details</TabsTrigger>
         </TabsList>
+
+        {/* COMPASS TAB */}
+        <TabsContent value="compass" className="mt-4">
+          <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-md overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-accent/20 bg-accent/10">
+              <div className="flex items-center gap-3">
+                <Compass className="h-7 w-7 text-accent animate-[spin_12s_linear_infinite]" />
+                <div>
+                  <h2 className="font-bold text-foreground text-base">Waypoint Case Compass™</h2>
+                  {contact.caseId && <p className="text-xs text-muted-foreground">Case ID: {contact.caseId}</p>}
+                  {(compass as any)?.updatedAt && (
+                    <p className="text-xs text-muted-foreground">Last updated {new Date((compass as any).updatedAt).toLocaleDateString()}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)} className="text-xs inline-flex items-center gap-1">
+                  <Clock className="h-3 w-3" />{showHistory ? "Hide History" : "View History"}{showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                </Button>
+                {!editingCompass ? (
+                  <Button size="sm" onClick={() => setEditingCompass(true)} className="text-xs inline-flex items-center gap-1">
+                    <Pencil className="h-3 w-3" />Edit Compass
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleCompassSave} disabled={compassUpsert.isPending} className="text-xs inline-flex items-center gap-1">
+                      {compassUpsert.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}Save
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setEditingCompass(false)} className="text-xs"><X className="h-3 w-3" /></Button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="p-6">
+              {!editingCompass ? (
+                (compass as any) ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(compass as any).currentStatus && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</p>
+                        <p className="text-sm text-foreground">{(compass as any).currentStatus}</p>
+                      </div>
+                    )}
+                    {(compass as any).lastMeetingSummary && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last Meeting Summary</p>
+                        <p className="text-sm text-foreground">{(compass as any).lastMeetingSummary}</p>
+                      </div>
+                    )}
+                    {(compass as any).nextStep && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
+                        <p className="text-sm text-foreground">{(compass as any).nextStep}</p>
+                      </div>
+                    )}
+                    {(compass as any).whoHasBall && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</p>
+                        <div className="flex flex-wrap gap-1">
+                          {ballParties.map((p: string, i: number) => (
+                            <span key={i} className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">{p}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(compass as any).nextMeetingDate && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting Date</p>
+                        <p className="text-sm text-foreground">{new Date((compass as any).nextMeetingDate).toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Compass className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground mb-3">No Compass set for this student yet.</p>
+                    <Button size="sm" onClick={() => setEditingCompass(true)}><Pencil className="h-3 w-3 mr-1" />Set Up Compass</Button>
+                  </div>
+                )
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</label>
+                    <Textarea rows={2} value={compassForm.currentStatus} onChange={e => setCompassForm(f => ({ ...f, currentStatus: e.target.value }))} placeholder="Brief snapshot of where the case stands..." className="text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</label>
+                    <Textarea rows={2} value={compassForm.lastMeetingSummary} onChange={e => setCompassForm(f => ({ ...f, lastMeetingSummary: e.target.value }))} placeholder="Key takeaways and decisions..." className="text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</label>
+                    <Textarea rows={2} value={compassForm.nextStep} onChange={e => setCompassForm(f => ({ ...f, nextStep: e.target.value }))} placeholder="The next action needed..." className="text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</label>
+                    <Textarea rows={2} value={compassForm.whoHasBall} onChange={e => setCompassForm(f => ({ ...f, whoHasBall: e.target.value }))} placeholder="Parent, School, District, Waypoint..." className="text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting Date</label>
+                    <Input type="datetime-local" value={compassForm.nextMeetingDate} onChange={e => setCompassForm(f => ({ ...f, nextMeetingDate: e.target.value }))} className="text-sm" />
+                  </div>
+                </div>
+              )}
+            </div>
+            {showHistory && (
+              <div className="border-t border-accent/20 px-6 py-4 bg-muted/30">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Case Compass History</p>
+                {compassHistory && (compassHistory as any[]).length > 0 ? (
+                  <div className="space-y-3">
+                    {(compassHistory as any[]).map((entry: any) => (
+                      <div key={entry.id} className="rounded-lg border border-border bg-card p-3 text-xs">
+                        <p className="font-semibold text-muted-foreground mb-1">{new Date(entry.savedAt).toLocaleString()}</p>
+                        {entry.currentStatus && <p className="text-foreground"><span className="font-medium">Status:</span> {entry.currentStatus}</p>}
+                        {entry.nextStep && <p className="text-foreground mt-0.5"><span className="font-medium">Next Step:</span> {entry.nextStep}</p>}
+                        {entry.whoHasBall && <p className="text-foreground mt-0.5"><span className="font-medium">Ball:</span> {entry.whoHasBall}</p>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-2">No history yet.</p>
+                )}
+              </div>
+            )}
+          </div>
+        </TabsContent>
 
         {/* ACTIVITY */}
         <TabsContent value="activity" className="mt-4 space-y-3">
