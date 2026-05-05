@@ -61,7 +61,11 @@ export default function ClientPortal() {
     }, 1500);
   };
 
-  if (!user || user.role !== "client") {
+  // Allow preview mode for admins
+  const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
+  const isClientOrPreview = user?.role === "client" || (user?.role === "admin" && isPreviewMode);
+
+  if (!user || !isClientOrPreview) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

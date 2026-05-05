@@ -39,6 +39,7 @@
 - [x] Add "Update Payment Information" button in Billing tab
 - [x] Add "Schedule Meeting" button on client portal pages
 - [x] Implement meeting type selection (IEP Meeting, 1:1 with Advocate, etc.)
+- [x] FIX: Client Portal Preview button now works for admin users (added preview=true parameter)
 - [ ] Build appointment scheduling interface
 - [ ] Build client messaging interface
 - [ ] Implement appointment scheduling with availability management

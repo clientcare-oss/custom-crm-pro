@@ -36,9 +36,13 @@ export function ClientPortalPreview() {
             </Button>
           </DialogHeader>
 
-          {/* Client Portal Preview - Simulated as client role */}
+          {/* Client Portal Preview - Load with preview=true parameter */}
           <div className="bg-background">
-            <ClientPortal />
+            <iframe
+              src="/client-portal?preview=true"
+              className="w-full h-[70vh] border-0 rounded-b-lg"
+              title="Client Portal Preview"
+            />
           </div>
         </DialogContent>
       </Dialog>
