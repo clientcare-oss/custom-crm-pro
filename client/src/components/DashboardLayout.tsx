@@ -33,9 +33,8 @@ function buildMenuItems(projectLabel: string) {
   return [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Users, label: "Contacts", path: "/contacts" },
-    { icon: GraduationCap, label: "Students", path: "/students" },
     { icon: TrendingUp, label: "Leads", path: "/leads" },
-    { icon: Briefcase, label: projectLabel + "s", path: "/projects" },
+    { icon: GraduationCap, label: projectLabel + "s", path: "/projects" },
     { icon: FileText, label: "Invoices", path: "/invoices" },
     { icon: ScrollText, label: "Contracts", path: "/contracts" },
     { icon: Upload, label: "Client Files", path: "/client-files" },
