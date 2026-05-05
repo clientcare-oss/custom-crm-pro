@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Briefcase, DollarSign, MessageSquare, LogOut, Calendar, Clock, Upload, Trash2, File, Shield, PenTool } from "lucide-react";
+import { useTerminology } from "@/contexts/TerminologyContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -25,6 +26,7 @@ const MEETING_TYPES = [
 
 export default function ClientPortal() {
   const { user } = useAuth();
+  const { projectLabel, projectLabelPlural } = useTerminology();
   const [, setLocation] = useLocation();
   const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
   const [selectedMeetingType, setSelectedMeetingType] = useState<string | null>(null);
@@ -318,7 +320,7 @@ export default function ClientPortal() {
               className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <Briefcase className="h-4 w-4" />
-              Projects
+              {projectLabelPlural}
             </TabsTrigger>
             <TabsTrigger
               value="invoices"
@@ -361,10 +363,10 @@ export default function ClientPortal() {
           <TabsContent value="projects" className="space-y-4">
             <div className="space-y-2">
               <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Your Projects
+                Your {projectLabelPlural}
               </h2>
               <p className="text-sm text-muted-foreground">
-                View the status and details of your projects
+                View the status and details of your {projectLabel.toLowerCase()}s
               </p>
             </div>
 

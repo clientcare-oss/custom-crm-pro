@@ -20,6 +20,7 @@ import {
 import { Plus, Loader2, Edit2, Calendar, DollarSign } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTerminology } from "@/contexts/TerminologyContext";
 
 const PROJECT_STAGES = [
   "Planning",
@@ -31,6 +32,7 @@ type ProjectStage = (typeof PROJECT_STAGES)[number];
 
 export default function Projects() {
   const { user } = useAuth();
+  const { projectLabel, projectLabelPlural } = useTerminology();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -160,9 +162,9 @@ export default function Projects() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{projectLabelPlural}</h1>
           <p className="text-muted-foreground">
-            Manage your project workflow and timeline
+            Manage your {projectLabel.toLowerCase()} workflow and timeline
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -182,19 +184,19 @@ export default function Projects() {
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md"
             >
               <Plus className="h-4 w-4" />
-              New Project
+              New {projectLabel}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingId ? "Edit Project" : "Create New Project"}
+                {editingId ? `Edit ${projectLabel}` : `Create New ${projectLabel}`}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">
-                  Project Name *
+                  {projectLabel} Name *
                 </label>
                 <Input
                   value={formData.name}
@@ -284,9 +286,9 @@ export default function Projects() {
                   {createMutation.isPending || updateMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : editingId ? (
-                    "Update Project"
+                    `Update ${projectLabel}`
                   ) : (
-                    "Create Project"
+                    `Create ${projectLabel}`
                   )}
                 </Button>
               </div>

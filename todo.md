@@ -70,6 +70,15 @@
 - [ ] Performance optimization (lazy loading, caching)
 - [ ] Create final checkpoint and prepare for deployment
 
+## Phase 7b: Customizable Terminology (Settings)
+- [x] Create a Settings page accessible from the sidebar
+- [x] Create a TerminologyContext (React context) that provides the label throughout the app
+- [x] Preset options: Project, Case, Student, plus a custom text input
+- [x] Update DashboardLayout sidebar nav to use dynamic label for the Projects link
+- [x] Update Projects page title/headings to use dynamic label
+- [x] Update Dashboard metrics card to use dynamic label
+- [x] Update all other pages that reference "Project" to use dynamic label (ClientPortal updated)
+
 ## Known Issues
 - TypeScript: storageProxy.ts type error (template issue - non-critical)
 - Delete operations not implemented for leads, projects, invoices, contracts, appointments

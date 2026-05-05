@@ -19,6 +19,8 @@ import Contracts from "./pages/Contracts";
 import BookingPage from "./pages/BookingPage";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import Settings from "./pages/Settings";
+import { TerminologyProvider } from "./contexts/TerminologyContext";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -46,6 +48,7 @@ function Router() {
           <Route path="/messages" component={Messages} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/client-files" component={ClientFiles} />
+          <Route path="/settings" component={Settings} />
           <Route path="/book" component={BookingPage} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
@@ -69,10 +72,12 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <TerminologyProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </TerminologyProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

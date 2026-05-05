@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { BarChart3, Users, TrendingUp, FileText, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { ClientPortalPreview } from "@/components/ClientPortalPreview";
+import { useTerminology } from "@/contexts/TerminologyContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { projectLabel, projectLabelPlural } = useTerminology();
   const { data: contacts, isLoading: contactsLoading } = trpc.contacts.list.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
@@ -66,7 +68,7 @@ export default function Dashboard() {
         <Card className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
+              <p className="text-sm font-medium text-muted-foreground">Active {projectLabelPlural}</p>
               <p className="text-3xl font-bold">
                 {projectsLoading ? "-" : projects?.filter((p) => p.status !== "Completed").length || 0}
               </p>
@@ -106,7 +108,7 @@ export default function Dashboard() {
             View Leads
           </Link>
           <Link href="/projects" className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-4 py-3 font-semibold text-foreground shadow-sm transition-all hover:bg-muted">
-            Projects
+            {projectLabelPlural}
           </Link>
           <Link href="/invoices" className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-4 py-3 font-semibold text-foreground shadow-sm transition-all hover:bg-muted">
             Invoices
