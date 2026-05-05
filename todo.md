@@ -93,3 +93,11 @@
 - [x] Leads pipeline with 5-stage Kanban board
 - [x] Role-based access control (basic)
 - [x] Design system and premium styling
+
+## Waypoint Case Compass™
+- [x] Add caseCompass and caseCompassHistory tables to Drizzle schema
+- [x] Generate and apply migration SQL
+- [x] Add DB helpers for compass CRUD + history snapshots
+- [x] Add tRPC procedures: get, upsert (auto-snapshots old version), listHistory
+- [x] Build admin Compass edit panel on client detail/profile page
+- [x] Build client portal Compass card (read-only, animated compass icon, View History panel)

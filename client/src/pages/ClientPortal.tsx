@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Briefcase, DollarSign, MessageSquare, LogOut, Calendar, Clock, Upload, Trash2, File, Shield, PenTool } from "lucide-react";
 import { useTerminology } from "@/contexts/TerminologyContext";
+import CaseCompassCard from "@/components/CaseCompassCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -312,7 +313,10 @@ export default function ClientPortal() {
       </Dialog>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Case Compass — shown only to clients */}
+        <CaseCompassCard />
+
         <Tabs defaultValue="projects" className="space-y-6">
           <TabsList className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted p-1">
             <TabsTrigger

@@ -17,6 +17,8 @@ import {
   webhooks,
   clientFiles,
   vaultSubscriptions,
+  caseCompass,
+  caseCompassHistory,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -708,4 +710,66 @@ export async function cancelVaultSubscription(clientId: number) {
       cancelledAt: new Date(),
     })
     .where(eq(vaultSubscriptions.clientId, clientId));
+}
+
+// ============ CASE COMPASS ============
+
+export async function getCaseCompass(clientId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(caseCompass).where(eq(caseCompass.clientId, clientId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertCaseCompass(clientId: number, data: {
+  currentStatus?: string | null;
+  lastMeetingSummary?: string | null;
+  nextStep?: string | null;
+  whoHasBall?: string | null;
+  nextMeetingDate?: Date | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Snapshot the existing compass before overwriting
+  const existing = await getCaseCompass(clientId);
+  if (existing) {
+    await db.insert(caseCompassHistory).values({
+      clientId,
+      currentStatus: existing.currentStatus,
+      lastMeetingSummary: existing.lastMeetingSummary,
+      nextStep: existing.nextStep,
+      whoHasBall: existing.whoHasBall,
+      nextMeetingDate: existing.nextMeetingDate,
+    });
+  }
+
+  // Upsert the current compass
+  await db.insert(caseCompass)
+    .values({ clientId, ...data })
+    .onDuplicateKeyUpdate({ set: data });
+
+  return await getCaseCompass(clientId);
+}
+
+export async function getCaseCompassHistory(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(caseCompassHistory)
+    .where(eq(caseCompassHistory.clientId, clientId))
+    .orderBy(desc(caseCompassHistory.savedAt));
+}
+
+// ============ PORTAL USERS (for admin) ============
+
+export async function getPortalClients() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select({ id: users.id, name: users.name, email: users.email, createdAt: users.createdAt })
+    .from(users)
+    .where(eq(users.role, "client"))
+    .orderBy(asc(users.name));
 }

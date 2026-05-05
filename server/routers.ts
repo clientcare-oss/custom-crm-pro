@@ -601,6 +601,55 @@ export const appRouter = router({
     }),
   }),
 
+  // ============ CASE COMPASS ============
+  caseCompass: router({
+    // Admin: list all portal clients (users with role=client)
+    portalClients: adminProcedure.query(async () => {
+      return await db.getPortalClients();
+    }),
+
+    // Admin: get compass for a specific client
+    get: adminProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getCaseCompass(input.clientId);
+      }),
+
+    // Admin: upsert compass (auto-snapshots old version)
+    upsert: adminProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          currentStatus: z.string().optional(),
+          lastMeetingSummary: z.string().optional(),
+          nextStep: z.string().optional(),
+          whoHasBall: z.string().optional(),
+          nextMeetingDate: z.date().optional().nullable(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { clientId, ...data } = input;
+        return await db.upsertCaseCompass(clientId, data);
+      }),
+
+    // Admin: get history for a specific client
+    history: adminProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getCaseCompassHistory(input.clientId);
+      }),
+
+    // Client: get their own compass
+    myCompass: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getCaseCompass(ctx.user.id);
+    }),
+
+    // Client: get their own compass history
+    myHistory: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getCaseCompassHistory(ctx.user.id);
+    }),
+  }),
+
   // ============ WEBHOOKS ============
   webhooks: router({
     list: adminProcedure.query(async ({ ctx }) => {

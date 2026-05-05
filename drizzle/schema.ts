@@ -339,3 +339,40 @@ export const webhooks = mysqlTable("webhooks", {
 
 export type Webhook = typeof webhooks.$inferSelect;
 export type InsertWebhook = typeof webhooks.$inferInsert;
+
+/**
+ * Case Compass™ — one per client, tracks current case status.
+ * When updated, the old version is automatically snapshotted to caseCompassHistory.
+ */
+export const caseCompass = mysqlTable("caseCompass", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull().unique(),
+  currentStatus: text("currentStatus"),
+  lastMeetingSummary: text("lastMeetingSummary"),
+  nextStep: text("nextStep"),
+  whoHasBall: text("whoHasBall"),
+  nextMeetingDate: datetime("nextMeetingDate"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CaseCompass = typeof caseCompass.$inferSelect;
+export type InsertCaseCompass = typeof caseCompass.$inferInsert;
+
+/**
+ * Case Compass History — immutable snapshots saved every time the Compass is updated.
+ * Provides a full audit trail of case progress over time.
+ */
+export const caseCompassHistory = mysqlTable("caseCompassHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull(),
+  currentStatus: text("currentStatus"),
+  lastMeetingSummary: text("lastMeetingSummary"),
+  nextStep: text("nextStep"),
+  whoHasBall: text("whoHasBall"),
+  nextMeetingDate: datetime("nextMeetingDate"),
+  savedAt: timestamp("savedAt").defaultNow().notNull(),
+});
+
+export type CaseCompassHistory = typeof caseCompassHistory.$inferSelect;
+export type InsertCaseCompassHistory = typeof caseCompassHistory.$inferInsert;

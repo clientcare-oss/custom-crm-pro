@@ -20,6 +20,7 @@ import BookingPage from "./pages/BookingPage";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import Settings from "./pages/Settings";
+import CaseCompassAdmin from "./pages/CaseCompassAdmin";
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
 function Router() {
@@ -49,6 +50,7 @@ function Router() {
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/client-files" component={ClientFiles} />
           <Route path="/settings" component={Settings} />
+          <Route path="/case-compass" component={CaseCompassAdmin} />
           <Route path="/book" component={BookingPage} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
