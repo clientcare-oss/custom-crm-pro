@@ -31,13 +31,15 @@
 - [ ] Integrate Stripe payment processing
 - [ ] Build payment tracking and confirmation flow
 
-## Phase 5: Scheduling, Client Portal & Messaging
+### Phase 5: Scheduling, Client Portal & Messaging
+- [x] Build branded client portal (invoices, contracts, projects, files)
+- [x] Create admin preview button to view client portal in real-time
+- [x] Implement client dashboard with their projects and invoices
+- [ ] Build client messaging interface
 - [ ] Implement appointment scheduling with availability management
 - [ ] Build public booking links
 - [ ] Create calendar view for appointments
-- [ ] Build client portal with login
-- [ ] Implement client-facing views (invoices, contracts, projects, files)
-- [ ] Build two-way messaging system between owner and clients
+- [ ] Implement two-way messaging system
 - [ ] Add notification alerts for new messages
 
 ## Phase 6: REST API & Webhooks

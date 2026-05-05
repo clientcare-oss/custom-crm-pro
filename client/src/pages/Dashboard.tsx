@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Users, TrendingUp, FileText, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { ClientPortalPreview } from "@/components/ClientPortalPreview";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -93,7 +94,10 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">Quick Actions</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold tracking-tight">Quick Actions</h2>
+          <ClientPortalPreview />
+        </div>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <Link href="/contacts" className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-4 py-3 font-semibold text-foreground shadow-sm transition-all hover:bg-muted">
             Manage Contacts
