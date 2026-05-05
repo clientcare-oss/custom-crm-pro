@@ -1,6 +1,5 @@
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronRight, ChevronLeft, ArrowUpDown } from "lucide-react";
 import { useState, useRef } from "react";
@@ -26,7 +25,6 @@ const PLACEHOLDER_STAGES = [
 ];
 
 export default function Students() {
-  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [sortAsc, setSortAsc] = useState(true);
@@ -40,10 +38,7 @@ export default function Students() {
     phone: "",
   });
 
-  const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery(
-    undefined,
-    { enabled: user?.role === "admin" }
-  );
+  const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery();
 
   const createMutation = trpc.contacts.create.useMutation({
     onSuccess: () => {
