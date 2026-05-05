@@ -78,9 +78,12 @@ export default function ContactDetail() {
   const { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory } = data;
 
   const handleCompassSave = () => {
-    const caseId = contact.caseId ?? `TEMP-${contactId}`;
+    if (!contact.caseId) {
+      toast.error("This student does not have a Case ID yet. Please refresh and try again.");
+      return;
+    }
     compassUpsert.mutate({
-      caseId,
+      caseId: contact.caseId,
       currentStatus: compassForm.currentStatus || undefined,
       lastMeetingSummary: compassForm.lastMeetingSummary || undefined,
       nextStep: compassForm.nextStep || undefined,

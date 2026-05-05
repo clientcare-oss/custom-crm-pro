@@ -151,9 +151,16 @@ export async function createContact(data: any, ownerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Auto-generate a unique caseId in WP-YYYY-NNNN format
+  const year = new Date().getFullYear();
+  const countResult = await db.select().from(contacts);
+  const nextNum = String(countResult.length + 1).padStart(4, "0");
+  const caseId = `WP-${year}-${nextNum}`;
+
   const result = await db.insert(contacts).values({
     ...data,
     ownerId,
+    caseId,
   });
 
   return result;

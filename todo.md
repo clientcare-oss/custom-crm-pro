@@ -118,9 +118,9 @@
 - [x] Replace "Go to sidebar" message with inline edit form on the card
 
 ## Case Compass caseId Refactor
-- [ ] Add caseId (unique, auto-generated) to contacts table
-- [ ] Add caseId column to caseCompass and caseCompassHistory tables
-- [ ] Backfill caseId for existing student contacts
-- [ ] Update backend: read/write Compass by caseId
-- [ ] Update client portal: look up Compass by caseId via linked contact
-- [ ] Update ContactDetail admin page to use caseId
+- [x] Add caseId (unique, auto-generated) to contacts table
+- [x] Add caseId column to caseCompass and caseCompassHistory tables
+- [x] Backfill caseId for existing student contacts
+- [x] Update backend: read/write Compass by caseId
+- [x] Update client portal: look up Compass by caseId via linked contact
+- [x] Update ContactDetail admin page to use caseId
