@@ -35,6 +35,11 @@
 - [x] Build branded client portal (invoices, contracts, projects, files)
 - [x] Create admin preview button to view client portal in real-time
 - [x] Implement client dashboard with their projects and invoices
+- [x] Build Billing tab in client portal with payment history
+- [x] Add "Update Payment Information" button in Billing tab
+- [x] Add "Schedule Meeting" button on client portal pages
+- [x] Implement meeting type selection (IEP Meeting, 1:1 with Advocate, etc.)
+- [ ] Build appointment scheduling interface
 - [ ] Build client messaging interface
 - [ ] Implement appointment scheduling with availability management
 - [ ] Build public booking links

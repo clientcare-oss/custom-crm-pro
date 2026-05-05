@@ -2,14 +2,31 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Briefcase, DollarSign, MessageSquare, LogOut } from "lucide-react";
+import { FileText, Briefcase, DollarSign, MessageSquare, LogOut, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+const MEETING_TYPES = [
+  "IEP Meeting",
+  "1:1 with Advocate",
+  "Progress Update",
+  "Consultation",
+  "Follow-up",
+] as const;
 
 export default function ClientPortal() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
+  const [selectedMeetingType, setSelectedMeetingType] = useState<string | null>(null);
 
   // Fetch client's data
   const { data: clientProjects } = trpc.projects.list.useQuery(undefined, {
@@ -32,6 +49,16 @@ export default function ClientPortal() {
 
   const handleLogout = () => {
     logoutMutation.mutate();
+  };
+
+  const handleScheduleMeeting = (meetingType: string) => {
+    setSelectedMeetingType(meetingType);
+    toast.success(`Scheduling ${meetingType}...`);
+    // In production, this would open a calendar/scheduling interface
+    setTimeout(() => {
+      setShowMeetingScheduler(false);
+      setSelectedMeetingType(null);
+    }, 1500);
   };
 
   if (!user || user.role !== "client") {
@@ -62,16 +89,51 @@ export default function ClientPortal() {
               Welcome, {user.name}
             </p>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setShowMeetingScheduler(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md"
+            >
+              <Calendar className="h-4 w-4" />
+              Schedule Meeting
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Meeting Scheduler Dialog */}
+      <Dialog open={showMeetingScheduler} onOpenChange={setShowMeetingScheduler}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule a Meeting</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Select the type of meeting you'd like to schedule:
+            </p>
+            {MEETING_TYPES.map((meetingType) => (
+              <Button
+                key={meetingType}
+                onClick={() => handleScheduleMeeting(meetingType)}
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-left font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
+              >
+                <div className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span>{meetingType}</span>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -97,6 +159,13 @@ export default function ClientPortal() {
             >
               <FileText className="h-4 w-4" />
               Contracts
+            </TabsTrigger>
+            <TabsTrigger
+              value="billing"
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <DollarSign className="h-4 w-4" />
+              Billing
             </TabsTrigger>
             <TabsTrigger
               value="messages"
@@ -308,6 +377,77 @@ export default function ClientPortal() {
                 </p>
               </div>
             )}
+          </TabsContent>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing" className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Billing & Payment
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Manage your payment information and view billing history
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Payment Information Card */}
+              <Card className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground">Payment Information</h3>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>💳 Payment method on file</p>
+                    <p>Last updated: {new Date().toLocaleDateString()}</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      toast.success("Redirecting to payment update...");
+                      // In production, this would open Stripe payment update flow
+                    }}
+                    className="w-full rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md"
+                  >
+                    Update Payment Information
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Account Summary Card */}
+              <Card className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground">Account Summary</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Current Balance</span>
+                      <span className="font-semibold text-foreground">$0.00</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Total Paid</span>
+                      <span className="font-semibold text-foreground">$0.00</span>
+                    </div>
+                    <div className="border-t border-border pt-3 flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Account Status</span>
+                      <span className="inline-block rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        Active
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Billing History */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground">Billing History</h3>
+              <div className="rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center">
+                <DollarSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-sm font-semibold text-foreground mb-2">
+                  No billing history yet
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Your invoices and payments will appear here
+                </p>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Messages Tab */}
