@@ -40,7 +40,7 @@ export default function Appointments() {
 
   const { data: appointments = [], refetch } = trpc.appointments.list.useQuery();
   const { data: contacts = [] } = trpc.contacts.list.useQuery();
-  const { data: availability = [] } = trpc.availability.get.useQuery();
+  const { data: availability = [], refetch: refetchAvailability } = trpc.availability.get.useQuery();
 
   const createMutation = trpc.appointments.create.useMutation({
     onSuccess: () => {
@@ -61,7 +61,10 @@ export default function Appointments() {
   });
 
   const updateAvailabilityMutation = trpc.availability.update.useMutation({
-    onSuccess: () => toast.success("Availability updated!"),
+    onSuccess: () => {
+      toast.success("Availability updated!");
+      refetchAvailability();
+    },
     onError: (err) => toast.error(err.message),
   });
 
@@ -315,6 +318,87 @@ export default function Appointments() {
         </CardContent>
       </Card>
 
+      {/* Availability Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Availability</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">Set your available hours for client bookings</p>
+          <div className="space-y-3">
+            {DAYS.map((day, index) => {
+              const dayAvail = (availability as any[]).find((a: any) => a.dayOfWeek === index);
+              const isAvailable = dayAvail?.isAvailable ?? (index >= 1 && index <= 5);
+              const startTime = dayAvail?.startTime ?? "09:00";
+              const endTime = dayAvail?.endTime ?? "17:00";
+
+              return (
+                <div key={day} className="flex items-center gap-4 p-3 rounded-lg border">
+                  <div className="w-28">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isAvailable}
+                        onChange={(e) => {
+                          const updated = DAYS.map((_, i) => {
+                            const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
+                            if (i === index) {
+                              return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: e.target.checked };
+                            }
+                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
+                          });
+                          updateAvailabilityMutation.mutate(updated);
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm font-medium">{day}</span>
+                    </label>
+                  </div>
+                  {isAvailable && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        defaultValue={startTime}
+                        onBlur={(e) => {
+                          const updated = DAYS.map((_, i) => {
+                            const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
+                            if (i === index) {
+                              return { dayOfWeek: i, startTime: e.target.value, endTime: existing?.endTime ?? "17:00", isAvailable: true };
+                            }
+                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
+                          });
+                          updateAvailabilityMutation.mutate(updated);
+                        }}
+                        className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      />
+                      <span className="text-sm text-muted-foreground">to</span>
+                      <input
+                        type="time"
+                        defaultValue={endTime}
+                        onBlur={(e) => {
+                          const updated = DAYS.map((_, i) => {
+                            const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
+                            if (i === index) {
+                              return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: e.target.value, isAvailable: true };
+                            }
+                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
+                          });
+                          updateAvailabilityMutation.mutate(updated);
+                        }}
+                        className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      />
+                    </div>
+                  )}
+                  {!isAvailable && (
+                    <span className="text-sm text-muted-foreground italic">Unavailable</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Past Appointments */}
       {pastAppointments.length > 0 && (
         <Card>
@@ -330,7 +414,6 @@ export default function Appointments() {
                       <p className="font-medium text-sm">{apt.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(apt.startTime).toLocaleDateString()}
-
                       </p>
                     </div>
                   </div>

@@ -35,13 +35,28 @@ export default function ClientPortal() {
   const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
   const isClientOrPreview = user?.role === "client" || (user?.role === "admin" && isPreviewMode);
 
+  // Handle payment confirmation from Stripe redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get("payment");
+    if (paymentStatus === "success") {
+      toast.success("Payment successful! Your invoice has been updated.");
+      // Clean the URL
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (paymentStatus === "cancelled") {
+      toast.error("Payment was cancelled. You can try again anytime.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   // Fetch client's data
   const { data: clientProjects } = trpc.projects.list.useQuery(undefined, {
     enabled: user?.role === "client",
   });
 
-  const { data: clientInvoices } = trpc.invoices.list.useQuery(undefined, {
+  const { data: clientInvoices, refetch: refetchInvoices } = trpc.invoices.list.useQuery(undefined, {
     enabled: user?.role === "client",
+    refetchOnWindowFocus: true,
   });
 
   const { data: clientContracts } = trpc.contracts.list.useQuery(undefined, {
@@ -432,6 +447,9 @@ export default function ClientPortal() {
                         <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                           Due Date
                         </th>
+                        <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">
+                          Action
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -467,6 +485,45 @@ export default function ClientPortal() {
                             {invoice.dueDate
                               ? new Date(invoice.dueDate).toLocaleDateString()
                               : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {invoice.status !== "Paid" && invoice.status !== "Cancelled" && invoice.status !== "Draft" ? (
+                              <Button
+                                size="sm"
+                                onClick={async () => {
+                                  if (isPreviewMode) {
+                                    toast.info("Preview: This would redirect to Stripe checkout for payment.");
+                                    return;
+                                  }
+                                  try {
+                                    toast.info("Redirecting to payment...");
+                                    const res = await fetch("/api/stripe/create-checkout", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        invoiceId: invoice.id,
+                                        amount: parseFloat(invoice.total || "0"),
+                                        customerEmail: user?.email,
+                                        customerName: user?.name,
+                                      }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.url) {
+                                      window.open(data.url, "_blank");
+                                    } else {
+                                      toast.error("Unable to start checkout.");
+                                    }
+                                  } catch {
+                                    toast.error("Payment service unavailable.");
+                                  }
+                                }}
+                                className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                              >
+                                Pay Now
+                              </Button>
+                            ) : invoice.status === "Paid" ? (
+                              <span className="text-xs text-emerald-600 font-semibold">✓ Paid</span>
+                            ) : null}
                           </td>
                         </tr>
                       ))}
@@ -682,7 +739,19 @@ export default function ClientPortal() {
                         <p className="text-sm font-semibold text-foreground mt-2">Basic</p>
                         <p className="text-xs text-muted-foreground">50 GB Storage</p>
                         <Button
-                          onClick={() => toast.success("Vault subscription coming soon!")}
+                          onClick={async () => {
+                            if (isPreviewMode) { toast.info("Preview: This would start a Stripe subscription checkout."); return; }
+                            try {
+                              const res = await fetch("/api/stripe/vault-subscription", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ tier: "basic", customerEmail: user?.email, customerName: user?.name }),
+                              });
+                              const data = await res.json();
+                              if (data.url) window.open(data.url, "_blank");
+                              else toast.error("Unable to start checkout.");
+                            } catch { toast.error("Payment service unavailable."); }
+                          }}
                           className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
                         >
                           Subscribe
@@ -695,7 +764,19 @@ export default function ClientPortal() {
                         <p className="text-sm font-semibold text-foreground mt-2">Pro</p>
                         <p className="text-xs text-muted-foreground">500 GB Storage</p>
                         <Button
-                          onClick={() => toast.success("Vault subscription coming soon!")}
+                          onClick={async () => {
+                            if (isPreviewMode) { toast.info("Preview: This would start a Stripe subscription checkout."); return; }
+                            try {
+                              const res = await fetch("/api/stripe/vault-subscription", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ tier: "pro", customerEmail: user?.email, customerName: user?.name }),
+                              });
+                              const data = await res.json();
+                              if (data.url) window.open(data.url, "_blank");
+                              else toast.error("Unable to start checkout.");
+                            } catch { toast.error("Payment service unavailable."); }
+                          }}
                           className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
                         >
                           Subscribe
@@ -707,7 +788,19 @@ export default function ClientPortal() {
                         <p className="text-sm font-semibold text-foreground mt-2">Enterprise</p>
                         <p className="text-xs text-muted-foreground">2 TB Storage</p>
                         <Button
-                          onClick={() => toast.success("Vault subscription coming soon!")}
+                          onClick={async () => {
+                            if (isPreviewMode) { toast.info("Preview: This would start a Stripe subscription checkout."); return; }
+                            try {
+                              const res = await fetch("/api/stripe/vault-subscription", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ tier: "enterprise", customerEmail: user?.email, customerName: user?.name }),
+                              });
+                              const data = await res.json();
+                              if (data.url) window.open(data.url, "_blank");
+                              else toast.error("Unable to start checkout.");
+                            } catch { toast.error("Payment service unavailable."); }
+                          }}
                           className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
                         >
                           Subscribe
@@ -741,9 +834,27 @@ export default function ClientPortal() {
                     <p>Last updated: {new Date().toLocaleDateString()}</p>
                   </div>
                   <Button
-                    onClick={() => {
-                      toast.success("Redirecting to payment update...");
-                      // In production, this would open Stripe payment update flow
+                    onClick={async () => {
+                      if (isPreviewMode) {
+                        toast.info("Preview mode: This would open the Stripe billing portal for clients.");
+                        return;
+                      }
+                      try {
+                        toast.info("Redirecting to payment portal...");
+                        const res = await fetch("/api/stripe/billing-portal", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ customerEmail: user?.email }),
+                        });
+                        const data = await res.json();
+                        if (data.url) {
+                          window.open(data.url, "_blank");
+                        } else {
+                          toast.error("Unable to open billing portal.");
+                        }
+                      } catch {
+                        toast.error("Failed to connect to payment service.");
+                      }
                     }}
                     className="w-full rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md"
                   >

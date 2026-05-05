@@ -28,8 +28,10 @@
 - [x] Build invoice generation and tracking
 - [x] Implement contract management page
 - [ ] Add e-signature support for contracts
-- [ ] Integrate Stripe payment processing
-- [ ] Build payment tracking and confirmation flow
+- [x] Integrate Stripe payment processing (checkout, billing portal, vault subscriptions)
+- [x] Wire invoice payment UI to Stripe checkout for end-to-end client payments
+- [x] Persist Stripe payment outcomes in webhook handler (update invoice status)
+- [x] Build payment confirmation UX in client portal after successful checkout
 
 ### Phase 5: Scheduling, Client Portal & Messaging
 - [x] Build branded client portal (invoices, contracts, projects, files)
@@ -48,7 +50,7 @@
 - [x] Set up S3 storage integration for files
 - [x] Build admin messaging page (conversation list, send/receive)
 - [x] Wire client portal Messages tab to real messaging API
-- [ ] Add owner availability management UI (days/hours editor)
+- [x] Add owner availability management UI (days/hours editor)
 - [ ] Build public booking links
 - [ ] Implement calendar view for appointments
 - [ ] Add notification alerts for new messages
