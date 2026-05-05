@@ -1,0 +1,429 @@
+import { trpc } from "@/lib/trpc";
+import { useParams, useLocation } from "wouter";
+import { useState } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+export default function ContactDetail() {
+  const params = useParams<{ id: string }>();
+  const contactId = parseInt(params.id ?? "0", 10);
+  const [, setLocation] = useLocation();
+  const [showHistory, setShowHistory] = useState(false);
+  const utils = trpc.useUtils();
+
+  const { data, isLoading, error } = trpc.contacts.detail.useQuery(
+    { id: contactId },
+    { enabled: !!contactId }
+  );
+
+  // compass and compassHistory come bundled in the detail query
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-muted-foreground">Contact not found.</p>
+        <Button variant="outline" onClick={() => setLocation("/contacts")} className="mt-4">
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Contacts
+        </Button>
+      </div>
+    );
+  }
+
+  const { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory } = data;
+  const fullName = `${contact.firstName} ${contact.lastName}`;
+
+  // Who Has the Ball — parse comma/newline separated
+  const ballParties = (compass as any)?.whoHasBall
+    ? (compass as any).whoHasBall.split(/[,\n]/).map((s: string) => s.trim()).filter(Boolean)
+    : [];
+
+  return (
+    <div className="space-y-6 p-8">
+      {/* Back */}
+      <Button
+        variant="outline"
+        onClick={() => setLocation("/contacts")}
+        className="inline-flex items-center gap-2 text-sm"
+      >
+        <ArrowLeft className="h-4 w-4" /> All Contacts
+      </Button>
+
+      {/* Student header */}
+      <div className="flex items-start gap-4 flex-wrap">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent font-bold text-xl flex-shrink-0">
+          {contact.firstName.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{fullName}</h1>
+          <div className="flex flex-wrap gap-3 mt-1 text-sm text-muted-foreground">
+            {contact.jobTitle && <span>{contact.jobTitle}</span>}
+            {contact.company && <span>· {contact.company}</span>}
+            {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
+            {contact.phone && <span>· {contact.phone}</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════
+          CASE COMPASS — FRONT AND CENTER
+      ═══════════════════════════════════════════════════ */}
+      <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-md overflow-hidden">
+        {/* Compass header bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-accent/20 bg-accent/10">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-9 w-9 items-center justify-center">
+              <Compass className="h-7 w-7 text-accent animate-[spin_12s_linear_infinite]" />
+            </div>
+            <div>
+              <h2 className="font-bold text-foreground text-base">Waypoint Case Compass™</h2>
+              {(compass as any)?.updatedAt && (
+                <p className="text-xs text-muted-foreground">
+                  Last updated {new Date((compass as any).updatedAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-xs"
+          >
+            {showHistory ? "Hide History" : "View History"}
+          </Button>
+        </div>
+
+        {/* Compass fields */}
+        {compass ? (
+          <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+            {(compass as any).currentStatus && (
+              <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</p>
+                <p className="text-sm text-foreground leading-relaxed">{(compass as any).currentStatus}</p>
+              </div>
+            )}
+            {(compass as any).lastMeetingSummary && (
+              <div className="space-y-1 sm:col-span-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</p>
+                <p className="text-sm text-foreground leading-relaxed">{(compass as any).lastMeetingSummary}</p>
+              </div>
+            )}
+            {(compass as any).nextStep && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
+                <p className="text-sm text-foreground leading-relaxed">{(compass as any).nextStep}</p>
+              </div>
+            )}
+            {ballParties.length > 0 && (
+              <div className="space-y-2 sm:col-span-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</p>
+                <div className="flex flex-wrap gap-2">
+                  {ballParties.map((party: string, i: number) => (
+                    <span key={i} className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">
+                      {party}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(compass as any).nextMeetingDate && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {new Date((compass as any).nextMeetingDate).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                </p>
+              </div>
+            )}
+            {!(compass as any).currentStatus && !(compass as any).lastMeetingSummary && !(compass as any).nextStep && (
+              <div className="sm:col-span-2 lg:col-span-3 text-center py-4 text-muted-foreground text-sm">
+                No compass data yet. Go to <strong>Case Compass</strong> in the sidebar to fill this in.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-6 text-center text-muted-foreground text-sm">
+            No compass set for this student yet. Go to <strong>Case Compass</strong> in the sidebar to create one.
+          </div>
+        )}
+
+        {/* History panel */}
+        {showHistory && (
+          <div className="border-t border-accent/20 bg-muted/20 px-6 py-4 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Compass History</p>
+            {compassHistory && (compassHistory as any[]).length > 0 ? (
+              (compassHistory as any[]).map((entry: any) => (
+                <div key={entry.id} className="rounded-lg border border-border bg-card p-4 space-y-2">
+                  <p className="text-xs text-muted-foreground">{new Date(entry.savedAt).toLocaleString()}</p>
+                  {entry.currentStatus && <p className="text-sm text-foreground"><span className="font-semibold">Status:</span> {entry.currentStatus}</p>}
+                  {entry.nextStep && <p className="text-sm text-foreground"><span className="font-semibold">Next Step:</span> {entry.nextStep}</p>}
+                  {entry.whoHasBall && <p className="text-sm text-foreground"><span className="font-semibold">Ball:</span> {entry.whoHasBall}</p>}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-2">No history yet.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ═══════════════════════════════════════════════════
+          TABS
+      ═══════════════════════════════════════════════════ */}
+      <Tabs defaultValue="activity">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="activity" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Activity</TabsTrigger>
+          <TabsTrigger value="files" className="flex items-center gap-1.5"><Folder className="h-3.5 w-3.5" />Files {files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>}</TabsTrigger>
+          <TabsTrigger value="projects" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Cases {projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{projects.length}</span>}</TabsTrigger>
+          <TabsTrigger value="financials" className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financials {invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{invoices.length}</span>}</TabsTrigger>
+          <TabsTrigger value="appointments" className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />Appointments {appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{appointments.length}</span>}</TabsTrigger>
+          <TabsTrigger value="details" className="flex items-center gap-1.5"><Info className="h-3.5 w-3.5" />Details</TabsTrigger>
+        </TabsList>
+
+        {/* ACTIVITY */}
+        <TabsContent value="activity" className="mt-4 space-y-3">
+          {messages.length === 0 ? (
+            <EmptyState icon={<MessageSquare className="h-8 w-8" />} text="No messages yet" />
+          ) : (
+            messages.map((msg: any) => (
+              <Card key={msg.id} className="p-4 rounded-lg border border-border">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {msg.senderId === contactId ? fullName : "You"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString()}</span>
+                </div>
+                <p className="text-sm text-foreground">{msg.content}</p>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* FILES */}
+        <TabsContent value="files" className="mt-4 space-y-3">
+          {files.length === 0 ? (
+            <EmptyState icon={<Folder className="h-8 w-8" />} text="No files uploaded" />
+          ) : (
+            files.map((f: any) => (
+              <Card key={f.id} className="p-4 rounded-lg border border-border flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{f.fileName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {f.fileSize ? `${(f.fileSize / 1024 / 1024).toFixed(2)} MB · ` : ""}
+                    {new Date(f.uploadedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline font-semibold">
+                  Open
+                </a>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* CASES / PROJECTS */}
+        <TabsContent value="projects" className="mt-4 space-y-3">
+          {projects.length === 0 ? (
+            <EmptyState icon={<FileText className="h-8 w-8" />} text="No cases linked to this student" />
+          ) : (
+            projects.map((p: any) => (
+              <Card key={p.id} className="p-4 rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-foreground">{p.name}</p>
+                  <StatusBadge status={p.status} />
+                </div>
+                {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {p.startDate ? `Started ${new Date(p.startDate).toLocaleDateString()}` : ""}
+                  {p.endDate ? ` · Due ${new Date(p.endDate).toLocaleDateString()}` : ""}
+                </p>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* FINANCIALS */}
+        <TabsContent value="financials" className="mt-4 space-y-3">
+          {invoices.length === 0 ? (
+            <EmptyState icon={<DollarSign className="h-8 w-8" />} text="No invoices for this student" />
+          ) : (
+            invoices.map((inv: any) => (
+              <Card key={inv.id} className="p-4 rounded-lg border border-border flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">#{inv.invoiceNumber}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {inv.dueDate ? `Due ${new Date(inv.dueDate).toLocaleDateString()}` : "No due date"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-foreground">${inv.total}</p>
+                  <StatusBadge status={inv.status} />
+                </div>
+              </Card>
+            ))
+          )}
+          {contracts.length > 0 && (
+            <div className="pt-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Contracts</p>
+              {contracts.map((c: any) => (
+                <Card key={c.id} className="p-4 rounded-lg border border-border flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <ScrollText className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-semibold text-foreground">{c.title}</p>
+                  </div>
+                  <StatusBadge status={c.status} />
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* APPOINTMENTS */}
+        <TabsContent value="appointments" className="mt-4 space-y-3">
+          {appointments.length === 0 ? (
+            <EmptyState icon={<Calendar className="h-8 w-8" />} text="No appointments scheduled" />
+          ) : (
+            appointments.map((appt: any) => (
+              <Card key={appt.id} className="p-4 rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-foreground">{appt.title || "Appointment"}</p>
+                  <StatusBadge status={appt.status} />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {new Date(appt.startTime).toLocaleString()}
+                  {appt.endTime ? ` – ${new Date(appt.endTime).toLocaleTimeString()}` : ""}
+                </p>
+                {appt.notes && <p className="text-xs text-muted-foreground mt-1">{appt.notes}</p>}
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* DETAILS */}
+        <TabsContent value="details" className="mt-4 space-y-4">
+          <PortalLinkSection contactId={contactId} currentPortalUserId={contact.portalUserId ?? null} utils={utils} />
+          <Card className="rounded-xl border border-border p-6 space-y-4">
+            <DetailRow label="First Name" value={contact.firstName} />
+            <DetailRow label="Last Name" value={contact.lastName} />
+            {contact.email && <DetailRow label="Email" value={contact.email} />}
+            {contact.phone && <DetailRow label="Phone" value={contact.phone} />}
+            {contact.company && <DetailRow label="Family / Organization" value={contact.company} />}
+            {contact.jobTitle && <DetailRow label="Role" value={contact.jobTitle} />}
+            {contact.address && <DetailRow label="Address" value={contact.address} />}
+            {contact.city && <DetailRow label="City" value={contact.city} />}
+            {contact.state && <DetailRow label="State" value={contact.state} />}
+            {contact.zipCode && <DetailRow label="Zip" value={contact.zipCode} />}
+            {contact.notes && (
+              <div className="pt-2 border-t border-border">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Notes</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{contact.notes}</p>
+              </div>
+            )}
+            <div className="pt-2 border-t border-border text-xs text-muted-foreground">
+              Added {new Date(contact.createdAt).toLocaleDateString()}
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function PortalLinkSection({ contactId, currentPortalUserId, utils }: { contactId: number; currentPortalUserId: number | null; utils: any }) {
+  const { data: portalClients } = trpc.caseCompass.portalClients.useQuery();
+  const linkMutation = trpc.contacts.linkPortalUser.useMutation({
+    onSuccess: () => {
+      utils.contacts.detail.invalidate({ id: contactId });
+      toast.success("Portal account linked — Compass data will now appear for this student.");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="rounded-xl border border-accent/30 p-5 space-y-3">
+      <div className="flex items-center gap-2">
+        <Compass className="h-4 w-4 text-accent" />
+        <p className="text-sm font-semibold text-foreground">Link Portal Account (for Case Compass)</p>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Link this contact to a portal user account so the Case Compass data appears here. Only needed if the client has logged into the portal.
+      </p>
+      <div className="flex items-center gap-3">
+        <Select
+          value={currentPortalUserId?.toString() ?? "none"}
+          onValueChange={(val) => {
+            const id = val === "none" ? null : parseInt(val, 10);
+            linkMutation.mutate({ contactId, portalUserId: id });
+          }}
+        >
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Select portal user..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">— Not linked —</SelectItem>
+            {(portalClients ?? []).map((u: any) => (
+              <SelectItem key={u.id} value={u.id.toString()}>
+                {u.name ?? u.email ?? `User #${u.id}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {currentPortalUserId && (
+          <span className="text-xs text-green-600 font-semibold">✓ Linked (user #{currentPortalUserId})</span>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 py-12 text-center">
+      <div className="text-muted-foreground mb-2">{icon}</div>
+      <p className="text-sm text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-4">
+      <p className="w-36 flex-shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-0.5">{label}</p>
+      <p className="text-sm text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status?: string | null }) {
+  if (!status) return null;
+  const colors: Record<string, string> = {
+    "In Progress": "bg-blue-100 text-blue-700",
+    "Planning": "bg-yellow-100 text-yellow-700",
+    "Completed": "bg-green-100 text-green-700",
+    "On Hold": "bg-gray-100 text-gray-600",
+    "Paid": "bg-green-100 text-green-700",
+    "Sent": "bg-blue-100 text-blue-700",
+    "Draft": "bg-gray-100 text-gray-600",
+    "Overdue": "bg-red-100 text-red-700",
+    "Signed": "bg-green-100 text-green-700",
+    "Executed": "bg-green-100 text-green-700",
+    "Confirmed": "bg-green-100 text-green-700",
+    "Pending": "bg-yellow-100 text-yellow-700",
+    "Cancelled": "bg-red-100 text-red-700",
+  };
+  const cls = colors[status] ?? "bg-muted text-muted-foreground";
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{status}</span>
+  );
+}

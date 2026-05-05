@@ -95,6 +95,37 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         return await db.deleteContact(input.id, ctx.user.id);
       }),
+
+    // Contact detail hub: all data for one contact
+    detail: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const contact = await db.getContactById(input.id, ctx.user.id);
+        if (!contact) throw new TRPCError({ code: "NOT_FOUND" });
+        const [projects, invoices, contracts, appointments, files, messages] = await Promise.all([
+          db.getProjectsByClient(input.id),
+          db.getInvoicesByClient(input.id),
+          db.getContractsByClient(input.id),
+          db.getAppointmentsByClient(input.id),
+          db.getClientFilesByClient(input.id),
+          db.getMessagesBetween(ctx.user.id, input.id),
+        ]);
+        // Fetch compass using portalUserId if linked
+        const compass = contact.portalUserId
+          ? await db.getCaseCompass(contact.portalUserId)
+          : null;
+        const compassHistory = contact.portalUserId
+          ? await db.getCaseCompassHistory(contact.portalUserId)
+          : [];
+        return { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory };
+      }),
+
+    // Link a contact to a portal user account
+    linkPortalUser: adminProcedure
+      .input(z.object({ contactId: z.number(), portalUserId: z.number().nullable() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.updateContact(input.contactId, ctx.user.id, { portalUserId: input.portalUserId });
+      }),
   }),
 
   // ============ LEADS ============
@@ -637,6 +668,20 @@ export const appRouter = router({
       .input(z.object({ clientId: z.number() }))
       .query(async ({ input }) => {
         return await db.getCaseCompassHistory(input.clientId);
+      }),
+
+    // Admin: get compass by contact id (same as clientId in admin context)
+    getByContactId: adminProcedure
+      .input(z.object({ contactId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getCaseCompass(input.contactId);
+      }),
+
+    // Admin: get history by contact id
+    historyByContactId: adminProcedure
+      .input(z.object({ contactId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getCaseCompassHistory(input.contactId);
       }),
 
     // Client: get their own compass

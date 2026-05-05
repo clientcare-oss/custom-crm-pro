@@ -21,6 +21,7 @@ import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import Settings from "./pages/Settings";
 import CaseCompassAdmin from "./pages/CaseCompassAdmin";
+import ContactDetail from "./pages/ContactDetail";
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
 function Router() {
@@ -40,6 +41,7 @@ function Router() {
       <DashboardLayout>
         <Switch>
           <Route path="/" component={Dashboard} />
+          <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/contacts" component={Contacts} />
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Projects} />

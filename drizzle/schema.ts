@@ -49,6 +49,7 @@ export const contacts = mysqlTable("contacts", {
   zipCode: varchar("zipCode", { length: 20 }),
   country: varchar("country", { length: 100 }),
   notes: text("notes"),
+  portalUserId: int("portalUserId"),  // links to users.id when client has a portal account
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

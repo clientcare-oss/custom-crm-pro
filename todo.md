@@ -101,3 +101,8 @@
 - [x] Add tRPC procedures: get, upsert (auto-snapshots old version), listHistory
 - [x] Build admin Compass edit panel on client detail/profile page
 - [x] Build client portal Compass card (read-only, animated compass icon, View History panel)
+
+## Contact Detail Page (/contacts/:id)
+- [x] Backend: getContactById, getContactActivity, getContactFiles, getContactInvoices procedures
+- [x] Build ContactDetail page: Compass card at top, tabs (Activity, Files, Tasks, Financials, Notes, Details)
+- [x] Wire Contacts list rows to navigate to /contacts/:id

@@ -10,12 +10,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit2, Loader2, Mail, Phone } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Mail, Phone, ExternalLink } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 export default function Contacts() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -300,10 +302,18 @@ export default function Contacts() {
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button
+                    onClick={() => setLocation(`/contacts/${contact.id}`)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 rounded-lg border border-accent/40 bg-accent/5 px-3 py-2 text-sm font-semibold text-accent shadow-sm transition-all hover:bg-accent/10"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" /> View
+                  </Button>
+                  <Button
                     onClick={() => handleEdit(contact)}
                     variant="outline"
                     size="sm"
-                    className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
+                    className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
