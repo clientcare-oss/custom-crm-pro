@@ -26,7 +26,7 @@
 
 ## Phase 4: Invoicing, Contracts & Payments
 - [x] Build invoice generation and tracking
-- [ ] Implement contract template builder
+- [x] Implement contract management page
 - [ ] Add e-signature support for contracts
 - [ ] Integrate Stripe payment processing
 - [ ] Build payment tracking and confirmation flow
@@ -40,17 +40,17 @@
 - [x] Add "Schedule Meeting" button on client portal pages
 - [x] Implement meeting type selection (IEP Meeting, 1:1 with Advocate, etc.)
 - [x] FIX: Client Portal Preview button now works for admin users (added preview=true parameter)
-- [ ] Build appointment scheduling interface
+- [x] Build admin appointment scheduling page (create, list, status management)
 - [x] Build client file upload system (PDF-only, 1GB limit)
 - [x] Create file management page in admin dashboard
 - [x] Implement vault subscription system with Stripe
 - [x] Build vault management for past clients
 - [x] Set up S3 storage integration for files
-- [ ] Build client messaging interface
-- [ ] Implement appointment scheduling with availability management
+- [x] Build admin messaging page (conversation list, send/receive)
+- [x] Wire client portal Messages tab to real messaging API
+- [ ] Add owner availability management UI (days/hours editor)
 - [ ] Build public booking links
-- [ ] Create calendar view for appointments
-- [ ] Implement two-way messaging system
+- [ ] Implement calendar view for appointments
 - [ ] Add notification alerts for new messages
 
 ## Phase 6: REST API & Webhooks

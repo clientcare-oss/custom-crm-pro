@@ -13,6 +13,9 @@ import Projects from "./pages/Projects";
 import Invoices from "./pages/Invoices";
 import ClientPortal from "./pages/ClientPortal";
 import ClientFiles from "./pages/ClientFiles";
+import Messages from "./pages/Messages";
+import Appointments from "./pages/Appointments";
+import Contracts from "./pages/Contracts";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -37,9 +40,9 @@ function Router() {
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Projects} />
           <Route path="/invoices" component={Invoices} />
-          <Route path="/contracts" component={Home} />
-          <Route path="/appointments" component={Home} />
-          <Route path="/messages" component={Home} />
+          <Route path="/contracts" component={Contracts} />
+          <Route path="/appointments" component={Appointments} />
+          <Route path="/messages" component={Messages} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/client-files" component={ClientFiles} />
           <Route path="/404" component={NotFound} />

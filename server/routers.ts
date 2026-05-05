@@ -26,6 +26,10 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    getOwner: protectedProcedure.query(async () => {
+      const owner = await db.getUserByOpenId(require("./_core/env").ENV.ownerOpenId);
+      return owner ? { id: owner.id, name: owner.name } : null;
+    }),
   }),
 
   // ============ CONTACTS ============
