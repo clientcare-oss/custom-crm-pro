@@ -51,9 +51,9 @@
 - [x] Build admin messaging page (conversation list, send/receive)
 - [x] Wire client portal Messages tab to real messaging API
 - [x] Add owner availability management UI (days/hours editor)
-- [ ] Build public booking links
-- [ ] Implement calendar view for appointments
-- [ ] Add notification alerts for new messages
+- [x] Build public booking links (/book route, public access)
+- [x] Implement calendar view for appointments
+- [x] Add notification alerts for new messages (owner notified via platform)
 
 ## Phase 6: REST API & Webhooks
 - [x] Build full REST API layer for all resources

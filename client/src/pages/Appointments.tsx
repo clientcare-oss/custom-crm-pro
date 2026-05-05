@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { Calendar, Clock, Plus, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import CalendarView from "@/components/CalendarView";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MEETING_TYPES = ["IEP Meeting", "1:1 with Advocate", "Progress Update", "Consultation", "Follow-up"];
@@ -259,6 +260,9 @@ export default function Appointments() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Calendar View */}
+      <CalendarView appointments={appointments as any} />
 
       {/* Upcoming Appointments */}
       <Card>

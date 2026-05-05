@@ -6,6 +6,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
+import { notifyOwner } from "./_core/notification";
+import { ENV } from "./_core/env";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -287,6 +289,37 @@ export const appRouter = router({
       return await db.getAppointmentsByOwner(ctx.user.id);
     }),
 
+    // Public booking endpoint - no auth required
+    book: publicProcedure
+      .input(
+        z.object({
+          title: z.string().min(1),
+          clientId: z.number().optional(),
+          description: z.string().optional(),
+          startTime: z.date(),
+          endTime: z.date(),
+          location: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+        if (!owner) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Owner not found" });
+        const appointment = await db.createAppointment({
+          ...input,
+          status: "Scheduled",
+        }, owner.id);
+        // Notify owner of new booking
+        try {
+          await notifyOwner({
+            title: "New Appointment Booking",
+            content: `${input.title} scheduled for ${new Date(input.startTime).toLocaleString()}`,
+          });
+        } catch (e) {
+          console.error("[Notification] Failed to notify owner of booking:", e);
+        }
+        return appointment;
+      }),
+
     get: adminProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
@@ -347,11 +380,25 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        return await db.createMessage({
+        const message = await db.createMessage({
           senderId: ctx.user.id,
           recipientId: input.recipientId,
           content: input.content,
         });
+        // Notify owner when a client sends a message
+        try {
+          const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+          if (owner && input.recipientId === owner.id && ctx.user.id !== owner.id) {
+            await notifyOwner({
+              title: `New message from ${ctx.user.name || "a client"}`,
+              content: input.content.substring(0, 200),
+            });
+          }
+        } catch (e) {
+          // Don't fail the message send if notification fails
+          console.error("[Notification] Failed to notify owner:", e);
+        }
+        return message;
       }),
 
     markAsRead: protectedProcedure
