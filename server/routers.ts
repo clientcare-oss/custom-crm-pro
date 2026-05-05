@@ -110,12 +110,12 @@ export const appRouter = router({
           db.getClientFilesByClient(input.id),
           db.getMessagesBetween(ctx.user.id, input.id),
         ]);
-        // Fetch compass using portalUserId if linked
-        const compass = contact.portalUserId
-          ? await db.getCaseCompass(contact.portalUserId)
+        // Fetch compass using caseId (unique per student)
+        const compass = contact.caseId
+          ? await db.getCaseCompass(contact.caseId)
           : null;
-        const compassHistory = contact.portalUserId
-          ? await db.getCaseCompassHistory(contact.portalUserId)
+        const compassHistory = contact.caseId
+          ? await db.getCaseCompassHistory(contact.caseId)
           : [];
         return { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory };
       }),
@@ -639,18 +639,18 @@ export const appRouter = router({
       return await db.getPortalClients();
     }),
 
-    // Admin: get compass for a specific client
+    // Admin: get compass for a specific case
     get: adminProcedure
-      .input(z.object({ clientId: z.number() }))
+      .input(z.object({ caseId: z.string() }))
       .query(async ({ input }) => {
-        return await db.getCaseCompass(input.clientId);
+        return await db.getCaseCompass(input.caseId);
       }),
 
     // Admin: upsert compass (auto-snapshots old version)
     upsert: adminProcedure
       .input(
         z.object({
-          clientId: z.number(),
+          caseId: z.string(),
           currentStatus: z.string().optional(),
           lastMeetingSummary: z.string().optional(),
           nextStep: z.string().optional(),
@@ -659,39 +659,30 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const { clientId, ...data } = input;
-        return await db.upsertCaseCompass(clientId, data);
+        const { caseId, ...data } = input;
+        return await db.upsertCaseCompass(caseId, data);
       }),
 
-    // Admin: get history for a specific client
+    // Admin: get history for a specific case
     history: adminProcedure
-      .input(z.object({ clientId: z.number() }))
+      .input(z.object({ caseId: z.string() }))
       .query(async ({ input }) => {
-        return await db.getCaseCompassHistory(input.clientId);
+        return await db.getCaseCompassHistory(input.caseId);
       }),
 
-    // Admin: get compass by contact id (same as clientId in admin context)
-    getByContactId: adminProcedure
-      .input(z.object({ contactId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getCaseCompass(input.contactId);
-      }),
-
-    // Admin: get history by contact id
-    historyByContactId: adminProcedure
-      .input(z.object({ contactId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getCaseCompassHistory(input.contactId);
-      }),
-
-    // Client: get their own compass
+    // Client: get their own compass (looks up by portalUserId → caseId)
     myCompass: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getCaseCompass(ctx.user.id);
+      // Find the contact linked to this portal user to get their caseId
+      const contact = await db.getContactByPortalUserId(ctx.user.id);
+      if (!contact?.caseId) return undefined;
+      return await db.getCaseCompass(contact.caseId);
     }),
 
     // Client: get their own compass history
     myHistory: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getCaseCompassHistory(ctx.user.id);
+      const contact = await db.getContactByPortalUserId(ctx.user.id);
+      if (!contact?.caseId) return [];
+      return await db.getCaseCompassHistory(contact.caseId);
     }),
   }),
 

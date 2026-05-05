@@ -714,14 +714,14 @@ export async function cancelVaultSubscription(clientId: number) {
 
 // ============ CASE COMPASS ============
 
-export async function getCaseCompass(clientId: number) {
+export async function getCaseCompass(caseId: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(caseCompass).where(eq(caseCompass.clientId, clientId)).limit(1);
+  const result = await db.select().from(caseCompass).where(eq(caseCompass.caseId, caseId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
-export async function upsertCaseCompass(clientId: number, data: {
+export async function upsertCaseCompass(caseId: string, data: {
   currentStatus?: string | null;
   lastMeetingSummary?: string | null;
   nextStep?: string | null;
@@ -732,10 +732,10 @@ export async function upsertCaseCompass(clientId: number, data: {
   if (!db) throw new Error("Database not available");
 
   // Snapshot the existing compass before overwriting
-  const existing = await getCaseCompass(clientId);
+  const existing = await getCaseCompass(caseId);
   if (existing) {
     await db.insert(caseCompassHistory).values({
-      clientId,
+      caseId,
       currentStatus: existing.currentStatus,
       lastMeetingSummary: existing.lastMeetingSummary,
       nextStep: existing.nextStep,
@@ -746,19 +746,19 @@ export async function upsertCaseCompass(clientId: number, data: {
 
   // Upsert the current compass
   await db.insert(caseCompass)
-    .values({ clientId, ...data })
+    .values({ caseId, ...data })
     .onDuplicateKeyUpdate({ set: data });
 
-  return await getCaseCompass(clientId);
+  return await getCaseCompass(caseId);
 }
 
-export async function getCaseCompassHistory(clientId: number) {
+export async function getCaseCompassHistory(caseId: string) {
   const db = await getDb();
   if (!db) return [];
   return await db
     .select()
     .from(caseCompassHistory)
-    .where(eq(caseCompassHistory.clientId, clientId))
+    .where(eq(caseCompassHistory.caseId, caseId))
     .orderBy(desc(caseCompassHistory.savedAt));
 }
 
@@ -772,4 +772,11 @@ export async function getPortalClients() {
     .from(users)
     .where(eq(users.role, "client"))
     .orderBy(asc(users.name));
+}
+
+export async function getContactByPortalUserId(portalUserId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(contacts).where(eq(contacts.portalUserId, portalUserId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }

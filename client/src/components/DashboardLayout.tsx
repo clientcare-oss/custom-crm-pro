@@ -55,7 +55,6 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: Upload, label: "Client Files", path: "/client-files" },
     { icon: Calendar, label: "Appointments", path: "/appointments" },
     { icon: MessageSquare, label: "Messages", path: "/messages" },
-    { icon: Compass, label: "Case Compass", path: "/case-compass" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 }

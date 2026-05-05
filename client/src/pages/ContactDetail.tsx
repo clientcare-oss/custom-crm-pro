@@ -1,11 +1,13 @@
 import { trpc } from "@/lib/trpc";
 import { useParams, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2 } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ContactDetail() {
@@ -13,6 +15,14 @@ export default function ContactDetail() {
   const contactId = parseInt(params.id ?? "0", 10);
   const [, setLocation] = useLocation();
   const [showHistory, setShowHistory] = useState(false);
+  const [editingCompass, setEditingCompass] = useState(false);
+  const [compassForm, setCompassForm] = useState({
+    currentStatus: "",
+    lastMeetingSummary: "",
+    nextStep: "",
+    whoHasBall: "",
+    nextMeetingDate: "",
+  });
   const utils = trpc.useUtils();
 
   const { data, isLoading, error } = trpc.contacts.detail.useQuery(
@@ -20,7 +30,31 @@ export default function ContactDetail() {
     { enabled: !!contactId }
   );
 
-  // compass and compassHistory come bundled in the detail query
+  // Populate compass form when data loads — MUST be before any early returns
+  useEffect(() => {
+    if (data?.compass) {
+      const c = data.compass as any;
+      setCompassForm({
+        currentStatus: c.currentStatus || "",
+        lastMeetingSummary: c.lastMeetingSummary || "",
+        nextStep: c.nextStep || "",
+        whoHasBall: c.whoHasBall || "",
+        nextMeetingDate: c.nextMeetingDate
+          ? new Date(c.nextMeetingDate).toISOString().slice(0, 16)
+          : "",
+      });
+    }
+  }, [data?.compass]);
+
+  // Compass upsert mutation — MUST be before any early returns
+  const compassUpsert = trpc.caseCompass.upsert.useMutation({
+    onSuccess: () => {
+      toast.success("Compass updated — previous version saved to history");
+      setEditingCompass(false);
+      utils.contacts.detail.invalidate({ id: contactId });
+    },
+    onError: (err) => toast.error("Failed to save Compass: " + err.message),
+  });
 
   if (isLoading) {
     return (
@@ -42,6 +76,18 @@ export default function ContactDetail() {
   }
 
   const { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory } = data;
+
+  const handleCompassSave = () => {
+    const caseId = contact.caseId ?? `TEMP-${contactId}`;
+    compassUpsert.mutate({
+      caseId,
+      currentStatus: compassForm.currentStatus || undefined,
+      lastMeetingSummary: compassForm.lastMeetingSummary || undefined,
+      nextStep: compassForm.nextStep || undefined,
+      whoHasBall: compassForm.whoHasBall || undefined,
+      nextMeetingDate: compassForm.nextMeetingDate ? new Date(compassForm.nextMeetingDate) : null,
+    });
+  };
   const fullName = `${contact.firstName} ${contact.lastName}`;
 
   // Who Has the Ball — parse comma/newline separated
@@ -95,67 +141,124 @@ export default function ContactDetail() {
               )}
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowHistory(!showHistory)}
-            className="text-xs"
-          >
-            {showHistory ? "Hide History" : "View History"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-xs inline-flex items-center gap-1"
+            >
+              <Clock className="h-3 w-3" />
+              {showHistory ? "Hide History" : "View History"}
+              {showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </Button>
+            {!editingCompass && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingCompass(true)}
+                className="text-xs inline-flex items-center gap-1"
+              >
+                <Pencil className="h-3 w-3" /> Edit
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Compass fields */}
-        {compass ? (
-          <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
-            {(compass as any).currentStatus && (
-              <div className="space-y-1 sm:col-span-2 lg:col-span-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</p>
-                <p className="text-sm text-foreground leading-relaxed">{(compass as any).currentStatus}</p>
+        {/* Compass body — view or edit mode */}
+        {editingCompass ? (
+          /* ── EDIT MODE ── */
+          <div className="p-6 space-y-5">
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <label className="block text-sm font-semibold text-foreground">Current Status</label>
+                <Textarea rows={2} value={compassForm.currentStatus}
+                  onChange={(e) => setCompassForm({ ...compassForm, currentStatus: e.target.value })}
+                  placeholder="Brief snapshot of where the case stands right now..." className="resize-none" />
               </div>
-            )}
-            {(compass as any).lastMeetingSummary && (
-              <div className="space-y-1 sm:col-span-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</p>
-                <p className="text-sm text-foreground leading-relaxed">{(compass as any).lastMeetingSummary}</p>
+              <div className="space-y-2 md:col-span-2">
+                <label className="block text-sm font-semibold text-foreground">Summary of Last Meeting</label>
+                <Textarea rows={3} value={compassForm.lastMeetingSummary}
+                  onChange={(e) => setCompassForm({ ...compassForm, lastMeetingSummary: e.target.value })}
+                  placeholder="Key takeaways, decisions made, concerns raised..." className="resize-none" />
               </div>
-            )}
-            {(compass as any).nextStep && (
-              <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
-                <p className="text-sm text-foreground leading-relaxed">{(compass as any).nextStep}</p>
+              <div className="space-y-2 md:col-span-2">
+                <label className="block text-sm font-semibold text-foreground">Next Step</label>
+                <Textarea rows={2} value={compassForm.nextStep}
+                  onChange={(e) => setCompassForm({ ...compassForm, nextStep: e.target.value })}
+                  placeholder="The next action needed to move the case forward..." className="resize-none" />
               </div>
-            )}
-            {ballParties.length > 0 && (
-              <div className="space-y-2 sm:col-span-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</p>
-                <div className="flex flex-wrap gap-2">
-                  {ballParties.map((party: string, i: number) => (
-                    <span key={i} className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">
-                      {party}
-                    </span>
-                  ))}
-                </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="block text-sm font-semibold text-foreground">Who Has the Ball</label>
+                <Input value={compassForm.whoHasBall}
+                  onChange={(e) => setCompassForm({ ...compassForm, whoHasBall: e.target.value })}
+                  placeholder="e.g. School (update IEP goals), Parent (sign consent), Waypoint (review draft)" />
+                <p className="text-xs text-muted-foreground">Separate multiple parties with commas.</p>
               </div>
-            )}
-            {(compass as any).nextMeetingDate && (
-              <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting</p>
-                <p className="text-sm font-semibold text-foreground">
-                  {new Date((compass as any).nextMeetingDate).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
-                </p>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground">Next Meeting Date</label>
+                <Input type="datetime-local" value={compassForm.nextMeetingDate}
+                  onChange={(e) => setCompassForm({ ...compassForm, nextMeetingDate: e.target.value })} />
               </div>
-            )}
-            {!(compass as any).currentStatus && !(compass as any).lastMeetingSummary && !(compass as any).nextStep && (
-              <div className="sm:col-span-2 lg:col-span-3 text-center py-4 text-muted-foreground text-sm">
-                No compass data yet. Go to <strong>Case Compass</strong> in the sidebar to fill this in.
-              </div>
-            )}
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <Button onClick={handleCompassSave} disabled={compassUpsert.isPending}
+                className="inline-flex items-center gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+                {compassUpsert.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save Compass
+              </Button>
+              <Button variant="outline" onClick={() => setEditingCompass(false)} className="inline-flex items-center gap-2">
+                <X className="h-4 w-4" /> Cancel
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="p-6 text-center text-muted-foreground text-sm">
-            No compass set for this student yet. Go to <strong>Case Compass</strong> in the sidebar to create one.
-          </div>
+          /* ── VIEW MODE ── */
+          compass && ((compass as any).currentStatus || (compass as any).lastMeetingSummary || (compass as any).nextStep || ballParties.length > 0) ? (
+            <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+              {(compass as any).currentStatus && (
+                <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</p>
+                  <p className="text-sm text-foreground leading-relaxed">{(compass as any).currentStatus}</p>
+                </div>
+              )}
+              {(compass as any).lastMeetingSummary && (
+                <div className="space-y-1 sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</p>
+                  <p className="text-sm text-foreground leading-relaxed">{(compass as any).lastMeetingSummary}</p>
+                </div>
+              )}
+              {(compass as any).nextStep && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
+                  <p className="text-sm text-foreground leading-relaxed">{(compass as any).nextStep}</p>
+                </div>
+              )}
+              {ballParties.length > 0 && (
+                <div className="space-y-2 sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</p>
+                  <div className="flex flex-wrap gap-2">
+                    {ballParties.map((party: string, i: number) => (
+                      <span key={i} className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">{party}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(compass as any).nextMeetingDate && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {new Date((compass as any).nextMeetingDate).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-6 text-center text-muted-foreground text-sm">
+              No compass data yet.{" "}
+              <button onClick={() => setEditingCompass(true)} className="text-accent font-semibold hover:underline">Click Edit to add it.</button>
+            </div>
+          )
         )}
 
         {/* History panel */}

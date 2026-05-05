@@ -111,3 +111,16 @@
 - [x] Filter Contacts page to exclude contacts with jobTitle === "Student"
 - [ ] Contact detail page: add "Related Students" section showing students with same family/company
 - [ ] Future: Quo phone service integration on contact detail page (call button)
+
+## Case Compass Inline Edit
+- [x] Remove Case Compass from sidebar nav
+- [x] Add inline Edit button to Compass card on student Contact Detail page
+- [x] Replace "Go to sidebar" message with inline edit form on the card
+
+## Case Compass caseId Refactor
+- [ ] Add caseId (unique, auto-generated) to contacts table
+- [ ] Add caseId column to caseCompass and caseCompassHistory tables
+- [ ] Backfill caseId for existing student contacts
+- [ ] Update backend: read/write Compass by caseId
+- [ ] Update client portal: look up Compass by caseId via linked contact
+- [ ] Update ContactDetail admin page to use caseId

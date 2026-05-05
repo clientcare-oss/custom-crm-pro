@@ -50,6 +50,7 @@ export const contacts = mysqlTable("contacts", {
   country: varchar("country", { length: 100 }),
   notes: text("notes"),
   portalUserId: int("portalUserId"),  // links to users.id when client has a portal account
+  caseId: varchar("caseId", { length: 20 }),  // unique case identifier e.g. WP-2026-0001
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -347,7 +348,7 @@ export type InsertWebhook = typeof webhooks.$inferInsert;
  */
 export const caseCompass = mysqlTable("caseCompass", {
   id: int("id").autoincrement().primaryKey(),
-  clientId: int("clientId").notNull().unique(),
+  caseId: varchar("caseId", { length: 20 }).notNull().unique(),  // links to contacts.caseId
   currentStatus: text("currentStatus"),
   lastMeetingSummary: text("lastMeetingSummary"),
   nextStep: text("nextStep"),
@@ -366,7 +367,7 @@ export type InsertCaseCompass = typeof caseCompass.$inferInsert;
  */
 export const caseCompassHistory = mysqlTable("caseCompassHistory", {
   id: int("id").autoincrement().primaryKey(),
-  clientId: int("clientId").notNull(),
+  caseId: varchar("caseId", { length: 20 }).notNull(),  // links to contacts.caseId
   currentStatus: text("currentStatus"),
   lastMeetingSummary: text("lastMeetingSummary"),
   nextStep: text("nextStep"),
