@@ -10,6 +10,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
 import { toast } from "sonner";
 
+/** Renders text with basic markdown-like formatting: **bold**, line breaks, --- dividers */
+function RichText({ text }: { text: string }) {
+  const lines = text.split(/\n/);
+  return (
+    <div className="text-sm text-foreground leading-relaxed space-y-1">
+      {lines.map((line, i) => {
+        if (/^---+$/.test(line.trim())) {
+          return <hr key={i} className="border-border/40 my-2" />;
+        }
+        // Parse **bold** inline
+        const parts = line.split(/(\*\*[^*]+\*\*)/);
+        return (
+          <p key={i} className={line.trim() === '' ? 'h-2' : ''}>
+            {parts.map((part, j) =>
+              part.startsWith('**') && part.endsWith('**')
+                ? <strong key={j}>{part.slice(2, -2)}</strong>
+                : part
+            )}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ContactDetail() {
   const params = useParams<{ id: string }>();
   const contactId = parseInt(params.id ?? "0", 10);
@@ -174,39 +199,39 @@ export default function ContactDetail() {
             <div className="p-6">
               {!editingCompass ? (
                 (compass as any) ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-5">
                     {(compass as any).currentStatus && (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</p>
-                        <p className="text-sm text-foreground">{(compass as any).currentStatus}</p>
+                        <RichText text={(compass as any).currentStatus} />
+                        <hr className="border-border/40 mt-3" />
                       </div>
                     )}
                     {(compass as any).lastMeetingSummary && (
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last Meeting Summary</p>
-                        <p className="text-sm text-foreground">{(compass as any).lastMeetingSummary}</p>
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</p>
+                        <RichText text={(compass as any).lastMeetingSummary} />
+                        <hr className="border-border/40 mt-3" />
                       </div>
                     )}
                     {(compass as any).nextStep && (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
-                        <p className="text-sm text-foreground">{(compass as any).nextStep}</p>
+                        <RichText text={(compass as any).nextStep} />
+                        <hr className="border-border/40 mt-3" />
                       </div>
                     )}
                     {(compass as any).whoHasBall && (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</p>
-                        <div className="flex flex-wrap gap-1">
-                          {ballParties.map((p: string, i: number) => (
-                            <span key={i} className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">{p}</span>
-                          ))}
-                        </div>
+                        <RichText text={(compass as any).whoHasBall} />
+                        <hr className="border-border/40 mt-3" />
                       </div>
                     )}
                     {(compass as any).nextMeetingDate && (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting Date</p>
-                        <p className="text-sm text-foreground">{new Date((compass as any).nextMeetingDate).toLocaleString()}</p>
+                        <p className="text-sm text-foreground font-medium">{new Date((compass as any).nextMeetingDate).toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     )}
                   </div>
