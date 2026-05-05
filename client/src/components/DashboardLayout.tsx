@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Briefcase, FileText, Calendar, MessageSquare, TrendingUp, Upload, ScrollText, Settings, Compass } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, MessageSquare, TrendingUp, Upload, ScrollText, Settings, Compass } from "lucide-react";
 import { useTerminology } from "@/contexts/TerminologyContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -33,6 +33,7 @@ function buildMenuItems(projectLabel: string) {
   return [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Users, label: "Contacts", path: "/contacts" },
+    { icon: GraduationCap, label: "Students", path: "/students" },
     { icon: TrendingUp, label: "Leads", path: "/leads" },
     { icon: Briefcase, label: projectLabel + "s", path: "/projects" },
     { icon: FileText, label: "Invoices", path: "/invoices" },

@@ -1,0 +1,248 @@
+import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Plus, ChevronRight, ChevronLeft, ArrowUpDown } from "lucide-react";
+import { useState, useRef } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+
+const PLACEHOLDER_STAGES = [
+  { label: "Intake", count: 0 },
+  { label: "Discovery", count: 0 },
+  { label: "Records Review", count: 0 },
+  { label: "School Contact", count: 0 },
+  { label: "1st IEP Scheduled", count: 0 },
+  { label: "IEP Active", count: 0 },
+  { label: "Monitoring", count: 0 },
+  { label: "Closed", count: 0 },
+];
+
+export default function Students() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [open, setOpen] = useState(false);
+  const [sortAsc, setSortAsc] = useState(true);
+  const pipelineRef = useRef<HTMLDivElement>(null);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    company: "", // family name
+    jobTitle: "Student",
+    email: "",
+    phone: "",
+  });
+
+  const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery(
+    undefined,
+    { enabled: user?.role === "admin" }
+  );
+
+  const createMutation = trpc.contacts.create.useMutation({
+    onSuccess: () => {
+      toast.success("Student added");
+      refetch();
+      setOpen(false);
+      setFormData({ firstName: "", lastName: "", company: "", jobTitle: "Student", email: "", phone: "" });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Filter to student contacts (jobTitle === "Student") or show all if none tagged
+  const allContacts = contacts ?? [];
+  const students = allContacts.filter((c) => c.jobTitle === "Student");
+  const displayList = students.length > 0 ? students : allContacts;
+
+  const sorted = [...displayList].sort((a, b) => {
+    const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+    const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+    return sortAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+  });
+
+  const totalAll = displayList.length;
+
+  const scrollPipeline = (dir: "left" | "right") => {
+    if (pipelineRef.current) {
+      pipelineRef.current.scrollBy({ left: dir === "right" ? 200 : -200, behavior: "smooth" });
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-8 pt-8 pb-4">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Students</h1>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm hover:shadow-md">
+              <Plus className="h-4 w-4" /> Add Student
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Student</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!formData.firstName || !formData.lastName) {
+                  toast.error("First and last name are required");
+                  return;
+                }
+                createMutation.mutate(formData);
+              }}
+              className="space-y-4"
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold">First Name *</label>
+                  <Input value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Woolbert" required />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold">Last Name *</label>
+                  <Input value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Sheep" required />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold">Family Name</label>
+                <Input value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Sheep Family" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold">Email</label>
+                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="parent@email.com" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold">Phone</label>
+                <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 (555) 000-0000" />
+              </div>
+              <Button type="submit" disabled={createMutation.isPending} className="w-full bg-accent text-accent-foreground font-semibold">
+                {createMutation.isPending ? "Adding..." : "Add Student"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Pipeline bar — placeholder */}
+      <div className="px-8 pb-2">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">
+          <span>IEP Pipeline</span>
+          <span className="ml-1 text-muted-foreground/50">(coming soon)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => scrollPipeline("left")} className="p-1 rounded hover:bg-muted text-muted-foreground flex-shrink-0">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div ref={pipelineRef} className="flex gap-2 overflow-x-auto scrollbar-none flex-1 pb-1">
+            {/* All pill */}
+            <div className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border-2 border-foreground bg-foreground text-background px-4 py-2 min-w-[64px] cursor-pointer">
+              <span className="text-xl font-bold leading-none">{totalAll}</span>
+              <span className="text-xs mt-0.5">All</span>
+            </div>
+            {PLACEHOLDER_STAGES.map((stage) => (
+              <div
+                key={stage.label}
+                className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border border-border bg-card px-4 py-2 min-w-[80px] cursor-pointer hover:bg-muted/50 transition-colors"
+              >
+                <span className="text-xl font-bold leading-none text-muted-foreground">{stage.count}</span>
+                <span className="text-xs mt-0.5 text-muted-foreground text-center leading-tight">{stage.label}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => scrollPipeline("right")} className="p-1 rounded hover:bg-muted text-muted-foreground flex-shrink-0">
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="px-8 pb-8 flex-1 overflow-auto">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          {/* Table header */}
+          <div className="border-b border-border bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+            {displayList.length} {displayList.length === 1 ? "student" : "students"}
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="w-8 px-4 py-3">
+                  <input type="checkbox" className="rounded border-border" disabled />
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  <button
+                    onClick={() => setSortAsc(!sortAsc)}
+                    className="inline-flex items-center gap-1 hover:text-accent transition-colors"
+                  >
+                    Name <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground hidden md:table-cell">Family / Parent</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground hidden lg:table-cell">Type</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground hidden xl:table-cell">Last Updated</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground hidden xl:table-cell">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                    Loading students...
+                  </td>
+                </tr>
+              ) : sorted.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                    No students yet. Click <strong>Add Student</strong> to get started.
+                  </td>
+                </tr>
+              ) : (
+                sorted.map((contact) => (
+                  <tr
+                    key={contact.id}
+                    onClick={() => setLocation(`/contacts/${contact.id}`)}
+                    className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer transition-colors group"
+                  >
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" className="rounded border-border" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-bold">
+                          {contact.firstName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-semibold text-foreground group-hover:text-accent transition-colors">
+                          {contact.firstName} {contact.lastName}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                      {contact.company || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                      {contact.jobTitle || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden xl:table-cell text-xs">
+                      {new Date(contact.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3 hidden xl:table-cell">
+                      <span className="rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-semibold">
+                        Active
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

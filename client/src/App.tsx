@@ -22,6 +22,7 @@ import { Loader2 } from "lucide-react";
 import Settings from "./pages/Settings";
 import CaseCompassAdmin from "./pages/CaseCompassAdmin";
 import ContactDetail from "./pages/ContactDetail";
+import Students from "./pages/Students";
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
 function Router() {
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/contacts" component={Contacts} />
+          <Route path="/students" component={Students} />
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Projects} />
           <Route path="/invoices" component={Invoices} />
