@@ -21,20 +21,35 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, MessageSquare, TrendingUp, Upload, ScrollText, Settings, Compass } from "lucide-react";
-import { useTerminology } from "@/contexts/TerminologyContext";
+import { LayoutDashboard, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, MessageSquare, TrendingUp, Upload, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, type LucideIcon } from "lucide-react";
+import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-// menuItems is now a function that accepts the project label
-function buildMenuItems(projectLabel: string) {
+const ICON_MAP: Record<ProjectIconKey, LucideIcon> = {
+  GraduationCap,
+  Briefcase,
+  FolderOpen,
+  BookOpen,
+  Users,
+  Star,
+  Heart,
+  Target,
+  Compass,
+  ClipboardList,
+  FileText,
+  Layers,
+};
+
+// menuItems is now a function that accepts the project label and icon
+function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
   return [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Users, label: "Contacts", path: "/contacts" },
     { icon: TrendingUp, label: "Leads", path: "/leads" },
-    { icon: GraduationCap, label: projectLabel + "s", path: "/projects" },
+    { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
     { icon: FileText, label: "Invoices", path: "/invoices" },
     { icon: ScrollText, label: "Contracts", path: "/contracts" },
     { icon: Upload, label: "Client Files", path: "/client-files" },
@@ -120,8 +135,9 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
-  const { projectLabel } = useTerminology();
-  const menuItems = buildMenuItems(projectLabel);
+  const { projectLabel, projectIconKey } = useTerminology();
+  const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
+  const menuItems = buildMenuItems(projectLabel, projectIcon);
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";

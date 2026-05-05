@@ -2,12 +2,16 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTerminology } from "@/contexts/TerminologyContext";
-import { CheckCircle, Settings2 } from "lucide-react";
+import { useTerminology, ICON_OPTIONS, type ProjectIconKey } from "@/contexts/TerminologyContext";
+import { CheckCircle, Settings2, GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
+const ICON_COMPONENT_MAP: Record<ProjectIconKey, LucideIcon> = {
+  GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers,
+};
+
 export default function Settings() {
-  const { projectLabel, setProjectLabel, presetOptions } = useTerminology();
+  const { projectLabel, setProjectLabel, presetOptions, projectIconKey, setProjectIconKey } = useTerminology();
   const [customValue, setCustomValue] = useState(
     presetOptions.some((o) => o.value === projectLabel) ? "" : projectLabel
   );
@@ -129,6 +133,43 @@ export default function Settings() {
             <p className="text-sm text-foreground">
               Button: <span className="font-semibold">New {projectLabel}</span>
             </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Icon Picker Section */}
+      <Card className="rounded-xl border border-border shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg">Sidebar Icon</CardTitle>
+          <CardDescription>
+            Choose the icon shown next to the {projectLabel}s label in the sidebar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+            {ICON_OPTIONS.map((opt) => {
+              const IconComp = ICON_COMPONENT_MAP[opt.key];
+              const isActive = projectIconKey === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    setProjectIconKey(opt.key);
+                    toast.success(`Icon updated to ${opt.label}`);
+                  }}
+                  title={opt.label}
+                  className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-3 text-xs font-medium transition-all ${
+                    isActive
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border bg-background text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <IconComp className="h-5 w-5" />
+                  <span className="truncate w-full text-center">{opt.label}</span>
+                  {isActive && <CheckCircle className="h-3 w-3 text-primary" />}
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
