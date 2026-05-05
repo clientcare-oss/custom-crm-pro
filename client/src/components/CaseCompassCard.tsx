@@ -29,23 +29,76 @@ function CompassIcon({ className }: { className?: string }) {
   );
 }
 
+// Render rich text: **bold**, --- dividers, line breaks
+function RichText({ value }: { value: string }) {
+  const lines = value.split("\n");
+  return (
+    <span>
+      {lines.map((line, li) => {
+        const isDivider = line.trim() === "---";
+        if (isDivider) {
+          return <hr key={li} className="my-1 border-border" />;
+        }
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
+        return (
+          <span key={li}>
+            {parts.map((part, pi) =>
+              part.startsWith("**") && part.endsWith("**") ? (
+                <strong key={pi}>{part.slice(2, -2)}</strong>
+              ) : (
+                <span key={pi}>{part}</span>
+              )
+            )}
+            {li < lines.length - 1 && <br />}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 function FieldRow({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="space-y-1">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground leading-relaxed">{value}</p>
+      <p className="text-sm text-foreground leading-relaxed">
+        <RichText value={value} />
+      </p>
     </div>
   );
 }
 
-export default function CaseCompassCard() {
+interface CaseCompassCardProps {
+  /** When provided, fetches compass for this specific student caseId via portal.getStudentCompass */
+  caseId?: string;
+}
+
+export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
   const [showHistory, setShowHistory] = useState(false);
 
-  const { data: compass, isLoading } = trpc.caseCompass.myCompass.useQuery();
-  const { data: history } = trpc.caseCompass.myHistory.useQuery(undefined, {
-    enabled: showHistory,
+  // When a specific caseId is provided (multi-student parent), use the portal student endpoints.
+  // Otherwise fall back to the single-student myCompass/myHistory endpoints.
+  const { data: studentCompass, isLoading: loadingStudent } = trpc.portal.getStudentCompass.useQuery(
+    { caseId: caseId! },
+    { enabled: !!caseId }
+  );
+  const { data: studentHistory } = trpc.portal.getStudentHistory.useQuery(
+    { caseId: caseId! },
+    { enabled: !!caseId && showHistory }
+  );
+
+  const { data: myCompass, isLoading: loadingMy } = trpc.caseCompass.myCompass.useQuery(
+    undefined,
+    { enabled: !caseId }
+  );
+  const { data: myHistory } = trpc.caseCompass.myHistory.useQuery(undefined, {
+    enabled: !caseId && showHistory,
   });
+
+  const compass = caseId ? studentCompass : myCompass;
+  const history = caseId ? studentHistory : myHistory;
+  const isLoading = caseId ? loadingStudent : loadingMy;
 
   if (isLoading) {
     return (
@@ -115,18 +168,9 @@ export default function CaseCompassCard() {
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Who Has the Ball
               </p>
-              <div className="flex flex-wrap gap-2">
-                {compass.whoHasBall.split(/[,\n]+/).map((party, i) => (
-                  party.trim() && (
-                    <span
-                      key={i}
-                      className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-semibold text-foreground"
-                    >
-                      {party.trim()}
-                    </span>
-                  )
-                ))}
-              </div>
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                {compass.whoHasBall}
+              </p>
             </div>
           )}
 

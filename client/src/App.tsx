@@ -52,6 +52,7 @@ function Router() {
           <Route path="/appointments" component={Appointments} />
           <Route path="/messages" component={Messages} />
           <Route path="/client-portal" component={ClientPortal} />
+          <Route path="/portal" component={ClientPortal} />
           <Route path="/client-files" component={ClientFiles} />
           <Route path="/settings" component={Settings} />
           <Route path="/case-compass" component={CaseCompassAdmin} />

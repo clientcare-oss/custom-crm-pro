@@ -787,3 +787,34 @@ export async function getContactByPortalUserId(portalUserId: number) {
   const result = await db.select().from(contacts).where(eq(contacts.portalUserId, portalUserId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
+
+// ============ PARENT PORTAL HELPERS ============
+
+/**
+ * Returns all student contacts linked to the given parent contact id.
+ * Students are identified by jobTitle = 'Student'.
+ */
+export async function getStudentsByParentContactId(parentContactId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(contacts)
+    .where(
+      and(
+        eq(contacts.parentContactId, parentContactId),
+        eq(contacts.jobTitle, "Student")
+      )
+    )
+    .orderBy(asc(contacts.firstName));
+}
+
+/**
+ * Given a portal user id (users.id), finds the parent contact linked to that
+ * portal account and returns all student contacts linked to that parent.
+ */
+export async function getStudentsByParentPortalUser(portalUserId: number) {
+  const parentContact = await getContactByPortalUserId(portalUserId);
+  if (!parentContact) return [];
+  return await getStudentsByParentContactId(parentContact.id);
+}

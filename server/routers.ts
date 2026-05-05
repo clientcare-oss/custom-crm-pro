@@ -61,6 +61,7 @@ export const appRouter = router({
           zipCode: z.string().optional(),
           country: z.string().optional(),
           notes: z.string().optional(),
+          parentContactId: z.number().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -630,6 +631,42 @@ export const appRouter = router({
       }
       return await db.cancelVaultSubscription(ctx.user.id);
     }),
+  }),
+
+  // ============ PORTAL (parent-facing) ============
+  portal: router({
+    // Parent portal: returns all students linked to the logged-in parent
+    getMyStudents: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getStudentsByParentPortalUser(ctx.user.id);
+    }),
+
+    // Parent portal: get compass for a specific student caseId (must belong to parent)
+    getStudentCompass: protectedProcedure
+      .input(z.object({ caseId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        // Verify this caseId belongs to one of the parent's students
+        const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        const isOwned = students.some((s) => s.caseId === input.caseId);
+        if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        return await db.getCaseCompass(input.caseId);
+      }),
+
+    // Parent portal: get history for a specific student caseId
+    getStudentHistory: protectedProcedure
+      .input(z.object({ caseId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        const isOwned = students.some((s) => s.caseId === input.caseId);
+        if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        return await db.getCaseCompassHistory(input.caseId);
+      }),
+
+    // Admin: get students for a specific parent contact (for preview mode)
+    getStudentsForParent: adminProcedure
+      .input(z.object({ parentContactId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getStudentsByParentContactId(input.parentContactId);
+      }),
   }),
 
   // ============ CASE COMPASS ============

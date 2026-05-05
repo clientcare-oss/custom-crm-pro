@@ -51,6 +51,7 @@ export const contacts = mysqlTable("contacts", {
   notes: text("notes"),
   portalUserId: int("portalUserId"),  // links to users.id when client has a portal account
   caseId: varchar("caseId", { length: 20 }),  // unique case identifier e.g. WP-2026-0001
+  parentContactId: int("parentContactId"),  // for students: links to parent contact's id
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

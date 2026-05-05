@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PLACEHOLDER_STAGES = [
   { label: "Intake", count: 0 },
@@ -36,6 +37,7 @@ export default function Students() {
     jobTitle: "Student",
     email: "",
     phone: "",
+    parentContactId: "", // id of the parent contact
   });
 
   const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery();
@@ -45,10 +47,13 @@ export default function Students() {
       toast.success("Student added");
       refetch();
       setOpen(false);
-      setFormData({ firstName: "", lastName: "", company: "", jobTitle: "Student", email: "", phone: "" });
+      setFormData({ firstName: "", lastName: "", company: "", jobTitle: "Student", email: "", phone: "", parentContactId: "" });
     },
     onError: (e) => toast.error(e.message),
   });
+
+  // Parent contacts (non-students) for the parent selector
+  const parents = (contacts ?? []).filter((c) => c.jobTitle !== "Student");
 
   // Filter to student contacts (jobTitle === "Student") or show all if none tagged
   const allContacts = contacts ?? [];
@@ -84,14 +89,18 @@ export default function Students() {
             <DialogHeader>
               <DialogTitle>Add New Student</DialogTitle>
             </DialogHeader>
-            <form
+              <form
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!formData.firstName || !formData.lastName) {
                   toast.error("First and last name are required");
                   return;
                 }
-                createMutation.mutate(formData);
+                const { parentContactId, ...rest } = formData;
+                createMutation.mutate({
+                  ...rest,
+                  ...(parentContactId ? { parentContactId: parseInt(parentContactId, 10) } : {}),
+                });
               }}
               className="space-y-4"
             >
@@ -108,6 +117,25 @@ export default function Students() {
               <div className="space-y-1">
                 <label className="text-sm font-semibold">Family Name</label>
                 <Input value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Sheep Family" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold">Parent</label>
+                <Select
+                  value={formData.parentContactId || "none"}
+                  onValueChange={(val) => setFormData({ ...formData, parentContactId: val === "none" ? "" : val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parent..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— No parent linked —</SelectItem>
+                    {parents.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.firstName} {p.lastName}{p.company ? ` (${p.company})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-semibold">Email</label>

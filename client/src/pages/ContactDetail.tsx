@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 /** Renders text with basic markdown-like formatting: **bold**, line breaks, --- dividers */
@@ -139,8 +139,22 @@ export default function ContactDetail() {
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent font-bold text-xl flex-shrink-0">
           {contact.firstName.charAt(0).toUpperCase()}
         </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{fullName}</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{fullName}</h1>
+            {/* Preview Portal button — only for parent contacts (not students) */}
+            {contact.jobTitle !== "Student" && contact.portalUserId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/portal?preview=true&parentContactId=${contact.id}`, "_blank")}
+                className="inline-flex items-center gap-1.5 text-xs"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Preview Portal
+              </Button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-3 mt-1 text-sm text-muted-foreground">
             {contact.jobTitle && <span>{contact.jobTitle}</span>}
             {contact.company && <span>· {contact.company}</span>}

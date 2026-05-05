@@ -39,6 +39,29 @@ export default function ClientPortal() {
   const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
   const isClientOrPreview = user?.role === "client" || (user?.role === "admin" && isPreviewMode);
 
+  // Multi-student case selector: fetch all students linked to this parent portal account
+  const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, {
+    enabled: user?.role === "client",
+  });
+
+  // Admin preview mode: read parentContactId from URL and fetch that parent's students
+  const previewParentContactId = (() => {
+    if (typeof window === "undefined") return null;
+    const v = new URLSearchParams(window.location.search).get("parentContactId");
+    return v ? parseInt(v, 10) : null;
+  })();
+  const { data: previewStudents = [] } = trpc.portal.getStudentsForParent.useQuery(
+    { parentContactId: previewParentContactId! },
+    { enabled: isPreviewMode && !!previewParentContactId }
+  );
+
+  // Merge: admins in preview mode use previewStudents; clients use myStudents
+  const portalStudents = isPreviewMode ? previewStudents : myStudents;
+
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  // Once students load, default to the first one
+  const effectiveCaseId = selectedCaseId ?? (portalStudents.length > 0 ? portalStudents[0].caseId ?? null : null);
+
   // Handle payment confirmation from Stripe redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -314,8 +337,28 @@ export default function ClientPortal() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Case selector — shown when parent has multiple students */}
+        {portalStudents.length > 1 && (
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mr-1">Student:</span>
+            {portalStudents.map((student) => (
+              <button
+                key={student.caseId}
+                onClick={() => setSelectedCaseId(student.caseId ?? null)}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors ${
+                  (effectiveCaseId === student.caseId)
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-background text-foreground border-border hover:bg-muted"
+                }`}
+              >
+                {student.firstName} {student.lastName}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Case Compass — shown only to clients */}
-        <CaseCompassCard />
+        <CaseCompassCard caseId={effectiveCaseId ?? undefined} />
 
         <Tabs defaultValue="projects" className="space-y-6">
           <TabsList className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted p-1">

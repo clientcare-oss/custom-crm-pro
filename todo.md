@@ -124,3 +124,12 @@
 - [x] Update backend: read/write Compass by caseId
 - [x] Update client portal: look up Compass by caseId via linked contact
 - [x] Update ContactDetail admin page to use caseId
+
+## Parent Portal System
+- [x] Add parentContactId field to contacts table (migration)
+- [x] Link Woolbert and Baaarbra to Shawn in the database
+- [x] Backend: getStudentsByParentPortalUser procedure (portal.getMyStudents, portal.getStudentCompass, portal.getStudentHistory, portal.getStudentsForParent)
+- [x] Client portal: case selector when parent has multiple students
+- [x] Client portal: Compass and content switch per selected student (by caseId)
+- [x] Preview Portal button on parent contact detail page
+- [x] Add Student form: parent selector dropdown to auto-link on creation
