@@ -106,3 +106,8 @@
 - [x] Backend: getContactById, getContactActivity, getContactFiles, getContactInvoices procedures
 - [x] Build ContactDetail page: Compass card at top, tabs (Activity, Files, Tasks, Financials, Notes, Details)
 - [x] Wire Contacts list rows to navigate to /contacts/:id
+
+## Contacts / Students Separation
+- [x] Filter Contacts page to exclude contacts with jobTitle === "Student"
+- [ ] Contact detail page: add "Related Students" section showing students with same family/company
+- [ ] Future: Quo phone service integration on contact detail page (call button)

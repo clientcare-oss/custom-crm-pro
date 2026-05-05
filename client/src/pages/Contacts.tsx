@@ -253,9 +253,9 @@ export default function Contacts() {
         <div className="flex items-center justify-center rounded-lg border border-border bg-muted/50 p-12">
           <Loader2 className="h-6 w-6 animate-spin text-accent" />
         </div>
-      ) : contacts && contacts.length > 0 ? (
+      ) : contacts && contacts.filter(c => c.jobTitle !== "Student").length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {contacts.map((contact) => (
+          {contacts.filter(c => c.jobTitle !== "Student").map((contact) => (
             <Card
               key={contact.id}
               className="rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md"
