@@ -41,6 +41,11 @@
 - [x] Implement meeting type selection (IEP Meeting, 1:1 with Advocate, etc.)
 - [x] FIX: Client Portal Preview button now works for admin users (added preview=true parameter)
 - [ ] Build appointment scheduling interface
+- [x] Build client file upload system (PDF-only, 1GB limit)
+- [x] Create file management page in admin dashboard
+- [x] Implement vault subscription system with Stripe
+- [x] Build vault management for past clients
+- [x] Set up S3 storage integration for files
 - [ ] Build client messaging interface
 - [ ] Implement appointment scheduling with availability management
 - [ ] Build public booking links

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Briefcase, FileText, Calendar, MessageSquare, TrendingUp } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Briefcase, FileText, Calendar, MessageSquare, TrendingUp, Upload } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -33,6 +33,7 @@ const menuItems = [
   { icon: TrendingUp, label: "Leads", path: "/leads" },
   { icon: Briefcase, label: "Projects", path: "/projects" },
   { icon: FileText, label: "Invoices", path: "/invoices" },
+  { icon: Upload, label: "Client Files", path: "/client-files" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

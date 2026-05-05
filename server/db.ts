@@ -15,6 +15,8 @@ import {
   messages,
   ownerAvailability,
   webhooks,
+  clientFiles,
+  vaultSubscriptions,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -615,4 +617,95 @@ export async function updateWebhook(id: number, ownerId: number, data: any) {
     .update(webhooks)
     .set(data)
     .where(and(eq(webhooks.id, id), eq(webhooks.ownerId, ownerId)));
+}
+
+// ============ CLIENT FILES ============
+
+export async function getClientFilesByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(clientFiles)
+    .where(eq(clientFiles.clientId, clientId))
+    .orderBy(desc(clientFiles.uploadedAt));
+}
+
+export async function getClientFilesByProject(projectId: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Verify project ownership before returning files
+  const project = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
+    .limit(1);
+
+  if (!project.length) return [];
+
+  return await db
+    .select()
+    .from(clientFiles)
+    .where(eq(clientFiles.projectId, projectId))
+    .orderBy(desc(clientFiles.uploadedAt));
+}
+
+export async function createClientFile(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(clientFiles).values(data);
+}
+
+export async function deleteClientFile(id: number, clientId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .delete(clientFiles)
+    .where(and(eq(clientFiles.id, id), eq(clientFiles.clientId, clientId)));
+}
+
+// ============ VAULT SUBSCRIPTIONS ============
+
+export async function getVaultSubscription(clientId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(vaultSubscriptions)
+    .where(eq(vaultSubscriptions.clientId, clientId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createVaultSubscription(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.insert(vaultSubscriptions).values(data);
+}
+
+export async function getAllVaultSubscriptions() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(vaultSubscriptions);
+}
+
+export async function cancelVaultSubscription(clientId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(vaultSubscriptions)
+    .set({
+      status: "cancelled",
+      cancelledAt: new Date(),
+    })
+    .where(eq(vaultSubscriptions.clientId, clientId));
 }

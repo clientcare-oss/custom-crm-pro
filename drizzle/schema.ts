@@ -279,6 +279,52 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = typeof messages.$inferInsert;
 
 /**
+ * Client files table for file uploads from clients.
+ * Clients can upload PDFs to share with the owner.
+ * Files are stored in S3, only metadata is stored here.
+ */
+export const clientFiles = mysqlTable("clientFiles", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull(),
+  projectId: int("projectId"),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileKey: text("fileKey").notNull(),
+  fileSize: int("fileSize"),
+  mimeType: varchar("mimeType", { length: 100 }).default("application/pdf"),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+
+export type ClientFile = typeof clientFiles.$inferSelect;
+export type InsertClientFile = typeof clientFiles.$inferInsert;
+
+/**
+ * Vault subscriptions for clients to maintain file access after service ends.
+ * Clients can subscribe to monthly/yearly vault storage.
+ */
+export const vaultSubscriptions = mysqlTable("vaultSubscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull().unique(),
+  tier: mysqlEnum("tier", ["basic", "pro", "enterprise"])
+    .default("basic")
+    .notNull(),
+  storageLimit: int("storageLimit").notNull(),
+  storageUsed: int("storageUsed").default(0).notNull(),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  status: mysqlEnum("status", ["active", "cancelled", "past_due"])
+    .default("active")
+    .notNull(),
+  startDate: datetime("startDate").notNull(),
+  renewalDate: datetime("renewalDate"),
+  cancelledAt: datetime("cancelledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type VaultSubscription = typeof vaultSubscriptions.$inferSelect;
+export type InsertVaultSubscription = typeof vaultSubscriptions.$inferInsert;
+
+/**
  * Webhooks table for external integrations.
  */
 export const webhooks = mysqlTable("webhooks", {

@@ -2,11 +2,11 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Briefcase, DollarSign, MessageSquare, LogOut, Calendar, Clock } from "lucide-react";
+import { FileText, Briefcase, DollarSign, MessageSquare, LogOut, Calendar, Clock, Upload, Trash2, File, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,13 @@ export default function ClientPortal() {
   const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
   const [selectedMeetingType, setSelectedMeetingType] = useState<string | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Allow preview mode for admins
+  const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
+  const isClientOrPreview = user?.role === "client" || (user?.role === "admin" && isPreviewMode);
+
   // Fetch client's data
   const { data: clientProjects } = trpc.projects.list.useQuery(undefined, {
     enabled: user?.role === "client",
@@ -40,6 +47,103 @@ export default function ClientPortal() {
   const { data: clientContracts } = trpc.contracts.list.useQuery(undefined, {
     enabled: user?.role === "client",
   });
+
+  const { data: clientFiles, refetch: refetchFiles } = trpc.clientFiles.listByClient.useQuery(undefined, {
+    enabled: user?.role === "client" || isPreviewMode,
+  });
+
+  const { data: vaultSubscription } = trpc.vault.getSubscription.useQuery(undefined, {
+    enabled: user?.role === "client" || isPreviewMode,
+  });
+
+  const uploadMutation = trpc.clientFiles.upload.useMutation({
+    onSuccess: () => {
+      toast.success("File uploaded successfully!");
+      refetchFiles();
+      setUploading(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Upload failed");
+      setUploading(false);
+    },
+  });
+
+  const deleteMutation = trpc.clientFiles.delete.useMutation({
+    onSuccess: () => {
+      toast.success("File deleted");
+      refetchFiles();
+    },
+  });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Only PDF files are accepted.");
+      return;
+    }
+
+    if (file.size > 1024 * 1024 * 1024) {
+      toast.error("File size exceeds 1GB limit.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Step 1: Get presigned upload URL
+      const presignRes = await fetch("/api/files/presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, fileSize: file.size }),
+      });
+
+      if (!presignRes.ok) {
+        const err = await presignRes.json();
+        throw new Error(err.error || "Failed to get upload URL");
+      }
+
+      const { uploadUrl, fileKey, fileUrl } = await presignRes.json();
+
+      // Step 2: Upload directly to S3
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/pdf" },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to storage");
+      }
+
+      // Step 3: Confirm upload and save metadata
+      const confirmRes = await fetch("/api/files/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: user?.id,
+          fileName: file.name,
+          fileKey,
+          fileUrl,
+          fileSize: file.size,
+        }),
+      });
+
+      if (!confirmRes.ok) {
+        throw new Error("Failed to confirm upload");
+      }
+
+      toast.success("File uploaded successfully!");
+      refetchFiles();
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
@@ -60,10 +164,6 @@ export default function ClientPortal() {
       setSelectedMeetingType(null);
     }, 1500);
   };
-
-  // Allow preview mode for admins
-  const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
-  const isClientOrPreview = user?.role === "client" || (user?.role === "admin" && isPreviewMode);
 
   if (!user || !isClientOrPreview) {
     return (
@@ -163,6 +263,13 @@ export default function ClientPortal() {
             >
               <FileText className="h-4 w-4" />
               Contracts
+            </TabsTrigger>
+            <TabsTrigger
+              value="files"
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Upload className="h-4 w-4" />
+              Files
             </TabsTrigger>
             <TabsTrigger
               value="billing"
@@ -381,6 +488,182 @@ export default function ClientPortal() {
                 </p>
               </div>
             )}
+          </TabsContent>
+
+          {/* Files Tab */}
+          <TabsContent value="files" className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Your Files
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Upload and manage your documents. Only PDF files are accepted (max 1GB).
+              </p>
+            </div>
+
+            {/* Upload Section */}
+            <Card className="rounded-lg border border-border bg-card p-6 shadow-sm">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground">Upload Document</h3>
+                  <span className="text-xs text-muted-foreground">PDF only, max 1GB</span>
+                </div>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="cursor-pointer rounded-lg border-2 border-dashed border-border bg-muted/30 p-8 text-center transition-all hover:border-accent hover:bg-muted/50"
+                >
+                  <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm font-semibold text-foreground mb-1">
+                    {uploading ? "Uploading..." : "Click to upload a PDF"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Drag and drop or click to browse
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+            </Card>
+
+            {/* File List */}
+            {clientFiles && clientFiles.length > 0 ? (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-foreground">Uploaded Files</h3>
+                <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+                  {clientFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between px-6 py-4 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <File className="h-8 w-8 text-red-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {file.fileName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {file.fileSize ? `${(file.fileSize / 1024 / 1024).toFixed(2)} MB` : "Unknown size"} &middot; Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={file.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                        >
+                          View
+                        </a>
+                        <button
+                          onClick={() => deleteMutation.mutate({ id: file.id })}
+                          className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center">
+                <File className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-sm font-semibold text-foreground mb-2">
+                  No files uploaded yet
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Upload PDF documents to share with your account manager
+                </p>
+              </div>
+            )}
+
+            {/* Vault Section */}
+            <Card className="rounded-lg border border-border bg-gradient-to-br from-card to-muted/30 p-6 shadow-sm">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Shield className="h-6 w-6 text-accent" />
+                  <div>
+                    <h3 className="font-semibold text-foreground">Document Vault</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Secure cloud storage for your important documents
+                    </p>
+                  </div>
+                </div>
+
+                {vaultSubscription ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Plan</span>
+                      <span className="font-semibold text-foreground capitalize">{vaultSubscription.tier}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Storage Used</span>
+                      <span className="font-semibold text-foreground">
+                        {((vaultSubscription.storageUsed || 0) / 1024 / 1024 / 1024).toFixed(2)} GB / {((vaultSubscription.storageLimit || 0) / 1024 / 1024 / 1024).toFixed(0)} GB
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Status</span>
+                      <span className="inline-block rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">
+                        {vaultSubscription.status}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Keep your documents safe and accessible even after your services end. Choose a vault plan:
+                    </p>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-lg border border-border bg-background p-4 text-center">
+                        <p className="text-lg font-bold text-foreground">$9</p>
+                        <p className="text-xs text-muted-foreground">per month</p>
+                        <p className="text-sm font-semibold text-foreground mt-2">Basic</p>
+                        <p className="text-xs text-muted-foreground">50 GB Storage</p>
+                        <Button
+                          onClick={() => toast.success("Vault subscription coming soon!")}
+                          className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
+                        >
+                          Subscribe
+                        </Button>
+                      </div>
+                      <div className="rounded-lg border-2 border-accent bg-background p-4 text-center relative">
+                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">Popular</span>
+                        <p className="text-lg font-bold text-foreground">$19</p>
+                        <p className="text-xs text-muted-foreground">per month</p>
+                        <p className="text-sm font-semibold text-foreground mt-2">Pro</p>
+                        <p className="text-xs text-muted-foreground">500 GB Storage</p>
+                        <Button
+                          onClick={() => toast.success("Vault subscription coming soon!")}
+                          className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
+                        >
+                          Subscribe
+                        </Button>
+                      </div>
+                      <div className="rounded-lg border border-border bg-background p-4 text-center">
+                        <p className="text-lg font-bold text-foreground">$29</p>
+                        <p className="text-xs text-muted-foreground">per month</p>
+                        <p className="text-sm font-semibold text-foreground mt-2">Enterprise</p>
+                        <p className="text-xs text-muted-foreground">2 TB Storage</p>
+                        <Button
+                          onClick={() => toast.success("Vault subscription coming soon!")}
+                          className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
+                        >
+                          Subscribe
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
           </TabsContent>
 
           {/* Billing Tab */}
