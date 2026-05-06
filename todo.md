@@ -145,3 +145,7 @@
 ## WCC Section Label Redesign
 - [x] Redesign Compass section labels (Current Status, Last Meeting, Next Step, Who Has the Ball, Next Meeting) with icons, stronger typography, and polished visual hierarchy
 - [x] Apply same label style to CaseCompassCard (client portal view)
+
+## Swipeable Compass Carousel (Client Portal)
+- [x] Build CompassCarousel component: touch swipe, arrow nav, dot indicators, slide animation
+- [x] Integrate carousel into CaseCompassCard (portal view only, admin keeps stacked layout)

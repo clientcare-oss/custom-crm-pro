@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Clock, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck } from "lucide-react";
+import CompassCarousel from "./CompassCarousel";
 
 // Animated compass SVG icon
 function CompassIcon({ className }: { className?: string }) {
@@ -23,100 +24,6 @@ function CompassIcon({ className }: { className?: string }) {
       <polygon points="32,14 29,32 32,29 35,32" fill="hsl(var(--accent))" />
       <polygon points="32,50 29,32 32,35 35,32" fill="currentColor" opacity="0.35" />
     </svg>
-  );
-}
-
-// Render rich text: **bold**, --- dividers, line breaks
-function RichText({ value }: { value: string }) {
-  const lines = value.split("\n");
-  return (
-    <span>
-      {lines.map((line, li) => {
-        const isDivider = line.trim() === "---";
-        if (isDivider) {
-          return <hr key={li} className="my-1 border-border" />;
-        }
-        const parts = line.split(/(\*\*[^*]+\*\*)/g);
-        return (
-          <span key={li}>
-            {parts.map((part, pi) =>
-              part.startsWith("**") && part.endsWith("**") ? (
-                <strong key={pi}>{part.slice(2, -2)}</strong>
-              ) : (
-                <span key={pi}>{part}</span>
-              )
-            )}
-            {li < lines.length - 1 && <br />}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
-// Section label configs
-const SECTION_CONFIG = {
-  status: {
-    icon: Activity,
-    label: "Current Status",
-    accent: "text-blue-600 dark:text-blue-400",
-    bg: "bg-blue-50 dark:bg-blue-950/40",
-    border: "border-blue-200 dark:border-blue-800",
-    dot: "bg-blue-500",
-  },
-  meeting: {
-    icon: BookOpen,
-    label: "Last Meeting",
-    accent: "text-violet-600 dark:text-violet-400",
-    bg: "bg-violet-50 dark:bg-violet-950/40",
-    border: "border-violet-200 dark:border-violet-800",
-    dot: "bg-violet-500",
-  },
-  nextStep: {
-    icon: ArrowRightCircle,
-    label: "Next Step",
-    accent: "text-emerald-600 dark:text-emerald-400",
-    bg: "bg-emerald-50 dark:bg-emerald-950/40",
-    border: "border-emerald-200 dark:border-emerald-800",
-    dot: "bg-emerald-500",
-  },
-  ball: {
-    icon: Zap,
-    label: "Who Has the Ball",
-    accent: "text-amber-600 dark:text-amber-400",
-    bg: "bg-amber-50 dark:bg-amber-950/40",
-    border: "border-amber-200 dark:border-amber-800",
-    dot: "bg-amber-500",
-  },
-  nextMeeting: {
-    icon: CalendarCheck,
-    label: "Next Meeting",
-    accent: "text-rose-600 dark:text-rose-400",
-    bg: "bg-rose-50 dark:bg-rose-950/40",
-    border: "border-rose-200 dark:border-rose-800",
-    dot: "bg-rose-500",
-  },
-} as const;
-
-function SectionBlock({
-  type,
-  children,
-}: {
-  type: keyof typeof SECTION_CONFIG;
-  children: React.ReactNode;
-}) {
-  const cfg = SECTION_CONFIG[type];
-  const Icon = cfg.icon;
-  return (
-    <div className={`rounded-lg border ${cfg.border} ${cfg.bg} px-4 py-3`}>
-      <div className={`flex items-center gap-2 mb-2`}>
-        <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${cfg.accent}`} />
-        <span className={`text-xs font-bold uppercase tracking-widest ${cfg.accent}`}>
-          {cfg.label}
-        </span>
-      </div>
-      <div className="text-sm text-foreground leading-relaxed">{children}</div>
-    </div>
   );
 }
 
@@ -206,42 +113,9 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
           </div>
         </div>
 
-        {/* Fields */}
-        <div className="px-6 py-5 space-y-3">
-          {compass.currentStatus && (
-            <SectionBlock type="status">
-              <RichText value={compass.currentStatus} />
-            </SectionBlock>
-          )}
-          {compass.lastMeetingSummary && (
-            <SectionBlock type="meeting">
-              <RichText value={compass.lastMeetingSummary} />
-            </SectionBlock>
-          )}
-          {compass.nextStep && (
-            <SectionBlock type="nextStep">
-              <RichText value={compass.nextStep} />
-            </SectionBlock>
-          )}
-          {compass.whoHasBall && (
-            <SectionBlock type="ball">
-              <p className="whitespace-pre-line">{compass.whoHasBall}</p>
-            </SectionBlock>
-          )}
-          {compass.nextMeetingDate && (
-            <SectionBlock type="nextMeeting">
-              <p className="font-semibold">
-                {new Date(compass.nextMeetingDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </p>
-            </SectionBlock>
-          )}
+        {/* Swipeable carousel */}
+        <div className="px-5 py-5">
+          <CompassCarousel compass={compass} />
         </div>
 
         {/* History toggle */}
