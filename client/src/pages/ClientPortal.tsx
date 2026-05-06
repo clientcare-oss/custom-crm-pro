@@ -337,23 +337,69 @@ export default function ClientPortal() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Case selector — shown when parent has multiple students */}
-        {portalStudents.length > 1 && (
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mr-1">Student:</span>
-            {portalStudents.map((student) => (
-              <button
-                key={student.caseId}
-                onClick={() => setSelectedCaseId(student.caseId ?? null)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors ${
-                  (effectiveCaseId === student.caseId)
-                    ? "bg-accent text-accent-foreground border-accent"
-                    : "bg-background text-foreground border-border hover:bg-muted"
-                }`}
-              >
-                {student.firstName} {student.lastName}
-              </button>
-            ))}
+        {/* Student selector cards — shown when parent has multiple students */}
+        {portalStudents.length > 0 && (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
+              {portalStudents.length > 1 ? "Select a Student" : "Your Student"}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {portalStudents.map((student) => {
+                const isSelected = effectiveCaseId === student.caseId;
+                const initials = `${student.firstName.charAt(0)}${student.lastName.charAt(0)}`.toUpperCase();
+                return (
+                  <button
+                    key={student.caseId}
+                    onClick={() => setSelectedCaseId(student.caseId ?? null)}
+                    className={`group relative text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
+                      isSelected
+                        ? "border-accent bg-accent/5 shadow-md"
+                        : "border-border bg-card hover:border-accent/50 hover:shadow-sm"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                        isSelected ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                      }`}>
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className={`font-bold text-sm truncate ${
+                            isSelected ? "text-accent" : "text-foreground"
+                          }`}>
+                            {student.firstName} {student.lastName}
+                          </p>
+                          {(student as any).pendingTaskCount > 0 && (
+                            <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                              ⚠️ {(student as any).pendingTaskCount} task{(student as any).pendingTaskCount !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Case ID: <span className="font-mono font-semibold">{student.caseId ?? "—"}</span>
+                        </p>
+                        {(student as any).nextMeeting ? (
+                          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            {new Date((student as any).nextMeeting.startTime).toLocaleDateString("en-US", {
+                              month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+                            })}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground/60 mt-0.5">No upcoming meeting</p>
+                        )}
+                      </div>
+                      {/* Selected indicator */}
+                      {isSelected && (
+                        <div className="flex-shrink-0 h-2 w-2 rounded-full bg-accent" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
