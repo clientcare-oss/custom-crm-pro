@@ -12,7 +12,6 @@ import Leads from "./pages/Leads";
 import Projects from "./pages/Projects";
 import Invoices from "./pages/Invoices";
 import ClientPortal from "./pages/ClientPortal";
-import Messages from "./pages/Messages";
 import Appointments from "./pages/Appointments";
 import Contracts from "./pages/Contracts";
 import BookingPage from "./pages/BookingPage";
@@ -49,7 +48,6 @@ function Router() {
           <Route path="/invoices" component={Invoices} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/appointments" component={Appointments} />
-          <Route path="/messages" component={Messages} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />

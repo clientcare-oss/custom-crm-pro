@@ -274,7 +274,7 @@ function ParentTabs({
         </TabsTrigger>
         <TabsTrigger value="activity" className="flex items-center gap-1.5">
           <MessageSquare className="h-3.5 w-3.5" />
-          Activity
+          Communication
         </TabsTrigger>
         <TabsTrigger value="files" className="flex items-center gap-1.5">
           <Folder className="h-3.5 w-3.5" />
@@ -551,7 +551,7 @@ function StudentTabs({
     <Tabs defaultValue="compass">
       <TabsList className="flex flex-wrap h-auto gap-1">
         <TabsTrigger value="compass" className="flex items-center gap-1.5"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
-        <TabsTrigger value="activity" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Activity</TabsTrigger>
+        <TabsTrigger value="activity" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Communication</TabsTrigger>
         <TabsTrigger value="files" className="flex items-center gap-1.5"><Folder className="h-3.5 w-3.5" />Files {files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>}</TabsTrigger>
         <TabsTrigger value="projects" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Cases {projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{projects.length}</span>}</TabsTrigger>
         <TabsTrigger value="financials" className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financials {invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{invoices.length}</span>}</TabsTrigger>

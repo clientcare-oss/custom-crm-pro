@@ -161,3 +161,9 @@
 ## Sidebar Cleanup
 - [x] Remove "Client Files" from sidebar navigation
 - [x] Remove /client-files route from App.tsx
+
+## Communication Rename & Sidebar Cleanup
+- [x] Remove "Messages" from sidebar navigation
+- [x] Remove /messages route from App.tsx
+- [x] Rename "Activity" tab to "Communication" in ContactDetail (student and parent views)
+- [x] Rename "Messages" tab to "Communication" in ClientPortal

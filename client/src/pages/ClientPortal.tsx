@@ -336,7 +336,7 @@ export default function ClientPortal() {
                 </TabsTrigger>
                 <TabsTrigger value="messages" className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
                   <MessageSquare className="h-4 w-4" />
-                  Messages
+                  Communication
                 </TabsTrigger>
               </TabsList>
 
@@ -628,7 +628,7 @@ export default function ClientPortal() {
               {/* ── Messages Tab ── */}
               <TabsContent value="messages" className="space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">Messages</h2>
+                  <h2 className="text-xl font-bold tracking-tight text-foreground">Communication</h2>
                   <p className="text-sm text-muted-foreground mt-1">Communicate directly with your advocate</p>
                 </div>
                 <div className="rounded-xl border border-border bg-card">
