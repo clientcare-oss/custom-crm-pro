@@ -167,3 +167,10 @@
 - [x] Remove /messages route from App.tsx
 - [x] Rename "Activity" tab to "Communication" in ContactDetail (student and parent views)
 - [x] Rename "Messages" tab to "Communication" in ClientPortal
+
+## Tasks Feature
+- [x] Add Tasks tab to student ContactDetail (alongside Communication tab)
+- [x] Tasks tab: show tasks assigned to this student, allow adding/completing tasks
+- [x] Add Tasks to sidebar navigation
+- [x] Create placeholder Tasks main page (/tasks)
+- [x] Wire up Tasks route in App.tsx

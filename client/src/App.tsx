@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import CaseCompassAdmin from "./pages/CaseCompassAdmin";
 import ContactDetail from "./pages/ContactDetail";
 import Students from "./pages/Students";
+import Tasks from "./pages/Tasks";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -48,6 +49,7 @@ function Router() {
           <Route path="/invoices" component={Invoices} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/appointments" component={Appointments} />
+          <Route path="/tasks" component={Tasks} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />

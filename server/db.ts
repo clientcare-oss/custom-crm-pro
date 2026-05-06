@@ -316,6 +316,60 @@ export async function updateTask(id: number, data: any) {
   return await db.update(projectTasks).set(data).where(eq(projectTasks.id, id));
 }
 
+export async function deleteTask(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.delete(projectTasks).where(eq(projectTasks.id, id));
+}
+
+export async function getTasksByStudent(studentContactId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const studentProjects = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(eq(projects.clientId, studentContactId));
+  if (studentProjects.length === 0) return [];
+  const allTasks: any[] = [];
+  for (const proj of studentProjects) {
+    const tasks = await db
+      .select()
+      .from(projectTasks)
+      .where(eq(projectTasks.projectId, proj.id))
+      .orderBy(asc(projectTasks.dueDate));
+    allTasks.push(...tasks);
+  }
+  return allTasks;
+}
+
+export async function getAllTasksForOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const ownerProjects = await db
+    .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
+    .from(projects)
+    .where(eq(projects.ownerId, ownerId));
+  const result: any[] = [];
+  for (const proj of ownerProjects) {
+    const tasks = await db
+      .select()
+      .from(projectTasks)
+      .where(eq(projectTasks.projectId, proj.id))
+      .orderBy(asc(projectTasks.dueDate));
+    let clientName: string | null = null;
+    if (proj.clientId) {
+      const [c] = await db
+        .select({ firstName: contacts.firstName, lastName: contacts.lastName })
+        .from(contacts)
+        .where(eq(contacts.id, proj.clientId))
+        .limit(1);
+      if (c) clientName = `${c.firstName} ${c.lastName}`;
+    }
+    result.push(...tasks.map((t: any) => ({ ...t, projectName: proj.name, clientName })));
+  }
+  return result;
+}
+
 // ============ PROJECT FILES ============
 
 export async function getFilesByProject(projectId: number) {

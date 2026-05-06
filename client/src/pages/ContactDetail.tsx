@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Compass section block (shared between admin + portal views) ───────────────
@@ -552,6 +552,7 @@ function StudentTabs({
       <TabsList className="flex flex-wrap h-auto gap-1">
         <TabsTrigger value="compass" className="flex items-center gap-1.5"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
         <TabsTrigger value="activity" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Communication</TabsTrigger>
+        <TabsTrigger value="tasks" className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
         <TabsTrigger value="files" className="flex items-center gap-1.5"><Folder className="h-3.5 w-3.5" />Files {files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>}</TabsTrigger>
         <TabsTrigger value="projects" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Cases {projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{projects.length}</span>}</TabsTrigger>
         <TabsTrigger value="financials" className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financials {invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{invoices.length}</span>}</TabsTrigger>
@@ -685,7 +686,8 @@ function StudentTabs({
           ))
         )}
       </TabsContent>
-
+      {/* TASKS */}
+      <TasksTabContent contactId={contactId} projects={projects} />
       {/* FILES */}
       <TabsContent value="files" className="mt-4 space-y-3">
         {files.length === 0 ? (
@@ -901,5 +903,154 @@ function StatusBadge({ status }: { status?: string | null }) {
   const cls = colors[status] ?? "bg-muted text-muted-foreground";
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{status}</span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// TASKS TAB — shows all tasks across student's projects
+// ─────────────────────────────────────────────────────────
+function TasksTabContent({ contactId, projects }: { contactId: number; projects: any[] }) {
+  const utils = trpc.useUtils();
+  const [newTask, setNewTask] = useState({ title: "", projectId: "", dueDate: "", priority: "Medium" });
+  const [adding, setAdding] = useState(false);
+
+  const { data: tasks = [], isLoading } = trpc.tasks.getByStudent.useQuery(
+    { studentContactId: contactId },
+    { enabled: !!contactId }
+  );
+
+  const createTask = trpc.tasks.create.useMutation({
+    onSuccess: () => {
+      toast.success("Task created");
+      setAdding(false);
+      setNewTask({ title: "", projectId: "", dueDate: "", priority: "Medium" });
+      utils.tasks.getByStudent.invalidate({ studentContactId: contactId });
+    },
+    onError: (e) => toast.error("Failed to create task: " + e.message),
+  });
+
+  const updateTask = trpc.tasks.update.useMutation({
+    onSuccess: () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId }),
+    onError: (e) => toast.error("Failed to update task: " + e.message),
+  });
+
+  const deleteTask = trpc.tasks.delete.useMutation({
+    onSuccess: () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId }),
+    onError: (e) => toast.error("Failed to delete task: " + e.message),
+  });
+
+  const priorityColors: Record<string, string> = {
+    High: "text-red-600 bg-red-50 border-red-200",
+    Medium: "text-amber-600 bg-amber-50 border-amber-200",
+    Low: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  };
+
+  return (
+    <TabsContent value="tasks" className="mt-4 space-y-3">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {tasks.length} task{tasks.length !== 1 ? "s" : ""}
+        </p>
+        <Button size="sm" variant="outline" onClick={() => setAdding((v) => !v)} className="text-xs inline-flex items-center gap-1">
+          <Plus className="h-3.5 w-3.5" />{adding ? "Cancel" : "Add Task"}
+        </Button>
+      </div>
+
+      {adding && (
+        <Card className="p-4 rounded-xl border border-accent/30 bg-accent/5 space-y-3">
+          <Input
+            placeholder="Task title..."
+            value={newTask.title}
+            onChange={(e: any) => setNewTask((f) => ({ ...f, title: e.target.value }))}
+            className="text-sm"
+          />
+          <div className="flex gap-2 flex-wrap">
+            <Select value={newTask.projectId} onValueChange={(v) => setNewTask((f) => ({ ...f, projectId: v }))} >
+              <SelectTrigger className="text-xs w-48"><SelectValue placeholder="Link to case..." /></SelectTrigger>
+              <SelectContent>
+                {projects.map((p: any) => (
+                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={newTask.priority} onValueChange={(v) => setNewTask((f) => ({ ...f, priority: v }))}>
+              <SelectTrigger className="text-xs w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="date"
+              value={newTask.dueDate}
+              onChange={(e: any) => setNewTask((f) => ({ ...f, dueDate: e.target.value }))}
+              className="text-xs w-40"
+            />
+          </div>
+          <Button
+            size="sm"
+            disabled={!newTask.title.trim() || !newTask.projectId || createTask.isPending}
+            onClick={() => createTask.mutate({
+              projectId: parseInt(newTask.projectId),
+              title: newTask.title.trim(),
+              dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
+              priority: newTask.priority,
+              status: "Todo",
+              assignedTo: contactId,
+            })}
+            className="text-xs"
+          >
+            {createTask.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+            Create Task
+          </Button>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+      ) : tasks.length === 0 ? (
+        <EmptyState icon={<CheckSquare className="h-8 w-8" />} text="No tasks for this student yet" />
+      ) : (
+        tasks.map((task: any) => (
+          <Card key={task.id} className="p-4 rounded-xl border border-border flex items-start gap-3">
+            <button
+              onClick={() => updateTask.mutate({ id: task.id, status: task.status === "Done" ? "Todo" : "Done" })}
+              className="mt-0.5 flex-shrink-0 text-muted-foreground hover:text-accent transition-colors"
+            >
+              {task.status === "Done"
+                ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                : <Circle className="h-5 w-5" />}
+            </button>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${task.status === "Done" ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                {task.title}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                {task.priority && (
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${priorityColors[task.priority] ?? "bg-muted text-muted-foreground"}`}>
+                    {task.priority}
+                  </span>
+                )}
+                {task.dueDate && (
+                  <span className="text-xs text-muted-foreground">
+                    Due {new Date(task.dueDate).toLocaleDateString()}
+                  </span>
+                )}
+                {task.status && task.status !== "Todo" && task.status !== "Done" && (
+                  <span className="text-xs text-muted-foreground">{task.status}</span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => deleteTask.mutate({ id: task.id })}
+              className="flex-shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </Card>
+        ))
+      )}
+    </TabsContent>
   );
 }

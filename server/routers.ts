@@ -228,6 +228,55 @@ export const appRouter = router({
       }),
   }),
 
+  // ============ TASKS ============
+  tasks: router({
+    // Get all tasks for a specific student contact (across all their projects)
+    getByStudent: adminProcedure
+      .input(z.object({ studentContactId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getTasksByStudent(input.studentContactId);
+      }),
+    // Get all tasks across all students for the Tasks main page
+    getAll: adminProcedure.query(async ({ ctx }) => {
+      return await db.getAllTasksForOwner(ctx.user.id);
+    }),
+    create: adminProcedure
+      .input(
+        z.object({
+          projectId: z.number(),
+          title: z.string().min(1),
+          description: z.string().optional(),
+          status: z.enum(["Todo", "In Progress", "Done"]).optional(),
+          dueDate: z.date().optional(),
+          assignedTo: z.number().optional(),
+          priority: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await db.createTask(input);
+      }),
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          title: z.string().optional(),
+          description: z.string().optional(),
+          status: z.enum(["Todo", "In Progress", "Done"]).optional(),
+          dueDate: z.date().optional().nullable(),
+          assignedTo: z.number().optional().nullable(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await db.updateTask(id, data);
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteTask(input.id);
+      }),
+  }),
+
   // ============ INVOICES ============
   invoices: router({
     list: adminProcedure.query(async ({ ctx }) => {
