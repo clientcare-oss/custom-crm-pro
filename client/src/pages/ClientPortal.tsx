@@ -5,8 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
-  FolderOpen, Info, Briefcase
+  FolderOpen, Info, Briefcase, Sun, Moon
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "@/components/CaseCompassCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ const MEETING_TYPES = [
 export default function ClientPortal() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -212,6 +214,19 @@ export default function ClientPortal() {
             <p className="text-sm text-muted-foreground mt-0.5">Welcome, {user.name}</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-4 w-4 text-amber-400" />
+              ) : (
+                <Moon className="h-4 w-4 text-slate-500" />
+              )}
+            </button>
             <Button
               onClick={() => setShowMeetingScheduler(true)}
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md"

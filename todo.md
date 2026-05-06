@@ -186,3 +186,7 @@
 - [ ] Financials tab: invoices/billing scoped to student
 - [ ] Appointments tab: appointments scoped to student
 - [ ] Details tab: student contact details
+
+## Theme Toggle
+- [x] Add light/dark mode toggle to admin sidebar (bottom, near user profile)
+- [x] Add light/dark mode toggle to client portal header
