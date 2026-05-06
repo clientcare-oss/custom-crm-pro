@@ -26,6 +26,8 @@ import Tasks from "./pages/Tasks";
 import Tools from "./pages/Tools";
 import Templates from "./pages/Templates";
 import LeadForms from "./pages/LeadForms";
+import Automations from "./pages/Automations";
+import Integrations from "./pages/Integrations";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -59,6 +61,8 @@ function Router() {
           <Route path="/tools" component={Tools} />
           <Route path="/templates" component={Templates} />
           <Route path="/lead-forms" component={LeadForms} />
+          <Route path="/automations" component={Automations} />
+          <Route path="/integrations" component={Integrations} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />

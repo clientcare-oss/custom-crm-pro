@@ -224,3 +224,10 @@
 - [x] Create stub Templates page (/templates) — coming soon placeholder
 - [x] Create stub Lead Forms page (/lead-forms) — coming soon placeholder
 - [x] Wire both routes in App.tsx
+
+## Automations & Integrations (Placeholders)
+- [x] Create stub Automations page (/automations) — coming soon placeholder
+- [x] Create stub Integrations page (/integrations) — coming soon placeholder
+- [x] Add Automations sidebar nav item (Zap icon)
+- [x] Add Integrations sidebar nav item (Plug icon)
+- [x] Wire both routes in App.tsx
