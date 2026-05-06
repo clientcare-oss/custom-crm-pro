@@ -149,3 +149,11 @@
 ## Swipeable Compass Carousel (Client Portal)
 - [x] Build CompassCarousel component: touch swipe, arrow nav, dot indicators, slide animation
 - [x] Integrate carousel into CaseCompassCard (portal view only, admin keeps stacked layout)
+
+## Student-Centric Portal Restructure
+- [ ] Audit DB: how appointments, files, invoices link to students/projects
+- [ ] Backend: portal.getStudentAppointments(caseId) — appointments for student's project
+- [ ] Backend: portal.getStudentFiles(caseId) — files for student's project/contact
+- [ ] Backend: portal.getStudentBilling(caseId) — invoices/contracts for student's project
+- [ ] Portal UI: tabs (Appointments, Files, Billing) scope to selected student
+- [ ] Portal UI: WCC carousel stays at top, tabs below update when student card is clicked

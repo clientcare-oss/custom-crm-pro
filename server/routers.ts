@@ -674,6 +674,44 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getStudentsByParentContactId(input.parentContactId);
       }),
+
+    // Portal: get appointments for a specific student (by their contact id)
+    getStudentAppointments: protectedProcedure
+      .input(z.object({ studentContactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return await db.getAppointmentsByClient(input.studentContactId);
+      }),
+
+    // Portal: get files for a specific student (by their contact id)
+    getStudentFiles: protectedProcedure
+      .input(z.object({ studentContactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return await db.getClientFilesByClient(input.studentContactId);
+      }),
+
+    // Portal: get billing (invoices + contracts) for a specific student
+    getStudentBilling: protectedProcedure
+      .input(z.object({ studentContactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const invoicesList = await db.getInvoicesByClient(input.studentContactId);
+        const contractsList = await db.getContractsByClient(input.studentContactId);
+        return { invoices: invoicesList, contracts: contractsList };
+      }),
   }),
 
   // ============ CASE COMPASS ============
@@ -718,8 +756,8 @@ export const appRouter = router({
     myCompass: protectedProcedure.query(async ({ ctx }) => {
       // Find the contact linked to this portal user to get their caseId
       const contact = await db.getContactByPortalUserId(ctx.user.id);
-      if (!contact?.caseId) return undefined;
-      return await db.getCaseCompass(contact.caseId);
+      if (!contact?.caseId) return null;
+      return await db.getCaseCompass(contact.caseId) ?? null;
     }),
 
     // Client: get their own compass history
