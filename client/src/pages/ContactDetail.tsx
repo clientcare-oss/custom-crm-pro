@@ -7,8 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
+
+// ─── Compass section block (shared between admin + portal views) ───────────────
+const COMPASS_SECTIONS = {
+  status: { icon: Activity, label: "Current Status", accent: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/40", border: "border-blue-200 dark:border-blue-800" },
+  meeting: { icon: BookOpen, label: "Last Meeting", accent: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40", border: "border-violet-200 dark:border-violet-800" },
+  nextStep: { icon: ArrowRightCircle, label: "Next Step", accent: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40", border: "border-emerald-200 dark:border-emerald-800" },
+  ball: { icon: Zap, label: "Who Has the Ball", accent: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-200 dark:border-amber-800" },
+  nextMeeting: { icon: CalendarCheck, label: "Next Meeting Date", accent: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/40", border: "border-rose-200 dark:border-rose-800" },
+} as const;
+
+function CompassSection({ type, children }: { type: keyof typeof COMPASS_SECTIONS; children: React.ReactNode }) {
+  const cfg = COMPASS_SECTIONS[type];
+  const Icon = cfg.icon;
+  return (
+    <div className={`rounded-lg border ${cfg.border} ${cfg.bg} px-4 py-3`}>
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${cfg.accent}`} />
+        <span className={`text-xs font-bold uppercase tracking-widest ${cfg.accent}`}>{cfg.label}</span>
+      </div>
+      <div className="text-sm text-foreground leading-relaxed">{children}</div>
+    </div>
+  );
+}
 
 /** Renders text with basic markdown-like formatting: **bold**, line breaks, --- dividers */
 function RichText({ text }: { text: string }) {
@@ -571,40 +594,23 @@ function StudentTabs({
           <div className="p-6">
             {!editingCompass ? (
               (compass as any) ? (
-                <div className="space-y-5">
+                <div className="space-y-3">
                   {(compass as any).currentStatus && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</p>
-                      <RichText text={(compass as any).currentStatus} />
-                      <hr className="border-border/40 mt-3" />
-                    </div>
+                    <CompassSection type="status"><RichText text={(compass as any).currentStatus} /></CompassSection>
                   )}
                   {(compass as any).lastMeetingSummary && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</p>
-                      <RichText text={(compass as any).lastMeetingSummary} />
-                      <hr className="border-border/40 mt-3" />
-                    </div>
+                    <CompassSection type="meeting"><RichText text={(compass as any).lastMeetingSummary} /></CompassSection>
                   )}
                   {(compass as any).nextStep && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
-                      <RichText text={(compass as any).nextStep} />
-                      <hr className="border-border/40 mt-3" />
-                    </div>
+                    <CompassSection type="nextStep"><RichText text={(compass as any).nextStep} /></CompassSection>
                   )}
                   {(compass as any).whoHasBall && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</p>
-                      <RichText text={(compass as any).whoHasBall} />
-                      <hr className="border-border/40 mt-3" />
-                    </div>
+                    <CompassSection type="ball"><RichText text={(compass as any).whoHasBall} /></CompassSection>
                   )}
                   {(compass as any).nextMeetingDate && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting Date</p>
-                      <p className="text-sm text-foreground font-medium">{new Date((compass as any).nextMeetingDate).toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
+                    <CompassSection type="nextMeeting">
+                      <p className="font-semibold">{new Date((compass as any).nextMeetingDate).toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                    </CompassSection>
                   )}
                 </div>
               ) : (

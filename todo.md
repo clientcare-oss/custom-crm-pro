@@ -141,3 +141,7 @@
 - [x] Parent view: show Financials, Activity, Files, Appointments, Details tabs (no Compass)
 - [x] Student view: keep existing Compass tab as default
 - [x] Backend: getStudentsWithSummary(parentContactId) — returns linked students with next meeting + task count
+
+## WCC Section Label Redesign
+- [x] Redesign Compass section labels (Current Status, Last Meeting, Next Step, Who Has the Ball, Next Meeting) with icons, stronger typography, and polished visual hierarchy
+- [x] Apply same label style to CaseCompassCard (client portal view)

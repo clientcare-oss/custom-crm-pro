@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck } from "lucide-react";
 
 // Animated compass SVG icon
 function CompassIcon({ className }: { className?: string }) {
@@ -15,14 +15,11 @@ function CompassIcon({ className }: { className?: string }) {
     >
       <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2.5" />
       <circle cx="32" cy="32" r="3" fill="currentColor" />
-      {/* Cardinal marks */}
       <line x1="32" y1="4" x2="32" y2="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <line x1="32" y1="54" x2="32" y2="60" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <line x1="4" y1="32" x2="10" y2="32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <line x1="54" y1="32" x2="60" y2="32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      {/* N label */}
       <text x="32" y="20" textAnchor="middle" fontSize="7" fontWeight="bold" fill="currentColor">N</text>
-      {/* Needle — north red, south muted */}
       <polygon points="32,14 29,32 32,29 35,32" fill="hsl(var(--accent))" />
       <polygon points="32,50 29,32 32,35 35,32" fill="currentColor" opacity="0.35" />
     </svg>
@@ -57,14 +54,68 @@ function RichText({ value }: { value: string }) {
   );
 }
 
-function FieldRow({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
+// Section label configs
+const SECTION_CONFIG = {
+  status: {
+    icon: Activity,
+    label: "Current Status",
+    accent: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-950/40",
+    border: "border-blue-200 dark:border-blue-800",
+    dot: "bg-blue-500",
+  },
+  meeting: {
+    icon: BookOpen,
+    label: "Last Meeting",
+    accent: "text-violet-600 dark:text-violet-400",
+    bg: "bg-violet-50 dark:bg-violet-950/40",
+    border: "border-violet-200 dark:border-violet-800",
+    dot: "bg-violet-500",
+  },
+  nextStep: {
+    icon: ArrowRightCircle,
+    label: "Next Step",
+    accent: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
+    border: "border-emerald-200 dark:border-emerald-800",
+    dot: "bg-emerald-500",
+  },
+  ball: {
+    icon: Zap,
+    label: "Who Has the Ball",
+    accent: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-50 dark:bg-amber-950/40",
+    border: "border-amber-200 dark:border-amber-800",
+    dot: "bg-amber-500",
+  },
+  nextMeeting: {
+    icon: CalendarCheck,
+    label: "Next Meeting",
+    accent: "text-rose-600 dark:text-rose-400",
+    bg: "bg-rose-50 dark:bg-rose-950/40",
+    border: "border-rose-200 dark:border-rose-800",
+    dot: "bg-rose-500",
+  },
+} as const;
+
+function SectionBlock({
+  type,
+  children,
+}: {
+  type: keyof typeof SECTION_CONFIG;
+  children: React.ReactNode;
+}) {
+  const cfg = SECTION_CONFIG[type];
+  const Icon = cfg.icon;
   return (
-    <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground leading-relaxed">
-        <RichText value={value} />
-      </p>
+    <div className={`rounded-lg border ${cfg.border} ${cfg.bg} px-4 py-3`}>
+      <div className={`flex items-center gap-2 mb-2`}>
+        <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${cfg.accent}`} />
+        <span className={`text-xs font-bold uppercase tracking-widest ${cfg.accent}`}>
+          {cfg.label}
+        </span>
+      </div>
+      <div className="text-sm text-foreground leading-relaxed">{children}</div>
     </div>
   );
 }
@@ -77,8 +128,6 @@ interface CaseCompassCardProps {
 export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
   const [showHistory, setShowHistory] = useState(false);
 
-  // When a specific caseId is provided (multi-student parent), use the portal student endpoints.
-  // Otherwise fall back to the single-student myCompass/myHistory endpoints.
   const { data: studentCompass, isLoading: loadingStudent } = trpc.portal.getStudentCompass.useQuery(
     { caseId: caseId! },
     { enabled: !!caseId }
@@ -127,7 +176,7 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
   const isRecentlyUpdated =
     compass.updatedAt &&
-    Date.now() - new Date(compass.updatedAt).getTime() < 7 * 24 * 60 * 60 * 1000; // within 7 days
+    Date.now() - new Date(compass.updatedAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <div className="space-y-3">
@@ -158,28 +207,30 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
         </div>
 
         {/* Fields */}
-        <div className="px-6 py-5 space-y-4">
-          <FieldRow label="Current Status" value={compass.currentStatus} />
-          <FieldRow label="Summary of Last Meeting" value={compass.lastMeetingSummary} />
-          <FieldRow label="Next Step" value={compass.nextStep} />
-
-          {compass.whoHasBall && (
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Who Has the Ball
-              </p>
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                {compass.whoHasBall}
-              </p>
-            </div>
+        <div className="px-6 py-5 space-y-3">
+          {compass.currentStatus && (
+            <SectionBlock type="status">
+              <RichText value={compass.currentStatus} />
+            </SectionBlock>
           )}
-
+          {compass.lastMeetingSummary && (
+            <SectionBlock type="meeting">
+              <RichText value={compass.lastMeetingSummary} />
+            </SectionBlock>
+          )}
+          {compass.nextStep && (
+            <SectionBlock type="nextStep">
+              <RichText value={compass.nextStep} />
+            </SectionBlock>
+          )}
+          {compass.whoHasBall && (
+            <SectionBlock type="ball">
+              <p className="whitespace-pre-line">{compass.whoHasBall}</p>
+            </SectionBlock>
+          )}
           {compass.nextMeetingDate && (
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Next Meeting
-              </p>
-              <p className="text-sm font-semibold text-accent">
+            <SectionBlock type="nextMeeting">
+              <p className="font-semibold">
                 {new Date(compass.nextMeetingDate).toLocaleDateString("en-US", {
                   weekday: "long",
                   month: "long",
@@ -189,7 +240,7 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                   minute: "2-digit",
                 })}
               </p>
-            </div>
+            </SectionBlock>
           )}
         </div>
 
@@ -227,19 +278,19 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                 </p>
                 {entry.currentStatus && (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1">Status</p>
                     <p className="text-sm text-foreground">{entry.currentStatus}</p>
                   </div>
                 )}
                 {entry.nextStep && (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Next Step</p>
                     <p className="text-sm text-foreground">{entry.nextStep}</p>
                   </div>
                 )}
                 {entry.whoHasBall && (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Had the Ball</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">Who Had the Ball</p>
                     <p className="text-sm text-foreground">{entry.whoHasBall}</p>
                   </div>
                 )}
