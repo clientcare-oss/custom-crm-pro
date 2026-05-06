@@ -174,3 +174,15 @@
 - [x] Add Tasks to sidebar navigation
 - [x] Create placeholder Tasks main page (/tasks)
 - [x] Wire up Tasks route in App.tsx
+
+## Client Portal Tab Restructure
+- [ ] Move tab bar above WCC carousel in client portal
+- [ ] Tab bar: Compass, Communication, Tasks, Files, Cases, Financials, Appointments, Details
+- [ ] Compass tab: shows WCC carousel (current behavior)
+- [ ] Communication tab: message thread scoped to student
+- [ ] Tasks tab: tasks assigned to student
+- [ ] Files tab: files scoped to student
+- [ ] Cases tab: case/project info for student
+- [ ] Financials tab: invoices/billing scoped to student
+- [ ] Appointments tab: appointments scoped to student
+- [ ] Details tab: student contact details

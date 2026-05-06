@@ -2,7 +2,11 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock, Upload, Trash2, File, Shield, PenTool, Compass } from "lucide-react";
+import {
+  FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
+  Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
+  FolderOpen, Info, Briefcase
+} from "lucide-react";
 import CaseCompassCard from "@/components/CaseCompassCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -97,6 +101,12 @@ export default function ClientPortal() {
     enabled: user?.role === "client" || isPreviewMode,
   });
 
+  // Tasks for this student
+  const { data: studentTasks = [] } = trpc.tasks.getByStudent.useQuery(
+    { studentContactId: effectiveStudentContactId! },
+    { enabled: !!effectiveStudentContactId }
+  );
+
   // Messaging (shared parent-level thread)
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -144,6 +154,7 @@ export default function ClientPortal() {
     if (file.size > 1024 * 1024 * 1024) { toast.error("File size exceeds 1GB limit."); return; }
     if (!effectiveStudentContactId) { toast.error("No student selected."); return; }
 
+    setUploading(true);
     try {
       const presignRes = await fetch("/api/files/presign", {
         method: "POST",
@@ -167,8 +178,10 @@ export default function ClientPortal() {
       refetchFiles();
     } catch (error: any) {
       toast.error(error.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
@@ -206,14 +219,16 @@ export default function ClientPortal() {
               <Calendar className="h-4 w-4" />
               Schedule Meeting
             </Button>
-            <Button
-              onClick={() => logoutMutation.mutate()}
-              variant="outline"
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+            {user?.role !== "admin" && (
+              <Button
+                onClick={() => logoutMutation.mutate()}
+                variant="outline"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -242,7 +257,7 @@ export default function ClientPortal() {
       </Dialog>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
         {/* ── Student selector cards ── */}
         {portalStudents.length > 0 && (
@@ -251,51 +266,45 @@ export default function ClientPortal() {
               {portalStudents.length > 1 ? "Select a Student" : "Your Student"}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {portalStudents.map((student) => {
+              {portalStudents.map((student: any) => {
                 const isSelected = effectiveStudent?.id === student.id;
-                const initials = `${student.firstName.charAt(0)}${student.lastName.charAt(0)}`.toUpperCase();
+                const initials = `${student.firstName.charAt(0)}${student.lastName.charAt(0)}`;
+                const pendingTasks = student.pendingTaskCount ?? 0;
+                const nextMeeting = student.nextMeeting ? new Date(student.nextMeeting) : null;
+
                 return (
                   <button
                     key={student.id}
                     onClick={() => setSelectedStudentId(student.id)}
-                    className={`group text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
+                    className={`group w-full rounded-2xl border-2 p-4 text-left transition-all duration-200 ${
                       isSelected
                         ? "border-accent bg-accent/5 shadow-md"
                         : "border-border bg-card hover:border-accent/50 hover:shadow-sm"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                        isSelected ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                        isSelected ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground group-hover:bg-accent/20"
                       }`}>
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className={`font-bold text-sm truncate ${isSelected ? "text-accent" : "text-foreground"}`}>
-                            {student.firstName} {student.lastName}
-                          </p>
-                          {(student as any).pendingTaskCount > 0 && (
-                            <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                              ⚠️ {(student as any).pendingTaskCount} task{(student as any).pendingTaskCount !== 1 ? "s" : ""}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Case ID: <span className="font-mono font-semibold">{student.caseId ?? "—"}</span>
+                        <p className={`font-semibold truncate ${isSelected ? "text-accent" : "text-foreground"}`}>
+                          {student.firstName} {student.lastName}
                         </p>
-                        {(student as any).nextMeeting ? (
-                          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                            <Calendar className="h-3 w-3 flex-shrink-0" />
-                            {new Date((student as any).nextMeeting.startTime).toLocaleDateString("en-US", {
-                              month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-                            })}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-muted-foreground/60 mt-0.5">No upcoming meeting</p>
-                        )}
+                        <p className="text-xs text-muted-foreground font-mono">{student.caseId}</p>
                       </div>
-                      {isSelected && <div className="flex-shrink-0 h-2 w-2 rounded-full bg-accent" />}
+                      {pendingTasks > 0 && (
+                        <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                          ⚠️ {pendingTasks} task{pendingTasks !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-2.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3 flex-shrink-0" />
+                      {nextMeeting
+                        ? nextMeeting.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+                        : "No upcoming meeting"}
                     </div>
                   </button>
                 );
@@ -306,333 +315,57 @@ export default function ClientPortal() {
 
         {/* ── Per-student content ── */}
         {effectiveStudent ? (
-          <>
-            {/* Student section header */}
-            <div className="flex items-center gap-2 border-b border-border pb-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
-                {effectiveStudent.firstName.charAt(0)}{effectiveStudent.lastName.charAt(0)}
+          <Tabs defaultValue="compass" className="space-y-0">
+
+            {/* ── Student header + Tab bar ── */}
+            <div className="rounded-t-xl border border-border bg-card shadow-sm overflow-hidden">
+              {/* Student identity strip */}
+              <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-border/50">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
+                  {effectiveStudent.firstName.charAt(0)}{effectiveStudent.lastName.charAt(0)}
+                </div>
+                <span className="font-semibold text-foreground">{effectiveStudent.firstName} {effectiveStudent.lastName}</span>
+                <span className="text-xs text-muted-foreground font-mono">{effectiveCaseId}</span>
               </div>
-              <span className="font-semibold text-foreground">{effectiveStudent.firstName} {effectiveStudent.lastName}</span>
-              <span className="text-xs text-muted-foreground font-mono ml-1">{effectiveCaseId}</span>
+
+              {/* Tab bar — matches the reference design */}
+              <TabsList className="flex w-full flex-wrap gap-0 rounded-none border-0 bg-card p-0 h-auto overflow-x-auto">
+                {[
+                  { value: "compass", icon: Compass, label: "Compass" },
+                  { value: "communication", icon: MessageSquare, label: "Communication" },
+                  { value: "tasks", icon: CheckSquare, label: "Tasks" },
+                  { value: "files", icon: FolderOpen, label: "Files" },
+                  { value: "cases", icon: Briefcase, label: "Cases" },
+                  { value: "financials", icon: DollarSign, label: "Financials" },
+                  { value: "appointments", icon: Calendar, label: "Appointments" },
+                  { value: "details", icon: Info, label: "Details" },
+                ].map(({ value, icon: Icon, label }) => (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className="inline-flex items-center gap-1.5 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:border-accent data-[state=active]:text-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
             </div>
 
-            {/* Case Compass */}
-            <CaseCompassCard caseId={effectiveCaseId ?? undefined} />
+            {/* ── Compass Tab ── */}
+            <TabsContent value="compass" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background p-0 overflow-hidden">
+              <CaseCompassCard caseId={effectiveCaseId ?? undefined} />
+            </TabsContent>
 
-            {/* Per-student tabs */}
-            <Tabs defaultValue="appointments" className="space-y-6">
-              <TabsList className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted p-1 h-auto">
-                <TabsTrigger value="appointments" className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <Calendar className="h-4 w-4" />
-                  Appointments
-                </TabsTrigger>
-                <TabsTrigger value="files" className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <Upload className="h-4 w-4" />
-                  Files
-                </TabsTrigger>
-                <TabsTrigger value="billing" className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <DollarSign className="h-4 w-4" />
-                  Billing
-                </TabsTrigger>
-                <TabsTrigger value="messages" className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <MessageSquare className="h-4 w-4" />
-                  Communication
-                </TabsTrigger>
-              </TabsList>
-
-              {/* ── Appointments Tab ── */}
-              <TabsContent value="appointments" className="space-y-4">
+            {/* ── Communication Tab ── */}
+            <TabsContent value="communication" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">Appointments</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Upcoming and past meetings for {effectiveStudent.firstName}
-                  </p>
-                </div>
-                {studentAppointments.length > 0 ? (
-                  <div className="space-y-3">
-                    {studentAppointments.map((appt: any) => (
-                      <Card key={appt.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
-                              <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">{appt.title}</p>
-                              {appt.description && (
-                                <p className="text-sm text-muted-foreground mt-0.5">{appt.description}</p>
-                              )}
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {new Date(appt.startTime).toLocaleDateString("en-US", {
-                                  weekday: "short", month: "short", day: "numeric",
-                                  hour: "numeric", minute: "2-digit",
-                                })}
-                                {appt.location && ` · ${appt.location}`}
-                              </p>
-                            </div>
-                          </div>
-                          <span className={`flex-shrink-0 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            appt.status === "Confirmed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : appt.status === "Completed" ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                            : appt.status === "Cancelled" ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                            : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                          }`}>
-                            {appt.status}
-                          </span>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-12 text-center">
-                    <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-40" />
-                    <p className="text-sm font-semibold text-foreground mb-1">No appointments yet</p>
-                    <p className="text-xs text-muted-foreground">Appointments for {effectiveStudent.firstName} will appear here</p>
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* ── Files Tab ── */}
-              <TabsContent value="files" className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">Files</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Documents for {effectiveStudent.firstName}'s case. PDF only, max 1GB.
-                  </p>
-                </div>
-
-                {/* Upload */}
-                <Card className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground">Upload Document</h3>
-                      <span className="text-xs text-muted-foreground">PDF only, max 1GB</span>
-                    </div>
-                    <div
-                      onClick={() => !isPreviewMode && fileInputRef.current?.click()}
-                      className={`cursor-pointer rounded-xl border-2 border-dashed border-border bg-muted/30 p-8 text-center transition-all hover:border-accent hover:bg-muted/50 ${isPreviewMode ? "opacity-60 cursor-not-allowed" : ""}`}
-                    >
-                      <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-                      <p className="text-sm font-semibold text-foreground mb-1">
-                        {uploading ? "Uploading..." : isPreviewMode ? "Upload (preview mode)" : "Click to upload a PDF"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Drag and drop or click to browse</p>
-                    </div>
-                    <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" onChange={handleFileUpload} className="hidden" />
-                  </div>
-                </Card>
-
-                {/* File list */}
-                {studentFiles.length > 0 ? (
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-foreground">Uploaded Files</h3>
-                    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                      {studentFiles.map((file: any) => (
-                        <div key={file.id} className="flex items-center justify-between px-6 py-4 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <File className="h-8 w-8 text-red-500 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">{file.fileName}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {file.fileSize ? `${(file.fileSize / 1024 / 1024).toFixed(2)} MB` : "Unknown size"} · Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <a href={file.fileUrl} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors">
-                              View
-                            </a>
-                            {!isPreviewMode && (
-                              <button onClick={() => deleteMutation.mutate({ id: file.id })}
-                                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors">
-                                <Trash2 className="h-3 w-3" /> Delete
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-                    <File className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-40" />
-                    <p className="text-sm font-semibold text-foreground mb-1">No files yet</p>
-                    <p className="text-xs text-muted-foreground">Upload PDFs to share with your advocate</p>
-                  </div>
-                )}
-
-                {/* Vault */}
-                <Card className="rounded-xl border border-border bg-gradient-to-br from-card to-muted/30 p-6 shadow-sm">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Shield className="h-6 w-6 text-accent" />
-                      <div>
-                        <h3 className="font-semibold text-foreground">Document Vault</h3>
-                        <p className="text-xs text-muted-foreground">Secure cloud storage — keep access even after services end</p>
-                      </div>
-                    </div>
-                    {vaultSubscription ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Plan</span>
-                          <span className="font-semibold text-foreground capitalize">{vaultSubscription.tier}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Storage Used</span>
-                          <span className="font-semibold text-foreground">
-                            {((vaultSubscription.storageUsed || 0) / 1024 / 1024 / 1024).toFixed(2)} GB / {((vaultSubscription.storageLimit || 0) / 1024 / 1024 / 1024).toFixed(0)} GB
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Status</span>
-                          <span className="inline-block rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">{vaultSubscription.status}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">Choose a vault plan to keep your documents safe after services end:</p>
-                        <div className="grid gap-3 md:grid-cols-3">
-                          {[
-                            { tier: "basic", price: "$9", storage: "50 GB" },
-                            { tier: "pro", price: "$19", storage: "500 GB", popular: true },
-                            { tier: "enterprise", price: "$29", storage: "2 TB" },
-                          ].map(({ tier, price, storage, popular }) => (
-                            <div key={tier} className={`rounded-xl border ${popular ? "border-2 border-accent" : "border-border"} bg-background p-4 text-center relative`}>
-                              {popular && <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">Popular</span>}
-                              <p className="text-lg font-bold text-foreground">{price}</p>
-                              <p className="text-xs text-muted-foreground">per month</p>
-                              <p className="text-sm font-semibold text-foreground mt-2 capitalize">{tier}</p>
-                              <p className="text-xs text-muted-foreground">{storage} Storage</p>
-                              <Button
-                                onClick={async () => {
-                                  if (isPreviewMode) { toast.info("Preview: This would start a Stripe subscription checkout."); return; }
-                                  try {
-                                    const res = await fetch("/api/stripe/vault-subscription", {
-                                      method: "POST", headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({ tier, customerEmail: user?.email, customerName: user?.name }),
-                                    });
-                                    const data = await res.json();
-                                    if (data.url) window.open(data.url, "_blank");
-                                    else toast.error("Unable to start checkout.");
-                                  } catch { toast.error("Payment service unavailable."); }
-                                }}
-                                className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
-                              >
-                                Subscribe
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </TabsContent>
-
-              {/* ── Billing Tab ── */}
-              <TabsContent value="billing" className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">Billing</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Invoices and contracts for {effectiveStudent.firstName}'s case
-                  </p>
-                </div>
-
-                {/* Invoices */}
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-foreground">Invoices</h3>
-                  {studentBilling?.invoices && studentBilling.invoices.length > 0 ? (
-                    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-border bg-muted/50">
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Invoice</th>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Amount</th>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Due Date</th>
-                              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {studentBilling.invoices.map((invoice: any) => (
-                              <tr key={invoice.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4 text-sm font-semibold text-foreground">{invoice.invoiceNumber}</td>
-                                <td className="px-6 py-4 text-sm font-semibold text-foreground">
-                                  ${parseFloat(invoice.total || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                                    invoice.status === "Paid" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                    : invoice.status === "Sent" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                    : invoice.status === "Overdue" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                    : "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400"
-                                  }`}>{invoice.status}</span>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-muted-foreground">
-                                  {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "-"}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                  {invoice.status !== "Paid" && invoice.status !== "Cancelled" && invoice.status !== "Draft" ? (
-                                    <Button size="sm"
-                                      onClick={async () => {
-                                        if (isPreviewMode) { toast.info("Preview: This would redirect to Stripe checkout."); return; }
-                                        try {
-                                          toast.info("Redirecting to payment...");
-                                          const res = await fetch("/api/stripe/create-checkout", {
-                                            method: "POST", headers: { "Content-Type": "application/json" },
-                                            body: JSON.stringify({ invoiceId: invoice.id, amount: parseFloat(invoice.total || "0"), customerEmail: user?.email, customerName: user?.name }),
-                                          });
-                                          const data = await res.json();
-                                          if (data.url) window.open(data.url, "_blank");
-                                          else toast.error("Unable to start checkout.");
-                                        } catch { toast.error("Payment service unavailable."); }
-                                      }}
-                                      className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                                    >Pay Now</Button>
-                                  ) : invoice.status === "Paid" ? (
-                                    <span className="text-xs text-emerald-600 font-semibold">✓ Paid</span>
-                                  ) : null}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-                      <DollarSign className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                      <p className="text-sm font-semibold text-foreground mb-1">No invoices yet</p>
-                      <p className="text-xs text-muted-foreground">Invoices for {effectiveStudent.firstName} will appear here</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Contracts */}
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-foreground">Contracts</h3>
-                  {studentBilling?.contracts && studentBilling.contracts.length > 0 ? (
-                    <ContractsTabContent contracts={studentBilling.contracts} isPreview={isPreviewMode} />
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-                      <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                      <p className="text-sm font-semibold text-foreground mb-1">No contracts yet</p>
-                      <p className="text-xs text-muted-foreground">Contracts for {effectiveStudent.firstName} will appear here</p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              {/* ── Messages Tab ── */}
-              <TabsContent value="messages" className="space-y-4">
-                <div>
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">Communication</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Communicate directly with your advocate</p>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Communication</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Communicate directly with your advocate</p>
                 </div>
                 <div className="rounded-xl border border-border bg-card">
-                  <div className="h-[400px] overflow-y-auto p-4 space-y-3">
+                  <div className="h-[380px] overflow-y-auto p-4 space-y-3">
                     {messages.length === 0 ? (
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center">
@@ -675,9 +408,404 @@ export default function ClientPortal() {
                     </div>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </>
+              </div>
+            </TabsContent>
+
+            {/* ── Tasks Tab ── */}
+            <TabsContent value="tasks" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Tasks</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Action items for {effectiveStudent.firstName}'s case</p>
+                </div>
+                {studentTasks.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
+                    <CheckSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
+                    <p className="text-sm font-semibold text-foreground mb-1">No tasks assigned</p>
+                    <p className="text-xs text-muted-foreground">Your advocate will assign tasks here when there are action items</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {studentTasks.map((task: any) => (
+                      <div key={task.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+                        <div className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                          task.status === "Done" ? "border-emerald-500 bg-emerald-500" : "border-muted-foreground"
+                        }`}>
+                          {task.status === "Done" && <span className="text-white text-[10px] font-bold">✓</span>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold ${task.status === "Done" ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                            {task.title}
+                          </p>
+                          {task.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{task.description}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            {task.priority && (
+                              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                task.priority === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                : task.priority === "Medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              }`}>{task.priority}</span>
+                            )}
+                            {task.dueDate && (
+                              <span className="text-[10px] text-muted-foreground">
+                                Due {new Date(task.dueDate).toLocaleDateString()}
+                              </span>
+                            )}
+                            <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              task.status === "Done" ? "bg-emerald-100 text-emerald-700"
+                              : task.status === "In Progress" ? "bg-blue-100 text-blue-700"
+                              : "bg-slate-100 text-slate-600"
+                            }`}>{task.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* ── Files Tab ── */}
+            <TabsContent value="files" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-5">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Files</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Documents for {effectiveStudent.firstName}'s case. PDF only, max 1GB.
+                  </p>
+                </div>
+
+                {/* Upload */}
+                <Card className="rounded-xl border border-border bg-card p-5 shadow-sm">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-foreground">Upload Document</h3>
+                      <span className="text-xs text-muted-foreground">PDF only, max 1GB</span>
+                    </div>
+                    <div
+                      onClick={() => !isPreviewMode && fileInputRef.current?.click()}
+                      className={`cursor-pointer rounded-xl border-2 border-dashed border-border bg-muted/30 p-6 text-center transition-all hover:border-accent hover:bg-muted/50 ${isPreviewMode ? "opacity-60 cursor-not-allowed" : ""}`}
+                    >
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm font-semibold text-foreground mb-1">
+                        {uploading ? "Uploading..." : isPreviewMode ? "Upload (preview mode)" : "Click to upload a PDF"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Drag and drop or click to browse</p>
+                    </div>
+                    <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" onChange={handleFileUpload} className="hidden" />
+                  </div>
+                </Card>
+
+                {/* File list */}
+                {studentFiles.length > 0 ? (
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-foreground text-sm">Uploaded Files</h3>
+                    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                      {studentFiles.map((file: any) => (
+                        <div key={file.id} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <File className="h-7 w-7 text-red-500 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">{file.fileName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {file.fileSize ? `${(file.fileSize / 1024 / 1024).toFixed(2)} MB` : "Unknown size"} · {new Date(file.uploadedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a href={file.fileUrl} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors">
+                              View
+                            </a>
+                            {!isPreviewMode && (
+                              <button onClick={() => deleteMutation.mutate({ id: file.id })}
+                                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors">
+                                <Trash2 className="h-3 w-3" /> Delete
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
+                    <File className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
+                    <p className="text-sm font-semibold text-foreground mb-1">No files yet</p>
+                    <p className="text-xs text-muted-foreground">Upload PDFs to share with your advocate</p>
+                  </div>
+                )}
+
+                {/* Vault */}
+                <Card className="rounded-xl border border-border bg-gradient-to-br from-card to-muted/30 p-5 shadow-sm">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-5 w-5 text-accent" />
+                      <div>
+                        <h3 className="font-semibold text-foreground">Document Vault</h3>
+                        <p className="text-xs text-muted-foreground">Secure cloud storage — keep access even after services end</p>
+                      </div>
+                    </div>
+                    {vaultSubscription ? (
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Plan</span>
+                          <span className="font-semibold text-foreground capitalize">{vaultSubscription.tier}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Storage Used</span>
+                          <span className="font-semibold text-foreground">
+                            {((vaultSubscription.storageUsed || 0) / 1024 / 1024 / 1024).toFixed(2)} GB / {((vaultSubscription.storageLimit || 0) / 1024 / 1024 / 1024).toFixed(0)} GB
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Status</span>
+                          <span className="inline-block rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">{vaultSubscription.status}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">Choose a vault plan to keep your documents safe after services end:</p>
+                        <div className="grid gap-3 md:grid-cols-3">
+                          {[
+                            { tier: "basic", price: "$9", storage: "50 GB" },
+                            { tier: "pro", price: "$19", storage: "500 GB", popular: true },
+                            { tier: "enterprise", price: "$29", storage: "2 TB" },
+                          ].map(({ tier, price, storage, popular }) => (
+                            <div key={tier} className={`rounded-xl border ${popular ? "border-2 border-accent" : "border-border"} bg-background p-4 text-center relative`}>
+                              {popular && <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">Popular</span>}
+                              <p className="text-lg font-bold text-foreground">{price}</p>
+                              <p className="text-xs text-muted-foreground">per month</p>
+                              <p className="text-sm font-semibold text-foreground mt-2 capitalize">{tier}</p>
+                              <p className="text-xs text-muted-foreground">{storage} Storage</p>
+                              <Button
+                                onClick={async () => {
+                                  if (isPreviewMode) { toast.info("Preview: This would start a Stripe subscription checkout."); return; }
+                                  try {
+                                    const res = await fetch("/api/stripe/vault-subscription", {
+                                      method: "POST", headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ tier, customerEmail: user?.email, customerName: user?.name }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.url) window.open(data.url, "_blank");
+                                    else toast.error("Unable to start checkout.");
+                                  } catch { toast.error("Payment service unavailable."); }
+                                }}
+                                className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
+                              >
+                                Subscribe
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* ── Cases Tab ── */}
+            <TabsContent value="cases" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Cases</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Active cases for {effectiveStudent.firstName}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                      <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{effectiveStudent.firstName} {effectiveStudent.lastName}</p>
+                      <p className="text-xs text-muted-foreground font-mono">{effectiveCaseId}</p>
+                    </div>
+                    <span className="ml-auto inline-block rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Active</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    This case is currently being managed by your advocate. Use the Compass tab to view the full case status and next steps.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Financials Tab ── */}
+            <TabsContent value="financials" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-5">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Financials</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Invoices and contracts for {effectiveStudent.firstName}'s case</p>
+                </div>
+
+                {/* Invoices */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-foreground text-sm">Invoices</h3>
+                  {studentBilling?.invoices && studentBilling.invoices.length > 0 ? (
+                    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-border bg-muted/50">
+                              <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Invoice</th>
+                              <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Amount</th>
+                              <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Status</th>
+                              <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Due</th>
+                              <th className="px-5 py-3 text-right text-xs font-semibold text-foreground">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {studentBilling.invoices.map((invoice: any) => (
+                              <tr key={invoice.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                                <td className="px-5 py-3.5 text-sm font-semibold text-foreground">{invoice.invoiceNumber}</td>
+                                <td className="px-5 py-3.5 text-sm font-semibold text-foreground">
+                                  ${parseFloat(invoice.total || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                    invoice.status === "Paid" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                    : invoice.status === "Sent" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                    : invoice.status === "Overdue" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                    : "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400"
+                                  }`}>{invoice.status}</span>
+                                </td>
+                                <td className="px-5 py-3.5 text-sm text-muted-foreground">
+                                  {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "-"}
+                                </td>
+                                <td className="px-5 py-3.5 text-right">
+                                  {invoice.status !== "Paid" && invoice.status !== "Cancelled" && invoice.status !== "Draft" ? (
+                                    <Button size="sm"
+                                      onClick={async () => {
+                                        if (isPreviewMode) { toast.info("Preview: This would redirect to Stripe checkout."); return; }
+                                        try {
+                                          toast.info("Redirecting to payment...");
+                                          const res = await fetch("/api/stripe/create-checkout", {
+                                            method: "POST", headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ invoiceId: invoice.id, amount: parseFloat(invoice.total || "0"), customerEmail: user?.email, customerName: user?.name }),
+                                          });
+                                          const data = await res.json();
+                                          if (data.url) window.open(data.url, "_blank");
+                                          else toast.error("Unable to start checkout.");
+                                        } catch { toast.error("Payment service unavailable."); }
+                                      }}
+                                      className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                                    >Pay Now</Button>
+                                  ) : invoice.status === "Paid" ? (
+                                    <span className="text-xs text-emerald-600 font-semibold">✓ Paid</span>
+                                  ) : null}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
+                      <DollarSign className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
+                      <p className="text-sm font-semibold text-foreground mb-1">No invoices yet</p>
+                      <p className="text-xs text-muted-foreground">Invoices for {effectiveStudent.firstName} will appear here</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Contracts */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-foreground text-sm">Contracts</h3>
+                  {studentBilling?.contracts && studentBilling.contracts.length > 0 ? (
+                    <ContractsTabContent contracts={studentBilling.contracts} isPreview={isPreviewMode} />
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
+                      <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
+                      <p className="text-sm font-semibold text-foreground mb-1">No contracts yet</p>
+                      <p className="text-xs text-muted-foreground">Contracts for {effectiveStudent.firstName} will appear here</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Appointments Tab ── */}
+            <TabsContent value="appointments" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Appointments</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Upcoming and past meetings for {effectiveStudent.firstName}
+                  </p>
+                </div>
+                {studentAppointments.length > 0 ? (
+                  <div className="space-y-3">
+                    {studentAppointments.map((appt: any) => (
+                      <Card key={appt.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                              <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground text-sm">{appt.title}</p>
+                              {appt.description && (
+                                <p className="text-xs text-muted-foreground mt-0.5">{appt.description}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(appt.startTime).toLocaleDateString("en-US", {
+                                  weekday: "short", month: "short", day: "numeric",
+                                  hour: "numeric", minute: "2-digit",
+                                })}
+                                {appt.location && ` · ${appt.location}`}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`flex-shrink-0 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            appt.status === "Confirmed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : appt.status === "Completed" ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                            : appt.status === "Cancelled" ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                            : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          }`}>
+                            {appt.status}
+                          </span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
+                    <Calendar className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
+                    <p className="text-sm font-semibold text-foreground mb-1">No appointments yet</p>
+                    <p className="text-xs text-muted-foreground">Appointments for {effectiveStudent.firstName} will appear here</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* ── Details Tab ── */}
+            <TabsContent value="details" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Details</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Student information on file</p>
+                </div>
+                <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+                  {[
+                    { label: "Full Name", value: `${effectiveStudent.firstName} ${effectiveStudent.lastName}` },
+                    { label: "Case ID", value: effectiveCaseId },
+                    { label: "School / District", value: effectiveStudent.company || "—" },
+                    { label: "Email", value: effectiveStudent.email || "—" },
+                    { label: "Phone", value: effectiveStudent.phone || "—" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex items-start justify-between gap-4 py-2 border-b border-border/50 last:border-0">
+                      <span className="text-sm text-muted-foreground">{label}</span>
+                      <span className="text-sm font-semibold text-foreground text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+
+          </Tabs>
         ) : (
           <div className="rounded-xl border border-dashed border-border bg-muted/30 p-16 text-center">
             <Compass className="h-14 w-14 mx-auto mb-4 text-muted-foreground opacity-40" />
