@@ -35,7 +35,7 @@ import { toast } from "sonner";
 const COLOR_OPTIONS = [
   "#3b82f6", "#6366f1", "#d4a017", "#92400e", "#78350f",
   "#0ea5e9", "#1d4ed8", "#64748b", "#93c5fd", "#f97316",
-  "#ea580c", "#92400e", "#f9a8d4", "#ec4899", "#a855f7",
+  "#ea580c", "#b45309", "#f9a8d4", "#ec4899", "#a855f7",
   "#7c3aed", "#c026d3", "#9333ea", "#db2777", "#e11d48",
   "#be123c", "#991b1b",
 ];
@@ -429,9 +429,9 @@ function SessionEditForm({
             <div className="space-y-1.5">
               <Label className="text-xs">Color</Label>
               <div className="flex flex-wrap gap-1.5">
-                {COLOR_OPTIONS.map((c) => (
+                {COLOR_OPTIONS.map((c, ci) => (
                   <button
-                    key={c}
+                    key={ci}
                     type="button"
                     onClick={() => set("color", c)}
                     className={`h-6 w-6 rounded-sm border-2 transition-all ${
