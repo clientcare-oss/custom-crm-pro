@@ -68,6 +68,36 @@ export function registerFileUploadRoutes(app: Express) {
     }
   });
 
+  // IEP-specific presign endpoint (accepts PDF, DOC, DOCX)
+  app.post("/api/files/iep-presign", async (req: Request, res: Response) => {
+    try {
+      const { fileName, fileSize } = req.body;
+      if (!fileName || typeof fileName !== "string") {
+        return res.status(400).json({ error: "fileName is required" });
+      }
+      const ext = fileName.toLowerCase().split('.').pop() ?? '';
+      const allowed = ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'];
+      if (!allowed.includes(ext)) {
+        return res.status(400).json({ error: "Only PDF, DOC, DOCX, or image files are accepted." });
+      }
+      if (fileSize && fileSize > 100 * 1024 * 1024) {
+        return res.status(400).json({ error: "File size exceeds 100MB limit." });
+      }
+      const hash = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+      const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const fileKey = `iep-documents/${Date.now()}_${hash}_${sanitizedName}`;
+      const uploadUrl = await getPresignedUploadUrl(fileKey);
+      return res.json({
+        uploadUrl,
+        fileKey,
+        fileUrl: `/manus-storage/${fileKey}`,
+      });
+    } catch (error: any) {
+      console.error("[IEPUpload] Presign error:", error);
+      return res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
   // Step 2: Confirm the upload and save metadata to DB
   app.post("/api/files/confirm", async (req: Request, res: Response) => {
     try {

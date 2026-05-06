@@ -5,8 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
-  FolderOpen, Info, Briefcase, Sun, Moon
+  FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock
 } from "lucide-react";
+import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "@/components/CaseCompassCard";
 import { Button } from "@/components/ui/button";
@@ -350,6 +351,7 @@ export default function ClientPortal() {
                   { value: "communication", icon: MessageSquare, label: "Communication" },
                   { value: "tasks", icon: CheckSquare, label: "Tasks" },
                   { value: "files", icon: FolderOpen, label: "Files" },
+                  { value: "tools", icon: Wrench, label: "Tools" },
                   { value: "cases", icon: Briefcase, label: "Cases" },
                   { value: "financials", icon: DollarSign, label: "Financials" },
                   { value: "appointments", icon: Calendar, label: "Appointments" },
@@ -488,9 +490,14 @@ export default function ClientPortal() {
                 <div>
                   <h2 className="text-lg font-bold tracking-tight text-foreground">Files</h2>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Documents for {effectiveStudent.firstName}'s case. PDF only, max 1GB.
+                    Documents for {effectiveStudent.firstName}'s case.
                   </p>
                 </div>
+
+                {/* IEP Document Blocks */}
+                {effectiveStudentContactId && (
+                  <IepDocumentBlocks contactId={effectiveStudentContactId} />
+                )}
 
                 {/* Upload */}
                 <Card className="rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -619,6 +626,21 @@ export default function ClientPortal() {
                     )}
                   </div>
                 </Card>
+              </div>
+            </TabsContent>
+
+            {/* ── Tools Tab ── */}
+            <TabsContent value="tools" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Tools</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Advocacy tools for {effectiveStudent.firstName}'s case</p>
+                </div>
+
+                {/* IEP Comparison Tool */}
+                {effectiveStudentContactId && (
+                  <PortalToolsContent contactId={effectiveStudentContactId} />
+                )}
               </div>
             </TabsContent>
 
@@ -829,6 +851,73 @@ export default function ClientPortal() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Portal Tools Tab Content
+function PortalToolsContent({ contactId }: { contactId: number }) {
+  const { data: iepDoc } = trpc.iep.get.useQuery({ contactId }, { enabled: !!contactId });
+  const hasBothVersions = !!(iepDoc?.currentFileKey && iepDoc?.previousFileKey);
+
+  return (
+    <div className="space-y-4">
+      {/* IEP Comparison Tool */}
+      <Card className={`p-5 rounded-xl border flex flex-col gap-3 ${
+        hasBothVersions ? "border-emerald-200 dark:border-emerald-800" : "border-border"
+      }`}>
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg ${
+            hasBothVersions ? "bg-emerald-100 dark:bg-emerald-950/40" : "bg-muted"
+          }`}>
+            <GitCompare className={`h-5 w-5 ${
+              hasBothVersions ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+            }`} />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">IEP/504 Comparison</p>
+              {hasBothVersions ? (
+                <span className="text-xs rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold">Ready</span>
+              ) : (
+                <span className="text-xs rounded-full px-2 py-0.5 bg-muted text-muted-foreground font-semibold flex items-center gap-1">
+                  <Lock className="h-3 w-3" /> Locked
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {hasBothVersions
+                ? "Compare your current and previous IEP/504 side by side to see what changed."
+                : "Upload two versions of the IEP/504 in the Files tab to unlock this tool."}
+            </p>
+            {hasBothVersions && (
+              <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                <p>Current: <span className="font-medium text-foreground">{iepDoc!.currentFileName}</span></p>
+                <p>Previous: <span className="font-medium text-foreground">{iepDoc!.previousFileName}</span></p>
+              </div>
+            )}
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant={hasBothVersions ? "default" : "outline"}
+          disabled={!hasBothVersions}
+          className="self-start inline-flex items-center gap-1.5 text-xs"
+          onClick={() => hasBothVersions && (window.location.href = `/portal?tab=tools&contactId=${contactId}`)}
+        >
+          <GitCompare className="h-3.5 w-3.5" />
+          {hasBothVersions ? "Compare IEP/504 — Coming Soon" : "Locked — Upload 2 IEP versions first"}
+        </Button>
+      </Card>
+
+      {/* More tools coming soon */}
+      <Card className="p-5 rounded-xl border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-2 py-8">
+        <Wrench className="h-6 w-6 text-muted-foreground" />
+        <p className="text-sm font-semibold text-muted-foreground">More tools coming soon</p>
+        <p className="text-xs text-muted-foreground text-center max-w-xs">
+          Additional AI-powered advocacy tools will appear here as they are developed.
+        </p>
+      </Card>
     </div>
   );
 }

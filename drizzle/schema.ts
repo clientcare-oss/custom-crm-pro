@@ -379,3 +379,27 @@ export const caseCompassHistory = mysqlTable("caseCompassHistory", {
 
 export type CaseCompassHistory = typeof caseCompassHistory.$inferSelect;
 export type InsertCaseCompassHistory = typeof caseCompassHistory.$inferInsert;
+
+/**
+ * IEP Documents — one record per student contact.
+ * Stores the current and previous IEP/504 document.
+ * When a new IEP is uploaded, the current becomes previous automatically (auto-archive).
+ */
+export const iepDocuments = mysqlTable("iepDocuments", {
+  id: int("id").autoincrement().primaryKey(),
+  contactId: int("contactId").notNull().unique(), // links to contacts.id (student)
+  // Current IEP/504
+  currentFileKey: text("currentFileKey"),
+  currentFileName: varchar("currentFileName", { length: 255 }),
+  currentFileUrl: text("currentFileUrl"),
+  currentUploadedAt: timestamp("currentUploadedAt"),
+  // Previous IEP/504 (auto-archived when new one is uploaded)
+  previousFileKey: text("previousFileKey"),
+  previousFileName: varchar("previousFileName", { length: 255 }),
+  previousFileUrl: text("previousFileUrl"),
+  previousUploadedAt: timestamp("previousUploadedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IepDocument = typeof iepDocuments.$inferSelect;
+export type InsertIepDocument = typeof iepDocuments.$inferInsert;

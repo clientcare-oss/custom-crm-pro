@@ -190,3 +190,15 @@
 ## Theme Toggle
 - [x] Add light/dark mode toggle to admin sidebar (bottom, near user profile)
 - [x] Add light/dark mode toggle to client portal header
+
+## IEP Document System & Tools
+- [x] DB: iepDocuments table (contactId, currentFileKey, currentFileName, currentUploadedAt, previousFileKey, previousFileName, previousUploadedAt)
+- [x] DB: migration applied via webdev_execute_sql
+- [x] Backend: iep.get(contactId), iep.upload(contactId, file) procedures
+- [x] IEP blocks in student Files tab: Current IEP card, Upload New/Amended card, Compare card (locked until both versions exist)
+- [x] IEP blocks in client portal Files tab: same 3-block layout, parent-friendly language
+- [x] Auto-archive: when new IEP uploaded, old current moves to previous slot
+- [x] Tools tab on student ContactDetail page
+- [x] Tools tab in client portal (pre-loaded with selected student)
+- [x] Tools sidebar nav item with hub page listing all tools
+- [x] IEP Comparison tool card on Tools hub (placeholder/coming soon state)

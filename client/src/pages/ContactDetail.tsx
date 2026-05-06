@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench } from "lucide-react";
+import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { toast } from "sonner";
 
 // ─── Compass section block (shared between admin + portal views) ───────────────
@@ -554,6 +555,7 @@ function StudentTabs({
         <TabsTrigger value="activity" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Communication</TabsTrigger>
         <TabsTrigger value="tasks" className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
         <TabsTrigger value="files" className="flex items-center gap-1.5"><Folder className="h-3.5 w-3.5" />Files {files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>}</TabsTrigger>
+        <TabsTrigger value="tools" className="flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Tools</TabsTrigger>
         <TabsTrigger value="projects" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Cases {projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{projects.length}</span>}</TabsTrigger>
         <TabsTrigger value="financials" className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financials {invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{invoices.length}</span>}</TabsTrigger>
         <TabsTrigger value="appointments" className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />Appointments {appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{appointments.length}</span>}</TabsTrigger>
@@ -690,8 +692,9 @@ function StudentTabs({
       <TasksTabContent contactId={contactId} projects={projects} />
       {/* FILES */}
       <TabsContent value="files" className="mt-4 space-y-3">
+        <IepDocumentBlocks contactId={contactId} />
         {files.length === 0 ? (
-          <EmptyState icon={<Folder className="h-8 w-8" />} text="No files uploaded" />
+          <EmptyState icon={<Folder className="h-8 w-8" />} text="No other files uploaded" />
         ) : (
           files.map((f: any) => (
             <Card key={f.id} className="p-4 rounded-lg border border-border flex items-center justify-between">
@@ -708,6 +711,11 @@ function StudentTabs({
             </Card>
           ))
         )}
+      </TabsContent>
+
+      {/* TOOLS */}
+      <TabsContent value="tools" className="mt-4">
+        <ToolsTabContent contactId={contactId} />
       </TabsContent>
 
       {/* CASES / PROJECTS */}
@@ -1052,5 +1060,69 @@ function TasksTabContent({ contactId, projects }: { contactId: number; projects:
         ))
       )}
     </TabsContent>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// TOOLS TAB — IEP comparison and other advocacy tools
+// ─────────────────────────────────────────────────────────
+function ToolsTabContent({ contactId }: { contactId: number }) {
+  const { data: iepDoc } = trpc.iep.get.useQuery({ contactId }, { enabled: !!contactId });
+  const hasBothVersions = !!(iepDoc?.currentFileKey && iepDoc?.previousFileKey);
+  const [, setLocation] = useLocation();
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Advocacy Tools</p>
+
+      {/* IEP Comparison Tool */}
+      <Card className={`p-5 rounded-xl border flex flex-col gap-3 ${hasBothVersions ? "border-emerald-200 dark:border-emerald-800" : "border-border"}`}>
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg ${hasBothVersions ? "bg-emerald-100 dark:bg-emerald-950/40" : "bg-muted"}`}>
+            <Wrench className={`h-5 w-5 ${hasBothVersions ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">IEP/504 Comparison</p>
+              {hasBothVersions ? (
+                <span className="text-xs rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold">Ready</span>
+              ) : (
+                <span className="text-xs rounded-full px-2 py-0.5 bg-muted text-muted-foreground font-semibold">Locked</span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {hasBothVersions
+                ? "Compare the current and previous IEP/504 side by side to identify changes, additions, and removals."
+                : "Upload two versions of the IEP/504 in the Files tab to unlock this tool."}
+            </p>
+            {hasBothVersions && (
+              <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                <p>Current: <span className="font-medium text-foreground">{iepDoc!.currentFileName}</span></p>
+                <p>Previous: <span className="font-medium text-foreground">{iepDoc!.previousFileName}</span></p>
+              </div>
+            )}
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant={hasBothVersions ? "default" : "outline"}
+          disabled={!hasBothVersions}
+          onClick={() => setLocation(`/tools?contactId=${contactId}`)}
+          className="self-start inline-flex items-center gap-1.5 text-xs"
+        >
+          <Wrench className="h-3.5 w-3.5" />
+          {hasBothVersions ? "Open IEP Comparison →" : "Locked — Upload 2 IEP versions first"}
+        </Button>
+      </Card>
+
+      {/* More tools coming soon */}
+      <Card className="p-5 rounded-xl border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-2 py-8">
+        <Wrench className="h-6 w-6 text-muted-foreground" />
+        <p className="text-sm font-semibold text-muted-foreground">More tools coming soon</p>
+        <p className="text-xs text-muted-foreground text-center max-w-xs">
+          Additional AI-powered advocacy tools will appear here as they are developed.
+        </p>
+      </Card>
+    </div>
   );
 }
