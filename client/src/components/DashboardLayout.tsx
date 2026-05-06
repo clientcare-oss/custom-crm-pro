@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, MessageSquare, TrendingUp, Upload, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, MessageSquare, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -52,7 +52,6 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
     { icon: FileText, label: "Invoices", path: "/invoices" },
     { icon: ScrollText, label: "Contracts", path: "/contracts" },
-    { icon: Upload, label: "Client Files", path: "/client-files" },
     { icon: Calendar, label: "Appointments", path: "/appointments" },
     { icon: MessageSquare, label: "Messages", path: "/messages" },
     { icon: Settings, label: "Settings", path: "/settings" },

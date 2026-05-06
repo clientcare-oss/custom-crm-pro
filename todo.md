@@ -157,3 +157,7 @@
 - [x] Backend: portal.getStudentBilling — invoices/contracts for student's contact ID
 - [x] Portal UI: tabs (Appointments, Files, Billing) scope to selected student
 - [x] Portal UI: WCC carousel stays at top, tabs below update when student card is clicked
+
+## Sidebar Cleanup
+- [x] Remove "Client Files" from sidebar navigation
+- [x] Remove /client-files route from App.tsx
