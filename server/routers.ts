@@ -647,24 +647,27 @@ export const appRouter = router({
       return await db.getStudentsByParentPortalUser(ctx.user.id);
     }),
 
-    // Parent portal: get compass for a specific student caseId (must belong to parent)
+     // Parent portal: get compass for a specific student caseId (must belong to parent, or admin)
     getStudentCompass: protectedProcedure
       .input(z.object({ caseId: z.string() }))
       .query(async ({ ctx, input }) => {
-        // Verify this caseId belongs to one of the parent's students
-        const students = await db.getStudentsByParentPortalUser(ctx.user.id);
-        const isOwned = students.some((s) => s.caseId === input.caseId);
-        if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
-        return await db.getCaseCompass(input.caseId);
+        // Admins can always preview any student's compass
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.caseId === input.caseId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return await db.getCaseCompass(input.caseId) ?? null;
       }),
-
-    // Parent portal: get history for a specific student caseId
+    // Parent portal: get history for a specific student caseId (must belong to parent, or admin)
     getStudentHistory: protectedProcedure
       .input(z.object({ caseId: z.string() }))
       .query(async ({ ctx, input }) => {
-        const students = await db.getStudentsByParentPortalUser(ctx.user.id);
-        const isOwned = students.some((s) => s.caseId === input.caseId);
-        if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.caseId === input.caseId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
         return await db.getCaseCompassHistory(input.caseId);
       }),
 
