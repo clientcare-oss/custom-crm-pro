@@ -53,7 +53,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
     { icon: FileText, label: "Invoices", path: "/invoices" },
     { icon: ScrollText, label: "Contracts", path: "/contracts" },
-    { icon: Calendar, label: "Appointments", path: "/appointments" },
+    { icon: Calendar, label: "Calendar", path: "/calendar" },
     { icon: CheckSquare, label: "Tasks", path: "/tasks" },
     { icon: Wrench, label: "Tools", path: "/tools" },
     { icon: Settings, label: "Settings", path: "/settings" },

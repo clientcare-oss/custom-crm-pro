@@ -403,3 +403,58 @@ export const iepDocuments = mysqlTable("iepDocuments", {
 });
 export type IepDocument = typeof iepDocuments.$inferSelect;
 export type InsertIepDocument = typeof iepDocuments.$inferInsert;
+
+/**
+ * Session types for the Scheduler feature.
+ * Each session type defines a bookable meeting format with full configuration.
+ */
+export const sessionTypes = mysqlTable("sessionTypes", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  // Meeting format
+  sessionFormat: mysqlEnum("sessionFormat", ["phone", "video"]).default("phone").notNull(),
+  videoType: varchar("videoType", { length: 64 }), // "zoom", "google_meet", "teams", "other"
+  videoLink: varchar("videoLink", { length: 512 }),
+  // Timing
+  timezone: varchar("timezone", { length: 64 }).default("America/New_York").notNull(),
+  duration: int("duration").default(60).notNull(),
+  durationUnit: mysqlEnum("durationUnit", ["minutes", "hours"]).default("minutes").notNull(),
+  // Date range
+  dateRange: mysqlEnum("dateRange", ["rolling", "indefinitely", "fixed"]).default("indefinitely").notNull(),
+  dateRangeDays: int("dateRangeDays"), // used when dateRange = "rolling"
+  // Color (hex or named color key)
+  color: varchar("color", { length: 32 }).default("#e11d48").notNull(),
+  // Instructions shown on booking page
+  instructions: text("instructions"),
+  // Confirmation message shown after booking
+  confirmationMessage: text("confirmationMessage"),
+  // Buffer time
+  bufferBefore: int("bufferBefore").default(30).notNull(),
+  bufferBeforeUnit: mysqlEnum("bufferBeforeUnit", ["minutes", "hours"]).default("minutes").notNull(),
+  bufferAfter: int("bufferAfter").default(6).notNull(),
+  bufferAfterUnit: mysqlEnum("bufferAfterUnit", ["minutes", "hours"]).default("hours").notNull(),
+  // Minimum notice
+  minNotice: int("minNotice").default(3).notNull(),
+  minNoticeUnit: mysqlEnum("minNoticeUnit", ["minutes", "hours", "days"]).default("days").notNull(),
+  // Custom increments (slot interval in minutes)
+  customIncrements: int("customIncrements").default(15).notNull(),
+  // Team / round-robin (stored as JSON array of user IDs)
+  teamMemberIds: text("teamMemberIds"), // JSON array e.g. "[1,2]"
+  // Weekly availability (JSON: { mon: [{start:"08:00",end:"17:00"}], tue: [...], ... })
+  weeklyHours: text("weeklyHours"),
+  // Reminder settings (JSON array of { method: "email"|"sms"|"both", amount: number, unit: "minutes"|"hours", notifyOwner: boolean })
+  reminderSettings: text("reminderSettings"),
+  // Confirmation toggles
+  canReschedule: boolean("canReschedule").default(true).notNull(),
+  canCancel: boolean("canCancel").default(false).notNull(),
+  sendConfirmationEmail: boolean("sendConfirmationEmail").default(true).notNull(),
+  // Active / inactive
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SessionType = typeof sessionTypes.$inferSelect;
+export type InsertSessionType = typeof sessionTypes.$inferInsert;

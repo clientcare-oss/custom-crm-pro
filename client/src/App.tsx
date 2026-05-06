@@ -13,6 +13,7 @@ import Projects from "./pages/Projects";
 import Invoices from "./pages/Invoices";
 import ClientPortal from "./pages/ClientPortal";
 import Appointments from "./pages/Appointments";
+import Scheduler from "./pages/Scheduler";
 import Contracts from "./pages/Contracts";
 import BookingPage from "./pages/BookingPage";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -50,6 +51,8 @@ function Router() {
           <Route path="/invoices" component={Invoices} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/appointments" component={Appointments} />
+          <Route path="/calendar" component={Appointments} />
+          <Route path="/scheduler" component={Scheduler} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/tools" component={Tools} />
           <Route path="/client-portal" component={ClientPortal} />

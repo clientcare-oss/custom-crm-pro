@@ -57,6 +57,13 @@
       "when": 1778102870584,
       "tag": "0007_wakeful_metal_master",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1778105857039,
+      "tag": "0008_brainy_mojo",
+      "breakpoints": true
     }
   ]
 }

@@ -202,3 +202,18 @@
 - [x] Tools tab in client portal (pre-loaded with selected student)
 - [x] Tools sidebar nav item with hub page listing all tools
 - [x] IEP Comparison tool card on Tools hub (placeholder/coming soon state)
+
+## Scheduler Feature (replaces Appointments)
+- [x] DB: sessionTypes table (name, description, sessionType phone/video, videoType, videoLink, duration, durationUnit, timezone, dateRange, dateRangeDays, color, instructions, confirmationMessage, bufferBefore, bufferBeforeUnit, bufferAfter, bufferAfterUnit, minNotice, minNoticeUnit, customIncrements, teamAvailability, roundRobin, canReschedule, canCancel, sendConfirmationEmail, reminderSettings JSON, weeklyHours JSON, isActive)
+- [x] DB: migration applied via webdev_execute_sql
+- [x] Backend: sessionTypes CRUD procedures (list, get, create, update, delete, toggleActive)
+- [x] Backend: default availability settings stored per session type (weekly hours, buffer, notice, increments)
+- [x] Scheduler admin page (/scheduler): session type cards grid with + New session type card
+- [x] Session type card: color dot, name, duration, meeting type, date range, active toggle, edit/copy/preview/link icons
+- [x] Session type edit form: Details section (name, type, video type, video link, timezone, duration, date range, color, instructions)
+- [x] Session type edit form: Availability section (weekly hours Mon-Sun with time pickers, buffer time, min notice, custom increments, team/round-robin)
+- [x] Session type edit form: Confirmation section (customizable message, reminders, reschedule/cancel/confirmation email toggles)
+- [x] Pre-populate all new session types with standard defaults (Mon/Tue/Thu/Fri 8am-5pm, 30min buffer before, 6hr after, 3 day min notice, 15min increments, round robin, 1hr + 15min reminders, reschedule on, cancel off, confirmation email on)
+- [x] Rename "Appointments" to "Calendar" in sidebar nav
+- [x] Update DashboardLayout sidebar label from Appointments to Calendar
+- [x] Keep existing appointments/calendar view accessible under /calendar route
