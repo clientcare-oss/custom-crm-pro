@@ -162,7 +162,7 @@ export default function ContactDetail() {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">{fullName}</h1>
             {/* Preview Portal button — only for parent contacts with a linked portal account */}
-            {isParent && contact.portalUserId && (
+            {isParent && (
               <Button
                 variant="outline"
                 size="sm"
