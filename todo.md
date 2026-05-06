@@ -231,3 +231,16 @@
 - [x] Add Automations sidebar nav item (Zap icon)
 - [x] Add Integrations sidebar nav item (Plug icon)
 - [x] Wire both routes in App.tsx
+
+## Workflows Feature
+- [x] DB: workflows table (id, title, description, category, color, createdBy, createdAt, updatedAt)
+- [x] DB: workflowSteps table (id, workflowId, stepNumber, title, description, notes, role, createdAt)
+- [x] DB: migration applied
+- [x] Backend: workflows.list, workflows.get, workflows.create, workflows.update, workflows.delete procedures
+- [x] Backend: workflowSteps.saveSteps (replace all steps) procedure
+- [x] Workflows page (/workflows): grid of workflow cards (title, category, step count, color)
+- [x] Owner view: create workflow (dialog), then edit steps inline after selection (two-step flow by design)
+- [x] Employee view: read-only accordion/list of steps with title, description, notes, role
+- [x] Role-based: admin/owner can create/edit, all users can view
+- [x] Add Workflows sidebar nav item (GitBranch icon)
+- [x] Wire /workflows route in App.tsx

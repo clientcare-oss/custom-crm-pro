@@ -19,6 +19,8 @@ import {
   vaultSubscriptions,
   caseCompass,
   caseCompassHistory,
+  workflows,
+  workflowSteps,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 

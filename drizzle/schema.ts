@@ -458,3 +458,32 @@ export const sessionTypes = mysqlTable("sessionTypes", {
 
 export type SessionType = typeof sessionTypes.$inferSelect;
 export type InsertSessionType = typeof sessionTypes.$inferInsert;
+
+// ── Workflows ──────────────────────────────────────────────────────────────
+export const workflows = mysqlTable("workflows", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 128 }),
+  color: varchar("color", { length: 32 }).default("#3b82f6").notNull(),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Workflow = typeof workflows.$inferSelect;
+export type InsertWorkflow = typeof workflows.$inferInsert;
+
+export const workflowSteps = mysqlTable("workflowSteps", {
+  id: int("id").autoincrement().primaryKey(),
+  workflowId: int("workflowId").notNull(),
+  stepNumber: int("stepNumber").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  notes: text("notes"),
+  role: varchar("role", { length: 128 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type WorkflowStep = typeof workflowSteps.$inferSelect;
+export type InsertWorkflowStep = typeof workflowSteps.$inferInsert;

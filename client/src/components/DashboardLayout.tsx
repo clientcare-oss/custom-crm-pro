@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -59,6 +59,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: Wrench, label: "Tools", path: "/tools" },
     { icon: LayoutTemplate, label: "Templates", path: "/templates" },
     { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
+    { icon: GitBranch, label: "Workflows", path: "/workflows" },
     { icon: Zap, label: "Automations", path: "/automations" },
     { icon: Plug, label: "Integrations", path: "/integrations" },
     { icon: Settings, label: "Settings", path: "/settings" },

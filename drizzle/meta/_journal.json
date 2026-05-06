@@ -64,6 +64,13 @@
       "when": 1778105857039,
       "tag": "0008_brainy_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1778110698698,
+      "tag": "0009_supreme_vivisector",
+      "breakpoints": true
     }
   ]
 }
