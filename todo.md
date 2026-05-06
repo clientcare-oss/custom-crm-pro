@@ -217,3 +217,10 @@
 - [x] Rename "Appointments" to "Calendar" in sidebar nav
 - [x] Update DashboardLayout sidebar label from Appointments to Calendar
 - [x] Keep existing appointments/calendar view accessible under /calendar route
+
+## Templates & Lead Forms (Placeholders)
+- [x] Add Templates sidebar nav item (LayoutTemplate icon, /templates route)
+- [x] Add Lead Forms sidebar nav item (ClipboardList icon, /lead-forms route)
+- [x] Create stub Templates page (/templates) — coming soon placeholder
+- [x] Create stub Lead Forms page (/lead-forms) — coming soon placeholder
+- [x] Wire both routes in App.tsx

@@ -24,6 +24,8 @@ import ContactDetail from "./pages/ContactDetail";
 import Students from "./pages/Students";
 import Tasks from "./pages/Tasks";
 import Tools from "./pages/Tools";
+import Templates from "./pages/Templates";
+import LeadForms from "./pages/LeadForms";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -55,6 +57,8 @@ function Router() {
           <Route path="/scheduler" component={Scheduler} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/tools" component={Tools} />
+          <Route path="/templates" component={Templates} />
+          <Route path="/lead-forms" component={LeadForms} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />
