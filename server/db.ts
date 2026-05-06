@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, gte, lte, like, inArray, or } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, like, inArray, or, gt, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -817,4 +817,66 @@ export async function getStudentsByParentPortalUser(portalUserId: number) {
   const parentContact = await getContactByPortalUserId(portalUserId);
   if (!parentContact) return [];
   return await getStudentsByParentContactId(parentContact.id);
+}
+
+/**
+ * Returns all students linked to a parent contact, enriched with:
+ * - nextMeeting: the next upcoming appointment for that student (via clientId = student.id)
+ * - pendingTaskCount: number of non-Done tasks across all projects linked to that student
+ */
+export async function getStudentsWithSummary(parentContactId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const students = await getStudentsByParentContactId(parentContactId);
+  if (students.length === 0) return [];
+
+  const now = new Date();
+
+  const enriched = await Promise.all(
+    students.map(async (student) => {
+      // Next upcoming appointment
+      const appts = await db
+        .select()
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.clientId, student.id),
+            gt(appointments.startTime, now)
+          )
+        )
+        .orderBy(asc(appointments.startTime))
+        .limit(1);
+
+      const nextMeeting = appts[0] ?? null;
+
+      // Pending tasks: count non-Done tasks explicitly assigned to this student (contact)
+      const studentProjects = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.clientId, student.id));
+
+      let pendingTaskCount = 0;
+      if (studentProjects.length > 0) {
+        const projectIds = studentProjects.map((p) => p.id);
+        for (const pid of projectIds) {
+          const tasks = await db
+            .select()
+            .from(projectTasks)
+            .where(
+              and(
+                eq(projectTasks.projectId, pid),
+                eq(projectTasks.assignedTo, student.id),
+                ne(projectTasks.status, "Done")
+              )
+            );
+          pendingTaskCount += tasks.length;
+        }
+      }
+
+      return { ...student, nextMeeting, pendingTaskCount };
+    })
+  );
+
+  return enriched;
 }

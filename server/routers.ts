@@ -121,6 +121,13 @@ export const appRouter = router({
         return { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory };
       }),
 
+    // Get students linked to a parent contact with next meeting + task summary
+    getStudentsWithSummary: adminProcedure
+      .input(z.object({ parentContactId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getStudentsWithSummary(input.parentContactId);
+      }),
+
     // Link a contact to a portal user account
     linkPortalUser: adminProcedure
       .input(z.object({ contactId: z.number(), portalUserId: z.number().nullable() }))

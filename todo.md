@@ -133,3 +133,11 @@
 - [x] Client portal: Compass and content switch per selected student (by caseId)
 - [x] Preview Portal button on parent contact detail page
 - [x] Add Student form: parent selector dropdown to auto-link on creation
+
+## Parent Contact Detail Page Redesign
+- [x] ContactDetail: detect parent vs student (jobTitle !== "Student" = parent)
+- [x] Parent view: replace Compass tab with "Students" overview tab showing case cards
+- [x] Student case card: student name, case ID, next meeting date, task alert (⚠️ if tasks assigned)
+- [x] Parent view: show Financials, Activity, Files, Appointments, Details tabs (no Compass)
+- [x] Student view: keep existing Compass tab as default
+- [x] Backend: getStudentsWithSummary(parentContactId) — returns linked students with next meeting + task count
