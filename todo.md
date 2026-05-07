@@ -256,3 +256,21 @@
 - [x] Admin: drag nodes, connect edges, edit labels inline, save canvas
 - [x] Employee: read-only pan/zoom canvas view
 - [x] Remove old workflowSteps-based Workflows.tsx and replace with canvas version
+
+## Tasks Page Rebuild (Monday-style)
+- [x] DB: internalTasks table (title, description, status, projectId, assigneeId, dueDate, resources JSON, createdBy)
+- [x] DB: internalSubtasks table (taskId, title, isComplete, assigneeId, dueDate, resources JSON, sortOrder)
+- [x] DB: migration applied
+- [x] Backend: internalTasks.list (with subtasks joined), create, update, delete procedures
+- [x] Backend: internalTasks.addSubtask, toggleSubtask, deleteSubtask procedures
+- [x] Backend: internalTasks.addResource, removeResource, addSubtaskResource, removeSubtaskResource
+- [x] Tasks page: Monday-style list view with expandable rows
+- [x] Each row: title, assignee, project badge, due date, status badge, progress bar
+- [x] Progress bar: auto-calculates from subtask completion, animates on change
+- [x] Completion animation: confetti burst when all subtasks done, auto-marks Complete
+- [x] Status badges: Not Started (gray), In Progress (blue), Stuck (red), Complete (green)
+- [x] Resource panel: multiple URL+label items per task and subtask
+- [x] Create task dialog: title, description, assignee, project, due date, status
+- [x] Add subtask inline within expanded row
+- [x] Admin and employees can create/edit; clients cannot access
+- [x] Client Tasks stub section at bottom (coming soon)

@@ -488,3 +488,39 @@ export const workflowSteps = mysqlTable("workflowSteps", {
 
 export type WorkflowStep = typeof workflowSteps.$inferSelect;
 export type InsertWorkflowStep = typeof workflowSteps.$inferInsert;
+
+// ── Internal Tasks (team-only, Monday-style) ───────────────────────────────
+export const internalTasks = mysqlTable("internalTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["not_started", "in_progress", "stuck", "complete"])
+    .default("not_started")
+    .notNull(),
+  projectId: int("projectId"),
+  assigneeId: int("assigneeId"),
+  dueDate: datetime("dueDate"),
+  resources: text("resources"), // JSON: [{label, url}]
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InternalTask = typeof internalTasks.$inferSelect;
+export type InsertInternalTask = typeof internalTasks.$inferInsert;
+
+export const internalSubtasks = mysqlTable("internalSubtasks", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  isComplete: boolean("isComplete").default(false).notNull(),
+  assigneeId: int("assigneeId"),
+  dueDate: datetime("dueDate"),
+  resources: text("resources"), // JSON: [{label, url}]
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InternalSubtask = typeof internalSubtasks.$inferSelect;
+export type InsertInternalSubtask = typeof internalSubtasks.$inferInsert;
