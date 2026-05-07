@@ -501,6 +501,11 @@ export const internalTasks = mysqlTable("internalTasks", {
   assigneeId: int("assigneeId"),
   dueDate: datetime("dueDate"),
   resources: text("resources"), // JSON: [{label, url}]
+  linkedFileId: int("linkedFileId"),
+  linkedFileName: varchar("linkedFileName", { length: 255 }),
+  linkedFileUrl: text("linkedFileUrl"),
+  linkedStudentId: int("linkedStudentId"),
+  linkedStudentName: varchar("linkedStudentName", { length: 255 }),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

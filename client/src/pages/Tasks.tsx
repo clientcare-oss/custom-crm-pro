@@ -36,6 +36,8 @@ import {
   Circle,
   X,
   BookOpen,
+  Paperclip,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -67,6 +69,17 @@ type Task = {
   subtasks: Subtask[];
   createdBy: number;
   createdAt: Date;
+  linkedFileId: number | null;
+  linkedFileName: string | null;
+  linkedFileUrl: string | null;
+  linkedStudentId: number | null;
+  linkedStudentName: string | null;
+};
+
+type StudentWithFiles = {
+  id: number;
+  name: string;
+  files: { id: number; fileName: string; fileUrl: string; uploadedAt: Date }[];
 };
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -88,6 +101,17 @@ function fireConfetti() {
   })();
 }
 
+// ─── Format datetime ──────────────────────────────────────────────────────────
+function formatDateTime(d: Date | null | undefined): string {
+  if (!d) return "";
+  const dt = new Date(d);
+  // Check if time is midnight (date-only)
+  if (dt.getHours() === 0 && dt.getMinutes() === 0) {
+    return dt.toLocaleDateString();
+  }
+  return dt.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+}
+
 // ─── Resource panel ───────────────────────────────────────────────────────────
 function ResourcePanel({
   resources,
@@ -101,23 +125,19 @@ function ResourcePanel({
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
-
-  const handleAdd = () => {
-    if (!label.trim() || !url.trim()) return;
-    onAdd(label.trim(), url.trim());
-    setLabel("");
-    setUrl("");
-    setAdding(false);
-  };
-
+  function handleAdd() {
+    if (label.trim() && url.trim()) {
+      onAdd(label.trim(), url.trim());
+      setLabel(""); setUrl(""); setAdding(false);
+    }
+  }
   return (
-    <div className="mt-2">
+    <div className="mt-1">
       <div className="flex items-center gap-1 mb-1">
-        <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-xs font-medium text-muted-foreground">Resources</span>
         <button
-          onClick={() => setAdding(true)}
-          className="ml-1 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-0.5"
+          onClick={() => setAdding(!adding)}
+          className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-0.5"
         >
           <Plus className="h-3 w-3" /> Add
         </button>
@@ -189,7 +209,6 @@ function SubtaskRow({
   onRemoveResource: (subtaskId: number, resourceId: number) => void;
 }) {
   const [showResources, setShowResources] = useState(false);
-
   return (
     <div className="pl-8 py-2 border-b border-gray-50 last:border-0 group">
       <div className="flex items-start gap-2">
@@ -215,7 +234,7 @@ function SubtaskRow({
             )}
             {subtask.dueDate && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />{new Date(subtask.dueDate).toLocaleDateString()}
+                <Calendar className="h-3 w-3" />{formatDateTime(subtask.dueDate)}
               </span>
             )}
             <button
@@ -262,22 +281,23 @@ function TaskRow({
   const [expanded, setExpanded] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [newSubtaskDue, setNewSubtaskDue] = useState("");
   const [showResources, setShowResources] = useState(false);
   const [editingStatus, setEditingStatus] = useState(false);
   const prevComplete = useRef(false);
   const utils = trpc.useUtils();
-
-  const total = task.subtasks.length;
+  const subtaskCount = task.subtasks.length;
   const done = task.subtasks.filter((s) => s.isComplete).length;
-  const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+  const progress = subtaskCount > 0 ? Math.round((done / subtaskCount) * 100) : 0;
   const isComplete = task.status === "complete";
+  const statusCfg = STATUS_CONFIG[task.status];
 
   useEffect(() => {
-    if (isComplete && !prevComplete.current && total > 0) {
+    if (isComplete && !prevComplete.current && subtaskCount > 0) {
       fireConfetti();
     }
     prevComplete.current = isComplete;
-  }, [isComplete, total]);
+  }, [isComplete, subtaskCount]);
 
   const toggleSubtask = trpc.internalTasks.toggleSubtask.useMutation({
     onSuccess: () => utils.internalTasks.list.invalidate(),
@@ -286,6 +306,7 @@ function TaskRow({
     onSuccess: () => {
       utils.internalTasks.list.invalidate();
       setNewSubtaskTitle("");
+      setNewSubtaskDue("");
       setAddingSubtask(false);
     },
   });
@@ -314,8 +335,6 @@ function TaskRow({
     onSuccess: () => utils.internalTasks.list.invalidate(),
   });
 
-  const statusCfg = STATUS_CONFIG[task.status];
-
   return (
     <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${isComplete ? "border-green-200 bg-green-50/30" : "border-border bg-card"}`}>
       {/* Header */}
@@ -323,7 +342,6 @@ function TaskRow({
         <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
-
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`font-medium text-sm ${isComplete ? "line-through text-muted-foreground" : "text-foreground"}`}>
@@ -341,21 +359,32 @@ function TaskRow({
             )}
             {task.dueDate && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />{new Date(task.dueDate).toLocaleDateString()}
+                <Calendar className="h-3 w-3" />{formatDateTime(task.dueDate)}
               </span>
             )}
+            {task.linkedFileName && (
+              <a
+                href={task.linkedFileUrl ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5 flex items-center gap-1 hover:bg-amber-100 transition-colors"
+                title={task.linkedStudentName ? `${task.linkedStudentName} — ${task.linkedFileName}` : task.linkedFileName}
+              >
+                <FileText className="h-3 w-3" />
+                {task.linkedStudentName ? `${task.linkedStudentName}: ` : ""}{task.linkedFileName}
+              </a>
+            )}
           </div>
-          {total > 0 && (
+          {subtaskCount > 0 && (
             <div className="flex items-center gap-2 mt-1.5">
               <Progress
                 value={progress}
                 className={`h-1.5 flex-1 max-w-[200px] transition-all duration-700 ${progress === 100 ? "[&>div]:bg-green-500" : "[&>div]:bg-blue-500"}`}
               />
-              <span className="text-xs text-muted-foreground">{done}/{total}</span>
+              <span className="text-xs text-muted-foreground">{done}/{subtaskCount}</span>
             </div>
           )}
         </div>
-
         <div className="flex items-center gap-2 flex-shrink-0">
           {editingStatus ? (
             <Select
@@ -393,7 +422,6 @@ function TaskRow({
           </button>
         </div>
       </div>
-
       {/* Expanded */}
       {expanded && (
         <div className="border-t border-border">
@@ -423,7 +451,7 @@ function TaskRow({
           </div>
           <div className="px-8 py-2">
             {addingSubtask ? (
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-wrap gap-2 items-center">
                 <Input
                   autoFocus
                   placeholder="Subtask title..."
@@ -431,16 +459,23 @@ function TaskRow({
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && newSubtaskTitle.trim()) {
-                      addSubtask.mutate({ taskId: task.id, title: newSubtaskTitle.trim() });
+                      addSubtask.mutate({ taskId: task.id, title: newSubtaskTitle.trim(), dueDate: newSubtaskDue || undefined });
                     }
                     if (e.key === "Escape") setAddingSubtask(false);
                   }}
-                  className="h-7 text-sm"
+                  className="h-7 text-sm flex-1 min-w-[160px]"
                 />
-                <Button size="sm" onClick={() => { if (newSubtaskTitle.trim()) addSubtask.mutate({ taskId: task.id, title: newSubtaskTitle.trim() }); }} className="h-7 px-3 text-xs">
+                <input
+                  type="datetime-local"
+                  value={newSubtaskDue}
+                  onChange={(e) => setNewSubtaskDue(e.target.value)}
+                  className="h-7 text-xs border border-input rounded-md px-2 bg-background text-foreground"
+                  placeholder="Due date & time"
+                />
+                <Button size="sm" onClick={() => { if (newSubtaskTitle.trim()) addSubtask.mutate({ taskId: task.id, title: newSubtaskTitle.trim(), dueDate: newSubtaskDue || undefined }); }} className="h-7 px-3 text-xs">
                   Add
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setAddingSubtask(false)} className="h-7 px-2 text-xs">
+                <Button size="sm" variant="ghost" onClick={() => { setAddingSubtask(false); setNewSubtaskDue(""); }} className="h-7 px-2 text-xs">
                   Cancel
                 </Button>
               </div>
@@ -462,11 +497,13 @@ function CreateTaskDialog({
   onClose,
   users,
   projects,
+  studentsWithFiles,
 }: {
   open: boolean;
   onClose: () => void;
   users: { id: number; name: string }[];
   projects: { id: number; name: string }[];
+  studentsWithFiles: StudentWithFiles[];
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -474,15 +511,41 @@ function CreateTaskDialog({
   const [projectId, setProjectId] = useState<string>("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState<Task["status"]>("not_started");
+  // File picker state
+  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  const [selectedFileId, setSelectedFileId] = useState<string>("");
   const utils = trpc.useUtils();
+
+  const selectedStudent = studentsWithFiles.find(s => String(s.id) === selectedStudentId);
+  const selectedFile = selectedStudent?.files.find(f => String(f.id) === selectedFileId);
+
   const createTask = trpc.internalTasks.create.useMutation({
     onSuccess: () => {
       utils.internalTasks.list.invalidate();
       toast("Task created");
-      setTitle(""); setDescription(""); setAssigneeId(""); setProjectId(""); setDueDate(""); setStatus("not_started");
+      setTitle(""); setDescription(""); setAssigneeId(""); setProjectId("");
+      setDueDate(""); setStatus("not_started");
+      setSelectedStudentId(""); setSelectedFileId("");
       onClose();
     },
   });
+
+  function handleCreate() {
+    if (!title.trim()) return;
+    createTask.mutate({
+      title: title.trim(),
+      description: description || undefined,
+      assigneeId: assigneeId ? Number(assigneeId) : undefined,
+      projectId: projectId ? Number(projectId) : undefined,
+      dueDate: dueDate || undefined,
+      status,
+      linkedFileId: selectedFile ? selectedFile.id : undefined,
+      linkedFileName: selectedFile ? selectedFile.fileName : undefined,
+      linkedFileUrl: selectedFile ? selectedFile.fileUrl : undefined,
+      linkedStudentId: selectedStudent ? selectedStudent.id : undefined,
+      linkedStudentName: selectedStudent ? selectedStudent.name : undefined,
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -521,8 +584,13 @@ function CreateTaskDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Due Date</Label>
-              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="mt-1" />
+              <Label className="text-xs">Due Date & Time</Label>
+              <input
+                type="datetime-local"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="mt-1 w-full h-9 border border-input rounded-md px-3 text-sm bg-background text-foreground"
+              />
             </div>
             <div>
               <Label className="text-xs">Status</Label>
@@ -534,10 +602,56 @@ function CreateTaskDialog({
               </Select>
             </div>
           </div>
+          {/* Student file attachment */}
+          <div className="border border-dashed border-border rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-1.5">
+              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+              <Label className="text-xs text-muted-foreground">Attach Student File (optional)</Label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Student</Label>
+                <Select value={selectedStudentId} onValueChange={(v) => { setSelectedStudentId(v); setSelectedFileId(""); }}>
+                  <SelectTrigger className="mt-1 h-8 text-xs"><SelectValue placeholder="Select student" /></SelectTrigger>
+                  <SelectContent>
+                    {studentsWithFiles.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)} className="text-xs">{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">File</Label>
+                <Select
+                  value={selectedFileId}
+                  onValueChange={setSelectedFileId}
+                  disabled={!selectedStudentId || !selectedStudent?.files.length}
+                >
+                  <SelectTrigger className="mt-1 h-8 text-xs">
+                    <SelectValue placeholder={!selectedStudentId ? "Select student first" : selectedStudent?.files.length === 0 ? "No files" : "Select file"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedStudent?.files.map((f) => (
+                      <SelectItem key={f.id} value={String(f.id)} className="text-xs">{f.fileName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {selectedFile && (
+              <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                <FileText className="h-3 w-3" />
+                <span className="truncate">{selectedFile.fileName}</span>
+                <button onClick={() => { setSelectedFileId(""); setSelectedStudentId(""); }} className="ml-auto text-gray-400 hover:text-red-500">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => createTask.mutate({ title: title.trim(), description: description || undefined, assigneeId: assigneeId ? Number(assigneeId) : undefined, projectId: projectId ? Number(projectId) : undefined, dueDate: dueDate || undefined, status })} disabled={!title.trim() || createTask.isPending}>
+          <Button onClick={handleCreate} disabled={!title.trim() || createTask.isPending}>
             {createTask.isPending ? "Creating..." : "Create Task"}
           </Button>
         </DialogFooter>
@@ -551,17 +665,19 @@ export default function Tasks() {
   const [createOpen, setCreateOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | Task["status"]>("all");
   const { user } = useAuth();
-
   const { data: tasks = [], isLoading } = trpc.internalTasks.list.useQuery({ status: statusFilter });
   const { data: projectsData = [] } = trpc.projects.list.useQuery();
-
   const { data: teamUsers = [] } = trpc.internalTasks.getTeamUsers.useQuery();
+  const { data: studentsData = [] } = trpc.internalTasks.getStudentsWithFiles.useQuery();
   const users: { id: number; name: string }[] = (teamUsers as { id: number; name: string | null }[]).map(u => ({ id: u.id, name: u.name ?? "" }));
   const projects: { id: number; name: string }[] = (projectsData as any[]).map((p) => ({ id: p.id, name: p.name }));
-
+  const studentsWithFiles: StudentWithFiles[] = (studentsData as any[]).map((s) => ({
+    id: s.id,
+    name: s.name,
+    files: (s.files || []).map((f: any) => ({ id: f.id, fileName: f.fileName, fileUrl: f.fileUrl, uploadedAt: new Date(f.uploadedAt) })),
+  }));
   const totalTasks = tasks.length;
   const completedTasks = (tasks as Task[]).filter((t) => t.status === "complete").length;
-
   return (
     <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto">
@@ -574,7 +690,6 @@ export default function Tasks() {
             <Plus className="h-4 w-4" />New Task
           </Button>
         </div>
-
         {/* Status filter */}
         <div className="flex gap-1 mb-5 border-b border-border pb-3 flex-wrap">
           {(["all", "not_started", "in_progress", "stuck", "complete"] as const).map((s) => (
@@ -587,7 +702,6 @@ export default function Tasks() {
             </button>
           ))}
         </div>
-
         {/* Task list */}
         {isLoading ? (
           <div className="space-y-3">
@@ -606,15 +720,19 @@ export default function Tasks() {
             ))}
           </div>
         )}
-
         {/* Client Tasks stub */}
         <div className="mt-8 border border-dashed border-border rounded-lg p-4 text-center">
           <p className="text-sm font-medium text-muted-foreground">Client Tasks</p>
           <p className="text-xs text-muted-foreground mt-1">Client-assigned tasks will appear here — coming soon.</p>
         </div>
       </div>
-
-      <CreateTaskDialog open={createOpen} onClose={() => setCreateOpen(false)} users={users} projects={projects} />
+      <CreateTaskDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        users={users}
+        projects={projects}
+        studentsWithFiles={studentsWithFiles}
+      />
     </DashboardLayout>
   );
 }

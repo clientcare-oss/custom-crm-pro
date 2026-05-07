@@ -274,3 +274,20 @@
 - [x] Add subtask inline within expanded row
 - [x] Admin and employees can create/edit; clients cannot access
 - [x] Client Tasks stub section at bottom (coming soon)
+
+## Tasks: Due Date + Time
+- [x] DB: dueDate column already stores datetime — verify it accepts time component
+- [x] Backend: ensure dueDate is passed as full ISO datetime string (not date-only)
+- [x] Tasks UI: replace date-only input with datetime-local input for task create dialog
+- [x] Tasks UI: replace date-only input with datetime-local input for subtask add form
+- [x] Tasks UI: display due date+time in task rows and subtask rows (formatted local time)
+
+## Tasks: Student File Reference
+- [x] DB: add linkedFileId (nullable int FK to contactFiles) and linkedFileName (nullable varchar) to internalTasks
+- [x] DB migration: generate and apply migration for new columns
+- [x] Backend: update internalTasks.create to accept linkedFileId/linkedFileName
+- [x] Backend: update internalTasks.update to accept linkedFileId/linkedFileName
+- [x] Backend: update internalTasks.list to return linkedFileId/linkedFileName
+- [x] Backend: add getStudentsWithFiles procedure for task file picker
+- [x] Tasks UI: add optional student file picker in CreateTaskDialog (select student → select file from their Files section)
+- [x] Tasks UI: display linked file badge in task row with link to file

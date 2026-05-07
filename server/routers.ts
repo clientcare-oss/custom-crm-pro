@@ -5,7 +5,7 @@ import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, desc } from "drizzle-orm";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
@@ -1210,6 +1210,29 @@ export const appRouter = router({
           .then(rows => rows.filter(u => u.role !== "client"));
       }),
 
+    // Returns all students that have at least one file, for task file picker
+    getStudentsWithFiles: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { contacts, clientFiles } = await import("../drizzle/schema");
+        const students = await database
+          .select({ id: contacts.id, firstName: contacts.firstName, lastName: contacts.lastName })
+          .from(contacts)
+          .where(eq(contacts.jobTitle, "Student"));
+        const result = await Promise.all(students.map(async (s) => {
+          const files = await database
+            .select({ id: clientFiles.id, fileName: clientFiles.fileName, fileUrl: clientFiles.fileUrl, uploadedAt: clientFiles.uploadedAt })
+            .from(clientFiles)
+            .where(eq(clientFiles.clientId, s.id))
+            .orderBy(desc(clientFiles.uploadedAt));
+          return { id: s.id, name: `${s.firstName} ${s.lastName}`, files };
+        }));
+        // Return all students (even those without files) so admin can still see them
+        return result;
+      }),
+
     list: protectedProcedure
       .input(z.object({
         status: z.enum(["all", "not_started", "in_progress", "stuck", "complete"]).optional(),
@@ -1259,6 +1282,11 @@ export const appRouter = router({
         projectId: z.number().optional(),
         assigneeId: z.number().optional(),
         dueDate: z.string().optional(),
+        linkedFileId: z.number().optional(),
+        linkedFileName: z.string().optional(),
+        linkedFileUrl: z.string().optional(),
+        linkedStudentId: z.number().optional(),
+        linkedStudentName: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const database = await db.getDb();
@@ -1272,6 +1300,11 @@ export const appRouter = router({
           assigneeId: input.assigneeId,
           dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
           resources: "[]",
+          linkedFileId: input.linkedFileId,
+          linkedFileName: input.linkedFileName,
+          linkedFileUrl: input.linkedFileUrl,
+          linkedStudentId: input.linkedStudentId,
+          linkedStudentName: input.linkedStudentName,
           createdBy: ctx.user.id,
         });
         return { id: (result as any).insertId };
@@ -1286,6 +1319,11 @@ export const appRouter = router({
         projectId: z.number().nullable().optional(),
         assigneeId: z.number().nullable().optional(),
         dueDate: z.string().nullable().optional(),
+        linkedFileId: z.number().nullable().optional(),
+        linkedFileName: z.string().nullable().optional(),
+        linkedFileUrl: z.string().nullable().optional(),
+        linkedStudentId: z.number().nullable().optional(),
+        linkedStudentName: z.string().nullable().optional(),
       }))
       .mutation(async ({ input }) => {
         const database = await db.getDb();
@@ -1299,6 +1337,11 @@ export const appRouter = router({
         if (data.projectId !== undefined) updateData.projectId = data.projectId;
         if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+        if (data.linkedFileId !== undefined) updateData.linkedFileId = data.linkedFileId;
+        if (data.linkedFileName !== undefined) updateData.linkedFileName = data.linkedFileName;
+        if (data.linkedFileUrl !== undefined) updateData.linkedFileUrl = data.linkedFileUrl;
+        if (data.linkedStudentId !== undefined) updateData.linkedStudentId = data.linkedStudentId;
+        if (data.linkedStudentName !== undefined) updateData.linkedStudentName = data.linkedStudentName;
         await database.update(internalTasks).set(updateData).where(eq(internalTasks.id, id));
         return { success: true };
       }),
