@@ -466,6 +466,7 @@ export const workflows = mysqlTable("workflows", {
   description: text("description"),
   category: varchar("category", { length: 128 }),
   color: varchar("color", { length: 32 }).default("#3b82f6").notNull(),
+  canvasData: text("canvasData"),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

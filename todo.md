@@ -244,3 +244,15 @@
 - [x] Role-based: admin/owner can create/edit, all users can view
 - [x] Add Workflows sidebar nav item (GitBranch icon)
 - [x] Wire /workflows route in App.tsx
+
+## Workflows Visual Canvas (replaces step-list)
+- [x] Install @xyflow/react (React Flow v12)
+- [x] Update workflows table: add canvasData JSON column (stores nodes + edges), drop workflowSteps table dependency
+- [x] Apply DB migration for canvasData column
+- [x] Backend: update workflows.get to return canvasData, update workflows.saveCanvas procedure
+- [x] Build visual Workflows page: left panel = workflow list, right = React Flow canvas
+- [x] Canvas node types: default card (label, color, notes), decision diamond, sticky note
+- [x] Toolbar: add node button, node color picker, delete selected, zoom in/out, fit view
+- [x] Admin: drag nodes, connect edges, edit labels inline, save canvas
+- [x] Employee: read-only pan/zoom canvas view
+- [x] Remove old workflowSteps-based Workflows.tsx and replace with canvas version

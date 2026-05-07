@@ -1128,16 +1128,8 @@ export const appRouter = router({
     list: protectedProcedure.query(async () => {
       const database = await db.getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      const { workflows, workflowSteps } = await import("../drizzle/schema");
-      const wfs = await database.select().from(workflows).orderBy(asc(workflows.createdAt));
-      // attach step count
-      const withCounts = await Promise.all(
-        wfs.map(async (w) => {
-          const steps = await database.select().from(workflowSteps).where(eq(workflowSteps.workflowId, w.id));
-          return { ...w, stepCount: steps.length };
-        })
-      );
-      return withCounts;
+      const { workflows } = await import("../drizzle/schema");
+      return await database.select().from(workflows).orderBy(asc(workflows.createdAt));
     }),
 
     get: protectedProcedure
@@ -1145,11 +1137,10 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { workflows, workflowSteps } = await import("../drizzle/schema");
+        const { workflows } = await import("../drizzle/schema");
         const [wf] = await database.select().from(workflows).where(eq(workflows.id, input.id));
         if (!wf) throw new TRPCError({ code: "NOT_FOUND" });
-        const steps = await database.select().from(workflowSteps).where(eq(workflowSteps.workflowId, input.id)).orderBy(asc(workflowSteps.stepNumber));
-        return { ...wf, steps };
+        return wf;
       }),
 
     create: adminProcedure
@@ -1189,35 +1180,21 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { workflows, workflowSteps } = await import("../drizzle/schema");
-        await database.delete(workflowSteps).where(eq(workflowSteps.workflowId, input.id));
+        const { workflows } = await import("../drizzle/schema");
         await database.delete(workflows).where(eq(workflows.id, input.id));
         return { success: true };
       }),
 
-    saveSteps: adminProcedure
+    saveCanvas: adminProcedure
       .input(z.object({
-        workflowId: z.number(),
-        steps: z.array(z.object({
-          id: z.number().optional(),
-          stepNumber: z.number(),
-          title: z.string().min(1),
-          description: z.string().optional(),
-          notes: z.string().optional(),
-          role: z.string().optional(),
-        })),
+        id: z.number(),
+        canvasData: z.string(),
       }))
       .mutation(async ({ input }) => {
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { workflowSteps } = await import("../drizzle/schema");
-        // Replace all steps for this workflow
-        await database.delete(workflowSteps).where(eq(workflowSteps.workflowId, input.workflowId));
-        if (input.steps.length > 0) {
-          await database.insert(workflowSteps).values(
-            input.steps.map((s) => ({ workflowId: input.workflowId, stepNumber: s.stepNumber, title: s.title, description: s.description, notes: s.notes, role: s.role }))
-          );
-        }
+        const { workflows } = await import("../drizzle/schema");
+        await database.update(workflows).set({ canvasData: input.canvasData }).where(eq(workflows.id, input.id));
         return { success: true };
       }),
   }),
