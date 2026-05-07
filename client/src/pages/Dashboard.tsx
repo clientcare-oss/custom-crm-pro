@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2 } from "lucide-react";
+import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2, Sparkles, AlertTriangle, CalendarClock, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { ClientPortalPreview } from "@/components/ClientPortalPreview";
 import { useTerminology } from "@/contexts/TerminologyContext";
@@ -21,6 +21,7 @@ export default function Dashboard() {
   );
 
   const isLoading = leadsLoading || projectsLoading || invoicesLoading || tasksLoading;
+  const { data: briefing, isLoading: briefingLoading } = trpc.ai.dailyBriefing.useQuery(undefined, { enabled: user?.role === "admin" });
 
   // Calculate metrics
   const openTasks = (allTasks as any[] | undefined)?.filter((t) => t.status !== "complete").length ?? 0;
@@ -36,6 +37,84 @@ export default function Dashboard() {
         <h1 className="text-4xl font-bold tracking-tight">Welcome back, {user?.name || "User"}</h1>
         <p className="text-lg text-muted-foreground">Here's your business overview</p>
       </div>
+
+      {/* Daily Briefing */}
+      {user?.role === "admin" && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h2 className="font-semibold text-base">
+              {briefingLoading ? "Loading your day..." : (briefing?.date ?? "Today's Briefing")}
+            </h2>
+          </div>
+          {briefingLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Fetching your schedule...</span>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Today's Meetings ({briefing?.todayAppointments?.length ?? 0})
+                </div>
+                {!briefing?.todayAppointments?.length ? (
+                  <p className="text-sm text-muted-foreground">No meetings today</p>
+                ) : (
+                  <div className="space-y-1">
+                    {briefing.todayAppointments.slice(0, 4).map((a: any) => (
+                      <div key={a.id} className="text-sm flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                        <span className="truncate">{a.title}</span>
+                        <span className="text-muted-foreground text-xs shrink-0">{new Date(a.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                  Overdue ({briefing?.overdueTasks?.length ?? 0})
+                </div>
+                {!briefing?.overdueTasks?.length ? (
+                  <p className="text-sm text-muted-foreground">Nothing overdue ✓</p>
+                ) : (
+                  <div className="space-y-1">
+                    {briefing.overdueTasks.slice(0, 4).map((t: any) => (
+                      <div key={t.id} className="text-sm flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
+                        <span className="truncate">{t.title}</span>
+                        {t.linkedStudentName && <span className="text-muted-foreground text-xs shrink-0">— {t.linkedStudentName}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <Clock className="h-3.5 w-3.5 text-amber-500" />
+                  Due Today ({briefing?.dueTodayTasks?.length ?? 0})
+                </div>
+                {!briefing?.dueTodayTasks?.length ? (
+                  <p className="text-sm text-muted-foreground">Nothing due today</p>
+                ) : (
+                  <div className="space-y-1">
+                    {briefing.dueTodayTasks.slice(0, 4).map((t: any) => (
+                      <div key={t.id} className="text-sm flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                        <span className="truncate">{t.title}</span>
+                        {t.linkedStudentName && <span className="text-muted-foreground text-xs shrink-0">— {t.linkedStudentName}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -344,3 +344,10 @@
 - [ ] Frontend: SOP builder — create/edit walkthrough with ordered steps (title, instructions/script, notes)
 - [ ] Frontend: Live runner — step-by-step guided view with checkboxes, script display, progress bar
 - [ ] Frontend: "Run Walkthrough" button inside student detail page
+
+## AI Assistant
+- [ ] Backend: ai.chat tRPC procedure — fetches live CRM context (today's appointments, overdue tasks, recent students) and sends to LLM with system prompt
+- [ ] Backend: ai.dailyBriefing procedure — structured summary of today's schedule, overdue items, and priority actions
+- [ ] Frontend: floating AI chat button (bottom-right, all pages) with slide-up panel
+- [ ] Frontend: chat history per session, markdown rendering, loading state
+- [ ] Frontend: daily briefing card on dashboard
