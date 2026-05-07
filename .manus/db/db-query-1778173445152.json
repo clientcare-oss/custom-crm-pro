@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `timeEntries` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`studentId` int NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`startedAt` bigint NOT NULL,\n\t`endedAt` bigint,\n\t`durationSeconds` int,\n\t`notes` text,\n\t`hourlyRate` decimal(10,2),\n\t`billable` boolean NOT NULL DEFAULT true,\n\t`invoiced` boolean NOT NULL DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `timeEntries_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `contacts` ADD `hourlyRate` decimal(10,2);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute CREATE TABLE `timeEntries` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`studentId` int NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`startedAt` bigint NOT NULL,\n\t`endedAt` bigint,\n\t`durationSeconds` int,\n\t`notes` text,\n\t`hourlyRate` decimal(10,2),\n\t`billable` boolean NOT NULL DEFAULT true,\n\t`invoiced` boolean NOT NULL DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `timeEntries_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `contacts` ADD `hourlyRate` decimal(10,2);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 926
+}

@@ -1,5 +1,6 @@
 import {
   int,
+  bigint,
   mysqlEnum,
   mysqlTable,
   text,
@@ -52,6 +53,7 @@ export const contacts = mysqlTable("contacts", {
   portalUserId: int("portalUserId"),  // links to users.id when client has a portal account
   caseId: varchar("caseId", { length: 20 }),  // unique case identifier e.g. WP-2026-0001
   parentContactId: int("parentContactId"),  // for students: links to parent contact's id
+  hourlyRate: decimal("hourlyRate", { precision: 10, scale: 2 }),  // billing rate per hour
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -546,3 +548,21 @@ export const knowledgeBase = mysqlTable("knowledgeBase", {
 });
 export type KnowledgeBase = typeof knowledgeBase.$inferSelect;
 export type InsertKnowledgeBase = typeof knowledgeBase.$inferInsert;
+
+// ============ TIME ENTRIES ============
+export const timeEntries = mysqlTable("timeEntries", {
+  id: int("id").autoincrement().primaryKey(),
+  studentId: int("studentId").notNull(),
+  ownerId: int("ownerId").notNull(),
+  startedAt: bigint("startedAt", { mode: "number" }).notNull(),
+  endedAt: bigint("endedAt", { mode: "number" }),
+  durationSeconds: int("durationSeconds"),
+  notes: text("notes"),
+  hourlyRate: decimal("hourlyRate", { precision: 10, scale: 2 }),
+  billable: boolean("billable").default(true).notNull(),
+  invoiced: boolean("invoiced").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TimeEntry = typeof timeEntries.$inferSelect;
+export type InsertTimeEntry = typeof timeEntries.$inferInsert;

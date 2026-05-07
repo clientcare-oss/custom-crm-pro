@@ -309,3 +309,21 @@
 - [x] Create Smart File block: dialog asking "Start from Scratch" or "From Template Gallery"
 - [x] Email Templates block: list/manage email templates
 - [x] Purchasables block: placeholder section for purchasable items/packages
+
+## Student Time Tracker
+- [x] DB: timeEntries table (id, studentId, ownerId, startedAt, endedAt, durationSeconds, notes, hourlyRate, billable, invoiced, createdAt)
+- [x] DB: add hourlyRate column to contacts table (default rate per student)
+- [x] DB migration: generate and apply
+- [x] Backend: timeEntries.start procedure (create open entry)
+- [x] Backend: timeEntries.stop procedure (close open entry, calc duration)
+- [x] Backend: timeEntries.list procedure (by studentId)
+- [x] Backend: timeEntries.delete procedure
+- [x] Backend: timeEntries.updateNotes procedure
+- [x] Backend: timeEntries.getActive procedure (check if timer running)
+- [x] Backend: contacts.setHourlyRate procedure
+- [x] Frontend: Time Tracker tab in ContactDetail page
+- [x] Frontend: live start/stop timer with elapsed display
+- [x] Frontend: session log table (date, duration, notes, rate, amount, billable toggle)
+- [x] Frontend: hourly rate setting per student (editable inline)
+- [x] Frontend: billing summary (total hours, total unbilled amount)
+- [x] Frontend: mark entries as invoiced / unbilled filter

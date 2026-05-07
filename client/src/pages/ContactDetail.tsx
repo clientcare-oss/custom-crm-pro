@@ -1,13 +1,13 @@
 import { trpc } from "@/lib/trpc";
 import { useParams, useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2 } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { toast } from "sonner";
 
@@ -619,6 +619,7 @@ function StudentTabs({
         <TabsTrigger value="activity" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Communication</TabsTrigger>
         <TabsTrigger value="tasks" className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
         <TabsTrigger value="files" className="flex items-center gap-1.5"><Folder className="h-3.5 w-3.5" />Files {files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>}</TabsTrigger>
+        <TabsTrigger value="time-tracker" className="flex items-center gap-1.5"><Timer className="h-3.5 w-3.5" />Time Tracker</TabsTrigger>
         <TabsTrigger value="tools" className="flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Tools</TabsTrigger>
         <TabsTrigger value="projects" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Cases {projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{projects.length}</span>}</TabsTrigger>
         <TabsTrigger value="financials" className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financials {invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{invoices.length}</span>}</TabsTrigger>
@@ -777,6 +778,10 @@ function StudentTabs({
         )}
       </TabsContent>
 
+      {/* TIME TRACKER */}
+      <TabsContent value="time-tracker" className="mt-4">
+        <TimeTrackerTab studentId={contactId} studentName={fullName} contact={contact} />
+      </TabsContent>
       {/* TOOLS */}
       <TabsContent value="tools" className="mt-4">
         <ToolsTabContent contactId={contactId} />
@@ -1124,5 +1129,296 @@ function TasksTabContent({ contactId, projects }: { contactId: number; projects:
         ))
       )}
     </TabsContent>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// TIME TRACKER TAB
+// ─────────────────────────────────────────────────────────
+function TimeTrackerTab({ studentId, studentName, contact }: { studentId: number; studentName: string; contact: any }) {
+  const utils = trpc.useUtils();
+  const [elapsed, setElapsed] = useState(0);
+  const [editingRate, setEditingRate] = useState(false);
+  const [rateInput, setRateInput] = useState(contact.hourlyRate ?? "");
+  const [editingNotes, setEditingNotes] = useState<number | null>(null);
+  const [notesInput, setNotesInput] = useState("");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch active timer
+  const { data: activeEntry, refetch: refetchActive } = trpc.timeTracker.getActive.useQuery(
+    { studentId },
+    { refetchInterval: 5000 }
+  );
+
+  // Fetch session log
+  const { data: entries = [] } = trpc.timeTracker.list.useQuery({ studentId });
+
+  // Live elapsed counter
+  useEffect(() => {
+    if (activeEntry) {
+      const tick = () => setElapsed(Math.floor((Date.now() - activeEntry.startedAt) / 1000));
+      tick();
+      intervalRef.current = setInterval(tick, 1000);
+    } else {
+      setElapsed(0);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [activeEntry?.id, activeEntry?.startedAt]);
+
+  const startMutation = trpc.timeTracker.start.useMutation({
+    onSuccess: () => {
+      toast.success("Timer started");
+      utils.timeTracker.getActive.invalidate({ studentId });
+      utils.timeTracker.list.invalidate({ studentId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const stopMutation = trpc.timeTracker.stop.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Session saved — ${formatDuration(data.durationSeconds)}`);
+      utils.timeTracker.getActive.invalidate({ studentId });
+      utils.timeTracker.list.invalidate({ studentId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteMutation = trpc.timeTracker.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Entry deleted");
+      utils.timeTracker.list.invalidate({ studentId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const toggleFlagMutation = trpc.timeTracker.toggleFlag.useMutation({
+    onSuccess: () => utils.timeTracker.list.invalidate({ studentId }),
+    onError: (e) => toast.error(e.message),
+  });
+
+  const updateNotesMutation = trpc.timeTracker.updateNotes.useMutation({
+    onSuccess: () => {
+      utils.timeTracker.list.invalidate({ studentId });
+      setEditingNotes(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const setRateMutation = trpc.timeTracker.setHourlyRate.useMutation({
+    onSuccess: () => {
+      toast.success("Hourly rate saved");
+      setEditingRate(false);
+      utils.contacts.detail.invalidate({ id: studentId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Billing summary
+  const billableEntries = entries.filter((e: any) => e.billable && !e.invoiced);
+  const totalBillableSeconds = billableEntries.reduce((sum: number, e: any) => sum + (e.durationSeconds ?? 0), 0);
+  const hourlyRate = parseFloat(contact.hourlyRate ?? rateInput ?? "0") || 0;
+  const totalBillableAmount = (totalBillableSeconds / 3600) * hourlyRate;
+  const totalTrackedSeconds = entries.reduce((sum: number, e: any) => sum + (e.durationSeconds ?? 0), 0);
+
+  function formatDuration(seconds: number | null | undefined) {
+    if (!seconds) return "0m 0s";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m ${s}s`;
+  }
+
+  function formatElapsed(seconds: number) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
+
+  const isRunning = !!activeEntry;
+
+  return (
+    <div className="space-y-5">
+      {/* Timer card */}
+      <div className={`rounded-2xl border-2 p-6 transition-colors ${isRunning ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" : "border-border bg-card"}`}>
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          {/* Clock display */}
+          <div className="flex-1 text-center sm:text-left">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              {isRunning ? "Session in Progress" : "Ready to Track"}
+            </p>
+            <p className={`text-5xl font-mono font-bold tabular-nums tracking-tight ${isRunning ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+              {formatElapsed(elapsed)}
+            </p>
+            {isRunning && activeEntry && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Started {new Date(activeEntry.startedAt).toLocaleTimeString()}
+                {activeEntry.hourlyRate ? ` · $${activeEntry.hourlyRate}/hr` : ""}
+              </p>
+            )}
+          </div>
+
+          {/* Controls */}
+          <div className="flex flex-col items-center gap-3">
+            {!isRunning ? (
+              <Button
+                size="lg"
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8"
+                onClick={() => startMutation.mutate({ studentId })}
+                disabled={startMutation.isPending}
+              >
+                {startMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
+                Start Timer
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                variant="destructive"
+                className="gap-2 px-8"
+                onClick={() => activeEntry && stopMutation.mutate({ entryId: activeEntry.id })}
+                disabled={stopMutation.isPending}
+              >
+                {stopMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Square className="h-5 w-5" />}
+                Stop & Save
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Billing summary + hourly rate */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="p-4 rounded-xl border">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total Tracked</p>
+          <p className="text-2xl font-bold text-foreground">{formatDuration(totalTrackedSeconds)}</p>
+          <p className="text-xs text-muted-foreground">{entries.length} session{entries.length !== 1 ? "s" : ""}</p>
+        </Card>
+        <Card className="p-4 rounded-xl border">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Unbilled Hours</p>
+          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{formatDuration(totalBillableSeconds)}</p>
+          <p className="text-xs text-muted-foreground">{billableEntries.length} unbilled session{billableEntries.length !== 1 ? "s" : ""}</p>
+        </Card>
+        <Card className="p-4 rounded-xl border">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unbilled Amount</p>
+            <button onClick={() => { setEditingRate(true); setRateInput(contact.hourlyRate ?? ""); }} className="text-xs text-accent hover:underline">
+              {contact.hourlyRate ? `$${contact.hourlyRate}/hr` : "Set rate"}
+            </button>
+          </div>
+          {editingRate ? (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-sm font-medium text-muted-foreground">$</span>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={rateInput}
+                onChange={(e) => setRateInput(e.target.value)}
+                className="h-8 text-sm w-24"
+                placeholder="0.00"
+                autoFocus
+              />
+              <span className="text-sm text-muted-foreground">/hr</span>
+              <Button size="sm" className="h-8 px-3" onClick={() => setRateMutation.mutate({ studentId, hourlyRate: rateInput })} disabled={setRateMutation.isPending}>
+                {setRateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+              </Button>
+              <button onClick={() => setEditingRate(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            </div>
+          ) : (
+            <p className="text-2xl font-bold text-foreground">
+              {hourlyRate > 0 ? `$${totalBillableAmount.toFixed(2)}` : <span className="text-base text-muted-foreground">Set hourly rate →</span>}
+            </p>
+          )}
+        </Card>
+      </div>
+
+      {/* Session log */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" /> Session Log
+          </h3>
+          <p className="text-xs text-muted-foreground">Completed sessions only</p>
+        </div>
+
+        {entries.length === 0 ? (
+          <Card className="flex flex-col items-center justify-center py-12 text-center border-dashed">
+            <Timer className="h-8 w-8 text-muted-foreground/30 mb-2" />
+            <p className="text-sm text-muted-foreground">No sessions recorded yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Start the timer to begin tracking time for {studentName}</p>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {entries.map((entry: any) => {
+              const amount = entry.hourlyRate && entry.durationSeconds
+                ? ((entry.durationSeconds / 3600) * parseFloat(entry.hourlyRate)).toFixed(2)
+                : null;
+              return (
+                <div key={entry.id} className="group rounded-xl border bg-card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-semibold tabular-nums text-foreground">{formatDuration(entry.durationSeconds)}</span>
+                      {entry.hourlyRate && <span className="text-xs text-muted-foreground">${entry.hourlyRate}/hr</span>}
+                      {amount && <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">${amount}</span>}
+                      <span className="text-xs text-muted-foreground">{new Date(entry.startedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(entry.startedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })} – {entry.endedAt ? new Date(entry.endedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                    </div>
+                    {editingNotes === entry.id ? (
+                      <div className="flex items-center gap-2 mt-2">
+                        <Input
+                          value={notesInput}
+                          onChange={(e) => setNotesInput(e.target.value)}
+                          placeholder="Add session notes..."
+                          className="h-7 text-xs flex-1"
+                          autoFocus
+                        />
+                        <Button size="sm" className="h-7 px-2" onClick={() => updateNotesMutation.mutate({ entryId: entry.id, notes: notesInput })}>
+                          <Save className="h-3 w-3" />
+                        </Button>
+                        <button onClick={() => setEditingNotes(null)}><X className="h-4 w-4 text-muted-foreground" /></button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setEditingNotes(entry.id); setNotesInput(entry.notes ?? ""); }}
+                        className="text-xs text-muted-foreground hover:text-foreground mt-1 text-left"
+                      >
+                        {entry.notes || <span className="italic">Add notes…</span>}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Billable toggle */}
+                    <button
+                      onClick={() => toggleFlagMutation.mutate({ entryId: entry.id, field: "billable", value: !entry.billable })}
+                      className={`text-xs px-2 py-1 rounded-full border font-medium transition-colors ${entry.billable ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300" : "bg-muted border-border text-muted-foreground"}`}
+                      title="Toggle billable"
+                    >
+                      {entry.billable ? "Billable" : "Non-billable"}
+                    </button>
+                    {/* Invoiced toggle */}
+                    <button
+                      onClick={() => toggleFlagMutation.mutate({ entryId: entry.id, field: "invoiced", value: !entry.invoiced })}
+                      className={`text-xs px-2 py-1 rounded-full border font-medium transition-colors ${entry.invoiced ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300" : "bg-muted border-border text-muted-foreground"}`}
+                      title="Toggle invoiced"
+                    >
+                      {entry.invoiced ? "Invoiced" : "Not invoiced"}
+                    </button>
+                    {/* Delete */}
+                    <button
+                      onClick={() => { if (confirm("Delete this session?")) deleteMutation.mutate({ entryId: entry.id }); }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
