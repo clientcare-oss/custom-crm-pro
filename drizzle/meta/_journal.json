@@ -120,6 +120,13 @@
       "when": 1778174678045,
       "tag": "0016_easy_katie_power",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1778177506860,
+      "tag": "0017_parallel_wildside",
+      "breakpoints": true
     }
   ]
 }

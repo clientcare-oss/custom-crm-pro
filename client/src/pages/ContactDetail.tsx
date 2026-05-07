@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2 } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { toast } from "sonner";
 
@@ -620,6 +620,7 @@ function StudentTabs({
         <TabsTrigger value="tasks" className="flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
         <TabsTrigger value="files" className="flex items-center gap-1.5"><Folder className="h-3.5 w-3.5" />Files {files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>}</TabsTrigger>
         <TabsTrigger value="time-tracker" className="flex items-center gap-1.5"><Timer className="h-3.5 w-3.5" />Time Tracker</TabsTrigger>
+        <TabsTrigger value="call-logs" className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />Call Logs</TabsTrigger>
         <TabsTrigger value="tools" className="flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Tools</TabsTrigger>
         <TabsTrigger value="projects" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Cases {projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{projects.length}</span>}</TabsTrigger>
         <TabsTrigger value="financials" className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financials {invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{invoices.length}</span>}</TabsTrigger>
@@ -781,6 +782,10 @@ function StudentTabs({
       {/* TIME TRACKER */}
       <TabsContent value="time-tracker" className="mt-4">
         <TimeTrackerTab studentId={contactId} studentName={fullName} contact={contact} />
+      </TabsContent>
+      {/* CALL LOGS */}
+      <TabsContent value="call-logs" className="mt-4">
+        <CallLogsTab studentId={contactId} />
       </TabsContent>
       {/* TOOLS */}
       <TabsContent value="tools" className="mt-4">
@@ -1419,6 +1424,106 @@ function TimeTrackerTab({ studentId, studentName, contact }: { studentId: number
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// CALL LOGS TAB — shows Quo (OpenPhone) call transcripts for this student
+// ─────────────────────────────────────────────────────────
+function CallLogsTab({ studentId }: { studentId: number }) {
+  const { data: logs = [], isLoading } = trpc.callLogs.listByStudent.useQuery({ studentId });
+  const deleteMutation = trpc.callLogs.delete.useMutation({
+    onSuccess: () => { toast.success("Call log deleted"); utils.callLogs.listByStudent.invalidate({ studentId }); },
+    onError: (e) => toast.error("Failed to delete: " + e.message),
+  });
+  const utils = trpc.useUtils();
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  function formatDuration(secs: number) {
+    if (!secs) return "—";
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  }
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-32"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (logs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <Phone className="h-10 w-10 text-muted-foreground/30" />
+        <p className="text-sm font-medium text-muted-foreground">No call logs yet</p>
+        <p className="text-xs text-muted-foreground/70 max-w-xs">
+          Call logs from Quo (OpenPhone) will appear here automatically when a call ends and a transcript is ready.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">{logs.length} call{logs.length !== 1 ? "s" : ""} logged</p>
+      {logs.map((log: any) => (
+        <Card key={log.id} className="p-4 rounded-lg border border-border">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`flex-shrink-0 rounded-full p-2 ${log.direction === "inbound" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"}`}>
+                {log.direction === "inbound" ? <PhoneIncoming className="h-4 w-4" /> : <PhoneOutgoing className="h-4 w-4" />}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-foreground">
+                    {log.direction === "inbound" ? "Incoming" : "Outgoing"} Call
+                  </span>
+                  <span className="text-xs text-muted-foreground">{formatDuration(log.durationSeconds)}</span>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <span className="text-xs text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground flex-wrap">
+                  {log.fromNumber && <span>From: {log.fromNumber}</span>}
+                  {log.toNumber && <span>To: {log.toNumber}</span>}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                className="text-xs text-accent hover:underline"
+              >
+                {expandedId === log.id ? "Hide" : "View transcript"}
+              </button>
+              <button
+                onClick={() => { if (confirm("Delete this call log?")) deleteMutation.mutate({ id: log.id }); }}
+                className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Summary always shown if available */}
+          {log.summary && (
+            <div className="mt-3 rounded-lg bg-accent/5 border border-accent/20 px-3 py-2">
+              <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-1">AI Summary</p>
+              <p className="text-sm text-foreground leading-relaxed">{log.summary}</p>
+            </div>
+          )}
+
+          {/* Full transcript expandable */}
+          {expandedId === log.id && log.transcript && (
+            <div className="mt-3 rounded-lg bg-muted/50 border border-border px-3 py-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Full Transcript</p>
+              <pre className="text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans">{log.transcript}</pre>
+            </div>
+          )}
+          {expandedId === log.id && !log.transcript && (
+            <div className="mt-3 text-xs text-muted-foreground italic">No transcript available for this call.</div>
+          )}
+        </Card>
+      ))}
     </div>
   );
 }

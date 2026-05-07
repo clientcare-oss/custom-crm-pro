@@ -605,3 +605,24 @@ export const walkthroughRuns = mysqlTable("walkthroughRuns", {
 });
 export type WalkthroughRun = typeof walkthroughRuns.$inferSelect;
 export type InsertWalkthroughRun = typeof walkthroughRuns.$inferInsert;
+
+// ============ QUO (OPENPHONE) CALL LOGS ============
+export const callLogs = mysqlTable("callLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  studentId: int("studentId"),           // null = unassigned
+  quoCallId: varchar("quoCallId", { length: 255 }).unique(),
+  fromNumber: varchar("fromNumber", { length: 30 }),
+  toNumber: varchar("toNumber", { length: 30 }),
+  durationSeconds: int("durationSeconds").default(0),
+  direction: varchar("direction", { length: 20 }).default("inbound"),
+  transcript: text("transcript"),
+  summary: text("summary"),
+  participants: json("participants").$type<string[]>(),
+  status: varchar("status", { length: 20 }).default("unassigned").notNull(),
+  matchedPhone: varchar("matchedPhone", { length: 30 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  assignedAt: timestamp("assignedAt"),
+});
+export type CallLog = typeof callLogs.$inferSelect;
+export type InsertCallLog = typeof callLogs.$inferInsert;

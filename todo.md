@@ -351,3 +351,18 @@
 - [ ] Frontend: floating AI chat button (bottom-right, all pages) with slide-up panel
 - [ ] Frontend: chat history per session, markdown rendering, loading state
 - [ ] Frontend: daily briefing card on dashboard
+
+## Quo (OpenPhone) Integration
+- [ ] DB: callLogs table (id, ownerId, studentId nullable, quoCallId, fromNumber, toNumber, durationSeconds, direction, transcript, summary, participants, status: assigned/unassigned, createdAt)
+- [ ] DB migration: generate and apply
+- [ ] Backend: /api/quo/webhook Express route with HMAC-SHA256 signature verification
+- [ ] Backend: phone number matching logic (normalize + match against contacts.phone)
+- [ ] Backend: auto-attach if 1 match, queue as unassigned if 0 or 2+ matches
+- [ ] Backend: tRPC callLogs.listByStudent procedure
+- [ ] Backend: tRPC callLogs.listUnassigned procedure
+- [ ] Backend: tRPC callLogs.assign procedure (assign unassigned log to a student)
+- [ ] Backend: tRPC callLogs.delete procedure
+- [ ] Frontend: Call Logs tab on student profile (transcript, summary, duration, date, direction)
+- [ ] Frontend: Unassigned Transcripts inbox page (sidebar nav item)
+- [ ] Frontend: assign dialog on unassigned transcripts (pick student)
+- [ ] Settings: QUO_WEBHOOK_SECRET secret via webdev_request_secrets

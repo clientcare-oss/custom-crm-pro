@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `callLogs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`studentId` int,\n\t`quoCallId` varchar(255),\n\t`fromNumber` varchar(30),\n\t`toNumber` varchar(30),\n\t`durationSeconds` int DEFAULT 0,\n\t`direction` varchar(20) DEFAULT 'inbound',\n\t`transcript` text,\n\t`summary` text,\n\t`participants` json,\n\t`status` varchar(20) NOT NULL DEFAULT 'unassigned',\n\t`matchedPhone` varchar(30),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`assignedAt` timestamp,\n\tCONSTRAINT `callLogs_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `callLogs_quoCallId_unique` UNIQUE(`quoCallId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute CREATE TABLE `callLogs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`studentId` int,\n\t`quoCallId` varchar(255),\n\t`fromNumber` varchar(30),\n\t`toNumber` varchar(30),\n\t`durationSeconds` int DEFAULT 0,\n\t`direction` varchar(20) DEFAULT 'inbound',\n\t`transcript` text,\n\t`summary` text,\n\t`participants` json,\n\t`status` varchar(20) NOT NULL DEFAULT 'unassigned',\n\t`matchedPhone` varchar(30),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`assignedAt` timestamp,\n\tCONSTRAINT `callLogs_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `callLogs_quoCallId_unique` UNIQUE(`quoCallId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 678
+}
