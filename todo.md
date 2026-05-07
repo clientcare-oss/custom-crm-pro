@@ -291,3 +291,14 @@
 - [x] Backend: add getStudentsWithFiles procedure for task file picker
 - [x] Tasks UI: add optional student file picker in CreateTaskDialog (select student → select file from their Files section)
 - [x] Tasks UI: display linked file badge in task row with link to file
+
+## Knowledge Base Hub
+- [x] DB: knowledgeBase table (id, ownerId, title, description, category, fileKey, fileUrl, fileName, fileSize, createdAt)
+- [x] DB migration: generate and apply migration
+- [x] Backend: knowledgeBase.list procedure (filter by category, search query)
+- [x] Backend: knowledgeBase.upload procedure (base64 upload → S3)
+- [x] Backend: knowledgeBase.delete procedure
+- [x] Frontend: KnowledgeBase page with category sidebar, upload dialog, search bar, document grid
+- [x] Frontend: open PDF in new tab or inline viewer
+- [x] Frontend: sidebar nav entry "Knowledge Base" with BookOpen icon
+- [x] Predefined categories: Law Books, Test Books, OSEP Letters, Work Documents, Other

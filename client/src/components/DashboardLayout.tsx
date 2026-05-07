@@ -60,6 +60,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: LayoutTemplate, label: "Templates", path: "/templates" },
     { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
     { icon: GitBranch, label: "Workflows", path: "/workflows" },
+    { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
     { icon: Zap, label: "Automations", path: "/automations" },
     { icon: Plug, label: "Integrations", path: "/integrations" },
     { icon: Settings, label: "Settings", path: "/settings" },

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `knowledgeBase` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`description` text,\n\t`category` varchar(100) NOT NULL DEFAULT 'Other',\n\t`fileKey` varchar(500) NOT NULL,\n\t`fileUrl` varchar(500) NOT NULL,\n\t`fileName` varchar(255) NOT NULL,\n\t`fileSize` int,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `knowledgeBase_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute CREATE TABLE `knowledgeBase` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`description` text,\n\t`category` varchar(100) NOT NULL DEFAULT 'Other',\n\t`fileKey` varchar(500) NOT NULL,\n\t`fileUrl` varchar(500) NOT NULL,\n\t`fileName` varchar(255) NOT NULL,\n\t`fileSize` int,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `knowledgeBase_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 712
+}

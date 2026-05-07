@@ -1480,6 +1480,79 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
-});
 
+  // ============ KNOWLEDGE BASE ============
+  knowledgeBase: router({
+    list: adminProcedure
+      .input(z.object({
+        category: z.string().optional(),
+        search: z.string().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { knowledgeBase } = await import("../drizzle/schema");
+        const { like, and: dbAnd, eq: dbEq } = await import("drizzle-orm");
+        const conditions: any[] = [dbEq(knowledgeBase.ownerId, ctx.user.id)];
+        if (input.category && input.category !== "All") {
+          conditions.push(dbEq(knowledgeBase.category, input.category));
+        }
+        if (input.search) {
+          conditions.push(like(knowledgeBase.title, `%${input.search}%`));
+        }
+        return await database
+          .select()
+          .from(knowledgeBase)
+          .where(dbAnd(...conditions))
+          .orderBy(desc(knowledgeBase.createdAt));
+      }),
+
+    upload: adminProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        description: z.string().optional(),
+        category: z.string().default("Other"),
+        fileName: z.string().min(1),
+        fileSize: z.number().optional(),
+        fileData: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { knowledgeBase } = await import("../drizzle/schema");
+        const fileBuffer = Buffer.from(input.fileData, "base64");
+        const fileKey = `kb/${ctx.user.id}/${Date.now()}-${input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { storagePut } = await import("./storage");
+        const { url } = await storagePut(fileKey, fileBuffer, "application/pdf");
+        const [result] = await database.insert(knowledgeBase).values({
+          ownerId: ctx.user.id,
+          title: input.title,
+          description: input.description || null,
+          category: input.category,
+          fileKey,
+          fileUrl: url,
+          fileName: input.fileName,
+          fileSize: input.fileSize || fileBuffer.length,
+        });
+        return { success: true, id: (result as any).insertId, url };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { knowledgeBase } = await import("../drizzle/schema");
+        const { eq: dbEq } = await import("drizzle-orm");
+        const [doc] = await database.select().from(knowledgeBase).where(dbEq(knowledgeBase.id, input.id));
+        if (!doc || doc.ownerId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+        await database.delete(knowledgeBase).where(dbEq(knowledgeBase.id, input.id));
+        return { success: true };
+      }),
+
+    categories: adminProcedure.query(() => {
+      return ["Law Books", "Test Books", "OSEP Letters", "Work Documents", "Other"] as const;
+    }),
+  }),
+});
 export type AppRouter = typeof appRouter;

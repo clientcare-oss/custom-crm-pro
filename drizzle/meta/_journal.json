@@ -99,6 +99,13 @@
       "when": 1778160300344,
       "tag": "0013_sharp_katie_power",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1778169870863,
+      "tag": "0014_parched_nightshade",
+      "breakpoints": true
     }
   ]
 }
