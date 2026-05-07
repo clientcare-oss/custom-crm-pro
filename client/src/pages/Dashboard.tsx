@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Users, TrendingUp, FileText, Loader2 } from "lucide-react";
+import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { ClientPortalPreview } from "@/components/ClientPortalPreview";
 import { useTerminology } from "@/contexts/TerminologyContext";
@@ -10,18 +10,20 @@ import { useTerminology } from "@/contexts/TerminologyContext";
 export default function Dashboard() {
   const { user } = useAuth();
   const { projectLabel, projectLabelPlural } = useTerminology();
-  const { data: contacts, isLoading: contactsLoading } = trpc.contacts.list.useQuery(undefined, {
-    enabled: user?.role === "admin",
-  });
   const { data: leads, isLoading: leadsLoading } = trpc.leads.list.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
   const { data: projects, isLoading: projectsLoading } = trpc.projects.list.useQuery();
   const { data: invoices, isLoading: invoicesLoading } = trpc.invoices.list.useQuery();
+  const { data: allTasks, isLoading: tasksLoading } = trpc.internalTasks.list.useQuery(
+    { status: "all" },
+    { enabled: user?.role === "admin" }
+  );
 
-  const isLoading = contactsLoading || leadsLoading || projectsLoading || invoicesLoading;
+  const isLoading = leadsLoading || projectsLoading || invoicesLoading || tasksLoading;
 
   // Calculate metrics
+  const openTasks = (allTasks as any[] | undefined)?.filter((t) => t.status !== "complete").length ?? 0;
   const newLeads = leads?.filter((l) => l.status === "New").length || 0;
   const qualifiedLeads = leads?.filter((l) => l.status === "Qualified").length || 0;
   const totalRevenue = invoices?.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0) || 0;
@@ -37,15 +39,16 @@ export default function Dashboard() {
 
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Contacts Card */}
+        {/* Open Tasks Card */}
         <Card className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Total Contacts</p>
-              <p className="text-3xl font-bold">{contactsLoading ? "-" : contacts?.length || 0}</p>
+              <p className="text-sm font-medium text-muted-foreground">Open Tasks</p>
+              <p className="text-3xl font-bold">{tasksLoading ? "-" : openTasks}</p>
+              <p className="text-xs text-muted-foreground">not complete</p>
             </div>
             <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
-              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <CheckSquare className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </Card>
