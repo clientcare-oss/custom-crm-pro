@@ -566,3 +566,42 @@ export const timeEntries = mysqlTable("timeEntries", {
 });
 export type TimeEntry = typeof timeEntries.$inferSelect;
 export type InsertTimeEntry = typeof timeEntries.$inferInsert;
+
+// ============ WALKTHROUGHS (SOP) ============
+import { json } from "drizzle-orm/mysql-core";
+
+export const walkthroughs = mysqlTable("walkthroughs", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 100 }).default("General").notNull(),
+  // JSON array of steps: [{id, title, instructions, script, notes, order}]
+  steps: json("steps").notNull().$type<Array<{
+    id: string;
+    title: string;
+    instructions: string;
+    script?: string;
+    notes?: string;
+    order: number;
+  }>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Walkthrough = typeof walkthroughs.$inferSelect;
+export type InsertWalkthrough = typeof walkthroughs.$inferInsert;
+
+export const walkthroughRuns = mysqlTable("walkthroughRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  walkthroughId: int("walkthroughId").notNull(),
+  studentId: int("studentId"),
+  ownerId: int("ownerId").notNull(),
+  // JSON array of completed step IDs
+  completedSteps: json("completedSteps").notNull().$type<string[]>(),
+  status: varchar("status", { length: 50 }).default("in_progress").notNull(),
+  notes: text("notes"),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+});
+export type WalkthroughRun = typeof walkthroughRuns.$inferSelect;
+export type InsertWalkthroughRun = typeof walkthroughRuns.$inferInsert;

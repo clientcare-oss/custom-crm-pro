@@ -30,6 +30,7 @@ import Automations from "./pages/Automations";
 import Integrations from "./pages/Integrations";
 import Workflows from "./pages/Workflows";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import Walkthroughs from "./pages/Walkthroughs";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -67,6 +68,7 @@ function Router() {
           <Route path="/integrations" component={Integrations} />
           <Route path="/workflows" component={Workflows} />
           <Route path="/knowledge-base" component={KnowledgeBase} />
+          <Route path="/walkthroughs" component={Walkthroughs} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />

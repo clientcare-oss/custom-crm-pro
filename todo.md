@@ -327,3 +327,20 @@
 - [x] Frontend: hourly rate setting per student (editable inline)
 - [x] Frontend: billing summary (total hours, total unbilled amount)
 - [x] Frontend: mark entries as invoiced / unbilled filter
+
+## Walkthroughs (SOP)
+- [ ] DB: walkthroughs table (id, ownerId, title, description, category, steps JSON, createdAt, updatedAt)
+- [ ] DB: walkthroughRuns table (id, walkthroughId, studentId, ownerId, completedSteps JSON, status, startedAt, completedAt)
+- [ ] DB migration: generate and apply
+- [ ] Backend: walkthroughs.list procedure
+- [ ] Backend: walkthroughs.create procedure
+- [ ] Backend: walkthroughs.update procedure
+- [ ] Backend: walkthroughs.delete procedure
+- [ ] Backend: walkthroughRuns.start procedure
+- [ ] Backend: walkthroughRuns.updateProgress procedure
+- [ ] Backend: walkthroughRuns.list procedure (by studentId)
+- [ ] Frontend: Walkthroughs sidebar nav item (separate from Templates)
+- [ ] Frontend: Walkthroughs page — list of SOP templates with category filter
+- [ ] Frontend: SOP builder — create/edit walkthrough with ordered steps (title, instructions/script, notes)
+- [ ] Frontend: Live runner — step-by-step guided view with checkboxes, script display, progress bar
+- [ ] Frontend: "Run Walkthrough" button inside student detail page
