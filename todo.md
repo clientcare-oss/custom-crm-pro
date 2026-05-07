@@ -302,3 +302,10 @@
 - [x] Frontend: open PDF in new tab or inline viewer
 - [x] Frontend: sidebar nav entry "Knowledge Base" with BookOpen icon
 - [x] Predefined categories: Law Books, Test Books, OSEP Letters, Work Documents, Other
+
+## Templates Hub Redesign
+- [x] Templates page: four hub blocks (Saved Smart Files, Create Smart File, Email Templates, Purchasables)
+- [x] Saved Smart Files block: list/manage previously saved smart files
+- [x] Create Smart File block: dialog asking "Start from Scratch" or "From Template Gallery"
+- [x] Email Templates block: list/manage email templates
+- [x] Purchasables block: placeholder section for purchasable items/packages
