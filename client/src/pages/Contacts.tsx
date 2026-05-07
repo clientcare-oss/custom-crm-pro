@@ -14,6 +14,8 @@ import { Plus, Trash2, Edit2, Loader2, Mail, Phone, ExternalLink } from "lucide-
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { PhoneInput } from "@/components/PhoneInput";
+import { validatePhone, formatPhone } from "@/lib/phone";
 
 export default function Contacts() {
   const { user } = useAuth();
@@ -91,11 +93,17 @@ export default function Contacts() {
       toast.error("First and last name are required");
       return;
     }
-
+    const phoneErr = validatePhone(formData.phone);
+    if (phoneErr) {
+      toast.error(phoneErr);
+      return;
+    }
+    // Auto-format phone before saving
+    const data = { ...formData, phone: formatPhone(formData.phone) };
     if (editingId) {
-      updateMutation.mutate({ id: editingId, ...formData });
+      updateMutation.mutate({ id: editingId, ...data });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
@@ -196,12 +204,9 @@ export default function Contacts() {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Phone</label>
-                <Input
+                <PhoneInput
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  placeholder="+1 (555) 000-0000"
+                  onChange={(val) => setFormData({ ...formData, phone: val })}
                 />
               </div>
               <div className="space-y-2">

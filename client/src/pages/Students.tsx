@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhoneInput } from "@/components/PhoneInput";
+import { validatePhone, formatPhone } from "@/lib/phone";
 
 const PLACEHOLDER_STAGES = [
   { label: "Intake", count: 0 },
@@ -96,9 +98,12 @@ export default function Students() {
                   toast.error("First and last name are required");
                   return;
                 }
+                const phoneErr = validatePhone(formData.phone);
+                if (phoneErr) { toast.error(phoneErr); return; }
                 const { parentContactId, ...rest } = formData;
                 createMutation.mutate({
                   ...rest,
+                  phone: formatPhone(formData.phone),
                   ...(parentContactId ? { parentContactId: parseInt(parentContactId, 10) } : {}),
                 });
               }}
@@ -143,7 +148,7 @@ export default function Students() {
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-semibold">Phone</label>
-                <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 (555) 000-0000" />
+                <PhoneInput value={formData.phone} onChange={(val) => setFormData({ ...formData, phone: val })} />
               </div>
               <Button type="submit" disabled={createMutation.isPending} className="w-full bg-accent text-accent-foreground font-semibold">
                 {createMutation.isPending ? "Adding..." : "Add Student"}

@@ -40,7 +40,7 @@ export const contacts = mysqlTable("contacts", {
   firstName: varchar("firstName", { length: 100 }).notNull(),
   lastName: varchar("lastName", { length: 100 }).notNull(),
   email: varchar("email", { length: 320 }),
-  phone: varchar("phone", { length: 20 }),
+  phone: varchar("phone", { length: 30 }),
   company: varchar("company", { length: 200 }),
   jobTitle: varchar("jobTitle", { length: 100 }),
   address: text("address"),
