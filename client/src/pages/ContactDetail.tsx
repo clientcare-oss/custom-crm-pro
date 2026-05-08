@@ -186,7 +186,7 @@ export default function ContactDetail() {
       </div>
 
       {/* Case Participants bar */}
-      <CaseParticipants contactId={contactId} contactName={fullName} />
+      <CaseParticipants contactId={contactId} contactName={fullName} parentContactId={contact.parentContactId} />
 
       {/* ═══════════════════════════════════════════════════
           TABS — split by parent vs student

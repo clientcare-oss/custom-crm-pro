@@ -495,3 +495,10 @@
 - [x] Create PAGE_IDS registry mapping every route path to a unique PG-XXX id and page name
 - [x] Wire badge into DashboardLayout so it auto-reads current route and shows the correct ID on every page
 - [x] Verify badge appears correctly on Dashboard, Contacts, ContactDetail, ClientPortal, BillGuardian, BrainDump, Tools, Invoices, Settings
+- [ ] PageIdBadge: add copy button inside expanded pill — copies "PG-XXX · Page Name" to clipboard, shows checkmark confirmation for 2 seconds
+
+## PG-030 Contact Detail — Participants Bar Fix
+- [x] Participants bar: auto-include the linked parent contact (parentId relationship) as a permanent participant with their name, avatar, and CONTACT badge
+- [x] Participants bar: show advocate/owner (logged-in user) as first avatar always
+- [x] Participants bar: clicking the parent participant shows quick-action options (call, text, email) using their stored phone/email
+- [x] Backend: used existing contacts.get procedure to fetch parent contact on demand
