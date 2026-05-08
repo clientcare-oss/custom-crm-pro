@@ -1297,6 +1297,7 @@ function TasksTabContent({ contactId, projects, caseId, parentContactId }: { con
       {/* Unified task creation */}
       <CreateTaskInline
         studentContactId={contactId}
+        parentContactId={parentContactId}
         caseId={caseId ?? undefined}
         projectId={projects[0]?.id}
         onCreated={() => utils.tasks.getByStudent.invalidate({ studentContactId: contactId })}

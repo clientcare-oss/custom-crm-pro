@@ -585,3 +585,10 @@
 - [x] Built CreateTaskInline component: Task Type selector (General/Client Facing/Case), correct assignee per type, compact inline style
 - [x] PG-009 Tasks page: old modal replaced with always-visible CreateTaskInline
 - [x] PG-030 ContactDetail Tasks tab: old form replaced with CreateTaskInline (pre-linked studentContactId + caseId)
+
+## PG-030 CreateTaskInline — Assignee Dropdown Fix
+- [x] When studentContactId is pre-linked: Task Type selector hidden; auto-defaults to Case Task
+- [x] Assign To shows team members (you + others) + parent contact (green, labelled "parent · client facing")
+- [x] Selecting parent auto-switches type to Client Facing; selecting team member keeps Case Task
+- [x] CreateTaskInline accepts parentContactId prop; ContactDetail passes it through
+- [x] Auto-type indicator badge shown in controls row (Case Task / Client Facing)
