@@ -1119,7 +1119,7 @@ function TasksTabContent({ contactId, projects, caseId, parentContactId }: { con
     { enabled: !!contactId }
   );
 
-  const createTask = trpc.tasks.create.useMutation({
+  const createTask = trpc.tasks.createForStudent.useMutation({
     onSuccess: () => {
       toast.success("Task created");
       setAdding(false);
@@ -1233,7 +1233,7 @@ function TasksTabContent({ contactId, projects, caseId, parentContactId }: { con
                 ? parseInt(newTask.assignedToId)
                 : undefined;
               createTask.mutate({
-                projectId: resolvedProjectId,
+                studentContactId: contactId,
                 title: newTask.title.trim(),
                 dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
                 priority: newTask.priority,

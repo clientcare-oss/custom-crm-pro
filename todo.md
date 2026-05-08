@@ -521,3 +521,7 @@
 ## PG-030 Tasks Tab — Button Fix + Assignee Picker
 - [x] Fix Create Task button still disabled — root cause: priority column missing from DB; added column + migration 0026
 - [x] Add Assign To dropdown in Add Task form showing: You (advocate), parent contact (from parentContactId), team members (from internalTasks.getTeamUsers)
+
+## PG-030 Tasks Tab — Task Save Fix
+- [x] Fix: projectId undefined at submit — added tasks.createForStudent backend procedure that auto-creates project if none exists
+- [x] Ensure saved tasks appear on student detail Tasks tab AND global Tasks page — both use same projectTasks table via getByStudent and getAllTasksForOwner

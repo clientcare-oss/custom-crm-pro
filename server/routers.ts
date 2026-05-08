@@ -276,6 +276,62 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.deleteTask(input.id);
       }),
+    // Create a task for a student — auto-creates a default project if the student has none
+    createForStudent: adminProcedure
+      .input(
+        z.object({
+          studentContactId: z.number(),
+          title: z.string().min(1),
+          description: z.string().optional(),
+          status: z.enum(["Todo", "In Progress", "Done"]).optional(),
+          dueDate: z.date().optional(),
+          assignedTo: z.number().optional(),
+          priority: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { projects: projectsTable, contacts: contactsTable } = await import("../drizzle/schema");
+        // Find existing project for this student
+        let projectId: number | undefined;
+        const existing = await database
+          .select({ id: projectsTable.id })
+          .from(projectsTable)
+          .where(eq(projectsTable.clientId, input.studentContactId))
+          .limit(1);
+        if (existing.length > 0) {
+          projectId = existing[0].id;
+        } else {
+          // Auto-create a default project named after the student
+          const studentRows = await database
+            .select({ firstName: contactsTable.firstName, lastName: contactsTable.lastName, caseId: contactsTable.caseId })
+            .from(contactsTable)
+            .where(eq(contactsTable.id, input.studentContactId))
+            .limit(1);
+          const student = studentRows[0];
+          const projectName = student
+            ? `${student.firstName} ${student.lastName}${student.caseId ? ` (${student.caseId})` : ""}`
+            : `Student #${input.studentContactId}`;
+          await database.insert(projectsTable).values({
+            clientId: input.studentContactId,
+            ownerId: ctx.user.id,
+            name: projectName,
+            status: "In Progress",
+          });
+          // Fetch the just-inserted project
+          const inserted = await database
+            .select({ id: projectsTable.id })
+            .from(projectsTable)
+            .where(eq(projectsTable.clientId, input.studentContactId))
+            .orderBy(desc(projectsTable.createdAt))
+            .limit(1);
+          projectId = inserted[0]?.id;
+        }
+        if (!projectId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not resolve project for student" });
+        const { studentContactId, ...taskData } = input;
+        return await db.createTask({ ...taskData, projectId });
+      }),
   }),
 
   // ============ INVOICES ============
