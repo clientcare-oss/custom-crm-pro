@@ -481,3 +481,7 @@
 - [x] Backend: billGuardian.getAlertSummary — returns { needsAttention: boolean, count: number, severity: 'critical'|'warning'|'info' } with NO bill names/amounts
 - [x] Frontend: Dashboard — sleek Bill Guardian status card when needsAttention is true, links to /bill-guardian
 - [x] Frontend: Card design — professional icon, "Bill Guardian needs your attention" copy, severity-based color, no bill details exposed
+
+## Client Portal — Cases Tab Mirror Fix
+- [x] Replace generic blue "Active" card in client portal Cases tab with exact mirror of advocate-side: Formal Escalation Files rose banner + type tag pills + empty state ("No formal cases on file — Great news, this is exactly where we want to be.")
+- [x] Add ScrollText icon import to ClientPortal.tsx
