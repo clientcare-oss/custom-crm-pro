@@ -578,3 +578,10 @@
 - [x] Backend: getAllTasksForOwner now resolves assignedToName from contacts table
 - [x] clientFacingTasks = tasks with assignedTo set; caseTasks = tasks without assignedTo
 - [x] StudentTaskRow confetti guard fixed (removed stepCount > 0)
+
+## Unified Task Creation — Fix Assignee + Task Type Selector
+- [x] Audited all task creation points — found assignee mismatch (users.id vs contacts.id)
+- [x] Fixed assignee: General tasks → team users; Client Facing → contacts; Case → no assignee
+- [x] Built CreateTaskInline component: Task Type selector (General/Client Facing/Case), correct assignee per type, compact inline style
+- [x] PG-009 Tasks page: old modal replaced with always-visible CreateTaskInline
+- [x] PG-030 ContactDetail Tasks tab: old form replaced with CreateTaskInline (pre-linked studentContactId + caseId)

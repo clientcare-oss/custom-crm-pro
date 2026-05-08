@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { CreateTaskInline } from "@/components/CreateTaskInline";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -879,7 +880,6 @@ function CreateTaskDialog({
 
 // ─── Main Tasks page ──────────────────────────────────────────────────────────
 export default function Tasks() {
-  const [createOpen, setCreateOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | Task["status"]>("all");
   const { user } = useAuth();
   const { data: tasks = [], isLoading } = trpc.internalTasks.list.useQuery({ status: statusFilter });
@@ -903,14 +903,15 @@ export default function Tasks() {
   const caseTasks = (studentTasks as StudentTask[]).filter((t) => !t.assignedTo);
   return (
     <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
             <p className="text-sm text-muted-foreground mt-0.5">{completedTasks}/{totalTasks} tasks complete</p>
           </div>
-          <Button onClick={() => setCreateOpen(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />New Task
-          </Button>
+        </div>
+        {/* Unified task creation */}
+        <div className="mb-6">
+          <CreateTaskInline />
         </div>
         {/* Status filter */}
         <div className="flex gap-1 mb-5 border-b border-border pb-3 flex-wrap">
@@ -992,13 +993,7 @@ export default function Tasks() {
             </div>
           )}
         </div>
-      <CreateTaskDialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        users={users}
-        projects={projects}
-        studentsWithFiles={studentsWithFiles}
-      />
+
     </div>
   );
 }

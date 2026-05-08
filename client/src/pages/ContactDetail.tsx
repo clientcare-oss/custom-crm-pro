@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { CreateTaskInline } from "@/components/CreateTaskInline";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useParams, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
@@ -1282,136 +1283,24 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
 // ─────────────────────────────────────────────────────────
 function TasksTabContent({ contactId, projects, caseId, parentContactId }: { contactId: number; projects: any[]; caseId?: string | null; parentContactId?: number | null }) {
   const utils = trpc.useUtils();
-  const { user } = useAuth();
-  const defaultProjectId = projects.length >= 1 ? String(projects[0].id) : "";
-  const [newTask, setNewTask] = useState({ title: "", projectId: defaultProjectId, dueDate: "", priority: "Medium", assignedToId: "" });
-  const [adding, setAdding] = useState(false);
-
-  // Fetch team users for assignee dropdown
-  const { data: teamUsers = [] } = trpc.internalTasks.getTeamUsers.useQuery(undefined, { enabled: adding });
-  // Fetch parent contact for assignee dropdown
-  const { data: parentContact } = trpc.contacts.get.useQuery(
-    { id: parentContactId! },
-    { enabled: adding && !!parentContactId }
-  );
 
   const { data: tasks = [], isLoading } = trpc.tasks.getByStudent.useQuery(
     { studentContactId: contactId },
     { enabled: !!contactId }
   );
 
-  const createTask = trpc.tasks.createForStudent.useMutation({
-    onSuccess: () => {
-      toast.success("Task created");
-      setAdding(false);
-      setNewTask({ title: "", projectId: defaultProjectId, dueDate: "", priority: "Medium", assignedToId: "" });
-      utils.tasks.getByStudent.invalidate({ studentContactId: contactId });
-    },
-    onError: (e) => toast.error("Failed to create task: " + e.message),
-  });
   return (
     <TabsContent value="tasks" className="mt-4 space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {tasks.length} task{tasks.length !== 1 ? "s" : ""}
-        </p>
-        <Button size="sm" variant="outline" onClick={() => setAdding((v) => !v)} className="text-xs inline-flex items-center gap-1">
-          <Plus className="h-3.5 w-3.5" />{adding ? "Cancel" : "Add Task"}
-        </Button>
-      </div>
-
-      {adding && (
-        <Card className="p-4 rounded-xl border border-accent/30 bg-accent/5 space-y-3">
-          <Input
-            placeholder="Task title..."
-            value={newTask.title}
-            onChange={(e: any) => setNewTask((f) => ({ ...f, title: e.target.value }))}
-            className="text-sm"
-          />
-          <div className="flex gap-2 flex-wrap items-center">
-            {/* Case ID chip */}
-            {caseId ? (
-              <div className="flex items-center gap-1.5 text-xs bg-accent/10 border border-accent/20 rounded-md px-2.5 py-1.5">
-                <span className="text-muted-foreground">Case:</span>
-                <span className="font-mono font-semibold text-accent">{caseId}</span>
-                <span className="text-muted-foreground/60">· auto-linked</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-2.5 py-1.5">
-                <span>No Case ID yet — save the student record to generate one</span>
-              </div>
-            )}
-            {/* Assign To dropdown */}
-            <Select value={newTask.assignedToId} onValueChange={(v) => setNewTask((f) => ({ ...f, assignedToId: v }))}>
-              <SelectTrigger className="text-xs w-44">
-                <SelectValue placeholder="Assign to..." />
-              </SelectTrigger>
-              <SelectContent>
-                {user && (
-                  <SelectItem value={String(user.id)}>
-                    <span className="flex items-center gap-1.5">
-                      <User className="h-3 w-3" /> {user.name ?? "You"} (me)
-                    </span>
-                  </SelectItem>
-                )}
-                {parentContact && (
-                  <SelectItem value={`contact-${parentContact.id}`}>
-                    <span className="flex items-center gap-1.5">
-                      <User className="h-3 w-3 text-green-600" />
-                      {parentContact.firstName} {parentContact.lastName} (parent)
-                    </span>
-                  </SelectItem>
-                )}
-                {teamUsers.filter((u: any) => u.id !== user?.id).map((u: any) => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    <span className="flex items-center gap-1.5">
-                      <User className="h-3 w-3 text-violet-600" /> {u.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {/* Priority */}
-            <Select value={newTask.priority} onValueChange={(v) => setNewTask((f) => ({ ...f, priority: v }))}>
-              <SelectTrigger className="text-xs w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="date"
-              value={newTask.dueDate}
-              onChange={(e: any) => setNewTask((f) => ({ ...f, dueDate: e.target.value }))}
-              className="text-xs w-40"
-            />
-          </div>
-          <Button
-            size="sm"
-            disabled={!newTask.title.trim() || createTask.isPending}
-            onClick={() => {
-              const resolvedProjectId = newTask.projectId ? parseInt(newTask.projectId) : projects[0]?.id;
-              // assignedTo is a userId (number) — skip contact-prefixed values (parent contacts)
-              const assignedToNum = newTask.assignedToId && !newTask.assignedToId.startsWith("contact-")
-                ? parseInt(newTask.assignedToId)
-                : undefined;
-              createTask.mutate({
-                studentContactId: contactId,
-                title: newTask.title.trim(),
-                dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
-                priority: newTask.priority,
-                status: "Todo",
-                assignedTo: assignedToNum,
-              });
-            }}
-            className="text-xs"
-          >
-            {createTask.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
-            Create Task
-          </Button>
-        </Card>
-      )}
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+        {tasks.length} task{tasks.length !== 1 ? "s" : ""}
+      </p>
+      {/* Unified task creation */}
+      <CreateTaskInline
+        studentContactId={contactId}
+        caseId={caseId ?? undefined}
+        projectId={projects[0]?.id}
+        onCreated={() => utils.tasks.getByStudent.invalidate({ studentContactId: contactId })}
+      />
 
       {isLoading ? (
         <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
