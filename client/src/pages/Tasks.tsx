@@ -1,7 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -881,8 +880,7 @@ export default function Tasks() {
   const totalTasks = tasks.length;
   const completedTasks = (tasks as Task[]).filter((t) => t.status === "complete").length;
   return (
-    <DashboardLayout>
-      <div className="p-6">
+    <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
@@ -949,7 +947,6 @@ export default function Tasks() {
             </div>
           )}
         </div>
-      </div>
       <CreateTaskDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
@@ -957,6 +954,6 @@ export default function Tasks() {
         projects={projects}
         studentsWithFiles={studentsWithFiles}
       />
-    </DashboardLayout>
+    </div>
   );
 }
