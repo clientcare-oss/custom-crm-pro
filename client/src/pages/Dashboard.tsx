@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2, Sparkles, AlertTriangle, CalendarClock, Clock } from "lucide-react";
+import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2, Sparkles, AlertTriangle, CalendarClock, Clock, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 import { ClientPortalPreview } from "@/components/ClientPortalPreview";
 import { useTerminology } from "@/contexts/TerminologyContext";
@@ -22,6 +22,7 @@ export default function Dashboard() {
 
   const isLoading = leadsLoading || projectsLoading || invoicesLoading || tasksLoading;
   const { data: briefing, isLoading: briefingLoading } = trpc.ai.dailyBriefing.useQuery(undefined, { enabled: user?.role === "admin" });
+  const { data: unreadMessages } = trpc.messages.unread.useQuery(undefined, { enabled: !!user });
 
   // Calculate metrics
   const openTasks = (allTasks as any[] | undefined)?.filter((t) => t.status !== "complete").length ?? 0;
@@ -161,20 +162,39 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Revenue Card */}
+        {/* Unread Messages Card */}
         <Card className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-              <p className="text-3xl font-bold">${invoicesLoading ? "-" : totalRevenue.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">{paidInvoices} paid</p>
+              <p className="text-sm font-medium text-muted-foreground">Unread Messages</p>
+              <p className="text-3xl font-bold">{unreadMessages === undefined ? "-" : (unreadMessages as any[]).length}</p>
+              <p className="text-xs text-muted-foreground">from clients</p>
             </div>
-            <div className="rounded-lg bg-amber-100 p-3 dark:bg-amber-900/30">
-              <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            <div className="rounded-lg bg-rose-100 p-3 dark:bg-rose-900/30">
+              <MessageSquare className="h-6 w-6 text-rose-600 dark:text-rose-400" />
             </div>
           </div>
         </Card>
       </div>
+
+      {/* Revenue Summary */}
+      <Card className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-amber-100 p-2.5 dark:bg-amber-900/30">
+              <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+              <p className="text-2xl font-bold">${invoicesLoading ? "-" : totalRevenue.toFixed(2)}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">{paidInvoices} paid invoice{paidInvoices !== 1 ? "s" : ""}</p>
+            <Link href="/invoices" className="text-xs text-accent hover:underline">View all invoices →</Link>
+          </div>
+        </div>
+      </Card>
 
       {/* Quick Actions */}
       <div className="space-y-4">
