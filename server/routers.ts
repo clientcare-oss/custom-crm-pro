@@ -904,8 +904,9 @@ export const appRouter = router({
         }
         return { success: true };
       }),
-    // Upload a Draft IEP / Pre-Meeting document for a student
-    uploadDraft: protectedProcedure
+    // ── Draft IEP History (completely separate from official IEP records) ──
+    // Upload a draft IEP — creates a NEW row in draftIepHistory (never overwrites)
+    uploadDraft: adminProcedure
       .input(z.object({
         contactId: z.number(),
         fileKey: z.string(),
@@ -914,64 +915,61 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { iepDocuments, contacts } = await import("../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
+        const { draftIepHistory } = await import("../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        if (ctx.user.role !== "admin") {
-          const parentContact = await dbConn.select().from(contacts).where(eq(contacts.portalUserId, ctx.user.id)).limit(1);
-          if (parentContact.length === 0) throw new TRPCError({ code: "FORBIDDEN" });
-          const students = await dbConn.select().from(contacts).where(eq(contacts.parentContactId, parentContact[0].id));
-          if (!students.map((s: any) => s.id).includes(input.contactId)) throw new TRPCError({ code: "FORBIDDEN" });
-        }
-        const existing = await dbConn.select().from(iepDocuments).where(eq(iepDocuments.contactId, input.contactId)).limit(1);
-        const now = new Date();
-        if (existing.length > 0) {
-          await dbConn.update(iepDocuments).set({
-            draftFileKey: input.fileKey,
-            draftFileName: input.fileName,
-            draftFileUrl: input.fileUrl,
-            draftUploadedAt: now,
-            draftNotes: input.notes ?? null,
-          }).where(eq(iepDocuments.contactId, input.contactId));
-        } else {
-          await dbConn.insert(iepDocuments).values({
-            contactId: input.contactId,
-            draftFileKey: input.fileKey,
-            draftFileName: input.fileName,
-            draftFileUrl: input.fileUrl,
-            draftUploadedAt: now,
-            draftNotes: input.notes ?? null,
-          });
-        }
+        await dbConn.insert(draftIepHistory).values({
+          contactId: input.contactId,
+          ownerId: ctx.user.id,
+          fileKey: input.fileKey,
+          fileName: input.fileName,
+          fileUrl: input.fileUrl,
+          notes: input.notes ?? null,
+        });
         return { success: true };
       }),
-    // Clear/remove the draft IEP document
-    clearDraft: adminProcedure
+
+    // List all draft IEP history entries for a student (newest first)
+    listDraftHistory: adminProcedure
       .input(z.object({ contactId: z.number() }))
-      .mutation(async ({ input }) => {
-        const { iepDocuments } = await import("../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
+      .query(async ({ ctx, input }) => {
+        const { draftIepHistory } = await import("../drizzle/schema");
+        const { eq: deq, desc: ddesc, and: dand } = await import("drizzle-orm");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        await dbConn.update(iepDocuments).set({
-          draftFileKey: null,
-          draftFileName: null,
-          draftFileUrl: null,
-          draftUploadedAt: null,
-          draftNotes: null,
-        }).where(eq(iepDocuments.contactId, input.contactId));
+        return await dbConn
+          .select()
+          .from(draftIepHistory)
+          .where(dand(deq(draftIepHistory.contactId, input.contactId), deq(draftIepHistory.ownerId, ctx.user.id)))
+          .orderBy(ddesc(draftIepHistory.uploadedAt));
+      }),
+
+    // Delete a specific draft history entry
+    deleteDraftHistory: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { draftIepHistory } = await import("../drizzle/schema");
+        const { eq: deq, and: dand } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await dbConn
+          .delete(draftIepHistory)
+          .where(dand(deq(draftIepHistory.id, input.id), deq(draftIepHistory.ownerId, ctx.user.id)));
         return { success: true };
       }),
-    // Update draft notes only
+
+    // Update notes on a specific draft history entry
     updateDraftNotes: adminProcedure
-      .input(z.object({ contactId: z.number(), notes: z.string() }))
-      .mutation(async ({ input }) => {
-        const { iepDocuments } = await import("../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
+      .input(z.object({ id: z.number(), notes: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { draftIepHistory } = await import("../drizzle/schema");
+        const { eq: deq, and: dand } = await import("drizzle-orm");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        await dbConn.update(iepDocuments).set({ draftNotes: input.notes }).where(eq(iepDocuments.contactId, input.contactId));
+        await dbConn
+          .update(draftIepHistory)
+          .set({ notes: input.notes })
+          .where(dand(deq(draftIepHistory.id, input.id), deq(draftIepHistory.ownerId, ctx.user.id)));
         return { success: true };
       }),
   }),

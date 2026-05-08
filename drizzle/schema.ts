@@ -384,33 +384,47 @@ export type InsertCaseCompassHistory = typeof caseCompassHistory.$inferInsert;
 
 /**
  * IEP Documents — one record per student contact.
- * Stores the current and previous IEP/504 document.
+ * Stores the current and previous OFFICIAL IEP/504 document.
  * When a new IEP is uploaded, the current becomes previous automatically (auto-archive).
+ * NOTE: Draft IEPs are stored separately in draftIepHistory — they must never mix.
  */
 export const iepDocuments = mysqlTable("iepDocuments", {
   id: int("id").autoincrement().primaryKey(),
   contactId: int("contactId").notNull().unique(), // links to contacts.id (student)
-  // Current IEP/504
+  // Current official IEP/504
   currentFileKey: text("currentFileKey"),
   currentFileName: varchar("currentFileName", { length: 255 }),
   currentFileUrl: text("currentFileUrl"),
   currentUploadedAt: timestamp("currentUploadedAt"),
-  // Previous IEP/504 (auto-archived when new one is uploaded)
+  // Previous official IEP/504 (auto-archived when new one is uploaded)
   previousFileKey: text("previousFileKey"),
   previousFileName: varchar("previousFileName", { length: 255 }),
   previousFileUrl: text("previousFileUrl"),
   previousUploadedAt: timestamp("previousUploadedAt"),
-  // Draft IEP / Pre-Meeting Document (school-provided draft before the IEP meeting)
-  draftFileKey: text("draftFileKey"),
-  draftFileName: varchar("draftFileName", { length: 255 }),
-  draftFileUrl: text("draftFileUrl"),
-  draftUploadedAt: timestamp("draftUploadedAt"),
-  draftNotes: text("draftNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type IepDocument = typeof iepDocuments.$inferSelect;
 export type InsertIepDocument = typeof iepDocuments.$inferInsert;
+
+/**
+ * Draft IEP History — completely separate from official IEP records.
+ * Stores school-provided draft IEPs received before meetings.
+ * Each upload creates a new row — full history is preserved, nothing is overwritten.
+ * AI tools reference this table independently from iepDocuments.
+ */
+export const draftIepHistory = mysqlTable("draftIepHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  contactId: int("contactId").notNull(),   // links to contacts.id (student)
+  ownerId: int("ownerId").notNull(),
+  fileKey: text("fileKey").notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  notes: text("notes"),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+export type DraftIepHistory = typeof draftIepHistory.$inferSelect;
+export type InsertDraftIepHistory = typeof draftIepHistory.$inferInsert;
 
 /**
  * Session types for the Scheduler feature.

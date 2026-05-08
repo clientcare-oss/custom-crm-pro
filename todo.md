@@ -329,40 +329,52 @@
 - [x] Frontend: mark entries as invoiced / unbilled filter
 
 ## Walkthroughs (SOP)
-- [ ] DB: walkthroughs table (id, ownerId, title, description, category, steps JSON, createdAt, updatedAt)
-- [ ] DB: walkthroughRuns table (id, walkthroughId, studentId, ownerId, completedSteps JSON, status, startedAt, completedAt)
-- [ ] DB migration: generate and apply
-- [ ] Backend: walkthroughs.list procedure
-- [ ] Backend: walkthroughs.create procedure
-- [ ] Backend: walkthroughs.update procedure
-- [ ] Backend: walkthroughs.delete procedure
-- [ ] Backend: walkthroughRuns.start procedure
-- [ ] Backend: walkthroughRuns.updateProgress procedure
-- [ ] Backend: walkthroughRuns.list procedure (by studentId)
-- [ ] Frontend: Walkthroughs sidebar nav item (separate from Templates)
-- [ ] Frontend: Walkthroughs page — list of SOP templates with category filter
-- [ ] Frontend: SOP builder — create/edit walkthrough with ordered steps (title, instructions/script, notes)
-- [ ] Frontend: Live runner — step-by-step guided view with checkboxes, script display, progress bar
-- [ ] Frontend: "Run Walkthrough" button inside student detail page
+- [x] DB: walkthroughs table (id, ownerId, title, description, category, steps JSON, createdAt, updatedAt)
+- [x] DB: walkthroughRuns table (id, walkthroughId, studentId, ownerId, completedSteps JSON, status, startedAt, completedAt)
+- [x] DB migration: generate and apply
+- [x] Backend: walkthroughs.list procedure
+- [x] Backend: walkthroughs.create procedure
+- [x] Backend: walkthroughs.update procedure
+- [x] Backend: walkthroughs.delete procedure
+- [x] Backend: walkthroughRuns.start procedure
+- [x] Backend: walkthroughRuns.updateProgress procedure
+- [x] Backend: walkthroughRuns.list procedure (by studentId)
+- [x] Frontend: Walkthroughs sidebar nav item (separate from Templates)
+- [x] Frontend: Walkthroughs page — list of SOP templates with category filter
+- [x] Frontend: SOP builder — create/edit walkthrough with ordered steps (title, instructions/script, notes)
+- [x] Frontend: Live runner — step-by-step guided view with checkboxes, script display, progress bar
+- [x] Frontend: "Run Walkthrough" button inside student detail page
 
 ## AI Assistant
-- [ ] Backend: ai.chat tRPC procedure — fetches live CRM context (today's appointments, overdue tasks, recent students) and sends to LLM with system prompt
-- [ ] Backend: ai.dailyBriefing procedure — structured summary of today's schedule, overdue items, and priority actions
-- [ ] Frontend: floating AI chat button (bottom-right, all pages) with slide-up panel
-- [ ] Frontend: chat history per session, markdown rendering, loading state
-- [ ] Frontend: daily briefing card on dashboard
+- [x] Backend: ai.chat tRPC procedure — fetches live CRM context (today's appointments, overdue tasks, recent students) and sends to LLM with system prompt
+- [x] Backend: ai.dailyBriefing procedure — structured summary of today's schedule, overdue items, and priority actions
+- [x] Frontend: floating AI chat button (bottom-right, all pages) with slide-up panel
+- [x] Frontend: chat history per session, markdown rendering, loading state
+- [x] Frontend: daily briefing card on dashboard
 
 ## Quo (OpenPhone) Integration
-- [ ] DB: callLogs table (id, ownerId, studentId nullable, quoCallId, fromNumber, toNumber, durationSeconds, direction, transcript, summary, participants, status: assigned/unassigned, createdAt)
-- [ ] DB migration: generate and apply
-- [ ] Backend: /api/quo/webhook Express route with HMAC-SHA256 signature verification
-- [ ] Backend: phone number matching logic (normalize + match against contacts.phone)
-- [ ] Backend: auto-attach if 1 match, queue as unassigned if 0 or 2+ matches
-- [ ] Backend: tRPC callLogs.listByStudent procedure
-- [ ] Backend: tRPC callLogs.listUnassigned procedure
-- [ ] Backend: tRPC callLogs.assign procedure (assign unassigned log to a student)
-- [ ] Backend: tRPC callLogs.delete procedure
-- [ ] Frontend: Call Logs tab on student profile (transcript, summary, duration, date, direction)
-- [ ] Frontend: Unassigned Transcripts inbox page (sidebar nav item)
-- [ ] Frontend: assign dialog on unassigned transcripts (pick student)
-- [ ] Settings: QUO_WEBHOOK_SECRET secret via webdev_request_secrets
+- [x] DB: callLogs table (id, ownerId, studentId nullable, quoCallId, fromNumber, toNumber, durationSeconds, direction, transcript, summary, participants, status: assigned/unassigned, createdAt)
+- [x] DB migration: generate and apply
+- [x] Backend: /api/quo/webhook Express route with HMAC-SHA256 signature verification
+- [x] Backend: phone number matching logic (normalize + match against contacts.phone)
+- [x] Backend: auto-attach if 1 match, queue as unassigned if 0 or 2+ matches
+- [x] Backend: tRPC callLogs.listByStudent procedure
+- [x] Backend: tRPC callLogs.listUnassigned procedure
+- [x] Backend: tRPC callLogs.assign procedure (assign unassigned log to a student)
+- [x] Backend: tRPC callLogs.delete procedure
+- [x] Frontend: Call Logs tab on student profile (transcript, summary, duration, date, direction)
+- [x] Frontend: Unassigned Transcripts inbox page (sidebar nav item)
+- [x] Frontend: assign dialog on unassigned transcripts (pick student)
+- [x] Settings: QUO_WEBHOOK_SECRET secret via webdev_request_secrets
+
+## Draft IEP History Separation
+- [x] DB: create draftIepHistory table (id, contactId, ownerId, fileKey, fileName, fileUrl, notes, uploadedAt)
+- [x] DB: remove draft columns from iepDocuments table (keep only official current/previous)
+- [x] DB migration: generate and apply both changes
+- [x] Backend: iep.uploadDraft saves new row to draftIepHistory (never overwrites, full history)
+- [x] Backend: iep.listDraftHistory(contactId) returns all draft rows ordered by uploadedAt desc
+- [x] Backend: iep.deleteDraftHistory(id) deletes a specific draft entry
+- [x] Backend: iep.updateDraftNotes(id, notes) updates notes on a draft entry
+- [x] Frontend: Draft block in IepDocumentBlocks uploads to draftIepHistory
+- [x] Frontend: Separate amber-themed "Draft History" list below the 3 official IEP blocks
+- [x] Frontend: Official IEP history (3 blocks) remains completely separate from Draft History section

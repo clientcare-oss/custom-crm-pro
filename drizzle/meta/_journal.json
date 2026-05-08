@@ -134,6 +134,13 @@
       "when": 1778244635505,
       "tag": "0018_good_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1778245254497,
+      "tag": "0019_curious_logan",
+      "breakpoints": true
     }
   ]
 }
