@@ -517,3 +517,7 @@
 
 ## PG-030 Tasks Tab — Create Task Button Fix
 - [x] Create Task button disabled because projectId not pre-populated; fixed — button now enabled when title is filled and projects.length > 0; projectId resolved at submit time from projects[0] fallback
+
+## PG-030 Tasks Tab — Button Fix + Assignee Picker
+- [x] Fix Create Task button still disabled — root cause: priority column missing from DB; added column + migration 0026
+- [x] Add Assign To dropdown in Add Task form showing: You (advocate), parent contact (from parentContactId), team members (from internalTasks.getTeamUsers)

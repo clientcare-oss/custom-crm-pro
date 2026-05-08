@@ -1,0 +1,1 @@
+ALTER TABLE `projectTasks` ADD `priority` enum('High','Medium','Low') DEFAULT 'Medium' NOT NULL;

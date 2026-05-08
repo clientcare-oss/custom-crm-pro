@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useParams, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -811,7 +812,7 @@ function StudentTabs({
         )}
       </TabsContent>
       {/* TASKS */}
-      <TasksTabContent contactId={contactId} projects={projects} caseId={contact.caseId} />
+      <TasksTabContent contactId={contactId} projects={projects} caseId={contact.caseId} parentContactId={contact.parentContactId} />
       {/* FILES */}
       <TabsContent value="files" className="mt-4 space-y-3">
         <IepDocumentBlocks contactId={contactId} />
@@ -1098,12 +1099,20 @@ function StatusBadge({ status }: { status?: string | null }) {
 // ─────────────────────────────────────────────────────────
 // TASKS TAB — shows all tasks across student's projects
 // ─────────────────────────────────────────────────────────
-function TasksTabContent({ contactId, projects, caseId }: { contactId: number; projects: any[]; caseId?: string | null }) {
+function TasksTabContent({ contactId, projects, caseId, parentContactId }: { contactId: number; projects: any[]; caseId?: string | null; parentContactId?: number | null }) {
   const utils = trpc.useUtils();
-  // Auto-select the first (and usually only) project so the field is never empty
-  const defaultProjectId = projects.length === 1 ? String(projects[0].id) : "";
-  const [newTask, setNewTask] = useState({ title: "", projectId: defaultProjectId, dueDate: "", priority: "Medium" });
+  const { user } = useAuth();
+  const defaultProjectId = projects.length >= 1 ? String(projects[0].id) : "";
+  const [newTask, setNewTask] = useState({ title: "", projectId: defaultProjectId, dueDate: "", priority: "Medium", assignedToId: "" });
   const [adding, setAdding] = useState(false);
+
+  // Fetch team users for assignee dropdown
+  const { data: teamUsers = [] } = trpc.internalTasks.getTeamUsers.useQuery(undefined, { enabled: adding });
+  // Fetch parent contact for assignee dropdown
+  const { data: parentContact } = trpc.contacts.get.useQuery(
+    { id: parentContactId! },
+    { enabled: adding && !!parentContactId }
+  );
 
   const { data: tasks = [], isLoading } = trpc.tasks.getByStudent.useQuery(
     { studentContactId: contactId },
@@ -1114,7 +1123,7 @@ function TasksTabContent({ contactId, projects, caseId }: { contactId: number; p
     onSuccess: () => {
       toast.success("Task created");
       setAdding(false);
-      setNewTask({ title: "", projectId: "", dueDate: "", priority: "Medium" });
+      setNewTask({ title: "", projectId: defaultProjectId, dueDate: "", priority: "Medium", assignedToId: "" });
       utils.tasks.getByStudent.invalidate({ studentContactId: contactId });
     },
     onError: (e) => toast.error("Failed to create task: " + e.message),
@@ -1155,8 +1164,8 @@ function TasksTabContent({ contactId, projects, caseId }: { contactId: number; p
             onChange={(e: any) => setNewTask((f) => ({ ...f, title: e.target.value }))}
             className="text-sm"
           />
-          <div className="flex gap-2 flex-wrap">
-            {/* Case ID chip — always shows the student's own case ID */}
+          <div className="flex gap-2 flex-wrap items-center">
+            {/* Case ID chip */}
             {caseId ? (
               <div className="flex items-center gap-1.5 text-xs bg-accent/10 border border-accent/20 rounded-md px-2.5 py-1.5">
                 <span className="text-muted-foreground">Case:</span>
@@ -1168,18 +1177,37 @@ function TasksTabContent({ contactId, projects, caseId }: { contactId: number; p
                 <span>No Case ID yet — save the student record to generate one</span>
               </div>
             )}
-            {/* Still need a project to save the task — hidden select auto-picks the first */}
-            {projects.length > 0 && (
-              <div className="hidden">
-                <Select value={newTask.projectId} onValueChange={(v) => setNewTask((f) => ({ ...f, projectId: v }))} >
-                  <SelectContent>
-                    {projects.map((p: any) => (
-                      <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Assign To dropdown */}
+            <Select value={newTask.assignedToId} onValueChange={(v) => setNewTask((f) => ({ ...f, assignedToId: v }))}>
+              <SelectTrigger className="text-xs w-44">
+                <SelectValue placeholder="Assign to..." />
+              </SelectTrigger>
+              <SelectContent>
+                {user && (
+                  <SelectItem value={String(user.id)}>
+                    <span className="flex items-center gap-1.5">
+                      <User className="h-3 w-3" /> {user.name ?? "You"} (me)
+                    </span>
+                  </SelectItem>
+                )}
+                {parentContact && (
+                  <SelectItem value={`contact-${parentContact.id}`}>
+                    <span className="flex items-center gap-1.5">
+                      <User className="h-3 w-3 text-green-600" />
+                      {parentContact.firstName} {parentContact.lastName} (parent)
+                    </span>
+                  </SelectItem>
+                )}
+                {teamUsers.filter((u: any) => u.id !== user?.id).map((u: any) => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    <span className="flex items-center gap-1.5">
+                      <User className="h-3 w-3 text-violet-600" /> {u.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {/* Priority */}
             <Select value={newTask.priority} onValueChange={(v) => setNewTask((f) => ({ ...f, priority: v }))}>
               <SelectTrigger className="text-xs w-32"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -1197,20 +1225,20 @@ function TasksTabContent({ contactId, projects, caseId }: { contactId: number; p
           </div>
           <Button
             size="sm"
-            disabled={!newTask.title.trim() || projects.length === 0 || createTask.isPending}
+            disabled={!newTask.title.trim() || createTask.isPending}
             onClick={() => {
-              // Resolve projectId: use state value if set, otherwise fall back to first project
-              const resolvedProjectId = newTask.projectId
-                ? parseInt(newTask.projectId)
-                : projects[0]?.id;
-              if (!resolvedProjectId) return;
+              const resolvedProjectId = newTask.projectId ? parseInt(newTask.projectId) : projects[0]?.id;
+              // assignedTo is a userId (number) — skip contact-prefixed values (parent contacts)
+              const assignedToNum = newTask.assignedToId && !newTask.assignedToId.startsWith("contact-")
+                ? parseInt(newTask.assignedToId)
+                : undefined;
               createTask.mutate({
                 projectId: resolvedProjectId,
                 title: newTask.title.trim(),
                 dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
                 priority: newTask.priority,
                 status: "Todo",
-                assignedTo: contactId,
+                assignedTo: assignedToNum,
               });
             }}
             className="text-xs"

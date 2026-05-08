@@ -124,6 +124,7 @@ export const projectTasks = mysqlTable("projectTasks", {
     .notNull(),
   dueDate: datetime("dueDate"),
   assignedTo: int("assignedTo"),
+  priority: mysqlEnum("priority", ["High", "Medium", "Low"]).default("Medium").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
