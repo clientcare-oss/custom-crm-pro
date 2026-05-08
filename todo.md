@@ -502,3 +502,7 @@
 - [x] Participants bar: show advocate/owner (logged-in user) as first avatar always
 - [x] Participants bar: clicking the parent participant shows quick-action options (call, text, email) using their stored phone/email
 - [x] Backend: used existing contacts.get procedure to fetch parent contact on demand
+
+## PG-004 Students List — Parent Name on Cards
+- [x] Backend: no change needed — contacts.list already returns parentContactId; parentMap built client-side from the same query
+- [x] Frontend: Family/Parent column now shows parent avatar + name (clickable → navigates to parent contact); falls back to company name or dash

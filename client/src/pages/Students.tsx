@@ -1,7 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight, ChevronLeft, ArrowUpDown } from "lucide-react";
+import { Plus, ChevronRight, ChevronLeft, ArrowUpDown, User } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import {
@@ -56,6 +56,9 @@ export default function Students() {
 
   // Parent contacts (non-students) for the parent selector
   const parents = (contacts ?? []).filter((c) => c.jobTitle !== "Student");
+  // Quick lookup: parentContactId → { name, id }
+  const parentMap = new Map<number, { name: string; id: number }>();
+  parents.forEach((p) => parentMap.set(p.id, { name: `${p.firstName} ${p.lastName}`, id: p.id }));
 
   // Filter to student contacts (jobTitle === "Student") or show all if none tagged
   const allContacts = contacts ?? [];
@@ -250,8 +253,28 @@ export default function Students() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                      {contact.company || "—"}
+                    <td className="px-4 py-3 hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
+                      {contact.parentContactId && parentMap.has(contact.parentContactId) ? (
+                        <button
+                          onClick={() => setLocation(`/contacts/${contact.parentContactId}`)}
+                          className="flex items-center gap-1.5 group/parent"
+                          title="Go to parent contact"
+                        >
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                            {parentMap.get(contact.parentContactId)!.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm text-foreground group-hover/parent:text-emerald-600 dark:group-hover/parent:text-emerald-400 transition-colors font-medium">
+                            {parentMap.get(contact.parentContactId)!.name}
+                          </span>
+                        </button>
+                      ) : contact.company ? (
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <User className="h-3.5 w-3.5 flex-shrink-0" />
+                          {contact.company}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                       {contact.jobTitle || "—"}
