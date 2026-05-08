@@ -1111,19 +1111,47 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
   const [addingStep, setAddingStep] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState("");
   const [editingStatus, setEditingStatus] = useState(false);
+  const prevDone = useRef(false);
   const utils = trpc.useUtils();
   const inv = () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId });
-
   const stepCount = (task.steps ?? []).length;
   const doneCount = (task.steps ?? []).filter((s: any) => s.isComplete).length;
   const progress = stepCount > 0 ? Math.round((doneCount / stepCount) * 100) : 0;
   const isDone = (task.status ?? "Todo") === "Done";
   const statusCfg = CD_STATUS_CONFIG[task.status ?? "Todo"] ?? CD_STATUS_CONFIG["Todo"];
 
+  // Fire confetti when task transitions to Done
+  useEffect(() => {
+    if (isDone && !prevDone.current && stepCount > 0) {
+      const end = Date.now() + 1200;
+      const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6"];
+      (function frame() {
+        import("canvas-confetti").then(({ default: confetti }) => {
+          confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors });
+          confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors });
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+    }
+    prevDone.current = isDone;
+  }, [isDone, stepCount]);
+
   const updateTask = trpc.tasks.update.useMutation({ onSuccess: inv });
   const deleteTask = trpc.tasks.delete.useMutation({ onSuccess: () => { inv(); toast("Task deleted"); } });
   const addStep = trpc.tasks.addStep.useMutation({ onSuccess: () => { inv(); setNewStepTitle(""); setAddingStep(false); } });
-  const toggleStep = trpc.tasks.toggleStep.useMutation({ onSuccess: inv });
+  const toggleStep = trpc.tasks.toggleStep.useMutation({
+    onSuccess: (_data, vars) => {
+      inv().then(() => {
+        const updatedSteps = (task.steps ?? []).map((s: any) =>
+          s.id === vars.stepId ? { ...s, isComplete: vars.isComplete } : s
+        );
+        const allDone = updatedSteps.length > 0 && updatedSteps.every((s: any) => s.isComplete);
+        if (allDone && !isDone) {
+          updateTask.mutate({ id: task.id, status: "Done" });
+        }
+      });
+    },
+  });
   const deleteStep = trpc.tasks.deleteStep.useMutation({ onSuccess: inv });
 
   return (

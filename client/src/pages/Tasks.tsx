@@ -300,7 +300,17 @@ function TaskRow({
   }, [isComplete, subtaskCount]);
 
   const toggleSubtask = trpc.internalTasks.toggleSubtask.useMutation({
-    onSuccess: () => utils.internalTasks.list.invalidate(),
+    onSuccess: (_data, vars) => {
+      utils.internalTasks.list.invalidate().then(() => {
+        const updatedSubtasks = task.subtasks.map((s) =>
+          s.id === vars.subtaskId ? { ...s, isComplete: vars.isComplete } : s
+        );
+        const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.isComplete);
+        if (allDone && !isComplete) {
+          updateStatus.mutate({ id: task.id, status: "complete" });
+        }
+      });
+    },
   });
   const addSubtask = trpc.internalTasks.addSubtask.useMutation({
     onSuccess: () => {
@@ -536,9 +546,21 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
   const addStep = trpc.tasks.addStep.useMutation({
     onSuccess: () => { utils.tasks.getAll.invalidate(); setNewStepTitle(""); setAddingStep(false); },
   });
-  const toggleStep = trpc.tasks.toggleStep.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
+  const toggleStep = trpc.tasks.toggleStep.useMutation({
+    onSuccess: (_data, vars) => {
+      utils.tasks.getAll.invalidate().then(() => {
+        // After invalidation, check if all steps are now complete
+        const updatedSteps = (task.steps ?? []).map((s) =>
+          s.id === vars.stepId ? { ...s, isComplete: vars.isComplete } : s
+        );
+        const allDone = updatedSteps.length > 0 && updatedSteps.every((s) => s.isComplete);
+        if (allDone && !isDone) {
+          updateTask.mutate({ id: task.id, status: "Done" });
+        }
+      });
+    },
+  });
   const deleteStep = trpc.tasks.deleteStep.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
-
   return (
     <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${
       isDone ? "border-green-200 bg-green-50/30" : "border-border bg-card"

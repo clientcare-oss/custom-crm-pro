@@ -535,3 +535,8 @@
 - [x] Frontend: StudentTaskRow component on PG-009 — chevron expand, steps list, add step, progress bar, confetti on complete, status badge click-to-change, priority pill, due date, delete
 - [x] Frontend: ContactDetailTaskRow on PG-030 — same full-featured row replaces simple card
 - [x] Rename "Client Tasks" stub to "Student Case Tasks"
+
+## Auto-Complete Task on All Steps Done
+- [x] StudentTaskRow (PG-009): when last step is toggled complete, auto-set task status to "Done" + fire confetti
+- [x] ContactDetailTaskRow (PG-030): same auto-complete + confetti when all steps done
+- [x] Internal TaskRow (PG-009): added same auto-complete logic (toggleSubtask → all done → status "complete")
