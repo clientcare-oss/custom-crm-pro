@@ -65,7 +65,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
     { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
     { icon: UserCheck, label: "Team", path: "/team" },
-    { icon: undefined, label: "🧠 BrainDump", path: "/brain-dump" },
+    { icon: Brain, label: "BrainDump", path: "/brain-dump" },
     { icon: Zap, label: "Automations", path: "/automations" },
     { icon: Plug, label: "Integrations", path: "/integrations" },
     { icon: Settings, label: "Settings", path: "/settings" },
