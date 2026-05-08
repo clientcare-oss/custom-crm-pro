@@ -485,3 +485,7 @@
 ## Client Portal — Cases Tab Mirror Fix
 - [x] Replace generic blue "Active" card in client portal Cases tab with exact mirror of advocate-side: Formal Escalation Files rose banner + type tag pills + empty state ("No formal cases on file — Great news, this is exactly where we want to be.")
 - [x] Add ScrollText icon import to ClientPortal.tsx
+
+## Rename "Financials" → "Billing" on All Client-Facing Pages
+- [x] ClientPortal.tsx: tab label "Financials" → "Billing", tab comment, h2 heading, subtitle copy
+- [x] ContactDetail.tsx: parent-side tab trigger label (line ~273) already says "Billing" — verified; student-side tab trigger label (line ~670) already says "Billing" — verified; no visible heading changes needed (no h2 in those tab contents)

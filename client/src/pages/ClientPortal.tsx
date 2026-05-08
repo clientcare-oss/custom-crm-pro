@@ -353,7 +353,7 @@ export default function ClientPortal() {
                   { value: "files", icon: FolderOpen, label: "Files" },
                   { value: "tools", icon: Wrench, label: "Tools" },
                   { value: "cases", icon: Briefcase, label: "Cases" },
-                  { value: "financials", icon: DollarSign, label: "Financials" },
+                  { value: "financials", icon: DollarSign, label: "Billing" },
                   { value: "appointments", icon: Calendar, label: "Appointments" },
                   { value: "details", icon: Info, label: "Details" },
                 ].map(({ value, icon: Icon, label }) => (
@@ -675,12 +675,12 @@ export default function ClientPortal() {
               </div>
             </TabsContent>
 
-            {/* ── Financials Tab ── */}
+            {/* ── Billing Tab ── */}
             <TabsContent value="financials" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
               <div className="p-5 space-y-5">
                 <div>
-                  <h2 className="text-lg font-bold tracking-tight text-foreground">Financials</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Invoices and contracts for {effectiveStudent.firstName}'s case</p>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Billing</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Billing and invoices for {effectiveStudent.firstName}'s case</p>
                 </div>
 
                 {/* Invoices */}
