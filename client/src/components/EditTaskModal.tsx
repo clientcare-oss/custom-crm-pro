@@ -30,6 +30,8 @@ import { toast } from "sonner";
 
 interface ProjectTaskEdit {
   kind: "project";
+  /** "client-facing" = assigned to a contact/student; "case" = internal work task with no contact assignee */
+  subKind?: "client-facing" | "case";
   id: number;
   title: string;
   status: string;
@@ -126,13 +128,19 @@ export function EditTaskModal({ task, open, onClose }: Props) {
   function handleSave() {
     if (!task || !title.trim()) return;
 
+    // Parse assignee — treat "" or "__none__" as null
+    const parsedAssignee = assigneeId && assigneeId !== "__none__" ? parseInt(assigneeId, 10) : null;
+
     if (task.kind === "project") {
+      // Build a valid Date or null — never pass new Date("") which is Invalid Date
+      const parsedDue = dueDate ? new Date(dueDate + "T00:00:00") : null;
       updateProject.mutate({
         id: task.id,
         title: title.trim(),
         status: status as "Todo" | "In Progress" | "Done",
-        dueDate: dueDate ? new Date(dueDate) : null,
-        assignedTo: assigneeId ? parseInt(assigneeId) : null,
+        dueDate: parsedDue && !isNaN(parsedDue.getTime()) ? parsedDue : null,
+        assignedTo: parsedAssignee,
+        priority: priority || null,
       });
     } else {
       updateInternal.mutate({
@@ -141,13 +149,15 @@ export function EditTaskModal({ task, open, onClose }: Props) {
         description: description || undefined,
         status: status as "not_started" | "in_progress" | "stuck" | "complete",
         dueDate: dueDate || null,
-        assigneeId: assigneeId ? parseInt(assigneeId) : null,
+        assigneeId: parsedAssignee,
       });
     }
   }
 
   const isPending = updateProject.isPending || updateInternal.isPending;
   const isProject = task?.kind === "project";
+  // Case tasks use team-user assignees; client-facing tasks use contacts
+  const isCaseTask = task?.kind === "project" && task.subKind === "case";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -244,11 +254,11 @@ export function EditTaskModal({ task, open, onClose }: Props) {
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned" className="text-xs text-muted-foreground">
+                  <SelectItem value="__none__" className="text-xs text-muted-foreground">
                     Unassigned
                   </SelectItem>
-                  {isProject ? (
-                    // Project tasks: assign to contacts
+                  {isProject && !isCaseTask ? (
+                    // Client-facing project tasks: assign to contacts/students
                     (contacts as any[]).map((c: any) => (
                       <SelectItem key={c.id} value={String(c.id)} className="text-xs">
                         <span className="flex items-center gap-1.5">
@@ -260,7 +270,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
                       </SelectItem>
                     ))
                   ) : (
-                    // Internal tasks: assign to team members
+                    // Internal tasks + Case tasks: assign to team members
                     (teamUsers as any[]).map((u: any) => (
                       <SelectItem key={u.id} value={String(u.id)} className="text-xs">
                         <span className="flex items-center gap-1.5">

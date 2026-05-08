@@ -1,4 +1,7 @@
-# Custom CRM Pro - Project TODO
+# Custom CRM Pro # Project TODO
+
+## Task Edit (Active)
+- [x] Verify pencil icon edit modal works correctly for all task types (General Tasks, Client Facing Tasks, Case Tasks)
 
 ## Phase 1: Database Schema & Design System
 - [x] Design database schema (users, contacts, leads, projects, invoices, contracts, appointments, messages)
@@ -109,7 +112,7 @@
 
 ## Contacts / Students Separation
 - [x] Filter Contacts page to exclude contacts with jobTitle === "Student"
-- [ ] Contact detail page: add "Related Students" section showing students with same family/company
+- [x] Contact detail page: add "Related Students" section showing students with same family/company (ParentTabs Students tab with getStudentsWithSummary)
 - [ ] Future: Quo phone service integration on contact detail page (call button)
 
 ## Case Compass Inline Edit
@@ -176,16 +179,16 @@
 - [x] Wire up Tasks route in App.tsx
 
 ## Client Portal Tab Restructure
-- [ ] Move tab bar above WCC carousel in client portal
-- [ ] Tab bar: Compass, Communication, Tasks, Files, Cases, Financials, Appointments, Details
-- [ ] Compass tab: shows WCC carousel (current behavior)
-- [ ] Communication tab: message thread scoped to student
-- [ ] Tasks tab: tasks assigned to student
-- [ ] Files tab: files scoped to student
-- [ ] Cases tab: case/project info for student
-- [ ] Financials tab: invoices/billing scoped to student
-- [ ] Appointments tab: appointments scoped to student
-- [ ] Details tab: student contact details
+- [x] Move tab bar above WCC carousel in client portal
+- [x] Tab bar: Compass, Communication, Tasks, Files, Cases, Financials, Appointments, Details (Tools tab also present)
+- [x] Compass tab: shows WCC carousel (current behavior)
+- [x] Communication tab: message thread (parent-level thread, not per-student)
+- [x] Tasks tab: tasks assigned to student
+- [x] Files tab: files scoped to student
+- [x] Cases tab: show real student case/project info (studentProjects query + project cards + escalation banner)
+- [x] Financials tab: invoices/billing scoped to student (labeled Billing)
+- [x] Appointments tab: appointments scoped to student
+- [x] Details tab: student contact details
 
 ## Theme Toggle
 - [x] Add light/dark mode toggle to admin sidebar (bottom, near user profile)

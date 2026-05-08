@@ -533,7 +533,7 @@ const STUDENT_STATUS_CONFIG: Record<string, { label: string; color: string }> = 
   Done: { label: "Done", color: "bg-green-100 text-green-700 border-green-200" },
 };
 
-function StudentTaskRow({ task }: { task: StudentTask }) {
+function StudentTaskRow({ task, subKind }: { task: StudentTask; subKind?: "client-facing" | "case" }) {
   const [expanded, setExpanded] = useState(false);
   const [addingStep, setAddingStep] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState("");
@@ -662,7 +662,7 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
             </button>
           )}
           <button
-            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedTo: task.assignedTo })}
+            onClick={() => setEditPayload({ kind: "project", subKind: subKind ?? (task.assignedTo ? "client-facing" : "case"), id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedTo: task.assignedTo })}
             className="text-muted-foreground hover:text-blue-500 transition-colors"
             title="Edit task"
           >
@@ -985,7 +985,7 @@ export default function Tasks() {
           ) : (
             <div>
               {clientFacingTasks.map((t) => (
-                <StudentTaskRow key={t.id} task={t} />
+                <StudentTaskRow key={t.id} task={t} subKind="client-facing" />
               ))}
             </div>
           )}
@@ -1008,7 +1008,7 @@ export default function Tasks() {
           ) : (
             <div>
               {caseTasks.map((t) => (
-                <StudentTaskRow key={t.id} task={t} />
+                <StudentTaskRow key={t.id} task={t} subKind="case" />
               ))}
             </div>
           )}

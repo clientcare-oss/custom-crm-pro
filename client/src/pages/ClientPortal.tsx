@@ -247,6 +247,12 @@ export default function ClientPortal() {
     { enabled: !!effectiveStudentContactId }
   );
 
+  // Projects/cases linked to this student
+  const { data: studentProjects = [] } = trpc.portal.getStudentProjects.useQuery(
+    { studentContactId: effectiveStudentContactId! },
+    { enabled: !!effectiveStudentContactId }
+  );
+
   // Messaging (shared parent-level thread)
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -750,8 +756,62 @@ export default function ClientPortal() {
 
             {/* ── Cases Tab ── */}
             <TabsContent value="cases" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
-              <div className="p-5 space-y-3">
-                {/* Formal Escalation Files banner — mirrors advocate side exactly */}
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Cases</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Active cases and projects for {effectiveStudent.firstName}</p>
+                </div>
+
+                {/* Active projects/cases */}
+                {studentProjects.length > 0 ? (
+                  <div className="space-y-3">
+                    {studentProjects.map((proj: any) => (
+                      <Card key={proj.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center">
+                              <Briefcase className="h-4 w-4 text-accent" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-foreground truncate">{proj.name}</p>
+                              {proj.description && (
+                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{proj.description}</p>
+                              )}
+                              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                {proj.startDate && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    Started {new Date(proj.startDate).toLocaleDateString()}
+                                  </span>
+                                )}
+                                {proj.endDate && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Ends {new Date(proj.endDate).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <span className={`flex-shrink-0 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            proj.status === "Completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : proj.status === "In Progress" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : proj.status === "On Hold" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                          }`}>{proj.status}</span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
+                    <Briefcase className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
+                    <p className="text-sm font-semibold text-foreground mb-1">No active cases</p>
+                    <p className="text-xs text-muted-foreground">Your advocate will create a case for {effectiveStudent.firstName} when work begins</p>
+                  </div>
+                )}
+
+                {/* Formal Escalation Files banner */}
                 <div className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50/60 dark:bg-rose-950/20 px-5 py-4 flex gap-3">
                   <div className="flex-shrink-0 mt-0.5">
                     <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
@@ -769,12 +829,6 @@ export default function ClientPortal() {
                       ))}
                     </div>
                   </div>
-                </div>
-                {/* Empty state — mirrors advocate side */}
-                <div className="rounded-lg border border-dashed border-border bg-muted/20 py-10 text-center">
-                  <ScrollText className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-40" />
-                  <p className="text-sm font-semibold text-foreground">No formal cases on file</p>
-                  <p className="text-xs text-muted-foreground mt-1">Great news — this is exactly where we want to be.</p>
                 </div>
               </div>
             </TabsContent>

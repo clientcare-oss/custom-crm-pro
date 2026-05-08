@@ -265,6 +265,7 @@ export const appRouter = router({
           status: z.enum(["Todo", "In Progress", "Done"]).optional(),
           dueDate: z.date().optional().nullable(),
           assignedTo: z.number().optional().nullable(),
+          priority: z.string().optional().nullable(),
         })
       )
       .mutation(async ({ input }) => {
@@ -881,6 +882,18 @@ export const appRouter = router({
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
         return await db.updateTask(input.taskId, { seenByClient: true });
+      }),
+
+    // Portal: get projects/cases linked to a student (by their contact id)
+    getStudentProjects: protectedProcedure
+      .input(z.object({ studentContactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return await db.getProjectsByClient(input.studentContactId);
       }),
   }),
 
