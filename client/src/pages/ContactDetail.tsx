@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
+import { CaseParticipants } from "@/components/CaseParticipants";
 import { toast } from "sonner";
 
 // ─── Compass section block (shared between admin + portal views) ───────────────
@@ -183,6 +184,9 @@ export default function ContactDetail() {
           </div>
         </div>
       </div>
+
+      {/* Case Participants bar */}
+      <CaseParticipants contactId={contactId} contactName={fullName} />
 
       {/* ═══════════════════════════════════════════════════
           TABS — split by parent vs student

@@ -646,3 +646,38 @@ export const callLogs = mysqlTable("callLogs", {
 });
 export type CallLog = typeof callLogs.$inferSelect;
 export type InsertCallLog = typeof callLogs.$inferInsert;
+
+// ============ TEAM MANAGEMENT ============
+/**
+ * Team invites — owner sends invite links to staff.
+ * When accepted, the invited user's record is linked via acceptedUserId.
+ * role: 'admin' = full access; 'member' = view/edit clients, no billing/settings.
+ */
+export const teamInvites = mysqlTable("teamInvites", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),          // the owner who sent the invite
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 200 }),
+  role: mysqlEnum("role", ["admin", "member"]).default("member").notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(), // invite link token
+  status: mysqlEnum("status", ["pending", "accepted", "revoked"]).default("pending").notNull(),
+  acceptedUserId: int("acceptedUserId"),       // links to users.id once accepted
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+});
+export type TeamInvite = typeof teamInvites.$inferSelect;
+export type InsertTeamInvite = typeof teamInvites.$inferInsert;
+
+/**
+ * Case Assignments — links team members to specific student/contact cases.
+ * Drives the "Visible to" participant bar on the student detail page.
+ */
+export const caseAssignments = mysqlTable("caseAssignments", {
+  id: int("id").autoincrement().primaryKey(),
+  contactId: int("contactId").notNull(),       // the student/contact (case)
+  teamInviteId: int("teamInviteId").notNull(), // links to teamInvites.id
+  assignedBy: int("assignedBy").notNull(),     // owner user id
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+});
+export type CaseAssignment = typeof caseAssignments.$inferSelect;
+export type InsertCaseAssignment = typeof caseAssignments.$inferInsert;

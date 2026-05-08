@@ -141,6 +141,20 @@
       "when": 1778245254497,
       "tag": "0019_curious_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1778246085166,
+      "tag": "0020_mighty_vanisher",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1778246175308,
+      "tag": "0021_salty_marvel_apes",
+      "breakpoints": true
     }
   ]
 }

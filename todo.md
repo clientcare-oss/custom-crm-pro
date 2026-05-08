@@ -378,3 +378,30 @@
 - [x] Frontend: Draft block in IepDocumentBlocks uploads to draftIepHistory
 - [x] Frontend: Separate amber-themed "Draft History" list below the 3 official IEP blocks
 - [x] Frontend: Official IEP history (3 blocks) remains completely separate from Draft History section
+
+## Team Management
+- [x] DB: teamInvites table (id, ownerId, email, name, role: admin/member, token, status: pending/accepted/revoked, createdAt, acceptedAt)
+- [x] DB migration: generate and apply
+- [x] Backend: team.listMembers — list all users who have accepted an invite from this owner
+- [x] Backend: team.listInvites — list pending/revoked invites
+- [x] Backend: team.invite — create invite record, return invite link
+- [x] Backend: team.revokeInvite — revoke a pending invite
+- [x] Backend: team.removeMember — remove an accepted team member
+- [x] Backend: team.updateRole — change a member's role (admin/member)
+- [x] Backend: public team.acceptInvite — accept invite by token, link user to owner
+- [x] Frontend: Team sidebar nav item (UserCheck icon, /team route)
+- [x] Frontend: Team page — member list with avatar, name, email, role badge, joined date, remove button
+- [x] Frontend: Pending invites section — email, role, sent date, revoke button
+- [x] Frontend: Invite dialog — email input, role selector (Admin/Member), copy invite link
+- [x] Frontend: Role descriptions (Admin = full access; Member = view/edit clients, no billing/settings)
+- [x] Wire /team route in App.tsx
+
+## Case Participant Bar (Student/Contact Detail)
+- [x] DB: caseAssignments table (id, contactId, teamInviteId, assignedBy, assignedAt)
+- [x] DB migration: generate and apply
+- [x] Backend: team.listCaseAssignments(contactId) — list team members assigned to a case
+- [x] Backend: team.assignToCase(contactId, teamInviteId) — assign a team member to a case
+- [x] Backend: team.removeFromCase(contactId, teamInviteId) — remove assignment
+- [x] Frontend: CaseParticipants component — horizontal bar showing owner avatar, contact avatar/initials, assigned team member chips, + Add button
+- [x] Frontend: Add participant popover — searchable list of team members to assign
+- [x] Frontend: Integrate CaseParticipants bar into ContactDetail page (below header, above tabs)

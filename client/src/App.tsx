@@ -32,6 +32,7 @@ import Workflows from "./pages/Workflows";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Walkthroughs from "./pages/Walkthroughs";
 import UnassignedCallLogs from "./pages/UnassignedCallLogs";
+import Team from "./pages/Team";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -71,6 +72,7 @@ function Router() {
           <Route path="/knowledge-base" component={KnowledgeBase} />
           <Route path="/walkthroughs" component={Walkthroughs} />
           <Route path="/call-logs" component={UnassignedCallLogs} />
+          <Route path="/team" component={Team} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />
