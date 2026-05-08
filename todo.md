@@ -2,6 +2,9 @@
 
 ## Task Edit (Active)
 - [x] Verify pencil icon edit modal works correctly for all task types (General Tasks, Client Facing Tasks, Case Tasks)
+- [x] BUG: Edit modal assignee dropdown must ALWAYS show team members only (never contacts/students — students are the case, not assignees)
+- [x] BUG: Selecting one team member (e.g. Byron) saves as another (e.g. Shawn) — wrong ID mapping (fixed with assignedToUserId column)
+- [x] Assignee dropdown should show team members (staff) AND parent contacts — but NOT students
 
 ## Phase 1: Database Schema & Design System
 - [x] Design database schema (users, contacts, leads, projects, invoices, contracts, appointments, messages)

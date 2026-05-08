@@ -2,6 +2,11 @@
  * EditTaskModal — shared edit dialog for all task types:
  *   - "project"  → calls tasks.update  (StudentTaskRow, ContactDetailTaskRow)
  *   - "internal" → calls internalTasks.update (TaskRow)
+ *
+ * Assignee dropdown shows:
+ *   - Team members (staff/users)
+ *   - Parent contacts (non-student contacts)
+ *   - NEVER students (students are the case, not assignees)
  */
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
@@ -30,13 +35,14 @@ import { toast } from "sonner";
 
 interface ProjectTaskEdit {
   kind: "project";
-  /** "client-facing" = assigned to a contact/student; "case" = internal work task with no contact assignee */
-  subKind?: "client-facing" | "case";
   id: number;
   title: string;
   status: string;
   priority?: string | null;
   dueDate?: Date | string | null;
+  /** Team member user ID assigned to this task */
+  assignedToUserId?: number | null;
+  /** Contact ID (parent) assigned to this task */
   assignedTo?: number | null;
   /** contact ID of the student this task belongs to — used to invalidate cache */
   studentContactId?: number;
@@ -49,6 +55,7 @@ interface InternalTaskEdit {
   description?: string | null;
   status: string;
   assigneeId?: number | null;
+  assigneeContactId?: number | null;
   dueDate?: Date | string | null;
 }
 
@@ -80,6 +87,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [dueDate, setDueDate] = useState("");
+  // Assignee value format: "user-{id}" for team members, "contact-{id}" for parent contacts, "" for unassigned
   const [assigneeId, setAssigneeId] = useState("");
 
   // Populate form when task changes
@@ -90,18 +98,35 @@ export function EditTaskModal({ task, open, onClose }: Props) {
     setDueDate(toDateString(task.dueDate));
     if (task.kind === "project") {
       setPriority(task.priority ?? "Medium");
-      setAssigneeId(task.assignedTo ? String(task.assignedTo) : "");
+      // Determine current assignee: prefer assignedToUserId (team member), fallback to assignedTo (parent contact)
+      if (task.assignedToUserId) {
+        setAssigneeId(`user-${task.assignedToUserId}`);
+      } else if (task.assignedTo) {
+        setAssigneeId(`contact-${task.assignedTo}`);
+      } else {
+        setAssigneeId("");
+      }
       setDescription("");
     } else {
       setDescription(task.description ?? "");
-      setAssigneeId(task.assigneeId ? String(task.assigneeId) : "");
+      if (task.assigneeId) {
+        setAssigneeId(`user-${task.assigneeId}`);
+      } else if (task.assigneeContactId) {
+        setAssigneeId(`contact-${task.assigneeContactId}`);
+      } else {
+        setAssigneeId("");
+      }
       setPriority("Medium");
     }
   }, [task]);
 
-  // Data for dropdowns
+  // Team members for assignee dropdown
   const { data: teamUsers = [] } = trpc.internalTasks.getTeamUsers.useQuery();
-  const { data: contacts = [] } = trpc.contacts.list.useQuery();
+  // All contacts — we'll filter to non-students (parents)
+  const { data: allContacts = [] } = trpc.contacts.list.useQuery();
+  const parentContacts = (allContacts as any[]).filter(
+    (c: any) => c.jobTitle !== "Student"
+  );
 
   // Mutations
   const updateProject = trpc.tasks.update.useMutation({
@@ -128,36 +153,45 @@ export function EditTaskModal({ task, open, onClose }: Props) {
   function handleSave() {
     if (!task || !title.trim()) return;
 
-    // Parse assignee — treat "" or "__none__" as null
-    const parsedAssignee = assigneeId && assigneeId !== "__none__" ? parseInt(assigneeId, 10) : null;
+    // Parse assignee value
+    let userAssignee: number | null = null;
+    let contactAssignee: number | null = null;
+
+    if (assigneeId && assigneeId !== "__none__") {
+      if (assigneeId.startsWith("user-")) {
+        userAssignee = parseInt(assigneeId.replace("user-", ""), 10);
+      } else if (assigneeId.startsWith("contact-")) {
+        contactAssignee = parseInt(assigneeId.replace("contact-", ""), 10);
+      }
+    }
 
     if (task.kind === "project") {
-      // Build a valid Date or null — never pass new Date("") which is Invalid Date
       const parsedDue = dueDate ? new Date(dueDate + "T00:00:00") : null;
       updateProject.mutate({
         id: task.id,
         title: title.trim(),
         status: status as "Todo" | "In Progress" | "Done",
         dueDate: parsedDue && !isNaN(parsedDue.getTime()) ? parsedDue : null,
-        assignedTo: parsedAssignee,
+        assignedToUserId: userAssignee,
+        assignedTo: contactAssignee,
         priority: priority || null,
       });
     } else {
+      // Internal tasks support both team user and parent contact assignment
       updateInternal.mutate({
         id: task.id,
         title: title.trim(),
         description: description || undefined,
         status: status as "not_started" | "in_progress" | "stuck" | "complete",
         dueDate: dueDate || null,
-        assigneeId: parsedAssignee,
+        assigneeId: userAssignee,
+        assigneeContactId: contactAssignee,
       });
     }
   }
 
   const isPending = updateProject.isPending || updateInternal.isPending;
   const isProject = task?.kind === "project";
-  // Case tasks use team-user assignees; client-facing tasks use contacts
-  const isCaseTask = task?.kind === "project" && task.subKind === "case";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -246,7 +280,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
               />
             </div>
 
-            {/* Assignee */}
+            {/* Assignee — staff + parent contacts, never students */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Assign to</Label>
               <Select value={assigneeId} onValueChange={setAssigneeId}>
@@ -257,31 +291,40 @@ export function EditTaskModal({ task, open, onClose }: Props) {
                   <SelectItem value="__none__" className="text-xs text-muted-foreground">
                     Unassigned
                   </SelectItem>
-                  {isProject && !isCaseTask ? (
-                    // Client-facing project tasks: assign to contacts/students
-                    (contacts as any[]).map((c: any) => (
-                      <SelectItem key={c.id} value={String(c.id)} className="text-xs">
-                        <span className="flex items-center gap-1.5">
-                          <div className="h-4 w-4 rounded-full bg-green-100 flex items-center justify-center text-[9px] font-bold text-green-700">
-                            {(c.firstName ?? "?").charAt(0).toUpperCase()}
-                          </div>
-                          {c.firstName} {c.lastName}
-                        </span>
-                      </SelectItem>
-                    ))
-                  ) : (
-                    // Internal tasks + Case tasks: assign to team members
-                    (teamUsers as any[]).map((u: any) => (
-                      <SelectItem key={u.id} value={String(u.id)} className="text-xs">
-                        <span className="flex items-center gap-1.5">
-                          <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">
-                            {(u.name ?? "?").charAt(0).toUpperCase()}
-                          </div>
-                          {u.name}
-                        </span>
-                      </SelectItem>
-                    ))
+
+                  {/* Team Members (Staff) */}
+                  {(teamUsers as any[]).length > 0 && (
+                    <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Staff
+                    </div>
                   )}
+                  {(teamUsers as any[]).map((u: any) => (
+                    <SelectItem key={`user-${u.id}`} value={`user-${u.id}`} className="text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">
+                          {(u.name ?? "?").charAt(0).toUpperCase()}
+                        </div>
+                        {u.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+
+                  {/* Parent Contacts */}
+                  {parentContacts.length > 0 && (
+                    <div className="px-2 py-1 mt-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-t">
+                      Parents / Contacts
+                    </div>
+                  )}
+                  {parentContacts.map((c: any) => (
+                    <SelectItem key={`contact-${c.id}`} value={`contact-${c.id}`} className="text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <div className="h-4 w-4 rounded-full bg-green-100 flex items-center justify-center text-[9px] font-bold text-green-700">
+                          {(c.firstName ?? "?").charAt(0).toUpperCase()}
+                        </div>
+                        {c.firstName} {c.lastName}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

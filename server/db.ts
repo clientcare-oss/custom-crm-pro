@@ -402,16 +402,24 @@ export async function getAllTasksForOwner(ownerId: number) {
         .from(projectTaskSteps)
         .where(eq(projectTaskSteps.taskId, (task as any).id))
         .orderBy(asc(projectTaskSteps.sortOrder));
-      let assignedToName: string | null = null;
-      if ((task as any).assignedTo) {
-        const [ac] = await db
+      // Resolve assignee name: prefer assignedToUserId (team member), fallback to assignedTo (parent contact)
+      let assignedToUserName: string | null = null;
+      if ((task as any).assignedToUserId) {
+        const [u] = await db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, (task as any).assignedToUserId))
+          .limit(1);
+        if (u) assignedToUserName = u.name;
+      } else if ((task as any).assignedTo) {
+        const [c] = await db
           .select({ firstName: contacts.firstName, lastName: contacts.lastName })
           .from(contacts)
           .where(eq(contacts.id, (task as any).assignedTo))
           .limit(1);
-        if (ac) assignedToName = `${ac.firstName} ${ac.lastName}`;
+        if (c) assignedToUserName = `${c.firstName} ${c.lastName}`;
       }
-      result.push({ ...task, projectName: proj.name, clientName, assignedToName, steps });
+      result.push({ ...task, projectName: proj.name, clientName, assignedToUserName, steps });
     }
   }
   return result;

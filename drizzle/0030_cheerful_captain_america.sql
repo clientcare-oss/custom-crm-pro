@@ -1,0 +1,1 @@
+ALTER TABLE `internalTasks` ADD `assigneeContactId` int;

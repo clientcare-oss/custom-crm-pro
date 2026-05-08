@@ -124,6 +124,8 @@ export const projectTasks = mysqlTable("projectTasks", {
     .notNull(),
   dueDate: datetime("dueDate"),
   assignedTo: int("assignedTo"),
+  /** Team member (user) assigned to work on this task */
+  assignedToUserId: int("assignedToUserId"),
   priority: mysqlEnum("priority", ["High", "Medium", "Low"]).default("Medium").notNull(),
   seenByClient: boolean("seenByClient").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -537,6 +539,7 @@ export const internalTasks = mysqlTable("internalTasks", {
     .notNull(),
   projectId: int("projectId"),
   assigneeId: int("assigneeId"),
+  assigneeContactId: int("assigneeContactId"),
   dueDate: datetime("dueDate"),
   resources: text("resources"), // JSON: [{label, url}]
   linkedFileId: int("linkedFileId"),

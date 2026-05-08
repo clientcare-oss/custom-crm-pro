@@ -155,20 +155,20 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
       }
 
       let assignedTo: number | undefined;
+      let assignedToUserId: number | undefined;
+
       if (taskType === "client") {
-        // Assignee is the parent contact (their contact ID) or the student themselves
-        if (assigneeId.startsWith("parent-")) {
-          assignedTo = parseInt(assigneeId.replace("parent-", ""));
-        } else if (assigneeId) {
-          assignedTo = contactId; // fallback to student
-        } else {
-          assignedTo = contactId;
+        // Client-facing: assignedTo = student contact ID (for portal visibility)
+        assignedTo = contactId;
+        // Also assign to a team member if one was selected
+        if (assigneeId && !assigneeId.startsWith("parent-")) {
+          assignedToUserId = parseInt(assigneeId);
         }
       } else {
-        // Case task: assignee is a team member (stored as user ID in assignedTo — or leave empty)
-        assignedTo = assigneeId && !assigneeId.startsWith("parent-")
-          ? parseInt(assigneeId)
-          : undefined;
+        // Case task: team member assignment only (no portal visibility)
+        if (assigneeId && !assigneeId.startsWith("parent-")) {
+          assignedToUserId = parseInt(assigneeId);
+        }
       }
 
       createProjectTask.mutate({
@@ -178,6 +178,7 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
         dueDate: dueDate ? new Date(dueDate) : undefined,
         status: "Todo",
         assignedTo,
+        assignedToUserId,
       });
     }
   }

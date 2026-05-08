@@ -1222,7 +1222,7 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
             </button>
           )}
           <button
-            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedTo: task.assignedTo, studentContactId: contactId })}
+            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedToUserId: (task as any).assignedToUserId, assignedTo: (task as any).assignedTo, studentContactId: contactId })}
             className="text-muted-foreground hover:text-blue-500 transition-colors"
             title="Edit task"
           >

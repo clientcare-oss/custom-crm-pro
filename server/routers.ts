@@ -250,6 +250,7 @@ export const appRouter = router({
           status: z.enum(["Todo", "In Progress", "Done"]).optional(),
           dueDate: z.date().optional(),
           assignedTo: z.number().optional(),
+          assignedToUserId: z.number().optional(),
           priority: z.string().optional(),
         })
       )
@@ -265,6 +266,7 @@ export const appRouter = router({
           status: z.enum(["Todo", "In Progress", "Done"]).optional(),
           dueDate: z.date().optional().nullable(),
           assignedTo: z.number().optional().nullable(),
+          assignedToUserId: z.number().optional().nullable(),
           priority: z.string().optional().nullable(),
         })
       )
@@ -305,6 +307,7 @@ export const appRouter = router({
           status: z.enum(["Todo", "In Progress", "Done"]).optional(),
           dueDate: z.date().optional(),
           assignedTo: z.number().optional(),
+          assignedToUserId: z.number().optional(),
           priority: z.string().optional(),
         })
       )
@@ -1440,13 +1443,15 @@ export const appRouter = router({
         if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { internalTasks, internalSubtasks, users, projects } = await import("../drizzle/schema");
+        const { internalTasks, internalSubtasks, users, projects, contacts } = await import("../drizzle/schema");
         const tasks = await database.select().from(internalTasks).orderBy(asc(internalTasks.createdAt));
         const subtasks = await database.select().from(internalSubtasks).orderBy(asc(internalSubtasks.sortOrder));
         const allUsers = await database.select({ id: users.id, name: users.name }).from(users);
         const allProjects = await database.select({ id: projects.id, name: projects.name }).from(projects);
+        const allContacts = await database.select({ id: contacts.id, firstName: contacts.firstName, lastName: contacts.lastName }).from(contacts);
         const userMap = Object.fromEntries(allUsers.map(u => [u.id, u.name]));
         const projectMap = Object.fromEntries(allProjects.map(p => [p.id, p.name]));
+        const contactMap = Object.fromEntries(allContacts.map(c => [c.id, `${c.firstName} ${c.lastName}`]));
         const subtasksByTask = subtasks.reduce((acc, s) => {
           if (!acc[s.taskId]) acc[s.taskId] = [];
           acc[s.taskId].push(s);
@@ -1455,7 +1460,7 @@ export const appRouter = router({
         let result = tasks.map(t => ({
           ...t,
           resources: t.resources ? JSON.parse(t.resources) : [],
-          assigneeName: t.assigneeId ? userMap[t.assigneeId] : null,
+          assigneeName: t.assigneeId ? userMap[t.assigneeId] : (t.assigneeContactId ? contactMap[t.assigneeContactId] : null),
           projectName: t.projectId ? projectMap[t.projectId] : null,
           subtasks: (subtasksByTask[t.id] || []).map(s => ({
             ...s,
@@ -1516,6 +1521,7 @@ export const appRouter = router({
         status: z.enum(["not_started", "in_progress", "stuck", "complete"]).optional(),
         projectId: z.number().nullable().optional(),
         assigneeId: z.number().nullable().optional(),
+        assigneeContactId: z.number().nullable().optional(),
         dueDate: z.string().nullable().optional(),
         linkedFileId: z.number().nullable().optional(),
         linkedFileName: z.string().nullable().optional(),
@@ -1534,6 +1540,7 @@ export const appRouter = router({
         if (data.status !== undefined) updateData.status = data.status;
         if (data.projectId !== undefined) updateData.projectId = data.projectId;
         if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
+        if (data.assigneeContactId !== undefined) updateData.assigneeContactId = data.assigneeContactId;
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
         if (data.linkedFileId !== undefined) updateData.linkedFileId = data.linkedFileId;
         if (data.linkedFileName !== undefined) updateData.linkedFileName = data.linkedFileName;

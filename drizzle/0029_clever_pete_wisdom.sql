@@ -1,0 +1,1 @@
+ALTER TABLE `projectTasks` ADD `assignedToUserId` int;

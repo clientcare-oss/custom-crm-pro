@@ -431,7 +431,7 @@ function TaskRow({
             <Link2 className="h-4 w-4" />
           </button>
           <button
-            onClick={() => setEditPayload({ kind: "internal", id: task.id, title: task.title, description: task.description, status: task.status, assigneeId: task.assigneeId, dueDate: task.dueDate })}
+            onClick={() => setEditPayload({ kind: "internal", id: task.id, title: task.title, description: task.description, status: task.status, assigneeId: task.assigneeId, assigneeContactId: (task as any).assigneeContactId, dueDate: task.dueDate })}
             className="text-muted-foreground hover:text-blue-500 transition-colors"
             title="Edit task"
           >
@@ -521,9 +521,11 @@ type StudentTask = {
   priority: string | null;
   dueDate: Date | null;
   assignedTo: number | null;
-  assignedToName: string | null;
+  assignedToUserId: number | null;
+  assignedToUserName: string | null;
   clientName: string | null;
   projectName: string | null;
+  seenByClient: boolean;
   steps: { id: number; taskId: number; title: string; isComplete: boolean; sortOrder: number }[];
 };
 
@@ -533,7 +535,7 @@ const STUDENT_STATUS_CONFIG: Record<string, { label: string; color: string }> = 
   Done: { label: "Done", color: "bg-green-100 text-green-700 border-green-200" },
 };
 
-function StudentTaskRow({ task, subKind }: { task: StudentTask; subKind?: "client-facing" | "case" }) {
+function StudentTaskRow({ task }: { task: StudentTask }) {
   const [expanded, setExpanded] = useState(false);
   const [addingStep, setAddingStep] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState("");
@@ -609,20 +611,20 @@ function StudentTaskRow({ task, subKind }: { task: StudentTask; subKind?: "clien
                 <span className="text-amber-700 font-medium">{task.projectName}</span>
               </span>
             )}
-            {task.projectName && task.assignedToName && (
+            {task.projectName && task.assignedToUserName && (
               <span className="text-muted-foreground/40 text-xs">|</span>
             )}
-            {task.assignedToName && (
+            {task.assignedToUserName && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">
-                  {task.assignedToName.charAt(0).toUpperCase()}
+                  {task.assignedToUserName.charAt(0).toUpperCase()}
                 </div>
-                {task.assignedToName}
+                {task.assignedToUserName}
               </span>
             )}
             {task.dueDate && (
               <>
-                {(task.projectName || task.assignedToName) && <span className="text-muted-foreground/40 text-xs">|</span>}
+                {(task.projectName || task.assignedToUserName) && <span className="text-muted-foreground/40 text-xs">|</span>}
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />{formatDateTime(task.dueDate)}
                 </span>
@@ -662,7 +664,7 @@ function StudentTaskRow({ task, subKind }: { task: StudentTask; subKind?: "clien
             </button>
           )}
           <button
-            onClick={() => setEditPayload({ kind: "project", subKind: subKind ?? (task.assignedTo ? "client-facing" : "case"), id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedTo: task.assignedTo })}
+            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedToUserId: task.assignedToUserId, assignedTo: task.assignedTo })}
             className="text-muted-foreground hover:text-blue-500 transition-colors"
             title="Edit task"
           >
@@ -918,9 +920,9 @@ export default function Tasks() {
   const utils = trpc.useUtils();
   const totalTasks = tasks.length;
   const completedTasks = (tasks as Task[]).filter((t) => t.status === "complete").length;
-  // Split into client-facing (assigned to someone) and case tasks (not assigned)
-  const clientFacingTasks = (studentTasks as StudentTask[]).filter((t) => !!t.assignedTo);
-  const caseTasks = (studentTasks as StudentTask[]).filter((t) => !t.assignedTo);
+  // Split into client-facing (visible to client) and case tasks (internal only)
+  const clientFacingTasks = (studentTasks as StudentTask[]).filter((t) => t.seenByClient);
+  const caseTasks = (studentTasks as StudentTask[]).filter((t) => !t.seenByClient);
   return (
     <div className="p-6">
         <div className="flex items-center justify-between mb-4">
@@ -985,7 +987,7 @@ export default function Tasks() {
           ) : (
             <div>
               {clientFacingTasks.map((t) => (
-                <StudentTaskRow key={t.id} task={t} subKind="client-facing" />
+                <StudentTaskRow key={t.id} task={t} />
               ))}
             </div>
           )}
@@ -1008,7 +1010,7 @@ export default function Tasks() {
           ) : (
             <div>
               {caseTasks.map((t) => (
-                <StudentTaskRow key={t.id} task={t} subKind="case" />
+                <StudentTaskRow key={t.id} task={t} />
               ))}
             </div>
           )}
