@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { CreateTaskInline } from "@/components/CreateTaskInline";
+import { EditTaskModal, type TaskEditPayload } from "@/components/EditTaskModal";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useParams, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
@@ -1112,6 +1113,7 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
   const [addingStep, setAddingStep] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState("");
   const [editingStatus, setEditingStatus] = useState(false);
+  const [editPayload, setEditPayload] = useState<TaskEditPayload | null>(null);
   const utils = trpc.useUtils();
   const inv = () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId });
   const stepCount = (task.steps ?? []).length;
@@ -1219,11 +1221,19 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
               </Badge>
             </button>
           )}
+          <button
+            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedTo: task.assignedTo, studentContactId: contactId })}
+            className="text-muted-foreground hover:text-blue-500 transition-colors"
+            title="Edit task"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
           <button onClick={() => deleteTask.mutate({ id: task.id })} className="text-muted-foreground hover:text-red-500 transition-colors">
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
+      <EditTaskModal task={editPayload} open={!!editPayload} onClose={() => setEditPayload(null)} />
       {expanded && (
         <div className="border-t border-border">
           {task.description && (

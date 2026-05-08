@@ -592,3 +592,10 @@
 - [x] Selecting parent auto-switches type to Client Facing; selecting team member keeps Case Task
 - [x] CreateTaskInline accepts parentContactId prop; ContactDetail passes it through
 - [x] Auto-type indicator badge shown in controls row (Case Task / Client Facing)
+
+## Task Edit Capability
+- [x] Backend: tasks.update and internalTasks.update procedures already existed
+- [x] Built EditTaskModal component (supports both internal tasks and project tasks)
+- [x] TaskRow (PG-009 General Tasks): pencil edit button wired to EditTaskModal
+- [x] StudentTaskRow (PG-009 Client Facing / Case Tasks): pencil edit button wired to EditTaskModal
+- [x] ContactDetailTaskRow (PG-030): pencil edit button wired to EditTaskModal with studentContactId
