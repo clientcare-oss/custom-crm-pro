@@ -409,3 +409,8 @@
 ## Student Tab Bar Cleanup
 - [x] Redesign StudentTabs tab bar: remove icon clutter, improve spacing, match parent/client side clean style
 - [x] Group or slim down tab labels so they don't overflow on normal screen widths
+
+## State Complaint Builder (Tools Tab)
+- [x] Add State Complaint Builder block to ToolsTabContent on student/advocate side
+- [x] Create /state-complaint-builder route and page
+- [x] Backend: stateComplaint.generate tRPC procedure using LLM with student context

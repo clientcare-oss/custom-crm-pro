@@ -562,6 +562,38 @@ function ToolsTabContent({ contactId }: { contactId: number }) {
         </Button>
       </Card>
 
+      {/* State Complaint Builder */}
+      <Card className="p-5 rounded-xl border border-rose-200 dark:border-rose-800 flex flex-col gap-3">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-rose-100 dark:bg-rose-950/40">
+            <ScrollText className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">State Complaint Builder</p>
+              <span className="text-xs rounded-full px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 font-semibold">AI-Assisted</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Draft a formal state complaint using this student's IEP data, case history, and documented violations. The builder walks you through each required section and generates a structured complaint ready for submission.
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {["FAPE Violations", "Procedural Safeguards", "Prior Written Notice", "Timelines", "Compensatory Services"].map((tag) => (
+                <span key={tag} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">{tag}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setLocation(`/state-complaint-builder?contactId=${contactId}`)}
+          className="self-start inline-flex items-center gap-1.5 text-xs border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+        >
+          <ScrollText className="h-3.5 w-3.5" />
+          Open State Complaint Builder →
+        </Button>
+      </Card>
+
       {/* More tools coming soon */}
       <Card className="p-5 rounded-xl border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-2 py-8">
         <Wrench className="h-6 w-6 text-muted-foreground" />
