@@ -562,3 +562,7 @@
 - [x] StudentTaskRow (Tasks.tsx): same fix
 - [x] ContactDetailTaskRow (ContactDetail.tsx): same fix
 - [x] PortalTaskRow (ClientPortal.tsx): same fix
+
+## Fix Confetti Animation — PG-030 and PG-023
+- [x] PG-030 ContactDetailTaskRow: removed stepCount > 0 guard — confetti now fires on any Done transition
+- [x] PG-023 PortalTaskRow: removed stepCount > 0 guard + added circle/check button so client can manually complete tasks → confetti fires

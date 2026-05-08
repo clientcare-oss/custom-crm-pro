@@ -1120,9 +1120,9 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
   const prevDone = useRef(isDone);
   const statusCfg = CD_STATUS_CONFIG[task.status ?? "Todo"] ?? CD_STATUS_CONFIG["Todo"];
 
-  // Fire confetti when task transitions to Done
+  // Fire confetti when task transitions to Done (with or without steps)
   useEffect(() => {
-    if (isDone && !prevDone.current && stepCount > 0) {
+    if (isDone && !prevDone.current) {
       const end = Date.now() + 1200;
       const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6"];
       (function frame() {
@@ -1134,7 +1134,7 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
       })();
     }
     prevDone.current = isDone;
-  }, [isDone, stepCount]);
+  }, [isDone]);
 
   const updateTask = trpc.tasks.update.useMutation({ onSuccess: inv });
   const deleteTask = trpc.tasks.delete.useMutation({ onSuccess: () => { inv(); toast("Task deleted"); } });

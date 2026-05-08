@@ -36,9 +36,9 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
   const isDone = (task.status ?? "Todo") === "Done";
   const prevDone = useRef(isDone);
 
-  // Fire confetti when task transitions to Done
+  // Fire confetti when task transitions to Done (with or without steps)
   useEffect(() => {
-    if (isDone && !prevDone.current && stepCount > 0) {
+    if (isDone && !prevDone.current) {
       const end = Date.now() + 1200;
       const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6"];
       (function frame() {
@@ -50,7 +50,7 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
       })();
     }
     prevDone.current = isDone;
-  }, [isDone, stepCount]);
+  }, [isDone]);
 
   const markSeen = trpc.portal.markTaskSeen.useMutation({ onSuccess: inv });
   const updateStatus = trpc.portal.updateTaskStatus.useMutation({ onSuccess: inv });
@@ -73,6 +73,16 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
       isDone ? "border-green-200 bg-green-50/30" : "border-border bg-card"
     }`}>
       <div className="flex items-center gap-3 px-4 py-3">
+        {/* Complete toggle button */}
+        <button
+          onClick={() => updateStatus.mutate({ taskId: task.id, status: isDone ? "In Progress" : "Done", studentContactId })}
+          className="flex-shrink-0 transition-transform hover:scale-110"
+          title={isDone ? "Mark as In Progress" : "Mark as Done"}
+        >
+          {isDone
+            ? <CheckCircle2 className="h-4 w-4 text-green-500" />
+            : <Circle className="h-4 w-4 text-muted-foreground hover:text-green-500" />}
+        </button>
         <button
           onClick={() => {
             const opening = !expanded;
