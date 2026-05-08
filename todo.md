@@ -550,3 +550,6 @@
 - [x] Add getTasksAssignedToStudent(studentContactId) db helper — filters by assignedTo = studentContactId
 - [x] Add portal.getAssignedTasks procedure (ownership-verified, protectedProcedure)
 - [x] ClientPortal.tsx now uses portal.getAssignedTasks — clients only see tasks assigned to them
+
+## PG-009 Tasks — Remove Wasted Space
+- [x] Removed max-w-4xl mx-auto constraint — task list now fills full available width beside the nav sidebar
