@@ -162,6 +162,13 @@
       "when": 1778250959647,
       "tag": "0022_reflective_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1778252935323,
+      "tag": "0023_pink_master_mold",
+      "breakpoints": true
     }
   ]
 }

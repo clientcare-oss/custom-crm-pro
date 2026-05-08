@@ -439,3 +439,25 @@
 - [x] Frontend: Priority color coding (urgent=red, high=orange, medium=blue, low=gray)
 - [x] Frontend: Status badges with dot indicators
 - [x] Frontend: Dark mode friendly styling
+
+## 💸 Bill Guardian™
+- [x] DB: billGuardianBills table (id, ownerId, vendorName, expectedAmount, dueDay, frequency, category, autopay, priority, notes, fileKey, fileUrl, fileName, isActive, createdAt, updatedAt)
+- [x] DB: billGuardianTransactions table (id, ownerId, bankAccountId, externalId, description, amount, transactionDate, category, matchedBillId, matchStatus, matchConfidence, matchNotes, isManuallyVerified, createdAt)
+- [x] DB: billGuardianAccounts table (id, ownerId, bankName, accountName, accountType, lastSyncedAt, isActive, createdAt)
+- [x] DB migrations: generate and apply all three tables
+- [x] Backend: billGuardian.listBills, createBill, updateBill, deleteBill procedures
+- [x] Backend: billGuardian.listTransactions, importTransactions (manual CSV/paste), deleteTransaction procedures
+- [x] Backend: billGuardian.runMatching — AI-powered matching of transactions to bills (LLM vendor similarity + amount/date proximity)
+- [x] Backend: billGuardian.getDashboard — aggregate status counts (paid, due soon, missing, duplicate, increased, needs review)
+- [x] Backend: billGuardian.overrideMatch — manually verify/override a match
+- [x] Backend: billGuardian.listAccounts, addAccount, deleteAccount procedures
+- [x] Frontend: /bill-guardian route and page
+- [x] Frontend: 💸 Bill Guardian sidebar nav item (ShieldCheck icon)
+- [x] Frontend: Dashboard tab — status cards (Paid/Due Soon/Missing/Duplicate/Increased/Needs Review), monthly summary
+- [x] Frontend: Bills tab — list of recurring bills with status badges, add/edit/delete, receipt upload
+- [x] Frontend: Transactions tab — imported transactions list with match status, manual import dialog
+- [x] Frontend: Add Bill dialog — all fields (vendor, amount, due day, frequency, category, autopay, priority, notes)
+- [x] Frontend: Run AI Matching button — triggers matching engine, shows results with confidence scores
+- [x] Frontend: Match result cards — show matched transaction, confidence %, override buttons
+- [x] Frontend: Alert banner for missing/overdue bills
+- [x] Frontend: Color coding — green=paid, amber=due soon, red=missing, orange=duplicate/increased, gray=needs review

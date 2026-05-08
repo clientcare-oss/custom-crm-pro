@@ -703,3 +703,58 @@ export const brainDumpItems = mysqlTable("brainDumpItems", {
 });
 export type BrainDumpItem = typeof brainDumpItems.$inferSelect;
 export type InsertBrainDumpItem = typeof brainDumpItems.$inferInsert;
+
+// ─── Bill Guardian™ ──────────────────────────────────────────────────────────
+export const billGuardianAccounts = mysqlTable("billGuardianAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  bankName: varchar("bankName", { length: 255 }).notNull(),
+  accountName: varchar("accountName", { length: 255 }).notNull(),
+  accountType: varchar("accountType", { length: 100 }).default("checking").notNull(),
+  lastSyncedAt: timestamp("lastSyncedAt"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BillGuardianAccount = typeof billGuardianAccounts.$inferSelect;
+export type InsertBillGuardianAccount = typeof billGuardianAccounts.$inferInsert;
+
+export const billGuardianBills = mysqlTable("billGuardianBills", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  vendorName: varchar("vendorName", { length: 255 }).notNull(),
+  vendorAliases: text("vendorAliases"),
+  expectedAmount: decimal("expectedAmount", { precision: 10, scale: 2 }).notNull(),
+  dueDay: int("dueDay").notNull(),
+  frequency: mysqlEnum("frequency", ["monthly", "quarterly", "annual", "weekly"]).default("monthly").notNull(),
+  category: varchar("category", { length: 100 }).default("General").notNull(),
+  autopay: boolean("autopay").default(false).notNull(),
+  priority: mysqlEnum("priority", ["critical", "high", "medium", "low"]).default("medium").notNull(),
+  notes: text("notes"),
+  fileKey: varchar("fileKey", { length: 500 }),
+  fileUrl: varchar("fileUrl", { length: 1000 }),
+  fileName: varchar("fileName", { length: 255 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BillGuardianBill = typeof billGuardianBills.$inferSelect;
+export type InsertBillGuardianBill = typeof billGuardianBills.$inferInsert;
+
+export const billGuardianTransactions = mysqlTable("billGuardianTransactions", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  bankAccountId: int("bankAccountId"),
+  externalId: varchar("externalId", { length: 255 }),
+  description: varchar("description", { length: 500 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  transactionDate: timestamp("transactionDate").notNull(),
+  category: varchar("category", { length: 100 }),
+  matchedBillId: int("matchedBillId"),
+  matchStatus: mysqlEnum("matchStatus", ["unmatched", "matched", "duplicate", "increased", "needs_review", "ignored"]).default("unmatched").notNull(),
+  matchConfidence: int("matchConfidence").default(0).notNull(),
+  matchNotes: text("matchNotes"),
+  isManuallyVerified: boolean("isManuallyVerified").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BillGuardianTransaction = typeof billGuardianTransactions.$inferSelect;
+export type InsertBillGuardianTransaction = typeof billGuardianTransactions.$inferInsert;
