@@ -405,3 +405,7 @@
 - [x] Frontend: CaseParticipants component — horizontal bar showing owner avatar, contact avatar/initials, assigned team member chips, + Add button
 - [x] Frontend: Add participant popover — searchable list of team members to assign
 - [x] Frontend: Integrate CaseParticipants bar into ContactDetail page (below header, above tabs)
+
+## Student Tab Bar Cleanup
+- [x] Redesign StudentTabs tab bar: remove icon clutter, improve spacing, match parent/client side clean style
+- [x] Group or slim down tab labels so they don't overflow on normal screen widths
