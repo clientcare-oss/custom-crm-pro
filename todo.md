@@ -545,3 +545,8 @@
 - [x] Audit how tasks are rendered in ClientPortal.tsx (Tasks tab)
 - [x] Add portal.toggleTaskStep and portal.updateTaskStatus procedures (ownership-verified, protectedProcedure)
 - [x] Replace simple task cards in portal Tasks tab with PortalTaskRow — chevron expand, steps list, progress bar, auto-complete + confetti when all steps done
+
+## PG-023 Client Portal — Tasks Assigned to Client Only
+- [x] Add getTasksAssignedToStudent(studentContactId) db helper — filters by assignedTo = studentContactId
+- [x] Add portal.getAssignedTasks procedure (ownership-verified, protectedProcedure)
+- [x] ClientPortal.tsx now uses portal.getAssignedTasks — clients only see tasks assigned to them

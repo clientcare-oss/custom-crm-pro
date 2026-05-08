@@ -29,7 +29,7 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
   const [expanded, setExpanded] = useState(false);
   const prevDone = useRef(false);
   const utils = trpc.useUtils();
-  const inv = () => utils.tasks.getByStudent.invalidate({ studentContactId });
+  const inv = () => utils.portal.getAssignedTasks.invalidate({ studentContactId });
 
   const stepCount = (task.steps ?? []).length;
   const doneCount = (task.steps ?? []).filter((s: any) => s.isComplete).length;
@@ -216,8 +216,8 @@ export default function ClientPortal() {
     enabled: user?.role === "client" || isPreviewMode,
   });
 
-  // Tasks for this student
-  const { data: studentTasks = [] } = trpc.tasks.getByStudent.useQuery(
+  // Tasks explicitly assigned to this student (client-facing — not all project tasks)
+  const { data: studentTasks = [] } = trpc.portal.getAssignedTasks.useQuery(
     { studentContactId: effectiveStudentContactId! },
     { enabled: !!effectiveStudentContactId }
   );

@@ -352,6 +352,27 @@ export async function getTasksByStudent(studentContactId: number) {
   return result;
 }
 
+// Get tasks explicitly assigned to a specific student contact (for client portal)
+export async function getTasksAssignedToStudent(studentContactId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const tasks = await db
+    .select()
+    .from(projectTasks)
+    .where(eq(projectTasks.assignedTo, studentContactId))
+    .orderBy(asc(projectTasks.dueDate));
+  const result: any[] = [];
+  for (const task of tasks) {
+    const steps = await db
+      .select()
+      .from(projectTaskSteps)
+      .where(eq(projectTaskSteps.taskId, (task as any).id))
+      .orderBy(asc(projectTaskSteps.sortOrder));
+    result.push({ ...task, steps });
+  }
+  return result;
+}
+
 export async function getAllTasksForOwner(ownerId: number) {
   const db = await getDb();
   if (!db) return [];
