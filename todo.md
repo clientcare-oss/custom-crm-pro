@@ -566,3 +566,8 @@
 ## Fix Confetti Animation — PG-030 and PG-023
 - [x] PG-030 ContactDetailTaskRow: removed stepCount > 0 guard — confetti now fires on any Done transition
 - [x] PG-023 PortalTaskRow: removed stepCount > 0 guard + added circle/check button so client can manually complete tasks → confetti fires
+
+## Student Case Tasks Stub — Wire Up Real Data
+- [x] Found dead stub in Tasks.tsx (lines 922-926) — removed
+- [x] Renamed real section from "Student Case Tasks" to "Client Facing Tasks"
+- [x] Also fixed TaskRow confetti guard (removed subtaskCount > 0) so it fires for tasks without subtasks too

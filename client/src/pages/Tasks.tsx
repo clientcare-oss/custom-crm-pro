@@ -292,11 +292,11 @@ function TaskRow({
   const statusCfg = STATUS_CONFIG[task.status];
 
   useEffect(() => {
-    if (isComplete && !prevComplete.current && subtaskCount > 0) {
+    if (isComplete && !prevComplete.current) {
       fireConfetti();
     }
     prevComplete.current = isComplete;
-  }, [isComplete, subtaskCount]);
+  }, [isComplete]);
 
   const toggleSubtask = trpc.internalTasks.toggleSubtask.useMutation({
     onSuccess: (_data, vars) => {
@@ -919,15 +919,10 @@ export default function Tasks() {
             ))}
           </div>
         )}
-        {/* Student Case Tasks (parent-assigned) stub */}
-        <div className="mt-8 border border-dashed border-border rounded-lg p-4 text-center">
-          <p className="text-sm font-medium text-muted-foreground">Student Case Tasks</p>
-          <p className="text-xs text-muted-foreground mt-1">Parent/client-assigned tasks will appear here — coming soon.</p>
-        </div>
-        {/* Student Case Tasks */}
+        {/* Client Facing Tasks */}
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-base font-semibold text-foreground">Student Case Tasks</h2>
+            <h2 className="text-base font-semibold text-foreground">Client Facing Tasks</h2>
             <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
               {(studentTasks as any[]).filter((t: any) => t.status !== "Done").length} open
             </span>
