@@ -508,6 +508,8 @@ type StudentTask = {
   status: string | null;
   priority: string | null;
   dueDate: Date | null;
+  assignedTo: number | null;
+  assignedToName: string | null;
   clientName: string | null;
   projectName: string | null;
   steps: { id: number; taskId: number; title: string; isComplete: boolean; sortOrder: number }[];
@@ -533,9 +535,9 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
   const statusCfg = STUDENT_STATUS_CONFIG[task.status ?? "Todo"] ?? STUDENT_STATUS_CONFIG["Todo"];
 
   useEffect(() => {
-    if (isDone && !prevDone.current && stepCount > 0) fireConfetti();
+    if (isDone && !prevDone.current) fireConfetti();
     prevDone.current = isDone;
-  }, [isDone, stepCount]);
+  }, [isDone]);
 
   const updateTask = trpc.tasks.update.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
   const deleteTask = trpc.tasks.delete.useMutation({
@@ -578,22 +580,40 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
             <span className={`font-medium text-sm ${
               isDone ? "line-through text-muted-foreground" : "text-foreground"
             }`}>{task.title}</span>
-            {task.clientName && (
-              <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 flex items-center gap-1">
-                <User className="h-3 w-3" />{task.clientName}
-              </span>
-            )}
-            {task.dueDate && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />{formatDateTime(task.dueDate)}
-              </span>
-            )}
             {task.priority && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                 task.priority === "High" ? "bg-red-100 text-red-700" :
                 task.priority === "Medium" ? "bg-amber-100 text-amber-700" :
                 "bg-muted text-muted-foreground"
               }`}>{task.priority}</span>
+            )}
+          </div>
+          {/* Metadata bar: source | assignee | due */}
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {task.projectName && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <FileText className="h-3 w-3 text-amber-500" />
+                <span className="text-amber-700 font-medium">{task.projectName}</span>
+              </span>
+            )}
+            {task.projectName && task.assignedToName && (
+              <span className="text-muted-foreground/40 text-xs">|</span>
+            )}
+            {task.assignedToName && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">
+                  {task.assignedToName.charAt(0).toUpperCase()}
+                </div>
+                {task.assignedToName}
+              </span>
+            )}
+            {task.dueDate && (
+              <>
+                {(task.projectName || task.assignedToName) && <span className="text-muted-foreground/40 text-xs">|</span>}
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />{formatDateTime(task.dueDate)}
+                </span>
+              </>
             )}
           </div>
           {stepCount > 0 && (
@@ -878,6 +898,9 @@ export default function Tasks() {
   const utils = trpc.useUtils();
   const totalTasks = tasks.length;
   const completedTasks = (tasks as Task[]).filter((t) => t.status === "complete").length;
+  // Split into client-facing (assigned to someone) and case tasks (not assigned)
+  const clientFacingTasks = (studentTasks as StudentTask[]).filter((t) => !!t.assignedTo);
+  const caseTasks = (studentTasks as StudentTask[]).filter((t) => !t.assignedTo);
   return (
     <div className="p-6">
         <div className="flex items-center justify-between mb-6">
@@ -901,16 +924,20 @@ export default function Tasks() {
             </button>
           ))}
         </div>
-        {/* Task list */}
+        {/* ── Section 1: General Tasks ── */}
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-base font-semibold text-foreground">General Tasks</h2>
+          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+            {(tasks as Task[]).filter((t) => t.status !== "complete").length} open
+          </span>
+        </div>
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-muted/40 rounded-lg animate-pulse" />)}
           </div>
         ) : tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <CheckCircle2 className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <p className="text-lg font-semibold text-foreground">No tasks yet</p>
-            <p className="text-sm text-muted-foreground mt-1">Click "New Task" to create your first task.</p>
+          <div className="border border-dashed border-border rounded-lg p-6 text-center">
+            <p className="text-sm text-muted-foreground">No general tasks yet — click "New Task" to create one.</p>
           </div>
         ) : (
           <div>
@@ -919,23 +946,47 @@ export default function Tasks() {
             ))}
           </div>
         )}
-        {/* Client Facing Tasks */}
+
+        {/* ── Section 2: Client Facing Tasks ── */}
         <div className="mt-8">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <h2 className="text-base font-semibold text-foreground">Client Facing Tasks</h2>
-            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-              {(studentTasks as any[]).filter((t: any) => t.status !== "Done").length} open
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              {clientFacingTasks.filter((t) => t.status !== "Done").length} open
             </span>
           </div>
           {studentTasksLoading ? (
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
-          ) : (studentTasks as any[]).length === 0 ? (
+          ) : clientFacingTasks.length === 0 ? (
             <div className="border border-dashed border-border rounded-lg p-6 text-center">
-              <p className="text-sm text-muted-foreground">No student case tasks yet — create one from a student’s Contact Detail page.</p>
+              <p className="text-sm text-muted-foreground">No client-facing tasks — assign a task to a client from their Contact Detail page.</p>
             </div>
           ) : (
             <div>
-              {(studentTasks as StudentTask[]).map((t) => (
+              {clientFacingTasks.map((t) => (
+                <StudentTaskRow key={t.id} task={t} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Section 3: Case Tasks ── */}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-base font-semibold text-foreground">Case Tasks</h2>
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              {caseTasks.filter((t) => t.status !== "Done").length} open
+            </span>
+          </div>
+          {studentTasksLoading ? (
+            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
+          ) : caseTasks.length === 0 ? (
+            <div className="border border-dashed border-border rounded-lg p-6 text-center">
+              <p className="text-sm text-muted-foreground">No case tasks yet — create one from a student's Contact Detail page.</p>
+            </div>
+          ) : (
+            <div>
+              {caseTasks.map((t) => (
                 <StudentTaskRow key={t.id} task={t} />
               ))}
             </div>

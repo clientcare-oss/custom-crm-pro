@@ -571,3 +571,10 @@
 - [x] Found dead stub in Tasks.tsx (lines 922-926) — removed
 - [x] Renamed real section from "Student Case Tasks" to "Client Facing Tasks"
 - [x] Also fixed TaskRow confetti guard (removed subtaskCount > 0) so it fires for tasks without subtasks too
+
+## PG-009 Tasks — Three Sections + Row Metadata Redesign
+- [x] Three distinct sections: General Tasks (blue badge), Client Facing Tasks (blue badge), Case Tasks (amber badge)
+- [x] StudentTaskRow metadata bar redesigned: 📁 projectName (amber) | ○ assignedToName (circle avatar initial) | 📅 dueDate
+- [x] Backend: getAllTasksForOwner now resolves assignedToName from contacts table
+- [x] clientFacingTasks = tasks with assignedTo set; caseTasks = tasks without assignedTo
+- [x] StudentTaskRow confetti guard fixed (removed stepCount > 0)

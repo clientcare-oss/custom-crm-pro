@@ -402,7 +402,16 @@ export async function getAllTasksForOwner(ownerId: number) {
         .from(projectTaskSteps)
         .where(eq(projectTaskSteps.taskId, (task as any).id))
         .orderBy(asc(projectTaskSteps.sortOrder));
-      result.push({ ...task, projectName: proj.name, clientName, steps });
+      let assignedToName: string | null = null;
+      if ((task as any).assignedTo) {
+        const [ac] = await db
+          .select({ firstName: contacts.firstName, lastName: contacts.lastName })
+          .from(contacts)
+          .where(eq(contacts.id, (task as any).assignedTo))
+          .limit(1);
+        if (ac) assignedToName = `${ac.firstName} ${ac.lastName}`;
+      }
+      result.push({ ...task, projectName: proj.name, clientName, assignedToName, steps });
     }
   }
   return result;
