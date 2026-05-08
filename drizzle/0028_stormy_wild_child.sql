@@ -1,0 +1,1 @@
+ALTER TABLE `projectTasks` ADD `seenByClient` boolean DEFAULT false NOT NULL;

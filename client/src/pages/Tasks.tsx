@@ -283,12 +283,12 @@ function TaskRow({
   const [newSubtaskDue, setNewSubtaskDue] = useState("");
   const [showResources, setShowResources] = useState(false);
   const [editingStatus, setEditingStatus] = useState(false);
-  const prevComplete = useRef(false);
+  const isComplete = task.status === "complete";
+  const prevComplete = useRef(isComplete);
   const utils = trpc.useUtils();
   const subtaskCount = task.subtasks.length;
   const done = task.subtasks.filter((s) => s.isComplete).length;
   const progress = subtaskCount > 0 ? Math.round((done / subtaskCount) * 100) : 0;
-  const isComplete = task.status === "complete";
   const statusCfg = STATUS_CONFIG[task.status];
 
   useEffect(() => {
@@ -521,16 +521,15 @@ const STUDENT_STATUS_CONFIG: Record<string, { label: string; color: string }> = 
 
 function StudentTaskRow({ task }: { task: StudentTask }) {
   const [expanded, setExpanded] = useState(false);
-  const [addingStep, setAddingStep] = useState(false);
+   const [addingStep, setAddingStep] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState("");
   const [editingStatus, setEditingStatus] = useState(false);
-  const prevDone = useRef(false);
   const utils = trpc.useUtils();
-
   const stepCount = task.steps?.length ?? 0;
   const doneCount = (task.steps ?? []).filter((s) => s.isComplete).length;
   const progress = stepCount > 0 ? Math.round((doneCount / stepCount) * 100) : 0;
   const isDone = (task.status ?? "Todo") === "Done";
+  const prevDone = useRef(isDone);
   const statusCfg = STUDENT_STATUS_CONFIG[task.status ?? "Todo"] ?? STUDENT_STATUS_CONFIG["Todo"];
 
   useEffect(() => {

@@ -550,6 +550,15 @@
 - [x] Add getTasksAssignedToStudent(studentContactId) db helper — filters by assignedTo = studentContactId
 - [x] Add portal.getAssignedTasks procedure (ownership-verified, protectedProcedure)
 - [x] ClientPortal.tsx now uses portal.getAssignedTasks — clients only see tasks assigned to them
+- [x] Add seenByClient column to projectTasks (migration applied)
+- [x] Add portal.markTaskSeen procedure
+- [x] PortalTaskRow: pulsing blue "New" badge on unseen tasks; dismissed when client expands the row
 
 ## PG-009 Tasks — Remove Wasted Space
 - [x] Removed max-w-4xl mx-auto constraint — task list now fills full available width beside the nav sidebar
+
+## Fix Confetti Firing on Page Load
+- [x] TaskRow (Tasks.tsx): prevDone initialized to current isComplete — confetti only fires on transition
+- [x] StudentTaskRow (Tasks.tsx): same fix
+- [x] ContactDetailTaskRow (ContactDetail.tsx): same fix
+- [x] PortalTaskRow (ClientPortal.tsx): same fix

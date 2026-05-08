@@ -872,6 +872,16 @@ export const appRouter = router({
         }
         return await db.updateTask(input.taskId, { status: input.status });
       }),
+    markTaskSeen: protectedProcedure
+      .input(z.object({ taskId: z.number(), studentContactId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return await db.updateTask(input.taskId, { seenByClient: true });
+      }),
   }),
 
   // ============ CASE COMPASS ============

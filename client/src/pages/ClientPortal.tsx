@@ -27,7 +27,6 @@ import SignaturePad from "@/components/SignaturePad";
 // ── Portal Task Row ──────────────────────────────────────────────────────────
 function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId: number }) {
   const [expanded, setExpanded] = useState(false);
-  const prevDone = useRef(false);
   const utils = trpc.useUtils();
   const inv = () => utils.portal.getAssignedTasks.invalidate({ studentContactId });
 
@@ -35,6 +34,7 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
   const doneCount = (task.steps ?? []).filter((s: any) => s.isComplete).length;
   const progress = stepCount > 0 ? Math.round((doneCount / stepCount) * 100) : 0;
   const isDone = (task.status ?? "Todo") === "Done";
+  const prevDone = useRef(isDone);
 
   // Fire confetti when task transitions to Done
   useEffect(() => {
@@ -52,6 +52,7 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
     prevDone.current = isDone;
   }, [isDone, stepCount]);
 
+  const markSeen = trpc.portal.markTaskSeen.useMutation({ onSuccess: inv });
   const updateStatus = trpc.portal.updateTaskStatus.useMutation({ onSuccess: inv });
   const toggleStep = trpc.portal.toggleTaskStep.useMutation({
     onSuccess: (_data, vars) => {
@@ -72,7 +73,16 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
       isDone ? "border-green-200 bg-green-50/30" : "border-border bg-card"
     }`}>
       <div className="flex items-center gap-3 px-4 py-3">
-        <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
+        <button
+          onClick={() => {
+            const opening = !expanded;
+            setExpanded(opening);
+            if (opening && !task.seenByClient && !isDone) {
+              markSeen.mutate({ taskId: task.id, studentContactId });
+            }
+          }}
+          className="text-muted-foreground hover:text-foreground flex-shrink-0"
+        >
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
         <div className="flex-1 min-w-0">
@@ -80,6 +90,11 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
             <span className={`font-medium text-sm ${
               isDone ? "line-through text-muted-foreground" : "text-foreground"
             }`}>{task.title}</span>
+            {!task.seenByClient && !isDone && (
+              <span className="inline-flex items-center rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white animate-pulse">
+                New
+              </span>
+            )}
             {task.priority && (
               <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
                 task.priority === "High" ? "bg-red-100 text-red-700"

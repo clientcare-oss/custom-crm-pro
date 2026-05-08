@@ -1111,13 +1111,13 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
   const [addingStep, setAddingStep] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState("");
   const [editingStatus, setEditingStatus] = useState(false);
-  const prevDone = useRef(false);
   const utils = trpc.useUtils();
   const inv = () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId });
   const stepCount = (task.steps ?? []).length;
   const doneCount = (task.steps ?? []).filter((s: any) => s.isComplete).length;
   const progress = stepCount > 0 ? Math.round((doneCount / stepCount) * 100) : 0;
   const isDone = (task.status ?? "Todo") === "Done";
+  const prevDone = useRef(isDone);
   const statusCfg = CD_STATUS_CONFIG[task.status ?? "Todo"] ?? CD_STATUS_CONFIG["Todo"];
 
   // Fire confetti when task transitions to Done
