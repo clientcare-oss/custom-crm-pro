@@ -676,6 +676,12 @@ export default function Tasks() {
     name: s.name,
     files: (s.files || []).map((f: any) => ({ id: f.id, fileName: f.fileName, fileUrl: f.fileUrl, uploadedAt: new Date(f.uploadedAt) })),
   }));
+  // Student case tasks (from projectTasks table)
+  const { data: studentTasks = [], isLoading: studentTasksLoading } = trpc.tasks.getAll.useQuery();
+  const utils = trpc.useUtils();
+  const updateStudentTask = trpc.tasks.update.useMutation({
+    onSuccess: () => utils.tasks.getAll.invalidate(),
+  });
   const totalTasks = tasks.length;
   const completedTasks = (tasks as Task[]).filter((t) => t.status === "complete").length;
   return (
@@ -724,6 +730,67 @@ export default function Tasks() {
         <div className="mt-8 border border-dashed border-border rounded-lg p-4 text-center">
           <p className="text-sm font-medium text-muted-foreground">Client Tasks</p>
           <p className="text-xs text-muted-foreground mt-1">Client-assigned tasks will appear here — coming soon.</p>
+        </div>
+        {/* Student Case Tasks */}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-base font-semibold text-foreground">Student Case Tasks</h2>
+            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+              {(studentTasks as any[]).filter((t: any) => t.status !== "Done").length} open
+            </span>
+          </div>
+          {studentTasksLoading ? (
+            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
+          ) : (studentTasks as any[]).length === 0 ? (
+            <div className="border border-dashed border-border rounded-lg p-6 text-center">
+              <p className="text-sm text-muted-foreground">No student case tasks yet — create one from a student’s Contact Detail page.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(studentTasks as any[]).map((t: any) => (
+                <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors">
+                  <button
+                    onClick={() => updateStudentTask.mutate({ id: t.id, status: t.status === "Done" ? "Todo" : "Done" })}
+                    className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {t.status === "Done" ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4" />}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium truncate ${t.status === "Done" ? "line-through text-muted-foreground" : "text-foreground"}`}>{t.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {t.clientName && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <User className="h-3 w-3" />{t.clientName}
+                        </span>
+                      )}
+                      {t.projectName && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <FolderOpen className="h-3 w-3" />{t.projectName}
+                        </span>
+                      )}
+                      {t.dueDate && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />{new Date(t.dueDate).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {t.priority && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
+                      t.priority === "High" ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" :
+                      t.priority === "Medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" :
+                      "bg-muted text-muted-foreground"
+                    }`}>{t.priority}</span>
+                  )}
+                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                    t.status === "Done" ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400" :
+                    t.status === "In Progress" ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400" :
+                    "bg-muted text-muted-foreground"
+                  }`}>{t.status ?? "Todo"}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <CreateTaskDialog

@@ -525,3 +525,6 @@
 ## PG-030 Tasks Tab — Task Save Fix
 - [x] Fix: projectId undefined at submit — added tasks.createForStudent backend procedure that auto-creates project if none exists
 - [x] Ensure saved tasks appear on student detail Tasks tab AND global Tasks page — both use same projectTasks table via getByStudent and getAllTasksForOwner
+
+## PG-009 Tasks Main Page — Show Student Tasks
+- [x] Fix getAllTasksForOwner to include tasks from student-linked projects (clientId-based projects) — added Student Case Tasks section to PG-009 below existing Client Tasks stub
