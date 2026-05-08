@@ -2555,6 +2555,7 @@ export const appRouter = router({
         paymentLink: z.string().optional(),
         paymentLinkNote: z.string().optional(),
         manuallyPaid: z.boolean().optional(),
+        paymentStatus: z.enum(["unpaid", "paid", "autopay_on", "disputed", "skipped"]).optional(),
         isActive: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {

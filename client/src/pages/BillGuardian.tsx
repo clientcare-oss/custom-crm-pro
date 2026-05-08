@@ -21,6 +21,35 @@ import {
 type MatchStatus = "unmatched" | "matched" | "duplicate" | "increased" | "needs_review" | "ignored";
 type BillPriority = "critical" | "high" | "medium" | "low";
 type BillFrequency = "monthly" | "quarterly" | "annual" | "weekly";
+type PaymentStatus = "unpaid" | "paid" | "autopay_on" | "disputed" | "skipped";
+
+// Click-through payment status pill
+const paymentStatusCycle: PaymentStatus[] = ["unpaid", "paid", "autopay_on", "disputed", "skipped"];
+const paymentStatusConfig: Record<PaymentStatus, { label: string; emoji: string; className: string }> = {
+  unpaid:     { label: "Unpaid",     emoji: "○", className: "bg-muted text-muted-foreground hover:bg-muted/80 border border-border" },
+  paid:       { label: "Paid ✓",     emoji: "✓", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 hover:bg-emerald-200 border border-emerald-300" },
+  autopay_on: { label: "Autopay On", emoji: "⟳", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 hover:bg-blue-200 border border-blue-300" },
+  disputed:   { label: "Disputed",   emoji: "!", className: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 hover:bg-orange-200 border border-orange-300" },
+  skipped:    { label: "Skipped",    emoji: "–", className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 border border-gray-300" },
+};
+
+function PaymentStatusPill({ billId, currentStatus, onUpdate }: { billId: number; currentStatus: PaymentStatus; onUpdate: (id: number, status: PaymentStatus) => void }) {
+  const cfg = paymentStatusConfig[currentStatus as PaymentStatus] || paymentStatusConfig.unpaid;
+  const nextStatus = (): PaymentStatus => {
+    const idx = paymentStatusCycle.indexOf(currentStatus as PaymentStatus);
+    return paymentStatusCycle[(idx + 1) % paymentStatusCycle.length];
+  };
+  return (
+    <button
+      onClick={() => onUpdate(billId, nextStatus())}
+      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all select-none ${cfg.className}`}
+      title={`Click to cycle status — currently: ${cfg.label}`}
+    >
+      <span>{cfg.emoji}</span>
+      <span>{cfg.label}</span>
+    </button>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -365,8 +394,13 @@ function BillsTab({ onAdd }: { onAdd: () => void }) {
   const deleteBill = trpc.billGuardian.deleteBill.useMutation({
     onSuccess: () => { utils.billGuardian.listBills.invalidate(); utils.billGuardian.getDashboard.invalidate(); toast.success("Bill removed"); },
   });
-  const markPaid = trpc.billGuardian.updateBill.useMutation({
-    onSuccess: (_, vars) => { utils.billGuardian.listBills.invalidate(); utils.billGuardian.getDashboard.invalidate(); toast.success(vars.manuallyPaid ? "Marked as paid" : "Marked as unpaid"); },
+  const updateStatus = trpc.billGuardian.updateBill.useMutation({
+    onSuccess: (_, vars) => {
+      utils.billGuardian.listBills.invalidate();
+      utils.billGuardian.getDashboard.invalidate();
+      const labels: Record<string, string> = { paid: "Marked as Paid ✓", autopay_on: "Set to Autopay On", disputed: "Marked as Disputed", skipped: "Marked as Skipped", unpaid: "Reset to Unpaid" };
+      toast.success(labels[vars.paymentStatus || "unpaid"] || "Status updated");
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -404,15 +438,11 @@ function BillsTab({ onAdd }: { onAdd: () => void }) {
               <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
                 <span className="font-semibold">${parseFloat(bill.expectedAmount).toFixed(2)}</span>
                 <div className="flex items-center gap-1">
-                  {bill.manuallyPaid ? (
-                    <Button variant="outline" size="sm" className="h-7 text-xs text-emerald-600 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400" onClick={() => markPaid.mutate({ id: bill.id, manuallyPaid: false })}>
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Paid
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => markPaid.mutate({ id: bill.id, manuallyPaid: true })}>
-                      Mark Paid
-                    </Button>
-                  )}
+                  <PaymentStatusPill
+                    billId={bill.id}
+                    currentStatus={(bill.paymentStatus as PaymentStatus) || "unpaid"}
+                    onUpdate={(id, status) => updateStatus.mutate({ id, paymentStatus: status })}
+                  />
                   {bill.paymentLink && (
                     <Button variant="ghost" size="icon" className="h-7 w-7" title="Open payment portal" onClick={() => window.open(bill.paymentLink!, "_blank")}>
                       <ExternalLink className="h-3.5 w-3.5" />

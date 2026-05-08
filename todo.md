@@ -470,3 +470,9 @@
 - [x] Frontend: Bills list — Mark Paid / Paid toggle button on each row (green when paid)
 - [x] Frontend: Bills list — external link icon when paymentLink is set (opens in new tab)
 - [x] Frontend: Bills list — payment notes shown below row when paymentLinkNote is set
+
+## Bill Guardian — Click-Through Status Pill
+- [ ] DB: add paymentStatus column to billGuardianBills (enum: unpaid, paid, autopay_on, disputed, skipped)
+- [ ] DB migration: generate and apply
+- [ ] Backend: updateBill accepts paymentStatus field
+- [ ] Frontend: replace Mark Paid button with a colored status pill that cycles on click (Unpaid → Paid → Autopay On → Disputed → Skipped → Unpaid)

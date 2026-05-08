@@ -737,6 +737,7 @@ export const billGuardianBills = mysqlTable("billGuardianBills", {
   paymentLinkNote: text("paymentLinkNote"),
   manuallyPaid: boolean("manuallyPaid").default(false).notNull(),
   manuallyPaidAt: timestamp("manuallyPaidAt"),
+  paymentStatus: mysqlEnum("paymentStatus", ["unpaid", "paid", "autopay_on", "disputed", "skipped"]).default("unpaid").notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

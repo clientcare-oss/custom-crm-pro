@@ -176,6 +176,13 @@
       "when": 1778253894408,
       "tag": "0024_yellow_scorpion",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1778255002924,
+      "tag": "0025_polite_wolverine",
+      "breakpoints": true
     }
   ]
 }
