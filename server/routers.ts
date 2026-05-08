@@ -276,6 +276,24 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.deleteTask(input.id);
       }),
+    // Add a step to a task
+    addStep: adminProcedure
+      .input(z.object({ taskId: z.number(), title: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        return await db.addTaskStep(input.taskId, input.title);
+      }),
+    // Toggle a step complete/incomplete
+    toggleStep: adminProcedure
+      .input(z.object({ stepId: z.number(), isComplete: z.boolean() }))
+      .mutation(async ({ input }) => {
+        return await db.toggleTaskStep(input.stepId, input.isComplete);
+      }),
+    // Delete a step
+    deleteStep: adminProcedure
+      .input(z.object({ stepId: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteTaskStep(input.stepId);
+      }),
     // Create a task for a student — auto-creates a default project if the student has none
     createForStudent: adminProcedure
       .input(

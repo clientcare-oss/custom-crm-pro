@@ -491,6 +491,183 @@ function TaskRow({
   );
 }
 
+// ─── Student Task Row ───────────────────────────────────────────────────────
+type StudentTask = {
+  id: number;
+  title: string;
+  description: string | null;
+  status: string | null;
+  priority: string | null;
+  dueDate: Date | null;
+  clientName: string | null;
+  projectName: string | null;
+  steps: { id: number; taskId: number; title: string; isComplete: boolean; sortOrder: number }[];
+};
+
+const STUDENT_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  Todo: { label: "Todo", color: "bg-gray-100 text-gray-600 border-gray-200" },
+  "In Progress": { label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200" },
+  Done: { label: "Done", color: "bg-green-100 text-green-700 border-green-200" },
+};
+
+function StudentTaskRow({ task }: { task: StudentTask }) {
+  const [expanded, setExpanded] = useState(false);
+  const [addingStep, setAddingStep] = useState(false);
+  const [newStepTitle, setNewStepTitle] = useState("");
+  const [editingStatus, setEditingStatus] = useState(false);
+  const prevDone = useRef(false);
+  const utils = trpc.useUtils();
+
+  const stepCount = task.steps?.length ?? 0;
+  const doneCount = (task.steps ?? []).filter((s) => s.isComplete).length;
+  const progress = stepCount > 0 ? Math.round((doneCount / stepCount) * 100) : 0;
+  const isDone = (task.status ?? "Todo") === "Done";
+  const statusCfg = STUDENT_STATUS_CONFIG[task.status ?? "Todo"] ?? STUDENT_STATUS_CONFIG["Todo"];
+
+  useEffect(() => {
+    if (isDone && !prevDone.current && stepCount > 0) fireConfetti();
+    prevDone.current = isDone;
+  }, [isDone, stepCount]);
+
+  const updateTask = trpc.tasks.update.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
+  const deleteTask = trpc.tasks.delete.useMutation({
+    onSuccess: () => { utils.tasks.getAll.invalidate(); toast("Task deleted"); },
+  });
+  const addStep = trpc.tasks.addStep.useMutation({
+    onSuccess: () => { utils.tasks.getAll.invalidate(); setNewStepTitle(""); setAddingStep(false); },
+  });
+  const toggleStep = trpc.tasks.toggleStep.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
+  const deleteStep = trpc.tasks.deleteStep.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
+
+  return (
+    <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${
+      isDone ? "border-green-200 bg-green-50/30" : "border-border bg-card"
+    }`}>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
+          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={() => updateTask.mutate({ id: task.id, status: isDone ? "In Progress" : "Done" })}
+          className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+        >
+          {isDone ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4" />}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-medium text-sm ${
+              isDone ? "line-through text-muted-foreground" : "text-foreground"
+            }`}>{task.title}</span>
+            {task.clientName && (
+              <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 flex items-center gap-1">
+                <User className="h-3 w-3" />{task.clientName}
+              </span>
+            )}
+            {task.dueDate && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3" />{formatDateTime(task.dueDate)}
+              </span>
+            )}
+            {task.priority && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                task.priority === "High" ? "bg-red-100 text-red-700" :
+                task.priority === "Medium" ? "bg-amber-100 text-amber-700" :
+                "bg-muted text-muted-foreground"
+              }`}>{task.priority}</span>
+            )}
+          </div>
+          {stepCount > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <Progress
+                value={progress}
+                className={`h-1.5 flex-1 max-w-[200px] transition-all duration-700 ${
+                  progress === 100 ? "[&>div]:bg-green-500" : "[&>div]:bg-blue-500"
+                }`}
+              />
+              <span className="text-xs text-muted-foreground">{doneCount}/{stepCount}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {editingStatus ? (
+            <Select
+              value={task.status ?? "Todo"}
+              onValueChange={(val) => { updateTask.mutate({ id: task.id, status: val as any }); setEditingStatus(false); }}
+            >
+              <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(STUDENT_STATUS_CONFIG).map(([k, v]) => (
+                  <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <button onClick={() => setEditingStatus(true)}>
+              <Badge variant="outline" className={`text-xs cursor-pointer hover:opacity-80 ${statusCfg.color}`}>
+                {statusCfg.label}
+              </Badge>
+            </button>
+          )}
+          <button onClick={() => deleteTask.mutate({ id: task.id })} className="text-muted-foreground hover:text-red-500 transition-colors">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      {expanded && (
+        <div className="border-t border-border">
+          {task.description && (
+            <div className="px-10 py-2 text-sm text-muted-foreground bg-muted/20">{task.description}</div>
+          )}
+          <div>
+            {(task.steps ?? []).map((step) => (
+              <div key={step.id} className="flex items-center gap-3 px-10 py-2 border-b border-border/50 last:border-0 hover:bg-muted/20 group">
+                <button
+                  onClick={() => toggleStep.mutate({ stepId: step.id, isComplete: !step.isComplete })}
+                  className="shrink-0 text-muted-foreground hover:text-primary"
+                >
+                  {step.isComplete ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Circle className="h-3.5 w-3.5" />}
+                </button>
+                <span className={`text-sm flex-1 ${
+                  step.isComplete ? "line-through text-muted-foreground" : "text-foreground"
+                }`}>{step.title}</span>
+                <button
+                  onClick={() => deleteStep.mutate({ stepId: step.id })}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-all"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="px-8 py-2">
+            {addingStep ? (
+              <div className="flex gap-2 items-center">
+                <Input
+                  autoFocus
+                  placeholder="Step title..."
+                  value={newStepTitle}
+                  onChange={(e) => setNewStepTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newStepTitle.trim()) addStep.mutate({ taskId: task.id, title: newStepTitle.trim() });
+                    if (e.key === "Escape") setAddingStep(false);
+                  }}
+                  className="h-7 text-sm flex-1"
+                />
+                <Button size="sm" onClick={() => { if (newStepTitle.trim()) addStep.mutate({ taskId: task.id, title: newStepTitle.trim() }); }} className="h-7 px-3 text-xs">Add</Button>
+                <Button size="sm" variant="ghost" onClick={() => setAddingStep(false)} className="h-7 px-2 text-xs">Cancel</Button>
+              </div>
+            ) : (
+              <button onClick={() => setAddingStep(true)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 py-1">
+                <Plus className="h-3.5 w-3.5" />Add step
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Create task dialog ───────────────────────────────────────────────────────
 function CreateTaskDialog({
   open,
@@ -679,9 +856,6 @@ export default function Tasks() {
   // Student case tasks (from projectTasks table)
   const { data: studentTasks = [], isLoading: studentTasksLoading } = trpc.tasks.getAll.useQuery();
   const utils = trpc.useUtils();
-  const updateStudentTask = trpc.tasks.update.useMutation({
-    onSuccess: () => utils.tasks.getAll.invalidate(),
-  });
   const totalTasks = tasks.length;
   const completedTasks = (tasks as Task[]).filter((t) => t.status === "complete").length;
   return (
@@ -726,10 +900,10 @@ export default function Tasks() {
             ))}
           </div>
         )}
-        {/* Client Tasks stub */}
+        {/* Student Case Tasks (parent-assigned) stub */}
         <div className="mt-8 border border-dashed border-border rounded-lg p-4 text-center">
-          <p className="text-sm font-medium text-muted-foreground">Client Tasks</p>
-          <p className="text-xs text-muted-foreground mt-1">Client-assigned tasks will appear here — coming soon.</p>
+          <p className="text-sm font-medium text-muted-foreground">Student Case Tasks</p>
+          <p className="text-xs text-muted-foreground mt-1">Parent/client-assigned tasks will appear here — coming soon.</p>
         </div>
         {/* Student Case Tasks */}
         <div className="mt-8">
@@ -746,48 +920,9 @@ export default function Tasks() {
               <p className="text-sm text-muted-foreground">No student case tasks yet — create one from a student’s Contact Detail page.</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {(studentTasks as any[]).map((t: any) => (
-                <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors">
-                  <button
-                    onClick={() => updateStudentTask.mutate({ id: t.id, status: t.status === "Done" ? "Todo" : "Done" })}
-                    className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {t.status === "Done" ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4" />}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${t.status === "Done" ? "line-through text-muted-foreground" : "text-foreground"}`}>{t.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      {t.clientName && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <User className="h-3 w-3" />{t.clientName}
-                        </span>
-                      )}
-                      {t.projectName && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <FolderOpen className="h-3 w-3" />{t.projectName}
-                        </span>
-                      )}
-                      {t.dueDate && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />{new Date(t.dueDate).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {t.priority && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                      t.priority === "High" ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" :
-                      t.priority === "Medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" :
-                      "bg-muted text-muted-foreground"
-                    }`}>{t.priority}</span>
-                  )}
-                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
-                    t.status === "Done" ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400" :
-                    t.status === "In Progress" ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400" :
-                    "bg-muted text-muted-foreground"
-                  }`}>{t.status ?? "Todo"}</span>
-                </div>
+            <div>
+              {(studentTasks as StudentTask[]).map((t) => (
+                <StudentTaskRow key={t.id} task={t} />
               ))}
             </div>
           )}

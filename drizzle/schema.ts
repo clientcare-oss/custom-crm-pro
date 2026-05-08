@@ -133,6 +133,20 @@ export type ProjectTask = typeof projectTasks.$inferSelect;
 export type InsertProjectTask = typeof projectTasks.$inferInsert;
 
 /**
+ * Steps (subtasks) for project tasks — mirrors internalSubtasks pattern.
+ */
+export const projectTaskSteps = mysqlTable("projectTaskSteps", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  isComplete: boolean("isComplete").default(false).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProjectTaskStep = typeof projectTaskSteps.$inferSelect;
+export type InsertProjectTaskStep = typeof projectTaskSteps.$inferInsert;
+
+/**
  * Project files for storing file references and metadata.
  * Files are stored in S3, only the reference is stored here.
  */

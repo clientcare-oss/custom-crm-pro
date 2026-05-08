@@ -5,10 +5,12 @@ import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { toast } from "sonner";
@@ -1097,6 +1099,157 @@ function StatusBadge({ status }: { status?: string | null }) {
 }
 
 // ─────────────────────────────────────────────────────────
+// CONTACT DETAIL TASK ROW — full-featured expandable row
+// ─────────────────────────────────────────────────────────
+const CD_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  Todo: { label: "Todo", color: "bg-gray-100 text-gray-600 border-gray-200" },
+  "In Progress": { label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200" },
+  Done: { label: "Done", color: "bg-green-100 text-green-700 border-green-200" },
+};
+function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const [addingStep, setAddingStep] = useState(false);
+  const [newStepTitle, setNewStepTitle] = useState("");
+  const [editingStatus, setEditingStatus] = useState(false);
+  const utils = trpc.useUtils();
+  const inv = () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId });
+
+  const stepCount = (task.steps ?? []).length;
+  const doneCount = (task.steps ?? []).filter((s: any) => s.isComplete).length;
+  const progress = stepCount > 0 ? Math.round((doneCount / stepCount) * 100) : 0;
+  const isDone = (task.status ?? "Todo") === "Done";
+  const statusCfg = CD_STATUS_CONFIG[task.status ?? "Todo"] ?? CD_STATUS_CONFIG["Todo"];
+
+  const updateTask = trpc.tasks.update.useMutation({ onSuccess: inv });
+  const deleteTask = trpc.tasks.delete.useMutation({ onSuccess: () => { inv(); toast("Task deleted"); } });
+  const addStep = trpc.tasks.addStep.useMutation({ onSuccess: () => { inv(); setNewStepTitle(""); setAddingStep(false); } });
+  const toggleStep = trpc.tasks.toggleStep.useMutation({ onSuccess: inv });
+  const deleteStep = trpc.tasks.deleteStep.useMutation({ onSuccess: inv });
+
+  return (
+    <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${
+      isDone ? "border-green-200 bg-green-50/30" : "border-border bg-card"
+    }`}>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
+          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={() => updateTask.mutate({ id: task.id, status: isDone ? "In Progress" : "Done" })}
+          className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+        >
+          {isDone ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4" />}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-medium text-sm ${
+              isDone ? "line-through text-muted-foreground" : "text-foreground"
+            }`}>{task.title}</span>
+            {task.dueDate && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3" />{new Date(task.dueDate).toLocaleDateString()}
+              </span>
+            )}
+            {task.priority && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                task.priority === "High" ? "bg-red-100 text-red-700" :
+                task.priority === "Medium" ? "bg-amber-100 text-amber-700" :
+                "bg-muted text-muted-foreground"
+              }`}>{task.priority}</span>
+            )}
+          </div>
+          {stepCount > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <Progress
+                value={progress}
+                className={`h-1.5 flex-1 max-w-[200px] transition-all duration-700 ${
+                  progress === 100 ? "[&>div]:bg-green-500" : "[&>div]:bg-blue-500"
+                }`}
+              />
+              <span className="text-xs text-muted-foreground">{doneCount}/{stepCount}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {editingStatus ? (
+            <Select
+              value={task.status ?? "Todo"}
+              onValueChange={(val) => { updateTask.mutate({ id: task.id, status: val as any }); setEditingStatus(false); }}
+            >
+              <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(CD_STATUS_CONFIG).map(([k, v]) => (
+                  <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <button onClick={() => setEditingStatus(true)}>
+              <Badge variant="outline" className={`text-xs cursor-pointer hover:opacity-80 ${statusCfg.color}`}>
+                {statusCfg.label}
+              </Badge>
+            </button>
+          )}
+          <button onClick={() => deleteTask.mutate({ id: task.id })} className="text-muted-foreground hover:text-red-500 transition-colors">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      {expanded && (
+        <div className="border-t border-border">
+          {task.description && (
+            <div className="px-10 py-2 text-sm text-muted-foreground bg-muted/20">{task.description}</div>
+          )}
+          <div>
+            {(task.steps ?? []).map((step: any) => (
+              <div key={step.id} className="flex items-center gap-3 px-10 py-2 border-b border-border/50 last:border-0 hover:bg-muted/20 group">
+                <button
+                  onClick={() => toggleStep.mutate({ stepId: step.id, isComplete: !step.isComplete })}
+                  className="shrink-0 text-muted-foreground hover:text-primary"
+                >
+                  {step.isComplete ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Circle className="h-3.5 w-3.5" />}
+                </button>
+                <span className={`text-sm flex-1 ${
+                  step.isComplete ? "line-through text-muted-foreground" : "text-foreground"
+                }`}>{step.title}</span>
+                <button
+                  onClick={() => deleteStep.mutate({ stepId: step.id })}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-all"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="px-8 py-2">
+            {addingStep ? (
+              <div className="flex gap-2 items-center">
+                <Input
+                  autoFocus
+                  placeholder="Step title..."
+                  value={newStepTitle}
+                  onChange={(e) => setNewStepTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newStepTitle.trim()) addStep.mutate({ taskId: task.id, title: newStepTitle.trim() });
+                    if (e.key === "Escape") setAddingStep(false);
+                  }}
+                  className="h-7 text-sm flex-1"
+                />
+                <Button size="sm" onClick={() => { if (newStepTitle.trim()) addStep.mutate({ taskId: task.id, title: newStepTitle.trim() }); }} className="h-7 px-3 text-xs">Add</Button>
+                <Button size="sm" variant="ghost" onClick={() => setAddingStep(false)} className="h-7 px-2 text-xs">Cancel</Button>
+              </div>
+            ) : (
+              <button onClick={() => setAddingStep(true)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 py-1">
+                <Plus className="h-3.5 w-3.5" />Add step
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────
 // TASKS TAB — shows all tasks across student's projects
 // ─────────────────────────────────────────────────────────
 function TasksTabContent({ contactId, projects, caseId, parentContactId }: { contactId: number; projects: any[]; caseId?: string | null; parentContactId?: number | null }) {
@@ -1128,23 +1281,6 @@ function TasksTabContent({ contactId, projects, caseId, parentContactId }: { con
     },
     onError: (e) => toast.error("Failed to create task: " + e.message),
   });
-
-  const updateTask = trpc.tasks.update.useMutation({
-    onSuccess: () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId }),
-    onError: (e) => toast.error("Failed to update task: " + e.message),
-  });
-
-  const deleteTask = trpc.tasks.delete.useMutation({
-    onSuccess: () => utils.tasks.getByStudent.invalidate({ studentContactId: contactId }),
-    onError: (e) => toast.error("Failed to delete task: " + e.message),
-  });
-
-  const priorityColors: Record<string, string> = {
-    High: "text-red-600 bg-red-50 border-red-200",
-    Medium: "text-amber-600 bg-amber-50 border-amber-200",
-    Low: "text-emerald-600 bg-emerald-50 border-emerald-200",
-  };
-
   return (
     <TabsContent value="tasks" className="mt-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
@@ -1254,44 +1390,15 @@ function TasksTabContent({ contactId, projects, caseId, parentContactId }: { con
       ) : tasks.length === 0 ? (
         <EmptyState icon={<CheckSquare className="h-8 w-8" />} text="No tasks for this student yet" />
       ) : (
-        tasks.map((task: any) => (
-          <Card key={task.id} className="p-4 rounded-xl border border-border flex items-start gap-3">
-            <button
-              onClick={() => updateTask.mutate({ id: task.id, status: task.status === "Done" ? "Todo" : "Done" })}
-              className="mt-0.5 flex-shrink-0 text-muted-foreground hover:text-accent transition-colors"
-            >
-              {task.status === "Done"
-                ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                : <Circle className="h-5 w-5" />}
-            </button>
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${task.status === "Done" ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                {task.title}
-              </p>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                {task.priority && (
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${priorityColors[task.priority] ?? "bg-muted text-muted-foreground"}`}>
-                    {task.priority}
-                  </span>
-                )}
-                {task.dueDate && (
-                  <span className="text-xs text-muted-foreground">
-                    Due {new Date(task.dueDate).toLocaleDateString()}
-                  </span>
-                )}
-                {task.status && task.status !== "Todo" && task.status !== "Done" && (
-                  <span className="text-xs text-muted-foreground">{task.status}</span>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={() => deleteTask.mutate({ id: task.id })}
-              className="flex-shrink-0 text-muted-foreground hover:text-destructive transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </Card>
-        ))
+        <div>
+          {tasks.map((task: any) => (
+            <ContactDetailTaskRow
+              key={task.id}
+              task={task}
+              contactId={contactId}
+            />
+          ))}
+        </div>
       )}
     </TabsContent>
   );

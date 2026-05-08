@@ -528,3 +528,10 @@
 
 ## PG-009 Tasks Main Page — Show Student Tasks
 - [x] Fix getAllTasksForOwner to include tasks from student-linked projects (clientId-based projects) — added Student Case Tasks section to PG-009 below existing Client Tasks stub
+
+## PG-009 Student Case Tasks — Full Feature Parity
+- [x] Backend: add projectTaskSteps table (subtasks for projectTasks) with toggle, add, delete procedures
+- [x] Backend: extend tasks.getAll and getByStudent to return steps array per task
+- [x] Frontend: StudentTaskRow component on PG-009 — chevron expand, steps list, add step, progress bar, confetti on complete, status badge click-to-change, priority pill, due date, delete
+- [x] Frontend: ContactDetailTaskRow on PG-030 — same full-featured row replaces simple card
+- [x] Rename "Client Tasks" stub to "Student Case Tasks"

@@ -7,6 +7,7 @@ import {
   leads,
   projects,
   projectTasks,
+  projectTaskSteps,
   projectFiles,
   invoices,
   invoiceLineItems,
@@ -332,16 +333,23 @@ export async function getTasksByStudent(studentContactId: number) {
     .from(projects)
     .where(eq(projects.clientId, studentContactId));
   if (studentProjects.length === 0) return [];
-  const allTasks: any[] = [];
+  const result: any[] = [];
   for (const proj of studentProjects) {
     const tasks = await db
       .select()
       .from(projectTasks)
       .where(eq(projectTasks.projectId, proj.id))
       .orderBy(asc(projectTasks.dueDate));
-    allTasks.push(...tasks);
+    for (const task of tasks) {
+      const steps = await db
+        .select()
+        .from(projectTaskSteps)
+        .where(eq(projectTaskSteps.taskId, (task as any).id))
+        .orderBy(asc(projectTaskSteps.sortOrder));
+      result.push({ ...task, steps });
+    }
   }
-  return allTasks;
+  return result;
 }
 
 export async function getAllTasksForOwner(ownerId: number) {
@@ -367,9 +375,38 @@ export async function getAllTasksForOwner(ownerId: number) {
         .limit(1);
       if (c) clientName = `${c.firstName} ${c.lastName}`;
     }
-    result.push(...tasks.map((t: any) => ({ ...t, projectName: proj.name, clientName })));
+    for (const task of tasks) {
+      const steps = await db
+        .select()
+        .from(projectTaskSteps)
+        .where(eq(projectTaskSteps.taskId, (task as any).id))
+        .orderBy(asc(projectTaskSteps.sortOrder));
+      result.push({ ...task, projectName: proj.name, clientName, steps });
+    }
   }
   return result;
+}
+
+// ============ PROJECT TASK STEPS ============
+
+export async function addTaskStep(taskId: number, title: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select({ sortOrder: projectTaskSteps.sortOrder }).from(projectTaskSteps).where(eq(projectTaskSteps.taskId, taskId)).orderBy(desc(projectTaskSteps.sortOrder)).limit(1);
+  const nextOrder = existing.length > 0 ? (existing[0].sortOrder + 1) : 0;
+  return await db.insert(projectTaskSteps).values({ taskId, title, sortOrder: nextOrder });
+}
+
+export async function toggleTaskStep(stepId: number, isComplete: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.update(projectTaskSteps).set({ isComplete }).where(eq(projectTaskSteps.id, stepId));
+}
+
+export async function deleteTaskStep(stepId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.delete(projectTaskSteps).where(eq(projectTaskSteps.id, stepId));
 }
 
 // ============ PROJECT FILES ============
