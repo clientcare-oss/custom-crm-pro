@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Wrench, GitCompare, Lock, Loader2, ArrowLeft, ExternalLink, FileText
+  Wrench, GitCompare, Lock, Loader2, ArrowLeft, ExternalLink, FileText, ScrollText
 } from "lucide-react";
 
 export default function Tools() {
@@ -192,6 +192,50 @@ export default function Tools() {
                 </Button>
               </div>
             </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Formal Actions section */}
+      <section className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Formal Actions
+        </p>
+        <Card className="p-5 rounded-xl border border-rose-200 dark:border-rose-800">
+          <div className="flex items-start gap-4">
+            <div className="p-2.5 rounded-lg bg-rose-100 dark:bg-rose-950/40 flex-shrink-0">
+              <ScrollText className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-bold text-foreground">State Complaint Builder</h2>
+                <span className="text-xs rounded-full px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 font-semibold">AI-Assisted</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                Draft a formal state complaint under IDEA. The builder walks you through each required section — violations, legal basis, requested relief — and generates a structured document ready for review and submission.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {["FAPE Violations", "Procedural Safeguards", "Prior Written Notice", "Timelines", "Compensatory Services"].map((tag) => (
+                  <span key={tag} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">{tag}</span>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 italic">
+                {contactId
+                  ? `Linked to current student — opens pre-filled.`
+                  : "You can select a student when the builder opens, or navigate here from a student's Tools tab."}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setLocation(contactId ? `/state-complaint-builder?contactId=${contactId}` : `/state-complaint-builder`)}
+              className="inline-flex items-center gap-1.5 text-xs border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+            >
+              <ScrollText className="h-3.5 w-3.5" />
+              Open State Complaint Builder →
+            </Button>
           </div>
         </Card>
       </section>

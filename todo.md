@@ -414,3 +414,7 @@
 - [x] Add State Complaint Builder block to ToolsTabContent on student/advocate side
 - [x] Create /state-complaint-builder route and page
 - [x] Backend: stateComplaint.generate tRPC procedure using LLM with student context
+
+## State Complaint Builder — Tools Page & Student Picker
+- [x] Add State Complaint Builder card to main Tools page (under a new "Formal Actions" section)
+- [x] StateComplaintBuilder: if no contactId in URL, show student picker dropdown before the form
