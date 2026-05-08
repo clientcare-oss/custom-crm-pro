@@ -510,3 +510,7 @@
 ## PG-030 Contact Detail — Link to Case Auto-Link
 - [x] Remove empty dropdown from "Link to Case" box; auto-link to current student's own contact ID (or caseId) on open
 - [x] If 1 project: show project name as read-only "auto-linked" chip; if 0 projects: show amber hint to create a case first; if 2+: show dropdown to choose
+
+## PG-030 Contact Detail — Case ID Header + Task Link Fix
+- [x] Show student's caseId under their name in the contact header (small monospace badge, only for students)
+- [x] Task "Link to case" chip should display the student's actual caseId string, not a project reference

@@ -182,6 +182,14 @@ export default function ContactDetail() {
             {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
             {contact.phone && <span>· {contact.phone}</span>}
           </div>
+          {/* Case ID badge — students only */}
+          {!isParent && contact.caseId && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/20 px-2 py-0.5 text-xs font-mono font-semibold text-accent tracking-wide">
+                Case ID: {contact.caseId}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -803,7 +811,7 @@ function StudentTabs({
         )}
       </TabsContent>
       {/* TASKS */}
-      <TasksTabContent contactId={contactId} projects={projects} />
+      <TasksTabContent contactId={contactId} projects={projects} caseId={contact.caseId} />
       {/* FILES */}
       <TabsContent value="files" className="mt-4 space-y-3">
         <IepDocumentBlocks contactId={contactId} />
@@ -1090,7 +1098,7 @@ function StatusBadge({ status }: { status?: string | null }) {
 // ─────────────────────────────────────────────────────────
 // TASKS TAB — shows all tasks across student's projects
 // ─────────────────────────────────────────────────────────
-function TasksTabContent({ contactId, projects }: { contactId: number; projects: any[] }) {
+function TasksTabContent({ contactId, projects, caseId }: { contactId: number; projects: any[]; caseId?: string | null }) {
   const utils = trpc.useUtils();
   // Auto-select the first (and usually only) project so the field is never empty
   const defaultProjectId = projects.length === 1 ? String(projects[0].id) : "";
@@ -1148,24 +1156,29 @@ function TasksTabContent({ contactId, projects }: { contactId: number; projects:
             className="text-sm"
           />
           <div className="flex gap-2 flex-wrap">
-            {projects.length === 0 ? (
-              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-2.5 py-1.5">
-                <span>No active case/project yet — create one on the Cases tab first</span>
-              </div>
-            ) : projects.length === 1 ? (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-md px-2.5 py-1.5">
-                <span className="font-medium text-foreground">{projects[0].name}</span>
+            {/* Case ID chip — always shows the student's own case ID */}
+            {caseId ? (
+              <div className="flex items-center gap-1.5 text-xs bg-accent/10 border border-accent/20 rounded-md px-2.5 py-1.5">
+                <span className="text-muted-foreground">Case:</span>
+                <span className="font-mono font-semibold text-accent">{caseId}</span>
                 <span className="text-muted-foreground/60">· auto-linked</span>
               </div>
             ) : (
-              <Select value={newTask.projectId} onValueChange={(v) => setNewTask((f) => ({ ...f, projectId: v }))} >
-                <SelectTrigger className="text-xs w-48"><SelectValue placeholder="Link to case..." /></SelectTrigger>
-                <SelectContent>
-                  {projects.map((p: any) => (
-                    <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-2.5 py-1.5">
+                <span>No Case ID yet — save the student record to generate one</span>
+              </div>
+            )}
+            {/* Still need a project to save the task — hidden select auto-picks the first */}
+            {projects.length > 0 && (
+              <div className="hidden">
+                <Select value={newTask.projectId} onValueChange={(v) => setNewTask((f) => ({ ...f, projectId: v }))} >
+                  <SelectContent>
+                    {projects.map((p: any) => (
+                      <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
             <Select value={newTask.priority} onValueChange={(v) => setNewTask((f) => ({ ...f, priority: v }))}>
               <SelectTrigger className="text-xs w-32"><SelectValue /></SelectTrigger>
