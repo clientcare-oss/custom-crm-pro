@@ -619,25 +619,25 @@ function StudentTabs({
   return (
     <Tabs defaultValue="compass">
       <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-xl">
-        <TabsTrigger value="compass" className="rounded-lg text-sm px-3 py-1.5">Compass</TabsTrigger>
-        <TabsTrigger value="activity" className="rounded-lg text-sm px-3 py-1.5">Messages</TabsTrigger>
-        <TabsTrigger value="tasks" className="rounded-lg text-sm px-3 py-1.5">Tasks</TabsTrigger>
-        <TabsTrigger value="files" className="rounded-lg text-sm px-3 py-1.5">
-          Files{files.length > 0 && <span className="ml-1.5 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{files.length}</span>}
+        <TabsTrigger value="compass" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
+        <TabsTrigger value="activity" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Messages</TabsTrigger>
+        <TabsTrigger value="tasks" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
+        <TabsTrigger value="files" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
+          <Folder className="h-3.5 w-3.5" />Files{files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{files.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="time-tracker" className="rounded-lg text-sm px-3 py-1.5">Time</TabsTrigger>
-        <TabsTrigger value="call-logs" className="rounded-lg text-sm px-3 py-1.5">Calls</TabsTrigger>
-        <TabsTrigger value="tools" className="rounded-lg text-sm px-3 py-1.5">Tools</TabsTrigger>
-        <TabsTrigger value="projects" className="rounded-lg text-sm px-3 py-1.5">
-          Cases{projects.length > 0 && <span className="ml-1.5 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{projects.length}</span>}
+        <TabsTrigger value="time-tracker" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Timer className="h-3.5 w-3.5" />Time</TabsTrigger>
+        <TabsTrigger value="call-logs" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />Calls</TabsTrigger>
+        <TabsTrigger value="tools" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Tools</TabsTrigger>
+        <TabsTrigger value="projects" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5" />Cases{projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{projects.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="financials" className="rounded-lg text-sm px-3 py-1.5">
-          Billing{invoices.length > 0 && <span className="ml-1.5 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{invoices.length}</span>}
+        <TabsTrigger value="financials" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
+          <DollarSign className="h-3.5 w-3.5" />Billing{invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{invoices.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="appointments" className="rounded-lg text-sm px-3 py-1.5">
-          Appts{appointments.length > 0 && <span className="ml-1.5 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{appointments.length}</span>}
+        <TabsTrigger value="appointments" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5" />Appts{appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{appointments.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="details" className="rounded-lg text-sm px-3 py-1.5">Details</TabsTrigger>
+        <TabsTrigger value="details" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Info className="h-3.5 w-3.5" />Details</TabsTrigger>
       </TabsList>
 
       {/* COMPASS TAB */}
