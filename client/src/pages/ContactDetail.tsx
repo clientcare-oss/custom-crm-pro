@@ -1197,15 +1197,22 @@ function TasksTabContent({ contactId, projects, caseId }: { contactId: number; p
           </div>
           <Button
             size="sm"
-            disabled={!newTask.title.trim() || !newTask.projectId || createTask.isPending}
-            onClick={() => createTask.mutate({
-              projectId: parseInt(newTask.projectId),
-              title: newTask.title.trim(),
-              dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
-              priority: newTask.priority,
-              status: "Todo",
-              assignedTo: contactId,
-            })}
+            disabled={!newTask.title.trim() || projects.length === 0 || createTask.isPending}
+            onClick={() => {
+              // Resolve projectId: use state value if set, otherwise fall back to first project
+              const resolvedProjectId = newTask.projectId
+                ? parseInt(newTask.projectId)
+                : projects[0]?.id;
+              if (!resolvedProjectId) return;
+              createTask.mutate({
+                projectId: resolvedProjectId,
+                title: newTask.title.trim(),
+                dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
+                priority: newTask.priority,
+                status: "Todo",
+                assignedTo: contactId,
+              });
+            }}
             className="text-xs"
           >
             {createTask.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}

@@ -514,3 +514,6 @@
 ## PG-030 Contact Detail — Case ID Header + Task Link Fix
 - [x] Show student's caseId under their name in the contact header (small monospace badge, only for students)
 - [x] Task "Link to case" chip should display the student's actual caseId string, not a project reference
+
+## PG-030 Tasks Tab — Create Task Button Fix
+- [x] Create Task button disabled because projectId not pre-populated; fixed — button now enabled when title is filled and projects.length > 0; projectId resolved at submit time from projects[0] fallback
