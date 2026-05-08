@@ -7,6 +7,7 @@
 - [x] Assignee dropdown should show team members (staff) AND parent contacts — but NOT students
 - [x] BUG: Assigning task to parent contact should make it client-facing (auto-sets type to Client-Facing)
 - [x] Add Task Type selector to edit modal (General / Client-Facing / Case) so user can change task type
+- [x] Create Task bar (blue bar): assignee dropdown should show staff AND parent contacts (not just staff)
 
 ## Phase 1: Database Schema & Design System
 - [x] Design database schema (users, contacts, leads, projects, invoices, contracts, appointments, messages)

@@ -132,6 +132,9 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
     if (isStudentContext) {
       const isParent = value.startsWith("parent-");
       setTaskType(isParent ? "client" : "case");
+    } else if (value.startsWith("parent-") && taskType === "general") {
+      // Auto-switch to client-facing when parent contact is assigned in general context
+      setTaskType("client");
     }
   }
 
@@ -139,9 +142,20 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
     if (!title.trim()) return;
 
     if (taskType === "general") {
+      // Parse assignee — could be a user ID or parent-{contactId}
+      let generalAssigneeId: number | undefined;
+      let generalAssigneeContactId: number | undefined;
+      if (assigneeId) {
+        if (assigneeId.startsWith("parent-")) {
+          generalAssigneeContactId = parseInt(assigneeId.replace("parent-", ""), 10);
+        } else {
+          generalAssigneeId = parseInt(assigneeId, 10);
+        }
+      }
       createGeneral.mutate({
         title: title.trim(),
-        assigneeId: assigneeId ? parseInt(assigneeId) : undefined,
+        assigneeId: generalAssigneeId,
+        assigneeContactId: generalAssigneeContactId,
         projectId: selectedProjectId ? parseInt(selectedProjectId) : undefined,
         dueDate: dueDate || undefined,
         status: "not_started",
@@ -289,12 +303,14 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
             </SelectContent>
           </Select>
         ) : taskType === "general" ? (
-          // General task: team members only
-          <Select value={assigneeId} onValueChange={setAssigneeId}>
+          // General task: team members + parent contacts
+          <Select value={assigneeId} onValueChange={handleAssigneeChange}>
             <SelectTrigger className="text-xs h-8 w-40">
               <SelectValue placeholder="Assign to..." />
             </SelectTrigger>
             <SelectContent>
+              {/* Staff */}
+              <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Staff</div>
               {user && (
                 <SelectItem value={String(user.id)} className="text-xs">
                   <span className="flex items-center gap-1.5">
@@ -315,18 +331,63 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
                   </span>
                 </SelectItem>
               ))}
+              {/* Parent contacts */}
+              {(contacts as any[]).filter((c: any) => c.jobTitle !== "Student").length > 0 && (
+                <div className="px-2 py-1 mt-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-t">Parents / Contacts</div>
+              )}
+              {(contacts as any[]).filter((c: any) => c.jobTitle !== "Student").map((c: any) => (
+                <SelectItem key={`parent-${c.id}`} value={`parent-${c.id}`} className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <div className="h-4 w-4 rounded-full bg-green-100 flex items-center justify-center text-[9px] font-bold text-green-700">
+                      {(c.firstName ?? "P").charAt(0).toUpperCase()}
+                    </div>
+                    {c.firstName} {c.lastName}
+                  </span>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         ) : (
-          // Client/case task (standalone, no student context): contacts list
-          <Select value={assigneeId} onValueChange={setAssigneeId}>
+          // Client/case task (standalone, no student context): staff + parent contacts
+          <Select value={assigneeId} onValueChange={handleAssigneeChange}>
             <SelectTrigger className="text-xs h-8 w-44">
-              <SelectValue placeholder="Assign to contact..." />
+              <SelectValue placeholder="Assign to..." />
             </SelectTrigger>
             <SelectContent>
-              {(contacts as any[]).map((c: any) => (
-                <SelectItem key={c.id} value={String(c.id)} className="text-xs">
-                  {c.firstName} {c.lastName}
+              {/* Staff */}
+              <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Staff</div>
+              {user && (
+                <SelectItem value={String(user.id)} className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">
+                      {(user.name ?? "Y").charAt(0).toUpperCase()}
+                    </div>
+                    {user.name ?? "You"} (me)
+                  </span>
+                </SelectItem>
+              )}
+              {(teamUsers as any[]).filter((u: any) => u.id !== user?.id).map((u: any) => (
+                <SelectItem key={u.id} value={String(u.id)} className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">
+                      {(u.name ?? "?").charAt(0).toUpperCase()}
+                    </div>
+                    {u.name}
+                  </span>
+                </SelectItem>
+              ))}
+              {/* Parent contacts */}
+              {(contacts as any[]).filter((c: any) => c.jobTitle !== "Student").length > 0 && (
+                <div className="px-2 py-1 mt-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-t">Parents / Contacts</div>
+              )}
+              {(contacts as any[]).filter((c: any) => c.jobTitle !== "Student").map((c: any) => (
+                <SelectItem key={`parent-${c.id}`} value={`parent-${c.id}`} className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <div className="h-4 w-4 rounded-full bg-green-100 flex items-center justify-center text-[9px] font-bold text-green-700">
+                      {(c.firstName ?? "P").charAt(0).toUpperCase()}
+                    </div>
+                    {c.firstName} {c.lastName}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
