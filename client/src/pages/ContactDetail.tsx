@@ -295,6 +295,10 @@ function ParentTabs({
             <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{appointments.length}</span>
           )}
         </TabsTrigger>
+        <TabsTrigger value="cases" className="flex items-center gap-1.5">
+          <ScrollText className="h-3.5 w-3.5" />
+          Cases
+        </TabsTrigger>
         <TabsTrigger value="details" className="flex items-center gap-1.5">
           <Info className="h-3.5 w-3.5" />
           Details
@@ -806,8 +810,31 @@ function StudentTabs({
 
       {/* CASES / PROJECTS */}
       <TabsContent value="projects" className="mt-4 space-y-3">
+        {/* Context banner */}
+        <div className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50/60 dark:bg-rose-950/20 px-5 py-4 flex gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+              <ScrollText className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-rose-800 dark:text-rose-300">Formal Escalation Files</p>
+            <p className="text-xs text-rose-700/80 dark:text-rose-400/80 mt-0.5 leading-relaxed">
+              This is where state complaints, resolution orders, MDR documents, tribunal records, findings, and federal case files are stored. Our goal is to keep this section empty — but when formal action is necessary, every document lives here.
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {["State Complaint", "Resolution Order", "MDR", "Tribunal Docs", "Findings", "Federal Case File"].map((tag) => (
+                <span key={tag} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">{tag}</span>
+              ))}
+            </div>
+          </div>
+        </div>
         {projects.length === 0 ? (
-          <EmptyState icon={<FileText className="h-8 w-8" />} text="No cases linked to this student" />
+          <div className="rounded-lg border border-dashed border-border bg-muted/20 py-10 text-center">
+            <ScrollText className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-40" />
+            <p className="text-sm font-semibold text-foreground">No formal cases on file</p>
+            <p className="text-xs text-muted-foreground mt-1">Great news — this is exactly where we want to be.</p>
+          </div>
         ) : (
           projects.map((p: any) => (
             <Card key={p.id} className="p-4 rounded-lg border border-border">
@@ -881,6 +908,34 @@ function StudentTabs({
           ))
         )}
       </TabsContent>
+
+      {/* CASES */}
+      <TabsContent value="cases" className="mt-4 space-y-3">
+        <div className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50/60 dark:bg-rose-950/20 px-5 py-4 flex gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+              <ScrollText className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-rose-800 dark:text-rose-300">Formal Escalation Files</p>
+            <p className="text-xs text-rose-700/80 dark:text-rose-400/80 mt-0.5 leading-relaxed">
+              This is where state complaints, resolution orders, MDR documents, tribunal records, findings, and federal case files are stored. Our goal is to keep this section empty — but when formal action is necessary, every document lives here.
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {["State Complaint", "Resolution Order", "MDR", "Tribunal Docs", "Findings", "Federal Case File"].map((tag) => (
+                <span key={tag} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">{tag}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-dashed border-border bg-muted/20 py-10 text-center">
+          <ScrollText className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-40" />
+          <p className="text-sm font-semibold text-foreground">No formal cases on file</p>
+          <p className="text-xs text-muted-foreground mt-1">Great news — this is exactly where we want to be.</p>
+        </div>
+      </TabsContent>
+
 
       {/* DETAILS */}
       <TabsContent value="details" className="mt-4 space-y-4">
