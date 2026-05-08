@@ -400,6 +400,12 @@ export const iepDocuments = mysqlTable("iepDocuments", {
   previousFileName: varchar("previousFileName", { length: 255 }),
   previousFileUrl: text("previousFileUrl"),
   previousUploadedAt: timestamp("previousUploadedAt"),
+  // Draft IEP / Pre-Meeting Document (school-provided draft before the IEP meeting)
+  draftFileKey: text("draftFileKey"),
+  draftFileName: varchar("draftFileName", { length: 255 }),
+  draftFileUrl: text("draftFileUrl"),
+  draftUploadedAt: timestamp("draftUploadedAt"),
+  draftNotes: text("draftNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

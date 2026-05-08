@@ -904,6 +904,76 @@ export const appRouter = router({
         }
         return { success: true };
       }),
+    // Upload a Draft IEP / Pre-Meeting document for a student
+    uploadDraft: protectedProcedure
+      .input(z.object({
+        contactId: z.number(),
+        fileKey: z.string(),
+        fileName: z.string(),
+        fileUrl: z.string(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { iepDocuments, contacts } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        if (ctx.user.role !== "admin") {
+          const parentContact = await dbConn.select().from(contacts).where(eq(contacts.portalUserId, ctx.user.id)).limit(1);
+          if (parentContact.length === 0) throw new TRPCError({ code: "FORBIDDEN" });
+          const students = await dbConn.select().from(contacts).where(eq(contacts.parentContactId, parentContact[0].id));
+          if (!students.map((s: any) => s.id).includes(input.contactId)) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const existing = await dbConn.select().from(iepDocuments).where(eq(iepDocuments.contactId, input.contactId)).limit(1);
+        const now = new Date();
+        if (existing.length > 0) {
+          await dbConn.update(iepDocuments).set({
+            draftFileKey: input.fileKey,
+            draftFileName: input.fileName,
+            draftFileUrl: input.fileUrl,
+            draftUploadedAt: now,
+            draftNotes: input.notes ?? null,
+          }).where(eq(iepDocuments.contactId, input.contactId));
+        } else {
+          await dbConn.insert(iepDocuments).values({
+            contactId: input.contactId,
+            draftFileKey: input.fileKey,
+            draftFileName: input.fileName,
+            draftFileUrl: input.fileUrl,
+            draftUploadedAt: now,
+            draftNotes: input.notes ?? null,
+          });
+        }
+        return { success: true };
+      }),
+    // Clear/remove the draft IEP document
+    clearDraft: adminProcedure
+      .input(z.object({ contactId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { iepDocuments } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await dbConn.update(iepDocuments).set({
+          draftFileKey: null,
+          draftFileName: null,
+          draftFileUrl: null,
+          draftUploadedAt: null,
+          draftNotes: null,
+        }).where(eq(iepDocuments.contactId, input.contactId));
+        return { success: true };
+      }),
+    // Update draft notes only
+    updateDraftNotes: adminProcedure
+      .input(z.object({ contactId: z.number(), notes: z.string() }))
+      .mutation(async ({ input }) => {
+        const { iepDocuments } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await dbConn.update(iepDocuments).set({ draftNotes: input.notes }).where(eq(iepDocuments.contactId, input.contactId));
+        return { success: true };
+      }),
   }),
 
   // ============ SESSION TYPES (SCHEDULER) ============
