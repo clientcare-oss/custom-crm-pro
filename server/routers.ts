@@ -2529,6 +2529,8 @@ export const appRouter = router({
         autopay: z.boolean().default(false),
         priority: z.enum(["critical", "high", "medium", "low"]).default("medium"),
         notes: z.string().optional(),
+        paymentLink: z.string().optional(),
+        paymentLinkNote: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { billGuardianBills: bgb } = await import("../drizzle/schema");
@@ -2550,6 +2552,9 @@ export const appRouter = router({
         autopay: z.boolean().optional(),
         priority: z.enum(["critical", "high", "medium", "low"]).optional(),
         notes: z.string().optional(),
+        paymentLink: z.string().optional(),
+        paymentLinkNote: z.string().optional(),
+        manuallyPaid: z.boolean().optional(),
         isActive: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {

@@ -461,3 +461,12 @@
 - [x] Frontend: Match result cards — show matched transaction, confidence %, override buttons
 - [x] Frontend: Alert banner for missing/overdue bills
 - [x] Frontend: Color coding — green=paid, amber=due soon, red=missing, orange=duplicate/increased, gray=needs review
+
+## Bill Guardian — Edit, Manual Paid & Payment Link
+- [x] DB: add paymentLink, paymentLinkNote, manuallyPaid, manuallyPaidAt columns to billGuardianBills
+- [x] DB migration: generated and applied
+- [x] Backend: billGuardian.updateBill accepts paymentLink, paymentLinkNote, manuallyPaid fields
+- [x] Frontend: edit bill dialog — Payment Method Info section with Payment Link URL + Payment Notes fields
+- [x] Frontend: Bills list — Mark Paid / Paid toggle button on each row (green when paid)
+- [x] Frontend: Bills list — external link icon when paymentLink is set (opens in new tab)
+- [x] Frontend: Bills list — payment notes shown below row when paymentLinkNote is set

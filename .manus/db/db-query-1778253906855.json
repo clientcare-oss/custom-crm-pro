@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `billGuardianBills` ADD `paymentLink` varchar(1000);\nALTER TABLE `billGuardianBills` ADD `paymentLinkNote` text;\nALTER TABLE `billGuardianBills` ADD `manuallyPaid` boolean DEFAULT false NOT NULL;\nALTER TABLE `billGuardianBills` ADD `manuallyPaidAt` timestamp;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute ALTER TABLE `billGuardianBills` ADD `paymentLink` varchar(1000);\nALTER TABLE `billGuardianBills` ADD `paymentLinkNote` text;\nALTER TABLE `billGuardianBills` ADD `manuallyPaid` boolean DEFAULT false NOT NULL;\nALTER TABLE `billGuardianBills` ADD `manuallyPaidAt` timestamp;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1689
+}

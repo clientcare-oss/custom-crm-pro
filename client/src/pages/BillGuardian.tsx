@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import {
   ShieldCheck, Plus, Trash2, Edit2, RefreshCw, CheckCircle2,
   AlertTriangle, XCircle, Copy, TrendingUp, Eye, Upload,
-  Building2, CreditCard, Zap, ChevronDown, ChevronUp, Info
+  Building2, CreditCard, Zap, ChevronDown, ChevronUp, Info, ExternalLink
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -72,6 +72,8 @@ function AddBillDialog({ open, onClose, editBill }: { open: boolean; onClose: ()
     priority: (editBill?.priority || "medium") as BillPriority,
     notes: editBill?.notes || "",
     aliases: editBill?.vendorAliases ? JSON.parse(editBill.vendorAliases).join(", ") : "",
+    paymentLink: editBill?.paymentLink || "",
+    paymentLinkNote: editBill?.paymentLinkNote || "",
   });
 
   const createBill = trpc.billGuardian.createBill.useMutation({
@@ -85,7 +87,8 @@ function AddBillDialog({ open, onClose, editBill }: { open: boolean; onClose: ()
 
   const handleSubmit = () => {
     const aliases = form.aliases.split(",").map((s: string) => s.trim()).filter(Boolean);
-    const payload = { ...form, dueDay: parseInt(form.dueDay), vendorAliases: aliases };
+    const { paymentLink, paymentLinkNote, ...formRest } = form;
+    const payload = { ...formRest, dueDay: parseInt(formRest.dueDay), vendorAliases: aliases, paymentLink: paymentLink || undefined, paymentLinkNote: paymentLinkNote || undefined };
     if (editBill) updateBill.mutate({ id: editBill.id, ...payload });
     else createBill.mutate(payload);
   };
@@ -158,6 +161,18 @@ function AddBillDialog({ open, onClose, editBill }: { open: boolean; onClose: ()
           <div>
             <Label>Notes</Label>
             <Textarea placeholder="Any notes about this bill..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
+          </div>
+          <div className="border-t pt-3 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payment Method Info</p>
+            <div>
+              <Label>Payment Link / Portal URL</Label>
+              <Input placeholder="https://pay.vendor.com/login" value={form.paymentLink} onChange={e => setForm(f => ({ ...f, paymentLink: e.target.value }))} />
+              <p className="text-xs text-muted-foreground mt-1">Where to go to pay or update payment method</p>
+            </div>
+            <div>
+              <Label>Payment Notes</Label>
+              <Textarea placeholder="e.g. Log in with billing@company.com, update card under Settings..." value={form.paymentLinkNote} onChange={e => setForm(f => ({ ...f, paymentLinkNote: e.target.value }))} rows={2} />
+            </div>
           </div>
         </div>
         <DialogFooter>
@@ -350,6 +365,10 @@ function BillsTab({ onAdd }: { onAdd: () => void }) {
   const deleteBill = trpc.billGuardian.deleteBill.useMutation({
     onSuccess: () => { utils.billGuardian.listBills.invalidate(); utils.billGuardian.getDashboard.invalidate(); toast.success("Bill removed"); },
   });
+  const markPaid = trpc.billGuardian.updateBill.useMutation({
+    onSuccess: (_, vars) => { utils.billGuardian.listBills.invalidate(); utils.billGuardian.getDashboard.invalidate(); toast.success(vars.manuallyPaid ? "Marked as paid" : "Marked as unpaid"); },
+    onError: (e) => toast.error(e.message),
+  });
 
   if (isLoading) return <div className="flex items-center justify-center h-40 text-muted-foreground">Loading...</div>;
 
@@ -382,10 +401,29 @@ function BillsTab({ onAdd }: { onAdd: () => void }) {
                   <p className="text-xs text-muted-foreground mt-0.5">Aliases: {JSON.parse(bill.vendorAliases).join(", ")}</p>
                 )}
               </div>
-              <div className="text-right shrink-0 flex items-center gap-2">
+              <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
                 <span className="font-semibold">${parseFloat(bill.expectedAmount).toFixed(2)}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditBill(bill)}><Edit2 className="h-3.5 w-3.5" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteBill.mutate({ id: bill.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <div className="flex items-center gap-1">
+                  {bill.manuallyPaid ? (
+                    <Button variant="outline" size="sm" className="h-7 text-xs text-emerald-600 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400" onClick={() => markPaid.mutate({ id: bill.id, manuallyPaid: false })}>
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Paid
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => markPaid.mutate({ id: bill.id, manuallyPaid: true })}>
+                      Mark Paid
+                    </Button>
+                  )}
+                  {bill.paymentLink && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7" title="Open payment portal" onClick={() => window.open(bill.paymentLink!, "_blank")}>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditBill(bill)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteBill.mutate({ id: bill.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </div>
+                {bill.paymentLinkNote && (
+                  <p className="text-xs text-muted-foreground max-w-[220px] text-right line-clamp-2">{bill.paymentLinkNote}</p>
+                )}
               </div>
             </div>
           ))}
