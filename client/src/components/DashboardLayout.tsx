@@ -65,7 +65,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
     { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
     { icon: UserCheck, label: "Team", path: "/team" },
-    { icon: Brain, label: "🧠 BrainDump", path: "/brain-dump" },
+    { icon: undefined, label: "🧠 BrainDump", path: "/brain-dump" },
     { icon: Zap, label: "Automations", path: "/automations" },
     { icon: Plug, label: "Integrations", path: "/integrations" },
     { icon: Settings, label: "Settings", path: "/settings" },
@@ -234,9 +234,11 @@ function DashboardLayoutContent({
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
+                      {item.icon ? (
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                      ) : null}
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
