@@ -34,6 +34,7 @@ import Walkthroughs from "./pages/Walkthroughs";
 import UnassignedCallLogs from "./pages/UnassignedCallLogs";
 import Team from "./pages/Team";
 import StateComplaintBuilder from "./pages/StateComplaintBuilder";
+import BrainDump from "./pages/BrainDump";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -75,6 +76,7 @@ function Router() {
           <Route path="/call-logs" component={UnassignedCallLogs} />
           <Route path="/team" component={Team} />
           <Route path="/state-complaint-builder" component={StateComplaintBuilder} />
+          <Route path="/brain-dump" component={BrainDump} />
           <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `brainDumpItems` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`title` text NOT NULL,\n\t`body` text,\n\t`category` varchar(100) NOT NULL DEFAULT 'General',\n\t`status` enum('not_started','in_progress','done','archived') NOT NULL DEFAULT 'not_started',\n\t`priority` enum('low','medium','high','urgent') NOT NULL DEFAULT 'medium',\n\t`nextStep` text,\n\t`pinned` boolean NOT NULL DEFAULT false,\n\t`tags` text,\n\t`sortOrder` int NOT NULL DEFAULT 0,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `brainDumpItems_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute CREATE TABLE `brainDumpItems` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`title` text NOT NULL,\n\t`body` text,\n\t`category` varchar(100) NOT NULL DEFAULT 'General',\n\t`status` enum('not_started','in_progress','done','archived') NOT NULL DEFAULT 'not_started',\n\t`priority` enum('low','medium','high','urgent') NOT NULL DEFAULT 'medium',\n\t`nextStep` text,\n\t`pinned` boolean NOT NULL DEFAULT false,\n\t`tags` text,\n\t`sortOrder` int NOT NULL DEFAULT 0,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `brainDumpItems_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 684
+}

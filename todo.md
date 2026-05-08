@@ -418,3 +418,24 @@
 ## State Complaint Builder — Tools Page & Student Picker
 - [x] Add State Complaint Builder card to main Tools page (under a new "Formal Actions" section)
 - [x] StateComplaintBuilder: if no contactId in URL, show student picker dropdown before the form
+
+## 🧠 BrainDump Workspace
+- [x] DB: brainDumpItems table (id, ownerId, title, body, category, status: not_started/in_progress/done/archived, priority: low/medium/high/urgent, nextStep, pinned, tags JSON, createdAt, updatedAt)
+- [x] DB migration: generate and apply
+- [x] Backend: brainDump.list procedure (filter by category, status, priority, search, pinned)
+- [x] Backend: brainDump.create procedure
+- [x] Backend: brainDump.update procedure (title, body, category, status, priority, nextStep, pinned, tags)
+- [x] Backend: brainDump.delete procedure
+- [x] Frontend: 🧠 BrainDump sidebar nav item (/brain-dump route)
+- [x] Frontend: Quick capture bar (always visible at top, press Enter to save)
+- [x] Frontend: List view (Notion-style table: idea, category, date, status, next step, priority)
+- [x] Frontend: Kanban view (columns by status: Not Started, In Progress, Done, Archived)
+- [x] Frontend: Card view (grid of cards with color-coded priority)
+- [x] Frontend: Category filter tabs at top (All Ideas, CRM, AI Tools, Workflows, Business, Feature Requests, etc.)
+- [x] Frontend: Search bar
+- [x] Frontend: Pin/favorite toggle on each item
+- [x] Frontend: Pinned items section at top of list
+- [x] Frontend: Inline edit on click (expand item to edit all fields)
+- [x] Frontend: Priority color coding (urgent=red, high=orange, medium=blue, low=gray)
+- [x] Frontend: Status badges with dot indicators
+- [x] Frontend: Dark mode friendly styling

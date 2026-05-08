@@ -681,3 +681,25 @@ export const caseAssignments = mysqlTable("caseAssignments", {
 });
 export type CaseAssignment = typeof caseAssignments.$inferSelect;
 export type InsertCaseAssignment = typeof caseAssignments.$inferInsert;
+
+/**
+ * BrainDump — fast idea capture workspace for advocates.
+ * ADHD-friendly second brain for operational intelligence and creative ideas.
+ */
+export const brainDumpItems = mysqlTable("brainDumpItems", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  title: text("title").notNull(),
+  body: text("body"),
+  category: varchar("category", { length: 100 }).default("General").notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "done", "archived"]).default("not_started").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium").notNull(),
+  nextStep: text("nextStep"),
+  pinned: boolean("pinned").default(false).notNull(),
+  tags: text("tags"),   // JSON array of strings
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BrainDumpItem = typeof brainDumpItems.$inferSelect;
+export type InsertBrainDumpItem = typeof brainDumpItems.$inferInsert;
