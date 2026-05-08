@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2, Sparkles, AlertTriangle, CalendarClock, Clock, MessageSquare } from "lucide-react";
+import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2, Sparkles, AlertTriangle, CalendarClock, Clock, MessageSquare, Banknote, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { ClientPortalPreview } from "@/components/ClientPortalPreview";
 import { useTerminology } from "@/contexts/TerminologyContext";
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const isLoading = leadsLoading || projectsLoading || invoicesLoading || tasksLoading;
   const { data: briefing, isLoading: briefingLoading } = trpc.ai.dailyBriefing.useQuery(undefined, { enabled: user?.role === "admin" });
   const { data: unreadMessages } = trpc.messages.unread.useQuery(undefined, { enabled: !!user });
+  const { data: billAlert } = trpc.billGuardian.getAlertSummary.useQuery(undefined, { enabled: user?.role === "admin", refetchInterval: 5 * 60 * 1000 });
 
   // Calculate metrics
   const openTasks = (allTasks as any[] | undefined)?.filter((t) => t.status !== "complete").length ?? 0;
@@ -117,6 +118,57 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Bill Guardian Alert Banner */}
+      {billAlert?.needsAttention && (
+        <Link href="/bill-guardian">
+          <div className={`group relative overflow-hidden rounded-xl border px-5 py-4 cursor-pointer transition-all hover:shadow-md ${
+            billAlert.severity === "critical"
+              ? "border-rose-200 bg-gradient-to-r from-rose-50 to-rose-100/50 dark:border-rose-800/50 dark:from-rose-950/40 dark:to-rose-900/20"
+              : "border-amber-200 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:border-amber-800/50 dark:from-amber-950/40 dark:to-amber-900/20"
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                  billAlert.severity === "critical"
+                    ? "bg-rose-100 dark:bg-rose-900/50"
+                    : "bg-amber-100 dark:bg-amber-900/50"
+                }`}>
+                  <Banknote className={`h-5 w-5 ${
+                    billAlert.severity === "critical"
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-amber-600 dark:text-amber-400"
+                  }`} />
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold ${
+                    billAlert.severity === "critical"
+                      ? "text-rose-900 dark:text-rose-200"
+                      : "text-amber-900 dark:text-amber-200"
+                  }`}>
+                    Bill Guardian needs your attention
+                  </p>
+                  <p className={`text-xs mt-0.5 ${
+                    billAlert.severity === "critical"
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-amber-600 dark:text-amber-400"
+                  }`}>
+                    {billAlert.severity === "critical"
+                      ? "One or more recurring items may be overdue"
+                      : "Some items are due soon or need review"}
+                  </p>
+                </div>
+              </div>
+              <div className={`flex items-center gap-1.5 text-xs font-medium transition-transform group-hover:translate-x-0.5 ${
+                billAlert.severity === "critical"
+                  ? "text-rose-600 dark:text-rose-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}>
+                Review <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Open Tasks Card */}

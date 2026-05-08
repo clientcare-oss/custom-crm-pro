@@ -2728,6 +2728,35 @@ export const appRouter = router({
         },
       };
     }),
+    // ── Alert Summary (no bill details exposed — dashboard use only)
+    getAlertSummary: protectedProcedure.query(async ({ ctx }) => {
+      const { billGuardianBills: bgb, billGuardianTransactions: bgt } = await import("../drizzle/schema");
+      const { eq: aeq, and: aand, gte: agte } = await import("drizzle-orm");
+      const dbConn = await db.getDb();
+      if (!dbConn) return { needsAttention: false, count: 0, severity: "info" as const };
+      const bills = await dbConn.select().from(bgb).where(aand(aeq(bgb.ownerId, ctx.user.id), aeq(bgb.isActive, true)));
+      if (bills.length === 0) return { needsAttention: false, count: 0, severity: "info" as const };
+      const since = new Date();
+      since.setDate(since.getDate() - 60);
+      const transactions = await dbConn.select().from(bgt).where(aand(aeq(bgt.ownerId, ctx.user.id), agte(bgt.transactionDate, since)));
+      const currentDay = new Date().getDate();
+      let critical = 0, warning = 0;
+      for (const bill of bills) {
+        // Skip bills manually marked as paid/autopay/skipped
+        const ps = (bill as any).paymentStatus;
+        if (ps === "paid" || ps === "autopay_on" || ps === "skipped") continue;
+        const matched = transactions.some(t => t.matchedBillId === bill.id && (t.matchStatus === "matched" || t.isManuallyVerified));
+        if (matched) continue;
+        const daysUntilDue = bill.dueDay - currentDay;
+        const duplicate = transactions.some(t => t.matchedBillId === bill.id && t.matchStatus === "duplicate");
+        const increased = transactions.some(t => t.matchedBillId === bill.id && t.matchStatus === "increased");
+        if (daysUntilDue < 0) critical++;
+        else if (daysUntilDue <= 5 || duplicate || increased) warning++;
+      }
+      const count = critical + warning;
+      const severity = critical > 0 ? "critical" : warning > 0 ? "warning" : "info";
+      return { needsAttention: count > 0, count, severity: severity as "critical" | "warning" | "info" };
+    }),
   }),
 });
 export type AppRouter = typeof appRouter;

@@ -472,7 +472,12 @@
 - [x] Frontend: Bills list — payment notes shown below row when paymentLinkNote is set
 
 ## Bill Guardian — Click-Through Status Pill
-- [ ] DB: add paymentStatus column to billGuardianBills (enum: unpaid, paid, autopay_on, disputed, skipped)
-- [ ] DB migration: generate and apply
-- [ ] Backend: updateBill accepts paymentStatus field
-- [ ] Frontend: replace Mark Paid button with a colored status pill that cycles on click (Unpaid → Paid → Autopay On → Disputed → Skipped → Unpaid)
+- [x] DB: add paymentStatus column to billGuardianBills (enum: unpaid, paid, autopay_on, disputed, skipped)
+- [x] DB migration: generate and apply
+- [x] Backend: updateBill accepts paymentStatus field
+- [x] Frontend: replace Mark Paid button with a colored status pill that cycles on click (Unpaid → Paid → Autopay On → Disputed → Skipped → Unpaid)
+
+## Bill Guardian — Dashboard Attention Banner
+- [x] Backend: billGuardian.getAlertSummary — returns { needsAttention: boolean, count: number, severity: 'critical'|'warning'|'info' } with NO bill names/amounts
+- [x] Frontend: Dashboard — sleek Bill Guardian status card when needsAttention is true, links to /bill-guardian
+- [x] Frontend: Card design — professional icon, "Bill Guardian needs your attention" copy, severity-based color, no bill details exposed
