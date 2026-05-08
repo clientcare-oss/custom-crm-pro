@@ -29,6 +29,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import PageIdBadge from './PageIdBadge';
 
 const ICON_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap,
@@ -323,6 +324,7 @@ function DashboardLayoutContent({
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
       <AIAssistant />
+      <PageIdBadge />
     </>
   );
 }

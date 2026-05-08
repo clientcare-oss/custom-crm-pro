@@ -489,3 +489,9 @@
 ## Rename "Financials" → "Billing" on All Client-Facing Pages
 - [x] ClientPortal.tsx: tab label "Financials" → "Billing", tab comment, h2 heading, subtitle copy
 - [x] ContactDetail.tsx: parent-side tab trigger label (line ~273) already says "Billing" — verified; student-side tab trigger label (line ~670) already says "Billing" — verified; no visible heading changes needed (no h2 in those tab contents)
+
+## Page ID Corner Badge
+- [x] Create PageIdBadge component — small fixed bottom-right badge showing page ID (Hash icon + PG-XXX code), subtle muted style, non-intrusive
+- [x] Create PAGE_IDS registry mapping every route path to a unique PG-XXX id and page name
+- [x] Wire badge into DashboardLayout so it auto-reads current route and shows the correct ID on every page
+- [x] Verify badge appears correctly on Dashboard, Contacts, ContactDetail, ClientPortal, BillGuardian, BrainDump, Tools, Invoices, Settings
