@@ -1092,7 +1092,9 @@ function StatusBadge({ status }: { status?: string | null }) {
 // ─────────────────────────────────────────────────────────
 function TasksTabContent({ contactId, projects }: { contactId: number; projects: any[] }) {
   const utils = trpc.useUtils();
-  const [newTask, setNewTask] = useState({ title: "", projectId: "", dueDate: "", priority: "Medium" });
+  // Auto-select the first (and usually only) project so the field is never empty
+  const defaultProjectId = projects.length === 1 ? String(projects[0].id) : "";
+  const [newTask, setNewTask] = useState({ title: "", projectId: defaultProjectId, dueDate: "", priority: "Medium" });
   const [adding, setAdding] = useState(false);
 
   const { data: tasks = [], isLoading } = trpc.tasks.getByStudent.useQuery(
@@ -1146,14 +1148,25 @@ function TasksTabContent({ contactId, projects }: { contactId: number; projects:
             className="text-sm"
           />
           <div className="flex gap-2 flex-wrap">
-            <Select value={newTask.projectId} onValueChange={(v) => setNewTask((f) => ({ ...f, projectId: v }))} >
-              <SelectTrigger className="text-xs w-48"><SelectValue placeholder="Link to case..." /></SelectTrigger>
-              <SelectContent>
-                {projects.map((p: any) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {projects.length === 0 ? (
+              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-2.5 py-1.5">
+                <span>No active case/project yet — create one on the Cases tab first</span>
+              </div>
+            ) : projects.length === 1 ? (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-md px-2.5 py-1.5">
+                <span className="font-medium text-foreground">{projects[0].name}</span>
+                <span className="text-muted-foreground/60">· auto-linked</span>
+              </div>
+            ) : (
+              <Select value={newTask.projectId} onValueChange={(v) => setNewTask((f) => ({ ...f, projectId: v }))} >
+                <SelectTrigger className="text-xs w-48"><SelectValue placeholder="Link to case..." /></SelectTrigger>
+                <SelectContent>
+                  {projects.map((p: any) => (
+                    <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select value={newTask.priority} onValueChange={(v) => setNewTask((f) => ({ ...f, priority: v }))}>
               <SelectTrigger className="text-xs w-32"><SelectValue /></SelectTrigger>
               <SelectContent>

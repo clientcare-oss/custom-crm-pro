@@ -506,3 +506,7 @@
 ## PG-004 Students List — Parent Name on Cards
 - [x] Backend: no change needed — contacts.list already returns parentContactId; parentMap built client-side from the same query
 - [x] Frontend: Family/Parent column now shows parent avatar + name (clickable → navigates to parent contact); falls back to company name or dash
+
+## PG-030 Contact Detail — Link to Case Auto-Link
+- [x] Remove empty dropdown from "Link to Case" box; auto-link to current student's own contact ID (or caseId) on open
+- [x] If 1 project: show project name as read-only "auto-linked" chip; if 0 projects: show amber hint to create a case first; if 2+: show dropdown to choose
