@@ -526,6 +526,7 @@ type StudentTask = {
   clientName: string | null;
   projectName: string | null;
   seenByClient: boolean;
+  studentContactId?: number;
   steps: { id: number; taskId: number; title: string; isComplete: boolean; sortOrder: number }[];
 };
 
@@ -664,7 +665,7 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
             </button>
           )}
           <button
-            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedToUserId: task.assignedToUserId, assignedTo: task.assignedTo })}
+            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedToUserId: task.assignedToUserId, assignedTo: task.assignedTo, seenByClient: task.seenByClient, studentContactId: task.studentContactId, description: task.description })}
             className="text-muted-foreground hover:text-blue-500 transition-colors"
             title="Edit task"
           >

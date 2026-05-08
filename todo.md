@@ -5,6 +5,8 @@
 - [x] BUG: Edit modal assignee dropdown must ALWAYS show team members only (never contacts/students — students are the case, not assignees)
 - [x] BUG: Selecting one team member (e.g. Byron) saves as another (e.g. Shawn) — wrong ID mapping (fixed with assignedToUserId column)
 - [x] Assignee dropdown should show team members (staff) AND parent contacts — but NOT students
+- [x] BUG: Assigning task to parent contact should make it client-facing (auto-sets type to Client-Facing)
+- [x] Add Task Type selector to edit modal (General / Client-Facing / Case) so user can change task type
 
 ## Phase 1: Database Schema & Design System
 - [x] Design database schema (users, contacts, leads, projects, invoices, contracts, appointments, messages)

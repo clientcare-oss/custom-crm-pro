@@ -3,10 +3,11 @@
  *   - "project"  → calls tasks.update  (StudentTaskRow, ContactDetailTaskRow)
  *   - "internal" → calls internalTasks.update (TaskRow)
  *
- * Assignee dropdown shows:
- *   - Team members (staff/users)
- *   - Parent contacts (non-student contacts)
- *   - NEVER students (students are the case, not assignees)
+ * Features:
+ *   - Task Type selector: General / Client-Facing / Case
+ *   - Assignee dropdown: staff + parent contacts (never students)
+ *   - Auto-sets Client-Facing when parent contact is assigned
+ *   - Converts between tables when type changes (General ↔ Project)
  */
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
@@ -40,12 +41,11 @@ interface ProjectTaskEdit {
   status: string;
   priority?: string | null;
   dueDate?: Date | string | null;
-  /** Team member user ID assigned to this task */
   assignedToUserId?: number | null;
-  /** Contact ID (parent) assigned to this task */
   assignedTo?: number | null;
-  /** contact ID of the student this task belongs to — used to invalidate cache */
   studentContactId?: number;
+  seenByClient?: boolean;
+  description?: string | null;
 }
 
 interface InternalTaskEdit {
@@ -57,6 +57,7 @@ interface InternalTaskEdit {
   assigneeId?: number | null;
   assigneeContactId?: number | null;
   dueDate?: Date | string | null;
+  linkedStudentId?: number | null;
 }
 
 export type TaskEditPayload = ProjectTaskEdit | InternalTaskEdit;
@@ -76,6 +77,16 @@ function toDateString(val?: Date | string | null): string {
   return d.toISOString().split("T")[0];
 }
 
+type TaskType = "general" | "client_facing" | "case";
+
+function getInitialTaskType(task: TaskEditPayload | null): TaskType {
+  if (!task) return "general";
+  if (task.kind === "internal") return "general";
+  // Project task: check seenByClient
+  if (task.seenByClient) return "client_facing";
+  return "case";
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function EditTaskModal({ task, open, onClose }: Props) {
@@ -87,8 +98,9 @@ export function EditTaskModal({ task, open, onClose }: Props) {
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [dueDate, setDueDate] = useState("");
-  // Assignee value format: "user-{id}" for team members, "contact-{id}" for parent contacts, "" for unassigned
   const [assigneeId, setAssigneeId] = useState("");
+  const [taskType, setTaskType] = useState<TaskType>("general");
+  const [studentId, setStudentId] = useState("");
 
   // Populate form when task changes
   useEffect(() => {
@@ -96,9 +108,11 @@ export function EditTaskModal({ task, open, onClose }: Props) {
     setTitle(task.title ?? "");
     setStatus(task.status ?? "");
     setDueDate(toDateString(task.dueDate));
+    setTaskType(getInitialTaskType(task));
+    setDescription(task.description ?? "");
+
     if (task.kind === "project") {
       setPriority(task.priority ?? "Medium");
-      // Determine current assignee: prefer assignedToUserId (team member), fallback to assignedTo (parent contact)
       if (task.assignedToUserId) {
         setAssigneeId(`user-${task.assignedToUserId}`);
       } else if (task.assignedTo) {
@@ -106,9 +120,8 @@ export function EditTaskModal({ task, open, onClose }: Props) {
       } else {
         setAssigneeId("");
       }
-      setDescription("");
+      setStudentId(task.studentContactId ? String(task.studentContactId) : "");
     } else {
-      setDescription(task.description ?? "");
       if (task.assigneeId) {
         setAssigneeId(`user-${task.assigneeId}`);
       } else if (task.assigneeContactId) {
@@ -117,21 +130,33 @@ export function EditTaskModal({ task, open, onClose }: Props) {
         setAssigneeId("");
       }
       setPriority("Medium");
+      setStudentId(task.linkedStudentId ? String(task.linkedStudentId) : "");
     }
   }, [task]);
 
+  // Auto-set client_facing when parent contact is assigned
+  useEffect(() => {
+    if (assigneeId.startsWith("contact-") && taskType === "general") {
+      setTaskType("client_facing");
+    }
+  }, [assigneeId]);
+
   // Team members for assignee dropdown
   const { data: teamUsers = [] } = trpc.internalTasks.getTeamUsers.useQuery();
-  // All contacts — we'll filter to non-students (parents)
+  // All contacts — filter to non-students (parents) for assignee, and students for student selector
   const { data: allContacts = [] } = trpc.contacts.list.useQuery();
   const parentContacts = (allContacts as any[]).filter(
     (c: any) => c.jobTitle !== "Student"
+  );
+  const studentContacts = (allContacts as any[]).filter(
+    (c: any) => c.jobTitle === "Student"
   );
 
   // Mutations
   const updateProject = trpc.tasks.update.useMutation({
     onSuccess: () => {
       utils.tasks.getAll.invalidate();
+      utils.internalTasks.list.invalidate();
       if (task?.kind === "project" && task.studentContactId) {
         utils.tasks.getByStudent.invalidate({ studentContactId: task.studentContactId });
       }
@@ -144,7 +169,18 @@ export function EditTaskModal({ task, open, onClose }: Props) {
   const updateInternal = trpc.internalTasks.update.useMutation({
     onSuccess: () => {
       utils.internalTasks.list.invalidate();
+      utils.tasks.getAll.invalidate();
       toast.success("Task updated");
+      onClose();
+    },
+    onError: (e) => toast.error("Failed: " + e.message),
+  });
+
+  const convertType = trpc.tasks.convertType.useMutation({
+    onSuccess: () => {
+      utils.tasks.getAll.invalidate();
+      utils.internalTasks.list.invalidate();
+      toast.success("Task type changed");
       onClose();
     },
     onError: (e) => toast.error("Failed: " + e.message),
@@ -165,6 +201,57 @@ export function EditTaskModal({ task, open, onClose }: Props) {
       }
     }
 
+    const initialType = getInitialTaskType(task);
+    const typeChanged = taskType !== initialType;
+
+    // ─── Type conversion needed ───
+    if (typeChanged) {
+      // Determine if we need cross-table conversion or just seenByClient toggle
+      const fromKind = task.kind;
+      const needsCrossTable =
+        (fromKind === "internal" && (taskType === "client_facing" || taskType === "case")) ||
+        (fromKind === "project" && taskType === "general");
+
+      if (needsCrossTable) {
+        // Need student for client_facing/case
+        if ((taskType === "client_facing" || taskType === "case") && !studentId) {
+          toast.error("Please select a student for client-facing or case tasks");
+          return;
+        }
+        convertType.mutate({
+          id: task.id,
+          fromKind: fromKind,
+          toType: taskType,
+          studentContactId: studentId ? parseInt(studentId, 10) : undefined,
+          title: title.trim(),
+          description: description || undefined,
+          status: status || undefined,
+          dueDate: dueDate || null,
+          assignedToUserId: userAssignee,
+          assignedTo: contactAssignee,
+          priority: priority || null,
+        });
+        return;
+      }
+
+      // Same table (project): just toggle seenByClient
+      if (fromKind === "project" && (taskType === "client_facing" || taskType === "case")) {
+        const parsedDue = dueDate ? new Date(dueDate + "T00:00:00") : null;
+        updateProject.mutate({
+          id: task.id,
+          title: title.trim(),
+          status: status as "Todo" | "In Progress" | "Done",
+          dueDate: parsedDue && !isNaN(parsedDue.getTime()) ? parsedDue : null,
+          assignedToUserId: userAssignee,
+          assignedTo: contactAssignee,
+          priority: priority || null,
+          seenByClient: taskType === "client_facing",
+        });
+        return;
+      }
+    }
+
+    // ─── No type change — normal update ───
     if (task.kind === "project") {
       const parsedDue = dueDate ? new Date(dueDate + "T00:00:00") : null;
       updateProject.mutate({
@@ -175,9 +262,9 @@ export function EditTaskModal({ task, open, onClose }: Props) {
         assignedToUserId: userAssignee,
         assignedTo: contactAssignee,
         priority: priority || null,
+        seenByClient: taskType === "client_facing",
       });
     } else {
-      // Internal tasks support both team user and parent contact assignment
       updateInternal.mutate({
         id: task.id,
         title: title.trim(),
@@ -190,8 +277,9 @@ export function EditTaskModal({ task, open, onClose }: Props) {
     }
   }
 
-  const isPending = updateProject.isPending || updateInternal.isPending;
+  const isPending = updateProject.isPending || updateInternal.isPending || convertType.isPending;
   const isProject = task?.kind === "project";
+  const showStudentSelector = taskType !== "general" && task?.kind === "internal";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -212,16 +300,48 @@ export function EditTaskModal({ task, open, onClose }: Props) {
             />
           </div>
 
-          {/* Description (internal tasks only) */}
-          {!isProject && (
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Description</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional description..."
+              className="text-sm min-h-[60px] resize-none"
+            />
+          </div>
+
+          {/* Task Type */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Task Type</Label>
+            <Select value={taskType} onValueChange={(v) => setTaskType(v as TaskType)}>
+              <SelectTrigger className="text-xs h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general" className="text-xs">General</SelectItem>
+                <SelectItem value="client_facing" className="text-xs">Client-Facing</SelectItem>
+                <SelectItem value="case" className="text-xs">Case</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Student selector — only shown when converting General → Client-Facing/Case */}
+          {showStudentSelector && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Description</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional description..."
-                className="text-sm min-h-[80px] resize-none"
-              />
+              <Label className="text-xs font-medium">Student (Case)</Label>
+              <Select value={studentId} onValueChange={setStudentId}>
+                <SelectTrigger className="text-xs h-9">
+                  <SelectValue placeholder="Select student..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {studentContacts.map((c: any) => (
+                    <SelectItem key={c.id} value={String(c.id)} className="text-xs">
+                      {c.firstName} {c.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -234,7 +354,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {isProject ? (
+                  {(isProject || taskType !== "general") ? (
                     <>
                       <SelectItem value="Todo" className="text-xs">Todo</SelectItem>
                       <SelectItem value="In Progress" className="text-xs">In Progress</SelectItem>
@@ -252,23 +372,6 @@ export function EditTaskModal({ task, open, onClose }: Props) {
               </Select>
             </div>
 
-            {/* Priority (project tasks only) */}
-            {isProject && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Priority</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger className="text-xs h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="High" className="text-xs">High</SelectItem>
-                    <SelectItem value="Medium" className="text-xs">Medium</SelectItem>
-                    <SelectItem value="Low" className="text-xs">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
             {/* Due Date */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Due Date</Label>
@@ -278,6 +381,21 @@ export function EditTaskModal({ task, open, onClose }: Props) {
                 onChange={(e) => setDueDate(e.target.value)}
                 className="text-xs h-9"
               />
+            </div>
+
+            {/* Priority */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Priority</Label>
+              <Select value={priority} onValueChange={setPriority}>
+                <SelectTrigger className="text-xs h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High" className="text-xs">High</SelectItem>
+                  <SelectItem value="Medium" className="text-xs">Medium</SelectItem>
+                  <SelectItem value="Low" className="text-xs">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Assignee — staff + parent contacts, never students */}

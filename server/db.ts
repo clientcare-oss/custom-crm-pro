@@ -419,7 +419,7 @@ export async function getAllTasksForOwner(ownerId: number) {
           .limit(1);
         if (c) assignedToUserName = `${c.firstName} ${c.lastName}`;
       }
-      result.push({ ...task, projectName: proj.name, clientName, assignedToUserName, steps });
+      result.push({ ...task, projectName: proj.name, clientName, assignedToUserName, studentContactId: proj.clientId, steps });
     }
   }
   return result;
