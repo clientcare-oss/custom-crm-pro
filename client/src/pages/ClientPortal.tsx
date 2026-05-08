@@ -5,8 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
-  FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText
+  FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
+  ChevronDown, ChevronRight, CheckCircle2, Circle
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "@/components/CaseCompassCard";
@@ -21,6 +23,116 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import SignaturePad from "@/components/SignaturePad";
+
+// ── Portal Task Row ──────────────────────────────────────────────────────────
+function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const prevDone = useRef(false);
+  const utils = trpc.useUtils();
+  const inv = () => utils.tasks.getByStudent.invalidate({ studentContactId });
+
+  const stepCount = (task.steps ?? []).length;
+  const doneCount = (task.steps ?? []).filter((s: any) => s.isComplete).length;
+  const progress = stepCount > 0 ? Math.round((doneCount / stepCount) * 100) : 0;
+  const isDone = (task.status ?? "Todo") === "Done";
+
+  // Fire confetti when task transitions to Done
+  useEffect(() => {
+    if (isDone && !prevDone.current && stepCount > 0) {
+      const end = Date.now() + 1200;
+      const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6"];
+      (function frame() {
+        import("canvas-confetti").then(({ default: confetti }) => {
+          confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors });
+          confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors });
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+    }
+    prevDone.current = isDone;
+  }, [isDone, stepCount]);
+
+  const updateStatus = trpc.portal.updateTaskStatus.useMutation({ onSuccess: inv });
+  const toggleStep = trpc.portal.toggleTaskStep.useMutation({
+    onSuccess: (_data, vars) => {
+      inv().then(() => {
+        const updatedSteps = (task.steps ?? []).map((s: any) =>
+          s.id === vars.stepId ? { ...s, isComplete: vars.isComplete } : s
+        );
+        const allDone = updatedSteps.length > 0 && updatedSteps.every((s: any) => s.isComplete);
+        if (allDone && !isDone) {
+          updateStatus.mutate({ taskId: task.id, status: "Done", studentContactId });
+        }
+      });
+    },
+  });
+
+  return (
+    <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${
+      isDone ? "border-green-200 bg-green-50/30" : "border-border bg-card"
+    }`}>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
+          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-medium text-sm ${
+              isDone ? "line-through text-muted-foreground" : "text-foreground"
+            }`}>{task.title}</span>
+            {task.priority && (
+              <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
+                task.priority === "High" ? "bg-red-100 text-red-700"
+                : task.priority === "Medium" ? "bg-amber-100 text-amber-700"
+                : "bg-slate-100 text-slate-600"
+              }`}>{task.priority}</span>
+            )}
+            {task.dueDate && (
+              <span className="text-[10px] text-muted-foreground">
+                Due {new Date(task.dueDate).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+          {stepCount > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <Progress
+                value={progress}
+                className={`h-1.5 flex-1 max-w-[200px] transition-all duration-700 ${
+                  progress === 100 ? "[&>div]:bg-green-500" : "[&>div]:bg-blue-500"
+                }`}
+              />
+              <span className="text-xs text-muted-foreground">{doneCount}/{stepCount}</span>
+            </div>
+          )}
+        </div>
+        <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 flex-shrink-0 ${
+          isDone ? "bg-emerald-100 text-emerald-700"
+          : task.status === "In Progress" ? "bg-blue-100 text-blue-700"
+          : "bg-slate-100 text-slate-600"
+        }`}>{isDone ? "Done" : task.status ?? "Todo"}</span>
+      </div>
+      {expanded && stepCount > 0 && (
+        <div className="border-t border-border px-4 py-3 space-y-2 bg-muted/20">
+          {(task.steps ?? []).map((step: any) => (
+            <div key={step.id} className="flex items-center gap-2">
+              <button
+                onClick={() => toggleStep.mutate({ stepId: step.id, isComplete: !step.isComplete, studentContactId })}
+                className="flex-shrink-0"
+              >
+                {step.isComplete
+                  ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  : <Circle className="h-3.5 w-3.5 text-muted-foreground" />}
+              </button>
+              <span className={`text-xs ${
+                step.isComplete ? "line-through text-muted-foreground" : "text-foreground"
+              }`}>{step.title}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const MEETING_TYPES = [
   "IEP Meeting",
@@ -444,40 +556,7 @@ export default function ClientPortal() {
                 ) : (
                   <div className="space-y-2">
                     {studentTasks.map((task: any) => (
-                      <div key={task.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-                        <div className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 ${
-                          task.status === "Done" ? "border-emerald-500 bg-emerald-500" : "border-muted-foreground"
-                        }`}>
-                          {task.status === "Done" && <span className="text-white text-[10px] font-bold">✓</span>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-semibold ${task.status === "Done" ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                            {task.title}
-                          </p>
-                          {task.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{task.description}</p>
-                          )}
-                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            {task.priority && (
-                              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                task.priority === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                : task.priority === "Medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                              }`}>{task.priority}</span>
-                            )}
-                            {task.dueDate && (
-                              <span className="text-[10px] text-muted-foreground">
-                                Due {new Date(task.dueDate).toLocaleDateString()}
-                              </span>
-                            )}
-                            <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                              task.status === "Done" ? "bg-emerald-100 text-emerald-700"
-                              : task.status === "In Progress" ? "bg-blue-100 text-blue-700"
-                              : "bg-slate-100 text-slate-600"
-                            }`}>{task.status}</span>
-                          </div>
-                        </div>
-                      </div>
+                      <PortalTaskRow key={task.id} task={task} studentContactId={effectiveStudentContactId!} />
                     ))}
                   </div>
                 )}

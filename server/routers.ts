@@ -839,6 +839,28 @@ export const appRouter = router({
         const contractsList = await db.getContractsByClient(input.studentContactId);
         return { invoices: invoicesList, contracts: contractsList };
       }),
+    // Portal: toggle a task step complete/incomplete (owned student only)
+    toggleTaskStep: protectedProcedure
+      .input(z.object({ stepId: z.number(), isComplete: z.boolean(), studentContactId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return await db.toggleTaskStep(input.stepId, input.isComplete);
+      }),
+    // Portal: update task status (owned student only)
+    updateTaskStatus: protectedProcedure
+      .input(z.object({ taskId: z.number(), status: z.enum(["Todo", "In Progress", "Done"]), studentContactId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return await db.updateTask(input.taskId, { status: input.status });
+      }),
   }),
 
   // ============ CASE COMPASS ============

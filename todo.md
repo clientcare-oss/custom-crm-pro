@@ -540,3 +540,8 @@
 - [x] StudentTaskRow (PG-009): when last step is toggled complete, auto-set task status to "Done" + fire confetti
 - [x] ContactDetailTaskRow (PG-030): same auto-complete + confetti when all steps done
 - [x] Internal TaskRow (PG-009): added same auto-complete logic (toggleSubtask → all done → status "complete")
+
+## PG-023 Client Portal — Full-Featured Task Rows
+- [x] Audit how tasks are rendered in ClientPortal.tsx (Tasks tab)
+- [x] Add portal.toggleTaskStep and portal.updateTaskStatus procedures (ownership-verified, protectedProcedure)
+- [x] Replace simple task cards in portal Tasks tab with PortalTaskRow — chevron expand, steps list, progress bar, auto-complete + confetti when all steps done
