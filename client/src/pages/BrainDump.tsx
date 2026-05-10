@@ -18,7 +18,7 @@ import {
 import {
   Brain, Plus, Search, Pin, PinOff, Trash2, Edit3, LayoutList,
   LayoutGrid, Kanban, Star, ChevronDown, X, Check, Zap, Tag, ArrowRight,
-  MoreHorizontal, Circle, Clock, AlertCircle, Flame,
+  MoreHorizontal, Circle, Clock, AlertCircle, Flame, Zap as ConvertIcon,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -271,12 +271,13 @@ function EditDialog({
 }
 
 // ─── List Row ─────────────────────────────────────────────────────────────────
-function ListRow({ item, onEdit, onDelete, onTogglePin, onStatusChange }: {
+function ListRow({ item, onEdit, onDelete, onTogglePin, onStatusChange, onConvertToTask }: {
   item: BrainItem;
   onEdit: (item: BrainItem) => void;
   onDelete: (id: number) => void;
   onTogglePin: (item: BrainItem) => void;
   onStatusChange: (id: number, status: Status) => void;
+  onConvertToTask: (item: BrainItem) => void;
 }) {
   return (
     <div className={`group flex items-center gap-3 px-4 py-2.5 border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer ${item.pinned ? "bg-violet-50/30 dark:bg-violet-950/10" : ""}`}>
@@ -334,6 +335,9 @@ function ListRow({ item, onEdit, onDelete, onTogglePin, onStatusChange }: {
         <button onClick={() => onEdit(item)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
           <Edit3 className="h-3.5 w-3.5" />
         </button>
+        <button onClick={() => onConvertToTask(item)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-emerald-500 transition-colors" title="Convert to Task">
+          <ConvertIcon className="h-3.5 w-3.5" />
+        </button>
         <button onClick={() => onDelete(item.id)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-rose-500 transition-colors">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -343,11 +347,12 @@ function ListRow({ item, onEdit, onDelete, onTogglePin, onStatusChange }: {
 }
 
 // ─── Kanban Card ──────────────────────────────────────────────────────────────
-function KanbanCard({ item, onEdit, onDelete, onTogglePin }: {
+function KanbanCard({ item, onEdit, onDelete, onTogglePin, onConvertToTask }: {
   item: BrainItem;
   onEdit: (item: BrainItem) => void;
   onDelete: (id: number) => void;
   onTogglePin: (item: BrainItem) => void;
+  onConvertToTask: (item: BrainItem) => void;
 }) {
   return (
     <div
@@ -393,12 +398,13 @@ function KanbanCard({ item, onEdit, onDelete, onTogglePin }: {
 }
 
 // ─── Grid Card ────────────────────────────────────────────────────────────────
-function GridCard({ item, onEdit, onDelete, onTogglePin, onStatusChange }: {
+function GridCard({ item, onEdit, onDelete, onTogglePin, onStatusChange, onConvertToTask }: {
   item: BrainItem;
   onEdit: (item: BrainItem) => void;
   onDelete: (id: number) => void;
   onTogglePin: (item: BrainItem) => void;
   onStatusChange: (id: number, status: Status) => void;
+  onConvertToTask: (item: BrainItem) => void;
 }) {
   const priorityBorder: Record<Priority, string> = {
     low: "border-l-muted-foreground/30",
@@ -419,6 +425,9 @@ function GridCard({ item, onEdit, onDelete, onTogglePin, onStatusChange }: {
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
           <button onClick={(e) => { e.stopPropagation(); onTogglePin(item); }} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-amber-500">
             {item.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onConvertToTask(item); }} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-emerald-500">
+            <ConvertIcon className="h-3.5 w-3.5" />
           </button>
           <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-rose-500">
             <Trash2 className="h-3.5 w-3.5" />
@@ -449,7 +458,97 @@ function GridCard({ item, onEdit, onDelete, onTogglePin, onStatusChange }: {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+
+// ─── Convert to Task Dialog ───────────────────────────────────────────────────
+function ConvertToTaskDialog({ item, open, onClose }: {
+  item: BrainItem | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [selectedAssignee, setSelectedAssignee] = useState<string>("");
+  const { data: teamUsers = [] } = trpc.internalTasks.getTeamUsers.useQuery();
+  const createTaskMutation = trpc.internalTasks.create.useMutation({
+    onSuccess: () => {
+      toast.success("Task created from brain dump item");
+      onClose();
+      setSelectedAssignee("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleConvert = async () => {
+    if (!item || !selectedAssignee) {
+      toast.error("Please select an assignee");
+      return;
+    }
+
+    let assigneeId: number | null = null;
+    let assigneeContactId: number | null = null;
+
+    if (selectedAssignee === "__none__") {
+      // Unassigned
+    } else if (selectedAssignee.startsWith("user-")) {
+      assigneeId = parseInt(selectedAssignee.substring(5));
+    } else if (selectedAssignee.startsWith("contact-")) {
+      assigneeContactId = parseInt(selectedAssignee.substring(8));
+    }
+
+    await createTaskMutation.mutateAsync({
+      title: item.title,
+      description: item.body || undefined,
+      assigneeId: assigneeId || undefined,
+      assigneeContactId: assigneeContactId || undefined,
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Convert to Task</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium mb-2">Task Title</p>
+            <p className="text-sm text-muted-foreground">{item?.title}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Assign to</label>
+            <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select assignee..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Unassigned</SelectItem>
+                {teamUsers.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">STAFF</div>
+                    {teamUsers.map((user: any) => (
+                      <SelectItem key={user.id} value={`user-${user.id}`}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button onClick={handleConvert} disabled={createTaskMutation.isPending}>
+              {createTaskMutation.isPending ? "Converting..." : "Convert to Task"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function BrainDump() {
+  const [convertItem, setConvertItem] = useState<BrainItem | null>(null);
+  const [convertOpen, setConvertOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -489,6 +588,10 @@ export default function BrainDump() {
     onError: (_e, _v, ctx) => { if (ctx?.prev) utils.brainDump.list.setData(undefined, ctx.prev); },
     onSettled: () => utils.brainDump.list.invalidate(),
   });
+  const handleConvertToTask = (item: BrainItem) => {
+    setConvertItem(item);
+    setConvertOpen(true);
+  };
 
   const deleteMutation = trpc.brainDump.delete.useMutation({
     onMutate: async ({ id }) => {
@@ -689,7 +792,7 @@ export default function BrainDump() {
                       </span>
                     </div>
                     {pinnedItems.map((item) => (
-                      <ListRow key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} />
+                      <ListRow key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} onConvertToTask={handleConvertToTask} />
                     ))}
                   </>
                 )}
@@ -703,7 +806,7 @@ export default function BrainDump() {
                       </div>
                     )}
                     {unpinnedItems.map((item) => (
-                      <ListRow key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} />
+                      <ListRow key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} onConvertToTask={handleConvertToTask} />
                     ))}
                   </>
                 )}
@@ -724,7 +827,7 @@ export default function BrainDump() {
                       </div>
                       <div className="space-y-2">
                         {colItems.map((item) => (
-                          <KanbanCard key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} />
+                          <KanbanCard key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onConvertToTask={handleConvertToTask} />
                         ))}
                         {colItems.length === 0 && (
                           <div className="border border-dashed border-border/50 rounded-lg p-4 text-center text-[11px] text-muted-foreground/50">
@@ -749,14 +852,14 @@ export default function BrainDump() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                       {pinnedItems.map((item) => (
-                        <GridCard key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} />
+                        <GridCard key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} onConvertToTask={handleConvertToTask} />
                       ))}
                     </div>
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {unpinnedItems.map((item) => (
-                    <GridCard key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} />
+                    <GridCard key={item.id} item={item} onEdit={(i) => { setEditItem(i); setEditOpen(true); }} onDelete={handleDelete} onTogglePin={handleTogglePin} onStatusChange={handleStatusChange} onConvertToTask={handleConvertToTask} />
                   ))}
                 </div>
               </div>
@@ -766,6 +869,7 @@ export default function BrainDump() {
       </div>
 
       {/* ── Edit Dialog ──────────────────────────────────────────────────── */}
+      <ConvertToTaskDialog item={convertItem} open={convertOpen} onClose={() => { setConvertOpen(false); setConvertItem(null); }} />
       <EditDialog
         item={editItem}
         open={editOpen}

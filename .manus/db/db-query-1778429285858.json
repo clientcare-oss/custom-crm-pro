@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE email LIKE '%byron%' OR name LIKE '%Byron%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, name, email, role FROM users WHERE email LIKE '%byron%' OR name LIKE '%Byron%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Byron Honea",
+      "email": "clientcare@waypointadvocates.com",
+      "role": "admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n1\tByron Honea\tclientcare@waypointadvocates.com\tadmin\n",
+  "stderr": "",
+  "execution_time_ms": 559
+}

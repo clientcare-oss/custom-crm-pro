@@ -1,0 +1,32 @@
+{
+  "query": "SELECT * FROM contacts WHERE firstName = 'Shawn' AND lastName = 'Sheep' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT * FROM contacts WHERE firstName = 'Shawn' AND lastName = 'Sheep' LIMIT 1;",
+  "rows": [
+    {
+      "id": "1",
+      "ownerId": "1",
+      "firstName": "Shawn",
+      "lastName": "Sheep",
+      "email": "",
+      "phone": "123467890",
+      "company": "Sheep Family",
+      "jobTitle": "Parent",
+      "address": "NULL",
+      "city": "NULL",
+      "state": "NULL",
+      "zipCode": "NULL",
+      "country": "NULL",
+      "notes": "Parent of Woolbert and Baaarbra Sheep",
+      "createdAt": "2026-05-05 20:52:10",
+      "updatedAt": "2026-05-07 15:58:02",
+      "portalUserId": "NULL",
+      "caseId": "WP-2026-0001",
+      "parentContactId": "NULL",
+      "hourlyRate": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\townerId\tfirstName\tlastName\temail\tphone\tcompany\tjobTitle\taddress\tcity\tstate\tzipCode\tcountry\tnotes\tcreatedAt\tupdatedAt\tportalUserId\tcaseId\tparentContactId\thourlyRate\n1\t1\tShawn\tSheep\t\t123467890\tSheep Family\tParent\tNULL\tNULL\tNULL\tNULL\tNULL\tParent of Woolbert and Baaarbra Sheep\t2026-05-05 20:52:10\t2026-05-07 15:58:02\tNULL\tWP-2026-0001\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 563
+}

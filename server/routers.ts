@@ -38,7 +38,9 @@ export const appRouter = router({
   // ============ CONTACTS ============
   contacts: router({
     list: adminProcedure.query(async ({ ctx }) => {
-      return await db.getContactsByOwner(ctx.user.id);
+      const contacts = await db.getContactsByOwner(ctx.user.id);
+      console.log('[contacts.list] User:', ctx.user.id, 'Contacts:', contacts.length, contacts);
+      return contacts;
     }),
 
     get: adminProcedure

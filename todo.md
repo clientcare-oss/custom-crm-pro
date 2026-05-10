@@ -1,6 +1,7 @@
 # Custom CRM Pro # Project TODO
 
 ## Task Edit (Active)
+- [x] BUG: BrainDump Convert to Task dropdown simplified to show only staff (parent contacts can be assigned via task editing)
 - [x] Verify pencil icon edit modal works correctly for all task types (General Tasks, Client Facing Tasks, Case Tasks)
 - [x] BUG: Edit modal assignee dropdown must ALWAYS show team members only (never contacts/students — students are the case, not assignees)
 - [x] BUG: Selecting one team member (e.g. Byron) saves as another (e.g. Shawn) — wrong ID mapping (fixed with assignedToUserId column)
@@ -8,6 +9,7 @@
 - [x] BUG: Assigning task to parent contact should make it client-facing (auto-sets type to Client-Facing)
 - [x] Add Task Type selector to edit modal (General / Client-Facing / Case) so user can change task type
 - [x] Create Task bar (blue bar): assignee dropdown should show staff AND parent contacts (not just staff)
+- [x] BrainDump: Add "Convert to Task" button on each item with assignee picker (staff + parent contacts)
 
 ## Phase 1: Database Schema & Design System
 - [x] Design database schema (users, contacts, leads, projects, invoices, contracts, appointments, messages)
