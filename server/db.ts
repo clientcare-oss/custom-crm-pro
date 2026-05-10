@@ -1266,6 +1266,7 @@ export async function createLeadForm(data: {
   isActive?: boolean;
   fields?: string;
   customLabels?: string;
+  sessionTypeId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1283,6 +1284,7 @@ export async function updateLeadForm(id: number, ownerId: number, data: Partial<
   isActive: boolean;
   fields: string;
   customLabels: string;
+  sessionTypeId: number | null;
 }>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1309,4 +1311,12 @@ export async function incrementLeadFormSubmissionCount(slug: string) {
     .update(leadForms)
     .set({ submissionCount: (form.submissionCount ?? 0) + 1 })
     .where(eq(leadForms.slug, slug));
+}
+export async function updateOwnerPhone(openId: string, phone: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(users)
+    .set({ phone: phone || null })
+    .where(eq(users.openId, openId));
 }

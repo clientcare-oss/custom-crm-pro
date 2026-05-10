@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, ChevronLeft, User, GraduationCap, Heart, Calendar, ExternalLink, Loader2, Eye } from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronLeft, User, GraduationCap, Heart, Calendar, ExternalLink, Loader2, Eye, Phone, Pencil, Check, Copy } from "lucide-react";
+import InlineScheduler from "@/components/InlineScheduler";
+import { ALL_FIELDS, DEFAULT_FIELDS } from "@/lib/formFields";
+import type { FieldKey } from "@/lib/formFields";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -33,33 +36,7 @@ const HOW_HEARD = [
 ];
 
 // All available fields with their labels and which step they belong to
-export const ALL_FIELDS = [
-  // Step 1 — Parent Info
-  { key: "parentFirstName",   label: "Parent First Name",         step: 1, required: true },
-  { key: "parentLastName",    label: "Parent Last Name",          step: 1, required: true },
-  { key: "parentEmail",       label: "Parent Email",              step: 1, required: true },
-  { key: "parentPhone",       label: "Parent Phone",              step: 1, required: true },
-  { key: "timezone",          label: "Timezone",                  step: 1, required: false },
-  { key: "bestTimeToCall",    label: "Best Time to Call",         step: 1, required: false },
-  { key: "secondParent",      label: "Second Parent / Guardian",  step: 1, required: false },
-  { key: "howHeardAboutUs",   label: "How Did You Hear About Us", step: 1, required: false },
-  // Step 2 — Student Info
-  { key: "studentFirstName",  label: "Student First Name",        step: 2, required: true },
-  { key: "studentLastName",   label: "Student Last Name",         step: 2, required: true },
-  { key: "dateOfBirth",       label: "Date of Birth",             step: 2, required: false },
-  { key: "gradeLevel",        label: "Grade Level",               step: 2, required: false },
-  { key: "diagnosis",         label: "Diagnosis / Disability",    step: 2, required: false },
-  { key: "schoolName",        label: "School Name",               step: 2, required: false },
-  { key: "countyDistrict",    label: "County / School District",  step: 2, required: false },
-  { key: "cityStateZip",      label: "City / State / ZIP",        step: 2, required: false },
-  // Step 3 — Challenges
-  { key: "challenges",        label: "Challenges & Concerns",     step: 3, required: false },
-] as const;
-
-export type FieldKey = typeof ALL_FIELDS[number]["key"];
-
-// Default: all fields enabled
-export const DEFAULT_FIELDS: FieldKey[] = ALL_FIELDS.map((f) => f.key);
+// ALL_FIELDS, FieldKey, DEFAULT_FIELDS are imported from @/lib/formFields);
 
 interface FormData {
   parentFirstName: string; parentLastName: string; parentEmail: string; parentPhone: string;
@@ -90,6 +67,18 @@ export default function DynamicForm() {
   const [form, setForm] = useState<FormData>(EMPTY);
   const [submitted, setSubmitted] = useState(false);
   const [caseId, setCaseId] = useState("");
+  const [bookedSlot, setBookedSlot] = useState<{ date: string; time: string } | null>(null);
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [phoneDraft, setPhoneDraft] = useState("");
+  const [copiedCaseId, setCopiedCaseId] = useState(false);
+
+  const { data: businessPhoneData } = trpc.system.getBusinessPhone.useQuery(undefined, { enabled: submitted });
+  const [businessPhone, setBusinessPhone] = useState("");
+
+  // Sync phone from server when available
+  useEffect(() => {
+    if (businessPhoneData?.phone) setBusinessPhone(businessPhoneData.phone);
+  }, [businessPhoneData?.phone]);
 
   const { data: formConfig, isLoading, error } = trpc.leadForms.getBySlug.useQuery(
     { slug },
@@ -97,9 +86,29 @@ export default function DynamicForm() {
   );
 
   const submitMutation = trpc.leadForms.submit.useMutation({
-    onSuccess: (data) => { setCaseId(data.caseId); setSubmitted(true); },
+    onSuccess: (data) => {
+      setCaseId(data.caseId);
+      setSubmitted(true);
+      // Fire confetti animation
+      import("canvas-confetti").then(({ default: confetti }) => {
+        const end = Date.now() + 1200;
+        const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6"];
+        (function frame() {
+          confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors });
+          confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors });
+          if (Date.now() < end) requestAnimationFrame(frame);
+        })();
+      }).catch(() => {});
+    },
     onError: (e) => toast.error("Submission failed: " + e.message),
   });
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedCaseId(true);
+      setTimeout(() => setCopiedCaseId(false), 2000);
+    }).catch(() => toast.info("Case ID: " + text));
+  };
 
   const set = (field: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -205,19 +214,35 @@ export default function DynamicForm() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <div className="max-w-lg w-full text-center space-y-6">
+          {/* Animated checkmark */}
           <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-green-400" />
+            <div className="w-24 h-24 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center animate-[bounce_0.6s_ease-out_1]">
+              <CheckCircle2 className="w-12 h-12 text-green-400" />
             </div>
           </div>
+
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Thank You!</h1>
             <p className="text-slate-300 text-lg">Your information has been submitted successfully.</p>
           </div>
-          <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6 text-left space-y-3">
+
+          {/* Case ID card */}
+          <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-5 text-left space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-slate-400 text-sm">Case ID</span>
-              <span className="text-white font-mono font-bold text-lg">{caseId}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-mono font-bold text-lg">{caseId}</span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(caseId)}
+                  className="p-1 rounded hover:bg-slate-700 transition-colors"
+                  title="Copy Case ID"
+                >
+                  {copiedCaseId
+                    ? <Check className="w-4 h-4 text-green-400" />
+                    : <Copy className="w-4 h-4 text-slate-400" />}
+                </button>
+              </div>
             </div>
             <div className="border-t border-slate-700 pt-3">
               <p className="text-slate-300 text-sm">
@@ -225,25 +250,66 @@ export default function DynamicForm() {
               </p>
             </div>
           </div>
-          {formConfig.schedulingEnabled && formConfig.schedulingUrl && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-3">
+
+          {/* Save our number notice */}
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 space-y-3">
+            <div className="flex items-center gap-2 justify-center">
+              <Phone className="w-5 h-5 text-amber-400" />
+              <p className="text-amber-300 font-semibold text-base">Remember to save our number!</p>
+            </div>
+            <p className="text-slate-400 text-sm">Add us to your contacts so you don’t miss our call.</p>
+            {editingPhone ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="tel"
+                  value={phoneDraft}
+                  onChange={(e) => setPhoneDraft(e.target.value)}
+                  className="flex-1 bg-slate-800 border border-amber-500/40 rounded-md px-3 py-1.5 text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  placeholder="(555) 123-4567"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => { setBusinessPhone(phoneDraft || businessPhone); setEditingPhone(false); }}
+                  className="p-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 transition-colors"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-white font-mono text-xl font-bold tracking-wide">{businessPhone}</span>
+                <button
+                  type="button"
+                  onClick={() => { setPhoneDraft(businessPhone); setEditingPhone(true); }}
+                  className="p-1 rounded hover:bg-slate-700 transition-colors"
+                  title="Edit phone number"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Booked slot confirmation */}
+          {bookedSlot && (
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 justify-center">
-                <Calendar className="w-5 h-5 text-blue-400" />
-                <p className="text-blue-300 font-medium">Ready to schedule your session?</p>
+                <Calendar className="w-4 h-4 text-blue-400" />
+                <p className="text-blue-300 font-medium text-sm">Session Booked!</p>
               </div>
               <p className="text-slate-400 text-sm">
-                Book your initial consultation at a time that works for you.
+                {new Date(bookedSlot.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                {" at "}
+                {(() => {
+                  const [h, m] = bookedSlot.time.split(":").map(Number);
+                  const p = h >= 12 ? "PM" : "AM";
+                  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${p}`;
+                })()}
               </p>
-              <Button
-                className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={() => window.open(formConfig.schedulingUrl!, "_blank")}
-              >
-                <Calendar className="w-4 h-4" />
-                {formConfig.schedulingLabel || "Schedule Your Consultation"}
-                <ExternalLink className="w-3.5 h-3.5 ml-auto" />
-              </Button>
             </div>
           )}
+
           <p className="text-slate-500 text-sm">
             Please save your Case ID for reference. You will receive a confirmation email at{" "}
             <strong className="text-slate-300">{form.parentEmail}</strong>.
@@ -537,54 +603,52 @@ export default function DynamicForm() {
           {/* Step 4: Scheduling (optional) */}
           {step === 4 && formConfig.schedulingEnabled && (
             <div className="space-y-5">
-              <div className="text-center space-y-4 py-4">
-                <div className="w-16 h-16 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center mx-auto">
-                  <Calendar className="w-8 h-8 text-blue-400" />
+              {formConfig.schedulingType === "builtin" && formConfig.sessionTypeId ? (
+                // Inline scheduler widget
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <h3 className="text-white font-semibold text-lg">Schedule Your Session</h3>
+                    <p className="text-slate-400 text-sm mt-1">Pick a date and time that works for you.</p>
+                  </div>
+                  {isPreview ? (
+                    <div className="bg-slate-800/60 border border-blue-500/30 rounded-xl p-6 text-center space-y-2">
+                      <Calendar className="w-10 h-10 text-blue-400 mx-auto" />
+                      <p className="text-slate-300 text-sm">Inline booking calendar will appear here in the live form.</p>
+                      <p className="text-slate-500 text-xs">Session type: {formConfig.sessionTypeId}</p>
+                    </div>
+                  ) : (
+                    <InlineScheduler
+                      sessionTypeId={formConfig.sessionTypeId}
+                      parentName={`${form.parentFirstName} ${form.parentLastName}`.trim()}
+                      parentEmail={form.parentEmail}
+                      onBooked={(date, time) => setBookedSlot({ date, time })}
+                    />
+                  )}
                 </div>
-                <div>
-                  <h3 className="text-white font-semibold text-lg">Schedule Your Session</h3>
-                  <p className="text-slate-400 text-sm mt-1">
-                    {formConfig.schedulingType === "builtin"
-                      ? "Book your session directly through our scheduling system."
-                      : "Book your initial consultation at a time that works for you."}
-                  </p>
-                </div>
-                {formConfig.schedulingType === "builtin" ? (
+              ) : (
+                // External URL button
+                <div className="text-center space-y-4 py-4">
+                  <div className="w-16 h-16 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center mx-auto">
+                    <Calendar className="w-8 h-8 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">Schedule Your Session</h3>
+                    <p className="text-slate-400 text-sm mt-1">Book your initial consultation at a time that works for you.</p>
+                  </div>
                   <Button
                     className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 text-base"
                     onClick={() => {
-                      if (isPreview) { toast.info("Preview: This button would open the built-in booking page (/book)"); return; }
-                      // Pre-fill name and email from the form submission
-                      const params = new URLSearchParams();
-                      if (form.parentFirstName || form.parentLastName) params.set("name", `${form.parentFirstName} ${form.parentLastName}`.trim());
-                      if (form.parentEmail) params.set("email", form.parentEmail);
-                      const query = params.toString();
-                      window.open(`/book${query ? `?${query}` : ""}`, "_blank");
-                    }}
-                  >
-                    <Calendar className="w-5 h-5" />
-                    {formConfig.schedulingLabel || "Book a Session"}
-                    <ExternalLink className="w-4 h-4 ml-auto" />
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 text-base"
-                    onClick={() => {
-                      if (isPreview) { toast.info(`Preview: This button would open ${formConfig.schedulingUrl}`); return; }
-                      window.open(formConfig.schedulingUrl!, "_blank");
+                      if (isPreview) { toast.info(`Preview: This button would open ${formConfig.schedulingUrl || "/book"}`); return; }
+                      if (formConfig.schedulingUrl) window.open(formConfig.schedulingUrl, "_blank");
                     }}
                   >
                     <Calendar className="w-5 h-5" />
                     {formConfig.schedulingLabel || "Schedule Your Consultation"}
                     <ExternalLink className="w-4 h-4 ml-auto" />
                   </Button>
-                )}
-                <p className="text-slate-500 text-xs">
-                  {isPreview
-                    ? (formConfig.schedulingType === "builtin" ? "Uses built-in CRM scheduler (/book)" : `External URL: ${formConfig.schedulingUrl}`)
-                    : "This will open the booking page in a new tab. You can also skip this step and we'll reach out to schedule."}
-                </p>
-              </div>
+                  <p className="text-slate-500 text-xs">You can also skip this step and we’ll reach out to schedule.</p>
+                </div>
+              )}
             </div>
           )}
 

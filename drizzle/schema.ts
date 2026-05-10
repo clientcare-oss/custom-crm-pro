@@ -26,6 +26,7 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  phone: varchar("phone", { length: 50 }),  // business phone (supports 1-800 toll-free numbers)
 });
 
 export type User = typeof users.$inferSelect;
@@ -41,7 +42,7 @@ export const contacts = mysqlTable("contacts", {
   firstName: varchar("firstName", { length: 100 }).notNull(),
   lastName: varchar("lastName", { length: 100 }).notNull(),
   email: varchar("email", { length: 320 }),
-  phone: varchar("phone", { length: 30 }),
+  phone: varchar("phone", { length: 50 }),
   company: varchar("company", { length: 200 }),
   jobTitle: varchar("jobTitle", { length: 100 }),
   address: text("address"),
@@ -61,7 +62,7 @@ export const contacts = mysqlTable("contacts", {
   referredBy: varchar("referredBy", { length: 200 }),
   // Second parent fields (stored on parent contact record)
   secondParentName: varchar("secondParentName", { length: 200 }),
-  secondParentPhone: varchar("secondParentPhone", { length: 30 }),
+  secondParentPhone: varchar("secondParentPhone", { length: 50 }),
   secondParentEmail: varchar("secondParentEmail", { length: 320 }),
   // Student-specific fields
   dateOfBirth: varchar("dateOfBirth", { length: 20 }),
@@ -894,6 +895,8 @@ export const leadForms = mysqlTable("leadForms", {
   schedulingLabel: varchar("schedulingLabel", { length: 200 }),
   // Scheduling type: 'builtin' (CRM /book page) or 'external' (URL)
   schedulingType: varchar("schedulingType", { length: 20 }).default("builtin"),
+  // Session type for inline booking (references sessionTypes.id)
+  sessionTypeId: int("sessionTypeId"),
   // Custom fields config — JSON array of enabled field keys (null = all fields enabled)
   fields: text("fields"),
   // Custom labels — JSON object mapping fieldKey → custom label text

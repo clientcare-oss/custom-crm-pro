@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTerminology, ICON_OPTIONS, type ProjectIconKey } from "@/contexts/TerminologyContext";
-import { CheckCircle, Settings2, GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers, type LucideIcon } from "lucide-react";
+import { CheckCircle, Settings2, GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers, Phone, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 const ICON_COMPONENT_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers,
@@ -18,6 +19,24 @@ export default function Settings() {
   const [selected, setSelected] = useState(
     presetOptions.some((o) => o.value === projectLabel) ? projectLabel : "__custom__"
   );
+
+  // Business phone state
+  const [phoneValue, setPhoneValue] = useState("");
+  const { data: phoneData } = trpc.system.getBusinessPhone.useQuery();
+  const setPhoneMutation = trpc.system.setBusinessPhone.useMutation({
+    onSuccess: () => {
+      toast.success("Business phone number saved");
+    },
+    onError: () => {
+      toast.error("Failed to save phone number");
+    },
+  });
+
+  useEffect(() => {
+    if (phoneData?.phone) {
+      setPhoneValue(phoneData.phone);
+    }
+  }, [phoneData]);
 
   const handleSelect = (value: string) => {
     setSelected(value);
@@ -38,6 +57,11 @@ export default function Settings() {
     toast.success(`Label updated to "${trimmed}"`);
   };
 
+  const handlePhoneSave = () => {
+    const trimmed = phoneValue.trim();
+    setPhoneMutation.mutate({ phone: trimmed });
+  };
+
   return (
     <div className="space-y-8 p-8 max-w-2xl">
       {/* Header */}
@@ -52,6 +76,49 @@ export default function Settings() {
           Customize how the CRM works for your business.
         </p>
       </div>
+
+      {/* Business Information Section */}
+      <Card className="rounded-xl border border-border shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg">Business Information</CardTitle>
+          <CardDescription>
+            Set your business contact details. Your phone number is shown on lead form confirmation pages so families can save it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold flex items-center gap-2">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              Business Phone Number
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Supports toll-free numbers (e.g., 1-800-XXX-XXXX). Displayed on the form success screen so families can save your number.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={phoneValue}
+                onChange={(e) => setPhoneValue(e.target.value)}
+                placeholder="e.g., 1-800-555-0100 or (555) 123-4567"
+                className="flex-1"
+                type="tel"
+              />
+              <Button
+                onClick={handlePhoneSave}
+                disabled={setPhoneMutation.isPending}
+                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {setPhoneMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+            {phoneData?.phone && (
+              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Currently saved: <span className="font-medium">{phoneData.phone}</span>
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Terminology Section */}
       <Card className="rounded-xl border border-border shadow-sm">
@@ -171,19 +238,6 @@ export default function Settings() {
               );
             })}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Business Info placeholder */}
-      <Card className="rounded-xl border border-border shadow-sm opacity-60">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Business Information</CardTitle>
-          <CardDescription>
-            Business name, logo, and contact details — coming soon.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground italic">This section will be available in a future update.</p>
         </CardContent>
       </Card>
     </div>

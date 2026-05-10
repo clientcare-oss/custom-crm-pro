@@ -10,9 +10,10 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import {
   Calendar, Link2, ClipboardList, Info, Settings, ListChecks,
-  CheckSquare, Square, Pencil, Check, X, CalendarDays, ExternalLink
+  CheckSquare, Square, Pencil, Check, X, CalendarDays, ExternalLink, ChevronDown
 } from "lucide-react";
-import { ALL_FIELDS, DEFAULT_FIELDS, type FieldKey } from "@/pages/DynamicForm";
+import { ALL_FIELDS, DEFAULT_FIELDS } from "@/lib/formFields";
+import type { FieldKey } from "@/lib/formFields";
 
 interface LeadFormModalProps {
   open: boolean;
@@ -25,6 +26,7 @@ interface LeadFormModalProps {
     schedulingUrl?: string | null;
     schedulingLabel?: string | null;
     schedulingType?: string | null;
+    sessionTypeId?: number | null;
     isActive: boolean;
     fields?: string | null;
     customLabels?: string | null;
@@ -41,6 +43,7 @@ interface FormState {
   schedulingType: SchedulingType;
   schedulingUrl: string;
   schedulingLabel: string;
+  sessionTypeId: number | null;
   isActive: boolean;
   enabledFields: FieldKey[];
   customLabels: Record<string, string>; // fieldKey → custom label
@@ -53,6 +56,7 @@ const EMPTY: FormState = {
   schedulingType: "builtin",
   schedulingUrl: "",
   schedulingLabel: "Schedule Your Consultation",
+  sessionTypeId: null,
   isActive: true,
   enabledFields: [...DEFAULT_FIELDS],
   customLabels: {},
@@ -73,6 +77,11 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
   const [editingLabelKey, setEditingLabelKey] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState("");
   const isEditing = !!editingForm;
+
+  // Fetch session types for the selector
+  const { data: sessionTypes } = trpc.sessionTypes.listAll.useQuery(undefined, {
+    enabled: open,
+  });
 
   useEffect(() => {
     if (editingForm) {
@@ -97,6 +106,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
         schedulingType: (editingForm.schedulingType as SchedulingType) ?? "builtin",
         schedulingUrl: editingForm.schedulingUrl ?? "",
         schedulingLabel: editingForm.schedulingLabel ?? "Schedule Your Consultation",
+        sessionTypeId: editingForm.sessionTypeId ?? null,
         isActive: editingForm.isActive ?? true,
         enabledFields,
         customLabels,
@@ -207,6 +217,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
       schedulingType: form.schedulingType,
       schedulingUrl: form.schedulingType === "external" ? (form.schedulingUrl || undefined) : undefined,
       schedulingLabel: form.schedulingLabel || undefined,
+      sessionTypeId: form.sessionTypeId ?? undefined,
       isActive: form.isActive,
       fields: form.enabledFields,
       customLabels: Object.keys(form.customLabels).length > 0
@@ -367,13 +378,34 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                     </div>
 
                     {form.schedulingType === "builtin" && (
-                      <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
-                        <div className="flex items-start gap-2">
-                          <CalendarDays className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Using Built-in Scheduler</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              After submitting the form, families will be directed to your CRM booking page (/book) to schedule a session. Their name and email will be pre-filled automatically.
+                      <div className="space-y-3">
+                        {/* Session Type Selector */}
+                        <div className="space-y-1.5">
+                          <Label className="text-sm">Session Type</Label>
+                          <div className="relative">
+                            <select
+                              value={form.sessionTypeId ?? ""}
+                              onChange={(e) => set("sessionTypeId", e.target.value ? Number(e.target.value) : null)}
+                              className="w-full appearance-none bg-background border border-border rounded-md px-3 py-2 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                              <option value="">— No specific session type —</option>
+                              {(sessionTypes ?? []).map((st) => (
+                                <option key={st.id} value={st.id}>
+                                  {st.name} ({st.duration} {st.durationUnit})
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Families will see available time slots for this session type directly in the form.
+                          </p>
+                        </div>
+                        <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <CalendarDays className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                            <p className="text-xs text-muted-foreground">
+                              The scheduling widget is embedded directly in the form — no redirect needed. Name and email are pre-filled from the form.
                             </p>
                           </div>
                         </div>

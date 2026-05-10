@@ -747,3 +747,24 @@
 - [ ] When built-in scheduler is selected: scheduling step embeds the /book page or links to it with pre-filled context
 - [ ] DynamicForm scheduling step: if schedulingType === "builtin", show embedded /book iframe or redirect button to /book
 - [ ] DynamicForm scheduling step: if schedulingType === "external", show the external URL link (existing behavior)
+
+## Lead Forms — Inline Scheduling Widget & Animated Success Screen
+- [x] Add sessionTypeId field to leadForms schema (which session type this form uses for booking)
+- [x] Run migration for sessionTypeId column
+- [x] Add session type selector dropdown to LeadFormModal Settings tab (shows all session types from scheduler)
+- [x] Update tRPC leadForms create/update to accept sessionTypeId
+- [x] Build inline scheduling widget in DynamicForm scheduling step — embed a mini calendar/time picker that calls the booking API directly (no redirect to /book page)
+- [x] Inline widget: pre-fill parent name and email from form data
+- [x] Inline widget: show available slots for the selected session type
+- [x] Animated success screen: confetti burst + animated checkmark (same style as task completion)
+- [x] Success screen: "Remember to save our number!" notice with the business phone number
+- [x] Success screen: editable phone number field (user can tap to edit/copy)
+- [x] Success screen: no page redirect — stays on same page after submission
+
+## Settings — Business Phone Number
+- [x] Add Business Information section to Settings page with phone field
+- [x] users.phone column already varchar(50) — supports 1-800 toll-free numbers
+- [x] Add setBusinessPhone protectedProcedure to systemRouter
+- [x] Add updateOwnerPhone db helper
+- [x] Settings page: phone input with Save button, shows currently saved number with green checkmark
+- [x] Form success screen: "Remember to save our number!" card shows the saved business phone

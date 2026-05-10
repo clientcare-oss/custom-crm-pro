@@ -699,6 +699,45 @@ export const appRouter = router({
         const { id, ...data } = input;
         return await db.updateAppointment(id, ctx.user.id, data);
       }),
+
+    // Public: get available time slots for a session type on a given date
+    getAvailableSlots: publicProcedure
+      .input(z.object({
+        sessionTypeId: z.number(),
+        date: z.string(), // YYYY-MM-DD
+      }))
+      .query(async ({ input }) => {
+        const { sessionTypes } = await import("../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const rows = await dbConn.select().from(sessionTypes).where(eq(sessionTypes.id, input.sessionTypeId)).limit(1);
+        const st = rows[0];
+        if (!st) throw new TRPCError({ code: "NOT_FOUND", message: "Session type not found" });
+        // Parse weekly hours
+        const weeklyHours: Record<string, { start: string; end: string }[]> = st.weeklyHours ? JSON.parse(st.weeklyHours) : {};
+        const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+        const dateObj = new Date(input.date + "T00:00:00");
+        const dayKey = dayNames[dateObj.getDay()];
+        const daySlots = weeklyHours[dayKey] || [];
+        if (daySlots.length === 0) return [];
+        // Generate slots based on duration and increment
+        const durationMin = st.durationUnit === "hours" ? st.duration * 60 : st.duration;
+        const increment = st.customIncrements || durationMin;
+        const slots: string[] = [];
+        for (const range of daySlots) {
+          const [startH, startM] = range.start.split(":").map(Number);
+          const [endH, endM] = range.end.split(":").map(Number);
+          let current = startH * 60 + startM;
+          const end = endH * 60 + endM;
+          while (current + durationMin <= end) {
+            const h = Math.floor(current / 60);
+            const m = current % 60;
+            slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+            current += increment;
+          }
+        }
+        return slots;
+      }),
   }),
 
   // ============ MESSAGES ============
@@ -1389,6 +1428,21 @@ export const appRouter = router({
       }),
 
     // Public: list active session types for a booking page (by ownerId)
+    // Returns all active session types for the owner (no ownerId required — uses ENV owner)
+    listAll: publicProcedure.query(async () => {
+      const { sessionTypes } = await import("../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new Error("DB unavailable");
+      const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+      if (!owner) return [];
+      const rows = await dbConn
+        .select()
+        .from(sessionTypes)
+        .where(and(eq(sessionTypes.ownerId, owner.id), eq(sessionTypes.isActive, true)))
+        .orderBy(asc(sessionTypes.createdAt));
+      return rows;
+    }),
+
     listPublic: publicProcedure
       .input(z.object({ ownerId: z.number() }))
       .query(async ({ input }) => {
@@ -3336,6 +3390,7 @@ export const appRouter = router({
         isActive: z.boolean().default(true),
         fields: z.array(z.string()).optional(),
         customLabels: z.string().optional(),
+        sessionTypeId: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Auto-generate slug from name
@@ -3359,6 +3414,7 @@ export const appRouter = router({
           isActive: input.isActive,
           fields: input.fields ? JSON.stringify(input.fields) : undefined,
           customLabels: input.customLabels,
+          sessionTypeId: input.sessionTypeId,
         });
         const id = db.getInsertId(result);
         return { id, slug };
@@ -3377,13 +3433,15 @@ export const appRouter = router({
         isActive: z.boolean().optional(),
         fields: z.array(z.string()).optional(),
         customLabels: z.string().optional(),
+        sessionTypeId: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { id, fields, customLabels, ...rest } = input;
+        const { id, fields, customLabels, sessionTypeId, ...rest } = input;
         await db.updateLeadForm(id, ctx.user.id, {
           ...rest,
           ...(fields !== undefined ? { fields: JSON.stringify(fields) } : {}),
           ...(customLabels !== undefined ? { customLabels } : {}),
+          ...(sessionTypeId !== undefined ? { sessionTypeId } : {}),
         });
         return { success: true };
       }),
