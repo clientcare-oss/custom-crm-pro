@@ -58,9 +58,14 @@ function Router() {
   if (user) {
     // Public pages accessible even when logged in (no dashboard layout)
     if (window.location.pathname === '/intake' || window.location.pathname.startsWith('/form/')) {
+      // Redirect /intake to /form/public-intake-form so it uses DynamicForm with the inline scheduler
+      if (window.location.pathname === '/intake') {
+        const search = window.location.search;
+        window.location.replace('/form/public-intake' + search);
+        return null;
+      }
       return (
         <Switch>
-          <Route path="/intake" component={IntakeForm} />
           <Route path="/form/:slug" component={DynamicForm} />
         </Switch>
       );
@@ -110,7 +115,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/intake" component={IntakeForm} />
+      <Route path="/intake">{() => { window.location.replace('/form/public-intake' + window.location.search); return null; }}</Route>
       <Route path="/form/:slug" component={DynamicForm} />
       <Route path="/book" component={BookingPage} />
       <Route path="/404" component={NotFound} />

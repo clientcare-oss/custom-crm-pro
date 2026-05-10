@@ -43,7 +43,7 @@ export default function LeadForms() {
     onError: (e) => toast.error("Update failed: " + e.message),
   });
 
-  const intakeUrl = `${window.location.origin}/intake`;
+  const intakeUrl = `${window.location.origin}/form/public-intake`;
   const formLeads = recentLeads?.filter((l: any) => l.source === "Lead Form" || l.source?.includes("Form")) ?? [];
 
   const handleCopy = (url: string, id: string) => {

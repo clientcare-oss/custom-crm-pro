@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, slug, isActive FROM leadForms WHERE name LIKE '%intake%' OR name LIKE '%Public%' OR slug LIKE '%intake%' OR slug LIKE '%public%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, name, slug, isActive FROM leadForms WHERE name LIKE '%intake%' OR name LIKE '%Public%' OR slug LIKE '%intake%' OR slug LIKE '%public%';",
+  "rows": [
+    {
+      "id": "30002",
+      "name": "Public Intake Form",
+      "slug": "public-intake",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\tisActive\n30002\tPublic Intake Form\tpublic-intake\t1\n",
+  "stderr": "",
+  "execution_time_ms": 584
+}

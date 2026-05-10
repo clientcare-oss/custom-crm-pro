@@ -736,7 +736,38 @@ export const appRouter = router({
             current += increment;
           }
         }
-        return slots;
+        // ── Double-booking prevention ──────────────────────────────────────
+        // Fetch existing confirmed/scheduled appointments on this date and
+        // remove any slot whose time window overlaps an existing booking.
+        const { appointments } = await import("../drizzle/schema");
+        const { gte: aGte, lte: aLte, sql: aSql } = await import("drizzle-orm");
+        const dayStart = new Date(input.date + "T00:00:00");
+        const dayEnd   = new Date(input.date + "T23:59:59");
+        const booked = await dbConn
+          .select({ startTime: appointments.startTime, endTime: appointments.endTime })
+          .from(appointments)
+          .where(
+            and(
+              aGte(appointments.startTime, dayStart),
+              aLte(appointments.startTime, dayEnd),
+              // exclude cancelled / no-show
+              aSql`${appointments.status} NOT IN ('Cancelled', 'No-Show')`
+            )
+          );
+        const availableSlots = slots.filter((slot) => {
+          const [slotH, slotM] = slot.split(":").map(Number);
+          const slotStartMin = slotH * 60 + slotM;
+          const slotEndMin   = slotStartMin + durationMin;
+          return !booked.some((appt) => {
+            const apptStart = new Date(appt.startTime);
+            const apptEnd   = new Date(appt.endTime);
+            const apptStartMin = apptStart.getHours() * 60 + apptStart.getMinutes();
+            const apptEndMin   = apptEnd.getHours()   * 60 + apptEnd.getMinutes();
+            // Overlap: slot starts before appt ends AND slot ends after appt starts
+            return slotStartMin < apptEndMin && slotEndMin > apptStartMin;
+          });
+        });
+        return availableSlots;
       }),
   }),
 
