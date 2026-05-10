@@ -3369,6 +3369,27 @@ export const appRouter = router({
       return await db.getLeadForms(ctx.user.id);
     }),
 
+    // Get or auto-create the built-in public intake form record (admin only)
+    getPublicIntakeForm: adminProcedure.query(async ({ ctx }) => {
+      const slug = "public-intake";
+      let form = await db.getLeadFormBySlug(slug);
+      if (!form) {
+        // Auto-create the record so it can be edited
+        const result = await db.createLeadForm({
+          ownerId: ctx.user.id,
+          name: "Public Intake Form",
+          slug,
+          description: "Default public intake form for families",
+          schedulingEnabled: false,
+          schedulingType: "builtin",
+          isActive: true,
+        });
+        const id = db.getInsertId(result);
+        form = await db.getLeadFormBySlug(slug);
+      }
+      return form;
+    }),
+
     // Get a single form by slug (public — for rendering the form)
     getBySlug: publicProcedure
       .input(z.object({ slug: z.string() }))

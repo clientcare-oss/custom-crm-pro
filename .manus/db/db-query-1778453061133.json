@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, slug, isActive FROM leadForms ORDER BY id LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, name, slug, isActive FROM leadForms ORDER BY id LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "IEP Consultation Request",
+      "slug": "iep-consultation-request",
+      "isActive": "1"
+    },
+    {
+      "id": "30001",
+      "name": "Main Lead Form",
+      "slug": "main-lead-form",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\tisActive\n1\tIEP Consultation Request\tiep-consultation-request\t1\n30001\tMain Lead Form\tmain-lead-form\t1\n",
+  "stderr": "",
+  "execution_time_ms": 578
+}

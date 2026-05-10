@@ -27,8 +27,11 @@ export default function LeadForms() {
   const [editingForm, setEditingForm] = useState<any | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const { data: customForms, refetch } = trpc.leadForms.list.useQuery(undefined, { retry: false });
+  const { data: allForms, refetch } = trpc.leadForms.list.useQuery(undefined, { retry: false });
   const { data: recentLeads } = trpc.leads.list.useQuery(undefined, { retry: false });
+  const { data: publicIntakeForm } = trpc.leadForms.getPublicIntakeForm.useQuery(undefined, { retry: false });
+  // Filter out the built-in public-intake record from the custom forms list
+  const customForms = allForms?.filter((f: any) => f.slug !== "public-intake") ?? null;
 
   const deleteMutation = trpc.leadForms.delete.useMutation({
     onSuccess: () => { toast.success("Form deleted"); refetch(); setDeletingId(null); },
@@ -87,7 +90,7 @@ export default function LeadForms() {
                 <ClipboardList className="w-4 h-4 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{2 + (customForms?.length ?? 0)}</p>
+                <p className="text-2xl font-bold">{1 + (customForms?.length ?? 0)}</p>
                 <p className="text-xs text-muted-foreground">Active Forms</p>
               </div>
             </div>
@@ -200,7 +203,7 @@ export default function LeadForms() {
                   <ExternalLink className="w-3.5 h-3.5" />
                   Open
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setShowCreateModal(true)} className="gap-1.5">
+                <Button size="sm" variant="outline" onClick={() => publicIntakeForm && setEditingForm(publicIntakeForm)} className="gap-1.5" disabled={!publicIntakeForm}>
                   <Pencil className="w-3.5 h-3.5" />
                   Edit
                 </Button>
