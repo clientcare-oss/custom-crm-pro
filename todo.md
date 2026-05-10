@@ -641,3 +641,10 @@
 - [ ] Display "Last edited" timestamp and edit history panel
 - [ ] Test visibility toggle: eye on = visible to both, eye off = advocate only
 - [ ] Write vitest for notes CRUD and visibility filtering
+
+## BUG: Notes Not Showing in Client Portal
+- [ ] BUG: Client portal Notes tab not showing client-visible notes for Baaarbra Sheep (notes marked eye-on not appearing)
+- [ ] Diagnose: check if studentProjects is populated in ClientPortal when viewing Baaarbra's student
+- [ ] Diagnose: check if the notes.list tRPC query is being called with the correct projectId in client portal
+- [ ] Diagnose: check if visibleToClient field is being saved/returned correctly from the database
+- [ ] Fix and verify the notes visibility flow end-to-end in the client portal

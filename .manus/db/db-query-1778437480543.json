@@ -1,0 +1,16 @@
+{
+  "query": "SHOW TABLES LIKE '%note%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SHOW TABLES LIKE '%note%';",
+  "rows": [
+    {
+      "Tables_in_gixQA33Udhd38D2dSPdEnX (%note%)": "projectNotes"
+    },
+    {
+      "Tables_in_gixQA33Udhd38D2dSPdEnX (%note%)": "projectNotesHistory"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_gixQA33Udhd38D2dSPdEnX (%note%)\nprojectNotes\nprojectNotesHistory\n",
+  "stderr": "",
+  "execution_time_ms": 595
+}

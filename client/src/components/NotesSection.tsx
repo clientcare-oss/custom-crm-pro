@@ -15,14 +15,19 @@ export function NotesSection({ projectId, studentName, isClientView = false }: N
   const [isExpanded, setIsExpanded] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
-  const { data: allNotes = [], refetch } = trpc.notes.list.useQuery({
-    projectId,
-  });
+  // Advocate view: use admin list (all notes). Client view: use listForClient (only visible ones)
+  const adminQuery = trpc.notes.list.useQuery(
+    { projectId },
+    { enabled: !isClientView }
+  );
+  const clientQuery = trpc.notes.listForClient.useQuery(
+    { projectId },
+    { enabled: isClientView }
+  );
 
-  // Client view: only show notes marked as visible to client
-  const notes = isClientView
-    ? allNotes.filter((n: any) => n.visibleToClient)
-    : allNotes;
+  const allNotes = isClientView ? (clientQuery.data ?? []) : (adminQuery.data ?? []);
+  const refetch = isClientView ? clientQuery.refetch : adminQuery.refetch;
+  const notes = allNotes;
 
   return (
     <div className="space-y-4">
@@ -79,6 +84,7 @@ export function NotesSection({ projectId, studentName, isClientView = false }: N
                     note={note}
                     onSave={() => refetch()}
                     onDelete={() => refetch()}
+                    isReadOnly={isClientView}
                   />
                 </Card>
               ))}

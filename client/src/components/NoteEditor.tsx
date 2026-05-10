@@ -28,6 +28,7 @@ interface NoteEditorProps {
   note?: Note;
   onSave?: () => void;
   onDelete?: () => void;
+  isReadOnly?: boolean;
 }
 
 export function NoteEditor({
@@ -35,6 +36,7 @@ export function NoteEditor({
   note,
   onSave,
   onDelete,
+  isReadOnly = false,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
@@ -81,9 +83,9 @@ export function NoteEditor({
     }
   );
 
-  // Auto-save with debounce
+  // Auto-save with debounce (disabled in read-only mode)
   useEffect(() => {
-    if (!note || !title || !content) return;
+    if (!note || !title || !content || isReadOnly) return;
 
     const timer = setTimeout(async () => {
       setIsSaving(true);
@@ -143,14 +145,19 @@ export function NoteEditor({
   return (
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <Input
-          placeholder="Note title..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="flex-1 font-semibold"
-        />
+        {isReadOnly ? (
+          <h3 className="flex-1 font-semibold text-foreground">{title}</h3>
+        ) : (
+          <Input
+            placeholder="Note title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="flex-1 font-semibold"
+          />
+        )}
         <div className="flex items-center gap-2 ml-4">
-          {/* Visibility Toggle */}
+          {/* Visibility Toggle — hidden in read-only mode */}
+          {!isReadOnly && (
           <Button
             variant="ghost"
             size="sm"
@@ -167,9 +174,10 @@ export function NoteEditor({
               <EyeOff className="w-4 h-4 text-gray-400" />
             )}
           </Button>
+          )}
 
-          {/* History */}
-          {note && (
+          {/* History — hidden in read-only mode */}
+          {note && !isReadOnly && (
             <Dialog open={showHistory} onOpenChange={setShowHistory}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" title="View edit history">
@@ -204,8 +212,8 @@ export function NoteEditor({
             </Dialog>
           )}
 
-          {/* Delete */}
-          {note && (
+          {/* Delete — hidden in read-only mode */}
+          {note && !isReadOnly && (
             <Button
               variant="ghost"
               size="sm"
@@ -218,20 +226,26 @@ export function NoteEditor({
         </div>
       </div>
 
-      {/* Rich Text Editor */}
-      <textarea
-        placeholder="Start typing your note..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        className="w-full h-48 p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+      {/* Rich Text Editor / Read-only view */}
+      {isReadOnly ? (
+        <div className="w-full min-h-24 p-3 border rounded-md bg-muted/30 text-sm whitespace-pre-wrap text-foreground">{content}</div>
+      ) : (
+        <textarea
+          placeholder="Start typing your note..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full h-48 p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      )}
 
       {/* Status Bar */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="space-x-2">
-          <span>
-            {isVisibleToClient ? "✓ Visible to client" : "🔒 Advocate only"}
-          </span>
+          {!isReadOnly && (
+            <span>
+              {isVisibleToClient ? "✓ Visible to client" : "🔒 Advocate only"}
+            </span>
+          )}
           {isSaving && <span className="text-blue-500">Saving...</span>}
         </div>
         {note && (
@@ -241,8 +255,8 @@ export function NoteEditor({
         )}
       </div>
 
-      {/* Create Button (for new notes) */}
-      {!note && (
+      {/* Create Button (for new notes, hidden in read-only mode) */}
+      {!note && !isReadOnly && (
         <Button
           onClick={handleCreate}
           disabled={!title.trim() || !content.trim()}

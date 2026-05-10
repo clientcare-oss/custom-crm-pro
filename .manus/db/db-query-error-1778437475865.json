@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, title, project_id, is_visible_to_client FROM project_notes ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, title, project_id, is_visible_to_client FROM project_notes ORDER BY id;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'gixqa33udhd38d2dspdenx.project_notes' doesn't exist"
+  ]
+}
