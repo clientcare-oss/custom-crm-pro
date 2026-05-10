@@ -722,3 +722,9 @@
 - [x] Build /form/:slug public route that renders a dynamic form from DB config
 - [x] Dynamic form renderer: standard fields + optional scheduling step at the end
 - [x] Wire /form/:slug route in App.tsx (public, no auth required)
+
+## Lead Forms UX Fixes
+- [x] Add prominent Edit button directly visible on each custom form card (not buried in ⋯ menu)
+- [x] Add prominent Edit button to Public Intake Form built-in card
+- [x] Fix Preview button on all form cards to open the actual live form in a new tab (window.open) so user can click through all steps
+- [x] Fix Preview button on Public Intake Form card to open /intake in a new tab

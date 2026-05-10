@@ -200,6 +200,10 @@ export default function LeadForms() {
                   <ExternalLink className="w-3.5 h-3.5" />
                   Open
                 </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowCreateModal(true)} className="gap-1.5">
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -280,15 +284,22 @@ export default function LeadForms() {
                           <span>Created {new Date(form.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0">
                         <Button
                           size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
+                          variant="outline"
+                          className="h-8 gap-1.5 text-xs"
                           onClick={() => window.open(formUrl, "_blank")}
-                          title="Preview form"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-3.5 h-3.5" /> Preview
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 gap-1.5 text-xs"
+                          onClick={() => setEditingForm(form)}
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Edit
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
