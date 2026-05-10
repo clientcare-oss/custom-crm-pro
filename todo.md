@@ -100,8 +100,11 @@
 - [x] UI Components: Create NoteEditor and NotesSection components
 - [x] Integration: Add NotesSection to ContactDetail (advocate view)
 - [x] Integration: Add NotesSection to ClientPortal (client view with visibility filtering)
-- [ ] Manual testing: Verify notes creation, editing, visibility toggle in browser
-- [ ] Fix test database issues and complete vitest coverage
+- [x] Manual testing: Verify notes creation, editing, visibility toggle in browser
+- [ ] Fix notes vitest coverage (notes CRUD/history tests need database setup fix)
+- [x] REDESIGN: Move NotesSection from Cases card embed to a dedicated 'Notes' tab in the student ContactDetail horizontal nav bar
+- [x] Remove NotesSection from inside the Cases card in ContactDetail
+- [x] Add Notes tab to ClientPortal horizontal nav (only shows client-visible notes)
 
 ## Known Issues
 - TypeScript: storageProxy.ts type error (template issue - non-critical)

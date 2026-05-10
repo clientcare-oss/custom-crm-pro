@@ -6,7 +6,7 @@ import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
-  ChevronDown, ChevronRight, CheckCircle2, Circle
+  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
@@ -499,6 +499,7 @@ export default function ClientPortal() {
                   { value: "cases", icon: Briefcase, label: "Cases" },
                   { value: "financials", icon: DollarSign, label: "Billing" },
                   { value: "appointments", icon: Calendar, label: "Appointments" },
+                  { value: "notes", icon: StickyNote, label: "Notes" },
                   { value: "details", icon: Info, label: "Details" },
                 ].map(({ value, icon: Icon, label }) => (
                   <TabsTrigger
@@ -803,9 +804,6 @@ export default function ClientPortal() {
                             }`}>{proj.status}</span>
                           </div>
                         </div>
-                        <div className="border-t pt-4">
-                          <NotesSection projectId={proj.id} studentName={effectiveStudent.firstName} />
-                        </div>
                       </Card>
                     ))}
                   </div>
@@ -836,6 +834,34 @@ export default function ClientPortal() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Notes Tab ── */}
+            <TabsContent value="notes" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5">
+                {studentProjects.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/20 py-12 text-center">
+                    <StickyNote className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-40" />
+                    <p className="text-sm font-semibold text-foreground">No cases on file yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Notes will appear here once your advocate creates a case.</p>
+                  </div>
+                ) : studentProjects.length === 1 ? (
+                  <NotesSection projectId={studentProjects[0].id} studentName={effectiveStudent.firstName} isClientView={true} />
+                ) : (
+                  <div className="space-y-6">
+                    {studentProjects.map((proj: any) => (
+                      <div key={proj.id}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-px flex-1 bg-border" />
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2">{proj.name}</span>
+                          <div className="h-px flex-1 bg-border" />
+                        </div>
+                        <NotesSection projectId={proj.id} studentName={effectiveStudent.firstName} isClientView={true} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </TabsContent>
 

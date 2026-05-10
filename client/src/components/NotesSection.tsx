@@ -8,15 +8,21 @@ import { NoteEditor } from "./NoteEditor";
 interface NotesSectionProps {
   projectId: number;
   studentName?: string;
+  isClientView?: boolean;
 }
 
-export function NotesSection({ projectId, studentName }: NotesSectionProps) {
+export function NotesSection({ projectId, studentName, isClientView = false }: NotesSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
-  const { data: notes = [], refetch } = trpc.notes.list.useQuery({
+  const { data: allNotes = [], refetch } = trpc.notes.list.useQuery({
     projectId,
   });
+
+  // Client view: only show notes marked as visible to client
+  const notes = isClientView
+    ? allNotes.filter((n: any) => n.visibleToClient)
+    : allNotes;
 
   return (
     <div className="space-y-4">
@@ -34,7 +40,7 @@ export function NotesSection({ projectId, studentName }: NotesSectionProps) {
           Notes {notes.length > 0 && `(${notes.length})`}
         </button>
 
-        {isExpanded && (
+        {isExpanded && !isClientView && (
           <Button
             size="sm"
             onClick={() => setIsCreating(!isCreating)}
@@ -49,8 +55,8 @@ export function NotesSection({ projectId, studentName }: NotesSectionProps) {
       {/* Content */}
       {isExpanded && (
         <div className="space-y-4">
-          {/* Create New Note */}
-          {isCreating && (
+          {/* Create New Note (advocate only) */}
+          {isCreating && !isClientView && (
             <NoteEditor
               projectId={projectId}
               onSave={() => {
@@ -79,7 +85,7 @@ export function NotesSection({ projectId, studentName }: NotesSectionProps) {
             </div>
           ) : !isCreating ? (
             <p className="text-sm text-gray-500 text-center py-8">
-              No notes yet. Create one to get started.
+              {isClientView ? "No shared notes yet. Your advocate will share notes with you here." : "No notes yet. Create one to get started."}
             </p>
           ) : null}
         </div>

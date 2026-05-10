@@ -687,6 +687,7 @@ function StudentTabs({
         <TabsTrigger value="appointments" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5" />Appts{appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{appointments.length}</span>}
         </TabsTrigger>
+        <TabsTrigger value="notes" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Notes</TabsTrigger>
         <TabsTrigger value="details" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Info className="h-3.5 w-3.5" />Details</TabsTrigger>
       </TabsList>
 
@@ -883,21 +884,16 @@ function StudentTabs({
           </div>
         ) : (
           projects.map((p: any) => (
-            <Card key={p.id} className="p-4 rounded-lg border border-border space-y-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-foreground">{p.name}</p>
-                  <StatusBadge status={p.status} />
-                </div>
-                {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
-                <p className="text-xs text-muted-foreground mt-1">
-                  {p.startDate ? `Started ${new Date(p.startDate).toLocaleDateString()}` : ""}
-                  {p.endDate ? ` · Due ${new Date(p.endDate).toLocaleDateString()}` : ""}
-                </p>
+            <Card key={p.id} className="p-4 rounded-lg border border-border">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-foreground">{p.name}</p>
+                <StatusBadge status={p.status} />
               </div>
-              <div className="border-t pt-4">
-                <NotesSection projectId={p.id} studentName={contact.firstName} />
-              </div>
+              {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
+              <p className="text-xs text-muted-foreground mt-1">
+                {p.startDate ? `Started ${new Date(p.startDate).toLocaleDateString()}` : ""}
+                {p.endDate ? ` · Due ${new Date(p.endDate).toLocaleDateString()}` : ""}
+              </p>
             </Card>
           ))
         )}
@@ -987,6 +983,31 @@ function StudentTabs({
         </div>
       </TabsContent>
 
+      {/* NOTES */}
+      <TabsContent value="notes" className="mt-4">
+        {projects.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 py-12 text-center">
+            <FileText className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-40" />
+            <p className="text-sm font-semibold text-foreground">No cases on file yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Notes are organized by case. Add a case first to start taking notes.</p>
+          </div>
+        ) : projects.length === 1 ? (
+          <NotesSection projectId={projects[0].id} studentName={contact.firstName} />
+        ) : (
+          <div className="space-y-6">
+            {projects.map((p: any) => (
+              <div key={p.id}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2">{p.name}</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <NotesSection projectId={p.id} studentName={contact.firstName} />
+              </div>
+            ))}
+          </div>
+        )}
+      </TabsContent>
 
       {/* DETAILS */}
       <TabsContent value="details" className="mt-4 space-y-4">
