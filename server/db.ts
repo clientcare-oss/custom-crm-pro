@@ -26,6 +26,7 @@ import {
   projectNotesHistory,
   aiConnections,
   aiConnectionRuns,
+  leadForms,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1218,4 +1219,88 @@ export async function getOwnerUser() {
 // Return the insertId from a MySQL insert result
 export function getInsertId(result: any): number {
   return result[0]?.insertId ?? result?.insertId ?? 0;
+}
+
+// ============ LEAD FORMS ============
+export async function getLeadForms(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(leadForms)
+    .where(eq(leadForms.ownerId, ownerId))
+    .orderBy(desc(leadForms.createdAt));
+}
+
+export async function getLeadFormBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(leadForms)
+    .where(eq(leadForms.slug, slug))
+    .limit(1);
+  return result[0];
+}
+
+export async function getLeadFormById(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(leadForms)
+    .where(and(eq(leadForms.id, id), eq(leadForms.ownerId, ownerId)))
+    .limit(1);
+  return result[0];
+}
+
+export async function createLeadForm(data: {
+  ownerId: number;
+  name: string;
+  slug: string;
+  description?: string;
+  schedulingEnabled?: boolean;
+  schedulingUrl?: string;
+  schedulingLabel?: string;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.insert(leadForms).values(data);
+}
+
+export async function updateLeadForm(id: number, ownerId: number, data: Partial<{
+  name: string;
+  slug: string;
+  description: string;
+  schedulingEnabled: boolean;
+  schedulingUrl: string;
+  schedulingLabel: string;
+  isActive: boolean;
+}>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(leadForms)
+    .set(data)
+    .where(and(eq(leadForms.id, id), eq(leadForms.ownerId, ownerId)));
+}
+
+export async function deleteLeadForm(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .delete(leadForms)
+    .where(and(eq(leadForms.id, id), eq(leadForms.ownerId, ownerId)));
+}
+
+export async function incrementLeadFormSubmissionCount(slug: string) {
+  const db = await getDb();
+  if (!db) return;
+  const form = await getLeadFormBySlug(slug);
+  if (!form) return;
+  await db
+    .update(leadForms)
+    .set({ submissionCount: (form.submissionCount ?? 0) + 1 })
+    .where(eq(leadForms.slug, slug));
 }

@@ -877,3 +877,27 @@ export const aiConnectionRuns = mysqlTable("aiConnectionRuns", {
 });
 export type AiConnectionRun = typeof aiConnectionRuns.$inferSelect;
 export type InsertAiConnectionRun = typeof aiConnectionRuns.$inferInsert;
+
+/**
+ * Lead Forms table for managing multiple custom intake forms.
+ * Each form has a unique slug for its public URL (/form/:slug).
+ */
+export const leadForms = mysqlTable("leadForms", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull(),
+  description: text("description"),
+  // Scheduling options
+  schedulingEnabled: boolean("schedulingEnabled").default(false).notNull(),
+  schedulingUrl: text("schedulingUrl"),
+  schedulingLabel: varchar("schedulingLabel", { length: 200 }),
+  // Status
+  isActive: boolean("isActive").default(true).notNull(),
+  submissionCount: int("submissionCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LeadForm = typeof leadForms.$inferSelect;
+export type InsertLeadForm = typeof leadForms.$inferInsert;

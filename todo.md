@@ -687,3 +687,38 @@
 - [x] Add "Quick Setup" button to DashboardLayout sidebar (bottom, above user profile)- [x] Add quickSetup.create tRPC procedure (protectedProcedure) — creates parent contact, student contact, project, lead record, sends notification
 - [x] Show success state with Case ID and "Go to Student" / "View in Contacts" links after submission
 - [x] Include the "What to Tell the Client" script prompt in the modal header
+
+## Lead Forms Overhaul
+- [ ] Redesign Lead Forms page to show two form cards: Internal (Quick Setup) and Public (Intake)
+- [ ] Internal form card: shows description, links to Quick Setup modal (opens it inline), no public URL
+- [ ] Public form card: shows shareable link, copy-link button, preview button, edit button
+- [ ] Add edit capability for the Public intake form (editable fields/settings stored in DB)
+- [ ] Public intake form: add scheduling option section with link to scheduler (Calendly-style embed or direct link to /scheduler)
+- [ ] Public intake form: show scheduler link field that advocate can configure (paste their scheduling URL)
+- [ ] Update /intake route to show scheduling option at the end of the form
+- [ ] Lead Forms page: show form submission count for each form
+
+## Lead Forms — Multi-Form Support
+- [x] Add lead_forms table to drizzle schema (id, ownerId, name, slug, description, fields JSON, schedulingUrl, schedulingEnabled, isActive, submissionCount, createdAt)
+- [x] Run migration for lead_forms table
+- [x] Add tRPC procedures: leadForms.list, leadForms.create, leadForms.update, leadForms.delete, leadForms.getBySlug (public)
+- [x] Redesign Lead Forms page with: Internal card (fixed), Public Intake card (fixed), + dynamic custom forms list
+- [x] Add "Create New Form" button that opens a Create/Edit Form modal
+- [x] Create/Edit Form modal: form name, description, scheduling URL toggle + URL field, active/inactive toggle
+- [x] Each custom form card: name, shareable link (/form/:slug), copy link, preview, edit, delete, submission count
+- [x] Build /form/:slug public route that renders a dynamic form from DB config
+- [x] Dynamic form renderer: standard fields + optional scheduling step at the end
+- [ ] Add scheduling step to default /intake public form (reads schedulingUrl from settings or hardcoded)
+- [x] Wire /form/:slug route in App.tsx (public, no auth required)
+
+## Lead Forms — Multi-Form Support (PG-012) — COMPLETED
+- [x] Add lead_forms table to drizzle schema
+- [x] Run migration for lead_forms table
+- [x] Add tRPC procedures: leadForms.list, create, update, delete, getBySlug (public)
+- [x] Redesign Lead Forms page: Internal card, Public Intake card, + dynamic custom forms list
+- [x] Add "Create New Form" button that opens Create/Edit Form modal
+- [x] Create/Edit Form modal: form name, description, scheduling URL toggle + URL field, active/inactive toggle
+- [x] Each custom form card: name, shareable link, copy link, preview, edit, delete, submission count
+- [x] Build /form/:slug public route that renders a dynamic form from DB config
+- [x] Dynamic form renderer: standard fields + optional scheduling step at the end
+- [x] Wire /form/:slug route in App.tsx (public, no auth required)

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `leadForms` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`name` varchar(200) NOT NULL,\n\t`slug` varchar(100) NOT NULL,\n\t`description` text,\n\t`schedulingEnabled` boolean NOT NULL DEFAULT false,\n\t`schedulingUrl` text,\n\t`schedulingLabel` varchar(200),\n\t`isActive` boolean NOT NULL DEFAULT true,\n\t`submissionCount` int NOT NULL DEFAULT 0,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `leadForms_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute CREATE TABLE `leadForms` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`ownerId` int NOT NULL,\n\t`name` varchar(200) NOT NULL,\n\t`slug` varchar(100) NOT NULL,\n\t`description` text,\n\t`schedulingEnabled` boolean NOT NULL DEFAULT false,\n\t`schedulingUrl` text,\n\t`schedulingLabel` varchar(200),\n\t`isActive` boolean NOT NULL DEFAULT true,\n\t`submissionCount` int NOT NULL DEFAULT 0,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `leadForms_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 700
+}
