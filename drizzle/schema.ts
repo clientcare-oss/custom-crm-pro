@@ -892,6 +892,8 @@ export const leadForms = mysqlTable("leadForms", {
   schedulingEnabled: boolean("schedulingEnabled").default(false).notNull(),
   schedulingUrl: text("schedulingUrl"),
   schedulingLabel: varchar("schedulingLabel", { length: 200 }),
+  // Custom fields config — JSON array of enabled field keys (null = all fields enabled)
+  fields: text("fields"),
   // Status
   isActive: boolean("isActive").default(true).notNull(),
   submissionCount: int("submissionCount").default(0).notNull(),

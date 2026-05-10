@@ -89,6 +89,9 @@ export default function IntakeForm() {
   const [submitted, setSubmitted] = useState(false);
   const [caseId, setCaseId] = useState("");
 
+  // Detect preview mode from URL query param
+  const isPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "true";
+
   const submitMutation = trpc.intake.submit.useMutation({
     onSuccess: (data) => {
       setCaseId(data.caseId);
@@ -103,6 +106,7 @@ export default function IntakeForm() {
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const validateStep = () => {
+    if (isPreview) return true; // skip all validation in preview mode
     if (step === 1) {
       if (!form.parentFirstName.trim()) { toast.error("First name is required"); return false; }
       if (!form.parentLastName.trim()) { toast.error("Last name is required"); return false; }
@@ -124,6 +128,7 @@ export default function IntakeForm() {
   const handleBack = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleSubmit = () => {
+    if (isPreview) { toast.info("Preview mode — form won't be submitted"); return; }
     if (!validateStep()) return;
     submitMutation.mutate({
       parentFirstName: form.parentFirstName,
@@ -198,6 +203,16 @@ export default function IntakeForm() {
         </div>
       </div>
 
+      {/* Preview Mode Banner */}
+      {isPreview && (
+        <div className="max-w-2xl mx-auto w-full px-6 pt-4">
+          <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-2.5">
+            <span className="text-yellow-400 text-xs font-semibold">👁 Preview Mode</span>
+            <span className="text-yellow-300/70 text-xs">— Click any step tab to jump between steps. This form won't submit.</span>
+          </div>
+        </div>
+      )}
+
       {/* Progress Steps */}
       <div className="max-w-2xl mx-auto w-full px-6 pt-8 pb-4">
         <div className="flex items-center gap-2">
@@ -207,10 +222,15 @@ export default function IntakeForm() {
             const isDone = step > s.id;
             return (
               <div key={s.id} className="flex items-center gap-2 flex-1">
-                <div className={`flex items-center gap-2 flex-shrink-0 ${isActive ? "text-blue-400" : isDone ? "text-green-400" : "text-slate-500"}`}>
+                <div
+                  className={`flex items-center gap-2 flex-shrink-0 ${isActive ? "text-blue-400" : isDone ? "text-green-400" : "text-slate-500"} ${isPreview ? "cursor-pointer" : "cursor-default"}`}
+                  onClick={() => isPreview && setStep(s.id)}
+                  title={isPreview ? `Jump to ${s.title}` : undefined}
+                >
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
                     isActive ? "border-blue-400 bg-blue-400/10" :
                     isDone ? "border-green-400 bg-green-400/10" :
+                    isPreview ? "border-slate-500 bg-slate-800 hover:border-slate-400" :
                     "border-slate-600 bg-slate-800"
                   }`}>
                     {isDone ? <CheckCircle2 className="w-4 h-4" /> : <Icon className="w-4 h-4" />}

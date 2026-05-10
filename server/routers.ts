@@ -3333,6 +3333,7 @@ export const appRouter = router({
         schedulingUrl: z.string().optional(),
         schedulingLabel: z.string().optional(),
         isActive: z.boolean().default(true),
+        fields: z.array(z.string()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Auto-generate slug from name
@@ -3353,6 +3354,7 @@ export const appRouter = router({
           schedulingUrl: input.schedulingUrl,
           schedulingLabel: input.schedulingLabel,
           isActive: input.isActive,
+          fields: input.fields ? JSON.stringify(input.fields) : undefined,
         });
         const id = db.getInsertId(result);
         return { id, slug };
@@ -3368,10 +3370,14 @@ export const appRouter = router({
         schedulingUrl: z.string().optional(),
         schedulingLabel: z.string().optional(),
         isActive: z.boolean().optional(),
+        fields: z.array(z.string()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { id, ...data } = input;
-        await db.updateLeadForm(id, ctx.user.id, data);
+        const { id, fields, ...rest } = input;
+        await db.updateLeadForm(id, ctx.user.id, {
+          ...rest,
+          ...(fields !== undefined ? { fields: JSON.stringify(fields) } : {}),
+        });
         return { success: true };
       }),
 

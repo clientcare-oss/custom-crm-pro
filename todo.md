@@ -728,3 +728,13 @@
 - [x] Add prominent Edit button to Public Intake Form built-in card
 - [x] Fix Preview button on all form cards to open the actual live form in a new tab (window.open) so user can click through all steps
 - [x] Fix Preview button on Public Intake Form card to open /intake in a new tab
+
+## Lead Forms — Preview Mode & Field Editor
+- [x] DynamicForm: add ?preview=true URL param that disables all field validation and allows free step navigation (click any step in the stepper to jump to it)
+- [x] DynamicForm preview mode: show a yellow "Preview Mode" banner at the top, hide the Submit button on the last step (replace with "Close Preview")
+- [x] LeadFormModal: add a "Questions" tab / section that shows all available fields with on/off toggles per field
+- [x] Store fields config (JSON array of enabled field keys) in the lead_forms.fields column
+- [x] DynamicForm: read the fields config from the form and hide/show fields accordingly
+- [x] Preview button on Lead Forms page: open /form/:slug?preview=true instead of /form/:slug
+- [x] Preview button on Public Intake Form card: open /intake?preview=true
+- [x] IntakeForm: also support ?preview=true mode (skip validation, free navigation)

@@ -188,7 +188,7 @@ export default function LeadForms() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => window.open(intakeUrl, "_blank")} className="gap-1.5">
+                <Button size="sm" variant="outline" onClick={() => window.open(`${intakeUrl}?preview=true`, "_blank")} className="gap-1.5">
                   <Eye className="w-3.5 h-3.5" />
                   Preview
                 </Button>
@@ -289,7 +289,7 @@ export default function LeadForms() {
                           size="sm"
                           variant="outline"
                           className="h-8 gap-1.5 text-xs"
-                          onClick={() => window.open(formUrl, "_blank")}
+                          onClick={() => window.open(`${formUrl}?preview=true`, "_blank")}
                         >
                           <Eye className="w-3.5 h-3.5" /> Preview
                         </Button>

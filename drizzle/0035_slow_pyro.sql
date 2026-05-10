@@ -1,0 +1,1 @@
+ALTER TABLE `leadForms` ADD `fields` text;
