@@ -604,7 +604,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "Saving..." : isEditing ? "Save Changes" : "Create Form"}
+            {isPending ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
