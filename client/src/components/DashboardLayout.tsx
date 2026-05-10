@@ -30,6 +30,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import PageIdBadge from './PageIdBadge';
+import QuickSetupModal from './QuickSetupModal';
 
 const ICON_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap,
@@ -158,6 +159,7 @@ function DashboardLayoutContent({
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
+  const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
@@ -251,6 +253,17 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3 space-y-2">
+            {/* Quick Setup Button */}
+            <button
+              onClick={() => setQuickSetupOpen(true)}
+              className="flex items-center gap-3 rounded-lg px-2 py-2.5 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 hover:from-blue-600 hover:to-indigo-600 transition-all w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-sm"
+              title="Quick Client Setup (phone call)"
+            >
+              <Zap className="h-4 w-4 text-white shrink-0" />
+              <span className="text-sm font-semibold text-white group-data-[collapsible=icon]:hidden">
+                Quick Setup
+              </span>
+            </button>
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
@@ -326,6 +339,7 @@ function DashboardLayoutContent({
       </SidebarInset>
       <AIAssistant />
       <PageIdBadge />
+      <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
     </>
   );
 }

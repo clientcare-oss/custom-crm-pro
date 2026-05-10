@@ -1208,3 +1208,14 @@ export async function getAiConnectionRunsByContact(contactId: number) {
     .where(eq(aiConnectionRuns.contactId, contactId))
     .orderBy(desc(aiConnectionRuns.createdAt));
 }
+
+// ============ OWNER RESOLUTION (for public endpoints) ============
+
+export async function getOwnerUser() {
+  return await getUserByOpenId(ENV.ownerOpenId);
+}
+
+// Return the insertId from a MySQL insert result
+export function getInsertId(result: any): number {
+  return result[0]?.insertId ?? result?.insertId ?? 0;
+}

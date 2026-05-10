@@ -35,6 +35,7 @@ import UnassignedCallLogs from "./pages/UnassignedCallLogs";
 import Team from "./pages/Team";
 import StateComplaintBuilder from "./pages/StateComplaintBuilder";
 import BrainDump from "./pages/BrainDump";
+import IntakeForm from "./pages/IntakeForm";
 import AiConnections from "./pages/AiConnections";
 import BillGuardian from "./pages/BillGuardian";
 import PageIdShowcase from "./pages/PageIdShowcase";
@@ -54,6 +55,10 @@ function Router() {
 
   // Authenticated routes
   if (user) {
+    // Public pages accessible even when logged in (no dashboard layout)
+    if (window.location.pathname === '/intake') {
+      return <IntakeForm />;
+    }
     return (
       <DashboardLayout>
         <Switch>
@@ -99,6 +104,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/intake" component={IntakeForm} />
       <Route path="/book" component={BookingPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

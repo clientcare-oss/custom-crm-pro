@@ -664,3 +664,26 @@
 - [ ] UI: AI run modal (shows result, option to save to Note or Compass)
 - [ ] Pre-built: Seed 3 starter AI connections (Compare IEPs, Draft Parent Summary, Identify Missing Services)
 - [ ] Test: Create a button, run it on a student, verify output appears
+
+## Lead Intake Form (NEW - Replaces HubSpot Form)
+- [ ] Add missing columns to contacts table: timezone, bestTimeToCall, referredBy, howHeardAboutUs, diagnosis, dateOfBirth, schoolName, gradeLevel, countyDistrict, state, zipcode, challenges, secondParentName, secondParentPhone, secondParentEmail
+- [ ] Build public tRPC procedure: leads.submitIntakeForm (no auth required)
+- [ ] Auto-create parent contact record on submission
+- [ ] Auto-create student contact record on submission with all details
+- [ ] Auto-create initial project/case for student on submission
+- [ ] Auto-populate student Details tab with all submitted fields
+- [ ] Notify advocate (owner) of new lead submission via platform notification
+- [ ] Build multi-step public lead form UI at /intake route (dark mode, branded, Waypoint style)
+- [ ] Step 1: Parent/Guardian Info (name, email, phone, 2nd parent optional, timezone, best time, referral)
+- [ ] Step 2: Student Info (name, age, DOB, diagnosis, school, grade, county, state, zip, challenges)
+- [ ] Step 3: Success/confirmation screen (next steps, what to expect)
+- [ ] Add /intake route to App.tsx (public, no auth required)
+- [ ] Add lead form link/embed to Lead Forms nav page
+- [ ] Test full submission flow: form → parent contact → student contact → project → Details tab populated
+
+## Quick Setup (Internal Phone Call Form)
+- [x] Build QuickSetupModal component — 2-step slide-in modal (Parent Info + Student Info) with script prompt for advocate
+- [x] Add "Quick Setup" button to Leads page header (prominent, always visible)
+- [x] Add "Quick Setup" button to DashboardLayout sidebar (bottom, above user profile)- [x] Add quickSetup.create tRPC procedure (protectedProcedure) — creates parent contact, student contact, project, lead record, sends notification
+- [x] Show success state with Case ID and "Go to Student" / "View in Contacts" links after submission
+- [x] Include the "What to Tell the Client" script prompt in the modal header

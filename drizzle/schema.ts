@@ -54,6 +54,22 @@ export const contacts = mysqlTable("contacts", {
   caseId: varchar("caseId", { length: 20 }),  // unique case identifier e.g. WP-2026-0001
   parentContactId: int("parentContactId"),  // for students: links to parent contact's id
   hourlyRate: decimal("hourlyRate", { precision: 10, scale: 2 }),  // billing rate per hour
+  // Lead intake form fields
+  timezone: varchar("timezone", { length: 50 }),
+  bestTimeToCall: varchar("bestTimeToCall", { length: 200 }),
+  howHeardAboutUs: varchar("howHeardAboutUs", { length: 200 }),
+  referredBy: varchar("referredBy", { length: 200 }),
+  // Second parent fields (stored on parent contact record)
+  secondParentName: varchar("secondParentName", { length: 200 }),
+  secondParentPhone: varchar("secondParentPhone", { length: 30 }),
+  secondParentEmail: varchar("secondParentEmail", { length: 320 }),
+  // Student-specific fields
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  diagnosis: text("diagnosis"),
+  schoolName: varchar("schoolName", { length: 200 }),
+  gradeLevel: varchar("gradeLevel", { length: 50 }),
+  countyDistrict: varchar("countyDistrict", { length: 200 }),
+  challenges: text("challenges"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

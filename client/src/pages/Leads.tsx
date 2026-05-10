@@ -17,9 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import QuickSetupModal from "@/components/QuickSetupModal";
 
 const LEAD_STATUSES = ["New", "Follow-up", "Qualified", "Won", "Lost"] as const;
 type LeadStatus = (typeof LEAD_STATUSES)[number];
@@ -27,6 +28,7 @@ type LeadStatus = (typeof LEAD_STATUSES)[number];
 export default function Leads() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     source: "",
@@ -147,6 +149,14 @@ export default function Leads() {
             Track leads through your sales process
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setQuickSetupOpen(true)}
+            className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
+          >
+            <Zap className="w-4 h-4" />
+            Quick Setup
+          </Button>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
@@ -248,6 +258,7 @@ export default function Leads() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Pipeline Columns */}
@@ -321,6 +332,7 @@ export default function Leads() {
           ))}
         </div>
       )}
+      <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
     </div>
   );
 }
