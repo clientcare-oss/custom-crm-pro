@@ -1260,10 +1260,12 @@ export async function createLeadForm(data: {
   slug: string;
   description?: string;
   schedulingEnabled?: boolean;
+  schedulingType?: string;
   schedulingUrl?: string;
   schedulingLabel?: string;
   isActive?: boolean;
   fields?: string;
+  customLabels?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1275,10 +1277,12 @@ export async function updateLeadForm(id: number, ownerId: number, data: Partial<
   slug: string;
   description: string;
   schedulingEnabled: boolean;
+  schedulingType: string;
   schedulingUrl: string;
   schedulingLabel: string;
   isActive: boolean;
   fields: string;
+  customLabels: string;
 }>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

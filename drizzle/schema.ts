@@ -892,8 +892,12 @@ export const leadForms = mysqlTable("leadForms", {
   schedulingEnabled: boolean("schedulingEnabled").default(false).notNull(),
   schedulingUrl: text("schedulingUrl"),
   schedulingLabel: varchar("schedulingLabel", { length: 200 }),
+  // Scheduling type: 'builtin' (CRM /book page) or 'external' (URL)
+  schedulingType: varchar("schedulingType", { length: 20 }).default("builtin"),
   // Custom fields config — JSON array of enabled field keys (null = all fields enabled)
   fields: text("fields"),
+  // Custom labels — JSON object mapping fieldKey → custom label text
+  customLabels: text("customLabels"),
   // Status
   isActive: boolean("isActive").default(true).notNull(),
   submissionCount: int("submissionCount").default(0).notNull(),

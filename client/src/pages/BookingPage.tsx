@@ -19,13 +19,17 @@ const MEETING_TYPES = [
 export default function BookingPage() {
   const [step, setStep] = useState<"type" | "details" | "confirmed">("type");
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    date: "",
-    time: "",
-    notes: "",
+  // Pre-fill name/email from URL params (e.g., when coming from a lead form submission)
+  const [formData, setFormData] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      name: params.get("name") || "",
+      email: params.get("email") || "",
+      phone: "",
+      date: "",
+      time: "",
+      notes: "",
+    };
   });
 
   const createAppointment = trpc.appointments.book.useMutation({

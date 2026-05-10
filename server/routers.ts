@@ -3330,10 +3330,12 @@ export const appRouter = router({
         name: z.string().min(1),
         description: z.string().optional(),
         schedulingEnabled: z.boolean().default(false),
+        schedulingType: z.enum(["builtin", "external"]).default("builtin"),
         schedulingUrl: z.string().optional(),
         schedulingLabel: z.string().optional(),
         isActive: z.boolean().default(true),
         fields: z.array(z.string()).optional(),
+        customLabels: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Auto-generate slug from name
@@ -3351,10 +3353,12 @@ export const appRouter = router({
           slug,
           description: input.description,
           schedulingEnabled: input.schedulingEnabled,
+          schedulingType: input.schedulingType,
           schedulingUrl: input.schedulingUrl,
           schedulingLabel: input.schedulingLabel,
           isActive: input.isActive,
           fields: input.fields ? JSON.stringify(input.fields) : undefined,
+          customLabels: input.customLabels,
         });
         const id = db.getInsertId(result);
         return { id, slug };
@@ -3367,16 +3371,19 @@ export const appRouter = router({
         name: z.string().min(1).optional(),
         description: z.string().optional(),
         schedulingEnabled: z.boolean().optional(),
+        schedulingType: z.enum(["builtin", "external"]).optional(),
         schedulingUrl: z.string().optional(),
         schedulingLabel: z.string().optional(),
         isActive: z.boolean().optional(),
         fields: z.array(z.string()).optional(),
+        customLabels: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { id, fields, ...rest } = input;
+        const { id, fields, customLabels, ...rest } = input;
         await db.updateLeadForm(id, ctx.user.id, {
           ...rest,
           ...(fields !== undefined ? { fields: JSON.stringify(fields) } : {}),
+          ...(customLabels !== undefined ? { customLabels } : {}),
         });
         return { success: true };
       }),

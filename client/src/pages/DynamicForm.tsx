@@ -118,6 +118,23 @@ export default function DynamicForm() {
 
   const isFieldEnabled = (key: FieldKey) => enabledFields.includes(key);
 
+  // Parse custom labels from form config
+  const customLabels: Record<string, string> = (() => {
+    if (!formConfig?.customLabels) return {};
+    try {
+      const parsed = typeof formConfig.customLabels === "string" ? JSON.parse(formConfig.customLabels) : formConfig.customLabels;
+      if (parsed && typeof parsed === "object") return parsed as Record<string, string>;
+    } catch { /* ignore */ }
+    return {};
+  })();
+
+  // Get the display label for a field (custom label overrides default)
+  const getLabel = (key: FieldKey): string => {
+    if (customLabels[key]) return customLabels[key];
+    const field = ALL_FIELDS.find((f) => f.key === key);
+    return field?.label ?? key;
+  };
+
   const validateStep = () => {
     if (isPreview) return true; // skip all validation in preview mode
     if (step === 1) {
@@ -327,13 +344,13 @@ export default function DynamicForm() {
                 <div className="grid grid-cols-2 gap-4">
                   {isFieldEnabled("parentFirstName") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">First Name <span className="text-red-400">*</span></Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("parentFirstName")} <span className="text-red-400">*</span></Label>
                       <Input value={form.parentFirstName} onChange={(e) => set("parentFirstName", e.target.value)} placeholder="Jane" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                     </div>
                   )}
                   {isFieldEnabled("parentLastName") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">Last Name <span className="text-red-400">*</span></Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("parentLastName")} <span className="text-red-400">*</span></Label>
                       <Input value={form.parentLastName} onChange={(e) => set("parentLastName", e.target.value)} placeholder="Smith" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                     </div>
                   )}
@@ -341,13 +358,13 @@ export default function DynamicForm() {
               )}
               {isFieldEnabled("parentEmail") && (
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">Email Address <span className="text-red-400">*</span></Label>
+                  <Label className="text-slate-300 text-sm">{getLabel("parentEmail")} <span className="text-red-400">*</span></Label>
                   <Input type="email" value={form.parentEmail} onChange={(e) => set("parentEmail", e.target.value)} placeholder="jane@example.com" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                 </div>
               )}
               {isFieldEnabled("parentPhone") && (
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">Phone Number <span className="text-red-400">*</span></Label>
+                  <Label className="text-slate-300 text-sm">{getLabel("parentPhone")} <span className="text-red-400">*</span></Label>
                   <Input type="tel" value={form.parentPhone} onChange={(e) => set("parentPhone", e.target.value)} placeholder="(555) 000-0000" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                 </div>
               )}
@@ -355,7 +372,7 @@ export default function DynamicForm() {
                 <div className="grid grid-cols-2 gap-4">
                   {isFieldEnabled("timezone") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">Timezone</Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("timezone")}</Label>
                       <Select value={form.timezone} onValueChange={(v) => set("timezone", v)}>
                         <SelectTrigger className="bg-slate-900/60 border-slate-600 text-white"><SelectValue placeholder="Select timezone" /></SelectTrigger>
                         <SelectContent>{TIMEZONES.map((tz) => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}</SelectContent>
@@ -364,7 +381,7 @@ export default function DynamicForm() {
                   )}
                   {isFieldEnabled("bestTimeToCall") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">Best Time to Call</Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("bestTimeToCall")}</Label>
                       <Select value={form.bestTimeToCall} onValueChange={(v) => set("bestTimeToCall", v)}>
                         <SelectTrigger className="bg-slate-900/60 border-slate-600 text-white"><SelectValue placeholder="Select time" /></SelectTrigger>
                         <SelectContent>
@@ -380,7 +397,7 @@ export default function DynamicForm() {
               )}
               {isFieldEnabled("secondParent") && (
                 <div className="border-t border-slate-700 pt-4">
-                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">Second Parent / Guardian (Optional)</p>
+                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">{getLabel("secondParent")} (Optional)</p>
                   <div className="space-y-3">
                     <Input value={form.secondParentName} onChange={(e) => set("secondParentName", e.target.value)} placeholder="Full name" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                     <div className="grid grid-cols-2 gap-3">
@@ -392,7 +409,7 @@ export default function DynamicForm() {
               )}
               {isFieldEnabled("howHeardAboutUs") && (
                 <div className="border-t border-slate-700 pt-4">
-                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">How did you hear about us?</p>
+                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">{getLabel("howHeardAboutUs")}</p>
                   <Select value={form.howHeardAboutUs} onValueChange={(v) => set("howHeardAboutUs", v)}>
                     <SelectTrigger className="bg-slate-900/60 border-slate-600 text-white"><SelectValue placeholder="Select an option" /></SelectTrigger>
                     <SelectContent>{HOW_HEARD.map((h) => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
@@ -412,13 +429,13 @@ export default function DynamicForm() {
                 <div className="grid grid-cols-2 gap-4">
                   {isFieldEnabled("studentFirstName") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">Student First Name <span className="text-red-400">*</span></Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("studentFirstName")} <span className="text-red-400">*</span></Label>
                       <Input value={form.studentFirstName} onChange={(e) => set("studentFirstName", e.target.value)} placeholder="Alex" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                     </div>
                   )}
                   {isFieldEnabled("studentLastName") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">Student Last Name <span className="text-red-400">*</span></Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("studentLastName")} <span className="text-red-400">*</span></Label>
                       <Input value={form.studentLastName} onChange={(e) => set("studentLastName", e.target.value)} placeholder="Smith" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                     </div>
                   )}
@@ -428,13 +445,13 @@ export default function DynamicForm() {
                 <div className="grid grid-cols-2 gap-4">
                   {isFieldEnabled("dateOfBirth") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">Date of Birth</Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("dateOfBirth")}</Label>
                       <Input type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} className="bg-slate-900/60 border-slate-600 text-white focus:border-blue-500" />
                     </div>
                   )}
                   {isFieldEnabled("gradeLevel") && (
                     <div className="space-y-1.5">
-                      <Label className="text-slate-300 text-sm">Grade Level</Label>
+                      <Label className="text-slate-300 text-sm">{getLabel("gradeLevel")}</Label>
                       <Select value={form.gradeLevel} onValueChange={(v) => set("gradeLevel", v)}>
                         <SelectTrigger className="bg-slate-900/60 border-slate-600 text-white"><SelectValue placeholder="Select grade" /></SelectTrigger>
                         <SelectContent>{GRADE_LEVELS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
@@ -445,19 +462,19 @@ export default function DynamicForm() {
               )}
               {isFieldEnabled("diagnosis") && (
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">Diagnosis / Disability</Label>
+                  <Label className="text-slate-300 text-sm">{getLabel("diagnosis")}</Label>
                   <Input value={form.diagnosis} onChange={(e) => set("diagnosis", e.target.value)} placeholder="e.g., Autism, ADHD, Dyslexia" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                 </div>
               )}
               {isFieldEnabled("schoolName") && (
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">School Name</Label>
+                  <Label className="text-slate-300 text-sm">{getLabel("schoolName")}</Label>
                   <Input value={form.schoolName} onChange={(e) => set("schoolName", e.target.value)} placeholder="Lincoln Elementary School" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                 </div>
               )}
               {isFieldEnabled("countyDistrict") && (
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">County / School District</Label>
+                  <Label className="text-slate-300 text-sm">{getLabel("countyDistrict")}</Label>
                   <Input value={form.countyDistrict} onChange={(e) => set("countyDistrict", e.target.value)} placeholder="e.g., Los Angeles Unified School District" className="bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500" />
                 </div>
               )}
@@ -488,7 +505,7 @@ export default function DynamicForm() {
             <div className="space-y-5">
               {isFieldEnabled("challenges") && (
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">Describe your child's challenges and concerns</Label>
+                  <Label className="text-slate-300 text-sm">{getLabel("challenges")}</Label>
                   <Textarea
                     value={form.challenges}
                     onChange={(e) => set("challenges", e.target.value)}
@@ -527,24 +544,45 @@ export default function DynamicForm() {
                 <div>
                   <h3 className="text-white font-semibold text-lg">Schedule Your Session</h3>
                   <p className="text-slate-400 text-sm mt-1">
-                    Book your initial consultation at a time that works for you.
+                    {formConfig.schedulingType === "builtin"
+                      ? "Book your session directly through our scheduling system."
+                      : "Book your initial consultation at a time that works for you."}
                   </p>
                 </div>
-                <Button
-                  className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 text-base"
-                  onClick={() => {
-                    if (isPreview) { toast.info("Preview: This button would open your scheduling link"); return; }
-                    window.open(formConfig.schedulingUrl!, "_blank");
-                  }}
-                >
-                  <Calendar className="w-5 h-5" />
-                  {formConfig.schedulingLabel || "Schedule Your Consultation"}
-                  <ExternalLink className="w-4 h-4 ml-auto" />
-                </Button>
+                {formConfig.schedulingType === "builtin" ? (
+                  <Button
+                    className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 text-base"
+                    onClick={() => {
+                      if (isPreview) { toast.info("Preview: This button would open the built-in booking page (/book)"); return; }
+                      // Pre-fill name and email from the form submission
+                      const params = new URLSearchParams();
+                      if (form.parentFirstName || form.parentLastName) params.set("name", `${form.parentFirstName} ${form.parentLastName}`.trim());
+                      if (form.parentEmail) params.set("email", form.parentEmail);
+                      const query = params.toString();
+                      window.open(`/book${query ? `?${query}` : ""}`, "_blank");
+                    }}
+                  >
+                    <Calendar className="w-5 h-5" />
+                    {formConfig.schedulingLabel || "Book a Session"}
+                    <ExternalLink className="w-4 h-4 ml-auto" />
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 text-base"
+                    onClick={() => {
+                      if (isPreview) { toast.info(`Preview: This button would open ${formConfig.schedulingUrl}`); return; }
+                      window.open(formConfig.schedulingUrl!, "_blank");
+                    }}
+                  >
+                    <Calendar className="w-5 h-5" />
+                    {formConfig.schedulingLabel || "Schedule Your Consultation"}
+                    <ExternalLink className="w-4 h-4 ml-auto" />
+                  </Button>
+                )}
                 <p className="text-slate-500 text-xs">
                   {isPreview
-                    ? `Scheduling URL: ${formConfig.schedulingUrl}`
-                    : "This will open your scheduling page in a new tab. You can also skip this step and we'll reach out to schedule."}
+                    ? (formConfig.schedulingType === "builtin" ? "Uses built-in CRM scheduler (/book)" : `External URL: ${formConfig.schedulingUrl}`)
+                    : "This will open the booking page in a new tab. You can also skip this step and we'll reach out to schedule."}
                 </p>
               </div>
             </div>

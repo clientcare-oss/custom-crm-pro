@@ -738,3 +738,12 @@
 - [x] Preview button on Lead Forms page: open /form/:slug?preview=true instead of /form/:slug
 - [x] Preview button on Public Intake Form card: open /intake?preview=true
 - [x] IntakeForm: also support ?preview=true mode (skip validation, free navigation)
+
+## Lead Forms — Editable Question Labels & Built-in Scheduler
+- [ ] LeadFormModal Questions tab: make each field label editable (click pencil icon to rename, save custom label per field)
+- [ ] Store custom labels in the fields config JSON alongside enabled/disabled state
+- [ ] DynamicForm: render custom field labels from form config instead of hardcoded defaults
+- [ ] LeadFormModal Settings tab: add "Use built-in scheduler" toggle (replaces external URL option)
+- [ ] When built-in scheduler is selected: scheduling step embeds the /book page or links to it with pre-filled context
+- [ ] DynamicForm scheduling step: if schedulingType === "builtin", show embedded /book iframe or redirect button to /book
+- [ ] DynamicForm scheduling step: if schedulingType === "external", show the external URL link (existing behavior)
