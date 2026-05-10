@@ -762,7 +762,15 @@ export const appRouter = router({
             const apptStart = new Date(appt.startTime);
             const apptEnd   = new Date(appt.endTime);
             const apptStartMin = apptStart.getHours() * 60 + apptStart.getMinutes();
-            const apptEndMin   = apptEnd.getHours()   * 60 + apptEnd.getMinutes();
+            // Use endTime only if it's on the same date and after startTime; otherwise fall back to startTime + session duration
+            let apptEndMin: number;
+            const sameDay = apptEnd.toDateString() === apptStart.toDateString();
+            if (sameDay && apptEnd > apptStart) {
+              apptEndMin = apptEnd.getHours() * 60 + apptEnd.getMinutes();
+            } else {
+              // Fallback: use the session duration as the booked block length
+              apptEndMin = apptStartMin + durationMin;
+            }
             // Overlap: slot starts before appt ends AND slot ends after appt starts
             return slotStartMin < apptEndMin && slotEndMin > apptStartMin;
           });

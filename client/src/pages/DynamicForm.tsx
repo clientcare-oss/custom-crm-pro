@@ -669,31 +669,19 @@ export default function DynamicForm() {
                 </Button>
               )
             ) : step < totalSteps ? (
-              <Button onClick={step === 3 ? handleSubmit : handleNext} disabled={submitMutation.isPending} className="gap-1.5">
-                {step === 3 ? (
-                  submitMutation.isPending ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
-                  ) : (
-                    <>Submit Form <ChevronRight className="w-4 h-4" /></>
-                  )
-                ) : (
-                  <>Continue <ChevronRight className="w-4 h-4" /></>
-                )}
-              </Button>
-            ) : step === 3 ? (
-              <Button onClick={handleSubmit} disabled={submitMutation.isPending} className="gap-1.5">
-                {submitMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
-                ) : (
-                  <>Submit Form <CheckCircle2 className="w-4 h-4" /></>
-                )}
+              // Not yet at last step — always show Continue
+              <Button onClick={handleNext} className="gap-1.5">
+                Continue <ChevronRight className="w-4 h-4" />
               </Button>
             ) : (
+              // At last step — show Submit
               <Button onClick={handleSubmit} disabled={submitMutation.isPending} className="gap-1.5">
                 {submitMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
-                ) : (
+                ) : formConfig?.schedulingEnabled ? (
                   <>Submit & Schedule <CheckCircle2 className="w-4 h-4" /></>
+                ) : (
+                  <>Submit Form <CheckCircle2 className="w-4 h-4" /></>
                 )}
               </Button>
             )}

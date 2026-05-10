@@ -74,6 +74,10 @@ export default function Appointments() {
       toast.error("Please fill in all required fields");
       return;
     }
+    if (new Date(formData.endTime) <= new Date(formData.startTime)) {
+      toast.error("End time must be after start time");
+      return;
+    }
     createMutation.mutate({
       clientId: parseInt(formData.clientId),
       title: formData.title,
@@ -175,7 +179,23 @@ export default function Appointments() {
                   <input
                     type="datetime-local"
                     value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    onChange={(e) => {
+                      const newStart = e.target.value;
+                      // Auto-set endTime to 1 hour after startTime if endTime is blank or on a different date
+                      let newEnd = formData.endTime;
+                      if (newStart) {
+                        const startDate = new Date(newStart);
+                        const endDate = formData.endTime ? new Date(formData.endTime) : null;
+                        const startDateStr = newStart.split("T")[0];
+                        const endDateStr = formData.endTime ? formData.endTime.split("T")[0] : "";
+                        if (!formData.endTime || endDateStr !== startDateStr) {
+                          // Auto-fill end time = start + 1 hour, same date
+                          const autoEnd = new Date(startDate.getTime() + 60 * 60 * 1000);
+                          newEnd = autoEnd.toISOString().slice(0, 16);
+                        }
+                      }
+                      setFormData({ ...formData, startTime: newStart, endTime: newEnd });
+                    }}
                     className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
@@ -184,6 +204,7 @@ export default function Appointments() {
                   <input
                     type="datetime-local"
                     value={formData.endTime}
+                    min={formData.startTime || undefined}
                     onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                     className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />

@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, startTime, endTime, status, title FROM appointments WHERE startTime >= '2026-05-13 00:00:00' AND startTime <= '2026-05-13 23:59:59';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, startTime, endTime, status, title FROM appointments WHERE startTime >= '2026-05-13 00:00:00' AND startTime <= '2026-05-13 23:59:59';",
+  "rows": [
+    {
+      "id": "1",
+      "startTime": "2026-05-13 12:54:00",
+      "endTime": "2026-05-12 16:55:00",
+      "status": "Scheduled",
+      "title": "bark"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstartTime\tendTime\tstatus\ttitle\n1\t2026-05-13 12:54:00\t2026-05-12 16:55:00\tScheduled\tbark\n",
+  "stderr": "",
+  "execution_time_ms": 572
+}
