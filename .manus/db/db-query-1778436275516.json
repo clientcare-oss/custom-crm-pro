@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `projectNotes` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`projectId` int NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`content` text NOT NULL,\n\t`isVisibleToClient` boolean NOT NULL DEFAULT false,\n\t`createdBy` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `projectNotes_id` PRIMARY KEY(`id`)\n);\nCREATE TABLE `projectNotesHistory` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`noteId` int NOT NULL,\n\t`projectId` int NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`content` text NOT NULL,\n\t`isVisibleToClient` boolean NOT NULL,\n\t`editedBy` int NOT NULL,\n\t`savedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `projectNotesHistory_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute CREATE TABLE `projectNotes` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`projectId` int NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`content` text NOT NULL,\n\t`isVisibleToClient` boolean NOT NULL DEFAULT false,\n\t`createdBy` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `projectNotes_id` PRIMARY KEY(`id`)\n);\nCREATE TABLE `projectNotesHistory` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`noteId` int NOT NULL,\n\t`projectId` int NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`content` text NOT NULL,\n\t`isVisibleToClient` boolean NOT NULL,\n\t`editedBy` int NOT NULL,\n\t`savedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `projectNotesHistory_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 791
+}

@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
+import { NotesSection } from "@/components/NotesSection";
 import { toast } from "sonner";
 
 // ─── Compass section block (shared between admin + portal views) ───────────────
@@ -882,16 +883,21 @@ function StudentTabs({
           </div>
         ) : (
           projects.map((p: any) => (
-            <Card key={p.id} className="p-4 rounded-lg border border-border">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-foreground">{p.name}</p>
-                <StatusBadge status={p.status} />
+            <Card key={p.id} className="p-4 rounded-lg border border-border space-y-4">
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-foreground">{p.name}</p>
+                  <StatusBadge status={p.status} />
+                </div>
+                {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {p.startDate ? `Started ${new Date(p.startDate).toLocaleDateString()}` : ""}
+                  {p.endDate ? ` · Due ${new Date(p.endDate).toLocaleDateString()}` : ""}
+                </p>
               </div>
-              {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
-              <p className="text-xs text-muted-foreground mt-1">
-                {p.startDate ? `Started ${new Date(p.startDate).toLocaleDateString()}` : ""}
-                {p.endDate ? ` · Due ${new Date(p.endDate).toLocaleDateString()}` : ""}
-              </p>
+              <div className="border-t pt-4">
+                <NotesSection projectId={p.id} studentName={contact.firstName} />
+              </div>
             </Card>
           ))
         )}

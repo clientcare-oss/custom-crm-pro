@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import SignaturePad from "@/components/SignaturePad";
+import { NotesSection } from "@/components/NotesSection";
 
 // ── Portal Task Row ──────────────────────────────────────────────────────────
 function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId: number }) {
@@ -766,39 +767,44 @@ export default function ClientPortal() {
                 {studentProjects.length > 0 ? (
                   <div className="space-y-3">
                     {studentProjects.map((proj: any) => (
-                      <Card key={proj.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3 min-w-0">
-                            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center">
-                              <Briefcase className="h-4 w-4 text-accent" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-foreground truncate">{proj.name}</p>
-                              {proj.description && (
-                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{proj.description}</p>
-                              )}
-                              <div className="flex items-center gap-3 mt-2 flex-wrap">
-                                {proj.startDate && (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" />
-                                    Started {new Date(proj.startDate).toLocaleDateString()}
-                                  </span>
+                      <Card key={proj.id} className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 min-w-0">
+                              <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center">
+                                <Briefcase className="h-4 w-4 text-accent" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-foreground truncate">{proj.name}</p>
+                                {proj.description && (
+                                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{proj.description}</p>
                                 )}
-                                {proj.endDate && (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    Ends {new Date(proj.endDate).toLocaleDateString()}
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                  {proj.startDate && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      Started {new Date(proj.startDate).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                  {proj.endDate && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      Ends {new Date(proj.endDate).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            <span className={`flex-shrink-0 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              proj.status === "Completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              : proj.status === "In Progress" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                              : proj.status === "On Hold" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                            }`}>{proj.status}</span>
                           </div>
-                          <span className={`flex-shrink-0 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            proj.status === "Completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : proj.status === "In Progress" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                            : proj.status === "On Hold" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
-                          }`}>{proj.status}</span>
+                        </div>
+                        <div className="border-t pt-4">
+                          <NotesSection projectId={proj.id} studentName={effectiveStudent.firstName} />
                         </div>
                       </Card>
                     ))}

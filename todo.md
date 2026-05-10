@@ -90,6 +90,19 @@
 - [x] Update Dashboard metrics card to use dynamic label
 - [x] Update all other pages that reference "Project" to use dynamic label (ClientPortal updated)
 
+## Notes Feature for Student Projects (NEW)
+- [x] Database schema: Create projectNotes and projectNotesHistory tables
+- [x] Database helpers: Add CRUD functions for notes in db.ts
+- [x] tRPC procedures: Create notes router with list, create, update, delete, getHistory
+- [x] Visibility control: Implement eye icon toggle (visible to client vs advocate-only)
+- [x] Auto-save: Implement auto-save with debounce on content changes
+- [x] Edit history: Track all edits with timestamps
+- [x] UI Components: Create NoteEditor and NotesSection components
+- [x] Integration: Add NotesSection to ContactDetail (advocate view)
+- [x] Integration: Add NotesSection to ClientPortal (client view with visibility filtering)
+- [ ] Manual testing: Verify notes creation, editing, visibility toggle in browser
+- [ ] Fix test database issues and complete vitest coverage
+
 ## Known Issues
 - TypeScript: storageProxy.ts type error (template issue - non-critical)
 - Delete operations not implemented for leads, projects, invoices, contracts, appointments
@@ -610,3 +623,18 @@
 - [x] TaskRow (PG-009 General Tasks): pencil edit button wired to EditTaskModal
 - [x] StudentTaskRow (PG-009 Client Facing / Case Tasks): pencil edit button wired to EditTaskModal
 - [x] ContactDetailTaskRow (PG-030): pencil edit button wired to EditTaskModal with studentContactId
+
+## Notes Feature for Student Projects (In Progress)
+- [ ] Add notes table to Drizzle schema (projectId, title, content, isVisibleToClient, createdBy, createdAt, updatedAt)
+- [ ] Add projectNoteHistory table for edit history tracking
+- [ ] Generate and apply migration SQL
+- [ ] Build DB helpers: createNote, updateNote, deleteNote, getNotesByProject, getNoteHistory
+- [ ] Build tRPC procedures: notes.create, notes.update, notes.delete, notes.list, notes.getHistory
+- [ ] Create NoteEditor component with rich text formatting (TipTap or similar)
+- [ ] Add eye icon visibility toggle to note header
+- [ ] Implement auto-save functionality (debounced)
+- [ ] Integrate Notes section into Project Detail page (admin side)
+- [ ] Add Notes to Client Portal (filtered by isVisibleToClient flag)
+- [ ] Display "Last edited" timestamp and edit history panel
+- [ ] Test visibility toggle: eye on = visible to both, eye off = advocate only
+- [ ] Write vitest for notes CRUD and visibility filtering

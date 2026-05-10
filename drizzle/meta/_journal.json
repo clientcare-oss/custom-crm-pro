@@ -218,6 +218,13 @@
       "when": 1778271713265,
       "tag": "0030_cheerful_captain_america",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1778436268056,
+      "tag": "0031_flimsy_anthem",
+      "breakpoints": true
     }
   ]
 }

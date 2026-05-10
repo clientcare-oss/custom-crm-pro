@@ -782,3 +782,42 @@ export const billGuardianTransactions = mysqlTable("billGuardianTransactions", {
 });
 export type BillGuardianTransaction = typeof billGuardianTransactions.$inferSelect;
 export type InsertBillGuardianTransaction = typeof billGuardianTransactions.$inferInsert;
+
+
+// ============ PROJECT NOTES ============
+/**
+ * Project notes for student projects.
+ * Each note can be visible to client portal (isVisibleToClient=true) or advocate-only (isVisibleToClient=false).
+ * Supports rich text content with auto-save and edit history tracking.
+ */
+export const projectNotes = mysqlTable("projectNotes", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(), // Rich text content (HTML or markdown)
+  isVisibleToClient: boolean("isVisibleToClient").default(false).notNull(),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProjectNote = typeof projectNotes.$inferSelect;
+export type InsertProjectNote = typeof projectNotes.$inferInsert;
+
+/**
+ * Project notes history for tracking edits and changes.
+ * Immutable snapshots saved every time a note is updated.
+ */
+export const projectNotesHistory = mysqlTable("projectNotesHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  noteId: int("noteId").notNull(),
+  projectId: int("projectId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  isVisibleToClient: boolean("isVisibleToClient").notNull(),
+  editedBy: int("editedBy").notNull(),
+  savedAt: timestamp("savedAt").defaultNow().notNull(),
+});
+
+export type ProjectNotesHistory = typeof projectNotesHistory.$inferSelect;
+export type InsertProjectNotesHistory = typeof projectNotesHistory.$inferInsert;

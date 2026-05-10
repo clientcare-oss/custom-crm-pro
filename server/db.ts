@@ -22,6 +22,8 @@ import {
   caseCompassHistory,
   workflows,
   workflowSteps,
+  projectNotes,
+  projectNotesHistory,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1010,4 +1012,126 @@ export async function getStudentsWithSummary(parentContactId: number) {
   );
 
   return enriched;
+}
+
+
+// ============ PROJECT NOTES ============
+
+export async function createProjectNote(data: {
+  projectId: number;
+  title: string;
+  content: string;
+  isVisibleToClient: boolean;
+  createdBy: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(projectNotes).values(data);
+  return result;
+}
+
+export async function updateProjectNote(
+  id: number,
+  data: {
+    title?: string;
+    content?: string;
+    isVisibleToClient?: boolean;
+  }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get the current note to save to history
+  const [currentNote] = await db
+    .select()
+    .from(projectNotes)
+    .where(eq(projectNotes.id, id))
+    .limit(1);
+
+  if (!currentNote) {
+    throw new Error("Note not found");
+  }
+
+  // Save current state to history before updating
+  await db.insert(projectNotesHistory).values({
+    noteId: id,
+    projectId: currentNote.projectId,
+    title: currentNote.title,
+    content: currentNote.content,
+    isVisibleToClient: currentNote.isVisibleToClient,
+    editedBy: currentNote.createdBy, // Use the original creator as editor for now
+    savedAt: new Date(),
+  });
+
+  // Update the note
+  return await db
+    .update(projectNotes)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(projectNotes.id, id));
+}
+
+export async function deleteProjectNote(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Delete history first
+  await db.delete(projectNotesHistory).where(eq(projectNotesHistory.noteId, id));
+
+  // Delete the note
+  return await db.delete(projectNotes).where(eq(projectNotes.id, id));
+}
+
+export async function getProjectNotes(projectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(projectNotes)
+    .where(eq(projectNotes.projectId, projectId))
+    .orderBy(desc(projectNotes.updatedAt));
+}
+
+export async function getProjectNotesForClient(projectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(projectNotes)
+    .where(
+      and(
+        eq(projectNotes.projectId, projectId),
+        eq(projectNotes.isVisibleToClient, true)
+      )
+    )
+    .orderBy(desc(projectNotes.updatedAt));
+}
+
+export async function getProjectNoteHistory(noteId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(projectNotesHistory)
+    .where(eq(projectNotesHistory.noteId, noteId))
+    .orderBy(desc(projectNotesHistory.savedAt));
+}
+
+export async function getProjectNoteById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [note] = await db
+    .select()
+    .from(projectNotes)
+    .where(eq(projectNotes.id, id))
+    .limit(1);
+
+  return note || null;
 }
