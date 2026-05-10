@@ -75,10 +75,16 @@ export default function LeadForms() {
             <p className="text-sm text-muted-foreground">Manage your client intake forms</p>
           </div>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Create New Form
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => window.open('/book', '_blank')}>
+            <ExternalLink className="w-4 h-4" />
+            View Live Scheduler
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Create New Form
+          </Button>
+        </div>
       </div>
 
       {/* Stats Row */}

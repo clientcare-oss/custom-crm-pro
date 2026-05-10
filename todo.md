@@ -772,5 +772,10 @@
 - [x] Form success screen: "Remember to save our number!" card shows the saved business phone
 
 ## Inline Scheduler — Timezone Fix & Calendar Link
-- [ ] Fix timezone bug in getAvailableSlots: appointments stored in UTC must be compared using correct local timezone so nuggs appointment on May 12 blocks the right slots
-- [ ] Add "View Live Scheduler" link in the scheduling step of DynamicForm (links to /book page)
+- [x] Fix timezone bug in getAvailableSlots: appointments stored in UTC must be compared using correct local timezone so nuggs appointment on May 12 blocks the right slots
+- [x] Add "View Live Scheduler" link in the scheduling step of DynamicForm (links to /book page) — REMOVED (families should not see this)
+
+## Admin — View Live Scheduler Button
+- [x] Add "View Live Scheduler" button on Lead Forms page header (opens /book in new tab)
+- [x] Add "View Live Scheduler" button on Scheduler page header (opens /book in new tab)
+- [x] Remove "View full scheduler" link from the public-facing form (families should not see this)

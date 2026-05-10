@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/collapsible";
 import {
   Phone, Video, Link2, Eye, Copy, Wrench,
-  Plus, ChevronDown, ChevronUp, Trash2, Calendar,
+  Plus, ChevronDown, ChevronUp, Trash2, Calendar, ExternalLink,
   Clock, Bell, Users, CheckCircle2, AlertCircle, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
@@ -844,9 +844,14 @@ export default function Scheduler() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Scheduler</h1>
         </div>
-        <Button variant="outline" size="sm" onClick={() => window.location.href = "/calendar"} className="text-xs gap-1.5">
-          <Calendar className="h-3.5 w-3.5" /> Go to calendar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.open("/book", "_blank")} className="text-xs gap-1.5">
+            <ExternalLink className="h-3.5 w-3.5" /> View Live Scheduler
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.location.href = "/calendar"} className="text-xs gap-1.5">
+            <Calendar className="h-3.5 w-3.5" /> Go to calendar
+          </Button>
+        </div>
       </div>
 
       <div>
