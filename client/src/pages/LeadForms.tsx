@@ -76,8 +76,8 @@ export default function LeadForms() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => window.open('/book', '_blank')}>
-            <ExternalLink className="w-4 h-4" />
+          <Button variant="outline" className="gap-2" onClick={() => window.open(`${window.location.origin}/form/public-intake?preview=true&step=4`, '_blank')}>
+            <Calendar className="w-4 h-4" />
             View Live Scheduler
           </Button>
           <Button onClick={() => setShowCreateModal(true)} className="gap-2">

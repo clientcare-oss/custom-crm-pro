@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id, title, startTime, endTime, status FROM appointments WHERE startTime >= 1747008000000 AND startTime < 1747094400000 ORDER BY startTime;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, title, startTime, endTime, status FROM appointments WHERE startTime >= 1747008000000 AND startTime < 1747094400000 ORDER BY startTime;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 559
+}

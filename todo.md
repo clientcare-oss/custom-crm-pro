@@ -779,3 +779,7 @@
 - [x] Add "View Live Scheduler" button on Lead Forms page header (opens /book in new tab)
 - [x] Add "View Live Scheduler" button on Scheduler page header (opens /book in new tab)
 - [x] Remove "View full scheduler" link from the public-facing form (families should not see this)
+
+## Lead Forms — View Live Scheduler Button Fix
+- [x] Update "View Live Scheduler" button on Lead Forms page to open /form/public-intake?preview=true&step=4 (inline scheduler widget) instead of /book (old standalone page)
+- [x] Update DynamicForm to support ?step=N URL param to auto-jump to a specific step on load

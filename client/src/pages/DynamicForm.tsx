@@ -62,8 +62,14 @@ export default function DynamicForm() {
 
   // Detect preview mode from URL query param
   const isPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "true";
+  // Support ?step=N to auto-jump to a specific step (useful for admin previewing the scheduler)
+  const initialStep = (() => {
+    if (typeof window === "undefined") return 1;
+    const s = parseInt(new URLSearchParams(window.location.search).get("step") ?? "1", 10);
+    return isNaN(s) || s < 1 ? 1 : s;
+  })();
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialStep);
   const [form, setForm] = useState<FormData>(EMPTY);
   const [submitted, setSubmitted] = useState(false);
   const [caseId, setCaseId] = useState("");
