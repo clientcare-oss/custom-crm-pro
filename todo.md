@@ -648,3 +648,19 @@
 - [ ] Diagnose: check if the notes.list tRPC query is being called with the correct projectId in client portal
 - [ ] Diagnose: check if visibleToClient field is being saved/returned correctly from the database
 - [ ] Fix and verify the notes visibility flow end-to-end in the client portal
+
+## AI Connections Feature (NEW)
+- [ ] DB: Create aiConnections table (id, name, icon, color, location, outputTarget, promptTemplate, isActive, createdAt, updatedAt)
+- [ ] DB: Create aiConnectionRuns table (id, connectionId, contactId, projectId, inputData, outputText, createdAt)
+- [ ] DB: Generate migration SQL and apply via webdev_execute_sql
+- [ ] DB helpers: CRUD functions for aiConnections and aiConnectionRuns in db.ts
+- [ ] tRPC: procedures for list, create, update, delete AI connections (adminProcedure)
+- [ ] tRPC: procedure to run an AI connection (execute prompt with student context, save run)
+- [ ] UI: AI Connections page with card list showing icon + label + location + prompt preview
+- [ ] UI: Create/Edit form with icon picker, label, location dropdown, output target, prompt textarea
+- [ ] UI: Live button preview chip on each card
+- [ ] UI: Add AI Connections to sidebar nav
+- [ ] UI: Render AI buttons on student ContactDetail page in the correct tab
+- [ ] UI: AI run modal (shows result, option to save to Note or Compass)
+- [ ] Pre-built: Seed 3 starter AI connections (Compare IEPs, Draft Parent Summary, Identify Missing Services)
+- [ ] Test: Create a button, run it on a student, verify output appears

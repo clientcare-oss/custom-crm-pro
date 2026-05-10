@@ -35,6 +35,7 @@ import UnassignedCallLogs from "./pages/UnassignedCallLogs";
 import Team from "./pages/Team";
 import StateComplaintBuilder from "./pages/StateComplaintBuilder";
 import BrainDump from "./pages/BrainDump";
+import AiConnections from "./pages/AiConnections";
 import BillGuardian from "./pages/BillGuardian";
 import PageIdShowcase from "./pages/PageIdShowcase";
 // Students page replaces Projects page
@@ -79,6 +80,7 @@ function Router() {
           <Route path="/team" component={Team} />
           <Route path="/state-complaint-builder" component={StateComplaintBuilder} />
           <Route path="/brain-dump" component={BrainDump} />
+          <Route path="/ai-connections" component={AiConnections} />
               <Route path="/bill-guardian" component={BillGuardian} />
           <Route path="/page-id-showcase" component={PageIdShowcase} />
           <Route path="/client-portal" component={ClientPortal} />

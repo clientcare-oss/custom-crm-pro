@@ -821,3 +821,43 @@ export const projectNotesHistory = mysqlTable("projectNotesHistory", {
 
 export type ProjectNotesHistory = typeof projectNotesHistory.$inferSelect;
 export type InsertProjectNotesHistory = typeof projectNotesHistory.$inferInsert;
+
+// ============ AI CONNECTIONS ============
+/**
+ * AI Connections: user-defined AI action buttons with custom prompts.
+ * Each connection appears as a button on student pages in the specified location.
+ * When clicked, runs the prompt with student context and writes output to the specified target.
+ */
+export const aiConnections = mysqlTable("aiConnections", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  icon: varchar("icon", { length: 50 }).notNull().default("Sparkles"),
+  color: varchar("color", { length: 50 }).notNull().default("blue"),
+  location: mysqlEnum("location", ["notes", "compass", "files", "tasks", "details", "any"]).notNull().default("notes"),
+  outputTarget: mysqlEnum("outputTarget", ["note", "compass", "popup"]).notNull().default("popup"),
+  promptTemplate: text("promptTemplate").notNull(),
+  description: varchar("description", { length: 500 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AiConnection = typeof aiConnections.$inferSelect;
+export type InsertAiConnection = typeof aiConnections.$inferInsert;
+
+/**
+ * AI Connection run history: records each time a button was clicked and the AI result.
+ */
+export const aiConnectionRuns = mysqlTable("aiConnectionRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  connectionId: int("connectionId").notNull(),
+  contactId: int("contactId").notNull(),
+  projectId: int("projectId"),
+  inputSummary: text("inputSummary"),
+  outputText: text("outputText").notNull(),
+  savedToNoteId: int("savedToNoteId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AiConnectionRun = typeof aiConnectionRuns.$inferSelect;
+export type InsertAiConnectionRun = typeof aiConnectionRuns.$inferInsert;

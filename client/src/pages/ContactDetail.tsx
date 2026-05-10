@@ -16,6 +16,7 @@ import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, 
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
+import AiButtonRunner from "@/components/AiButtonRunner";
 import { toast } from "sonner";
 
 // ─── Compass section block (shared between admin + portal views) ───────────────
@@ -693,6 +694,14 @@ function StudentTabs({
 
       {/* COMPASS TAB */}
       <TabsContent value="compass" className="mt-4">
+        {/* AI Buttons for Compass tab */}
+        <AiButtonRunner
+          contactId={contactId}
+          projectId={projects[0]?.id}
+          location="compass"
+          studentName={`${contact.firstName} ${contact.lastName}`}
+          caseId={contact.caseId ?? undefined}
+        />
         <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-md overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-accent/20 bg-accent/10">
             <div className="flex items-center gap-3">
@@ -985,6 +994,14 @@ function StudentTabs({
 
       {/* NOTES */}
       <TabsContent value="notes" className="mt-4">
+        {/* AI Buttons for Notes tab */}
+        <AiButtonRunner
+          contactId={contactId}
+          projectId={projects[0]?.id}
+          location="notes"
+          studentName={`${contact.firstName} ${contact.lastName}`}
+          caseId={contact.caseId ?? undefined}
+        />
         {projects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-muted/20 py-12 text-center">
             <FileText className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-40" />

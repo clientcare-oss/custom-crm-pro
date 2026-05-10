@@ -24,6 +24,8 @@ import {
   workflowSteps,
   projectNotes,
   projectNotesHistory,
+  aiConnections,
+  aiConnectionRuns,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1134,4 +1136,75 @@ export async function getProjectNoteById(id: number) {
     .limit(1);
 
   return note || null;
+}
+
+// ============ AI CONNECTIONS ============
+
+export async function getAiConnectionsByOwner(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(aiConnections)
+    .where(and(eq(aiConnections.ownerId, ownerId), eq(aiConnections.isActive, true)))
+    .orderBy(asc(aiConnections.sortOrder), asc(aiConnections.createdAt));
+}
+
+export async function getAiConnectionById(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [conn] = await db
+    .select()
+    .from(aiConnections)
+    .where(and(eq(aiConnections.id, id), eq(aiConnections.ownerId, ownerId)))
+    .limit(1);
+  return conn || null;
+}
+
+export async function createAiConnection(data: any, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.insert(aiConnections).values({ ...data, ownerId });
+}
+
+export async function updateAiConnection(id: number, ownerId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(aiConnections)
+    .set(data)
+    .where(and(eq(aiConnections.id, id), eq(aiConnections.ownerId, ownerId)));
+}
+
+export async function deleteAiConnection(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Soft delete by setting isActive = false
+  return await db
+    .update(aiConnections)
+    .set({ isActive: false })
+    .where(and(eq(aiConnections.id, id), eq(aiConnections.ownerId, ownerId)));
+}
+
+export async function createAiConnectionRun(data: {
+  connectionId: number;
+  contactId: number;
+  projectId?: number;
+  inputSummary?: string;
+  outputText: string;
+  savedToNoteId?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.insert(aiConnectionRuns).values(data);
+}
+
+export async function getAiConnectionRunsByContact(contactId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(aiConnectionRuns)
+    .where(eq(aiConnectionRuns.contactId, contactId))
+    .orderBy(desc(aiConnectionRuns.createdAt));
 }
