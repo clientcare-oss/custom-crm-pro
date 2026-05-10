@@ -756,6 +756,8 @@
 - [x] Build inline scheduling widget in DynamicForm scheduling step — embed a mini calendar/time picker that calls the booking API directly (no redirect to /book page)
 - [x] Inline widget: pre-fill parent name and email from form data
 - [x] Inline widget: show available slots for the selected session type
+- [x] Inline widget: calendar on left, AM/PM time slots on right (matching design reference)
+- [x] Inline widget: save booking appointment when slot is selected and form is submitted
 - [x] Animated success screen: confetti burst + animated checkmark (same style as task completion)
 - [x] Success screen: "Remember to save our number!" notice with the business phone number
 - [x] Success screen: editable phone number field (user can tap to edit/copy)

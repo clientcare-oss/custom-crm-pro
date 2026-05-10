@@ -1,27 +1,25 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CalendarDays, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface InlineSchedulerProps {
-  sessionTypeId: number;
+  sessionTypeId: number | null;
   sessionTypeName?: string;
+  sessionDuration?: number; // minutes
   parentName: string;
   parentEmail: string;
   onBooked: (date: string, time: string) => void;
   isPreview?: boolean;
 }
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "July", "August", "September", "October", "November", "December",
 ];
 
-function formatTime(time: string): string {
+function formatTime12(time: string): string {
   const [h, m] = time.split(":").map(Number);
   const period = h >= 12 ? "PM" : "AM";
   const displayH = h % 12 || 12;
@@ -32,9 +30,22 @@ function toDateString(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+// Detect user's timezone label
+function getUserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, " ");
+  } catch {
+    return "Eastern Time";
+  }
+}
+
+// Preview placeholder slots
+const PREVIEW_SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"];
+
 export default function InlineScheduler({
   sessionTypeId,
   sessionTypeName,
+  sessionDuration = 60,
   parentName,
   parentEmail,
   onBooked,
@@ -46,6 +57,8 @@ export default function InlineScheduler({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
+
+  const userTz = getUserTimezone();
 
   const bookAppointment = trpc.appointments.book.useMutation({
     onSuccess: () => {
@@ -61,11 +74,17 @@ export default function InlineScheduler({
 
   // Fetch available slots for the selected date
   const { data: slots, isLoading: slotsLoading } = trpc.appointments.getAvailableSlots.useQuery(
-    { sessionTypeId, date: selectedDate! },
-    { enabled: !!selectedDate && !isPreview }
+    { sessionTypeId: sessionTypeId!, date: selectedDate! },
+    { enabled: !!selectedDate && !!sessionTypeId && !isPreview }
   );
 
-  // Build calendar days for current view month
+  const displaySlots: string[] = isPreview ? PREVIEW_SLOTS : (slots ?? []);
+
+  // Split into AM and PM groups
+  const amSlots = displaySlots.filter(t => parseInt(t.split(":")[0]) < 12);
+  const pmSlots = displaySlots.filter(t => parseInt(t.split(":")[0]) >= 12);
+
+  // Build calendar days
   const calendarDays = useMemo(() => {
     const firstDay = new Date(viewYear, viewMonth, 1).getDay();
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -85,8 +104,7 @@ export default function InlineScheduler({
 
   const handleDateClick = (day: number) => {
     if (isPastDate(day) && !isPreview) return;
-    const dateStr = toDateString(viewYear, viewMonth, day);
-    setSelectedDate(dateStr);
+    setSelectedDate(toDateString(viewYear, viewMonth, day));
     setSelectedTime(null);
   };
 
@@ -104,164 +122,191 @@ export default function InlineScheduler({
     if (!selectedDate || !selectedTime || isPreview) return;
     setIsBooking(true);
     const startTime = new Date(`${selectedDate}T${selectedTime}`);
-    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hr default
+    const endTime = new Date(startTime.getTime() + sessionDuration * 60 * 1000);
     bookAppointment.mutate({
-      title: `${sessionTypeName || "Consultation"} - ${parentName}`,
+      title: `${sessionTypeName || "Consultation"} — ${parentName}`,
       startTime,
       endTime,
-      description: `Session Type: ${sessionTypeName || "Consultation"}\nClient: ${parentName}\nEmail: ${parentEmail}`,
+      description: `Session: ${sessionTypeName || "Consultation"}\nClient: ${parentName}\nEmail: ${parentEmail}`,
     });
   };
 
-  const selectedDateObj = selectedDate ? new Date(selectedDate + "T00:00:00") : null;
+  const todayStr = toDateString(today.getFullYear(), today.getMonth(), today.getDate());
 
   return (
-    <div className="space-y-4">
-      {/* Calendar header */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={handlePrevMonth}
-          className="p-1.5 rounded-md hover:bg-muted transition-colors"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <span className="font-semibold text-sm">
-          {MONTH_NAMES[viewMonth]} {viewYear}
-        </span>
-        <button
-          type="button"
-          onClick={handleNextMonth}
-          className="p-1.5 rounded-md hover:bg-muted transition-colors"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+    <div className="rounded-2xl overflow-hidden border border-blue-500/30 bg-slate-900/80 shadow-xl shadow-blue-900/20">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/60 bg-slate-800/60">
+        <div className="flex items-center gap-2 text-slate-200 text-sm font-semibold tracking-wide uppercase">
+          <CalendarDays className="w-4 h-4 text-blue-400" />
+          {sessionTypeName || "FREE DISCOVERY CALL"}
+        </div>
+        <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+          <Clock className="w-3.5 h-3.5 text-blue-400" />
+          {sessionDuration} min
+        </div>
       </div>
 
-      {/* Day-of-week headers */}
-      <div className="grid grid-cols-7 gap-1 text-center">
-        {DAY_NAMES.map(d => (
-          <div key={d} className="text-xs font-medium text-muted-foreground py-1">{d}</div>
-        ))}
-        {calendarDays.map((day, i) => {
-          if (!day) return <div key={`empty-${i}`} />;
-          const dateStr = toDateString(viewYear, viewMonth, day);
-          const isSelected = dateStr === selectedDate;
-          const isPast = isPastDate(day) && !isPreview;
-          const isToday = dateStr === toDateString(today.getFullYear(), today.getMonth(), today.getDate());
-          return (
+      {/* Body: two-column */}
+      <div className="flex flex-col md:flex-row">
+        {/* LEFT: Calendar */}
+        <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-slate-700/60">
+          {/* Month nav */}
+          <div className="flex items-center justify-between mb-4">
             <button
-              key={day}
               type="button"
-              onClick={() => handleDateClick(day)}
-              disabled={isPast}
-              className={`
-                aspect-square rounded-lg text-sm font-medium transition-all
-                ${isSelected ? "bg-primary text-primary-foreground shadow-sm" : ""}
-                ${!isSelected && isToday ? "ring-2 ring-primary/40 bg-primary/5" : ""}
-                ${!isSelected && !isPast ? "hover:bg-muted cursor-pointer" : ""}
-                ${isPast ? "text-muted-foreground/40 cursor-not-allowed" : ""}
-              `}
+              onClick={handlePrevMonth}
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-700/60 text-slate-400 hover:text-white transition-colors"
             >
-              {day}
+              <ChevronLeft className="w-4 h-4" />
             </button>
-          );
-        })}
-      </div>
-
-      {/* Time slots */}
-      {selectedDate && (
-        <div className="border-t pt-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Clock className="h-4 w-4 text-primary" />
-            <span>
-              {selectedDateObj
-                ? `${DAY_NAMES[selectedDateObj.getDay()]}, ${MONTH_NAMES[selectedDateObj.getMonth()]} ${selectedDateObj.getDate()}`
-                : "Select a time"}
+            <span className="text-white font-semibold text-sm">
+              {MONTH_NAMES[viewMonth]} {viewYear}
             </span>
+            <button
+              type="button"
+              onClick={handleNextMonth}
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-700/60 text-slate-400 hover:text-white transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
-          {isPreview ? (
-            <div className="grid grid-cols-3 gap-2">
-              {["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"].map(t => (
+          {/* Day headers */}
+          <div className="grid grid-cols-7 mb-1">
+            {DAY_NAMES_SHORT.map(d => (
+              <div key={d} className="text-center text-xs font-medium text-slate-500 py-1">{d}</div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 gap-y-1">
+            {calendarDays.map((day, i) => {
+              if (!day) return <div key={`e-${i}`} />;
+              const dateStr = toDateString(viewYear, viewMonth, day);
+              const isSelected = dateStr === selectedDate;
+              const isPast = isPastDate(day) && !isPreview;
+              const isToday = dateStr === todayStr;
+              return (
                 <button
-                  key={t}
+                  key={day}
                   type="button"
-                  onClick={() => setSelectedTime(t)}
+                  onClick={() => handleDateClick(day)}
+                  disabled={isPast}
                   className={`
-                    py-2 px-3 rounded-md text-sm font-medium border transition-all
-                    ${selectedTime === t
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
+                    mx-auto w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-all
+                    ${isSelected
+                      ? "bg-blue-500 text-white shadow-md shadow-blue-500/40"
+                      : isToday
+                        ? "ring-2 ring-blue-500/50 text-blue-300 hover:bg-blue-500/20"
+                        : isPast
+                          ? "text-slate-600 cursor-not-allowed"
+                          : "text-slate-300 hover:bg-slate-700/60 cursor-pointer"
                     }
                   `}
                 >
-                  {formatTime(t)}
+                  {day}
                 </button>
-              ))}
+              );
+            })}
+          </div>
+        </div>
+
+        {/* RIGHT: Time slots */}
+        <div className="flex-1 p-5 min-w-0">
+          {/* Timezone */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-slate-400">{userTz}</span>
+            {selectedDate && (
+              <span className="text-xs text-blue-400 font-medium">
+                {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              </span>
+            )}
+          </div>
+
+          {!selectedDate ? (
+            <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
+              <CalendarDays className="w-8 h-8 text-slate-600" />
+              <span>Select a date to see available times</span>
             </div>
           ) : slotsLoading ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
             </div>
-          ) : !slots || slots.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-6 text-center">
-                <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No available times on this day.</p>
-                <p className="text-xs text-muted-foreground mt-1">Please select a different date.</p>
-              </CardContent>
-            </Card>
+          ) : displaySlots.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
+              <Clock className="w-8 h-8 text-slate-600" />
+              <span>No available times on this day.</span>
+              <span className="text-xs">Please select a different date.</span>
+            </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {slots.map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setSelectedTime(t)}
-                  className={`
-                    py-2 px-3 rounded-md text-sm font-medium border transition-all
-                    ${selectedTime === t
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
-                    }
-                  `}
-                >
-                  {formatTime(t)}
-                </button>
-              ))}
+            <div className="space-y-4 overflow-y-auto max-h-64 pr-1">
+              {amSlots.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">AM</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {amSlots.map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setSelectedTime(t)}
+                        className={`
+                          py-2 px-1 rounded-xl text-xs font-semibold border transition-all
+                          ${selectedTime === t
+                            ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
+                            : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
+                          }
+                        `}
+                      >
+                        {formatTime12(t).replace(" AM", "").replace(" PM", "")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {pmSlots.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">PM</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {pmSlots.map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setSelectedTime(t)}
+                        className={`
+                          py-2 px-1 rounded-xl text-xs font-semibold border transition-all
+                          ${selectedTime === t
+                            ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
+                            : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
+                          }
+                        `}
+                      >
+                        {formatTime12(t).replace(" AM", "").replace(" PM", "")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Confirm booking button */}
+          {/* Confirm button */}
           {selectedTime && (
-            <Button
+            <button
               type="button"
-              className="w-full mt-2"
               disabled={isBooking || isPreview}
               onClick={handleBook}
+              className="mt-4 w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-semibold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
             >
               {isBooking ? (
-                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Booking...</>
-              ) : isPreview ? (
-                <><CheckCircle2 className="h-4 w-4 mr-2" /> Confirm {formatTime(selectedTime)} (preview)</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> Booking...</>
               ) : (
-                <><CheckCircle2 className="h-4 w-4 mr-2" /> Confirm {formatTime(selectedTime)}</>
+                <>Confirm {formatTime12(selectedTime)}{isPreview ? " (preview)" : ""}</>
               )}
-            </Button>
+            </button>
           )}
         </div>
-      )}
-
-      {/* Session type badge */}
-      {sessionTypeName && (
-        <div className="flex items-center gap-2 pt-1">
-          <Badge variant="secondary" className="text-xs">
-            <Clock className="h-3 w-3 mr-1" />
-            {sessionTypeName}
-          </Badge>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

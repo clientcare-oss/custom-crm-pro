@@ -610,20 +610,13 @@ export default function DynamicForm() {
                     <h3 className="text-white font-semibold text-lg">Schedule Your Session</h3>
                     <p className="text-slate-400 text-sm mt-1">Pick a date and time that works for you.</p>
                   </div>
-                  {isPreview ? (
-                    <div className="bg-slate-800/60 border border-blue-500/30 rounded-xl p-6 text-center space-y-2">
-                      <Calendar className="w-10 h-10 text-blue-400 mx-auto" />
-                      <p className="text-slate-300 text-sm">Inline booking calendar will appear here in the live form.</p>
-                      <p className="text-slate-500 text-xs">Session type: {formConfig.sessionTypeId}</p>
-                    </div>
-                  ) : (
-                    <InlineScheduler
-                      sessionTypeId={formConfig.sessionTypeId}
-                      parentName={`${form.parentFirstName} ${form.parentLastName}`.trim()}
-                      parentEmail={form.parentEmail}
-                      onBooked={(date, time) => setBookedSlot({ date, time })}
-                    />
-                  )}
+                  <InlineScheduler
+                    sessionTypeId={formConfig.sessionTypeId}
+                    parentName={`${form.parentFirstName} ${form.parentLastName}`.trim()}
+                    parentEmail={form.parentEmail}
+                    onBooked={(date, time) => setBookedSlot({ date, time })}
+                    isPreview={isPreview}
+                  />
                 </div>
               ) : (
                 // External URL button
