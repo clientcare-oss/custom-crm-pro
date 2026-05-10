@@ -737,44 +737,88 @@ export const appRouter = router({
           }
         }
         // ── Double-booking prevention ──────────────────────────────────────
-        // Fetch existing confirmed/scheduled appointments on this date and
-        // remove any slot whose time window overlaps an existing booking.
+        // The slots are generated as local "wall clock" times (e.g. "09:00").
+        // Appointments are stored as UTC datetime values in the DB.
+        // Strategy: convert each slot to an absolute UTC timestamp for the
+        // requested date, then do a proper timestamp-based overlap check.
+        // We treat the slot times as America/New_York (Eastern) because that
+        // is the business timezone.  The UTC offset is determined at runtime
+        // so it handles EST (-5) vs EDT (-4) automatically.
         const { appointments } = await import("../drizzle/schema");
         const { gte: aGte, lte: aLte, sql: aSql } = await import("drizzle-orm");
-        const dayStart = new Date(input.date + "T00:00:00");
-        const dayEnd   = new Date(input.date + "T23:59:59");
+
+        // Helper: convert a "HH:MM" wall-clock time on input.date to a UTC ms timestamp.
+        // We use the Intl API to find the UTC offset for America/New_York on that date.
+        function localToUtcMs(dateStr: string, timeStr: string, tz = "America/New_York"): number {
+          const [h, m] = timeStr.split(":").map(Number);
+          // Use noon UTC as reference — noon UTC always falls on the same calendar day
+          // in Eastern time (UTC-4 to UTC-5), avoiding the midnight off-by-one-day bug.
+          const noonUtc = Date.UTC(
+            Number(dateStr.slice(0,4)),
+            Number(dateStr.slice(5,7)) - 1,
+            Number(dateStr.slice(8,10)),
+            12, 0, 0
+          );
+          const formatter = new Intl.DateTimeFormat("en-US", {
+            timeZone: tz,
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            hour12: false,
+          });
+          const parts = formatter.formatToParts(new Date(noonUtc));
+          const p: Record<string,string> = {};
+          parts.forEach(x => { p[x.type] = x.value; });
+          // tzNoonMs = the UTC timestamp that corresponds to noon in this tz
+          const tzNoonMs = Date.UTC(
+            Number(p.year), Number(p.month)-1, Number(p.day),
+            Number(p.hour === '24' ? '0' : p.hour), Number(p.minute), Number(p.second)
+          );
+          const offsetMs = noonUtc - tzNoonMs; // positive = tz is behind UTC
+          const utcMidnight = Date.UTC(
+            Number(dateStr.slice(0,4)),
+            Number(dateStr.slice(5,7)) - 1,
+            Number(dateStr.slice(8,10))
+          );
+          return utcMidnight + h * 3600000 + m * 60000 + offsetMs;
+        }
+
+        // Fetch ALL appointments that could overlap this day (±1 day buffer for timezone edge cases)
+        const bufferDayStart = new Date(input.date + "T00:00:00Z");
+        bufferDayStart.setUTCDate(bufferDayStart.getUTCDate() - 1);
+        const bufferDayEnd = new Date(input.date + "T23:59:59Z");
+        bufferDayEnd.setUTCDate(bufferDayEnd.getUTCDate() + 1);
+
         const booked = await dbConn
           .select({ startTime: appointments.startTime, endTime: appointments.endTime })
           .from(appointments)
           .where(
             and(
-              aGte(appointments.startTime, dayStart),
-              aLte(appointments.startTime, dayEnd),
-              // exclude cancelled / no-show
+              aGte(appointments.startTime, bufferDayStart),
+              aLte(appointments.startTime, bufferDayEnd),
               aSql`${appointments.status} NOT IN ('Cancelled', 'No-Show')`
             )
           );
+
+        console.log(`[scheduler] date=${input.date} booked appointments:`, booked.map(b => ({ start: b.startTime, end: b.endTime })));
+
         const availableSlots = slots.filter((slot) => {
-          const [slotH, slotM] = slot.split(":").map(Number);
-          const slotStartMin = slotH * 60 + slotM;
-          const slotEndMin   = slotStartMin + durationMin;
-          return !booked.some((appt) => {
-            const apptStart = new Date(appt.startTime);
-            const apptEnd   = new Date(appt.endTime);
-            const apptStartMin = apptStart.getHours() * 60 + apptStart.getMinutes();
-            // Use endTime only if it's on the same date and after startTime; otherwise fall back to startTime + session duration
-            let apptEndMin: number;
-            const sameDay = apptEnd.toDateString() === apptStart.toDateString();
-            if (sameDay && apptEnd > apptStart) {
-              apptEndMin = apptEnd.getHours() * 60 + apptEnd.getMinutes();
+          const slotStartMs = localToUtcMs(input.date, slot);
+          const slotEndMs   = slotStartMs + durationMin * 60000;
+          const blocked = booked.some((appt) => {
+            const apptStartMs = new Date(appt.startTime).getTime();
+            let apptEndMs: number;
+            const apptEndDate = new Date(appt.endTime);
+            if (apptEndDate.getTime() > apptStartMs) {
+              apptEndMs = apptEndDate.getTime();
             } else {
-              // Fallback: use the session duration as the booked block length
-              apptEndMin = apptStartMin + durationMin;
+              apptEndMs = apptStartMs + durationMin * 60000;
             }
             // Overlap: slot starts before appt ends AND slot ends after appt starts
-            return slotStartMin < apptEndMin && slotEndMin > apptStartMin;
+            return slotStartMs < apptEndMs && slotEndMs > apptStartMs;
           });
+          return !blocked;
         });
+        console.log(`[scheduler] date=${input.date} slots generated=${slots.length} available=${availableSlots.length}`);
         return availableSlots;
       }),
   }),
@@ -1481,6 +1525,22 @@ export const appRouter = router({
         .orderBy(asc(sessionTypes.createdAt));
       return rows;
     }),
+
+    // Public: get a single session type by ID (for inline scheduler)
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const { sessionTypes } = await import("../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new Error("DB unavailable");
+        const [row] = await dbConn
+          .select()
+          .from(sessionTypes)
+          .where(eq(sessionTypes.id, input.id))
+          .limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+        return row;
+      }),
 
     listPublic: publicProcedure
       .input(z.object({ ownerId: z.number() }))

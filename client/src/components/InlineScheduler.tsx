@@ -14,6 +14,7 @@ interface InlineSchedulerProps {
 }
 
 const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -30,7 +31,6 @@ function toDateString(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-// Detect user's timezone label
 function getUserTimezone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, " ");
@@ -59,6 +59,31 @@ export default function InlineScheduler({
   const [isBooking, setIsBooking] = useState(false);
 
   const userTz = getUserTimezone();
+
+  // Fetch session type to know which days of the week have hours
+  const { data: sessionTypeData } = trpc.sessionTypes.getById.useQuery(
+    { id: sessionTypeId! },
+    { enabled: !!sessionTypeId && !isPreview }
+  );
+
+  // Parse weekly hours to determine which day-of-week indices have availability
+  const availableDayIndices = useMemo<Set<number>>(() => {
+    if (isPreview) {
+      // In preview, all weekdays are available
+      return new Set([1, 2, 3, 4, 5]);
+    }
+    if (!sessionTypeData?.weeklyHours) return new Set();
+    try {
+      const wh: Record<string, { start: string; end: string }[]> = JSON.parse(sessionTypeData.weeklyHours);
+      const available = new Set<number>();
+      DAY_KEYS.forEach((key, idx) => {
+        if (wh[key] && wh[key].length > 0) available.add(idx);
+      });
+      return available;
+    } catch {
+      return new Set();
+    }
+  }, [sessionTypeData, isPreview]);
 
   const bookAppointment = trpc.appointments.book.useMutation({
     onSuccess: () => {
@@ -102,8 +127,15 @@ export default function InlineScheduler({
     return d < t;
   };
 
+  const isDayUnavailable = (day: number) => {
+    if (isPreview) return false;
+    const dayOfWeek = new Date(viewYear, viewMonth, day).getDay();
+    return !availableDayIndices.has(dayOfWeek);
+  };
+
   const handleDateClick = (day: number) => {
     if (isPastDate(day) && !isPreview) return;
+    if (isDayUnavailable(day)) return;
     setSelectedDate(toDateString(viewYear, viewMonth, day));
     setSelectedTime(null);
   };
@@ -174,9 +206,17 @@ export default function InlineScheduler({
 
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
-            {DAY_NAMES_SHORT.map(d => (
-              <div key={d} className="text-center text-xs font-medium text-slate-500 py-1">{d}</div>
-            ))}
+            {DAY_NAMES_SHORT.map((d, i) => {
+              const hasHours = isPreview || availableDayIndices.has(i);
+              return (
+                <div
+                  key={d}
+                  className={`text-center text-xs font-medium py-1 ${hasHours ? "text-slate-400" : "text-slate-700"}`}
+                >
+                  {d}
+                </div>
+              );
+            })}
           </div>
 
           {/* Calendar grid */}
@@ -186,21 +226,26 @@ export default function InlineScheduler({
               const dateStr = toDateString(viewYear, viewMonth, day);
               const isSelected = dateStr === selectedDate;
               const isPast = isPastDate(day) && !isPreview;
+              const isUnavailable = isDayUnavailable(day);
               const isToday = dateStr === todayStr;
+              const isDisabled = isPast || isUnavailable;
               return (
                 <button
                   key={day}
                   type="button"
                   onClick={() => handleDateClick(day)}
-                  disabled={isPast}
+                  disabled={isDisabled}
+                  title={isUnavailable ? "No availability on this day" : undefined}
                   className={`
                     mx-auto w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-all
                     ${isSelected
                       ? "bg-blue-500 text-white shadow-md shadow-blue-500/40"
-                      : isToday
-                        ? "ring-2 ring-blue-500/50 text-blue-300 hover:bg-blue-500/20"
-                        : isPast
-                          ? "text-slate-600 cursor-not-allowed"
+                      : isDisabled
+                        ? isUnavailable
+                          ? "text-slate-700 cursor-not-allowed"
+                          : "text-slate-600 cursor-not-allowed"
+                        : isToday
+                          ? "ring-2 ring-blue-500/50 text-blue-300 hover:bg-blue-500/20 cursor-pointer"
                           : "text-slate-300 hover:bg-slate-700/60 cursor-pointer"
                     }
                   `}
@@ -210,6 +255,14 @@ export default function InlineScheduler({
               );
             })}
           </div>
+
+          {/* Legend */}
+          {!isPreview && availableDayIndices.size > 0 && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="w-2 h-2 rounded-full bg-slate-700 inline-block" />
+              <span>No availability</span>
+            </div>
+          )}
         </div>
 
         {/* RIGHT: Time slots */}

@@ -770,3 +770,7 @@
 - [x] Add updateOwnerPhone db helper
 - [x] Settings page: phone input with Save button, shows currently saved number with green checkmark
 - [x] Form success screen: "Remember to save our number!" card shows the saved business phone
+
+## Inline Scheduler — Timezone Fix & Calendar Link
+- [ ] Fix timezone bug in getAvailableSlots: appointments stored in UTC must be compared using correct local timezone so nuggs appointment on May 12 blocks the right slots
+- [ ] Add "View Live Scheduler" link in the scheduling step of DynamicForm (links to /book page)

@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, title, startTime, endTime, status FROM appointments WHERE title LIKE '%nugg%' OR title LIKE '%Nugg%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, title, startTime, endTime, status FROM appointments WHERE title LIKE '%nugg%' OR title LIKE '%Nugg%';",
+  "rows": [
+    {
+      "id": "30001",
+      "title": "nuggs",
+      "startTime": "2026-05-12 12:18:00",
+      "endTime": "2026-05-12 19:00:00",
+      "status": "Scheduled"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstartTime\tendTime\tstatus\n30001\tnuggs\t2026-05-12 12:18:00\t2026-05-12 19:00:00\tScheduled\n",
+  "stderr": "",
+  "execution_time_ms": 571
+}

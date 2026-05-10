@@ -617,6 +617,18 @@ export default function DynamicForm() {
                     onBooked={(date, time) => setBookedSlot({ date, time })}
                     isPreview={isPreview}
                   />
+                  {/* View Live Scheduler link */}
+                  <div className="text-center pt-1">
+                    <a
+                      href="/book"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-400 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      View full scheduler
+                    </a>
+                  </div>
                 </div>
               ) : (
                 // External URL button
