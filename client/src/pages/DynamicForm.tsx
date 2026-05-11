@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, ChevronLeft, User, GraduationCap, Heart, Calendar, ExternalLink, Loader2, Eye, Phone, Pencil, Check, Copy } from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronLeft, User, GraduationCap, Heart, Calendar, ExternalLink, Loader2, Eye, Phone, Check, Copy } from "lucide-react";
 import InlineScheduler from "@/components/InlineScheduler";
 import { ALL_FIELDS, DEFAULT_FIELDS } from "@/lib/formFields";
 import type { FieldKey } from "@/lib/formFields";
@@ -77,8 +77,6 @@ export default function DynamicForm() {
   const [confettiDone, setConfettiDone] = useState(false);
   const [caseId, setCaseId] = useState("");
   const [bookedSlot, setBookedSlot] = useState<{ date: string; time: string } | null>(null);
-  const [editingPhone, setEditingPhone] = useState(false);
-  const [phoneDraft, setPhoneDraft] = useState("");
   const [copiedCaseId, setCopiedCaseId] = useState(false);
 
   const { data: businessPhoneData } = trpc.system.getBusinessPhone.useQuery(undefined, { enabled: submitted });
@@ -282,35 +280,9 @@ export default function DynamicForm() {
               <Phone className="w-5 h-5 text-amber-400" />
               <p className="text-amber-300 font-semibold text-base">{confPhone}</p>
             </div>
-            {editingPhone ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="tel"
-                  value={phoneDraft}
-                  onChange={(e) => setPhoneDraft(e.target.value)}
-                  className="flex-1 bg-slate-800 border border-amber-500/40 rounded-md px-3 py-1.5 text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                  placeholder="(555) 123-4567"
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  onClick={() => { setBusinessPhone(phoneDraft || businessPhone); setEditingPhone(false); }}
-                  className="p-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 transition-colors"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
+            {businessPhone && (
+              <div className="flex items-center justify-center">
                 <span className="text-white font-mono text-xl font-bold tracking-wide">{businessPhone}</span>
-                <button
-                  type="button"
-                  onClick={() => { setPhoneDraft(businessPhone); setEditingPhone(true); }}
-                  className="p-1 rounded hover:bg-slate-700 transition-colors"
-                  title="Edit phone number"
-                >
-                  <Pencil className="w-3.5 h-3.5 text-slate-400" />
-                </button>
               </div>
             )}
           </div>

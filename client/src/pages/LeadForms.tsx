@@ -44,6 +44,15 @@ export default function LeadForms() {
   const [confSaving, setConfSaving] = useState(false);
   const [confImageUploading, setConfImageUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  // Business phone number (shown on confirmation screen)
+  const [businessPhone, setBusinessPhone] = useState("");
+  const [phoneSaving, setPhoneSaving] = useState(false);
+  const [phoneInitialized, setPhoneInitialized] = useState(false);
+  const { data: businessPhoneData, refetch: refetchPhone } = trpc.system.getBusinessPhone.useQuery(undefined, { retry: false });
+  if (businessPhoneData?.phone !== undefined && !phoneInitialized) {
+    setBusinessPhone(businessPhoneData.phone ?? "");
+    setPhoneInitialized(true);
+  }
 
   const { data: allForms, refetch } = trpc.leadForms.list.useQuery(undefined, { retry: false });
   const { data: recentLeads } = trpc.leads.list.useQuery(undefined, { retry: false });
@@ -90,6 +99,14 @@ export default function LeadForms() {
     },
     onError: (e) => { toast.error("Upload failed: " + e.message); setConfImageUploading(false); },
   });
+  const setPhoneMutation = trpc.system.setBusinessPhone.useMutation({
+    onSuccess: () => { toast.success("Phone number saved!"); refetchPhone(); setPhoneSaving(false); },
+    onError: (e) => { toast.error("Save failed: " + e.message); setPhoneSaving(false); },
+  });
+  const handleSavePhone = () => {
+    setPhoneSaving(true);
+    setPhoneMutation.mutate({ phone: businessPhone });
+  };
 
   const intakeUrl = `${window.location.origin}/form/public-intake`;
   const formLeads = recentLeads?.filter((l: any) => l.source === "Lead Form" || l.source?.includes("Form")) ?? [];
@@ -394,6 +411,33 @@ export default function LeadForms() {
                       className="text-sm"
                     />
                     <p className="text-[10px] text-muted-foreground">Shown in the amber reminder box on the confirmation screen</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-green-400" />
+                      Business Phone Number
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={businessPhone}
+                        onChange={(e) => setBusinessPhone(e.target.value)}
+                        placeholder="(555) 123-4567"
+                        className="text-sm font-mono"
+                        type="tel"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleSavePhone}
+                        disabled={phoneSaving}
+                        className="shrink-0 gap-1.5"
+                      >
+                        {phoneSaving
+                          ? <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</>
+                          : <><Save className="w-3.5 h-3.5" />Save</>}
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">The big bold number shown to families on the confirmation screen — edit here, not on the form itself</p>
                   </div>
                 </div>
 

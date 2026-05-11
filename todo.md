@@ -819,3 +819,8 @@
 - [x] Run DB migration for new image fields
 - [x] Add image upload to Customize Confirmation section (upload to S3, store key+url)
 - [x] Display uploaded QR/image on DynamicForm confirmation screen
+
+## Lead Forms — Phone Number Edit Location Fix
+- [x] Move business phone number edit field into the admin "Customize Confirmation" block on PG-012 Lead Forms (not on the client-facing confirmation screen)
+- [x] Client-facing confirmation screen: show the phone number read-only (no pencil/edit button, no inline edit)
+- [x] Admin Customize Confirmation block: add a "Business Phone" input field that saves via setBusinessPhone procedure
