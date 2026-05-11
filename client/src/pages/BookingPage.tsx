@@ -1,218 +1,111 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
-
-const MEETING_TYPES = [
-  { id: "iep-meeting", label: "IEP Meeting", duration: "60 min", description: "Individualized Education Program meeting" },
-  { id: "1-on-1-advocate", label: "1:1 with Advocate", duration: "30 min", description: "One-on-one session with your advocate" },
-  { id: "progress-update", label: "Progress Update", duration: "30 min", description: "Review progress and next steps" },
-  { id: "consultation", label: "Consultation", duration: "45 min", description: "Initial consultation for new clients" },
-  { id: "follow-up", label: "Follow-up", duration: "15 min", description: "Quick follow-up on previous discussion" },
-];
+import { CheckCircle2, Clock, ChevronLeft, Loader2 } from "lucide-react";
+import InlineScheduler from "@/components/InlineScheduler";
 
 export default function BookingPage() {
-  const [step, setStep] = useState<"type" | "details" | "confirmed">("type");
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  // Pre-fill name/email from URL params (e.g., when coming from a lead form submission)
-  const [formData, setFormData] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      name: params.get("name") || "",
-      email: params.get("email") || "",
-      phone: "",
-      date: "",
-      time: "",
-      notes: "",
-    };
-  });
+  const params = new URLSearchParams(window.location.search);
+  const preselectedId = params.get("session") ? parseInt(params.get("session")!, 10) : null;
+  const isPreview = params.get("preview") === "true";
 
-  const createAppointment = trpc.appointments.book.useMutation({
-    onSuccess: () => {
-      setStep("confirmed");
-      toast.success("Appointment booked successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to book appointment. Please try again.");
-    },
-  });
+  const { data: sessionTypes, isLoading } = trpc.sessionTypes.listAll.useQuery(undefined, { retry: false });
 
-  const handleBooking = () => {
-    if (!selectedType || !formData.name || !formData.email || !formData.date || !formData.time) {
-      toast.error("Please fill in all required fields");
-      return;
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(preselectedId);
+  const [booked, setBooked] = useState(false);
+  const [bookedDate, setBookedDate] = useState("");
+  const [bookedTime, setBookedTime] = useState("");
+
+  useEffect(() => {
+    if (!preselectedId && sessionTypes?.length === 1) {
+      setSelectedTypeId(sessionTypes[0].id);
     }
-    const meetingType = MEETING_TYPES.find((t) => t.id === selectedType);
-    createAppointment.mutate({
-      title: `${meetingType?.label} - ${formData.name}`,
-      startTime: new Date(`${formData.date}T${formData.time}`),
-      endTime: new Date(new Date(`${formData.date}T${formData.time}`).getTime() + 60 * 60 * 1000),
-      description: `Meeting Type: ${meetingType?.label}\nClient: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nNotes: ${formData.notes}`,
-    });
+  }, [sessionTypes, preselectedId]);
+
+  const selectedType = sessionTypes?.find((t) => t.id === selectedTypeId);
+
+  const handleBooked = (date: string, time: string) => {
+    setBookedDate(date);
+    setBookedTime(time);
+    setBooked(true);
   };
 
-  if (step === "confirmed") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
-        <Card className="max-w-md w-full text-center">
-          <CardContent className="pt-8 pb-8">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-            <p className="text-muted-foreground mb-4">
-              Your {MEETING_TYPES.find((t) => t.id === selectedType)?.label} has been scheduled.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              A confirmation will be sent to <strong>{formData.email}</strong>
-            </p>
-            <Button className="mt-6" onClick={() => { setStep("type"); setSelectedType(null); setFormData({ name: "", email: "", phone: "", date: "", time: "", notes: "" }); }}>
-              Book Another Appointment
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Schedule a Meeting</h1>
-          <p className="text-muted-foreground mt-2">Choose a meeting type and select a time that works for you.</p>
+          <h1 className="text-3xl font-bold text-white">Schedule a Session</h1>
+          <p className="text-slate-400 mt-2">Pick a date and time that works for you.</p>
         </div>
 
-        {step === "type" && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold mb-4">Select Meeting Type</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {MEETING_TYPES.map((type) => (
-                <Card
-                  key={type.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${selectedType === type.id ? "ring-2 ring-primary border-primary" : ""}`}
-                  onClick={() => setSelectedType(type.id)}
-                >
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center justify-between">
-                      {type.label}
-                      <span className="text-xs font-normal text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {type.duration}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{type.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          </div>
+        ) : booked ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-green-400" />
             </div>
-            <div className="flex justify-end mt-6">
-              <Button disabled={!selectedType} onClick={() => setStep("details")}>
-                Continue
-              </Button>
+            <div>
+              <h2 className="text-2xl font-bold text-white">You're Booked!</h2>
+              <p className="text-slate-300 mt-2">
+                {selectedType?.name} on{" "}
+                {new Date(bookedDate + "T00:00:00").toLocaleDateString("en-US", {
+                  weekday: "long", month: "long", day: "numeric",
+                })}{" "}
+                at{" "}
+                {(() => {
+                  const [h, m] = bookedTime.split(":").map(Number);
+                  const period = h >= 12 ? "PM" : "AM";
+                  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${period}`;
+                })()}
+              </p>
+              <p className="text-slate-400 text-sm mt-3">We'll send you a confirmation shortly.</p>
             </div>
           </div>
-        )}
-
-        {step === "details" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Book Your {MEETING_TYPES.find((t) => t.id === selectedType)?.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Your full name"
-                  />
+        ) : !selectedTypeId ? (
+          <div className="space-y-3">
+            <p className="text-slate-400 text-sm text-center mb-4">Select the type of session you'd like to book:</p>
+            {(sessionTypes ?? []).length === 0 && (
+              <p className="text-slate-500 text-sm text-center italic">No sessions available. Please contact us directly.</p>
+            )}
+            {(sessionTypes ?? []).map((st) => (
+              <button
+                key={st.id}
+                onClick={() => setSelectedTypeId(st.id)}
+                className="w-full flex items-center gap-4 px-5 py-4 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-700/60 hover:border-blue-500/50 transition-all text-left group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-blue-400" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="your@email.com"
-                  />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white group-hover:text-blue-300 transition-colors">{st.name}</p>
+                  {st.description && <p className="text-slate-400 text-sm mt-0.5 truncate">{st.description}</p>}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Preferred Date *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="time">Preferred Time *</Label>
-                  <Select value={formData.time} onValueChange={(v) => setFormData({ ...formData, time: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="09:00">9:00 AM</SelectItem>
-                      <SelectItem value="09:30">9:30 AM</SelectItem>
-                      <SelectItem value="10:00">10:00 AM</SelectItem>
-                      <SelectItem value="10:30">10:30 AM</SelectItem>
-                      <SelectItem value="11:00">11:00 AM</SelectItem>
-                      <SelectItem value="11:30">11:30 AM</SelectItem>
-                      <SelectItem value="12:00">12:00 PM</SelectItem>
-                      <SelectItem value="13:00">1:00 PM</SelectItem>
-                      <SelectItem value="13:30">1:30 PM</SelectItem>
-                      <SelectItem value="14:00">2:00 PM</SelectItem>
-                      <SelectItem value="14:30">2:30 PM</SelectItem>
-                      <SelectItem value="15:00">3:00 PM</SelectItem>
-                      <SelectItem value="15:30">3:30 PM</SelectItem>
-                      <SelectItem value="16:00">4:00 PM</SelectItem>
-                      <SelectItem value="16:30">4:30 PM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes</Label>
-                <textarea
-                  id="notes"
-                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Any additional information or questions..."
-                />
-              </div>
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={() => setStep("type")}>
-                  Back
-                </Button>
-                <Button onClick={handleBooking} disabled={createAppointment.isPending}>
-                  {createAppointment.isPending ? "Booking..." : "Confirm Booking"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <span className="text-xs text-slate-500 flex-shrink-0">{st.duration} min</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {!preselectedId && (
+              <button
+                onClick={() => setSelectedTypeId(null)}
+                className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" /> Back to session types
+              </button>
+            )}
+            <InlineScheduler
+              sessionTypeId={selectedTypeId}
+              sessionTypeName={selectedType?.name}
+              sessionDuration={selectedType?.duration ?? 60}
+              parentName=""
+              parentEmail=""
+              onBooked={handleBooked}
+              isPreview={isPreview}
+            />
+          </div>
         )}
       </div>
     </div>

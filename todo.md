@@ -788,3 +788,8 @@
 - [x] Replace old /book plain form in client portal "Schedule Meeting" dialog with InlineScheduler widget (same calendar widget families see in the intake form)
 - [x] Client portal: show session type selector first, then InlineScheduler for the selected session type
 - [x] Pre-fill client name and email in the InlineScheduler from the logged-in user's profile
+
+## Booking Widget — Replace /book Plain Form Everywhere
+- [x] Rewrite BookingPage.tsx (/book route) to use InlineScheduler widget with dark theme (matching the intake form widget)
+- [x] Support ?session=ID on /book to pre-select a session type directly
+- [x] Update Scheduler.tsx copy/preview link buttons to use the new /book page with InlineScheduler (already use /book?session=ID format — now shows InlineScheduler widget)
