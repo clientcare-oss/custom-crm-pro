@@ -859,3 +859,6 @@
 - [x] Fix phone number not saving in Customize Confirmation block (LeadForms admin)
 - [x] Add center-text alignment toggle for the large confirmation headline
 - [x] Fix phone number not displaying on the DynamicForm confirmation screen
+
+## Portal Book Theme
+- [x] Apply dark blue navy theme to /portal/book (session type selector + calendar) matching the /book page style
