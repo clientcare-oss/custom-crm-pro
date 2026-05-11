@@ -108,6 +108,13 @@ export default function DynamicForm() {
     { retry: false, enabled: !!slug }
   );
 
+  // Fetch session type details for confirmation screen (after formConfig is available)
+  const sessionTypeId = (formConfig as any)?.sessionTypeId ?? null;
+  const { data: sessionTypeData } = trpc.sessionTypes.getById.useQuery(
+    { id: sessionTypeId! },
+    { enabled: !!sessionTypeId, retry: false }
+  );
+
   const submitMutation = trpc.leadForms.submit.useMutation({
     onSuccess: (data) => {
       setCaseId(data.caseId);
@@ -292,22 +299,54 @@ export default function DynamicForm() {
             )}
           </div>
 
-          {/* Booked slot confirmation */}
+          {/* Appointment details card — shown when a slot was booked */}
           {bookedSlot && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 space-y-1">
-              <div className="flex items-center gap-2 justify-center">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                <p className="text-blue-300 font-medium text-sm">Session Booked!</p>
+            <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-5 text-left space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-blue-300 font-semibold text-sm">Your Appointment</p>
+                  {sessionTypeData?.name && (
+                    <p className="text-white font-bold text-base leading-tight">{sessionTypeData.name}</p>
+                  )}
+                </div>
               </div>
-              <p className="text-slate-400 text-sm">
-                {new Date(bookedSlot.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                {" at "}
-                {(() => {
-                  const [h, m] = bookedSlot.time.split(":").map(Number);
-                  const p = h >= 12 ? "PM" : "AM";
-                  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${p}`;
-                })()}
-              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-800/60 rounded-lg p-3">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Date</p>
+                  <p className="text-white font-semibold text-sm">
+                    {new Date(bookedSlot.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
+                  </p>
+                </div>
+                <div className="bg-slate-800/60 rounded-lg p-3">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Time</p>
+                  <p className="text-white font-semibold text-sm">
+                    {(() => {
+                      const [h, m] = bookedSlot.time.split(":").map(Number);
+                      const period = h >= 12 ? "PM" : "AM";
+                      return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${period} ET`;
+                    })()}
+                  </p>
+                </div>
+                {sessionTypeData && (
+                  <div className="bg-slate-800/60 rounded-lg p-3">
+                    <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Format</p>
+                    <p className="text-white font-semibold text-sm capitalize">
+                      {sessionTypeData.sessionFormat === "video" ? "📹 Video Call" : "📞 Phone Call"}
+                    </p>
+                  </div>
+                )}
+                {sessionTypeData && (
+                  <div className="bg-slate-800/60 rounded-lg p-3">
+                    <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Duration</p>
+                    <p className="text-white font-semibold text-sm">
+                      {sessionTypeData.duration} {sessionTypeData.durationUnit === "hours" ? (sessionTypeData.duration === 1 ? "hour" : "hours") : "min"}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

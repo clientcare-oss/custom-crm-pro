@@ -833,3 +833,4 @@
 - [x] Fix phone number not saving from Customize Confirmation block (save button not persisting to DB) — moved setState calls to useEffect to prevent render-phase reset
 - [x] Fix phone number not showing on client-facing confirmation screen — set correct number 1-(833)-696-4377 in DB directly
 - [x] Fix booked appointment info not showing on confirmation screen after scheduling — InlineScheduler now auto-submits form after booking so confirmation shows immediately
+- [x] Show appointment details (date, time, session type name) on DynamicForm confirmation screen

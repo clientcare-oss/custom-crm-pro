@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, name, isActive, weeklyHours, timezone, duration, dateRange FROM sessionTypes WHERE ownerId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, name, isActive, weeklyHours, timezone, duration, dateRange FROM sessionTypes WHERE ownerId = 1;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "1:1 with advocate",
+      "isActive": "1",
+      "weeklyHours": "{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}",
+      "timezone": "EDT/EST",
+      "duration": "60",
+      "dateRange": "indefinitely"
+    },
+    {
+      "id": "30001",
+      "name": "IEP Meeting",
+      "isActive": "1",
+      "weeklyHours": "{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}",
+      "timezone": "EDT/EST",
+      "duration": "3",
+      "dateRange": "rolling"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tisActive\tweeklyHours\ttimezone\tduration\tdateRange\n1\t1:1 with advocate\t1\t{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}\tEDT/EST\t60\tindefinitely\n30001\tIEP Meeting\t1\t{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}\tEDT/EST\t3\trolling\n",
+  "stderr": "",
+  "execution_time_ms": 568
+}
