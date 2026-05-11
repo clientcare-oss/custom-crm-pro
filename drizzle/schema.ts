@@ -678,6 +678,13 @@ export const callLogs = mysqlTable("callLogs", {
   participants: json("participants").$type<string[]>(),
   status: varchar("status", { length: 20 }).default("unassigned").notNull(),
   matchedPhone: varchar("matchedPhone", { length: 30 }),
+  // Extended fields for voicemail, recordings, messages
+  eventType: varchar("eventType", { length: 50 }),       // call.completed, message.received, etc.
+  isVoicemail: boolean("isVoicemail").default(false),
+  voicemailTranscript: text("voicemailTranscript"),
+  recordingUrl: text("recordingUrl"),
+  smsBody: text("smsBody"),                              // for message.received events
+  rawPayload: json("rawPayload"),                        // full raw event for debugging
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   assignedAt: timestamp("assignedAt"),
 });

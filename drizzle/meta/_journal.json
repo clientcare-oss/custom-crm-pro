@@ -295,6 +295,13 @@
       "when": 1778468670200,
       "tag": "0041_fat_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1778501531725,
+      "tag": "0042_aberrant_sebastian_shaw",
+      "breakpoints": true
     }
   ]
 }

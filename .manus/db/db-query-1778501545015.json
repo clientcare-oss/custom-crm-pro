@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `callLogs` ADD `eventType` varchar(50);\nALTER TABLE `callLogs` ADD `isVoicemail` boolean DEFAULT false;\nALTER TABLE `callLogs` ADD `voicemailTranscript` text;\nALTER TABLE `callLogs` ADD `recordingUrl` text;\nALTER TABLE `callLogs` ADD `smsBody` text;\nALTER TABLE `callLogs` ADD `rawPayload` json;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute ALTER TABLE `callLogs` ADD `eventType` varchar(50);\nALTER TABLE `callLogs` ADD `isVoicemail` boolean DEFAULT false;\nALTER TABLE `callLogs` ADD `voicemailTranscript` text;\nALTER TABLE `callLogs` ADD `recordingUrl` text;\nALTER TABLE `callLogs` ADD `smsBody` text;\nALTER TABLE `callLogs` ADD `rawPayload` json;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2094
+}

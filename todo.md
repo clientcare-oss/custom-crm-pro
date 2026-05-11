@@ -840,3 +840,9 @@
 - [x] Add server procedure to save/get QUO_WEBHOOK_SECRET from DB settings table
 - [x] Show webhook status (configured / not configured) on Integrations page
 - [x] Update setup instructions to reflect in-app secret entry
+
+## Quo Webhook Debugging & Expansion
+- [x] Diagnose why voicemail calls are not importing (check server logs, event types)
+- [x] Fix webhook handler to support voicemail.transcription.completed and all Quo event types
+- [x] Add raw webhook event logging to DB for debugging
+- [x] Add Quo Settings panel in Call Logs sidebar with: event type toggles, auto-assign rules, test webhook button, raw event log viewer
