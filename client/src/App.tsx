@@ -108,6 +108,7 @@ function Router() {
               <Route path="/bill-guardian" component={BillGuardian} />
           <Route path="/page-id-showcase" component={PageIdShowcase} />
           <Route path="/client-portal" component={ClientPortal} />
+          <Route path="/portal/book" component={PortalBook} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />
           <Route path="/case-compass" component={CaseCompassAdmin} />
@@ -126,6 +127,7 @@ function Router() {
       <Route path="/intake">{() => { window.location.replace('/form/public-intake' + window.location.search); return null; }}</Route>
       <Route path="/form/:slug" component={DynamicForm} />
       <Route path="/book" component={BookingPage} />
+      <Route path="/portal/book" component={PortalBook} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
