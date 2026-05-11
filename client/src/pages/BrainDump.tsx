@@ -21,6 +21,7 @@ import {
   Brain, Plus, Search, Pin, PinOff, Trash2, Edit3, LayoutList,
   LayoutGrid, Kanban, Star, ChevronDown, X, Check, Zap, Tag, ArrowRight,
   MoreHorizontal, Circle, Clock, AlertCircle, Flame, Zap as ConvertIcon,
+  Mic, MicOff, Loader2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -562,8 +563,74 @@ export default function BrainDump() {
   const [captureCategory, setCaptureCategory] = useState("General");
   const [capturePriority, setCapturePriority] = useState<Priority>("medium");
   const captureRef = useRef<HTMLInputElement>(null);
+  // Voice capture state for Quick Capture bar
+  const [captureVoiceState, setCaptureVoiceState] = useState<"idle" | "recording" | "uploading">("idle");
+  const captureMediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const captureChunksRef = useRef<Blob[]>([]);
+  const captureStreamRef = useRef<MediaStream | null>(null);
 
   const utils = trpc.useUtils();
+
+  const captureTranscribeMutation = trpc.voice.transcribe.useMutation({
+    onSuccess: (data) => {
+      if (!data.text) return;
+      setCaptureText((prev) => prev ? `${prev} ${data.text}` : data.text);
+      setCaptureVoiceState("idle");
+      captureRef.current?.focus();
+    },
+    onError: (err) => {
+      toast.error(`Transcription failed: ${err.message}`);
+      setCaptureVoiceState("idle");
+    },
+  });
+
+  const startCaptureRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      captureStreamRef.current = stream;
+      captureChunksRef.current = [];
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      captureMediaRecorderRef.current = recorder;
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) captureChunksRef.current.push(e.data); };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        captureStreamRef.current = null;
+        const blob = new Blob(captureChunksRef.current, { type: mimeType });
+        if (blob.size === 0) { toast.error("No audio captured."); setCaptureVoiceState("idle"); return; }
+        setCaptureVoiceState("uploading");
+        try {
+          const formData = new FormData();
+          const ext = mimeType.includes("webm") ? "webm" : "mp4";
+          formData.append("audio", blob, `voice_${Date.now()}.${ext}`);
+          const uploadRes = await fetch("/api/voice/upload", { method: "POST", body: formData, credentials: "include" });
+          if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.statusText}`);
+          const { url } = (await uploadRes.json()) as { url: string };
+          await captureTranscribeMutation.mutateAsync({ audioUrl: url });
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Audio upload failed");
+          setCaptureVoiceState("idle");
+        }
+      };
+      recorder.start(250);
+      setCaptureVoiceState("recording");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "NotAllowedError") {
+        toast.error("Microphone access denied. Please allow microphone in your browser settings.");
+      } else {
+        toast.error("Could not start recording.");
+      }
+      setCaptureVoiceState("idle");
+    }
+  }, [captureTranscribeMutation]);
+
+  const stopCaptureRecording = useCallback(() => {
+    if (captureMediaRecorderRef.current && captureMediaRecorderRef.current.state !== "inactive") {
+      captureMediaRecorderRef.current.stop();
+    }
+  }, []);
 
   const { data: items = [], isLoading } = trpc.brainDump.list.useQuery(
     { search: search || undefined, category: activeCategory !== "All" ? activeCategory : undefined },
@@ -681,6 +748,28 @@ export default function BrainDump() {
               placeholder="Quick capture — type your idea and press Enter…"
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
             />
+            {/* Mic button */}
+            <button
+              type="button"
+              onClick={() => captureVoiceState === "recording" ? stopCaptureRecording() : captureVoiceState === "idle" ? startCaptureRecording() : undefined}
+              disabled={captureVoiceState === "uploading"}
+              title={captureVoiceState === "uploading" ? "Transcribing…" : captureVoiceState === "recording" ? "Stop recording" : "Click to dictate"}
+              className={`flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full transition-all ${
+                captureVoiceState === "recording"
+                  ? "text-red-500 animate-pulse bg-red-100 dark:bg-red-900/30"
+                  : captureVoiceState === "uploading"
+                  ? "text-muted-foreground cursor-wait"
+                  : "text-violet-400 hover:text-violet-600 hover:bg-violet-100 dark:hover:bg-violet-900/30"
+              }`}
+            >
+              {captureVoiceState === "uploading" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : captureVoiceState === "recording" ? (
+                <MicOff className="h-3.5 w-3.5" />
+              ) : (
+                <Mic className="h-3.5 w-3.5" />
+              )}
+            </button>
             <Select value={captureCategory} onValueChange={setCaptureCategory}>
               <SelectTrigger className="h-6 w-28 text-[10px] border-none bg-muted/60 rounded-lg focus:ring-0">
                 <SelectValue />
