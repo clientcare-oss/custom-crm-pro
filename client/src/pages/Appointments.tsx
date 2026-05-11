@@ -36,6 +36,72 @@ export default function Appointments() {
   const { user } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
+  const [isEditingApt, setIsEditingApt] = useState(false);
+  const [editAptData, setEditAptData] = useState<{
+    title: string; description: string; startTime: string; endTime: string;
+    location: string; videoLink: string; parentName: string; parentPhone: string;
+    studentName: string; status: string;
+  } | null>(null);
+
+  const toLocalDateTimeInput = (dt: Date | string) => {
+    const d = new Date(dt);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const openEditMode = (apt: Appointment) => {
+    setEditAptData({
+      title: apt.title,
+      description: apt.description || '',
+      startTime: toLocalDateTimeInput(apt.startTime),
+      endTime: toLocalDateTimeInput(apt.endTime),
+      location: apt.location || '',
+      videoLink: apt.videoLink || '',
+      parentName: apt.parentName || '',
+      parentPhone: apt.parentPhone || '',
+      studentName: apt.studentName || '',
+      status: apt.status,
+    });
+    setIsEditingApt(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedApt || !editAptData) return;
+    if (!editAptData.title || !editAptData.startTime || !editAptData.endTime) {
+      toast.error('Title, start time, and end time are required');
+      return;
+    }
+    updateMutation.mutate({
+      id: selectedApt.id,
+      title: editAptData.title,
+      description: editAptData.description || undefined,
+      startTime: new Date(editAptData.startTime),
+      endTime: new Date(editAptData.endTime),
+      location: editAptData.location || undefined,
+      videoLink: editAptData.videoLink || undefined,
+      parentName: editAptData.parentName || undefined,
+      parentPhone: editAptData.parentPhone || undefined,
+      studentName: editAptData.studentName || undefined,
+      status: editAptData.status as 'Scheduled' | 'Confirmed' | 'Completed' | 'Cancelled',
+    }, {
+      onSuccess: () => {
+        setIsEditingApt(false);
+        setSelectedApt(prev => prev ? {
+          ...prev,
+          title: editAptData.title,
+          description: editAptData.description || null,
+          startTime: new Date(editAptData.startTime),
+          endTime: new Date(editAptData.endTime),
+          location: editAptData.location || null,
+          videoLink: editAptData.videoLink || null,
+          parentName: editAptData.parentName || null,
+          parentPhone: editAptData.parentPhone || null,
+          studentName: editAptData.studentName || null,
+          status: editAptData.status,
+        } : null);
+      }
+    });
+  };
   const [formData, setFormData] = useState({
     clientId: "",
     title: "",
@@ -164,19 +230,157 @@ export default function Appointments() {
               {/* Title + close */}
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold leading-tight">{selectedApt.title}</h2>
-                  <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedApt.status)}`}>
-                    {selectedApt.status}
-                  </span>
+                  <h2 className="text-lg font-bold leading-tight">{isEditingApt ? 'Edit Appointment' : selectedApt.title}</h2>
+                  {!isEditingApt && (
+                    <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedApt.status)}`}>
+                      {selectedApt.status}
+                    </span>
+                  )}
                 </div>
-                <button
-                  onClick={() => setSelectedApt(null)}
-                  className="text-muted-foreground hover:text-foreground transition-colors mt-0.5 shrink-0"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {!isEditingApt && (
+                    <button
+                      onClick={() => openEditMode(selectedApt)}
+                      className="text-xs px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setSelectedApt(null); setIsEditingApt(false); }}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
 
+              {isEditingApt && editAptData ? (
+                /* ── Edit Form ── */
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                    <VoiceInput
+                      value={editAptData.title}
+                      onChange={(e) => setEditAptData(d => d ? { ...d, title: e.target.value } : d)}
+                      placeholder="Appointment title"
+                      className="mt-1 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Start *</label>
+                      <input
+                        type="datetime-local"
+                        value={editAptData.startTime}
+                        onChange={(e) => setEditAptData(d => d ? { ...d, startTime: e.target.value } : d)}
+                        className="mt-1 w-full h-8 text-xs rounded-md border border-input bg-background px-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">End *</label>
+                      <input
+                        type="datetime-local"
+                        value={editAptData.endTime}
+                        onChange={(e) => setEditAptData(d => d ? { ...d, endTime: e.target.value } : d)}
+                        className="mt-1 w-full h-8 text-xs rounded-md border border-input bg-background px-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Status</label>
+                    <Select
+                      value={editAptData.status}
+                      onValueChange={(v) => setEditAptData(d => d ? { ...d, status: v } : d)}
+                    >
+                      <SelectTrigger className="mt-1 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                        <SelectItem value="Confirmed">Confirmed</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Video / Meeting Link</label>
+                    <VoiceInput
+                      value={editAptData.videoLink}
+                      onChange={(e) => setEditAptData(d => d ? { ...d, videoLink: e.target.value } : d)}
+                      placeholder="https://..."
+                      className="mt-1 h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Location</label>
+                    <VoiceInput
+                      value={editAptData.location}
+                      onChange={(e) => setEditAptData(d => d ? { ...d, location: e.target.value } : d)}
+                      placeholder="Location"
+                      className="mt-1 h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Parent Name</label>
+                    <VoiceInput
+                      value={editAptData.parentName}
+                      onChange={(e) => setEditAptData(d => d ? { ...d, parentName: e.target.value } : d)}
+                      placeholder="Parent name"
+                      className="mt-1 h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Parent Phone</label>
+                    <VoiceInput
+                      value={editAptData.parentPhone}
+                      onChange={(e) => setEditAptData(d => d ? { ...d, parentPhone: e.target.value } : d)}
+                      placeholder="(xxx) xxx-xxxx"
+                      className="mt-1 h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Student Name</label>
+                    <VoiceInput
+                      value={editAptData.studentName}
+                      onChange={(e) => setEditAptData(d => d ? { ...d, studentName: e.target.value } : d)}
+                      placeholder="Student name"
+                      className="mt-1 h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Description</label>
+                    <VoiceTextarea
+                      value={editAptData.description}
+                      onChange={(e) => setEditAptData(d => d ? { ...d, description: e.target.value } : d)}
+                      placeholder="Notes about this appointment..."
+                      rows={3}
+                      className="mt-1 text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveEdit}
+                      disabled={updateMutation.isPending}
+                      className="flex-1"
+                    >
+                      {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditingApt(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                /* ── View Mode ── */
+                <>
               {/* Date & Time */}
               <div className="flex items-start gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -260,6 +464,8 @@ export default function Appointments() {
                   </SelectContent>
                 </Select>
               </div>
+                </>
+              )}
             </div>
           </div>
         </div>

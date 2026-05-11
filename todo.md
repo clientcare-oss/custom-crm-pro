@@ -877,3 +877,4 @@
 - [ ] Workflow: Add hover "+" button at bottom-center of each card/sticky node to add a card below (inherits color, auto-connects with arrow)
 - [ ] Calendar: clicking an event opens a detail popup showing title, date/time, video link with Join Meeting button, and participants as Parent/Student labels
 - [ ] Calendar event popup: show Delete and Edit actions
+- [ ] Appointments: Add full edit form to popup — pre-filled with all fields (title, date/time, video link, parent name, parent phone, student name, location, description, status), save via tRPC update mutation
