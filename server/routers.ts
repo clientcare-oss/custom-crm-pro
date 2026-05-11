@@ -643,7 +643,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+        const { users: usersTable } = await import("../drizzle/schema");
+        const dbConn2 = await db.getDb();
+        let owner = await db.getUserByOpenId(ENV.ownerOpenId);
+        if (!owner && dbConn2) {
+          const [firstAdmin] = await dbConn2.select().from(usersTable).where(eq(usersTable.role, 'admin')).limit(1);
+          owner = firstAdmin ?? null;
+        }
         if (!owner) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Owner not found" });
         const appointment = await db.createAppointment({
           ...input,
@@ -1513,10 +1519,15 @@ export const appRouter = router({
     // Public: list active session types for a booking page (by ownerId)
     // Returns all active session types for the owner (no ownerId required — uses ENV owner)
     listAll: publicProcedure.query(async () => {
-      const { sessionTypes } = await import("../drizzle/schema");
+      const { sessionTypes, users } = await import("../drizzle/schema");
       const dbConn = await db.getDb();
       if (!dbConn) throw new Error("DB unavailable");
-      const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+      let owner = await db.getUserByOpenId(ENV.ownerOpenId);
+      // Fallback: if OWNER_OPEN_ID doesn't match, use the first admin user
+      if (!owner) {
+        const [firstAdmin] = await dbConn.select().from(users).where(eq(users.role, 'admin')).limit(1);
+        owner = firstAdmin ?? null;
+      }
       if (!owner) return [];
       const rows = await dbConn
         .select()

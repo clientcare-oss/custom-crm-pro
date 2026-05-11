@@ -1,0 +1,34 @@
+{
+  "query": "SELECT u.id, u.name, u.openId, u.role FROM users u LIMIT 10; SELECT st.id, st.name, st.isActive, st.ownerId FROM sessionTypes st LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT u.id, u.name, u.openId, u.role FROM users u LIMIT 10; SELECT st.id, st.name, st.isActive, st.ownerId FROM sessionTypes st LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Byron Honea",
+      "openId": "2MHEUL2uW9fjKjubn89JVw",
+      "role": "admin"
+    },
+    {
+      "id": "id",
+      "name": "name",
+      "openId": "isActive",
+      "role": "ownerId"
+    },
+    {
+      "id": "1",
+      "name": "1:1 with advocate",
+      "openId": "1",
+      "role": "1"
+    },
+    {
+      "id": "30001",
+      "name": "IEP Meeting",
+      "openId": "1",
+      "role": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\topenId\trole\n1\tByron Honea\t2MHEUL2uW9fjKjubn89JVw\tadmin\nid\tname\tisActive\townerId\n1\t1:1 with advocate\t1\t1\n30001\tIEP Meeting\t1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 675
+}
