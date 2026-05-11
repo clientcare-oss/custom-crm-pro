@@ -3554,6 +3554,11 @@ export const appRouter = router({
         fields: z.array(z.string()).optional(),
         customLabels: z.string().optional(),
         sessionTypeId: z.number().nullable().optional(),
+        confirmationHeadline: z.string().max(200).optional(),
+        confirmationBody: z.string().optional(),
+        saveOurNumberMessage: z.string().optional(),
+        confirmationImageKey: z.string().optional().nullable(),
+        confirmationImageUrl: z.string().optional().nullable(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, fields, customLabels, sessionTypeId, ...rest } = input;
@@ -3565,7 +3570,6 @@ export const appRouter = router({
         });
         return { success: true };
       }),
-
     // Delete a form
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
@@ -3664,9 +3668,27 @@ export const appRouter = router({
         });
         return { success: true, caseId, parentContactId, studentContactId };
       }),
+    // Upload a confirmation page image (QR code, logo, etc.)
+    uploadConfirmationImage: adminProcedure
+      .input(z.object({
+        formId: z.number(),
+        fileName: z.string().min(1),
+        fileData: z.string().min(1), // base64
+        mimeType: z.string().default("image/png"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const fileBuffer = Buffer.from(input.fileData, "base64");
+        const ext = input.fileName.split(".").pop() ?? "png";
+        const fileKey = `lead-forms/${ctx.user.id}/confirmation-${input.formId}-${Date.now()}.${ext}`;
+        const { key, url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+        await db.updateLeadForm(input.formId, ctx.user.id, {
+          confirmationImageKey: key,
+          confirmationImageUrl: url,
+        });
+        return { success: true, key, url };
+      }),
   }),
-
-  // ─── Public Lead Intake Form ───────────────────────────────────────────────
+  // ─── Public Lead Intake Form ────────────────────────────────────────────────
   intake: router({
     submit: publicProcedure
       .input(z.object({

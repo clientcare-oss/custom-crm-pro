@@ -1285,6 +1285,11 @@ export async function updateLeadForm(id: number, ownerId: number, data: Partial<
   fields: string;
   customLabels: string;
   sessionTypeId: number | null;
+  confirmationHeadline: string | null;
+  confirmationBody: string | null;
+  saveOurNumberMessage: string | null;
+  confirmationImageKey: string | null;
+  confirmationImageUrl: string | null;
 }>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

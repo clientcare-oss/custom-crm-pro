@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ClipboardList, Copy, ExternalLink, Eye, CheckCircle2, Users, GraduationCap,
   Link2, Zap, Globe, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar,
-  MoreHorizontal, Hash
+  MoreHorizontal, Hash, ImagePlus, Save, Sparkles, Phone, MessageSquare, X,
+  Upload, ChevronDown, ChevronUp
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import QuickSetupModal from "@/components/QuickSetupModal";
@@ -19,6 +23,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger
+} from "@/components/ui/collapsible";
 
 export default function LeadForms() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -26,10 +33,35 @@ export default function LeadForms() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingForm, setEditingForm] = useState<any | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmationOpen, setConfirmationOpen] = useState(true);
+
+  // Confirmation customization state
+  const [confHeadline, setConfHeadline] = useState("");
+  const [confBody, setConfBody] = useState("");
+  const [confPhone, setConfPhone] = useState("");
+  const [confImageUrl, setConfImageUrl] = useState<string | null>(null);
+  const [confImageKey, setConfImageKey] = useState<string | null>(null);
+  const [confSaving, setConfSaving] = useState(false);
+  const [confImageUploading, setConfImageUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: allForms, refetch } = trpc.leadForms.list.useQuery(undefined, { retry: false });
   const { data: recentLeads } = trpc.leads.list.useQuery(undefined, { retry: false });
-  const { data: publicIntakeForm } = trpc.leadForms.getPublicIntakeForm.useQuery(undefined, { retry: false });
+  const { data: publicIntakeForm, refetch: refetchIntake } = trpc.leadForms.getPublicIntakeForm.useQuery(undefined, {
+    retry: false,
+  });
+
+  // Populate confirmation fields when form data loads
+  const [confInitialized, setConfInitialized] = useState(false);
+  if (publicIntakeForm && !confInitialized) {
+    setConfHeadline((publicIntakeForm as any).confirmationHeadline ?? "");
+    setConfBody((publicIntakeForm as any).confirmationBody ?? "");
+    setConfPhone((publicIntakeForm as any).saveOurNumberMessage ?? "");
+    setConfImageUrl((publicIntakeForm as any).confirmationImageUrl ?? null);
+    setConfImageKey((publicIntakeForm as any).confirmationImageKey ?? null);
+    setConfInitialized(true);
+  }
+
   // Filter out the built-in public-intake record from the custom forms list
   const customForms = allForms?.filter((f: any) => f.slug !== "public-intake") ?? null;
 
@@ -37,10 +69,26 @@ export default function LeadForms() {
     onSuccess: () => { toast.success("Form deleted"); refetch(); setDeletingId(null); },
     onError: (e) => toast.error("Delete failed: " + e.message),
   });
-
   const toggleActiveMutation = trpc.leadForms.update.useMutation({
     onSuccess: () => { refetch(); },
     onError: (e) => toast.error("Update failed: " + e.message),
+  });
+  const updateConfirmationMutation = trpc.leadForms.update.useMutation({
+    onSuccess: () => {
+      toast.success("Confirmation page saved!");
+      refetchIntake();
+      setConfSaving(false);
+    },
+    onError: (e) => { toast.error("Save failed: " + e.message); setConfSaving(false); },
+  });
+  const uploadImageMutation = trpc.leadForms.uploadConfirmationImage.useMutation({
+    onSuccess: (data: any) => {
+      setConfImageUrl(data.url);
+      setConfImageKey(data.key);
+      setConfImageUploading(false);
+      toast.success("Image uploaded!");
+    },
+    onError: (e) => { toast.error("Upload failed: " + e.message); setConfImageUploading(false); },
   });
 
   const intakeUrl = `${window.location.origin}/form/public-intake`;
@@ -55,6 +103,49 @@ export default function LeadForms() {
 
   const handleToggleActive = (form: any) => {
     toggleActiveMutation.mutate({ id: form.id, isActive: !form.isActive });
+  };
+
+  const handleSaveConfirmation = () => {
+    if (!publicIntakeForm) return;
+    setConfSaving(true);
+    updateConfirmationMutation.mutate({
+      id: (publicIntakeForm as any).id,
+      confirmationHeadline: confHeadline || undefined,
+      confirmationBody: confBody || undefined,
+      saveOurNumberMessage: confPhone || undefined,
+      confirmationImageKey: confImageKey,
+      confirmationImageUrl: confImageUrl,
+    });
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !publicIntakeForm) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setConfImageUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      uploadImageMutation.mutate({
+        formId: (publicIntakeForm as any).id,
+        fileName: file.name,
+        fileData: base64,
+        mimeType: file.type,
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = () => {
+    if (!publicIntakeForm) return;
+    setConfImageUrl(null);
+    setConfImageKey(null);
+    updateConfirmationMutation.mutate({
+      id: (publicIntakeForm as any).id,
+      confirmationImageKey: null,
+      confirmationImageUrl: null,
+    });
   };
 
   return (
@@ -130,11 +221,11 @@ export default function LeadForms() {
         </Card>
       </div>
 
-      {/* ── BUILT-IN: Internal Quick Setup ── */}
+      {/* ── BUILT-IN FORMS ── */}
       <div>
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Built-in Forms</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Internal Form Card */}
+        <div className="space-y-3">
+          {/* Quick Setup Card */}
           <Card className="border-border/60 border-l-4 border-l-orange-500">
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between">
@@ -196,10 +287,14 @@ export default function LeadForms() {
                   {copiedId === "intake" ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => window.open(`${intakeUrl}?preview=true`, "_blank")} className="gap-1.5">
                   <Eye className="w-3.5 h-3.5" />
-                  Preview
+                  Preview Form
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => window.open(`${intakeUrl}?preview=true&confirmed=true`, "_blank")} className="gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Preview Confirmation
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => handleCopy(intakeUrl, "intake")} className="gap-1.5">
                   <Copy className="w-3.5 h-3.5" />
@@ -218,6 +313,181 @@ export default function LeadForms() {
           </Card>
         </div>
       </div>
+
+      {/* ── CUSTOMIZE CONFIRMATION PAGE ── */}
+      <Collapsible open={confirmationOpen} onOpenChange={setConfirmationOpen}>
+        <Card className="border-border/60 border-l-4 border-l-purple-500">
+          <CardHeader className="pb-0">
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center justify-between w-full text-left">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-semibold">Customize Confirmation Page</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">What families see after submitting the intake form</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs"
+                    onClick={(e) => { e.stopPropagation(); window.open(`${intakeUrl}?preview=true&confirmed=true`, "_blank"); }}
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Preview
+                  </Button>
+                  {confirmationOpen
+                    ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  }
+                </div>
+              </button>
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="pt-4 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Left: text fields */}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                      Confirmation Headline
+                    </Label>
+                    <Input
+                      value={confHeadline}
+                      onChange={(e) => setConfHeadline(e.target.value)}
+                      placeholder="Thank You!"
+                      maxLength={200}
+                      className="text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Leave blank to use the default "Thank You!" heading</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                      Confirmation Message
+                    </Label>
+                    <Textarea
+                      value={confBody}
+                      onChange={(e) => setConfBody(e.target.value)}
+                      placeholder="Your information has been submitted successfully. We will be in touch within 1–2 business days."
+                      rows={3}
+                      className="text-sm resize-none"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Shown below the headline on the confirmation screen</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-amber-400" />
+                      "Save Our Number" Message
+                    </Label>
+                    <Input
+                      value={confPhone}
+                      onChange={(e) => setConfPhone(e.target.value)}
+                      placeholder="Remember to save our number so you don't miss our call!"
+                      className="text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Shown in the amber reminder box on the confirmation screen</p>
+                  </div>
+                </div>
+
+                {/* Right: image upload */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <ImagePlus className="w-3.5 h-3.5 text-green-400" />
+                    QR Code / Image
+                  </Label>
+                  <div className="border-2 border-dashed border-border/60 rounded-xl p-4 flex flex-col items-center justify-center gap-3 min-h-[200px] bg-muted/20 hover:bg-muted/30 transition-colors">
+                    {confImageUrl ? (
+                      <>
+                        <img
+                          src={confImageUrl}
+                          alt="Confirmation image"
+                          className="max-h-44 max-w-full object-contain rounded-lg"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 text-xs h-7"
+                            onClick={() => imageInputRef.current?.click()}
+                            disabled={confImageUploading}
+                          >
+                            <Upload className="w-3 h-3" />
+                            Replace
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-1.5 text-xs h-7 text-destructive hover:text-destructive"
+                            onClick={handleRemoveImage}
+                          >
+                            <X className="w-3 h-3" />
+                            Remove
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                          <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium">Upload your QR code</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG, GIF up to 5MB</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={confImageUploading || !publicIntakeForm}
+                        >
+                          {confImageUploading ? (
+                            <><span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />Uploading...</>
+                          ) : (
+                            <><Upload className="w-3.5 h-3.5" />Choose Image</>
+                          )}
+                        </Button>
+                      </>
+                    )}
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageSelect}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Displayed on the confirmation screen — great for your QR code or logo</p>
+                </div>
+              </div>
+
+              {/* Save button */}
+              <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                <p className="text-xs text-muted-foreground">Changes apply to the public intake form confirmation screen</p>
+                <Button
+                  onClick={handleSaveConfirmation}
+                  disabled={confSaving || !publicIntakeForm}
+                  className="gap-2"
+                >
+                  {confSaving ? (
+                    <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4" />Save Confirmation Page</>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* ── CUSTOM FORMS ── */}
       <div>
@@ -354,7 +624,6 @@ export default function LeadForms() {
 
       {/* Modals */}
       <QuickSetupModal open={showQuickSetup} onClose={() => setShowQuickSetup(false)} />
-
       <LeadFormModal
         open={showCreateModal || !!editingForm}
         onOpenChange={(open: boolean) => {

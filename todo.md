@@ -799,3 +799,23 @@
 - [x] Fix InlineScheduler: when opened via admin View Live Scheduler, always fetch real slots regardless of preview param
 - [x] Investigate why weeklyHours config may be missing/empty causing no slots to show on some days — Wednesday is intentionally empty in session type config
 - [x] Add admin-only "preview=false" override so admin can always see real availability — fixed by removing preview=true from URL
+
+## Lead Forms — Confirmation Page & Post-Submit Features
+- [x] Add "Preview Confirmation Page" button on Lead Forms admin page (PG-012) that opens the form confirmation/thank-you screen
+- [x] Make the post-submission animation visible/previewable from the admin Lead Forms page
+- [x] Add customizable "Save Our Phone Number" message field in form settings — shown on confirmation page after submission
+- [x] Store the save-our-number message per form in the database and render it on the confirmation screen
+
+## Lead Forms — Customize Confirmation Section (PG-012)
+- [x] Add confirmationHeadline, confirmationBody, saveOurNumberMessage fields to leadForms schema
+- [x] Run DB migration to add the new columns
+- [x] Update leadForms.update router procedure to accept and save the new fields
+- [x] Update leadForms.getBySlug and getPublicIntakeForm to return the new fields
+- [x] Add "Customize Confirmation" card/section to LeadForms.tsx admin page with editable fields and live save
+- [x] Add "Preview Confirmation" button that opens /form/:slug?preview=true&confirmed=true in new tab
+- [x] Update DynamicForm to support ?confirmed=true param — show confirmation screen directly with confetti animation
+- [x] DynamicForm confirmation screen: render confirmationHeadline, confirmationBody, saveOurNumberMessage from form config instead of hardcoded text
+- [x] Add confirmationImageKey and confirmationImageUrl fields to leadForms schema for QR code / custom image on confirmation page
+- [x] Run DB migration for new image fields
+- [x] Add image upload to Customize Confirmation section (upload to S3, store key+url)
+- [x] Display uploaded QR/image on DynamicForm confirmation screen

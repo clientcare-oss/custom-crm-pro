@@ -274,6 +274,20 @@
       "when": 1778451381887,
       "tag": "0038_cloudy_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1778461583274,
+      "tag": "0039_classy_phantom_reporter",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1778461762697,
+      "tag": "0040_premium_speedball",
+      "breakpoints": true
     }
   ]
 }

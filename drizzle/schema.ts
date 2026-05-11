@@ -901,6 +901,12 @@ export const leadForms = mysqlTable("leadForms", {
   fields: text("fields"),
   // Custom labels — JSON object mapping fieldKey → custom label text
   customLabels: text("customLabels"),
+  // Confirmation page customization
+  confirmationHeadline: varchar("confirmationHeadline", { length: 200 }),
+  confirmationBody: text("confirmationBody"),
+  saveOurNumberMessage: text("saveOurNumberMessage"),
+  confirmationImageKey: text("confirmationImageKey"),
+  confirmationImageUrl: text("confirmationImageUrl"),
   // Status
   isActive: boolean("isActive").default(true).notNull(),
   submissionCount: int("submissionCount").default(0).notNull(),

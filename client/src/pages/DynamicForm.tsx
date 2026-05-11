@@ -62,6 +62,8 @@ export default function DynamicForm() {
 
   // Detect preview mode from URL query param
   const isPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "true";
+  // ?confirmed=true jumps straight to the confirmation screen (admin preview)
+  const isConfirmedPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("confirmed") === "true";
   // Support ?step=N to auto-jump to a specific step (useful for admin previewing the scheduler)
   const initialStep = (() => {
     if (typeof window === "undefined") return 1;
@@ -71,7 +73,8 @@ export default function DynamicForm() {
 
   const [step, setStep] = useState(initialStep);
   const [form, setForm] = useState<FormData>(EMPTY);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(isConfirmedPreview);
+  const [confettiDone, setConfettiDone] = useState(false);
   const [caseId, setCaseId] = useState("");
   const [bookedSlot, setBookedSlot] = useState<{ date: string; time: string } | null>(null);
   const [editingPhone, setEditingPhone] = useState(false);
@@ -86,16 +89,10 @@ export default function DynamicForm() {
     if (businessPhoneData?.phone) setBusinessPhone(businessPhoneData.phone);
   }, [businessPhoneData?.phone]);
 
-  const { data: formConfig, isLoading, error } = trpc.leadForms.getBySlug.useQuery(
-    { slug },
-    { retry: false, enabled: !!slug }
-  );
-
-  const submitMutation = trpc.leadForms.submit.useMutation({
-    onSuccess: (data) => {
-      setCaseId(data.caseId);
-      setSubmitted(true);
-      // Fire confetti animation
+  // Fire confetti when confirmation screen appears (including preview)
+  useEffect(() => {
+    if (submitted && !confettiDone) {
+      setConfettiDone(true);
       import("canvas-confetti").then(({ default: confetti }) => {
         const end = Date.now() + 1200;
         const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6"];
@@ -105,6 +102,18 @@ export default function DynamicForm() {
           if (Date.now() < end) requestAnimationFrame(frame);
         })();
       }).catch(() => {});
+    }
+  }, [submitted, confettiDone]);
+
+  const { data: formConfig, isLoading, error } = trpc.leadForms.getBySlug.useQuery(
+    { slug },
+    { retry: false, enabled: !!slug }
+  );
+
+  const submitMutation = trpc.leadForms.submit.useMutation({
+    onSuccess: (data) => {
+      setCaseId(data.caseId);
+      setSubmitted(true);
     },
     onError: (e) => toast.error("Submission failed: " + e.message),
   });
@@ -217,6 +226,10 @@ export default function DynamicForm() {
 
   // ── Success screen ──
   if (submitted) {
+    const confHeadline = (formConfig as any)?.confirmationHeadline || "Thank You!";
+    const confBody = (formConfig as any)?.confirmationBody || "Your information has been submitted successfully.";
+    const confPhone = (formConfig as any)?.saveOurNumberMessage || "Remember to save our number!";
+    const confImageUrl = (formConfig as any)?.confirmationImageUrl;
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <div className="max-w-lg w-full text-center space-y-6">
@@ -228,8 +241,8 @@ export default function DynamicForm() {
           </div>
 
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Thank You!</h1>
-            <p className="text-slate-300 text-lg">Your information has been submitted successfully.</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{confHeadline}</h1>
+            <p className="text-slate-300 text-lg">{confBody}</p>
           </div>
 
           {/* Case ID card */}
@@ -257,13 +270,18 @@ export default function DynamicForm() {
             </div>
           </div>
 
+          {/* QR code / image */}
+          {confImageUrl && (
+            <div className="flex justify-center">
+              <img src={confImageUrl} alt="Contact QR code" className="max-h-52 max-w-full object-contain rounded-xl" />
+            </div>
+          )}
           {/* Save our number notice */}
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2 justify-center">
               <Phone className="w-5 h-5 text-amber-400" />
-              <p className="text-amber-300 font-semibold text-base">Remember to save our number!</p>
+              <p className="text-amber-300 font-semibold text-base">{confPhone}</p>
             </div>
-            <p className="text-slate-400 text-sm">Add us to your contacts so you don’t miss our call.</p>
             {editingPhone ? (
               <div className="flex items-center gap-2">
                 <input

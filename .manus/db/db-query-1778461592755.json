@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `leadForms` ADD `confirmationHeadline` varchar(200);\nALTER TABLE `leadForms` ADD `confirmationBody` text;\nALTER TABLE `leadForms` ADD `saveOurNumberMessage` text;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute ALTER TABLE `leadForms` ADD `confirmationHeadline` varchar(200);\nALTER TABLE `leadForms` ADD `confirmationBody` text;\nALTER TABLE `leadForms` ADD `saveOurNumberMessage` text;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1361
+}
