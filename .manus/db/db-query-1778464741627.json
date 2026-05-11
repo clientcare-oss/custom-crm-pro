@@ -1,0 +1,15 @@
+{
+  "query": "SELECT name, email, phone FROM users WHERE email = 'clientcare@waypointadvocates.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT name, email, phone FROM users WHERE email = 'clientcare@waypointadvocates.com';",
+  "rows": [
+    {
+      "name": "Byron Honea",
+      "email": "clientcare@waypointadvocates.com",
+      "phone": "1-(833)-696-4377"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\temail\tphone\nByron Honea\tclientcare@waypointadvocates.com\t1-(833)-696-4377\n",
+  "stderr": "",
+  "execution_time_ms": 573
+}

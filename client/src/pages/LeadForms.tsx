@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   ClipboardList, Copy, ExternalLink, Eye, CheckCircle2, Users, GraduationCap,
   Link2, Zap, Globe, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar,
@@ -47,12 +47,7 @@ export default function LeadForms() {
   // Business phone number (shown on confirmation screen)
   const [businessPhone, setBusinessPhone] = useState("");
   const [phoneSaving, setPhoneSaving] = useState(false);
-  const [phoneInitialized, setPhoneInitialized] = useState(false);
   const { data: businessPhoneData, refetch: refetchPhone } = trpc.system.getBusinessPhone.useQuery(undefined, { retry: false });
-  if (businessPhoneData?.phone !== undefined && !phoneInitialized) {
-    setBusinessPhone(businessPhoneData.phone ?? "");
-    setPhoneInitialized(true);
-  }
 
   const { data: allForms, refetch } = trpc.leadForms.list.useQuery(undefined, { retry: false });
   const { data: recentLeads } = trpc.leads.list.useQuery(undefined, { retry: false });
@@ -60,16 +55,25 @@ export default function LeadForms() {
     retry: false,
   });
 
-  // Populate confirmation fields when form data loads
+  // Populate phone from server — only once on first load
+  useEffect(() => {
+    if (businessPhoneData?.phone !== undefined) {
+      setBusinessPhone(businessPhoneData.phone ?? "");
+    }
+  }, [businessPhoneData?.phone]);
+
+  // Populate confirmation fields when form data loads — only once
   const [confInitialized, setConfInitialized] = useState(false);
-  if (publicIntakeForm && !confInitialized) {
-    setConfHeadline((publicIntakeForm as any).confirmationHeadline ?? "");
-    setConfBody((publicIntakeForm as any).confirmationBody ?? "");
-    setConfPhone((publicIntakeForm as any).saveOurNumberMessage ?? "");
-    setConfImageUrl((publicIntakeForm as any).confirmationImageUrl ?? null);
-    setConfImageKey((publicIntakeForm as any).confirmationImageKey ?? null);
-    setConfInitialized(true);
-  }
+  useEffect(() => {
+    if (publicIntakeForm && !confInitialized) {
+      setConfHeadline((publicIntakeForm as any).confirmationHeadline ?? "");
+      setConfBody((publicIntakeForm as any).confirmationBody ?? "");
+      setConfPhone((publicIntakeForm as any).saveOurNumberMessage ?? "");
+      setConfImageUrl((publicIntakeForm as any).confirmationImageUrl ?? null);
+      setConfImageKey((publicIntakeForm as any).confirmationImageKey ?? null);
+      setConfInitialized(true);
+    }
+  }, [publicIntakeForm, confInitialized]);
 
   // Filter out the built-in public-intake record from the custom forms list
   const customForms = allForms?.filter((f: any) => f.slug !== "public-intake") ?? null;

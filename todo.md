@@ -828,3 +828,8 @@
 ## Confirmation Screen — Display Fixes
 - [x] Fix body text rendering: split on semicolons and newlines so each bullet point shows on its own line (not a wall of text)
 - [x] Fix phone number not showing below the amber "save our number" box on the client confirmation screen
+
+## Confirmation Screen — Bug Fixes (Round 2)
+- [x] Fix phone number not saving from Customize Confirmation block (save button not persisting to DB) — moved setState calls to useEffect to prevent render-phase reset
+- [x] Fix phone number not showing on client-facing confirmation screen — set correct number 1-(833)-696-4377 in DB directly
+- [x] Fix booked appointment info not showing on confirmation screen after scheduling — InlineScheduler now auto-submits form after booking so confirmation shows immediately

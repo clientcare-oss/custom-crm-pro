@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, name, email, phone, openId FROM users LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, name, email, phone, openId FROM users LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Byron Honea",
+      "email": "clientcare@waypointadvocates.com",
+      "phone": "1-800-555-0100",
+      "openId": "2MHEUL2uW9fjKjubn89JVw"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tphone\topenId\n1\tByron Honea\tclientcare@waypointadvocates.com\t1-800-555-0100\t2MHEUL2uW9fjKjubn89JVw\n",
+  "stderr": "",
+  "execution_time_ms": 574
+}

@@ -615,7 +615,26 @@ export default function DynamicForm() {
                     sessionTypeId={formConfig.sessionTypeId}
                     parentName={`${form.parentFirstName} ${form.parentLastName}`.trim()}
                     parentEmail={form.parentEmail}
-                    onBooked={(date, time) => setBookedSlot({ date, time })}
+                    onBooked={(date, time) => {
+                      setBookedSlot({ date, time });
+                      // Auto-submit the form immediately after booking so confirmation shows right away
+                      if (!isPreview) {
+                        submitMutation.mutate({
+                          slug,
+                          parentFirstName: form.parentFirstName, parentLastName: form.parentLastName,
+                          parentEmail: form.parentEmail, parentPhone: form.parentPhone,
+                          timezone: form.timezone || undefined, bestTimeToCall: form.bestTimeToCall || undefined,
+                          howHeardAboutUs: form.howHeardAboutUs || undefined, referredBy: form.referredBy || undefined,
+                          secondParentName: form.secondParentName || undefined, secondParentPhone: form.secondParentPhone || undefined,
+                          secondParentEmail: form.secondParentEmail || undefined,
+                          studentFirstName: form.studentFirstName, studentLastName: form.studentLastName,
+                          dateOfBirth: form.dateOfBirth || undefined, diagnosis: form.diagnosis || undefined,
+                          schoolName: form.schoolName || undefined, gradeLevel: form.gradeLevel || undefined,
+                          city: form.city || undefined, state: form.state || undefined, zipCode: form.zipCode || undefined,
+                          countyDistrict: form.countyDistrict || undefined, challenges: form.challenges || undefined,
+                        });
+                      }
+                    }}
                     isPreview={isPreview}
                   />
 
