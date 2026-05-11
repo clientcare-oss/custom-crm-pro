@@ -732,6 +732,7 @@ export const appRouter = router({
           location: z.string().optional(),
           videoLink: z.string().optional(),
           parentName: z.string().optional(),
+          parentPhone: z.string().optional(),
           studentName: z.string().optional(),
           status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
         })
@@ -750,6 +751,7 @@ export const appRouter = router({
           location: z.string().optional(),
           videoLink: z.string().optional(),
           parentName: z.string().optional(),
+          parentPhone: z.string().optional(),
           studentName: z.string().optional(),
           status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
         })

@@ -9,14 +9,21 @@ interface Appointment {
   startTime: string | Date;
   endTime: string | Date;
   status: string;
+  description?: string | null;
+  videoLink?: string | null;
+  parentName?: string | null;
+  parentPhone?: string | null;
+  studentName?: string | null;
+  location?: string | null;
 }
 
 interface CalendarViewProps {
   appointments: Appointment[];
   onDateClick?: (date: Date) => void;
+  onEventClick?: (appointment: Appointment) => void;
 }
 
-export default function CalendarView({ appointments, onDateClick }: CalendarViewProps) {
+export default function CalendarView({ appointments, onDateClick, onEventClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();
@@ -53,7 +60,7 @@ export default function CalendarView({ appointments, onDateClick }: CalendarView
     days.push(
       <div
         key={day}
-        className={`h-24 border border-border/30 p-1 cursor-pointer hover:bg-accent/30 transition-colors ${isToday ? "bg-primary/5 border-primary/30" : ""}`}
+        className={`h-24 border border-border/30 p-1 transition-colors ${isToday ? "bg-primary/5 border-primary/30" : "hover:bg-accent/20"}`}
         onClick={() => onDateClick?.(new Date(year, month, day))}
       >
         <span className={`text-xs font-medium ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>
@@ -63,10 +70,12 @@ export default function CalendarView({ appointments, onDateClick }: CalendarView
           {dayAppointments.slice(0, 2).map((apt) => (
             <div
               key={apt.id}
-              className={`text-[10px] px-1 py-0.5 rounded truncate ${
-                apt.status === "Confirmed" ? "bg-green-100 text-green-700" :
-                apt.status === "Cancelled" ? "bg-red-100 text-red-700" :
-                "bg-blue-100 text-blue-700"
+              onClick={(e) => { e.stopPropagation(); onEventClick?.(apt); }}
+              className={`text-[10px] px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
+                apt.status === "Confirmed" ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" :
+                apt.status === "Cancelled" ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" :
+                apt.status === "Completed" ? "bg-gray-100 text-gray-600 dark:bg-gray-800/60 dark:text-gray-300" :
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
               }`}
             >
               {apt.title}

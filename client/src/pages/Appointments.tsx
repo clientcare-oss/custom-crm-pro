@@ -24,6 +24,7 @@ interface Appointment {
   location: string | null;
   videoLink?: string | null;
   parentName?: string | null;
+  parentPhone?: string | null;
   studentName?: string | null;
   status: string;
   ownerId: number;
@@ -210,7 +211,7 @@ export default function Appointments() {
               )}
 
               {/* Participants */}
-              {(selectedApt.parentName || selectedApt.studentName) && (
+              {(selectedApt.parentName || selectedApt.parentPhone || selectedApt.studentName) && (
                 <div className="flex items-start gap-3">
                   <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="text-sm space-y-1">
@@ -218,6 +219,12 @@ export default function Appointments() {
                       <p>
                         <span className="font-medium text-muted-foreground">Parent:</span>{" "}
                         {selectedApt.parentName}
+                      </p>
+                    )}
+                    {selectedApt.parentPhone && (
+                      <p>
+                        <span className="font-medium text-muted-foreground">Parent Phone:</span>{" "}
+                        <a href={`tel:${selectedApt.parentPhone}`} className="text-primary hover:underline">{selectedApt.parentPhone}</a>
                       </p>
                     )}
                     {selectedApt.studentName && (
@@ -455,7 +462,7 @@ export default function Appointments() {
       </div>
 
       {/* ── Calendar View ── */}
-      <CalendarView appointments={appointments as any} />
+      <CalendarView appointments={appointments as any} onEventClick={(apt) => setSelectedApt(apt as Appointment)} />
 
       {/* ── Upcoming Appointments ── */}
       <Card>
