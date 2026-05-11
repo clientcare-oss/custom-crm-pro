@@ -19,16 +19,13 @@ import "@xyflow/react/dist/style.css";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import VoiceInput from "@/components/VoiceInput";
-import { Textarea } from "@/components/ui/textarea";
-import VoiceTextarea from "@/components/VoiceTextarea";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import VoiceInput from "@/components/VoiceInput";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import {
   GitBranch, Plus, Pencil, Trash2, Save, Square, Diamond,
-  StickyNote, ChevronLeft, Loader2
+  StickyNote, Loader2, CheckCircle2, PlusCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -129,6 +126,9 @@ const nodeTypes: NodeTypes = {
 // ─── Empty canvas ─────────────────────────────────────────────────────────────
 const EMPTY_CANVAS = { nodes: [], edges: [] };
 
+// ─── Autosave status type ─────────────────────────────────────────────────────
+type SaveStatus = "saved" | "saving" | "unsaved";
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Workflows() {
   const { user } = useAuth();
@@ -146,12 +146,25 @@ export default function Workflows() {
   // Canvas state
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [isDirty, setIsDirty] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
+
+  // Autosave debounce ref
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectedIdRef = useRef<number | null>(null);
+  selectedIdRef.current = selectedId;
 
   // Node edit dialog
-  const [nodeDialog, setNodeDialog] = useState<{ open: boolean; nodeId: string | null; label: string; notes: string; color: string; type: string }>({
+  const [nodeDialog, setNodeDialog] = useState<{
+    open: boolean;
+    nodeId: string | null;
+    label: string;
+    notes: string;
+    color: string;
+    type: string;
+    nodePosition: { x: number; y: number };
+  }>({
     open: false, nodeId: null, label: "", notes: "", color: "#3b82f6", type: "card",
+    nodePosition: { x: 200, y: 100 },
   });
 
   // Workflow create/edit dialog
@@ -170,17 +183,51 @@ export default function Workflows() {
       setNodes([]);
       setEdges([]);
     }
-    setIsDirty(false);
+    setSaveStatus("saved");
+    // Clear any pending autosave from previous workflow
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
   }, [selectedWorkflow?.id, selectedWorkflow?.canvasData]);
 
-  const onConnect = useCallback((connection: Connection) => {
-    setEdges((eds) => addEdge({ ...connection, animated: true, style: { stroke: "#64748b", strokeWidth: 2 } }, eds));
-    setIsDirty(true);
-  }, [setEdges]);
-
-  function markDirty() { setIsDirty(true); }
-
   // Mutations
+  const saveCanvasMutation = trpc.workflows.saveCanvas.useMutation({
+    onSuccess: () => {
+      if (selectedIdRef.current) utils.workflows.get.invalidate({ id: selectedIdRef.current });
+      setSaveStatus("saved");
+    },
+    onError: () => {
+      setSaveStatus("unsaved");
+      toast.error("Autosave failed — please save manually");
+    },
+  });
+
+  // Trigger autosave after 1.5s of no changes
+  const triggerAutosave = useCallback((currentNodes: Node[], currentEdges: Edge[]) => {
+    if (!selectedIdRef.current) return;
+    setSaveStatus("unsaved");
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      if (!selectedIdRef.current) return;
+      setSaveStatus("saving");
+      saveCanvasMutation.mutate({
+        id: selectedIdRef.current,
+        canvasData: JSON.stringify({ nodes: currentNodes, edges: currentEdges }),
+      });
+    }, 1500);
+  }, [saveCanvasMutation]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
+  }, []);
+
+  const onConnect = useCallback((connection: Connection) => {
+    setEdges((eds) => {
+      const newEdges = addEdge({ ...connection, animated: true, style: { stroke: "#64748b", strokeWidth: 2 } }, eds);
+      triggerAutosave(nodes, newEdges);
+      return newEdges;
+    });
+  }, [setEdges, nodes, triggerAutosave]);
+
   const createMutation = trpc.workflows.create.useMutation({
     onSuccess: (data) => {
       utils.workflows.list.invalidate();
@@ -207,56 +254,101 @@ export default function Workflows() {
     },
     onError: () => toast.error("Failed to delete workflow"),
   });
-  const saveCanvasMutation = trpc.workflows.saveCanvas.useMutation({
-    onSuccess: () => {
-      if (selectedId) utils.workflows.get.invalidate({ id: selectedId });
-      setIsDirty(false);
-      setIsSaving(false);
-      toast.success("Canvas saved");
-    },
-    onError: () => { setIsSaving(false); toast.error("Failed to save canvas"); },
-  });
 
+  // Manual save (still available via button)
   function handleSaveCanvas() {
     if (!selectedId) return;
-    setIsSaving(true);
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    setSaveStatus("saving");
     saveCanvasMutation.mutate({ id: selectedId, canvasData: JSON.stringify({ nodes, edges }) });
   }
 
-  function addNode(type: "card" | "diamond" | "sticky") {
+  function addNode(type: "card" | "diamond" | "sticky", position?: { x: number; y: number }) {
     const id = `node-${Date.now()}`;
     const color = type === "sticky" ? "#f59e0b" : type === "diamond" ? "#ef4444" : "#3b82f6";
+    const pos = position ?? { x: 200 + Math.random() * 100, y: 100 + Math.random() * 100 };
     const newNode: Node = {
       id,
       type,
-      position: { x: 200 + Math.random() * 100, y: 100 + Math.random() * 100 },
+      position: pos,
       data: { label: type === "diamond" ? "Decision?" : type === "sticky" ? "Note..." : "Step", notes: "", color },
     };
-    setNodes((nds) => [...nds, newNode]);
-    setIsDirty(true);
+    setNodes((nds) => {
+      const updated = [...nds, newNode];
+      triggerAutosave(updated, edges);
+      return updated;
+    });
+    return { id, newNode };
+  }
+
+  /** Add a card directly below the currently-edited node and connect them */
+  function addCardBelow() {
+    if (!nodeDialog.nodeId) return;
+    const parentPos = nodeDialog.nodePosition;
+    const newPos = { x: parentPos.x, y: parentPos.y + 160 };
+    const newId = `node-${Date.now()}`;
+    const newNode: Node = {
+      id: newId,
+      type: "card",
+      position: newPos,
+      data: { label: "Step", notes: "", color: nodeDialog.color },
+    };
+    const newEdge: Edge = {
+      id: `edge-${Date.now()}`,
+      source: nodeDialog.nodeId,
+      target: newId,
+      animated: true,
+      style: { stroke: "#64748b", strokeWidth: 2 },
+    };
+    setNodes((nds) => {
+      const updated = [...nds, newNode];
+      setEdges((eds) => {
+        const updatedEdges = [...eds, newEdge];
+        triggerAutosave(updated, updatedEdges);
+        return updatedEdges;
+      });
+      return updated;
+    });
+    setNodeDialog((d) => ({ ...d, open: false }));
+    toast.success("Card added below");
   }
 
   function deleteSelected() {
-    setNodes((nds) => nds.filter((n) => !n.selected));
-    setEdges((eds) => eds.filter((e) => !e.selected));
-    setIsDirty(true);
+    setNodes((nds) => {
+      const updated = nds.filter((n) => !n.selected);
+      setEdges((eds) => {
+        const updatedEdges = eds.filter((e) => !e.selected);
+        triggerAutosave(updated, updatedEdges);
+        return updatedEdges;
+      });
+      return updated;
+    });
   }
 
   function onNodeDoubleClick(_: React.MouseEvent, node: Node) {
     if (!isAdmin) return;
     const d = node.data as { label: string; notes?: string; color: string };
-    setNodeDialog({ open: true, nodeId: node.id, label: d.label, notes: d.notes ?? "", color: d.color, type: node.type ?? "card" });
+    setNodeDialog({
+      open: true,
+      nodeId: node.id,
+      label: d.label,
+      notes: d.notes ?? "",
+      color: d.color,
+      type: node.type ?? "card",
+      nodePosition: node.position,
+    });
   }
 
   function saveNodeEdit() {
-    setNodes((nds) =>
-      nds.map((n) =>
+    setNodes((nds) => {
+      const updated = nds.map((n) =>
         n.id === nodeDialog.nodeId
           ? { ...n, data: { ...n.data, label: nodeDialog.label, notes: nodeDialog.notes, color: nodeDialog.color } }
           : n
-      )
-    );
-    setIsDirty(true);
+      );
+      triggerAutosave(updated, edges);
+      return updated;
+    });
     setNodeDialog((d) => ({ ...d, open: false }));
   }
 
@@ -288,6 +380,33 @@ export default function Workflows() {
   }
 
   const selectedWfMeta = workflows.find((w) => w.id === selectedId);
+
+  // Save status indicator
+  const SaveIndicator = () => {
+    if (saveStatus === "saving") {
+      return (
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" /> Saving…
+        </span>
+      );
+    }
+    if (saveStatus === "unsaved") {
+      return (
+        <button
+          onClick={handleSaveCanvas}
+          className="flex items-center gap-1 text-xs text-amber-500 hover:text-amber-600 font-medium"
+          title="Click to save now"
+        >
+          <Save className="h-3 w-3" /> Unsaved
+        </button>
+      );
+    }
+    return (
+      <span className="flex items-center gap-1 text-xs text-emerald-500">
+        <CheckCircle2 className="h-3 w-3" /> Saved
+      </span>
+    );
+  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
@@ -374,21 +493,14 @@ export default function Workflows() {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-7 gap-1 text-xs"
-                    onClick={handleSaveCanvas}
-                    disabled={!isDirty || isSaving}
-                  >
-                    {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                    {isDirty ? "Save*" : "Saved"}
-                  </Button>
-                  <Button
-                    size="sm"
                     variant="outline"
                     className="h-7 gap-1 text-xs text-destructive"
                     onClick={() => { if (confirm("Delete this workflow?")) deleteMutation.mutate({ id: selectedId }); }}
                   >
                     <Trash2 className="h-3 w-3" /> Delete Workflow
                   </Button>
+                  {/* Autosave status */}
+                  <SaveIndicator />
                 </div>
               )}
             </div>
@@ -398,8 +510,25 @@ export default function Workflows() {
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
-                onNodesChange={(changes) => { onNodesChange(changes); if (changes.some(c => c.type !== "select")) markDirty(); }}
-                onEdgesChange={(changes) => { onEdgesChange(changes); if (changes.some(c => c.type !== "select")) markDirty(); }}
+                onNodesChange={(changes) => {
+                  onNodesChange(changes);
+                  // Only trigger autosave on position/data changes, not selection
+                  if (changes.some(c => c.type !== "select")) {
+                    setNodes((nds) => {
+                      triggerAutosave(nds, edges);
+                      return nds;
+                    });
+                  }
+                }}
+                onEdgesChange={(changes) => {
+                  onEdgesChange(changes);
+                  if (changes.some(c => c.type !== "select")) {
+                    setEdges((eds) => {
+                      triggerAutosave(nodes, eds);
+                      return eds;
+                    });
+                  }
+                }}
                 onConnect={onConnect}
                 onNodeDoubleClick={onNodeDoubleClick}
                 nodeTypes={nodeTypes}
@@ -473,7 +602,19 @@ export default function Workflows() {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {/* Add Card Below — only for card/sticky nodes */}
+            {nodeDialog.type !== "diamond" && (
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-1.5 text-xs sm:mr-auto"
+                onClick={addCardBelow}
+              >
+                <PlusCircle className="h-3.5 w-3.5" />
+                Add Card Below
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setNodeDialog((d) => ({ ...d, open: false }))}>Cancel</Button>
             <Button onClick={saveNodeEdit}>Apply</Button>
           </DialogFooter>
