@@ -40,6 +40,7 @@ import DynamicForm from "./pages/DynamicForm";
 import AiConnections from "./pages/AiConnections";
 import BillGuardian from "./pages/BillGuardian";
 import PageIdShowcase from "./pages/PageIdShowcase";
+import PortalBook from "./pages/PortalBook";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -57,6 +58,13 @@ function Router() {
   // Authenticated routes
   if (user) {
     // Public pages accessible even when logged in (no dashboard layout)
+    if (window.location.pathname === '/portal/book') {
+      return (
+        <Switch>
+          <Route path="/portal/book" component={PortalBook} />
+        </Switch>
+      );
+    }
     if (window.location.pathname === '/intake' || window.location.pathname.startsWith('/form/')) {
       // Redirect /intake to /form/public-intake-form so it uses DynamicForm with the inline scheduler
       if (window.location.pathname === '/intake') {

@@ -376,7 +376,7 @@ export default function ClientPortal() {
               )}
             </button>
             <Button
-              onClick={() => setShowMeetingScheduler(true)}
+              onClick={() => setLocation("/portal/book")}
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md"
             >
               <Calendar className="h-4 w-4" />

@@ -846,3 +846,11 @@
 - [x] Fix webhook handler to support voicemail.transcription.completed and all Quo event types
 - [x] Add raw webhook event logging to DB for debugging
 - [x] Add Quo Settings panel in Call Logs sidebar with: event type toggles, auto-assign rules, test webhook button, raw event log viewer
+
+## Portal Booking Page
+- [x] Fix "no sessions available" in portal — ensure sessionTypes.listAll uses owner ID not portal user ID
+- [x] Replace Schedule Meeting popup/modal with a dedicated portal page /portal/book
+- [x] Show clickable session type blocks (like student selector) on /portal/book
+- [x] Show full calendar scheduler (date/time picker) after selecting a session type
+- [x] Show confirmation screen after booking with appointment details
+- [x] Wire "Schedule Meeting" button in portal to navigate to /portal/book
