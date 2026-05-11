@@ -65,6 +65,33 @@ export default function Appointments() {
     setIsEditingApt(true);
   };
 
+  // Auto-fill parent/student info from selected contact
+  const autoFillFromContact = (contactId: string, setter: (fn: (prev: any) => any) => void) => {
+    const id = parseInt(contactId);
+    const contact = (contacts as any[]).find((c: any) => c.id === id);
+    if (!contact) return;
+    const isStudent = contact.jobTitle === 'Student';
+    if (isStudent) {
+      // Student selected: fill student name, then find parent for parent fields
+      const parent = contact.parentContactId
+        ? (contacts as any[]).find((c: any) => c.id === contact.parentContactId)
+        : null;
+      setter((prev: any) => ({
+        ...prev,
+        studentName: `${contact.firstName} ${contact.lastName}`,
+        parentName: parent ? `${parent.firstName} ${parent.lastName}` : prev.parentName,
+        parentPhone: parent ? (parent.phone || '') : prev.parentPhone,
+      }));
+    } else {
+      // Parent/contact selected: fill parent fields
+      setter((prev: any) => ({
+        ...prev,
+        parentName: `${contact.firstName} ${contact.lastName}`,
+        parentPhone: contact.phone || '',
+      }));
+    }
+  };
+
   const handleSaveEdit = () => {
     if (!selectedApt || !editAptData) return;
     if (!editAptData.title || !editAptData.startTime || !editAptData.endTime) {
@@ -258,6 +285,21 @@ export default function Appointments() {
               {isEditingApt && editAptData ? (
                 /* ── Edit Form ── */
                 <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Auto-fill from Contact</label>
+                    <Select onValueChange={(v) => autoFillFromContact(v, setEditAptData)}>
+                      <SelectTrigger className="mt-1 h-8 text-xs">
+                        <SelectValue placeholder="Pick a contact to auto-fill parent/student…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(contacts as any[]).map((c: any) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.firstName} {c.lastName}{c.jobTitle === 'Student' ? ' (Student)' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Title *</label>
                     <VoiceInput
@@ -491,7 +533,10 @@ export default function Appointments() {
             <div className="space-y-4 mt-4">
               <div>
                 <label className="text-sm font-medium">Client *</label>
-                <Select value={formData.clientId} onValueChange={(v) => setFormData({ ...formData, clientId: v })}>
+                <Select value={formData.clientId} onValueChange={(v) => {
+                  setFormData(prev => ({ ...prev, clientId: v }));
+                  autoFillFromContact(v, setFormData);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
