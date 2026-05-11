@@ -339,34 +339,39 @@ export default function LeadForms() {
       <Collapsible open={confirmationOpen} onOpenChange={setConfirmationOpen}>
         <Card className="border-border/60 border-l-4 border-l-purple-500">
           <CardHeader className="pb-0">
-            <CollapsibleTrigger asChild>
-              <button className="flex items-center justify-between w-full text-left">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+            <div className="flex items-center justify-between w-full">
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-3 text-left flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
                     <Sparkles className="w-5 h-5 text-purple-500" />
                   </div>
                   <div>
                     <CardTitle className="text-sm font-semibold">Customize Confirmation Page</CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">What families see after submitting the intake form</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5 text-xs"
-                    onClick={(e) => { e.stopPropagation(); window.open(`${intakeUrl}?preview=true&confirmed=true`, "_blank"); }}
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    Preview
-                  </Button>
-                  {confirmationOpen
-                    ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                    : <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  }
-                </div>
-              </button>
-            </CollapsibleTrigger>
+                </button>
+              </CollapsibleTrigger>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  className="gap-1.5 text-xs"
+                  onClick={(e) => { e.stopPropagation(); window.open(`${intakeUrl}?preview=true&confirmed=true`, "_blank"); }}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
+                </Button>
+                <CollapsibleTrigger asChild>
+                  <button type="button" className="p-1 rounded hover:bg-muted/50 transition-colors">
+                    {confirmationOpen
+                      ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                      : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    }
+                  </button>
+                </CollapsibleTrigger>
+              </div>
+            </div>
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="pt-4 space-y-5">
