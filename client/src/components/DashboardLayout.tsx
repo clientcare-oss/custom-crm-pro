@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Droplets, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -264,20 +264,26 @@ function DashboardLayoutContent({
                 Quick Setup
               </span>
             </button>
-            {/* Theme toggle */}
+            {/* Theme toggle — cycles light → dark → blue */}
             <button
               onClick={toggleTheme}
               className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Toggle theme"
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={
+                theme === 'light' ? 'Switch to dark mode' :
+                theme === 'dark' ? 'Switch to blue mode' :
+                'Switch to light mode'
+              }
             >
               {theme === 'dark' ? (
+                <Droplets className="h-4 w-4 text-blue-400 shrink-0" />
+              ) : theme === 'blue' ? (
                 <Sun className="h-4 w-4 text-amber-400 shrink-0" />
               ) : (
                 <Moon className="h-4 w-4 text-slate-500 shrink-0" />
               )}
               <span className="text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
-                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                {theme === 'light' ? 'Dark mode' : theme === 'dark' ? 'Blue mode' : 'Light mode'}
               </span>
             </button>
             <DropdownMenu>

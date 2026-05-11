@@ -862,3 +862,6 @@
 
 ## Portal Book Theme
 - [x] Apply dark blue navy theme to /portal/book (session type selector + calendar) matching the /book page style
+
+## Blue Theme Option
+- [x] Add "blue" as a third theme option in the theme switcher (alongside dark/light) with navy blue CSS variables
