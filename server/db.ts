@@ -1325,3 +1325,15 @@ export async function updateOwnerPhone(openId: string, phone: string) {
     .set({ phone: phone || null })
     .where(eq(users.openId, openId));
 }
+export async function updateOwnerQuoSecret(openId: string, secret: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(users)
+    .set({ quoWebhookSecret: secret || null })
+    .where(eq(users.openId, openId));
+}
+export async function getOwnerQuoSecret(openId: string): Promise<string | null> {
+  const owner = await getUserByOpenId(openId);
+  return owner?.quoWebhookSecret ?? null;
+}

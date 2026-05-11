@@ -6,6 +6,7 @@
 import { Router, raw } from "express";
 import crypto from "crypto";
 import * as db from "./db";
+import { ENV } from "./_core/env";
 
 // Normalize a phone number to digits only for matching
 function normalizePhone(phone: string): string {
@@ -40,7 +41,9 @@ export function registerQuoWebhookRoutes(app: Router) {
     raw({ type: "application/json" }),
     async (req, res) => {
       const sigHeader = req.headers["x-openphone-signature"] as string | undefined;
-      const webhookSecret = process.env.QUO_WEBHOOK_SECRET;
+      // Read secret from DB first (set via Integrations page), fall back to env var
+      const dbSecret = await db.getOwnerQuoSecret(ENV.ownerOpenId).catch(() => null);
+      const webhookSecret = dbSecret || process.env.QUO_WEBHOOK_SECRET;
 
       // Verify HMAC-SHA256 signature if secret is configured
       if (webhookSecret && sigHeader) {

@@ -288,6 +288,13 @@
       "when": 1778461762697,
       "tag": "0040_premium_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1778468670200,
+      "tag": "0041_fat_wolfsbane",
+      "breakpoints": true
     }
   ]
 }

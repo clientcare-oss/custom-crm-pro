@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `quoWebhookSecret` varchar(255);

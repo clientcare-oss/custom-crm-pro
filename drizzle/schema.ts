@@ -27,6 +27,7 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   phone: varchar("phone", { length: 50 }),  // business phone (supports 1-800 toll-free numbers)
+  quoWebhookSecret: varchar("quoWebhookSecret", { length: 255 }),  // Quo (OpenPhone) webhook signing secret
 });
 
 export type User = typeof users.$inferSelect;

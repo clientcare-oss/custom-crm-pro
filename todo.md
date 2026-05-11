@@ -834,3 +834,9 @@
 - [x] Fix phone number not showing on client-facing confirmation screen — set correct number 1-(833)-696-4377 in DB directly
 - [x] Fix booked appointment info not showing on confirmation screen after scheduling — InlineScheduler now auto-submits form after booking so confirmation shows immediately
 - [x] Show appointment details (date, time, session type name) on DynamicForm confirmation screen
+
+## Quo Integration — Full Functionality
+- [x] Add QUO_WEBHOOK_SECRET input field directly in Integrations page (no need to find hidden Secrets panel)
+- [x] Add server procedure to save/get QUO_WEBHOOK_SECRET from DB settings table
+- [x] Show webhook status (configured / not configured) on Integrations page
+- [x] Update setup instructions to reflect in-app secret entry

@@ -29,6 +29,20 @@ export const systemRouter = router({
       return { success: true };
     }),
 
+  // Get whether Quo webhook secret is configured (returns status only, not the secret)
+  getQuoStatus: adminProcedure.query(async () => {
+    const secret = await db.getOwnerQuoSecret(ENV.ownerOpenId);
+    return { configured: !!secret };
+  }),
+
+  // Save the Quo webhook signing secret into the DB
+  setQuoSecret: adminProcedure
+    .input(z.object({ secret: z.string().max(512) }))
+    .mutation(async ({ input }) => {
+      await db.updateOwnerQuoSecret(ENV.ownerOpenId, input.secret || null);
+      return { success: true };
+    }),
+
   notifyOwner: adminProcedure
     .input(
       z.object({
