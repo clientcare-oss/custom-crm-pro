@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type Theme = "light" | "dark" | "blue";
+export type Theme = "light" | "dark" | "blue" | "navy";
 
 interface ThemeContextType {
   theme: Theme;
@@ -17,7 +17,7 @@ interface ThemeProviderProps {
   switchable?: boolean;
 }
 
-const THEME_CYCLE: Theme[] = ["light", "dark", "blue"];
+const THEME_CYCLE: Theme[] = ["light", "dark", "blue", "navy"];
 
 export function ThemeProvider({
   children,
@@ -34,11 +34,13 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("dark", "blue");
+    root.classList.remove("dark", "blue", "navy");
     if (theme === "dark") {
       root.classList.add("dark");
     } else if (theme === "blue") {
       root.classList.add("blue");
+    } else if (theme === "navy") {
+      root.classList.add("navy");
     }
     if (switchable) {
       localStorage.setItem("theme", theme);

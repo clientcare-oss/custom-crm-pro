@@ -264,7 +264,7 @@ function DashboardLayoutContent({
                 Quick Setup
               </span>
             </button>
-            {/* Theme toggle — cycles light → dark → blue */}
+            {/* Theme toggle — cycles light → dark → blue → navy */}
             <button
               onClick={toggleTheme}
               className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -272,18 +272,24 @@ function DashboardLayoutContent({
               title={
                 theme === 'light' ? 'Switch to dark mode' :
                 theme === 'dark' ? 'Switch to blue mode' :
+                theme === 'blue' ? 'Switch to navy mode' :
                 'Switch to light mode'
               }
             >
-              {theme === 'dark' ? (
+              {theme === 'light' ? (
+                <Moon className="h-4 w-4 text-slate-500 shrink-0" />
+              ) : theme === 'dark' ? (
                 <Droplets className="h-4 w-4 text-blue-400 shrink-0" />
               ) : theme === 'blue' ? (
-                <Sun className="h-4 w-4 text-amber-400 shrink-0" />
+                <Droplets className="h-4 w-4 text-indigo-400 shrink-0" />
               ) : (
-                <Moon className="h-4 w-4 text-slate-500 shrink-0" />
+                <Sun className="h-4 w-4 text-amber-400 shrink-0" />
               )}
               <span className="text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
-                {theme === 'light' ? 'Dark mode' : theme === 'dark' ? 'Blue mode' : 'Light mode'}
+                {theme === 'light' ? 'Dark mode' :
+                 theme === 'dark' ? 'Blue mode' :
+                 theme === 'blue' ? 'Navy mode' :
+                 'Light mode'}
               </span>
             </button>
             <DropdownMenu>
