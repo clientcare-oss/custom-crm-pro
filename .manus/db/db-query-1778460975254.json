@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, name, duration, durationUnit, weeklyHours, customIncrements FROM sessionTypes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, name, duration, durationUnit, weeklyHours, customIncrements FROM sessionTypes;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "1:1 with advocate",
+      "duration": "60",
+      "durationUnit": "minutes",
+      "weeklyHours": "{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}",
+      "customIncrements": "15"
+    },
+    {
+      "id": "30001",
+      "name": "IEP Meeting",
+      "duration": "3",
+      "durationUnit": "hours",
+      "weeklyHours": "{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}",
+      "customIncrements": "15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tduration\tdurationUnit\tweeklyHours\tcustomIncrements\n1\t1:1 with advocate\t60\tminutes\t{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}\t15\n30001\tIEP Meeting\t3\thours\t{\"mon\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"tue\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"wed\":[],\"thu\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"fri\":[{\"start\":\"08:00\",\"end\":\"17:00\"}],\"sat\":[],\"sun\":[]}\t15\n",
+  "stderr": "",
+  "execution_time_ms": 645
+}

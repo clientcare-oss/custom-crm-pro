@@ -224,7 +224,7 @@ function SessionCard({
         <button
           className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           title="Preview"
-          onClick={() => window.open(`/book?session=${session.id}&preview=true`, "_blank")}
+          onClick={() => window.open(`/book?session=${session.id}`, "_blank")}
         >
           <Eye className="h-3.5 w-3.5" />
         </button>

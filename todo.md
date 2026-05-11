@@ -793,3 +793,9 @@
 - [x] Rewrite BookingPage.tsx (/book route) to use InlineScheduler widget with dark theme (matching the intake form widget)
 - [x] Support ?session=ID on /book to pre-select a session type directly
 - [x] Update Scheduler.tsx copy/preview link buttons to use the new /book page with InlineScheduler (already use /book?session=ID format — now shows InlineScheduler widget)
+
+## Scheduler Availability — Fix Inconsistent Slot Display
+- [x] Remove ?preview=true from "View Live Scheduler" button URL so real availability always loads (not fake preview slots)
+- [x] Fix InlineScheduler: when opened via admin View Live Scheduler, always fetch real slots regardless of preview param
+- [x] Investigate why weeklyHours config may be missing/empty causing no slots to show on some days — Wednesday is intentionally empty in session type config
+- [x] Add admin-only "preview=false" override so admin can always see real availability — fixed by removing preview=true from URL
