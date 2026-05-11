@@ -824,3 +824,7 @@
 - [x] Move business phone number edit field into the admin "Customize Confirmation" block on PG-012 Lead Forms (not on the client-facing confirmation screen)
 - [x] Client-facing confirmation screen: show the phone number read-only (no pencil/edit button, no inline edit)
 - [x] Admin Customize Confirmation block: add a "Business Phone" input field that saves via setBusinessPhone procedure
+
+## Confirmation Screen — Display Fixes
+- [x] Fix body text rendering: split on semicolons and newlines so each bullet point shows on its own line (not a wall of text)
+- [x] Fix phone number not showing below the amber "save our number" box on the client confirmation screen

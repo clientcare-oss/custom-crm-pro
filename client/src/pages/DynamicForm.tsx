@@ -79,7 +79,7 @@ export default function DynamicForm() {
   const [bookedSlot, setBookedSlot] = useState<{ date: string; time: string } | null>(null);
   const [copiedCaseId, setCopiedCaseId] = useState(false);
 
-  const { data: businessPhoneData } = trpc.system.getBusinessPhone.useQuery(undefined, { enabled: submitted });
+  const { data: businessPhoneData } = trpc.system.getBusinessPhone.useQuery(undefined, { enabled: true });
   const [businessPhone, setBusinessPhone] = useState("");
 
   // Sync phone from server when available
@@ -240,7 +240,12 @@ export default function DynamicForm() {
 
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">{confHeadline}</h1>
-            <p className="text-slate-300 text-lg">{confBody}</p>
+            <div className="text-slate-300 text-base space-y-2 text-left">
+              {confBody.split(/;|\n/).map((line: string, i: number) => {
+                const trimmed = line.trim();
+                return trimmed ? <p key={i} className="leading-relaxed">{trimmed}</p> : null;
+              })}
+            </div>
           </div>
 
           {/* Case ID card */}
