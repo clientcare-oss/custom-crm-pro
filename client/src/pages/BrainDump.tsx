@@ -584,6 +584,8 @@ export default function BrainDump() {
     },
   });
 
+  const captureMimeTypeRef = useRef<string>("audio/webm");
+
   const startCaptureRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -592,25 +594,24 @@ export default function BrainDump() {
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      captureMimeTypeRef.current = mimeType;
       const recorder = new MediaRecorder(stream, { mimeType });
       captureMediaRecorderRef.current = recorder;
       recorder.ondataavailable = (e) => { if (e.data.size > 0) captureChunksRef.current.push(e.data); };
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         captureStreamRef.current = null;
-        const blob = new Blob(captureChunksRef.current, { type: mimeType });
+        const blob = new Blob(captureChunksRef.current, { type: captureMimeTypeRef.current });
         if (blob.size === 0) { toast.error("No audio captured."); setCaptureVoiceState("idle"); return; }
         setCaptureVoiceState("uploading");
         try {
-          const formData = new FormData();
-          const ext = mimeType.includes("webm") ? "webm" : "mp4";
-          formData.append("audio", blob, `voice_${Date.now()}.${ext}`);
-          const uploadRes = await fetch("/api/voice/upload", { method: "POST", body: formData, credentials: "include" });
-          if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.statusText}`);
-          const { url } = (await uploadRes.json()) as { url: string };
-          await captureTranscribeMutation.mutateAsync({ audioUrl: url });
+          const arrayBuffer = await blob.arrayBuffer();
+          const base64 = btoa(
+            new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+          );
+          await captureTranscribeMutation.mutateAsync({ audioBase64: base64, mimeType: captureMimeTypeRef.current });
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Audio upload failed");
+          toast.error(err instanceof Error ? err.message : "Transcription failed");
           setCaptureVoiceState("idle");
         }
       };

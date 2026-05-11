@@ -30,6 +30,7 @@ const VoiceTextarea = forwardRef<HTMLTextAreaElement, VoiceTextareaProps>(
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const streamRef = useRef<MediaStream | null>(null);
+    const mimeTypeRef = useRef<string>("audio/webm");
 
     const transcribeMutation = trpc.voice.transcribe.useMutation({
       onSuccess: (data) => {
@@ -63,6 +64,7 @@ const VoiceTextarea = forwardRef<HTMLTextAreaElement, VoiceTextareaProps>(
           : MediaRecorder.isTypeSupported("audio/webm")
           ? "audio/webm"
           : "audio/mp4";
+        mimeTypeRef.current = mimeType;
 
         const recorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = recorder;
@@ -76,7 +78,7 @@ const VoiceTextarea = forwardRef<HTMLTextAreaElement, VoiceTextareaProps>(
           stream.getTracks().forEach((t) => t.stop());
           streamRef.current = null;
 
-          const blob = new Blob(chunksRef.current, { type: mimeType });
+          const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current });
           if (blob.size === 0) {
             toast.error("No audio captured. Please try again.");
             setRecordingState("idle");
@@ -85,27 +87,19 @@ const VoiceTextarea = forwardRef<HTMLTextAreaElement, VoiceTextareaProps>(
 
           setRecordingState("uploading");
 
-          // Upload to storage via fetch → server endpoint
+          // Convert blob to base64 and send directly to tRPC — no S3 needed
           try {
-            const formData = new FormData();
-            const ext = mimeType.includes("webm") ? "webm" : "mp4";
-            formData.append("audio", blob, `voice_${Date.now()}.${ext}`);
-
-            const uploadRes = await fetch("/api/voice/upload", {
-              method: "POST",
-              body: formData,
-              credentials: "include",
+            const arrayBuffer = await blob.arrayBuffer();
+            const base64 = btoa(
+              new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+            );
+            await transcribeMutation.mutateAsync({
+              audioBase64: base64,
+              mimeType: mimeTypeRef.current,
             });
-
-            if (!uploadRes.ok) {
-              throw new Error(`Upload failed: ${uploadRes.statusText}`);
-            }
-
-            const { url } = (await uploadRes.json()) as { url: string };
-            await transcribeMutation.mutateAsync({ audioUrl: url });
           } catch (err) {
             toast.error(
-              err instanceof Error ? err.message : "Audio upload failed"
+              err instanceof Error ? err.message : "Transcription failed"
             );
             setRecordingState("idle");
           }
