@@ -151,7 +151,7 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme, toggleTheme } = useTheme();
   const { projectLabel, projectIconKey } = useTerminology();
   const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
   const menuItems = buildMenuItems(projectLabel, projectIcon);
@@ -264,33 +264,41 @@ function DashboardLayoutContent({
                 Quick Setup
               </span>
             </button>
-            {/* Theme toggle — cycles light → dark → blue → navy */}
+            {/* Theme selector — 4 buttons side by side */}
+            <div className="group-data-[collapsible=icon]:hidden">
+              <div className="flex items-center gap-1 w-full">
+                {([
+                  { value: 'light', icon: Sun, label: 'Light', iconClass: 'text-amber-500' },
+                  { value: 'dark', icon: Moon, label: 'Dark', iconClass: 'text-slate-400' },
+                  { value: 'blue', icon: Droplets, label: 'Blue', iconClass: 'text-blue-400' },
+                  { value: 'navy', icon: Droplets, label: 'Navy', iconClass: 'text-indigo-400' },
+                ] as const).map(({ value, icon: Icon, label, iconClass }) => (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    title={`Switch to ${label} mode`}
+                    className={`flex-1 flex flex-col items-center gap-1 py-1.5 rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      theme === value
+                        ? 'bg-accent text-accent-foreground ring-1 ring-border'
+                        : 'hover:bg-accent/40 text-muted-foreground'
+                    }`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${theme === value ? iconClass : ''}`} />
+                    <span className="text-[10px] font-medium leading-none">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Collapsed sidebar: single cycle button */}
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="hidden group-data-[collapsible=icon]:flex items-center justify-center rounded-lg p-2 hover:bg-accent/50 transition-colors w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Toggle theme"
-              title={
-                theme === 'light' ? 'Switch to dark mode' :
-                theme === 'dark' ? 'Switch to blue mode' :
-                theme === 'blue' ? 'Switch to navy mode' :
-                'Switch to light mode'
-              }
             >
-              {theme === 'light' ? (
-                <Moon className="h-4 w-4 text-slate-500 shrink-0" />
-              ) : theme === 'dark' ? (
-                <Droplets className="h-4 w-4 text-blue-400 shrink-0" />
-              ) : theme === 'blue' ? (
-                <Droplets className="h-4 w-4 text-indigo-400 shrink-0" />
-              ) : (
-                <Sun className="h-4 w-4 text-amber-400 shrink-0" />
-              )}
-              <span className="text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
-                {theme === 'light' ? 'Dark mode' :
-                 theme === 'dark' ? 'Blue mode' :
-                 theme === 'blue' ? 'Navy mode' :
-                 'Light mode'}
-              </span>
+              {theme === 'light' ? <Moon className="h-4 w-4 text-slate-500" /> :
+               theme === 'dark' ? <Droplets className="h-4 w-4 text-blue-400" /> :
+               theme === 'blue' ? <Droplets className="h-4 w-4 text-indigo-400" /> :
+               <Sun className="h-4 w-4 text-amber-400" />}
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
