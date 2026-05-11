@@ -3596,6 +3596,7 @@ export const appRouter = router({
         saveOurNumberMessage: z.string().optional(),
         confirmationImageKey: z.string().optional().nullable(),
         confirmationImageUrl: z.string().optional().nullable(),
+        confirmationHeadlineAlign: z.enum(["left", "center"]).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, fields, customLabels, sessionTypeId, ...rest } = input;

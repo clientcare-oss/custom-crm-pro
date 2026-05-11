@@ -3,7 +3,7 @@ import {
   ClipboardList, Copy, ExternalLink, Eye, CheckCircle2, Users, GraduationCap,
   Link2, Zap, Globe, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar,
   MoreHorizontal, Hash, ImagePlus, Save, Sparkles, Phone, MessageSquare, X,
-  Upload, ChevronDown, ChevronUp
+  Upload, ChevronDown, ChevronUp, AlignCenter, AlignLeft
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ export default function LeadForms() {
   const [confImageKey, setConfImageKey] = useState<string | null>(null);
   const [confSaving, setConfSaving] = useState(false);
   const [confImageUploading, setConfImageUploading] = useState(false);
+  const [confHeadlineAlign, setConfHeadlineAlign] = useState<"left" | "center">("left");
   const imageInputRef = useRef<HTMLInputElement>(null);
   // Business phone number (shown on confirmation screen)
   const [businessPhone, setBusinessPhone] = useState("");
@@ -71,6 +72,7 @@ export default function LeadForms() {
       setConfPhone((publicIntakeForm as any).saveOurNumberMessage ?? "");
       setConfImageUrl((publicIntakeForm as any).confirmationImageUrl ?? null);
       setConfImageKey((publicIntakeForm as any).confirmationImageKey ?? null);
+      setConfHeadlineAlign(((publicIntakeForm as any).confirmationHeadlineAlign as "left" | "center") ?? "left");
       setConfInitialized(true);
     }
   }, [publicIntakeForm, confInitialized]);
@@ -136,6 +138,7 @@ export default function LeadForms() {
       saveOurNumberMessage: confPhone || undefined,
       confirmationImageKey: confImageKey,
       confirmationImageUrl: confImageUrl,
+      confirmationHeadlineAlign: confHeadlineAlign,
     });
   };
 
@@ -390,6 +393,21 @@ export default function LeadForms() {
                       maxLength={200}
                       className="text-sm"
                     />
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setConfHeadlineAlign(confHeadlineAlign === "center" ? "left" : "center")}
+                        className={`flex items-center gap-1.5 text-[11px] px-2 py-1 rounded border transition-colors ${
+                          confHeadlineAlign === "center"
+                            ? "bg-purple-500/20 border-purple-400/50 text-purple-300"
+                            : "bg-muted/40 border-border/50 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {confHeadlineAlign === "center" ? <AlignCenter className="w-3 h-3" /> : <AlignLeft className="w-3 h-3" />}
+                        {confHeadlineAlign === "center" ? "Centered" : "Left-aligned"}
+                      </button>
+                      <span className="text-[10px] text-muted-foreground">Click to toggle headline alignment</span>
+                    </div>
                     <p className="text-[10px] text-muted-foreground">Leave blank to use the default "Thank You!" heading</p>
                   </div>
 

@@ -235,6 +235,7 @@ export default function DynamicForm() {
     const confBody = (formConfig as any)?.confirmationBody || "Your information has been submitted successfully.";
     const confPhone = (formConfig as any)?.saveOurNumberMessage || "Remember to save our number!";
     const confImageUrl = (formConfig as any)?.confirmationImageUrl;
+    const headlineAlign = ((formConfig as any)?.confirmationHeadlineAlign as "left" | "center") || "left";
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <div className="max-w-lg w-full text-center space-y-6">
@@ -245,9 +246,9 @@ export default function DynamicForm() {
             </div>
           </div>
 
-          <div>
+          <div className={headlineAlign === "center" ? "text-center" : "text-left"}>
             <h1 className="text-3xl font-bold text-white mb-2">{confHeadline}</h1>
-            <div className="text-slate-300 text-base space-y-2 text-left">
+            <div className="text-slate-300 text-base space-y-2">
               {confBody.split(/;|\n/).map((line: string, i: number) => {
                 const trimmed = line.trim();
                 return trimmed ? <p key={i} className="leading-relaxed">{trimmed}</p> : null;

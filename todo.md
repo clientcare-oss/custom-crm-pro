@@ -854,3 +854,8 @@
 - [x] Show full calendar scheduler (date/time picker) after selecting a session type
 - [x] Show confirmation screen after booking with appointment details
 - [x] Wire "Schedule Meeting" button in portal to navigate to /portal/book
+
+## PG-012 Confirmation Page Fixes
+- [x] Fix phone number not saving in Customize Confirmation block (LeadForms admin)
+- [x] Add center-text alignment toggle for the large confirmation headline
+- [x] Fix phone number not displaying on the DynamicForm confirmation screen
