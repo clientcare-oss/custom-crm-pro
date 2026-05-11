@@ -730,13 +730,15 @@ export const appRouter = router({
           startTime: z.date(),
           endTime: z.date(),
           location: z.string().optional(),
+          videoLink: z.string().optional(),
+          parentName: z.string().optional(),
+          studentName: z.string().optional(),
           status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         return await db.createAppointment(input, ctx.user.id);
       }),
-
     update: adminProcedure
       .input(
         z.object({
@@ -746,6 +748,9 @@ export const appRouter = router({
           startTime: z.date().optional(),
           endTime: z.date().optional(),
           location: z.string().optional(),
+          videoLink: z.string().optional(),
+          parentName: z.string().optional(),
+          studentName: z.string().optional(),
           status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
         })
       )

@@ -274,6 +274,9 @@ export const appointments = mysqlTable("appointments", {
   startTime: datetime("startTime").notNull(),
   endTime: datetime("endTime").notNull(),
   location: varchar("location", { length: 255 }),
+  videoLink: varchar("videoLink", { length: 512 }),
+  parentName: varchar("parentName", { length: 255 }),
+  studentName: varchar("studentName", { length: 255 }),
   status: mysqlEnum("status", [
     "Scheduled",
     "Confirmed",
