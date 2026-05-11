@@ -152,19 +152,19 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                 </p>
                 {entry.currentStatus && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1">Status</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 navy:text-blue-300 mb-1">Status</p>
                     <p className="text-sm text-foreground">{entry.currentStatus}</p>
                   </div>
                 )}
                 {entry.nextStep && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Next Step</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 navy:text-emerald-300 mb-1">Next Step</p>
                     <p className="text-sm text-foreground">{entry.nextStep}</p>
                   </div>
                 )}
                 {entry.whoHasBall && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">Who Had the Ball</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 navy:text-amber-300 mb-1">Who Had the Ball</p>
                     <p className="text-sm text-foreground">{entry.whoHasBall}</p>
                   </div>
                 )}

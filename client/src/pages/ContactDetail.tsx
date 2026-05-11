@@ -21,11 +21,11 @@ import { toast } from "sonner";
 
 // ─── Compass section block (shared between admin + portal views) ───────────────
 const COMPASS_SECTIONS = {
-  status: { icon: Activity, label: "Current Status", accent: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/40", border: "border-blue-200 dark:border-blue-800" },
-  meeting: { icon: BookOpen, label: "Last Meeting", accent: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40", border: "border-violet-200 dark:border-violet-800" },
-  nextStep: { icon: ArrowRightCircle, label: "Next Step", accent: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40", border: "border-emerald-200 dark:border-emerald-800" },
-  ball: { icon: Zap, label: "Who Has the Ball", accent: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-200 dark:border-amber-800" },
-  nextMeeting: { icon: CalendarCheck, label: "Next Meeting Date", accent: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/40", border: "border-rose-200 dark:border-rose-800" },
+  status: { icon: Activity, label: "Current Status", accent: "text-blue-600 dark:text-blue-400 navy:text-blue-300", bg: "bg-blue-50 dark:bg-blue-950/40 navy:bg-blue-900/30", border: "border-blue-200 dark:border-blue-800 navy:border-blue-600/40" },
+  meeting: { icon: BookOpen, label: "Last Meeting", accent: "text-violet-600 dark:text-violet-400 navy:text-violet-300", bg: "bg-violet-50 dark:bg-violet-950/40 navy:bg-violet-900/30", border: "border-violet-200 dark:border-violet-800 navy:border-violet-600/40" },
+  nextStep: { icon: ArrowRightCircle, label: "Next Step", accent: "text-emerald-600 dark:text-emerald-400 navy:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-950/40 navy:bg-emerald-900/30", border: "border-emerald-200 dark:border-emerald-800 navy:border-emerald-600/40" },
+  ball: { icon: Zap, label: "Who Has the Ball", accent: "text-amber-600 dark:text-amber-400 navy:text-amber-300", bg: "bg-amber-50 dark:bg-amber-950/40 navy:bg-amber-900/30", border: "border-amber-200 dark:border-amber-800 navy:border-amber-600/40" },
+  nextMeeting: { icon: CalendarCheck, label: "Next Meeting Date", accent: "text-rose-600 dark:text-rose-400 navy:text-rose-300", bg: "bg-rose-50 dark:bg-rose-950/40 navy:bg-rose-900/30", border: "border-rose-200 dark:border-rose-800 navy:border-rose-600/40" },
 } as const;
 
 function CompassSection({ type, children }: { type: keyof typeof COMPASS_SECTIONS; children: React.ReactNode }) {
