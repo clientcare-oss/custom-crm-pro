@@ -783,3 +783,8 @@
 ## Lead Forms — View Live Scheduler Button Fix
 - [x] Update "View Live Scheduler" button on Lead Forms page to open /form/public-intake?preview=true&step=4 (inline scheduler widget) instead of /book (old standalone page)
 - [x] Update DynamicForm to support ?step=N URL param to auto-jump to a specific step on load
+
+## Client Portal — Schedule Meeting Fix
+- [x] Replace old /book plain form in client portal "Schedule Meeting" dialog with InlineScheduler widget (same calendar widget families see in the intake form)
+- [x] Client portal: show session type selector first, then InlineScheduler for the selected session type
+- [x] Pre-fill client name and email in the InlineScheduler from the logged-in user's profile

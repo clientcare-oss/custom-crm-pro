@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import SignaturePad from "@/components/SignaturePad";
+import InlineScheduler from "@/components/InlineScheduler";
 import { NotesSection } from "@/components/NotesSection";
 
 // ── Portal Task Row ──────────────────────────────────────────────────────────
@@ -160,19 +161,16 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
   );
 }
 
-const MEETING_TYPES = [
-  "IEP Meeting",
-  "1:1 with Advocate",
-  "Progress Update",
-  "Consultation",
-  "Follow-up",
-] as const;
+
 
 export default function ClientPortal() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
+  const [schedulerSessionTypeId, setSchedulerSessionTypeId] = useState<number | null>(null);
+  const [schedulerBooked, setSchedulerBooked] = useState(false);
+  const { data: publicSessionTypes } = trpc.sessionTypes.listAll.useQuery(undefined, { retry: false });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -333,9 +331,14 @@ export default function ClientPortal() {
 
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
 
-  const handleScheduleMeeting = () => {
-    toast.success("Meeting request sent!");
-    setShowMeetingScheduler(false);
+  const handleOpenScheduler = (sessionTypeId: number) => {
+    setSchedulerSessionTypeId(sessionTypeId);
+    setSchedulerBooked(false);
+  };
+  const handleSchedulerBooked = (date: string, time: string) => {
+    setSchedulerBooked(true);
+    toast.success(`Session booked for ${date} at ${time}!`);
+    setTimeout(() => setShowMeetingScheduler(false), 2000);
   };
 
   if (!user || !isClientOrPreview) {
@@ -394,25 +397,51 @@ export default function ClientPortal() {
       </div>
 
       {/* Meeting Scheduler Dialog */}
-      <Dialog open={showMeetingScheduler} onOpenChange={setShowMeetingScheduler}>
-        <DialogContent className="max-w-md">
+      <Dialog open={showMeetingScheduler} onOpenChange={(open) => { setShowMeetingScheduler(open); if (!open) { setSchedulerSessionTypeId(null); setSchedulerBooked(false); } }}>
+        <DialogContent className="max-w-2xl w-full">
           <DialogHeader>
             <DialogTitle>Schedule a Meeting</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Select the type of meeting you'd like to schedule:</p>
-            {MEETING_TYPES.map((meetingType) => (
-              <Button
-                key={meetingType}
-                onClick={handleScheduleMeeting}
-                variant="outline"
-                className="w-full justify-start gap-3 px-4 py-3 font-semibold"
-              >
-                <Clock className="h-4 w-4 flex-shrink-0" />
-                {meetingType}
-              </Button>
-            ))}
-          </div>
+          {!schedulerSessionTypeId ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Select the type of meeting you'd like to schedule:</p>
+              {(publicSessionTypes ?? []).length === 0 && (
+                <p className="text-sm text-muted-foreground italic">No session types available. Please contact us directly.</p>
+              )}
+              {(publicSessionTypes ?? []).map((st: any) => (
+                <Button
+                  key={st.id}
+                  onClick={() => handleOpenScheduler(st.id)}
+                  variant="outline"
+                  className="w-full justify-start gap-3 px-4 py-3 font-semibold"
+                >
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span className="flex-1 text-left">{st.name}</span>
+                  <span className="text-xs text-muted-foreground">{st.duration} min</span>
+                </Button>
+              ))}
+            </div>
+          ) : schedulerBooked ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8 text-green-500" />
+              </div>
+              <p className="text-lg font-semibold">Session Booked!</p>
+              <p className="text-sm text-muted-foreground">We'll send you a confirmation shortly.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <button onClick={() => setSchedulerSessionTypeId(null)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+                <ChevronDown className="w-3 h-3 rotate-90" /> Back to meeting types
+              </button>
+              <InlineScheduler
+                sessionTypeId={schedulerSessionTypeId}
+                parentName={user?.name ?? ""}
+                parentEmail={user?.email ?? ""}
+                onBooked={handleSchedulerBooked}
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
