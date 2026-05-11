@@ -3,7 +3,9 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -162,14 +164,14 @@ function EditDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-1">
-          <Input
+          <VoiceInput
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Idea title…"
             className="text-sm font-medium"
             autoFocus
           />
-          <Textarea
+          <VoiceTextarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Details, context, or notes… (optional)"
@@ -186,7 +188,7 @@ function EditDialog({
                   {cats.map((c) => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Input
+              <VoiceInput
                 value={customCat}
                 onChange={(e) => setCustomCat(e.target.value)}
                 placeholder="Or type a new category…"
@@ -226,7 +228,7 @@ function EditDialog({
             <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
               <ArrowRight className="h-3 w-3" /> Next Step
             </label>
-            <Input
+            <VoiceInput
               value={nextStep}
               onChange={(e) => setNextStep(e.target.value)}
               placeholder="What's the immediate next action?"
@@ -238,7 +240,7 @@ function EditDialog({
               <Tag className="h-3 w-3" /> Tags
             </label>
             <div className="flex gap-2">
-              <Input
+              <VoiceInput
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
@@ -739,7 +741,7 @@ export default function BrainDump() {
           <div className="flex-1 min-w-[120px] max-w-xs ml-auto">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
+              <VoiceInput
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search ideas…"

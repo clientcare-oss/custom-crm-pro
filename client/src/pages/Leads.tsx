@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import {
   Dialog,
   DialogContent,
@@ -184,7 +185,7 @@ export default function Leads() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Source</label>
-                <Input
+                <VoiceInput
                   value={formData.source}
                   onChange={(e) =>
                     setFormData({ ...formData, source: e.target.value })
@@ -196,7 +197,7 @@ export default function Leads() {
                 <label className="block text-sm font-semibold">
                   Deal Value ($)
                 </label>
-                <Input
+                <VoiceInput
                   type="number"
                   value={formData.value}
                   onChange={(e) =>
@@ -230,7 +231,7 @@ export default function Leads() {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Notes</label>
-                <Input
+                <VoiceInput
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })

@@ -18,6 +18,7 @@ import { useState } from "react";
 import { Plus, Loader2, FileText, Users, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import {
   Select,
   SelectContent,
@@ -203,7 +204,7 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
   return (
     <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-3">
       {/* Title */}
-      <Input
+      <VoiceInput
         placeholder="Task title..."
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -407,7 +408,7 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
         </Select>
 
         {/* Due date */}
-        <Input
+        <VoiceInput
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}

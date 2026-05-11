@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -138,7 +139,7 @@ function QuoIntegrationCard() {
             </Label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Input
+                <VoiceInput
                   type={showSecret ? "text" : "password"}
                   placeholder={isConfigured ? "Secret already saved — paste new value to update" : "Paste the signing secret from Quo..."}
                   value={secretInput}

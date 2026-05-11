@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -199,7 +200,7 @@ export default function KnowledgeBase() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Title *</label>
-                  <Input
+                  <VoiceInput
                     value={uploadForm.title}
                     onChange={(e) => setUploadForm((f) => ({ ...f, title: e.target.value }))}
                     placeholder="e.g. IDEA 2004 Full Text"
@@ -226,7 +227,7 @@ export default function KnowledgeBase() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Description <span className="text-muted-foreground font-normal">(optional)</span></label>
-                  <Input
+                  <VoiceInput
                     value={uploadForm.description}
                     onChange={(e) => setUploadForm((f) => ({ ...f, description: e.target.value }))}
                     placeholder="Brief notes about this document"
@@ -269,7 +270,7 @@ export default function KnowledgeBase() {
           {/* Search */}
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
+            <VoiceInput
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search documents…"

@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { Calendar, Clock, Plus, User } from "lucide-react";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { useState } from "react";
 import { toast } from "sonner";
 import CalendarView from "@/components/CalendarView";
@@ -222,7 +223,7 @@ export default function Appointments() {
               </div>
               <div>
                 <label className="text-sm font-medium">Description</label>
-                <textarea
+                <VoiceTextarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"

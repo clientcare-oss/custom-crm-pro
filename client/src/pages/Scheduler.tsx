@@ -3,8 +3,10 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -322,7 +324,7 @@ function SessionEditForm({
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 sm:col-span-1 space-y-1.5">
                 <Label className="text-xs">Session Name *</Label>
-                <Input
+                <VoiceInput
                   value={form.name}
                   onChange={(e) => set("name", e.target.value)}
                   placeholder="e.g. FREE DISCOVERY CALL"
@@ -358,7 +360,7 @@ function SessionEditForm({
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Video link</Label>
-                  <Input
+                  <VoiceInput
                     value={form.videoLink}
                     onChange={(e) => set("videoLink", e.target.value)}
                     placeholder="https://..."
@@ -382,7 +384,7 @@ function SessionEditForm({
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Duration *</Label>
-                <Input
+                <VoiceInput
                   type="number"
                   min={1}
                   value={form.duration}
@@ -413,7 +415,7 @@ function SessionEditForm({
               </Select>
               {form.dateRange === "rolling" && (
                 <div className="flex items-center gap-2 mt-2">
-                  <Input
+                  <VoiceInput
                     type="number"
                     min={1}
                     className="w-20"
@@ -448,7 +450,7 @@ function SessionEditForm({
             <div className="space-y-1.5">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground pt-2">Instructions</p>
               <p className="text-xs text-muted-foreground">Advise attendees how to come prepared.</p>
-              <Textarea
+              <VoiceTextarea
                 value={form.instructions}
                 onChange={(e) => set("instructions", e.target.value)}
                 rows={4}
@@ -488,14 +490,14 @@ function SessionEditForm({
                     <span className="text-xs font-semibold w-8 text-muted-foreground">{DAY_LABELS[day]}</span>
                     {isOn && slots.length > 0 ? (
                       <div className="flex items-center gap-2">
-                        <Input
+                        <VoiceInput
                           type="time"
                           value={slots[0].start}
                           onChange={(e) => updateDayTime(day, 0, "start", e.target.value)}
                           className="h-8 w-28 text-xs"
                         />
                         <span className="text-muted-foreground text-xs">-</span>
-                        <Input
+                        <VoiceInput
                           type="time"
                           value={slots[0].end}
                           onChange={(e) => updateDayTime(day, 0, "end", e.target.value)}
@@ -523,7 +525,7 @@ function SessionEditForm({
               </div>
               <div className="grid grid-cols-2 gap-3 pl-8">
                 <div className="flex items-center gap-2">
-                  <Input
+                  <VoiceInput
                     type="number"
                     min={0}
                     value={form.bufferBefore}
@@ -540,7 +542,7 @@ function SessionEditForm({
                   <span className="text-xs text-muted-foreground">before</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input
+                  <VoiceInput
                     type="number"
                     min={0}
                     value={form.bufferAfter}
@@ -569,7 +571,7 @@ function SessionEditForm({
                 </div>
               </div>
               <div className="flex items-center gap-2 pl-8">
-                <Input
+                <VoiceInput
                   type="number"
                   min={0}
                   value={form.minNotice}
@@ -649,7 +651,7 @@ function SessionEditForm({
           <div className="px-5 pb-5 space-y-4">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground pt-1">Customizable Message</p>
             <p className="text-xs text-muted-foreground">This message appears on the confirmation page after the invitee schedules.</p>
-            <Textarea
+            <VoiceTextarea
               value={form.confirmationMessage}
               onChange={(e) => set("confirmationMessage", e.target.value)}
               rows={5}
@@ -672,7 +674,7 @@ function SessionEditForm({
                         <SelectItem value="both">Email & SMS</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input
+                    <VoiceInput
                       type="number"
                       min={1}
                       value={r.amount}

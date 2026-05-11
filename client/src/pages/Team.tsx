@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -338,7 +339,7 @@ export default function TeamPage() {
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
                 <Label htmlFor="invite-email">Email address *</Label>
-                <Input
+                <VoiceInput
                   id="invite-email"
                   type="email"
                   placeholder="colleague@example.com"
@@ -349,7 +350,7 @@ export default function TeamPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="invite-name">Name (optional)</Label>
-                <Input
+                <VoiceInput
                   id="invite-name"
                   placeholder="Jane Smith"
                   value={inviteName}
@@ -391,7 +392,7 @@ export default function TeamPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Input
+                <VoiceInput
                   readOnly
                   value={generatedLink}
                   className="text-xs font-mono bg-muted"

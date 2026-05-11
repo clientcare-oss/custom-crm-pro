@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { useTerminology, ICON_OPTIONS, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { CheckCircle, Settings2, GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers, Phone, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -95,7 +96,7 @@ export default function Settings() {
               Supports toll-free numbers (e.g., 1-800-XXX-XXXX). Displayed on the form success screen so families can save your number.
             </p>
             <div className="flex gap-2">
-              <Input
+              <VoiceInput
                 value={phoneValue}
                 onChange={(e) => setPhoneValue(e.target.value)}
                 placeholder="e.g., 1-800-555-0100 or (555) 123-4567"
@@ -165,7 +166,7 @@ export default function Settings() {
               Enter any word that fits your workflow (e.g., "Enrollment", "Engagement", "File").
             </p>
             <div className="flex gap-2">
-              <Input
+              <VoiceInput
                 value={customValue}
                 onChange={(e) => {
                   setCustomValue(e.target.value);

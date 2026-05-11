@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
 import { MessageSquare, Send, User } from "lucide-react";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -208,7 +209,7 @@ export default function Messages() {
             {/* Message Input */}
             <div className="p-4 border-t">
               <div className="flex gap-2">
-                <textarea
+                <VoiceTextarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={handleKeyPress}

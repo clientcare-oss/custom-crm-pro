@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PhoneInput } from "@/components/PhoneInput";
 import { validatePhone, formatPhone } from "@/lib/phone";
@@ -115,16 +116,16 @@ export default function Students() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <label className="text-sm font-semibold">First Name *</label>
-                  <Input value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Woolbert" required />
+                  <VoiceInput value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Woolbert" required />
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-semibold">Last Name *</label>
-                  <Input value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Sheep" required />
+                  <VoiceInput value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Sheep" required />
                 </div>
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-semibold">Family Name</label>
-                <Input value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Sheep Family" />
+                <VoiceInput value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Sheep Family" />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-semibold">Parent</label>
@@ -147,7 +148,7 @@ export default function Students() {
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-semibold">Email</label>
-                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="parent@email.com" />
+                <VoiceInput type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="parent@email.com" />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-semibold">Phone</label>

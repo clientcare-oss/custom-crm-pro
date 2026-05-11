@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Label } from "@/components/ui/label";
 import {
   Plus,
@@ -172,13 +174,13 @@ function ResourcePanel({
       )}
       {adding && (
         <div className="flex gap-1.5 items-center mt-1 flex-wrap">
-          <Input
+          <VoiceInput
             placeholder="Label (e.g. Loom video)"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             className="h-7 text-xs w-40"
           />
-          <Input
+          <VoiceInput
             placeholder="URL"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -473,7 +475,7 @@ function TaskRow({
           <div className="px-8 py-2">
             {addingSubtask ? (
               <div className="flex flex-wrap gap-2 items-center">
-                <Input
+                <VoiceInput
                   autoFocus
                   placeholder="Subtask title..."
                   value={newSubtaskTitle}
@@ -706,7 +708,7 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
           <div className="px-8 py-2">
             {addingStep ? (
               <div className="flex gap-2 items-center">
-                <Input
+                <VoiceInput
                   autoFocus
                   placeholder="Step title..."
                   value={newStepTitle}
@@ -797,11 +799,11 @@ function CreateTaskDialog({
         <div className="space-y-4 py-2">
           <div>
             <Label className="text-xs">Title *</Label>
-            <Input autoFocus placeholder="Task title..." value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
+            <VoiceInput autoFocus placeholder="Task title..." value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
           </div>
           <div>
             <Label className="text-xs">Description</Label>
-            <Textarea placeholder="Optional description..." value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1 resize-none" rows={2} />
+            <VoiceTextarea placeholder="Optional description..." value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1 resize-none" rows={2} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

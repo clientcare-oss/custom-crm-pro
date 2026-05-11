@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -297,7 +299,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
               {/* Form Name */}
               <div className="space-y-1.5">
                 <Label>Form Name <span className="text-destructive">*</span></Label>
-                <Input
+                <VoiceInput
                   value={form.name}
                   onChange={(e) => set("name", e.target.value)}
                   placeholder="e.g., IEP Consultation Request, Summer Program Intake"
@@ -313,7 +315,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
               {/* Description */}
               <div className="space-y-1.5">
                 <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                <Textarea
+                <VoiceTextarea
                   value={form.description}
                   onChange={(e) => set("description", e.target.value)}
                   placeholder="Brief description of what this form is for..."
@@ -416,7 +418,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                       <div className="space-y-3">
                         <div className="space-y-1.5">
                           <Label className="text-sm">Scheduler URL <span className="text-destructive">*</span></Label>
-                          <Input
+                          <VoiceInput
                             value={form.schedulingUrl}
                             onChange={(e) => set("schedulingUrl", e.target.value)}
                             placeholder="https://calendly.com/waypoint/consultation"
@@ -433,7 +435,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                     {/* Button Label */}
                     <div className="space-y-1.5">
                       <Label className="text-sm">Button Label</Label>
-                      <Input
+                      <VoiceInput
                         value={form.schedulingLabel}
                         onChange={(e) => set("schedulingLabel", e.target.value)}
                         placeholder="Schedule Your Consultation"
@@ -512,7 +514,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                             <div className="flex-1 min-w-0">
                               {isEditingThis ? (
                                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                  <Input
+                                  <VoiceInput
                                     value={editingLabelValue}
                                     onChange={(e) => setEditingLabelValue(e.target.value)}
                                     className="h-7 text-sm py-0"

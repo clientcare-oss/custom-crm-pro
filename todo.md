@@ -865,3 +865,12 @@
 
 ## Blue Theme Option
 - [x] Add "blue" as a third theme option in the theme switcher (alongside dark/light) with navy blue CSS variables
+
+## Voice-to-Text Feature
+- [x] Create VoiceTextarea component: mic icon in bottom-right corner, click to start/stop recording, appends transcript directly to field
+- [x] Create VoiceInput component: mic icon on right side of Input, click to start/stop recording, appends transcript
+- [x] Add server tRPC voice.transcribe mutation using built-in Whisper API
+- [x] Add POST /api/voice/upload Express route for audio blob upload (busboy multipart)
+- [x] Replace ALL Textarea and Input instances across all 30+ pages and components with VoiceTextarea/VoiceInput
+- [x] Replace raw textarea elements in Messages, Appointments, Contracts, NoteEditor
+- [x] Voice-to-text now available on every text field in the entire CRM (both short and long fields)

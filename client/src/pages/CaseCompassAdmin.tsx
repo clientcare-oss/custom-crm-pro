@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { toast } from "sonner";
 import { Compass, Save, Clock, ChevronDown, ChevronUp, Loader2, Users } from "lucide-react";
 
@@ -112,7 +114,7 @@ export default function CaseCompassAdmin() {
           <Card className="p-6 space-y-4">
             <div>
               <label className="text-sm font-medium mb-1 block">Current Status</label>
-              <Textarea
+              <VoiceTextarea
                 placeholder="Brief snapshot of where the case stands right now..."
                 value={formData.currentStatus}
                 onChange={(e) => setFormData({ ...formData, currentStatus: e.target.value })}
@@ -121,7 +123,7 @@ export default function CaseCompassAdmin() {
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Summary of Last Meeting</label>
-              <Textarea
+              <VoiceTextarea
                 placeholder="Key takeaways, decisions made, concerns raised..."
                 value={formData.lastMeetingSummary}
                 onChange={(e) => setFormData({ ...formData, lastMeetingSummary: e.target.value })}
@@ -130,7 +132,7 @@ export default function CaseCompassAdmin() {
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Next Step</label>
-              <Textarea
+              <VoiceTextarea
                 placeholder="The next action needed to move the case forward..."
                 value={formData.nextStep}
                 onChange={(e) => setFormData({ ...formData, nextStep: e.target.value })}
@@ -139,7 +141,7 @@ export default function CaseCompassAdmin() {
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Who Has the Ball</label>
-              <Textarea
+              <VoiceTextarea
                 placeholder="Parent / School / District / Evaluator / State / Waypoint (comma-separated)"
                 value={formData.whoHasBall}
                 onChange={(e) => setFormData({ ...formData, whoHasBall: e.target.value })}
@@ -148,7 +150,7 @@ export default function CaseCompassAdmin() {
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Next Meeting Date</label>
-              <Input
+              <VoiceInput
                 type="datetime-local"
                 value={formData.nextMeetingDate}
                 onChange={(e) => setFormData({ ...formData, nextMeetingDate: e.target.value })}

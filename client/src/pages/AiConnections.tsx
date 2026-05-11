@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -410,7 +412,7 @@ export default function AiConnections() {
             {/* Name */}
             <div className="space-y-1.5">
               <Label>Button Name *</Label>
-              <Input
+              <VoiceInput
                 placeholder="e.g. Compare New vs Previous IEP"
                 value={formData.name}
                 onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
@@ -420,7 +422,7 @@ export default function AiConnections() {
             {/* Description */}
             <div className="space-y-1.5">
               <Label>Description <span className="text-muted-foreground">(shown on management page)</span></Label>
-              <Input
+              <VoiceInput
                 placeholder="Brief description of what this button does"
                 value={formData.description}
                 onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
@@ -520,7 +522,7 @@ export default function AiConnections() {
                   </button>
                 ))}
               </div>
-              <Textarea
+              <VoiceTextarea
                 placeholder="Write your AI prompt here. Use {{studentName}}, {{compassContent}}, etc. to inject student data automatically."
                 value={formData.promptTemplate}
                 onChange={e => setFormData(f => ({ ...f, promptTemplate: e.target.value }))}

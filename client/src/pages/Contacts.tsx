@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import {
   Dialog,
   DialogContent,
@@ -168,7 +169,7 @@ export default function Contacts() {
                   <label className="block text-sm font-semibold">
                     First Name *
                   </label>
-                  <Input
+                  <VoiceInput
                     value={formData.firstName}
                     onChange={(e) =>
                       setFormData({ ...formData, firstName: e.target.value })
@@ -181,7 +182,7 @@ export default function Contacts() {
                   <label className="block text-sm font-semibold">
                     Last Name *
                   </label>
-                  <Input
+                  <VoiceInput
                     value={formData.lastName}
                     onChange={(e) =>
                       setFormData({ ...formData, lastName: e.target.value })
@@ -193,7 +194,7 @@ export default function Contacts() {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Email</label>
-                <Input
+                <VoiceInput
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
@@ -211,7 +212,7 @@ export default function Contacts() {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Company</label>
-                <Input
+                <VoiceInput
                   value={formData.company}
                   onChange={(e) =>
                     setFormData({ ...formData, company: e.target.value })
@@ -223,7 +224,7 @@ export default function Contacts() {
                 <label className="block text-sm font-semibold">
                   Job Title
                 </label>
-                <Input
+                <VoiceInput
                   value={formData.jobTitle}
                   onChange={(e) =>
                     setFormData({ ...formData, jobTitle: e.target.value })

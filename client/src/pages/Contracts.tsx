@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { FileText, Plus, CheckCircle, Clock, XCircle } from "lucide-react";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -142,7 +143,7 @@ export default function Contracts() {
               </div>
               <div>
                 <label className="text-sm font-medium">Contract Content</label>
-                <textarea
+                <VoiceTextarea
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[200px] font-mono"

@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import {
   Dialog,
   DialogContent,
@@ -198,7 +199,7 @@ export default function Projects() {
                 <label className="block text-sm font-semibold">
                   {projectLabel} Name *
                 </label>
-                <Input
+                <VoiceInput
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -211,7 +212,7 @@ export default function Projects() {
                 <label className="block text-sm font-semibold">
                   Description
                 </label>
-                <Input
+                <VoiceInput
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -246,7 +247,7 @@ export default function Projects() {
                 <label className="block text-sm font-semibold">
                   Budget ($)
                 </label>
-                <Input
+                <VoiceInput
                   type="number"
                   value={formData.budget}
                   onChange={(e) =>
@@ -257,7 +258,7 @@ export default function Projects() {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Start Date</label>
-                <Input
+                <VoiceInput
                   type="date"
                   value={formData.startDate}
                   onChange={(e) =>
@@ -267,7 +268,7 @@ export default function Projects() {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">End Date</label>
-                <Input
+                <VoiceInput
                   type="date"
                   value={formData.endDate}
                   onChange={(e) =>

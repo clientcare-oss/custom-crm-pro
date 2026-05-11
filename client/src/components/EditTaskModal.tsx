@@ -13,7 +13,9 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import {
   Dialog,
   DialogContent,
@@ -292,7 +294,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
           {/* Title */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Title</Label>
-            <Input
+            <VoiceInput
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Task title..."
@@ -303,7 +305,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
           {/* Description */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Description</Label>
-            <Textarea
+            <VoiceTextarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description..."
@@ -375,7 +377,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
             {/* Due Date */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Due Date</Label>
-              <Input
+              <VoiceInput
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}

@@ -22,7 +22,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Badge } from "@/components/ui/badge";
 import {
   GitBranch, Plus, Pencil, Trash2, Save, Square, Diamond,
@@ -438,7 +440,7 @@ export default function Workflows() {
           <div className="space-y-3 py-2">
             <div>
               <label className="text-sm font-medium mb-1 block">Label</label>
-              <Input
+              <VoiceInput
                 value={nodeDialog.label}
                 onChange={(e) => setNodeDialog((d) => ({ ...d, label: e.target.value }))}
                 placeholder="Node label"
@@ -447,7 +449,7 @@ export default function Workflows() {
             {nodeDialog.type !== "diamond" && (
               <div>
                 <label className="text-sm font-medium mb-1 block">Notes / details</label>
-                <Textarea
+                <VoiceTextarea
                   value={nodeDialog.notes}
                   onChange={(e) => setNodeDialog((d) => ({ ...d, notes: e.target.value }))}
                   placeholder="Optional notes shown below the label"
@@ -487,15 +489,15 @@ export default function Workflows() {
           <div className="space-y-4 py-2">
             <div>
               <label className="text-sm font-medium mb-1 block">Title *</label>
-              <Input value={wfForm.title} onChange={(e) => setWfForm({ ...wfForm, title: e.target.value })} placeholder="e.g. New Client Onboarding" />
+              <VoiceInput value={wfForm.title} onChange={(e) => setWfForm({ ...wfForm, title: e.target.value })} placeholder="e.g. New Client Onboarding" />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Category</label>
-              <Input value={wfForm.category} onChange={(e) => setWfForm({ ...wfForm, category: e.target.value })} placeholder="e.g. Onboarding, IEP, Admin" />
+              <VoiceInput value={wfForm.category} onChange={(e) => setWfForm({ ...wfForm, category: e.target.value })} placeholder="e.g. Onboarding, IEP, Admin" />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Description</label>
-              <Textarea value={wfForm.description} onChange={(e) => setWfForm({ ...wfForm, description: e.target.value })} placeholder="Brief overview" rows={2} />
+              <VoiceTextarea value={wfForm.description} onChange={(e) => setWfForm({ ...wfForm, description: e.target.value })} placeholder="Brief overview" rows={2} />
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Color</label>

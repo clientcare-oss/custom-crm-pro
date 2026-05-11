@@ -4,6 +4,7 @@ import { ArrowLeft, ScrollText, Copy, Download, CheckCircle2, Loader2, AlertTria
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
@@ -177,7 +178,7 @@ export default function StateComplaintBuilder() {
             <p className="text-xs text-muted-foreground">
               Describe the specific violations — e.g., failure to provide FAPE, missed timelines, lack of prior written notice, denial of related services, procedural violations.
             </p>
-            <Textarea
+            <VoiceTextarea
               id="violations"
               value={violationSummary}
               onChange={(e) => setViolationSummary(e.target.value)}
@@ -193,7 +194,7 @@ export default function StateComplaintBuilder() {
             <p className="text-xs text-muted-foreground">
               What do you want the state to order? Include compensatory services, corrective action plans, training, reimbursement, or policy changes.
             </p>
-            <Textarea
+            <VoiceTextarea
               id="resolution"
               value={desiredResolution}
               onChange={(e) => setDesiredResolution(e.target.value)}
@@ -209,7 +210,7 @@ export default function StateComplaintBuilder() {
             <p className="text-xs text-muted-foreground">
               Include relevant dates, meeting notes, district responses, prior complaints, or any other context that strengthens the complaint.
             </p>
-            <Textarea
+            <VoiceTextarea
               id="context"
               value={additionalContext}
               onChange={(e) => setAdditionalContext(e.target.value)}

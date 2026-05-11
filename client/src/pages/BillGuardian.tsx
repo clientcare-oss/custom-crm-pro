@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -134,15 +136,15 @@ function AddBillDialog({ open, onClose, editBill }: { open: boolean; onClose: ()
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <Label>Vendor Name *</Label>
-              <Input placeholder="e.g. Google Workspace" value={form.vendorName} onChange={e => setForm(f => ({ ...f, vendorName: e.target.value }))} />
+              <VoiceInput placeholder="e.g. Google Workspace" value={form.vendorName} onChange={e => setForm(f => ({ ...f, vendorName: e.target.value }))} />
             </div>
             <div>
               <Label>Expected Amount *</Label>
-              <Input placeholder="0.00" type="number" step="0.01" value={form.expectedAmount} onChange={e => setForm(f => ({ ...f, expectedAmount: e.target.value }))} />
+              <VoiceInput placeholder="0.00" type="number" step="0.01" value={form.expectedAmount} onChange={e => setForm(f => ({ ...f, expectedAmount: e.target.value }))} />
             </div>
             <div>
               <Label>Due Day of Month *</Label>
-              <Input placeholder="1-31" type="number" min={1} max={31} value={form.dueDay} onChange={e => setForm(f => ({ ...f, dueDay: e.target.value }))} />
+              <VoiceInput placeholder="1-31" type="number" min={1} max={31} value={form.dueDay} onChange={e => setForm(f => ({ ...f, dueDay: e.target.value }))} />
             </div>
             <div>
               <Label>Frequency</Label>
@@ -184,23 +186,23 @@ function AddBillDialog({ open, onClose, editBill }: { open: boolean; onClose: ()
           </div>
           <div>
             <Label>Known Vendor Aliases (comma-separated)</Label>
-            <Input placeholder="GOOGLE *WORKSPACE, Google LLC" value={form.aliases} onChange={e => setForm(f => ({ ...f, aliases: e.target.value }))} />
+            <VoiceInput placeholder="GOOGLE *WORKSPACE, Google LLC" value={form.aliases} onChange={e => setForm(f => ({ ...f, aliases: e.target.value }))} />
             <p className="text-xs text-muted-foreground mt-1">Helps AI match bank transaction descriptions to this bill</p>
           </div>
           <div>
             <Label>Notes</Label>
-            <Textarea placeholder="Any notes about this bill..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
+            <VoiceTextarea placeholder="Any notes about this bill..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
           </div>
           <div className="border-t pt-3 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payment Method Info</p>
             <div>
               <Label>Payment Link / Portal URL</Label>
-              <Input placeholder="https://pay.vendor.com/login" value={form.paymentLink} onChange={e => setForm(f => ({ ...f, paymentLink: e.target.value }))} />
+              <VoiceInput placeholder="https://pay.vendor.com/login" value={form.paymentLink} onChange={e => setForm(f => ({ ...f, paymentLink: e.target.value }))} />
               <p className="text-xs text-muted-foreground mt-1">Where to go to pay or update payment method</p>
             </div>
             <div>
               <Label>Payment Notes</Label>
-              <Textarea placeholder="e.g. Log in with billing@company.com, update card under Settings..." value={form.paymentLinkNote} onChange={e => setForm(f => ({ ...f, paymentLinkNote: e.target.value }))} rows={2} />
+              <VoiceTextarea placeholder="e.g. Log in with billing@company.com, update card under Settings..." value={form.paymentLinkNote} onChange={e => setForm(f => ({ ...f, paymentLinkNote: e.target.value }))} rows={2} />
             </div>
           </div>
         </div>
@@ -258,7 +260,7 @@ function ImportTransactionsDialog({ open, onClose }: { open: boolean; onClose: (
               <code>AMAZON WEB SERVICES, 47.23, 2026-05-03</code>
             </p>
           </div>
-          <Textarea
+          <VoiceTextarea
             placeholder={"GOOGLE *WORKSPACE, 14.99, 2026-05-01\nAMAZON WEB SERVICES, 47.23, 2026-05-03"}
             value={raw}
             onChange={e => setRaw(e.target.value)}
@@ -559,7 +561,7 @@ function TransactionsTab({ onImport }: { onImport: () => void }) {
             </div>
             <div>
               <Label>Notes</Label>
-              <Input value={overrideNotes} onChange={e => setOverrideNotes(e.target.value)} placeholder="Optional note..." />
+              <VoiceInput value={overrideNotes} onChange={e => setOverrideNotes(e.target.value)} placeholder="Optional note..." />
             </div>
           </div>
           <DialogFooter>
@@ -614,8 +616,8 @@ function AccountsTab() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Add Bank Account</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
-            <div><Label>Bank Name</Label><Input placeholder="e.g. Found Bank" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} /></div>
-            <div><Label>Account Name / Label</Label><Input placeholder="e.g. Business Checking" value={form.accountName} onChange={e => setForm(f => ({ ...f, accountName: e.target.value }))} /></div>
+            <div><Label>Bank Name</Label><VoiceInput placeholder="e.g. Found Bank" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} /></div>
+            <div><Label>Account Name / Label</Label><VoiceInput placeholder="e.g. Business Checking" value={form.accountName} onChange={e => setForm(f => ({ ...f, accountName: e.target.value }))} /></div>
             <div>
               <Label>Account Type</Label>
               <Select value={form.accountType} onValueChange={v => setForm(f => ({ ...f, accountType: v }))}>

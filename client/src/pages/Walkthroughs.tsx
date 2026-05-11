@@ -3,7 +3,9 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -260,7 +262,7 @@ function WalkthroughBuilder({
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Title *</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Discovery Call SOP" className="text-base font-semibold" />
+            <VoiceInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Discovery Call SOP" className="text-base font-semibold" />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Category</label>
@@ -275,7 +277,7 @@ function WalkthroughBuilder({
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Description</label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief summary of this SOP..." />
+            <VoiceInput value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief summary of this SOP..." />
           </div>
         </div>
       </Card>
@@ -321,11 +323,11 @@ function WalkthroughBuilder({
                 <div className="px-4 pb-4 space-y-3 border-t border-border bg-muted/10">
                   <div className="pt-3">
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Step Title *</label>
-                    <Input value={step.title} onChange={(e) => updateStep(step.id, "title", e.target.value)} placeholder="e.g. Introduce yourself and the company" />
+                    <VoiceInput value={step.title} onChange={(e) => updateStep(step.id, "title", e.target.value)} placeholder="e.g. Introduce yourself and the company" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Instructions</label>
-                    <Textarea
+                    <VoiceTextarea
                       rows={3}
                       value={step.instructions}
                       onChange={(e) => updateStep(step.id, "instructions", e.target.value)}
@@ -336,7 +338,7 @@ function WalkthroughBuilder({
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
                       Script / What to Say <span className="font-normal text-muted-foreground">(optional)</span>
                     </label>
-                    <Textarea
+                    <VoiceTextarea
                       rows={3}
                       value={step.script ?? ""}
                       onChange={(e) => updateStep(step.id, "script", e.target.value)}
@@ -348,7 +350,7 @@ function WalkthroughBuilder({
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
                       Notes / If-Then Guidance <span className="font-normal text-muted-foreground">(optional)</span>
                     </label>
-                    <Textarea
+                    <VoiceTextarea
                       rows={2}
                       value={step.notes ?? ""}
                       onChange={(e) => updateStep(step.id, "notes", e.target.value)}
@@ -537,7 +539,7 @@ function WalkthroughRunner({
       {/* Run notes */}
       <div>
         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block">Session Notes (optional)</label>
-        <Textarea
+        <VoiceTextarea
           rows={3}
           value={runNotes}
           onChange={(e) => setRunNotes(e.target.value)}

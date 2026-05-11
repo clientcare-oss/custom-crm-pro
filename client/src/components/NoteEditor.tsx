@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Eye, EyeOff, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -148,7 +150,7 @@ export function NoteEditor({
         {isReadOnly ? (
           <h3 className="flex-1 font-semibold text-foreground">{title}</h3>
         ) : (
-          <Input
+          <VoiceInput
             placeholder="Note title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -230,7 +232,7 @@ export function NoteEditor({
       {isReadOnly ? (
         <div className="w-full min-h-24 p-3 border rounded-md bg-muted/30 text-sm whitespace-pre-wrap text-foreground">{content}</div>
       ) : (
-        <textarea
+        <VoiceTextarea
           placeholder="Start typing your note..."
           value={content}
           onChange={(e) => setContent(e.target.value)}

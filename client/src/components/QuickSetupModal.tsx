@@ -5,8 +5,10 @@ import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -296,7 +298,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">First Name <span className="text-red-500">*</span></Label>
-                    <Input
+                    <VoiceInput
                       value={form.parentFirstName}
                       onChange={(e) => set("parentFirstName", e.target.value)}
                       placeholder="Jane"
@@ -305,7 +307,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">Last Name <span className="text-red-500">*</span></Label>
-                    <Input
+                    <VoiceInput
                       value={form.parentLastName}
                       onChange={(e) => set("parentLastName", e.target.value)}
                       placeholder="Smith"
@@ -315,7 +317,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">Email <span className="text-red-500">*</span></Label>
-                    <Input
+                    <VoiceInput
                       type="email"
                       value={form.parentEmail}
                       onChange={(e) => set("parentEmail", e.target.value)}
@@ -324,7 +326,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">Phone <span className="text-red-500">*</span></Label>
-                    <Input
+                    <VoiceInput
                       type="tel"
                       value={form.parentPhone}
                       onChange={(e) => set("parentPhone", e.target.value)}
@@ -348,7 +350,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">Best Time to Reach</Label>
-                    <Input
+                    <VoiceInput
                       value={form.bestTimeToCall}
                       onChange={(e) => set("bestTimeToCall", e.target.value)}
                       placeholder="Weekdays after 3pm"
@@ -371,7 +373,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">Referred By</Label>
-                    <Input
+                    <VoiceInput
                       value={form.referredBy}
                       onChange={(e) => set("referredBy", e.target.value)}
                       placeholder="Name of referrer"
@@ -387,7 +389,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-1.5 col-span-1">
                       <Label className="text-xs">Full Name</Label>
-                      <Input
+                      <VoiceInput
                         value={form.secondParentName}
                         onChange={(e) => set("secondParentName", e.target.value)}
                         placeholder="John Smith"
@@ -396,7 +398,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Phone</Label>
-                      <Input
+                      <VoiceInput
                         value={form.secondParentPhone}
                         onChange={(e) => set("secondParentPhone", e.target.value)}
                         placeholder="555-000-0000"
@@ -405,7 +407,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Email (gives portal access)</Label>
-                      <Input
+                      <VoiceInput
                         value={form.secondParentEmail}
                         onChange={(e) => set("secondParentEmail", e.target.value)}
                         placeholder="john@example.com"
@@ -430,7 +432,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">Student First Name <span className="text-red-500">*</span></Label>
-                    <Input
+                    <VoiceInput
                       value={form.studentFirstName}
                       onChange={(e) => set("studentFirstName", e.target.value)}
                       placeholder="Michael"
@@ -439,7 +441,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">Student Last Name <span className="text-red-500">*</span></Label>
-                    <Input
+                    <VoiceInput
                       value={form.studentLastName}
                       onChange={(e) => set("studentLastName", e.target.value)}
                       placeholder="Smith"
@@ -449,7 +451,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">Date of Birth</Label>
-                    <Input
+                    <VoiceInput
                       type="date"
                       value={form.dateOfBirth}
                       onChange={(e) => set("dateOfBirth", e.target.value)}
@@ -471,7 +473,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-sm">Diagnosis / Disability</Label>
-                  <Input
+                  <VoiceInput
                     value={form.diagnosis}
                     onChange={(e) => set("diagnosis", e.target.value)}
                     placeholder="List known or suspected diagnoses"
@@ -480,7 +482,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">School Name</Label>
-                    <Input
+                    <VoiceInput
                       value={form.schoolName}
                       onChange={(e) => set("schoolName", e.target.value)}
                       placeholder="Lincoln Elementary"
@@ -488,7 +490,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">County / District</Label>
-                    <Input
+                    <VoiceInput
                       value={form.countyDistrict}
                       onChange={(e) => set("countyDistrict", e.target.value)}
                       placeholder="Fulton County District 1"
@@ -498,7 +500,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">City</Label>
-                    <Input
+                    <VoiceInput
                       value={form.city}
                       onChange={(e) => set("city", e.target.value)}
                       placeholder="Atlanta"
@@ -506,7 +508,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">State</Label>
-                    <Input
+                    <VoiceInput
                       value={form.state}
                       onChange={(e) => set("state", e.target.value)}
                       placeholder="Georgia"
@@ -514,7 +516,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">ZIP Code</Label>
-                    <Input
+                    <VoiceInput
                       value={form.zipCode}
                       onChange={(e) => set("zipCode", e.target.value)}
                       placeholder="30104"
@@ -523,7 +525,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-sm">Top 3 Challenges / Concerns</Label>
-                  <Textarea
+                  <VoiceTextarea
                     value={form.challenges}
                     onChange={(e) => set("challenges", e.target.value)}
                     placeholder="Briefly describe the student's challenges, goals, and what the family is hoping to achieve..."

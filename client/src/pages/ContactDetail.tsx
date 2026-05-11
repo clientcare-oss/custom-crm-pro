@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
@@ -765,23 +767,23 @@ function StudentTabs({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Status</label>
-                  <Textarea rows={2} value={compassForm.currentStatus} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, currentStatus: e.target.value }))} placeholder="Brief snapshot of where the case stands..." className="text-sm" />
+                  <VoiceTextarea rows={2} value={compassForm.currentStatus} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, currentStatus: e.target.value }))} placeholder="Brief snapshot of where the case stands..." className="text-sm" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</label>
-                  <Textarea rows={2} value={compassForm.lastMeetingSummary} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, lastMeetingSummary: e.target.value }))} placeholder="Key takeaways and decisions..." className="text-sm" />
+                  <VoiceTextarea rows={2} value={compassForm.lastMeetingSummary} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, lastMeetingSummary: e.target.value }))} placeholder="Key takeaways and decisions..." className="text-sm" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</label>
-                  <Textarea rows={2} value={compassForm.nextStep} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, nextStep: e.target.value }))} placeholder="The next action needed..." className="text-sm" />
+                  <VoiceTextarea rows={2} value={compassForm.nextStep} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, nextStep: e.target.value }))} placeholder="The next action needed..." className="text-sm" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</label>
-                  <Textarea rows={2} value={compassForm.whoHasBall} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, whoHasBall: e.target.value }))} placeholder="Parent, School, District, Waypoint..." className="text-sm" />
+                  <VoiceTextarea rows={2} value={compassForm.whoHasBall} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, whoHasBall: e.target.value }))} placeholder="Parent, School, District, Waypoint..." className="text-sm" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting Date</label>
-                  <Input type="datetime-local" value={compassForm.nextMeetingDate} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, nextMeetingDate: e.target.value }))} className="text-sm" />
+                  <VoiceInput type="datetime-local" value={compassForm.nextMeetingDate} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, nextMeetingDate: e.target.value }))} className="text-sm" />
                 </div>
               </div>
             )}
@@ -1307,7 +1309,7 @@ function ContactDetailTaskRow({ task, contactId }: { task: any; contactId: numbe
           <div className="px-8 py-2">
             {addingStep ? (
               <div className="flex gap-2 items-center">
-                <Input
+                <VoiceInput
                   autoFocus
                   placeholder="Step title..."
                   value={newStepTitle}
@@ -1554,7 +1556,7 @@ function TimeTrackerTab({ studentId, studentName, contact }: { studentId: number
           {editingRate ? (
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm font-medium text-muted-foreground">$</span>
-              <Input
+              <VoiceInput
                 type="number"
                 min="0"
                 step="0.01"
@@ -1611,7 +1613,7 @@ function TimeTrackerTab({ studentId, studentName, contact }: { studentId: number
                     </div>
                     {editingNotes === entry.id ? (
                       <div className="flex items-center gap-2 mt-2">
-                        <Input
+                        <VoiceInput
                           value={notesInput}
                           onChange={(e) => setNotesInput(e.target.value)}
                           placeholder="Add session notes..."

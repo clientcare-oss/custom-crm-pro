@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import {
   FileText, Upload, GitCompare, CheckCircle2, Lock, Loader2,
   ExternalLink, FilePen, Trash2, Pencil, Clock, ChevronDown, ChevronUp,
@@ -382,7 +383,7 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
                       {/* Notes row */}
                       {isEditingThis ? (
                         <div className="flex flex-col gap-1.5 mt-0.5">
-                          <Textarea
+                          <VoiceTextarea
                             value={editingNotes[draft.id] ?? ""}
                             onChange={(e) =>
                               setEditingNotes((prev) => ({ ...prev, [draft.id]: e.target.value }))

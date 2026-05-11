@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -197,7 +198,7 @@ export default function UnassignedCallLogs() {
             </p>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Input
+                <VoiceInput
                   type={showSecret ? "text" : "password"}
                   placeholder={isConfigured ? "Enter new secret to update…" : "Paste signing secret from Quo…"}
                   value={secretInput}

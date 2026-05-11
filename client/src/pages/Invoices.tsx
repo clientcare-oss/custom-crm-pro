@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import {
   Dialog,
   DialogContent,
@@ -188,7 +189,7 @@ export default function Invoices() {
                 <label className="block text-sm font-semibold">
                   Invoice Number *
                 </label>
-                <Input
+                <VoiceInput
                   value={formData.invoiceNumber}
                   onChange={(e) =>
                     setFormData({ ...formData, invoiceNumber: e.target.value })
@@ -202,7 +203,7 @@ export default function Invoices() {
                 <label className="block text-sm font-semibold">
                   Total ($) *
                 </label>
-                <Input
+                <VoiceInput
                   type="number"
                   value={formData.total}
                   onChange={(e) =>
@@ -216,7 +217,7 @@ export default function Invoices() {
                 <label className="block text-sm font-semibold">
                   Amount ($) *
                 </label>
-                <Input
+                <VoiceInput
                   type="number"
                   value={formData.amount}
                   onChange={(e) =>
@@ -252,7 +253,7 @@ export default function Invoices() {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Due Date</label>
-                <Input
+                <VoiceInput
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) =>

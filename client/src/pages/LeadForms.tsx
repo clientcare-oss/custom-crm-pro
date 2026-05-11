@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
+import VoiceTextarea from "@/components/VoiceTextarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -386,7 +388,7 @@ export default function LeadForms() {
                       <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
                       Confirmation Headline
                     </Label>
-                    <Input
+                    <VoiceInput
                       value={confHeadline}
                       onChange={(e) => setConfHeadline(e.target.value)}
                       placeholder="Thank You!"
@@ -416,7 +418,7 @@ export default function LeadForms() {
                       <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
                       Confirmation Message
                     </Label>
-                    <Textarea
+                    <VoiceTextarea
                       value={confBody}
                       onChange={(e) => setConfBody(e.target.value)}
                       placeholder="Your information has been submitted successfully. We will be in touch within 1–2 business days."
@@ -431,7 +433,7 @@ export default function LeadForms() {
                       <Phone className="w-3.5 h-3.5 text-amber-400" />
                       "Save Our Number" Message
                     </Label>
-                    <Input
+                    <VoiceInput
                       value={confPhone}
                       onChange={(e) => setConfPhone(e.target.value)}
                       placeholder="Remember to save our number so you don't miss our call!"
@@ -446,7 +448,7 @@ export default function LeadForms() {
                       Business Phone Number
                     </Label>
                     <div className="flex items-center gap-2">
-                      <Input
+                      <VoiceInput
                         value={businessPhone}
                         onChange={(e) => setBusinessPhone(e.target.value)}
                         placeholder="(555) 123-4567"

@@ -9,6 +9,7 @@ import { eq, and, asc, desc } from "drizzle-orm";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
+import { transcribeAudio } from "./_core/voiceTranscription";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -20,6 +21,24 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 export const appRouter = router({
   system: systemRouter,
+  voice: router({
+    transcribe: protectedProcedure
+      .input(z.object({
+        audioUrl: z.string().url(),
+        language: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await transcribeAudio({
+          audioUrl: input.audioUrl,
+          language: input.language || "en",
+          prompt: "Transcribe the user's voice input for a CRM field. Return exact words spoken.",
+        });
+        if ("error" in result) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: result.error });
+        }
+        return { text: result.text.trim() };
+      }),
+  }),
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
