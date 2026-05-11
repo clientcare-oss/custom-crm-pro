@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, slug, confirmationHeadline, confirmationBody, saveOurNumberMessage, confirmationImageUrl FROM leadForms WHERE slug = 'public-intake' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, slug, confirmationHeadline, confirmationBody, saveOurNumberMessage, confirmationImageUrl FROM leadForms WHERE slug = 'public-intake' LIMIT 1;",
+  "rows": [],
+  "messages": [
+    "30002\tpublic-intake\t🎉Your Discovery Call is Booked!🎉\tLet's Get Your Child’s IEP Moving in the Right Direction! 🚀📚",
+    "👉 Your Goals & Concerns: Let’s talk about what matters most to you and your child. 💖",
+    "👉 How We Work: We’ll share how we support families like yours, collaborating with school teams to make IEP meetings positive, productive, and focused on your child’s success. 🏫🤝",
+    "👉 Payment & Next Steps: We’ll walk you through our services, payment information, and what to expect as we move forward together. 💼✨",
+    "This is a Free Discovery Call.",
+    "Please view the details of this session below:\tSave our number, or scan the QR code above to add it directly to your phone.\t/manus-storage/lead-forms/1/confirmation-30002-1778463604265_2a20b469.png"
+  ],
+  "stdout": "id\tslug\tconfirmationHeadline\tconfirmationBody\tsaveOurNumberMessage\tconfirmationImageUrl\n30002\tpublic-intake\t🎉Your Discovery Call is Booked!🎉\tLet's Get Your Child’s IEP Moving in the Right Direction! 🚀📚\n\n👉 Your Goals & Concerns: Let’s talk about what matters most to you and your child. 💖\n\n👉 How We Work: We’ll share how we support families like yours, collaborating with school teams to make IEP meetings positive, productive, and focused on your child’s success. 🏫🤝\n\n👉 Payment & Next Steps: We’ll walk you through our services, payment information, and what to expect as we move forward together. 💼✨\n\nThis is a Free Discovery Call.\nPlease view the details of this session below:\tSave our number, or scan the QR code above to add it directly to your phone.\t/manus-storage/lead-forms/1/confirmation-30002-1778463604265_2a20b469.png\n",
+  "stderr": "",
+  "execution_time_ms": 571
+}
