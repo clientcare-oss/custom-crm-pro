@@ -50,15 +50,27 @@ const WORKFLOW_COLORS = [
   "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#64748b",
 ];
 
+// ─── Node data types ──────────────────────────────────────────────────────────
+type CardData = {
+  label: string;
+  notes?: string;
+  color: string;
+  onAddBelow?: (nodeId: string) => void;
+  isAdmin?: boolean;
+};
+
 // ─── Custom node: Card ───────────────────────────────────────────────────────
-function CardNode({ data, selected }: { data: { label: string; notes?: string; color: string }; selected?: boolean }) {
+function CardNode({ id, data, selected }: { id: string; data: CardData; selected?: boolean }) {
+  const [hovered, setHovered] = useState(false);
   return (
     <div
-      className="rounded-lg shadow-md min-w-[120px] max-w-[200px] border-2 transition-all"
+      className="rounded-lg shadow-md min-w-[120px] max-w-[200px] border-2 transition-all relative"
       style={{
         backgroundColor: data.color,
         borderColor: selected ? "#1e293b" : "transparent",
       }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <Handle type="target" position={Position.Top} className="!bg-white/80 !border-slate-400" />
       <Handle type="target" position={Position.Left} className="!bg-white/80 !border-slate-400" />
@@ -70,6 +82,21 @@ function CardNode({ data, selected }: { data: { label: string; notes?: string; c
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-white/80 !border-slate-400" />
       <Handle type="source" position={Position.Right} className="!bg-white/80 !border-slate-400" />
+
+      {/* Hover "+" button at bottom-center */}
+      {data.isAdmin && (
+        <button
+          title="Add card below"
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onAddBelow?.(id);
+          }}
+          className="nodrag absolute left-1/2 -translate-x-1/2 -bottom-4 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:scale-110 transition-all"
+          style={{ opacity: hovered ? 1 : 0, pointerEvents: hovered ? "auto" : "none" }}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -99,28 +126,46 @@ function DiamondNode({ data, selected }: { data: { label: string; color: string 
 }
 
 // ─── Custom node: Sticky note ─────────────────────────────────────────────────
-function StickyNoteNode({ data, selected }: { data: { label: string; color: string }; selected?: boolean }) {
+function StickyNoteNode({ id, data, selected }: { id: string; data: CardData; selected?: boolean }) {
+  const [hovered, setHovered] = useState(false);
   return (
     <div
-      className="rounded shadow-md min-w-[140px] max-w-[220px] border-2 transition-all p-3"
+      className="rounded shadow-md min-w-[140px] max-w-[220px] border-2 transition-all p-3 relative"
       style={{
         backgroundColor: data.color,
         borderColor: selected ? "#1e293b" : "transparent",
       }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <Handle type="target" position={Position.Top} className="!bg-white/80 !border-slate-400" />
       <Handle type="target" position={Position.Left} className="!bg-white/80 !border-slate-400" />
       <p className="text-white text-[11px] leading-relaxed break-words whitespace-pre-wrap">{data.label}</p>
       <Handle type="source" position={Position.Bottom} className="!bg-white/80 !border-slate-400" />
       <Handle type="source" position={Position.Right} className="!bg-white/80 !border-slate-400" />
+
+      {/* Hover "+" button at bottom-center */}
+      {data.isAdmin && (
+        <button
+          title="Add card below"
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onAddBelow?.(id);
+          }}
+          className="nodrag absolute left-1/2 -translate-x-1/2 -bottom-4 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:scale-110 transition-all"
+          style={{ opacity: hovered ? 1 : 0, pointerEvents: hovered ? "auto" : "none" }}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
 
 const nodeTypes: NodeTypes = {
-  card: CardNode,
+  card: CardNode as NodeTypes["card"],
   diamond: DiamondNode,
-  sticky: StickyNoteNode,
+  sticky: StickyNoteNode as NodeTypes["sticky"],
 };
 
 // ─── Empty canvas ─────────────────────────────────────────────────────────────
@@ -184,7 +229,6 @@ export default function Workflows() {
       setEdges([]);
     }
     setSaveStatus("saved");
-    // Clear any pending autosave from previous workflow
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
   }, [selectedWorkflow?.id, selectedWorkflow?.canvasData]);
 
@@ -208,9 +252,14 @@ export default function Workflows() {
     autosaveTimerRef.current = setTimeout(() => {
       if (!selectedIdRef.current) return;
       setSaveStatus("saving");
+      // Strip callback functions before serializing — they can't be JSON-serialized
+      const serializableNodes = currentNodes.map((n) => ({
+        ...n,
+        data: { ...n.data, onAddBelow: undefined, isAdmin: undefined },
+      }));
       saveCanvasMutation.mutate({
         id: selectedIdRef.current,
-        canvasData: JSON.stringify({ nodes: currentNodes, edges: currentEdges }),
+        canvasData: JSON.stringify({ nodes: serializableNodes, edges: currentEdges }),
       });
     }, 1500);
   }, [saveCanvasMutation]);
@@ -219,6 +268,16 @@ export default function Workflows() {
   useEffect(() => {
     return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
   }, []);
+
+  // Inject callbacks into node data after loading from DB
+  const nodesWithCallbacks = nodes.map((n) => ({
+    ...n,
+    data: {
+      ...n.data,
+      onAddBelow: handleAddBelowFromNode,
+      isAdmin,
+    },
+  }));
 
   const onConnect = useCallback((connection: Connection) => {
     setEdges((eds) => {
@@ -255,17 +314,21 @@ export default function Workflows() {
     onError: () => toast.error("Failed to delete workflow"),
   });
 
-  // Manual save (still available via button)
+  // Manual save
   function handleSaveCanvas() {
     if (!selectedId) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     setSaveStatus("saving");
-    saveCanvasMutation.mutate({ id: selectedId, canvasData: JSON.stringify({ nodes, edges }) });
+    const serializableNodes = nodes.map((n) => ({
+      ...n,
+      data: { ...n.data, onAddBelow: undefined, isAdmin: undefined },
+    }));
+    saveCanvasMutation.mutate({ id: selectedId, canvasData: JSON.stringify({ nodes: serializableNodes, edges }) });
   }
 
-  function addNode(type: "card" | "diamond" | "sticky", position?: { x: number; y: number }) {
+  function addNode(type: "card" | "diamond" | "sticky", position?: { x: number; y: number }, inheritColor?: string) {
     const id = `node-${Date.now()}`;
-    const color = type === "sticky" ? "#f59e0b" : type === "diamond" ? "#ef4444" : "#3b82f6";
+    const color = inheritColor ?? (type === "sticky" ? "#f59e0b" : type === "diamond" ? "#ef4444" : "#3b82f6");
     const pos = position ?? { x: 200 + Math.random() * 100, y: 100 + Math.random() * 100 };
     const newNode: Node = {
       id,
@@ -278,10 +341,43 @@ export default function Workflows() {
       triggerAutosave(updated, edges);
       return updated;
     });
-    return { id, newNode };
+    return id;
   }
 
-  /** Add a card directly below the currently-edited node and connect them */
+  /** Called from the hover "+" button on a card node */
+  function handleAddBelowFromNode(sourceNodeId: string) {
+    setNodes((nds) => {
+      const sourceNode = nds.find((n) => n.id === sourceNodeId);
+      if (!sourceNode) return nds;
+      const parentPos = sourceNode.position;
+      const newId = `node-${Date.now()}`;
+      const newPos = { x: parentPos.x, y: parentPos.y + 160 };
+      const sourceColor = (sourceNode.data as CardData).color ?? "#3b82f6";
+      const newNode: Node = {
+        id: newId,
+        type: "card",
+        position: newPos,
+        data: { label: "Step", notes: "", color: sourceColor },
+      };
+      const newEdge: Edge = {
+        id: `edge-${Date.now()}`,
+        source: sourceNodeId,
+        target: newId,
+        animated: true,
+        style: { stroke: "#64748b", strokeWidth: 2 },
+      };
+      const updated = [...nds, newNode];
+      setEdges((eds) => {
+        const updatedEdges = [...eds, newEdge];
+        triggerAutosave(updated, updatedEdges);
+        return updatedEdges;
+      });
+      return updated;
+    });
+    toast.success("Card added below");
+  }
+
+  /** Add a card directly below the currently-edited node (dialog version) */
   function addCardBelow() {
     if (!nodeDialog.nodeId) return;
     const parentPos = nodeDialog.nodePosition;
@@ -327,7 +423,7 @@ export default function Workflows() {
 
   function onNodeDoubleClick(_: React.MouseEvent, node: Node) {
     if (!isAdmin) return;
-    const d = node.data as { label: string; notes?: string; color: string };
+    const d = node.data as CardData;
     setNodeDialog({
       open: true,
       nodeId: node.id,
@@ -499,7 +595,6 @@ export default function Workflows() {
                   >
                     <Trash2 className="h-3 w-3" /> Delete Workflow
                   </Button>
-                  {/* Autosave status */}
                   <SaveIndicator />
                 </div>
               )}
@@ -508,11 +603,10 @@ export default function Workflows() {
             {/* React Flow canvas */}
             <div className="flex-1 min-h-0">
               <ReactFlow
-                nodes={nodes}
+                nodes={nodesWithCallbacks}
                 edges={edges}
                 onNodesChange={(changes) => {
                   onNodesChange(changes);
-                  // Only trigger autosave on position/data changes, not selection
                   if (changes.some(c => c.type !== "select")) {
                     setNodes((nds) => {
                       triggerAutosave(nds, edges);
@@ -541,7 +635,7 @@ export default function Workflows() {
               >
                 <Background gap={16} color="#e2e8f0" />
                 <Controls />
-                <MiniMap nodeColor={(n) => (n.data as { color: string }).color ?? "#64748b"} />
+                <MiniMap nodeColor={(n) => (n.data as CardData).color ?? "#64748b"} />
                 {!isAdmin && (
                   <Panel position="top-right">
                     <Badge variant="secondary" className="text-xs">Read-only view</Badge>
@@ -603,7 +697,6 @@ export default function Workflows() {
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            {/* Add Card Below — only for card/sticky nodes */}
             {nodeDialog.type !== "diamond" && (
               <Button
                 type="button"

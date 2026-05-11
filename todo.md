@@ -874,3 +874,4 @@
 - [x] Replace ALL Textarea and Input instances across all 30+ pages and components with VoiceTextarea/VoiceInput
 - [x] Replace raw textarea elements in Messages, Appointments, Contracts, NoteEditor
 - [x] Voice-to-text now available on every text field in the entire CRM (both short and long fields)
+- [ ] Workflow: Add hover "+" button at bottom-center of each card/sticky node to add a card below (inherits color, auto-connects with arrow)
