@@ -878,3 +878,13 @@
 - [ ] Calendar: clicking an event opens a detail popup showing title, date/time, video link with Join Meeting button, and participants as Parent/Student labels
 - [ ] Calendar event popup: show Delete and Edit actions
 - [ ] Appointments: Add full edit form to popup — pre-filled with all fields (title, date/time, video link, parent name, parent phone, student name, location, description, status), save via tRPC update mutation
+
+## BrainDump Image Attachments
+- [ ] Add braindumpImages table to schema (braindumpId, imageUrl, uploadedAt)
+- [ ] Generate and apply DB migration for braindumpImages table
+- [ ] Add tRPC procedures for braindump image CRUD (upload, delete, list)
+- [ ] Update BrainDump component with file input button + paste handler for images
+- [ ] Display image thumbnails next to braindump text in the list
+- [ ] Support multiple images per braindump item
+- [ ] Auto-attach images when converting braindump to task
+- [ ] Display images on task detail view (same as braindump)

@@ -27,6 +27,8 @@ import {
   aiConnections,
   aiConnectionRuns,
   leadForms,
+  brainDumpItems,
+  brainDumpImages,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `brain_dump_images` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`brain_dump_item_id` int NOT NULL,\n\t`image_url` text NOT NULL,\n\t`uploaded_at` timestamp DEFAULT (now()),\n\tCONSTRAINT `brain_dump_images_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `brain_dump_images` ADD CONSTRAINT `brain_dump_images_brain_dump_item_id_brainDumpItems_id_fk` FOREIGN KEY (`brain_dump_item_id`) REFERENCES `brainDumpItems`(`id`) ON DELETE cascade ON UPDATE no action;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute CREATE TABLE `brain_dump_images` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`brain_dump_item_id` int NOT NULL,\n\t`image_url` text NOT NULL,\n\t`uploaded_at` timestamp DEFAULT (now()),\n\tCONSTRAINT `brain_dump_images_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `brain_dump_images` ADD CONSTRAINT `brain_dump_images_brain_dump_item_id_brainDumpItems_id_fk` FOREIGN KEY (`brain_dump_item_id`) REFERENCES `brainDumpItems`(`id`) ON DELETE cascade ON UPDATE no action;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1304
+}

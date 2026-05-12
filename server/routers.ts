@@ -3894,3 +3894,54 @@ export const appRouter = router({
   }),
 });
 export type AppRouter = typeof appRouter;
+  // BrainDump images: upload, list, delete
+  brainDumpImages: {
+    upload: protectedProcedure
+      .input(z.object({
+        brainDumpItemId: z.number(),
+        imageUrl: z.string().url(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const item = await db.query.brainDumpItems.findFirst({
+          where: eq(brainDumpItems.id, input.brainDumpItemId),
+        });
+        if (!item || item.ownerId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN' });
+        }
+        const image = await db.insert(brainDumpImages).values({
+          brainDumpItemId: input.brainDumpItemId,
+          imageUrl: input.imageUrl,
+        }).returning();
+        return image[0];
+      }),
+    listByItem: protectedProcedure
+      .input(z.object({ brainDumpItemId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const item = await db.query.brainDumpItems.findFirst({
+          where: eq(brainDumpItems.id, input.brainDumpItemId),
+        });
+        if (!item || item.ownerId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN' });
+        }
+        return db.query.brainDumpImages.findMany({
+          where: eq(brainDumpImages.brainDumpItemId, input.brainDumpItemId),
+          orderBy: desc(brainDumpImages.uploadedAt),
+        });
+      }),
+    delete: protectedProcedure
+      .input(z.object({ imageId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const image = await db.query.brainDumpImages.findFirst({
+          where: eq(brainDumpImages.id, input.imageId),
+        });
+        if (!image) throw new TRPCError({ code: 'NOT_FOUND' });
+        const item = await db.query.brainDumpItems.findFirst({
+          where: eq(brainDumpItems.id, image.brainDumpItemId),
+        });
+        if (!item || item.ownerId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN' });
+        }
+        await db.delete(brainDumpImages).where(eq(brainDumpImages.id, input.imageId));
+        return { success: true };
+      }),
+  },

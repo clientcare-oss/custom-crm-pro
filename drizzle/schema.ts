@@ -929,3 +929,13 @@ export const leadForms = mysqlTable("leadForms", {
 
 export type LeadForm = typeof leadForms.$inferSelect;
 export type InsertLeadForm = typeof leadForms.$inferInsert;
+
+export const brainDumpImages = mysqlTable('brain_dump_images', {
+  id: int('id').primaryKey().autoincrement(),
+  brainDumpItemId: int('brain_dump_item_id').notNull().references(() => brainDumpItems.id, { onDelete: 'cascade' }),
+  imageUrl: text('image_url').notNull(),
+  uploadedAt: timestamp('uploaded_at').defaultNow(),
+});
+
+export type BrainDumpImage = typeof brainDumpImages.$inferSelect;
+export type InsertBrainDumpImage = typeof brainDumpImages.$inferInsert;
