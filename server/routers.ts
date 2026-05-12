@@ -3898,7 +3898,7 @@ export const appRouter = router({
       upload: protectedProcedure
         .input(z.object({
           brainDumpItemId: z.number(),
-          imageUrl: z.string().url(),
+          imageUrl: z.string().min(1),
         }))
         .mutation(async ({ ctx, input }) => {
           const { brainDumpItems: bdi, brainDumpImages: bimg } = await import("../drizzle/schema");
