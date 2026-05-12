@@ -10,6 +10,7 @@ import { registerStripeRoutes } from "../stripe";
 import { registerQuoWebhookRoutes } from "../quoWebhook";
 import { registerRestApiRoutes } from "../restApi";
 import { registerVoiceUploadRoutes } from "../voiceUpload";
+import { registerImageUploadRoutes } from "../imageUpload";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -46,6 +47,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerFileUploadRoutes(app);
   registerVoiceUploadRoutes(app);
+  registerImageUploadRoutes(app);
   registerRestApiRoutes(app);
   registerOAuthRoutes(app);
   // tRPC API

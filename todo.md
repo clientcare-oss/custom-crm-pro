@@ -880,11 +880,11 @@
 - [ ] Appointments: Add full edit form to popup — pre-filled with all fields (title, date/time, video link, parent name, parent phone, student name, location, description, status), save via tRPC update mutation
 
 ## BrainDump Image Attachments
-- [ ] Add braindumpImages table to schema (braindumpId, imageUrl, uploadedAt)
-- [ ] Generate and apply DB migration for braindumpImages table
-- [ ] Add tRPC procedures for braindump image CRUD (upload, delete, list)
-- [ ] Update BrainDump component with file input button + paste handler for images
-- [ ] Display image thumbnails next to braindump text in the list
-- [ ] Support multiple images per braindump item
-- [ ] Auto-attach images when converting braindump to task
+- [x] Add braindumpImages table to schema (braindumpId, imageUrl, uploadedAt)
+- [x] Generate and apply DB migration for braindumpImages table
+- [x] Add tRPC procedures for braindump image CRUD (upload, delete, list)
+- [x] Update BrainDump component with file input button + paste handler for images
+- [x] Display image thumbnails next to braindump text in the list
+- [x] Support multiple images per braindump item
+- [x] Auto-attach images when converting braindump to task
 - [ ] Display images on task detail view (same as braindump)

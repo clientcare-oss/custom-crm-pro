@@ -1,3 +1,4 @@
+import { brainDumpItems, brainDumpImages } from "../drizzle/schema";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -1823,6 +1824,7 @@ export const appRouter = router({
         linkedFileUrl: z.string().optional(),
         linkedStudentId: z.number().optional(),
         linkedStudentName: z.string().optional(),
+        resources: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const database = await db.getDb();
@@ -1836,7 +1838,7 @@ export const appRouter = router({
           assigneeId: input.assigneeId,
           assigneeContactId: input.assigneeContactId,
           dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
-          resources: "[]",
+          resources: input.resources || "[]",
           linkedFileId: input.linkedFileId,
           linkedFileName: input.linkedFileName,
           linkedFileUrl: input.linkedFileUrl,
@@ -3892,56 +3894,56 @@ export const appRouter = router({
         };
       }),
   }),
+  brainDumpImages: router({
+      upload: protectedProcedure
+        .input(z.object({
+          brainDumpItemId: z.number(),
+          imageUrl: z.string().url(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const { brainDumpItems: bdi, brainDumpImages: bimg } = await import("../drizzle/schema");
+          const { eq: beq } = await import("drizzle-orm");
+          const dbConn = await db.getDb();
+          if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+          const [item] = await dbConn.select().from(bdi).where(beq(bdi.id, input.brainDumpItemId)).limit(1);
+          if (!item || item.ownerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' });
+          await dbConn.insert(bimg).values({
+            brainDumpItemId: input.brainDumpItemId,
+            imageUrl: input.imageUrl,
+          });
+          const [inserted] = await dbConn.select().from(bimg)
+            .where(beq(bimg.brainDumpItemId, input.brainDumpItemId))
+            .orderBy(bimg.id)
+            .limit(1);
+          return inserted;
+        }),
+      listByItem: protectedProcedure
+        .input(z.object({ brainDumpItemId: z.number() }))
+        .query(async ({ ctx, input }) => {
+          const { brainDumpItems: bdi, brainDumpImages: bimg } = await import("../drizzle/schema");
+          const { eq: beq, desc: bdesc } = await import("drizzle-orm");
+          const dbConn = await db.getDb();
+          if (!dbConn) return [];
+          const [item] = await dbConn.select().from(bdi).where(beq(bdi.id, input.brainDumpItemId)).limit(1);
+          if (!item || item.ownerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' });
+          return dbConn.select().from(bimg)
+            .where(beq(bimg.brainDumpItemId, input.brainDumpItemId))
+            .orderBy(bdesc(bimg.uploadedAt));
+        }),
+      delete: protectedProcedure
+        .input(z.object({ imageId: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+          const { brainDumpItems: bdi, brainDumpImages: bimg } = await import("../drizzle/schema");
+          const { eq: beq } = await import("drizzle-orm");
+          const dbConn = await db.getDb();
+          if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+          const [image] = await dbConn.select().from(bimg).where(beq(bimg.id, input.imageId)).limit(1);
+          if (!image) throw new TRPCError({ code: 'NOT_FOUND' });
+          const [item] = await dbConn.select().from(bdi).where(beq(bdi.id, image.brainDumpItemId)).limit(1);
+          if (!item || item.ownerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' });
+          await dbConn.delete(bimg).where(beq(bimg.id, input.imageId));
+          return { success: true };
+        }),
+  }),
 });
 export type AppRouter = typeof appRouter;
-  // BrainDump images: upload, list, delete
-  brainDumpImages: {
-    upload: protectedProcedure
-      .input(z.object({
-        brainDumpItemId: z.number(),
-        imageUrl: z.string().url(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const item = await db.query.brainDumpItems.findFirst({
-          where: eq(brainDumpItems.id, input.brainDumpItemId),
-        });
-        if (!item || item.ownerId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN' });
-        }
-        const image = await db.insert(brainDumpImages).values({
-          brainDumpItemId: input.brainDumpItemId,
-          imageUrl: input.imageUrl,
-        }).returning();
-        return image[0];
-      }),
-    listByItem: protectedProcedure
-      .input(z.object({ brainDumpItemId: z.number() }))
-      .query(async ({ ctx, input }) => {
-        const item = await db.query.brainDumpItems.findFirst({
-          where: eq(brainDumpItems.id, input.brainDumpItemId),
-        });
-        if (!item || item.ownerId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN' });
-        }
-        return db.query.brainDumpImages.findMany({
-          where: eq(brainDumpImages.brainDumpItemId, input.brainDumpItemId),
-          orderBy: desc(brainDumpImages.uploadedAt),
-        });
-      }),
-    delete: protectedProcedure
-      .input(z.object({ imageId: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        const image = await db.query.brainDumpImages.findFirst({
-          where: eq(brainDumpImages.id, input.imageId),
-        });
-        if (!image) throw new TRPCError({ code: 'NOT_FOUND' });
-        const item = await db.query.brainDumpItems.findFirst({
-          where: eq(brainDumpItems.id, image.brainDumpItemId),
-        });
-        if (!item || item.ownerId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN' });
-        }
-        await db.delete(brainDumpImages).where(eq(brainDumpImages.id, input.imageId));
-        return { success: true };
-      }),
-  },
