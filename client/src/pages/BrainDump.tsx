@@ -70,9 +70,17 @@ function SmallThumbnailStrip({ itemId }: { itemId: number }) {
   return (
     <div className="flex gap-1 mt-1.5 flex-wrap">
       {images.slice(0, 4).map((img) => (
-        <div key={img.id} className="w-8 h-8 rounded overflow-hidden border border-border flex-shrink-0">
+        <a
+          key={img.id}
+          href={img.imageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="w-8 h-8 rounded overflow-hidden border border-border flex-shrink-0 hover:ring-2 hover:ring-violet-400 transition-all"
+          title="Click to view image"
+        >
           <img src={img.imageUrl} alt="img" className="w-full h-full object-cover" />
-        </div>
+        </a>
       ))}
       {images.length > 4 && (
         <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-[9px] text-muted-foreground font-bold flex-shrink-0">
