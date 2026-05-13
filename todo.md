@@ -907,3 +907,7 @@
 - [ ] Add Forgot Password link and form to portal login page
 - [ ] Add Reset Password view at /portal?reset=TOKEN
 - [ ] Send reset email via Gmail with reset link
+
+## Portal Email Link & First-Time Login Fixes
+- [x] Fix portal email link to use CRM domain not Wix domain (cleared wrong portalDomain from DB)
+- [x] Add first-time "Set your password" link on portal login screen

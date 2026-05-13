@@ -218,7 +218,7 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
           <h1 className="text-2xl font-bold text-foreground mb-1">Client Portal</h1>
           <p className="text-sm text-muted-foreground">
             {view === "login" && "Sign in to access your portal"}
-            {view === "forgot" && "Reset your password"}
+            {view === "forgot" && "Set up or reset your password"}
             {view === "forgot-sent" && "Check your email"}
             {view === "reset" && "Set a new password"}
             {view === "reset-done" && "Password updated"}
@@ -250,9 +250,18 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
               disabled={login.isPending || !email || !password}>
               {login.isPending ? "Signing in…" : "Sign In"}
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Don't have access? Contact your advocate to get set up.
-            </p>
+            <div className="text-center space-y-1">
+              <p className="text-xs text-muted-foreground">
+                First time here?{" "}
+                <button type="button" onClick={() => setView("forgot")}
+                  className="text-primary hover:underline font-medium">
+                  Set up your password
+                </button>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Don't have access? Contact your advocate.
+              </p>
+            </div>
           </div>
         )}
 
@@ -260,7 +269,7 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
         {view === "forgot" && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we'll send you a link to set or reset your password.
             </p>
             <div className="space-y-1.5">
               <Label htmlFor="forgot-email">Email</Label>

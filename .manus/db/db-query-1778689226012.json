@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, email, portalDomain FROM users LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, name, email, portalDomain FROM users LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Byron Honea",
+      "email": "clientcare@waypointadvocates.com",
+      "portalDomain": "www.waypointadvocates.com"
+    },
+    {
+      "id": "9060030",
+      "name": "Byron Honea",
+      "email": "contactbyronhonea@gmail.com",
+      "portalDomain": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tportalDomain\n1\tByron Honea\tclientcare@waypointadvocates.com\twww.waypointadvocates.com\n9060030\tByron Honea\tcontactbyronhonea@gmail.com\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 600
+}
