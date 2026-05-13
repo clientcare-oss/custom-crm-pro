@@ -888,3 +888,14 @@
 - [x] Support multiple images per braindump item
 - [x] Auto-attach images when converting braindump to task
 - [ ] Display images on task detail view (same as braindump)
+
+## Client Portal Separate Auth (CRITICAL FIX)
+- [ ] Add clientCredentials table (email, passwordHash, contactId, createdAt)
+- [ ] Add portalSessions table (token, contactId, expiresAt)
+- [ ] Generate and apply DB migration for new tables
+- [ ] Add backend procedures: setClientPassword (admin), portalLogin, portalLogout, portalMe
+- [ ] Build separate PortalLogin page at /portal with email/password form (no Manus OAuth)
+- [ ] Portal route shows PortalLogin for unauthenticated users instead of Manus OAuth
+- [ ] ClientPortal page checks portal session cookie (not Manus OAuth user)
+- [ ] Admin can set/reset client password from Contact Detail page
+- [ ] Send login instructions in portal link email

@@ -21,11 +21,35 @@ import { NotesSection } from "@/components/NotesSection";
 import AiButtonRunner from "@/components/AiButtonRunner";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { KeyRound } from "lucide-react";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
   const [selectedParents, setSelectedParents] = useState<number[]>([]);
   const [includeInEmails, setIncludeInEmails] = useState(true);
+  const [showSetPassword, setShowSetPassword] = useState(false);
+  const [pwEmail, setPwEmail] = useState("");
+  const [pwPassword, setPwPassword] = useState("");
+
+  const { data: portalStatus, refetch: refetchStatus } = trpc.portalAuth.getClientPortalStatus.useQuery(
+    { contactId: contact.id },
+    { enabled: !!contact.id }
+  );
+  const setPasswordMutation = trpc.portalAuth.setClientPassword.useMutation({
+    onSuccess: () => {
+      toast.success("Portal credentials saved!");
+      setShowSetPassword(false);
+      setPwPassword("");
+      refetchStatus();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const removeCredsMutation = trpc.portalAuth.removeClientCredentials.useMutation({
+    onSuccess: () => { toast.success("Portal access removed"); refetchStatus(); },
+    onError: (err) => toast.error(err.message),
+  });
 
   // Fetch the saved custom portal domain from the DB
   const { data: domainData } = trpc.system.getPortalDomain.useQuery();
@@ -88,15 +112,42 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
     : [];
 
   return (
+    <>
     <Card className="border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-sm">
       <div className="flex items-start justify-between p-6">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-3">
             <Users className="h-5 w-5 text-accent" />
             <h3 className="font-bold text-foreground">Client portal</h3>
-            <Button variant="ghost" size="sm" className="text-xs text-accent hover:bg-accent/10 ml-auto">
-              <span className="text-blue-600">View & edit</span>
-            </Button>
+            <div className="ml-auto flex items-center gap-2">
+              {portalStatus?.hasCredentials ? (
+                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                  <KeyRound className="h-3 w-3" /> Access enabled
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <KeyRound className="h-3 w-3" /> No access yet
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-accent hover:bg-accent/10"
+                onClick={() => { setPwEmail(portalStatus?.email ?? contact.email ?? ""); setShowSetPassword(true); }}
+              >
+                {portalStatus?.hasCredentials ? "Update Login" : "Set Login"}
+              </Button>
+              {portalStatus?.hasCredentials && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-destructive hover:bg-destructive/10"
+                  onClick={() => removeCredsMutation.mutate({ contactId: contact.id })}
+                >
+                  Remove
+                </Button>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 mb-4 bg-muted/50 rounded px-3 py-2 text-sm text-muted-foreground font-mono">
             <span className="truncate">{portalLink.substring(0, 50)}...</span>
@@ -152,6 +203,53 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
         </Button>
       </div>
     </Card>
+
+    {/* Set Portal Password Dialog */}
+    <Dialog open={showSetPassword} onOpenChange={setShowSetPassword}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-accent" />
+            {portalStatus?.hasCredentials ? "Update Portal Login" : "Set Portal Login"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-muted-foreground">
+            Set the email and password this client will use to sign in to their portal.
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="pw-email">Client Email</Label>
+            <Input
+              id="pw-email"
+              type="email"
+              value={pwEmail}
+              onChange={(e) => setPwEmail(e.target.value)}
+              placeholder="client@example.com"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pw-password">{portalStatus?.hasCredentials ? "New Password" : "Password"}</Label>
+            <Input
+              id="pw-password"
+              type="password"
+              value={pwPassword}
+              onChange={(e) => setPwPassword(e.target.value)}
+              placeholder="Min 8 characters"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowSetPassword(false)}>Cancel</Button>
+          <Button
+            onClick={() => setPasswordMutation.mutate({ contactId: contact.id, email: pwEmail, password: pwPassword })}
+            disabled={setPasswordMutation.isPending || !pwEmail || pwPassword.length < 8}
+          >
+            {setPasswordMutation.isPending ? "Saving..." : "Save Credentials"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 

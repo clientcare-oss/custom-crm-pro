@@ -942,3 +942,29 @@ export const brainDumpImages = mysqlTable('brain_dump_images', {
 
 export type BrainDumpImage = typeof brainDumpImages.$inferSelect;
 export type InsertBrainDumpImage = typeof brainDumpImages.$inferInsert;
+
+/**
+ * Client portal credentials — separate from Manus OAuth.
+ * Each parent contact can have an email + hashed password for portal login.
+ */
+export const clientCredentials = mysqlTable('client_credentials', {
+  id: int('id').primaryKey().autoincrement(),
+  contactId: int('contact_id').notNull().unique(),
+  email: varchar('email', { length: 320 }).notNull().unique(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
+export type ClientCredential = typeof clientCredentials.$inferSelect;
+
+/**
+ * Portal sessions — issued on successful portal login.
+ */
+export const portalSessions = mysqlTable('portal_sessions', {
+  id: int('id').primaryKey().autoincrement(),
+  token: varchar('token', { length: 128 }).notNull().unique(),
+  contactId: int('contact_id').notNull(),
+  expiresAt: datetime('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+export type PortalSession = typeof portalSessions.$inferSelect;

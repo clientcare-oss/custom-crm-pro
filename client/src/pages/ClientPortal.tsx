@@ -13,6 +13,8 @@ import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "@/components/CaseCompassCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
@@ -163,6 +165,69 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
 
 
 
+// ── Portal Login Form ───────────────────────────────────────────────────────
+function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const login = trpc.portalAuth.portalLogin.useMutation({
+    onSuccess: () => {
+      toast.success("Welcome back!");
+      onSuccess();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Invalid email or password");
+    },
+  });
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="w-full max-w-sm mx-auto px-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-8 h-8 text-accent" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-1">Client Portal</h1>
+          <p className="text-sm text-muted-foreground">Sign in to access your portal</p>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="portal-email">Email</Label>
+            <Input
+              id="portal-email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="portal-password">Password</Label>
+            <Input
+              id="portal-password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })}
+            />
+          </div>
+          <Button
+            className="w-full"
+            onClick={() => login.mutate({ email, password })}
+            disabled={login.isPending || !email || !password}
+          >
+            {login.isPending ? "Signing in…" : "Sign In"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground text-center mt-6">
+          Don't have access? Contact your advocate to get set up.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function ClientPortal() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -175,13 +240,21 @@ export default function ClientPortal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
+  // Portal-specific session (separate from Manus OAuth)
+  const { data: portalUser, refetch: refetchPortalMe } = trpc.portalAuth.portalMe.useQuery();
+  const portalLogout = trpc.portalAuth.portalLogout.useMutation({
+    onSuccess: () => { refetchPortalMe(); },
+  });
+
   // Allow preview mode for admins
   const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
-  const isClientOrPreview = user?.role === "client" || (user?.role === "admin" && isPreviewMode);
+  // isClientOrPreview: admin preview OR logged-in via portal session
+  const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser;
 
   // Multi-student: fetch students linked to this parent portal account
+  // Use portalUser.contactId if logged in via portal session, otherwise fall back to Manus OAuth client
   const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, {
-    enabled: user?.role === "client",
+    enabled: !!portalUser || user?.role === "client",
   });
 
   // Admin preview mode: read parentContactId from URL
@@ -330,6 +403,8 @@ export default function ClientPortal() {
   };
 
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
+  // Display name: portal session user name or Manus OAuth user name
+  const displayName = portalUser?.name ?? user?.name ?? "Client";
 
   const handleOpenScheduler = (sessionTypeId: number) => {
     setSchedulerSessionTypeId(sessionTypeId);
@@ -341,43 +416,8 @@ export default function ClientPortal() {
     setTimeout(() => setShowMeetingScheduler(false), 2000);
   };
 
-  if (!user || !isClientOrPreview) {
-    // Build a login URL that returns the user back to this portal page after login
-    const returnPath = window.location.pathname + window.location.search;
-    const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
-    const appId = import.meta.env.VITE_APP_ID;
-    const redirectUri = `${window.location.origin}/api/oauth/callback`;
-    const state = btoa(JSON.stringify({ redirectUri, returnPath }));
-    const loginUrl = new URL(`${oauthPortalUrl}/app-auth`);
-    loginUrl.searchParams.set('appId', appId);
-    loginUrl.searchParams.set('redirectUri', redirectUri);
-    loginUrl.searchParams.set('state', state);
-    loginUrl.searchParams.set('type', 'signIn');
-
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-center max-w-sm mx-auto px-6">
-          <div className="mb-6">
-            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Client Portal</h1>
-            <p className="text-sm text-muted-foreground">Please sign in to access your portal.</p>
-          </div>
-          <a
-            href={loginUrl.toString()}
-            className="inline-flex items-center justify-center gap-2 w-full rounded-lg bg-accent text-accent-foreground font-semibold px-6 py-3 text-sm hover:bg-accent/90 transition-colors"
-          >
-            Sign In to Access Portal
-          </a>
-          <p className="text-xs text-muted-foreground mt-4">
-            Don't have an account? Contact your advocate to get access.
-          </p>
-        </div>
-      </div>
-    );
+  if (!isClientOrPreview) {
+    return <PortalLoginForm onSuccess={refetchPortalMe} />;
   }
 
   return (
@@ -387,7 +427,7 @@ export default function ClientPortal() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Client Portal</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Welcome, {user.name}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Welcome, {displayName}</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Theme selector — 4 buttons side by side */}
@@ -420,9 +460,15 @@ export default function ClientPortal() {
               <Calendar className="h-4 w-4" />
               Schedule Meeting
             </Button>
-            {user?.role !== "admin" && (
+            {(portalUser || user?.role !== "admin") && (
               <Button
-                onClick={() => logoutMutation.mutate()}
+                onClick={() => {
+                  if (portalUser) {
+                    portalLogout.mutate();
+                  } else {
+                    logoutMutation.mutate();
+                  }
+                }}
                 variant="outline"
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
               >

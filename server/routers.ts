@@ -2,6 +2,7 @@ import { brainDumpItems, brainDumpImages } from "../drizzle/schema";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
+import { portalAuthRouter } from "./routers/portalAuth";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -22,6 +23,7 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 export const appRouter = router({
   system: systemRouter,
+  portalAuth: portalAuthRouter,
   voice: router({
     transcribe: protectedProcedure
       .input(z.object({
