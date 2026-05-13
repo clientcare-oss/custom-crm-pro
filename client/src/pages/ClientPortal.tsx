@@ -167,18 +167,47 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
 
 // ── Portal Login Form ───────────────────────────────────────────────────────
 function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
+  // Detect reset token in URL: /portal?reset=TOKEN
+  const resetToken = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("reset") ?? ""
+    : "";
+
+  // view: "login" | "forgot" | "forgot-sent" | "reset" | "reset-done"
+  const [view, setView] = useState<"login" | "forgot" | "forgot-sent" | "reset" | "reset-done">(
+    resetToken ? "reset" : "login"
+  );
+
+  // ── Login state ──
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const login = trpc.portalAuth.portalLogin.useMutation({
-    onSuccess: () => {
-      toast.success("Welcome back!");
-      onSuccess();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Invalid email or password");
-    },
+    onSuccess: () => { toast.success("Welcome back!"); onSuccess(); },
+    onError: (err) => { toast.error(err.message || "Invalid email or password"); },
   });
 
+  // ── Forgot password state ──
+  const [forgotEmail, setForgotEmail] = useState("");
+  const requestReset = trpc.portalAuth.requestPasswordReset.useMutation({
+    onSuccess: () => setView("forgot-sent"),
+    onError: () => setView("forgot-sent"), // always show sent to avoid enumeration
+  });
+
+  // ── Reset password state ──
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const { data: tokenStatus } = trpc.portalAuth.validateResetToken.useQuery(
+    { token: resetToken },
+    { enabled: !!resetToken }
+  );
+  const doReset = trpc.portalAuth.resetPassword.useMutation({
+    onSuccess: () => setView("reset-done"),
+    onError: (err) => toast.error(err.message || "Reset failed. The link may have expired."),
+  });
+
+  const portalUrl = (import.meta.env.VITE_APP_PUBLIC_URL as string | undefined)
+    || window.location.origin;
+
+  // ── Shared wrapper ──
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-full max-w-sm mx-auto px-6">
@@ -187,42 +216,145 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
             <Shield className="w-8 h-8 text-accent" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Client Portal</h1>
-          <p className="text-sm text-muted-foreground">Sign in to access your portal</p>
+          <p className="text-sm text-muted-foreground">
+            {view === "login" && "Sign in to access your portal"}
+            {view === "forgot" && "Reset your password"}
+            {view === "forgot-sent" && "Check your email"}
+            {view === "reset" && "Set a new password"}
+            {view === "reset-done" && "Password updated"}
+          </p>
         </div>
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="portal-email">Email</Label>
-            <Input
-              id="portal-email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })}
-            />
+
+        {/* ── Login view ── */}
+        {view === "login" && (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-email">Email</Label>
+              <Input id="portal-email" type="email" placeholder="you@example.com"
+                value={email} onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })} />
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="portal-password">Password</Label>
+                <button type="button" onClick={() => setView("forgot")}
+                  className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </button>
+              </div>
+              <Input id="portal-password" type="password" placeholder="••••••••"
+                value={password} onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })} />
+            </div>
+            <Button className="w-full" onClick={() => login.mutate({ email, password })}
+              disabled={login.isPending || !email || !password}>
+              {login.isPending ? "Signing in…" : "Sign In"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Don't have access? Contact your advocate to get set up.
+            </p>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="portal-password">Password</Label>
-            <Input
-              id="portal-password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })}
-            />
+        )}
+
+        {/* ── Forgot password view ── */}
+        {view === "forgot" && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="forgot-email">Email</Label>
+              <Input id="forgot-email" type="email" placeholder="you@example.com"
+                value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && requestReset.mutate({ email: forgotEmail, portalUrl })} />
+            </div>
+            <Button className="w-full"
+              onClick={() => requestReset.mutate({ email: forgotEmail, portalUrl })}
+              disabled={requestReset.isPending || !forgotEmail}>
+              {requestReset.isPending ? "Sending…" : "Send Reset Link"}
+            </Button>
+            <button type="button" onClick={() => setView("login")}
+              className="text-xs text-muted-foreground hover:text-foreground w-full text-center">
+              ← Back to sign in
+            </button>
           </div>
-          <Button
-            className="w-full"
-            onClick={() => login.mutate({ email, password })}
-            disabled={login.isPending || !email || !password}
-          >
-            {login.isPending ? "Signing in…" : "Sign In"}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground text-center mt-6">
-          Don't have access? Contact your advocate to get set up.
-        </p>
+        )}
+
+        {/* ── Forgot sent view ── */}
+        {view === "forgot-sent" && (
+          <div className="space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              If an account exists for <strong>{forgotEmail}</strong>, you'll receive a reset link shortly.
+              Check your inbox (and spam folder).
+            </p>
+            <Button variant="outline" className="w-full" onClick={() => setView("login")}>
+              Back to Sign In
+            </Button>
+          </div>
+        )}
+
+        {/* ── Reset password view ── */}
+        {view === "reset" && (
+          <div className="space-y-4">
+            {tokenStatus?.valid === false && (
+              <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                This reset link is invalid or has expired. Please request a new one.
+              </div>
+            )}
+            {tokenStatus?.valid !== false && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input id="new-password" type="password" placeholder="At least 8 characters"
+                    value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input id="confirm-password" type="password" placeholder="Repeat password"
+                    value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newPassword === confirmPassword && newPassword.length >= 8)
+                        doReset.mutate({ token: resetToken, newPassword });
+                    }} />
+                </div>
+                {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-xs text-red-500">Passwords don't match</p>
+                )}
+                <Button className="w-full"
+                  onClick={() => doReset.mutate({ token: resetToken, newPassword })}
+                  disabled={doReset.isPending || newPassword.length < 8 || newPassword !== confirmPassword}>
+                  {doReset.isPending ? "Saving…" : "Set New Password"}
+                </Button>
+              </>
+            )}
+            <button type="button" onClick={() => setView("forgot")}
+              className="text-xs text-muted-foreground hover:text-foreground w-full text-center">
+              Request a new reset link
+            </button>
+          </div>
+        )}
+
+        {/* ── Reset done view ── */}
+        {view === "reset-done" && (
+          <div className="space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Your password has been updated. You can now sign in with your new password.
+            </p>
+            <Button className="w-full" onClick={() => {
+              // Clear the reset token from the URL
+              window.history.replaceState({}, "", "/portal");
+              setView("login");
+            }}>
+              Sign In
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

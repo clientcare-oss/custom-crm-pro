@@ -968,3 +968,16 @@ export const portalSessions = mysqlTable('portal_sessions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 export type PortalSession = typeof portalSessions.$inferSelect;
+
+/**
+ * Password reset tokens for client portal forgot-password flow.
+ */
+export const passwordResetTokens = mysqlTable('password_reset_tokens', {
+  id: int('id').primaryKey().autoincrement(),
+  token: varchar('token', { length: 128 }).notNull().unique(),
+  contactId: int('contact_id').notNull(),
+  expiresAt: datetime('expires_at').notNull(),
+  usedAt: datetime('used_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

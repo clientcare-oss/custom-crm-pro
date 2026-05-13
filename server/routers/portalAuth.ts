@@ -9,15 +9,18 @@ import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import * as db from "../db";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import {
   clientCredentials,
   portalSessions,
+  passwordResetTokens,
   contacts,
 } from "../../drizzle/schema";
+import { sendEmail } from "../_core/email";
 
 const SALT_ROUNDS = 10;
 const SESSION_DAYS = 30;
+const RESET_TOKEN_MINUTES = 60;
 
 async function getDbConn() {
   const conn = await db.getDb();
@@ -153,6 +156,131 @@ export const portalAuthRouter = router({
         await conn.delete(portalSessions).where(eq(portalSessions.token, token));
       }
       (ctx as any).res?.clearCookie("portal_session", { path: "/" });
+      return { success: true };
+    }),
+
+  /**
+   * Public: request a password reset email.
+   * Always returns success to avoid email enumeration.
+   */
+  requestPasswordReset: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+      portalUrl: z.string().min(1), // frontend passes its own origin
+    }))
+    .mutation(async ({ input }) => {
+      const conn = await getDbConn();
+      const normalizedEmail = input.email.toLowerCase().trim();
+      const [cred] = await conn.select().from(clientCredentials)
+        .where(eq(clientCredentials.email, normalizedEmail)).limit(1);
+
+      // Always return success to prevent email enumeration
+      if (!cred) return { success: true };
+
+      // Get the contact name for the email
+      const [contact] = await conn.select().from(contacts)
+        .where(eq(contacts.id, cred.contactId)).limit(1);
+
+      // Generate a secure token
+      const token = crypto.randomBytes(48).toString("hex");
+      const expiresAt = new Date(Date.now() + RESET_TOKEN_MINUTES * 60 * 1000);
+
+      await conn.insert(passwordResetTokens).values({
+        token,
+        contactId: cred.contactId,
+        expiresAt,
+      });
+
+      const resetLink = `${input.portalUrl}/portal?reset=${token}`;
+      const firstName = contact?.firstName ?? "there";
+
+      try {
+        await sendEmail({
+          to: normalizedEmail,
+          subject: "Reset your portal password",
+          html: `
+            <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+              <h2 style="color: #1e3a5f;">Reset Your Password</h2>
+              <p>Hi ${firstName},</p>
+              <p>We received a request to reset your client portal password. Click the button below to set a new password. This link expires in ${RESET_TOKEN_MINUTES} minutes.</p>
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${resetLink}"
+                   style="background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+                  Reset Password
+                </a>
+              </div>
+              <p style="color: #6b7280; font-size: 13px;">If you didn't request this, you can safely ignore this email. Your password won't change.</p>
+              <p style="color: #6b7280; font-size: 13px;">Or copy this link: ${resetLink}</p>
+            </div>
+          `,
+        });
+      } catch (err) {
+        console.error("[portalAuth] Failed to send reset email:", err);
+        // Don't throw — still return success to avoid leaking info
+      }
+
+      return { success: true };
+    }),
+
+  /**
+   * Public: validate a reset token (used to show the reset form).
+   */
+  validateResetToken: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      const conn = await getDbConn();
+      const now = new Date();
+      const [row] = await conn.select().from(passwordResetTokens)
+        .where(
+          and(
+            eq(passwordResetTokens.token, input.token),
+            gt(passwordResetTokens.expiresAt, now)
+          )
+        ).limit(1);
+      if (!row || row.usedAt) return { valid: false };
+      return { valid: true };
+    }),
+
+  /**
+   * Public: reset password using a valid token.
+   */
+  resetPassword: publicProcedure
+    .input(z.object({
+      token: z.string(),
+      newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    }))
+    .mutation(async ({ input }) => {
+      const conn = await getDbConn();
+      const now = new Date();
+      const [row] = await conn.select().from(passwordResetTokens)
+        .where(
+          and(
+            eq(passwordResetTokens.token, input.token),
+            gt(passwordResetTokens.expiresAt, now)
+          )
+        ).limit(1);
+
+      if (!row || row.usedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This reset link is invalid or has already been used.",
+        });
+      }
+
+      const passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
+      await conn.update(clientCredentials)
+        .set({ passwordHash })
+        .where(eq(clientCredentials.contactId, row.contactId));
+
+      // Mark token as used
+      await conn.update(passwordResetTokens)
+        .set({ usedAt: now })
+        .where(eq(passwordResetTokens.token, input.token));
+
+      // Invalidate all existing portal sessions for this contact
+      await conn.delete(portalSessions)
+        .where(eq(portalSessions.contactId, row.contactId));
+
       return { success: true };
     }),
 });

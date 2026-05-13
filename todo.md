@@ -899,3 +899,11 @@
 - [ ] ClientPortal page checks portal session cookie (not Manus OAuth user)
 - [ ] Admin can set/reset client password from Contact Detail page
 - [ ] Send login instructions in portal link email
+
+## Forgot Password Flow
+- [ ] Add password_reset_tokens table to schema with token, contactId, expiresAt, usedAt
+- [ ] Generate and apply DB migration for password_reset_tokens
+- [ ] Add requestPasswordReset and resetPassword tRPC procedures to portalAuth router
+- [ ] Add Forgot Password link and form to portal login page
+- [ ] Add Reset Password view at /portal?reset=TOKEN
+- [ ] Send reset email via Gmail with reset link
