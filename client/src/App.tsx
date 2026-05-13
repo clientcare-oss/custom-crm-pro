@@ -128,6 +128,9 @@ function Router() {
       <Route path="/form/:slug" component={DynamicForm} />
       <Route path="/book" component={BookingPage} />
       <Route path="/portal/book" component={PortalBook} />
+      {/* Portal is public so email links work for unauthenticated clients */}
+      <Route path="/portal" component={ClientPortal} />
+      <Route path="/client-portal" component={ClientPortal} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

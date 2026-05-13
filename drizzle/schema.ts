@@ -30,6 +30,7 @@ export const users = mysqlTable("users", {
   quoWebhookSecret: varchar("quoWebhookSecret", { length: 255 }),  // Quo (OpenPhone) webhook signing secret
   gmailUser: varchar("gmailUser", { length: 320 }),  // Gmail address for sending emails
   gmailAppPassword: varchar("gmailAppPassword", { length: 255 }),  // Gmail app-specific password
+  portalDomain: varchar("portalDomain", { length: 320 }),  // Custom domain for portal links (e.g. portal.waypointadvocates.com)
 });
 
 export type User = typeof users.$inferSelect;

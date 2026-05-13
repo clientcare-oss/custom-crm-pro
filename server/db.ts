@@ -1356,3 +1356,17 @@ export async function getOwnerGmailCredentials(openId: string): Promise<{ gmailU
     gmailAppPassword: owner?.gmailAppPassword ?? null,
   };
 }
+
+export async function updateOwnerPortalDomain(openId: string, portalDomain: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(users)
+    .set({ portalDomain: portalDomain || null })
+    .where(eq(users.openId, openId));
+}
+
+export async function getOwnerPortalDomain(openId: string): Promise<string | null> {
+  const owner = await getUserByOpenId(openId);
+  return owner?.portalDomain ?? null;
+}

@@ -342,11 +342,39 @@ export default function ClientPortal() {
   };
 
   if (!user || !isClientOrPreview) {
+    // Build a login URL that returns the user back to this portal page after login
+    const returnPath = window.location.pathname + window.location.search;
+    const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
+    const appId = import.meta.env.VITE_APP_ID;
+    const redirectUri = `${window.location.origin}/api/oauth/callback`;
+    const state = btoa(JSON.stringify({ redirectUri, returnPath }));
+    const loginUrl = new URL(`${oauthPortalUrl}/app-auth`);
+    loginUrl.searchParams.set('appId', appId);
+    loginUrl.searchParams.set('redirectUri', redirectUri);
+    loginUrl.searchParams.set('state', state);
+    loginUrl.searchParams.set('type', 'signIn');
+
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-foreground mb-4">Access Denied</p>
-          <p className="text-sm text-muted-foreground">This portal is for clients only.</p>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center max-w-sm mx-auto px-6">
+          <div className="mb-6">
+            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Client Portal</h1>
+            <p className="text-sm text-muted-foreground">Please sign in to access your portal.</p>
+          </div>
+          <a
+            href={loginUrl.toString()}
+            className="inline-flex items-center justify-center gap-2 w-full rounded-lg bg-accent text-accent-foreground font-semibold px-6 py-3 text-sm hover:bg-accent/90 transition-colors"
+          >
+            Sign In to Access Portal
+          </a>
+          <p className="text-xs text-muted-foreground mt-4">
+            Don't have an account? Contact your advocate to get access.
+          </p>
         </div>
       </div>
     );

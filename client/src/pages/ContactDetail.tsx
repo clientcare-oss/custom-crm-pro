@@ -26,7 +26,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
   const [selectedParents, setSelectedParents] = useState<number[]>([]);
   const [includeInEmails, setIncludeInEmails] = useState(true);
-  const portalLink = `${window.location.origin}/portal?caseId=${contact.caseId}`;
+
+  // Fetch the saved custom portal domain from the DB
+  const { data: domainData } = trpc.system.getPortalDomain.useQuery();
+  const savedDomain = domainData?.portalDomain;
+  // Priority: DB saved domain > env var > current origin (dev fallback)
+  const publicBase = savedDomain
+    ? `https://${savedDomain}`
+    : ((import.meta.env.VITE_APP_PUBLIC_URL as string | undefined)?.replace(/\/$/, '') || window.location.origin);
+  const portalLink = `${publicBase}/portal?caseId=${contact.caseId}`;
 
   // Fetch parent contact details if parentContactId exists
   const { data: parentContactData } = trpc.contacts.detail.useQuery(

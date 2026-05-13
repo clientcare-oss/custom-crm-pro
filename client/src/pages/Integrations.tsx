@@ -423,6 +423,196 @@ function GmailIntegrationCard() {
   );
 }
 
+function WixDomainCard() {
+  const [expanded, setExpanded] = useState(false);
+  const [domainInput, setDomainInput] = useState("");
+
+  const { data: domainStatus, refetch } = trpc.system.getPortalDomain.useQuery();
+  const isConfigured = !!(domainStatus?.portalDomain);
+  const savedDomain = domainStatus?.portalDomain ?? null;
+
+  const setDomainMutation = trpc.system.setPortalDomain.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Domain saved! Portal links will now use ${data.portalDomain}`);
+      setDomainInput("");
+      refetch();
+    },
+    onError: (e) => toast.error("Failed to save domain: " + e.message),
+  });
+
+  const clearDomainMutation = trpc.system.clearPortalDomain.useMutation({
+    onSuccess: () => {
+      toast.success("Custom domain removed. Using default Manus domain.");
+      refetch();
+    },
+    onError: (e) => toast.error("Failed to remove domain: " + e.message),
+  });
+
+  const manusSubdomain = "customcrmpro-gixqa33u.manus.space";
+  const activeDomain = savedDomain ?? manusSubdomain;
+  const cnamTarget = manusSubdomain;
+
+  return (
+    <Card className="p-5 rounded-xl border border-border">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-lg">🌐</div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Custom Domain</p>
+            <p className="text-xs text-muted-foreground">
+              {isConfigured ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓ {savedDomain}</span>
+              ) : (
+                "Use your own domain for client portal links"
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isConfigured && <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 text-xs">Active</Badge>}
+          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} className="gap-1.5">
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {expanded ? "Hide" : isConfigured ? "Manage" : "Setup"}
+          </Button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="mt-5 space-y-5 border-t border-border pt-5">
+
+          {/* Current portal link */}
+          <div className="rounded-lg bg-muted/50 border border-border p-4">
+            <p className="text-xs font-semibold text-foreground mb-1">Your current portal link</p>
+            <p className="text-sm font-mono text-accent break-all">https://{activeDomain}/portal</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isConfigured ? "Using your custom domain" : "Using your default Manus subdomain — set up a custom domain below to use your own"}
+            </p>
+          </div>
+
+          {/* Step 1 */}
+          <div>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3 block">
+              Step 1 — Choose your subdomain
+            </Label>
+            <p className="text-sm text-muted-foreground mb-3">
+              Decide what subdomain you want clients to use. Common choices:
+            </p>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {["portal.waypointadvocates.com", "client.waypointadvocates.com", "crm.waypointadvocates.com"].map((example) => (
+                <button
+                  key={example}
+                  onClick={() => setDomainInput(example)}
+                  className="text-xs border border-border rounded-lg px-3 py-2 text-left hover:bg-accent/10 hover:border-accent transition-colors font-mono"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">Click one above or type your own below.</p>
+          </div>
+
+          {/* Step 2 */}
+          <div>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3 block">
+              Step 2 — Add a CNAME record in Wix
+            </Label>
+            <ol className="space-y-3">
+              {[
+                { step: "a", text: "Go to your Wix dashboard", link: "https://manage.wix.com", linkLabel: "Open Wix Dashboard ↗" },
+                { step: "b", text: "Click Domains → Manage DNS for waypointadvocates.com" },
+                { step: "c", text: "Click + Add Record → choose CNAME" },
+                { step: "d", text: `Set Host/Name to: portal (or whichever subdomain you chose)` },
+                { step: "e", text: `Set Points to / Value to:`, code: cnamTarget },
+                { step: "f", text: "Click Save and wait 5–10 minutes for it to take effect" },
+              ].map((item) => (
+                <li key={item.step} className="flex gap-3 items-start">
+                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-xs font-bold flex items-center justify-center mt-0.5">{item.step}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-foreground">{item.text}</p>
+                    {item.code && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{item.code}</code>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(item.code!); toast.success("Copied!"); }}
+                          className="text-xs text-accent hover:underline"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    )}
+                    {item.link && (
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline inline-flex items-center gap-1 mt-0.5">
+                        <ExternalLink className="h-3 w-3" />{item.linkLabel}
+                      </a>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* Step 3 — Save domain */}
+          <div>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-foreground mb-2 block">
+              Step 3 — Enter your domain here
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder={isConfigured ? savedDomain! : "portal.waypointadvocates.com"}
+                value={domainInput}
+                onChange={(e) => setDomainInput(e.target.value)}
+                className="text-sm font-mono"
+              />
+              <Button
+                onClick={() => setDomainMutation.mutate({ portalDomain: domainInput })}
+                disabled={!domainInput.trim() || setDomainMutation.isPending}
+                className="gap-1.5 shrink-0"
+              >
+                {setDomainMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                Save
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">Just the domain — no https:// needed. Example: portal.waypointadvocates.com</p>
+          </div>
+
+          {/* Step 4 — Manus domain binding */}
+          <div>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3 block">
+              Step 4 — Bind domain in Manus Settings
+            </Label>
+            <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 space-y-2">
+              <p className="text-sm text-foreground font-medium">One last step in Manus:</p>
+              <ol className="space-y-1.5 text-sm text-muted-foreground">
+                <li>1. Open the <strong>Management UI</strong> (panel on the right)</li>
+                <li>2. Click <strong>Settings → Domains</strong></li>
+                <li>3. Enter your subdomain (e.g. <code className="text-xs bg-muted px-1 rounded">{domainInput || "portal.waypointadvocates.com"}</code>)</li>
+                <li>4. Click <strong>Add Domain</strong> and wait for verification</li>
+              </ol>
+              <p className="text-xs text-muted-foreground mt-2">Once verified, your portal links will work at your custom domain automatically.</p>
+            </div>
+          </div>
+
+          {/* Remove domain */}
+          {isConfigured && (
+            <div className="flex justify-end pt-2 border-t border-border">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => clearDomainMutation.mutate()}
+                disabled={clearDomainMutation.isPending}
+                className="gap-1.5 text-destructive hover:text-destructive"
+              >
+                {clearDomainMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Remove Custom Domain
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function Integrations() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -442,6 +632,11 @@ export default function Integrations() {
       <div>
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Email</p>
         <GmailIntegrationCard />
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Website & Domain</p>
+        <WixDomainCard />
       </div>
 
       <div>

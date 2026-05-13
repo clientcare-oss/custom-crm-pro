@@ -74,6 +74,29 @@ export const systemRouter = router({
         } as const;
       }),
 
+  // Get the saved custom portal domain
+  getPortalDomain: adminProcedure.query(async ({ ctx }) => {
+    const domain = await db.getOwnerPortalDomain(ctx.user.openId);
+    return { portalDomain: domain ?? null };
+  }),
+
+  // Save a custom portal domain
+  setPortalDomain: adminProcedure
+    .input(z.object({ portalDomain: z.string().min(3) }))
+    .mutation(async ({ ctx, input }) => {
+      // Strip protocol if accidentally included
+      const clean = input.portalDomain.replace(/^https?:\/\//, '').replace(/\/$/, '').trim();
+      await db.updateOwnerPortalDomain(ctx.user.openId, clean);
+      return { success: true, portalDomain: clean };
+    }),
+
+  // Remove the custom portal domain (revert to Manus subdomain)
+  clearPortalDomain: adminProcedure
+    .mutation(async ({ ctx }) => {
+      await db.updateOwnerPortalDomain(ctx.user.openId, null);
+      return { success: true };
+    }),
+
   // Get Gmail integration status (returns whether configured, and the email address only — not the password)
   getGmailStatus: adminProcedure.query(async ({ ctx }) => {
     const creds = await db.getOwnerGmailCredentials(ctx.user.openId);
