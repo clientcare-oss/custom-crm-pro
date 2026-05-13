@@ -58,10 +58,17 @@ function Router() {
   // Authenticated routes
   if (user) {
     // Public pages accessible even when logged in (no dashboard layout)
-    if (window.location.pathname === '/portal/book') {
+    if (
+      window.location.pathname === '/portal/book' ||
+      window.location.pathname === '/portal' ||
+      window.location.pathname.startsWith('/portal?') ||
+      window.location.pathname === '/client-portal'
+    ) {
       return (
         <Switch>
           <Route path="/portal/book" component={PortalBook} />
+          <Route path="/portal" component={ClientPortal} />
+          <Route path="/client-portal" component={ClientPortal} />
         </Switch>
       );
     }
@@ -107,9 +114,7 @@ function Router() {
           <Route path="/ai-connections" component={AiConnections} />
               <Route path="/bill-guardian" component={BillGuardian} />
           <Route path="/page-id-showcase" component={PageIdShowcase} />
-          <Route path="/client-portal" component={ClientPortal} />
           <Route path="/portal/book" component={PortalBook} />
-          <Route path="/portal" component={ClientPortal} />
           <Route path="/settings" component={Settings} />
           <Route path="/case-compass" component={CaseCompassAdmin} />
           <Route path="/book" component={BookingPage} />

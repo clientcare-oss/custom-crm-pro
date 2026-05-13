@@ -10,6 +10,11 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import * as db from "../db";
 import { eq } from "drizzle-orm";
+import {
+  clientCredentials,
+  portalSessions,
+  contacts,
+} from "../../drizzle/schema";
 
 const SALT_ROUNDS = 10;
 const SESSION_DAYS = 30;
@@ -29,7 +34,6 @@ export const portalAuthRouter = router({
       password: z.string().min(8, "Password must be at least 8 characters"),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { clientCredentials, contacts } = await import("../../drizzle/schema");
       const conn = await getDbConn();
       const [contact] = await conn.select().from(contacts)
         .where(eq(contacts.id, input.contactId)).limit(1);
@@ -57,7 +61,6 @@ export const portalAuthRouter = router({
   getClientPortalStatus: protectedProcedure
     .input(z.object({ contactId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { clientCredentials, contacts } = await import("../../drizzle/schema");
       const conn = await getDbConn();
       const [contact] = await conn.select().from(contacts)
         .where(eq(contacts.id, input.contactId)).limit(1);
@@ -74,7 +77,6 @@ export const portalAuthRouter = router({
   removeClientCredentials: protectedProcedure
     .input(z.object({ contactId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const { clientCredentials, contacts } = await import("../../drizzle/schema");
       const conn = await getDbConn();
       const [contact] = await conn.select().from(contacts)
         .where(eq(contacts.id, input.contactId)).limit(1);
@@ -92,7 +94,6 @@ export const portalAuthRouter = router({
       password: z.string().min(1),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { clientCredentials, portalSessions } = await import("../../drizzle/schema");
       const conn = await getDbConn();
       const [cred] = await conn.select().from(clientCredentials)
         .where(eq(clientCredentials.email, input.email.toLowerCase().trim())).limit(1);
@@ -126,7 +127,6 @@ export const portalAuthRouter = router({
       const req = (ctx as any).req;
       const token = req?.cookies?.portal_session;
       if (!token) return null;
-      const { portalSessions, contacts } = await import("../../drizzle/schema");
       const conn = await getDbConn();
       const now = new Date();
       const [session] = await conn.select().from(portalSessions)
@@ -149,7 +149,6 @@ export const portalAuthRouter = router({
       const req = (ctx as any).req;
       const token = req?.cookies?.portal_session;
       if (token) {
-        const { portalSessions } = await import("../../drizzle/schema");
         const conn = await getDbConn();
         await conn.delete(portalSessions).where(eq(portalSessions.token, token));
       }
