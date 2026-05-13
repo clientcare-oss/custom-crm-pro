@@ -186,6 +186,64 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         return await db.updateContact(input.contactId, ctx.user.id, { portalUserId: input.portalUserId });
       }),
+
+    // Send portal link to parent contact(s) via email
+    sendPortalLink: adminProcedure
+      .input(z.object({
+        parentContactIds: z.array(z.number()).min(1),
+        portalLink: z.string(),
+        studentName: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { sendEmail } = await import("./_core/email");
+        
+        // Fetch parent contact details
+        const parentContacts = await Promise.all(
+          input.parentContactIds.map(id => db.getContactById(id, ctx.user.id))
+        );
+
+        const validContacts = parentContacts
+          .filter(contact => contact?.email)
+          .map(contact => ({
+            email: contact!.email!,
+            name: `${contact!.firstName} ${contact!.lastName}`,
+          }));
+
+        if (validContacts.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No parent contacts with valid email addresses found.',
+          });
+        }
+
+        // Send email to each parent contact
+        const emailResults = await Promise.all(
+          validContacts.map(contact =>
+            sendEmail({
+              to: contact.email,
+              subject: `Portal Access for ${input.studentName}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                  <h2>Portal Access</h2>
+                  <p>Hello ${contact.name},</p>
+                  <p>You have been granted access to the client portal for <strong>${input.studentName}</strong>.</p>
+                  <p style="margin-top: 20px;">
+                    <a href="${input.portalLink}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Access Portal</a>
+                  </p>
+                  <p style="margin-top: 20px; color: #666; font-size: 14px;">If you have any questions, please contact us.</p>
+                </div>
+              `,
+            })
+          )
+        );
+
+        const successCount = emailResults.filter(Boolean).length;
+        return {
+          sent: successCount,
+          total: validContacts.length,
+          success: successCount > 0,
+        };
+      }),
   }),
 
   // ============ LEADS ============

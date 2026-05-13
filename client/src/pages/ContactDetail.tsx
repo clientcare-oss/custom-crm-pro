@@ -39,13 +39,31 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
     toast.success("Portal link copied to clipboard");
   };
 
-  const handleSendEmail = () => {
+  const sendPortalLinkMutation = trpc.contacts.sendPortalLink.useMutation();
+
+  const handleSendEmail = async () => {
     if (selectedParents.length === 0) {
       toast.error("Please select at least one parent contact");
       return;
     }
-    // In a real app, this would open an email compose or call a backend endpoint
-    toast.success(`Portal link ready to send to ${selectedParents.length} parent(s)`);
+    
+    try {
+      const result = await sendPortalLinkMutation.mutateAsync({
+        parentContactIds: selectedParents,
+        portalLink: portalLink,
+        studentName: `${contact.firstName} ${contact.lastName}`,
+      });
+      
+      if (result.success) {
+        toast.success(`Portal link sent to ${result.sent} parent contact(s)`);
+        setSelectedParents([]);
+      } else {
+        toast.error("Failed to send portal link");
+      }
+    } catch (error) {
+      toast.error("Error sending portal link");
+      console.error(error);
+    }
   };
 
   // Build parent contacts list with full details
@@ -106,14 +124,23 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
           )}
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-2 cursor-pointer">
-              <Checkbox checked={includeInEmails} onCheckedChange={setIncludeInEmails} />
+              <Checkbox checked={includeInEmails} onCheckedChange={(checked) => setIncludeInEmails(checked === true)} />
               <span className="text-xs text-foreground">Include client portal links in files and emails</span>
             </label>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
-        <Button onClick={handleSendEmail} size="sm" className="ml-4 h-10 w-10 p-0 flex-shrink-0">
-          <Send className="h-5 w-5" />
+        <Button 
+          onClick={handleSendEmail} 
+          disabled={sendPortalLinkMutation.isPending || selectedParents.length === 0}
+          size="sm" 
+          className="ml-4 h-10 w-10 p-0 flex-shrink-0"
+        >
+          {sendPortalLinkMutation.isPending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Send className="h-5 w-5" />
+          )}
         </Button>
       </div>
     </Card>

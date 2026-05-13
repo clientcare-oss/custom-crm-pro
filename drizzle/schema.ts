@@ -28,6 +28,8 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   phone: varchar("phone", { length: 50 }),  // business phone (supports 1-800 toll-free numbers)
   quoWebhookSecret: varchar("quoWebhookSecret", { length: 255 }),  // Quo (OpenPhone) webhook signing secret
+  gmailUser: varchar("gmailUser", { length: 320 }),  // Gmail address for sending emails
+  gmailAppPassword: varchar("gmailAppPassword", { length: 255 }),  // Gmail app-specific password
 });
 
 export type User = typeof users.$inferSelect;

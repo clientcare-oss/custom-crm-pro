@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "./notification";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./trpc";
 import * as db from "../db";
@@ -60,16 +61,63 @@ export const systemRouter = router({
     }),
 
   notifyOwner: adminProcedure
-    .input(
-      z.object({
-        title: z.string().min(1, "title is required"),
-        content: z.string().min(1, "content is required"),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const delivered = await notifyOwner(input);
-      return {
-        success: delivered,
-      } as const;
+      .input(
+        z.object({
+          title: z.string().min(1, "title is required"),
+          content: z.string().min(1, "content is required"),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const delivered = await notifyOwner(input);
+        return {
+          success: delivered,
+        } as const;
+      }),
+
+  // Get Gmail integration status (returns whether configured, and the email address only — not the password)
+  getGmailStatus: adminProcedure.query(async ({ ctx }) => {
+    const creds = await db.getOwnerGmailCredentials(ctx.user.openId);
+    return {
+      configured: !!(creds.gmailUser && creds.gmailAppPassword),
+      gmailUser: creds.gmailUser ?? null,
+    };
+  }),
+
+  // Save Gmail credentials to the database
+  setGmailCredentials: adminProcedure
+    .input(z.object({
+      gmailUser: z.string().email(),
+      gmailAppPassword: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await db.updateOwnerGmailCredentials(ctx.user.openId, input.gmailUser, input.gmailAppPassword);
+      return { success: true };
+    }),
+
+  // Remove Gmail credentials
+  clearGmailCredentials: adminProcedure
+    .mutation(async ({ ctx }) => {
+      await db.updateOwnerGmailCredentials(ctx.user.openId, null, null);
+      return { success: true };
+    }),
+
+  // Test Gmail connection by verifying SMTP credentials
+  testGmailConnection: adminProcedure
+    .mutation(async ({ ctx }) => {
+      const creds = await db.getOwnerGmailCredentials(ctx.user.openId);
+      if (!creds.gmailUser || !creds.gmailAppPassword) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Gmail credentials not configured.' });
+      }
+      const nodemailer = await import('nodemailer');
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: creds.gmailUser, pass: creds.gmailAppPassword },
+      });
+      try {
+        await transporter.verify();
+        return { success: true, message: 'Gmail connection verified successfully.' };
+      } catch (err: any) {
+        return { success: false, message: err?.message ?? 'Connection failed.' };
+      }
     }),
 });

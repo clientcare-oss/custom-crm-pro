@@ -1339,3 +1339,20 @@ export async function getOwnerQuoSecret(openId: string): Promise<string | null> 
   const owner = await getUserByOpenId(openId);
   return owner?.quoWebhookSecret ?? null;
 }
+
+export async function updateOwnerGmailCredentials(openId: string, gmailUser: string | null, gmailAppPassword: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(users)
+    .set({ gmailUser: gmailUser || null, gmailAppPassword: gmailAppPassword || null })
+    .where(eq(users.openId, openId));
+}
+
+export async function getOwnerGmailCredentials(openId: string): Promise<{ gmailUser: string | null; gmailAppPassword: string | null }> {
+  const owner = await getUserByOpenId(openId);
+  return {
+    gmailUser: owner?.gmailUser ?? null,
+    gmailAppPassword: owner?.gmailAppPassword ?? null,
+  };
+}
