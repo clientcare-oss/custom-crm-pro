@@ -14,12 +14,93 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
 import AiButtonRunner from "@/components/AiButtonRunner";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// ─── Client Portal Card ───────────────────────────────────────────────────────
+function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
+  const [selectedParents, setSelectedParents] = useState<number[]>([]);
+  const [includeInEmails, setIncludeInEmails] = useState(true);
+  const portalLink = `${window.location.origin}/portal?caseId=${contact.caseId}`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(portalLink);
+    toast.success("Portal link copied to clipboard");
+  };
+
+  const handleSendEmail = () => {
+    if (selectedParents.length === 0) {
+      toast.error("Please select at least one parent contact");
+      return;
+    }
+    // In a real app, this would open an email compose or call a backend endpoint
+    toast.success(`Portal link ready to send to ${selectedParents.length} parent(s)`);
+  };
+
+  // Get parent contacts for this student
+  const parentContacts = contact.parentContactId ? [{ id: contact.parentContactId, name: "Parent Contact" }] : [];
+
+  return (
+    <Card className="border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-sm">
+      <div className="flex items-start justify-between p-6">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="h-5 w-5 text-accent" />
+            <h3 className="font-bold text-foreground">Client portal</h3>
+            <Button variant="ghost" size="sm" className="text-xs text-accent hover:bg-accent/10 ml-auto">
+              <span className="text-blue-600">View & edit</span>
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 mb-4 bg-muted/50 rounded px-3 py-2 text-sm text-muted-foreground font-mono">
+            <span className="truncate">{portalLink.substring(0, 50)}...</span>
+            <Button variant="ghost" size="sm" onClick={handleCopyLink} className="ml-auto h-6 w-6 p-0">
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="text-xs text-muted-foreground mb-3">
+            Select the connected contacts you want to send the client portal link to.
+          </div>
+          {parentContacts.length > 0 ? (
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {parentContacts.map((parent) => (
+                <label key={parent.id} className="flex items-center gap-2 rounded-full border border-accent/40 bg-accent/5 px-3 py-1.5 cursor-pointer hover:bg-accent/10 transition-colors">
+                  <Checkbox
+                    checked={selectedParents.includes(parent.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedParents([...selectedParents, parent.id]);
+                      } else {
+                        setSelectedParents(selectedParents.filter((id) => id !== parent.id));
+                      }
+                    }}
+                  />
+                  <span className="text-xs font-semibold text-accent">{parent.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground mb-4">No parent contacts linked to this student.</div>
+          )}
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox checked={includeInEmails} onCheckedChange={setIncludeInEmails} />
+              <span className="text-xs text-foreground">Include client portal links in files and emails</span>
+            </label>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </div>
+        <Button onClick={handleSendEmail} size="sm" className="ml-4 h-10 w-10 p-0 flex-shrink-0">
+          <Send className="h-5 w-5" />
+        </Button>
+      </div>
+    </Card>
+  );
+}
 
 // ─── Compass section block (shared between admin + portal views) ───────────────
 const COMPASS_SECTIONS = {
@@ -696,6 +777,9 @@ function StudentTabs({
 
       {/* COMPASS TAB */}
       <TabsContent value="compass" className="mt-4">
+        {/* Client Portal Card */}
+        <ClientPortalCard contact={contact} parentContactId={contact.parentContactId} />
+        <div className="mt-6" />
         {/* AI Buttons for Compass tab */}
         <AiButtonRunner
           contactId={contactId}
