@@ -14,6 +14,11 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
+  // Never redirect to Manus/Google login from the client portal or booking pages
+  // — those pages have their own auth systems
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/portal') || pathname.startsWith('/form/') || pathname === '/book') return;
+
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;

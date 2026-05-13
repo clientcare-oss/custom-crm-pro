@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, firstName, lastName, jobTitle, caseId, parentContactId FROM contacts WHERE id IN (60001, 60002);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, firstName, lastName, jobTitle, caseId, parentContactId FROM contacts WHERE id IN (60001, 60002);",
+  "rows": [
+    {
+      "id": "60001",
+      "firstName": "berk ",
+      "lastName": "dog",
+      "jobTitle": "Parent",
+      "caseId": "WP-2026-0006",
+      "parentContactId": "NULL"
+    },
+    {
+      "id": "60002",
+      "firstName": "barf",
+      "lastName": "nuggets",
+      "jobTitle": "Student",
+      "caseId": "WP-2026-0007",
+      "parentContactId": "60001"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\tjobTitle\tcaseId\tparentContactId\n60001\tberk \tdog\tParent\tWP-2026-0006\tNULL\n60002\tbarf\tnuggets\tStudent\tWP-2026-0007\t60001\n",
+  "stderr": "",
+  "execution_time_ms": 595
+}

@@ -1,0 +1,8 @@
+{
+  "query": "SELECT c.id, c.firstName, c.lastName, c.email, c.jobTitle, c.caseId, cc.email as portalEmail, cc.id as credId FROM contacts c LEFT JOIN client_credentials cc ON cc.contactId = c.id WHERE c.firstName LIKE '%Barf%' OR c.lastName LIKE '%Nuggets%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT c.id, c.firstName, c.lastName, c.email, c.jobTitle, c.caseId, cc.email as portalEmail, cc.id as credId FROM contacts c LEFT JOIN client_credentials cc ON cc.contactId = c.id WHERE c.firstName LIKE '%Barf%' OR c.lastName LIKE '%Nuggets%' LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'cc.contactid' in 'on clause'"
+  ]
+}

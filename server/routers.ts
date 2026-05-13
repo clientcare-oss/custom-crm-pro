@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { portalAuthRouter } from "./routers/portalAuth";
-import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { publicProcedure, router, protectedProcedure, portalProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
@@ -80,7 +80,7 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
-    getOwner: protectedProcedure.query(async () => {
+    getOwner: publicProcedure.query(async () => {
       const owner = await db.getUserByOpenId(require("./_core/env").ENV.ownerOpenId);
       return owner ? { id: owner.id, name: owner.name } : null;
     }),
@@ -1127,29 +1127,31 @@ export const appRouter = router({
 
   // ============ PORTAL (parent-facing) ============
   portal: router({
-    // Parent portal: returns all students linked to the logged-in parent
-    getMyStudents: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getStudentsByParentPortalUser(ctx.user.id);
+    // Parent portal: returns all students linked to the logged-in portal parent
+    getMyStudents: portalProcedure.query(async ({ ctx }) => {
+      // Admin preview: no portal contact, return empty (preview uses getStudentsForParent)
+      if ((ctx as any).isAdminPreview) return [];
+      return await db.getStudentsByParentContactId((ctx as any).portalContactId);
     }),
 
-     // Parent portal: get compass for a specific student caseId (must belong to parent, or admin)
-    getStudentCompass: protectedProcedure
+    // Parent portal: get compass for a specific student caseId (must belong to parent, or admin)
+    getStudentCompass: portalProcedure
       .input(z.object({ caseId: z.string() }))
       .query(async ({ ctx, input }) => {
-        // Admins can always preview any student's compass
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.caseId === input.caseId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
         return await db.getCaseCompass(input.caseId) ?? null;
       }),
+
     // Parent portal: get history for a specific student caseId (must belong to parent, or admin)
-    getStudentHistory: protectedProcedure
+    getStudentHistory: portalProcedure
       .input(z.object({ caseId: z.string() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.caseId === input.caseId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
@@ -1164,11 +1166,11 @@ export const appRouter = router({
       }),
 
     // Portal: get appointments for a specific student (by their contact id)
-    getStudentAppointments: protectedProcedure
+    getStudentAppointments: portalProcedure
       .input(z.object({ studentContactId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
@@ -1176,11 +1178,11 @@ export const appRouter = router({
       }),
 
     // Portal: get files for a specific student (by their contact id)
-    getStudentFiles: protectedProcedure
+    getStudentFiles: portalProcedure
       .input(z.object({ studentContactId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
@@ -1188,11 +1190,11 @@ export const appRouter = router({
       }),
 
     // Portal: get billing (invoices + contracts) for a specific student
-    getStudentBilling: protectedProcedure
+    getStudentBilling: portalProcedure
       .input(z.object({ studentContactId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
@@ -1200,44 +1202,48 @@ export const appRouter = router({
         const contractsList = await db.getContractsByClient(input.studentContactId);
         return { invoices: invoicesList, contracts: contractsList };
       }),
+
     // Portal: get tasks explicitly assigned to a student (client-facing — not all project tasks)
-    getAssignedTasks: protectedProcedure
+    getAssignedTasks: portalProcedure
       .input(z.object({ studentContactId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
         return await db.getTasksAssignedToStudent(input.studentContactId);
       }),
+
     // Portal: toggle a task step complete/incomplete (owned student only)
-    toggleTaskStep: protectedProcedure
+    toggleTaskStep: portalProcedure
       .input(z.object({ stepId: z.number(), isComplete: z.boolean(), studentContactId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
         return await db.toggleTaskStep(input.stepId, input.isComplete);
       }),
+
     // Portal: update task status (owned student only)
-    updateTaskStatus: protectedProcedure
+    updateTaskStatus: portalProcedure
       .input(z.object({ taskId: z.number(), status: z.enum(["Todo", "In Progress", "Done"]), studentContactId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
         return await db.updateTask(input.taskId, { status: input.status });
       }),
-    markTaskSeen: protectedProcedure
+
+    markTaskSeen: portalProcedure
       .input(z.object({ taskId: z.number(), studentContactId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
@@ -1245,11 +1251,11 @@ export const appRouter = router({
       }),
 
     // Portal: get projects/cases linked to a student (by their contact id)
-    getStudentProjects: protectedProcedure
+    getStudentProjects: portalProcedure
       .input(z.object({ studentContactId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          const students = await db.getStudentsByParentPortalUser(ctx.user.id);
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }

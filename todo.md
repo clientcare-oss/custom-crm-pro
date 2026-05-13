@@ -911,3 +911,6 @@
 ## Portal Email Link & First-Time Login Fixes
 - [x] Fix portal email link to use CRM domain not Wix domain (cleared wrong portalDomain from DB)
 - [x] Add first-time "Set your password" link on portal login screen
+
+## Portal Login Bug Fix (May 2026)
+- [x] Fix portal login Google redirect bug: portal procedures were using protectedProcedure (Manus auth) — converted to portalProcedure that reads portal_session cookie; fixed main.tsx global redirect to skip /portal paths; made auth.getOwner public; zero TS errors

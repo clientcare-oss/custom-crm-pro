@@ -393,9 +393,9 @@ export default function ClientPortal() {
   const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser;
 
   // Multi-student: fetch students linked to this parent portal account
-  // Use portalUser.contactId if logged in via portal session, otherwise fall back to Manus OAuth client
+  // Uses portal session auth — enabled when logged in via portal session OR admin preview
   const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, {
-    enabled: !!portalUser || user?.role === "client",
+    enabled: !!portalUser,
   });
 
   // Admin preview mode: read parentContactId from URL
@@ -451,7 +451,7 @@ export default function ClientPortal() {
   );
 
   const { data: vaultSubscription } = trpc.vault.getSubscription.useQuery(undefined, {
-    enabled: user?.role === "client" || isPreviewMode,
+    enabled: !!portalUser || isPreviewMode,
   });
 
   // Tasks explicitly assigned to this student (client-facing — not all project tasks)
@@ -469,9 +469,9 @@ export default function ClientPortal() {
   // Messaging (shared parent-level thread)
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { data: ownerUser } = trpc.auth.getOwner.useQuery(undefined, {
-    enabled: user?.role === "client" || isPreviewMode,
-  });
+  // getOwner is now public, always fetch so portal clients can see owner name
+  const { data: ownerUser } = trpc.auth.getOwner.useQuery();
+  // Messages require Manus auth (portal messaging not yet supported)
   const { data: messages = [], refetch: refetchMessages } = trpc.messages.list.useQuery(
     { recipientId: ownerUser?.id ?? 0 },
     { enabled: (user?.role === "client" || isPreviewMode) && !!ownerUser?.id }
