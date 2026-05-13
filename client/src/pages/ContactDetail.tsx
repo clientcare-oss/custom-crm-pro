@@ -28,6 +28,12 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
   const [includeInEmails, setIncludeInEmails] = useState(true);
   const portalLink = `${window.location.origin}/portal?caseId=${contact.caseId}`;
 
+  // Fetch parent contact details if parentContactId exists
+  const { data: parentContactData } = trpc.contacts.detail.useQuery(
+    { id: parentContactId ?? 0 },
+    { enabled: !!parentContactId }
+  );
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(portalLink);
     toast.success("Portal link copied to clipboard");
@@ -42,8 +48,18 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
     toast.success(`Portal link ready to send to ${selectedParents.length} parent(s)`);
   };
 
-  // Get parent contacts for this student
-  const parentContacts = contact.parentContactId ? [{ id: contact.parentContactId, name: "Parent Contact" }] : [];
+  // Build parent contacts list with full details
+  const parentContacts = parentContactData?.contact
+    ? [
+        {
+          id: parentContactData.contact.id,
+          firstName: parentContactData.contact.firstName,
+          lastName: parentContactData.contact.lastName,
+          initials: `${parentContactData.contact.firstName.charAt(0)}${parentContactData.contact.lastName.charAt(0)}`.toUpperCase(),
+          role: parentContactData.contact.jobTitle || "PARENT",
+        },
+      ]
+    : [];
 
   return (
     <Card className="border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-sm">
@@ -79,7 +95,9 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
                       }
                     }}
                   />
-                  <span className="text-xs font-semibold text-accent">{parent.name}</span>
+                  <span className="text-xs font-semibold text-accent">{parent.initials}</span>
+                  <span className="text-xs text-foreground">{parent.firstName} {parent.lastName}</span>
+                  <span className="text-xs font-semibold text-accent uppercase">{parent.role}</span>
                 </label>
               ))}
             </div>
