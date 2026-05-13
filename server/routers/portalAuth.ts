@@ -160,7 +160,8 @@ export const portalAuthRouter = router({
     }),
 
   /**
-   * Public: request a password reset email.
+   * Public: request a password setup/reset email.
+   * Works for both existing clients (reset) and new clients (first-time setup).
    * Always returns success to avoid email enumeration.
    */
   requestPasswordReset: publicProcedure
@@ -171,15 +172,45 @@ export const portalAuthRouter = router({
     .mutation(async ({ input }) => {
       const conn = await getDbConn();
       const normalizedEmail = input.email.toLowerCase().trim();
+
+      // Check for existing credentials
       const [cred] = await conn.select().from(clientCredentials)
         .where(eq(clientCredentials.email, normalizedEmail)).limit(1);
 
-      // Always return success to prevent email enumeration
-      if (!cred) return { success: true };
+      let contactId: number;
+      let firstName: string;
+      let isFirstTime = false;
 
-      // Get the contact name for the email
-      const [contact] = await conn.select().from(contacts)
-        .where(eq(contacts.id, cred.contactId)).limit(1);
+      if (cred) {
+        // Existing client — password reset flow
+        contactId = cred.contactId;
+        const [contact] = await conn.select().from(contacts)
+          .where(eq(contacts.id, cred.contactId)).limit(1);
+        firstName = contact?.firstName ?? "there";
+      } else {
+        // No credentials yet — look up contact by email (self-onboarding)
+        const [contact] = await conn.select().from(contacts)
+          .where(eq(contacts.email, normalizedEmail)).limit(1);
+
+        // Always return success to prevent email enumeration
+        if (!contact) return { success: true };
+
+        contactId = contact.id;
+        firstName = contact.firstName ?? "there";
+        isFirstTime = true;
+
+        // Pre-create a placeholder credential row so the reset token can reference it
+        // Password hash is empty — the reset flow will set the real password
+        const placeholderHash = await (await import("bcryptjs")).default.hash(
+          crypto.randomBytes(32).toString("hex"),
+          10
+        );
+        await conn.insert(clientCredentials).values({
+          contactId,
+          email: normalizedEmail,
+          passwordHash: placeholderHash,
+        }).onDuplicateKeyUpdate({ set: { email: normalizedEmail } });
+      }
 
       // Generate a secure token
       const token = crypto.randomBytes(48).toString("hex");
@@ -187,35 +218,40 @@ export const portalAuthRouter = router({
 
       await conn.insert(passwordResetTokens).values({
         token,
-        contactId: cred.contactId,
+        contactId,
         expiresAt,
       });
 
       const resetLink = `${input.portalUrl}/portal?reset=${token}`;
-      const firstName = contact?.firstName ?? "there";
+      const subject = isFirstTime ? "Set up your portal password" : "Reset your portal password";
+      const heading = isFirstTime ? "Welcome to the Client Portal" : "Reset Your Password";
+      const bodyText = isFirstTime
+        ? `Your advocate has set up a client portal for you. Click the button below to create your password and access your portal. This link expires in ${RESET_TOKEN_MINUTES} minutes.`
+        : `We received a request to reset your client portal password. Click the button below to set a new password. This link expires in ${RESET_TOKEN_MINUTES} minutes.`;
+      const buttonText = isFirstTime ? "Set Up My Password" : "Reset Password";
 
       try {
         await sendEmail({
           to: normalizedEmail,
-          subject: "Reset your portal password",
+          subject,
           html: `
             <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-              <h2 style="color: #1e3a5f;">Reset Your Password</h2>
+              <h2 style="color: #1e3a5f;">${heading}</h2>
               <p>Hi ${firstName},</p>
-              <p>We received a request to reset your client portal password. Click the button below to set a new password. This link expires in ${RESET_TOKEN_MINUTES} minutes.</p>
+              <p>${bodyText}</p>
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${resetLink}"
                    style="background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
-                  Reset Password
+                  ${buttonText}
                 </a>
               </div>
-              <p style="color: #6b7280; font-size: 13px;">If you didn't request this, you can safely ignore this email. Your password won't change.</p>
+              <p style="color: #6b7280; font-size: 13px;">If you didn't request this, you can safely ignore this email.</p>
               <p style="color: #6b7280; font-size: 13px;">Or copy this link: ${resetLink}</p>
             </div>
           `,
         });
       } catch (err) {
-        console.error("[portalAuth] Failed to send reset email:", err);
+        console.error("[portalAuth] Failed to send setup/reset email:", err);
         // Don't throw — still return success to avoid leaking info
       }
 

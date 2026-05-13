@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, firstName, lastName, email FROM contacts WHERE id = 60001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, firstName, lastName, email FROM contacts WHERE id = 60001;",
+  "rows": [
+    {
+      "id": "60001",
+      "firstName": "berk ",
+      "lastName": "dog",
+      "email": "contactbyronhonea@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\temail\n60001\tberk \tdog\tcontactbyronhonea@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 728
+}

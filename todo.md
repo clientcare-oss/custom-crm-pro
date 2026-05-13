@@ -914,3 +914,6 @@
 
 ## Portal Login Bug Fix (May 2026)
 - [x] Fix portal login Google redirect bug: portal procedures were using protectedProcedure (Manus auth) — converted to portalProcedure that reads portal_session cookie; fixed main.tsx global redirect to skip /portal paths; made auth.getOwner public; zero TS errors
+
+## Portal Self-Onboarding Fix
+- [x] Fix requestPasswordReset to work for contacts without existing credentials (look up contact by email, send setup link that creates credentials on first use)
