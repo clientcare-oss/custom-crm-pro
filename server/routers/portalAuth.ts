@@ -6,7 +6,7 @@
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";  // used for hashing passwords
 import crypto from "crypto";
 import * as db from "../db";
 import { eq, and, gt } from "drizzle-orm";
@@ -201,7 +201,7 @@ export const portalAuthRouter = router({
 
         // Pre-create a placeholder credential row so the reset token can reference it
         // Password hash is empty — the reset flow will set the real password
-        const placeholderHash = await (await import("bcryptjs")).default.hash(
+        const placeholderHash = await bcrypt.hash(
           crypto.randomBytes(32).toString("hex"),
           10
         );

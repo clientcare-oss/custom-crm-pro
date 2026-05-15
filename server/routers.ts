@@ -81,7 +81,7 @@ export const appRouter = router({
       } as const;
     }),
     getOwner: publicProcedure.query(async () => {
-      const owner = await db.getUserByOpenId(require("./_core/env").ENV.ownerOpenId);
+      const owner = await db.getUserByOpenId(ENV.ownerOpenId);
       return owner ? { id: owner.id, name: owner.name } : null;
     }),
   }),

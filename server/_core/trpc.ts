@@ -2,6 +2,9 @@ import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
+import { getDb } from "../db";
+import { portalSessions } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
@@ -70,10 +73,6 @@ export const portalProcedure = t.procedure.use(
     }
 
     // Validate the portal session
-    const { getDb } = await import("../db");
-    const { portalSessions, contacts } = await import("../../drizzle/schema");
-    const { eq } = await import("drizzle-orm");
-
     const conn = await getDb();
     if (!conn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
