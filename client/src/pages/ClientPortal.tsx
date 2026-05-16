@@ -212,6 +212,18 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
   const portalUrl = (import.meta.env.VITE_APP_PUBLIC_URL as string | undefined)
     || window.location.origin;
 
+  // Force navy theme on the html element while the login/reset screen is shown
+  useEffect(() => {
+    const root = document.documentElement;
+    const prev = Array.from(root.classList).filter(c => ['light','dark','blue','navy'].includes(c));
+    root.classList.remove('light', 'dark', 'blue', 'navy');
+    root.classList.add('navy');
+    return () => {
+      root.classList.remove('navy');
+      prev.forEach(c => root.classList.add(c));
+    };
+  }, []);
+
   // ── Shared wrapper ──
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -377,7 +389,7 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
 export default function ClientPortal() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, toggleTheme } = useTheme();
   const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
   const [schedulerSessionTypeId, setSchedulerSessionTypeId] = useState<number | null>(null);
   const [schedulerBooked, setSchedulerBooked] = useState(false);
@@ -579,29 +591,18 @@ export default function ClientPortal() {
             <p className="text-sm text-muted-foreground mt-0.5">Welcome, {displayName}</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Theme selector — 4 buttons side by side */}
-            <div className="flex items-center gap-0.5 rounded-lg border border-border bg-background p-0.5">
-              {([
-                { value: 'light', icon: Sun, label: 'Light', iconClass: 'text-amber-500' },
-                { value: 'dark', icon: Moon, label: 'Dark', iconClass: 'text-slate-400' },
-                { value: 'blue', icon: Droplets, label: 'Blue', iconClass: 'text-blue-400' },
-                { value: 'navy', icon: Droplets, label: 'Navy', iconClass: 'text-indigo-400' },
-              ] as const).map(({ value, icon: Icon, label, iconClass }) => (
-                <button
-                  key={value}
-                  onClick={() => setTheme(value)}
-                  title={`${label} mode`}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    theme === value
-                      ? 'bg-accent text-accent-foreground shadow-sm'
-                      : 'hover:bg-muted text-muted-foreground'
-                  }`}
-                >
-                  <Icon className={`h-3.5 w-3.5 ${theme === value ? iconClass : ''}`} />
-                  <span className="text-[9px] font-medium leading-none">{label}</span>
-                </button>
-              ))}
-            </div>
+            {/* Theme toggle — sun (Blue/light) or moon (Navy/dark) */}
+            <button
+              onClick={toggleTheme}
+              type="button"
+              title={theme === 'navy' ? 'Switch to Blue (light) mode' : 'Switch to Navy (dark) mode'}
+              className="flex items-center justify-center rounded-lg border border-border bg-background p-2 hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Toggle theme"
+            >
+              {theme === 'navy'
+                ? <Sun className="h-4 w-4 text-amber-400" />
+                : <Moon className="h-4 w-4 text-indigo-400" />}
+            </button>
             <Button
               onClick={() => setLocation("/portal/book")}
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md"

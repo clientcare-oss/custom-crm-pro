@@ -264,41 +264,19 @@ function DashboardLayoutContent({
                 Quick Setup
               </span>
             </button>
-            {/* Theme selector — 4 buttons side by side */}
-            <div className="group-data-[collapsible=icon]:hidden">
-              <div className="flex items-center gap-1 w-full">
-                {([
-                  { value: 'light', icon: Sun, label: 'Light', iconClass: 'text-amber-500' },
-                  { value: 'dark', icon: Moon, label: 'Dark', iconClass: 'text-slate-400' },
-                  { value: 'blue', icon: Droplets, label: 'Blue', iconClass: 'text-blue-400' },
-                  { value: 'navy', icon: Droplets, label: 'Navy', iconClass: 'text-indigo-400' },
-                ] as const).map(({ value, icon: Icon, label, iconClass }) => (
-                  <button
-                    key={value}
-                    onClick={() => setTheme(value)}
-                    title={`Switch to ${label} mode`}
-                    className={`flex-1 flex flex-col items-center gap-1 py-1.5 rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                      theme === value
-                        ? 'bg-accent text-accent-foreground ring-1 ring-border'
-                        : 'hover:bg-accent/40 text-muted-foreground'
-                    }`}
-                  >
-                    <Icon className={`h-3.5 w-3.5 ${theme === value ? iconClass : ''}`} />
-                    <span className="text-[10px] font-medium leading-none">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Collapsed sidebar: single cycle button */}
+            {/* Theme toggle — sun (Blue/light) or moon (Navy/dark) */}
             <button
               onClick={toggleTheme}
-              className="hidden group-data-[collapsible=icon]:flex items-center justify-center rounded-lg p-2 hover:bg-accent/50 transition-colors w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              title={theme === 'navy' ? 'Switch to Blue (light) mode' : 'Switch to Navy (dark) mode'}
+              className="flex items-center justify-center gap-2 w-full rounded-lg p-2 hover:bg-accent/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring text-muted-foreground group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto"
               aria-label="Toggle theme"
             >
-              {theme === 'light' ? <Moon className="h-4 w-4 text-slate-500" /> :
-               theme === 'dark' ? <Droplets className="h-4 w-4 text-blue-400" /> :
-               theme === 'blue' ? <Droplets className="h-4 w-4 text-indigo-400" /> :
-               <Sun className="h-4 w-4 text-amber-400" />}
+              {theme === 'navy'
+                ? <Sun className="h-4 w-4 text-amber-400 shrink-0" />
+                : <Moon className="h-4 w-4 text-indigo-400 shrink-0" />}
+              <span className="text-xs font-medium group-data-[collapsible=icon]:hidden">
+                {theme === 'navy' ? 'Light mode' : 'Dark mode'}
+              </span>
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

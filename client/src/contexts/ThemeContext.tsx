@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type Theme = "light" | "dark" | "blue" | "navy";
+// Only two themes: blue (light/day) and navy (dark/night)
+export type Theme = "blue" | "navy";
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  toggleTheme?: () => void;
+  toggleTheme: () => void;
   switchable: boolean;
 }
 
@@ -17,29 +18,28 @@ interface ThemeProviderProps {
   switchable?: boolean;
 }
 
-const THEME_CYCLE: Theme[] = ["light", "dark", "blue", "navy"];
-
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "navy",
   switchable = false,
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (switchable) {
       const stored = localStorage.getItem("theme") as Theme | null;
-      if (stored && THEME_CYCLE.includes(stored)) return stored;
+      if (stored === "blue" || stored === "navy") return stored;
+      // Migrate old values: light/blue → blue, dark/navy → navy
+      if (stored === "light") return "blue";
+      if (stored === "dark") return "navy";
     }
     return defaultTheme;
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("dark", "blue", "navy");
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else if (theme === "blue") {
+    root.classList.remove("dark", "blue", "navy", "light");
+    if (theme === "blue") {
       root.classList.add("blue");
-    } else if (theme === "navy") {
+    } else {
       root.classList.add("navy");
     }
     if (switchable) {
@@ -51,14 +51,9 @@ export function ThemeProvider({
     setThemeState(t);
   }
 
-  const toggleTheme = switchable
-    ? () => {
-        setThemeState(prev => {
-          const idx = THEME_CYCLE.indexOf(prev);
-          return THEME_CYCLE[(idx + 1) % THEME_CYCLE.length];
-        });
-      }
-    : undefined;
+  const toggleTheme = () => {
+    setThemeState(prev => (prev === "navy" ? "blue" : "navy"));
+  };
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, switchable }}>

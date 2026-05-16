@@ -928,3 +928,8 @@
 - [ ] Fix portal session cookie cross-domain issue (dev server vs production domain) — cookies work on production domain, dev testing requires local domain workaround
 - [x] Fix portal session: store token in localStorage and send as X-Portal-Token header (cookie not persisting in production)
 - [x] Set navy as the default theme for the entire app (including portal login screen, ThemeProvider default, localStorage initial value)
+- [x] Simplify theme to 2 modes: Blue (light/sun) and Navy (dark/moon), remove light and dark options
+- [x] Replace 4-option theme switcher in sidebar with a single sun/moon toggle button
+- [x] Add sun/moon theme toggle to client portal top-right header
+- [x] Navy remains the default theme
+- [x] Ensure portal login, set-password, and reset-password screens always render in navy theme (not dependent on localStorage)
