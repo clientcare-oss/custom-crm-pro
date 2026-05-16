@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, title, startTime, endTime, TIMESTAMPDIFF(MINUTE, startTime, endTime) as duration_minutes FROM appointments ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, title, startTime, endTime, TIMESTAMPDIFF(MINUTE, startTime, endTime) as duration_minutes FROM appointments ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "120001",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-28 17:00:00",
+      "endTime": "2026-05-28 17:03:00",
+      "duration_minutes": "3"
+    },
+    {
+      "id": "90002",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-25 17:00:00",
+      "endTime": "2026-05-25 17:03:00",
+      "duration_minutes": "3"
+    },
+    {
+      "id": "90001",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-29 12:00:00",
+      "endTime": "2026-05-29 12:03:00",
+      "duration_minutes": "3"
+    },
+    {
+      "id": "60001",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-15 13:00:00",
+      "endTime": "2026-05-15 13:03:00",
+      "duration_minutes": "3"
+    },
+    {
+      "id": "30001",
+      "title": "nuggs",
+      "startTime": "2026-05-12 12:18:00",
+      "endTime": "2026-05-12 19:00:00",
+      "duration_minutes": "402"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstartTime\tendTime\tduration_minutes\n120001\tIEP Meeting — Byron Honea\t2026-05-28 17:00:00\t2026-05-28 17:03:00\t3\n90002\tIEP Meeting — Byron Honea\t2026-05-25 17:00:00\t2026-05-25 17:03:00\t3\n90001\tIEP Meeting — Byron Honea\t2026-05-29 12:00:00\t2026-05-29 12:03:00\t3\n60001\tIEP Meeting — Byron Honea\t2026-05-15 13:00:00\t2026-05-15 13:03:00\t3\n30001\tnuggs\t2026-05-12 12:18:00\t2026-05-12 19:00:00\t402\n",
+  "stderr": "",
+  "execution_time_ms": 566
+}

@@ -155,10 +155,12 @@ export default function PortalBook() {
           </div>
 
           {/* Calendar scheduler */}
+          {/* eslint-disable-next-line no-console */}
+          {console.log('[PortalBook] sessionType duration:', selectedType.duration, 'unit:', selectedType.durationUnit, 'computed:', String(selectedType.durationUnit).trim() === 'hours' ? Number(selectedType.duration) * 60 : Number(selectedType.duration)) as unknown as null}
           <InlineScheduler
             sessionTypeId={selectedSessionTypeId}
             sessionTypeName={selectedType.name}
-            sessionDuration={selectedType.durationUnit === 'hours' ? selectedType.duration * 60 : selectedType.duration}
+            sessionDuration={String(selectedType.durationUnit).trim() === 'hours' ? Number(selectedType.duration) * 60 : Number(selectedType.duration)}
             parentName={user?.name ?? ""}
             parentEmail={user?.email ?? ""}
             onBooked={handleBooked}

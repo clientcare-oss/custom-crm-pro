@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Clock, ExternalLink, MapPin, Plus, User, Video, X } from "lucide-react";
+import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X } from "lucide-react";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import VoiceInput from "@/components/VoiceInput";
 import { useState } from "react";
@@ -37,6 +37,9 @@ export default function Appointments() {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [isEditingApt, setIsEditingApt] = useState(false);
+  const [isDeletingApt, setIsDeletingApt] = useState(false);
+  const [isCancellingApt, setIsCancellingApt] = useState(false);
+  const [notifyParentOnCancel, setNotifyParentOnCancel] = useState(true);
   const [editAptData, setEditAptData] = useState<{
     title: string; description: string; startTime: string; endTime: string;
     location: string; videoLink: string; parentName: string; parentPhone: string;
@@ -156,6 +159,32 @@ export default function Appointments() {
     onError: (err) => toast.error(err.message),
   });
 
+  const cancelWithNotifyMutation = trpc.appointments.cancelWithNotify.useMutation({
+    onSuccess: () => {
+      toast.success("Appointment cancelled" + (notifyParentOnCancel ? " — parent notified by email" : ""));
+      setSelectedApt(prev => prev ? { ...prev, status: "Cancelled" } : null);
+      setIsCancellingApt(false);
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setIsCancellingApt(false);
+    },
+  });
+
+  const deleteMutation = trpc.appointments.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Appointment deleted");
+      setSelectedApt(null);
+      setIsDeletingApt(false);
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setIsDeletingApt(false);
+    },
+  });
+
   const updateMutation = trpc.appointments.update.useMutation({
     onSuccess: () => {
       toast.success("Appointment updated!");
@@ -266,12 +295,40 @@ export default function Appointments() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {!isEditingApt && (
-                    <button
-                      onClick={() => openEditMode(selectedApt)}
-                      className="text-xs px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-                    >
-                      Edit
-                    </button>
+                    <>
+                      <button
+                        onClick={() => openEditMode(selectedApt)}
+                        className="text-xs px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                      >
+                        Edit
+                      </button>
+                      {!isDeletingApt ? (
+                        <button
+                          onClick={() => setIsDeletingApt(true)}
+                          className="text-muted-foreground hover:text-red-500 transition-colors"
+                          title="Delete appointment"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-red-500 font-medium">Delete?</span>
+                          <button
+                            onClick={() => deleteMutation.mutate({ id: selectedApt.id })}
+                            disabled={deleteMutation.isPending}
+                            className="text-xs px-2 py-0.5 rounded bg-red-600 text-white hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+                          >
+                            {deleteMutation.isPending ? '...' : 'Yes'}
+                          </button>
+                          <button
+                            onClick={() => setIsDeletingApt(false)}
+                            className="text-xs px-2 py-0.5 rounded border border-muted-foreground/30 hover:bg-accent transition-colors"
+                          >
+                            No
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                   <button
                     onClick={() => { setSelectedApt(null); setIsEditingApt(false); }}

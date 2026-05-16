@@ -69,11 +69,12 @@ export default function InlineScheduler({
   // Compute effective duration in minutes from sessionTypeData (overrides prop when available)
   const effectiveDurationMin = useMemo(() => {
     if (sessionTypeData) {
-      return sessionTypeData.durationUnit === 'hours'
-        ? sessionTypeData.duration * 60
-        : sessionTypeData.duration;
+      const dur = Number(sessionTypeData.duration);
+      const unit = String(sessionTypeData.durationUnit).trim();
+      console.log('[InlineScheduler] duration:', dur, 'unit:', unit, 'raw:', sessionTypeData.duration, sessionTypeData.durationUnit);
+      return unit === 'hours' ? dur * 60 : dur;
     }
-    return sessionDuration;
+    return Number(sessionDuration);
   }, [sessionTypeData, sessionDuration]);
 
   // Parse weekly hours to determine which day-of-week indices have availability
@@ -164,11 +165,13 @@ export default function InlineScheduler({
     if (!selectedDate || !selectedTime || isPreview) return;
     setIsBooking(true);
     const startTime = new Date(`${selectedDate}T${selectedTime}`);
+    console.log('[InlineScheduler] handleBook effectiveDurationMin:', effectiveDurationMin, 'sessionTypeData:', sessionTypeData);
     const endTime = new Date(startTime.getTime() + effectiveDurationMin * 60 * 1000);
     bookAppointment.mutate({
       title: `${sessionTypeName || "Consultation"} — ${parentName}`,
       startTime,
       endTime,
+      sessionTypeId: sessionTypeId ?? undefined,
       description: `Session: ${sessionTypeName || "Consultation"}\nClient: ${parentName}\nEmail: ${parentEmail}`,
     });
   };

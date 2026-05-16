@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, title, startTime, endTime, TIMESTAMPDIFF(MINUTE, startTime, endTime) as duration_minutes FROM appointments WHERE startTime >= '2026-06-01' ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, title, startTime, endTime, TIMESTAMPDIFF(MINUTE, startTime, endTime) as duration_minutes FROM appointments WHERE startTime >= '2026-06-01' ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "120002",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-06-01 12:00:00",
+      "endTime": "2026-06-01 12:03:00",
+      "duration_minutes": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstartTime\tendTime\tduration_minutes\n120002\tIEP Meeting — Byron Honea\t2026-06-01 12:00:00\t2026-06-01 12:03:00\t3\n",
+  "stderr": "",
+  "execution_time_ms": 558
+}

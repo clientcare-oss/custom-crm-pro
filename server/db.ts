@@ -651,6 +651,15 @@ export async function updateAppointment(id: number, ownerId: number, data: any) 
     .where(and(eq(appointments.id, id), eq(appointments.ownerId, ownerId)));
 }
 
+export async function deleteAppointment(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .delete(appointments)
+    .where(and(eq(appointments.id, id), eq(appointments.ownerId, ownerId)));
+}
+
 // ============ MESSAGES ============
 
 export async function getMessagesBetween(userId1: number, userId2: number) {

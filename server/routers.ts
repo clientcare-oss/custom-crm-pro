@@ -748,11 +748,12 @@ export const appRouter = router({
           description: z.string().optional(),
           startTime: z.date(),
           endTime: z.date(),
+          sessionTypeId: z.number().optional(), // used to recompute endTime server-side
           location: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {
-        const { users: usersTable } = await import("../drizzle/schema");
+        const { users: usersTable, sessionTypes: sessionTypesTable } = await import("../drizzle/schema");
         const dbConn2 = await db.getDb();
         let owner = await db.getUserByOpenId(ENV.ownerOpenId);
         if (!owner && dbConn2) {
@@ -760,8 +761,23 @@ export const appRouter = router({
           owner = firstAdmin ?? null;
         }
         if (!owner) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Owner not found" });
+
+        // Recompute endTime server-side from session type to prevent client-side duration bugs
+        let computedEndTime = input.endTime;
+        if (input.sessionTypeId && dbConn2) {
+          const [st] = await dbConn2.select().from(sessionTypesTable).where(eq(sessionTypesTable.id, input.sessionTypeId)).limit(1);
+          if (st) {
+            const durationMin = String(st.durationUnit).trim() === 'hours' ? Number(st.duration) * 60 : Number(st.duration);
+            computedEndTime = new Date(input.startTime.getTime() + durationMin * 60 * 1000);
+            console.log('[book] sessionType:', st.name, 'duration:', st.duration, st.durationUnit, '-> durationMin:', durationMin, 'endTime:', computedEndTime);
+          }
+        } else {
+          console.log('[book] no sessionTypeId, using client endTime, diff_min:', (input.endTime.getTime() - input.startTime.getTime()) / 60000);
+        }
+
         const appointment = await db.createAppointment({
           ...input,
+          endTime: computedEndTime,
           status: "Scheduled",
         }, owner.id);
         // Notify owner of new booking
@@ -820,6 +836,62 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
         return await db.updateAppointment(id, ctx.user.id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.deleteAppointment(input.id, ctx.user.id);
+      }),
+
+    cancelWithNotify: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        notifyParent: z.boolean().default(false),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Mark appointment as Cancelled
+        await db.updateAppointment(input.id, ctx.user.id, { status: "Cancelled" });
+
+        if (input.notifyParent) {
+          // Fetch the appointment to get parent email / name / time
+          const apts = await db.getAppointmentsByOwner(ctx.user.id);
+          const apt = (apts as any[]).find((a: any) => a.id === input.id);
+          if (apt) {
+            // Try to find parent email from contacts
+            let parentEmail: string | null = null;
+            if (apt.clientId) {
+              try {
+                const contact = await db.getContactById(apt.clientId, ctx.user.id);
+                if (contact) parentEmail = (contact as any).email ?? null;
+              } catch { /* ignore */ }
+            }
+            if (parentEmail) {
+              const { sendEmail } = await import("./_core/email");
+              const dateStr = new Date(apt.startTime).toLocaleString("en-US", {
+                weekday: "long", month: "long", day: "numeric", year: "numeric",
+                hour: "2-digit", minute: "2-digit",
+              });
+              await sendEmail({
+                to: parentEmail,
+                subject: `Appointment Cancelled: ${apt.title}`,
+                html: `
+                  <p>Hello${apt.parentName ? ` ${apt.parentName}` : ""},</p>
+                  <p>We wanted to let you know that the following appointment has been <strong>cancelled</strong>:</p>
+                  <ul>
+                    <li><strong>Meeting:</strong> ${apt.title}</li>
+                    <li><strong>Date &amp; Time:</strong> ${dateStr}</li>
+                    ${apt.studentName ? `<li><strong>Student:</strong> ${apt.studentName}</li>` : ""}
+                  </ul>
+                  <p>Please reach out if you have any questions or would like to reschedule.</p>
+                  <p>Thank you,<br/>Waypoint Advocacy</p>
+                `,
+              });
+            }
+          }
+        }
+
+        return { success: true };
       }),
 
     // Public: get available time slots for a session type on a given date

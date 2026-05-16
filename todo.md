@@ -522,7 +522,7 @@
 - [x] Create PAGE_IDS registry mapping every route path to a unique PG-XXX id and page name
 - [x] Wire badge into DashboardLayout so it auto-reads current route and shows the correct ID on every page
 - [x] Verify badge appears correctly on Dashboard, Contacts, ContactDetail, ClientPortal, BillGuardian, BrainDump, Tools, Invoices, Settings
-- [ ] PageIdBadge: add copy button inside expanded pill — copies "PG-XXX · Page Name" to clipboard, shows checkmark confirmation for 2 seconds
+- [x] PageIdBadge: add copy button inside expanded pill — copies "PG-XXX · Page Name" to clipboard, shows checkmark confirmation for 2 seconds
 
 ## PG-030 Contact Detail — Participants Bar Fix
 - [x] Participants bar: auto-include the linked parent contact (parentId relationship) as a permanent participant with their name, avatar, and CONTACT badge
@@ -874,10 +874,11 @@
 - [x] Replace ALL Textarea and Input instances across all 30+ pages and components with VoiceTextarea/VoiceInput
 - [x] Replace raw textarea elements in Messages, Appointments, Contracts, NoteEditor
 - [x] Voice-to-text now available on every text field in the entire CRM (both short and long fields)
-- [ ] Workflow: Add hover "+" button at bottom-center of each card/sticky node to add a card below (inherits color, auto-connects with arrow)
-- [ ] Calendar: clicking an event opens a detail popup showing title, date/time, video link with Join Meeting button, and participants as Parent/Student labels
-- [ ] Calendar event popup: show Delete and Edit actions
-- [ ] Appointments: Add full edit form to popup — pre-filled with all fields (title, date/time, video link, parent name, parent phone, student name, location, description, status), save via tRPC update mutation
+- [x] Workflow: Add hover "+" button at bottom-center of each card/sticky node to add a card below (inherits color, auto-connects with arrow)
+- [x] Calendar: clicking an event opens a detail popup showing title, date/time, video link with Join Meeting button, and participants as Parent/Student labels
+- [x] Calendar event popup: show Delete and Edit actions
+- [ ] Calendar event popup: add Cancel Meeting button with "Notify parent by email" checkbox — marks appointment as Cancelled and optionally sends cancellation email to parent
+- [x] Appointments: Add full edit form to popup — pre-filled with all fields (title, date/time, video link, parent name, parent phone, student name, location, description, status), save via tRPC update mutation
 
 ## BrainDump Image Attachments
 - [x] Add braindumpImages table to schema (braindumpId, imageUrl, uploadedAt)
@@ -934,4 +935,4 @@
 - [x] Navy remains the default theme
 - [x] Ensure portal login, set-password, and reset-password screens always render in navy theme (not dependent on localStorage)
 - [x] Fix session type duration display in portal scheduler — shows "3 min" instead of "3 hours" (now uses durationUnit field in ClientPortal and BookingPage)
-- [x] Fix calendar appointment duration when booking — raw duration value (3) used as minutes instead of converting hours to minutes (3 hours = 180 minutes)
+- [x] Fix calendar appointment duration when booking — server now recomputes endTime from sessionTypeId server-side, ignoring client-side duration calculation entirely (bulletproof fix)
