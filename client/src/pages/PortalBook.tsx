@@ -7,11 +7,14 @@ import {
 } from "lucide-react";
 import InlineScheduler from "@/components/InlineScheduler";
 
-function formatDuration(minutes: number) {
-  if (minutes < 60) return `${minutes} min`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return m > 0 ? `${h}h ${m}m` : `${h} hour${h > 1 ? "s" : ""}`;
+function formatDuration(duration: number, durationUnit?: string) {
+  if (durationUnit === 'hours') {
+    return `${duration} ${duration === 1 ? 'hour' : 'hours'}`;
+  }
+  if (duration < 60) return `${duration} min`;
+  const h = Math.floor(duration / 60);
+  const m = duration % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h} hour${h > 1 ? 's' : ''}`;
 }
 
 export default function PortalBook() {
@@ -73,7 +76,7 @@ export default function PortalBook() {
                   <div className="rounded-xl bg-blue-500/20 border border-blue-500/30 p-2.5">
                     <Clock className="h-5 w-5 text-blue-400" />
                   </div>
-                  <p className="text-sm text-blue-200/70">{formatDuration(selectedType.duration)}</p>
+                  <p className="text-sm text-blue-200/70">{formatDuration(selectedType.duration, selectedType.durationUnit)}</p>
                 </div>
               )}
               {selectedType?.sessionFormat && (
@@ -135,7 +138,7 @@ export default function PortalBook() {
               <div className="flex items-center gap-3 mt-1 text-sm text-blue-200/70 flex-wrap">
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  {formatDuration(selectedType.duration)}
+                  {formatDuration(selectedType.duration, selectedType.durationUnit)}
                 </span>
                 <span className="flex items-center gap-1 capitalize">
                   {selectedType.sessionFormat === "phone" ? (
@@ -232,7 +235,7 @@ export default function PortalBook() {
                     </div>
                     {/* Duration + arrow */}
                     <div className="flex-shrink-0 flex items-center gap-2">
-                      <span className="text-sm text-blue-300/60">{formatDuration(st.duration)}</span>
+                      <span className="text-sm text-blue-300/60">{formatDuration(st.duration, st.durationUnit)}</span>
                       <ChevronRight className="h-4 w-4 text-blue-400/40 group-hover:text-blue-400 transition-colors" />
                     </div>
                   </div>
