@@ -934,3 +934,4 @@
 - [x] Navy remains the default theme
 - [x] Ensure portal login, set-password, and reset-password screens always render in navy theme (not dependent on localStorage)
 - [x] Fix session type duration display in portal scheduler — shows "3 min" instead of "3 hours" (now uses durationUnit field in ClientPortal and BookingPage)
+- [x] Fix calendar appointment duration when booking — raw duration value (3) used as minutes instead of converting hours to minutes (3 hours = 180 minutes)

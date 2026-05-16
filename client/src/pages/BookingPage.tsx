@@ -101,7 +101,7 @@ export default function BookingPage() {
             <InlineScheduler
               sessionTypeId={selectedTypeId}
               sessionTypeName={selectedType?.name}
-              sessionDuration={selectedType?.duration ?? 60}
+              sessionDuration={selectedType ? (selectedType.durationUnit === 'hours' ? selectedType.duration * 60 : selectedType.duration) : 60}
               parentName=""
               parentEmail=""
               onBooked={handleBooked}

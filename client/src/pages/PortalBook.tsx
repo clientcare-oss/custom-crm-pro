@@ -158,7 +158,7 @@ export default function PortalBook() {
           <InlineScheduler
             sessionTypeId={selectedSessionTypeId}
             sessionTypeName={selectedType.name}
-            sessionDuration={selectedType.duration}
+            sessionDuration={selectedType.durationUnit === 'hours' ? selectedType.duration * 60 : selectedType.duration}
             parentName={user?.name ?? ""}
             parentEmail={user?.email ?? ""}
             onBooked={handleBooked}

@@ -66,6 +66,16 @@ export default function InlineScheduler({
     { enabled: !!sessionTypeId && !isPreview }
   );
 
+  // Compute effective duration in minutes from sessionTypeData (overrides prop when available)
+  const effectiveDurationMin = useMemo(() => {
+    if (sessionTypeData) {
+      return sessionTypeData.durationUnit === 'hours'
+        ? sessionTypeData.duration * 60
+        : sessionTypeData.duration;
+    }
+    return sessionDuration;
+  }, [sessionTypeData, sessionDuration]);
+
   // Parse weekly hours to determine which day-of-week indices have availability
   const availableDayIndices = useMemo<Set<number>>(() => {
     if (isPreview) {
@@ -154,7 +164,7 @@ export default function InlineScheduler({
     if (!selectedDate || !selectedTime || isPreview) return;
     setIsBooking(true);
     const startTime = new Date(`${selectedDate}T${selectedTime}`);
-    const endTime = new Date(startTime.getTime() + sessionDuration * 60 * 1000);
+    const endTime = new Date(startTime.getTime() + effectiveDurationMin * 60 * 1000);
     bookAppointment.mutate({
       title: `${sessionTypeName || "Consultation"} — ${parentName}`,
       startTime,
@@ -175,7 +185,9 @@ export default function InlineScheduler({
         </div>
         <div className="flex items-center gap-1.5 text-slate-400 text-xs">
           <Clock className="w-3.5 h-3.5 text-blue-400" />
-          {sessionDuration} min
+          {effectiveDurationMin >= 60 && effectiveDurationMin % 60 === 0
+            ? `${effectiveDurationMin / 60} hour${effectiveDurationMin / 60 !== 1 ? 's' : ''}`
+            : `${effectiveDurationMin} min`}
         </div>
       </div>
 
