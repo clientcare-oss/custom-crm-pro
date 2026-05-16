@@ -933,3 +933,4 @@
 - [x] Add sun/moon theme toggle to client portal top-right header
 - [x] Navy remains the default theme
 - [x] Ensure portal login, set-password, and reset-password screens always render in navy theme (not dependent on localStorage)
+- [x] Fix session type duration display in portal scheduler — shows "3 min" instead of "3 hours" (now uses durationUnit field in ClientPortal and BookingPage)

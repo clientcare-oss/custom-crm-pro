@@ -651,7 +651,9 @@ export default function ClientPortal() {
                 >
                   <Clock className="h-4 w-4 flex-shrink-0" />
                   <span className="flex-1 text-left">{st.name}</span>
-                  <span className="text-xs text-muted-foreground">{st.duration} min</span>
+                  <span className="text-xs text-muted-foreground">
+                    {st.duration} {st.durationUnit === 'hours' ? (st.duration === 1 ? 'hour' : 'hours') : 'min'}
+                  </span>
                 </Button>
               ))}
             </div>

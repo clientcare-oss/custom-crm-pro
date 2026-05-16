@@ -82,7 +82,9 @@ export default function BookingPage() {
                   <p className="font-semibold text-white group-hover:text-blue-300 transition-colors">{st.name}</p>
                   {st.description && <p className="text-slate-400 text-sm mt-0.5 truncate">{st.description}</p>}
                 </div>
-                <span className="text-xs text-slate-500 flex-shrink-0">{st.duration} min</span>
+                <span className="text-xs text-slate-500 flex-shrink-0">
+                  {st.duration} {st.durationUnit === 'hours' ? (st.duration === 1 ? 'hour' : 'hours') : 'min'}
+                </span>
               </button>
             ))}
           </div>
