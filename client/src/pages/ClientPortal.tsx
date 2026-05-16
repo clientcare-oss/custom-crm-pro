@@ -674,6 +674,7 @@ export default function ClientPortal() {
                 sessionTypeId={schedulerSessionTypeId}
                 parentName={user?.name ?? ""}
                 parentEmail={user?.email ?? ""}
+                clientId={effectiveStudentContactId}
                 onBooked={handleSchedulerBooked}
               />
             </div>

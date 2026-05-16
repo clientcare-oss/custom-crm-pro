@@ -1,0 +1,59 @@
+{
+  "query": "SELECT id, firstName, lastName, jobTitle, parentContactId FROM contacts WHERE jobTitle = 'Student' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, firstName, lastName, jobTitle, parentContactId FROM contacts WHERE jobTitle = 'Student' LIMIT 10;",
+  "rows": [
+    {
+      "id": "2",
+      "firstName": "Woolbert",
+      "lastName": "Sheep",
+      "jobTitle": "Student",
+      "parentContactId": "1"
+    },
+    {
+      "id": "3",
+      "firstName": "Baaarbra",
+      "lastName": "Sheep",
+      "jobTitle": "Student",
+      "parentContactId": "1"
+    },
+    {
+      "id": "30002",
+      "firstName": "Alex",
+      "lastName": "Thompson",
+      "jobTitle": "Student",
+      "parentContactId": "30001"
+    },
+    {
+      "id": "60002",
+      "firstName": "barf",
+      "lastName": "nuggets",
+      "jobTitle": "Student",
+      "parentContactId": "60001"
+    },
+    {
+      "id": "90002",
+      "firstName": "Test",
+      "lastName": "Student",
+      "jobTitle": "Student",
+      "parentContactId": "90001"
+    },
+    {
+      "id": "90004",
+      "firstName": "Test",
+      "lastName": "Student2",
+      "jobTitle": "Student",
+      "parentContactId": "90003"
+    },
+    {
+      "id": "120001",
+      "firstName": "barky",
+      "lastName": " berkington",
+      "jobTitle": "Student",
+      "parentContactId": "60001"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\tjobTitle\tparentContactId\n2\tWoolbert\tSheep\tStudent\t1\n3\tBaaarbra\tSheep\tStudent\t1\n30002\tAlex\tThompson\tStudent\t30001\n60002\tbarf\tnuggets\tStudent\t60001\n90002\tTest\tStudent\tStudent\t90001\n90004\tTest\tStudent2\tStudent\t90003\n120001\tbarky\t berkington\tStudent\t60001\n",
+  "stderr": "",
+  "execution_time_ms": 682
+}

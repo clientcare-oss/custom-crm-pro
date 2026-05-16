@@ -9,6 +9,7 @@ interface InlineSchedulerProps {
   sessionDuration?: number; // minutes
   parentName: string;
   parentEmail: string;
+  clientId?: number | null; // student contact ID to link appointment to
   onBooked: (date: string, time: string) => void;
   isPreview?: boolean;
 }
@@ -48,6 +49,7 @@ export default function InlineScheduler({
   sessionDuration = 60,
   parentName,
   parentEmail,
+  clientId,
   onBooked,
   isPreview = false,
 }: InlineSchedulerProps) {
@@ -172,6 +174,7 @@ export default function InlineScheduler({
       startTime,
       endTime,
       sessionTypeId: sessionTypeId ?? undefined,
+      clientId: clientId ?? undefined,
       description: `Session: ${sessionTypeName || "Consultation"}\nClient: ${parentName}\nEmail: ${parentEmail}`,
     });
   };

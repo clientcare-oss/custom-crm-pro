@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE appointments SET clientId = 60002 WHERE clientId IS NULL AND title LIKE '%Byron Honea%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute UPDATE appointments SET clientId = 60002 WHERE clientId IS NULL AND title LIKE '%Byron Honea%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 594
+}

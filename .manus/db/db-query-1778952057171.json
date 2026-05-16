@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, title, clientId, startTime, endTime FROM appointments WHERE title LIKE '%Byron%' ORDER BY startTime DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, title, clientId, startTime, endTime FROM appointments WHERE title LIKE '%Byron%' ORDER BY startTime DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "150002",
+      "title": "IEP Meeting — Byron Honea",
+      "clientId": "60002",
+      "startTime": "2026-06-05 12:00:00",
+      "endTime": "2026-06-05 15:00:00"
+    },
+    {
+      "id": "150001",
+      "title": "IEP Meeting — Byron Honea",
+      "clientId": "60002",
+      "startTime": "2026-06-04 12:00:00",
+      "endTime": "2026-06-04 12:03:00"
+    },
+    {
+      "id": "120003",
+      "title": "IEP Meeting — Byron Honea",
+      "clientId": "60002",
+      "startTime": "2026-06-02 12:00:00",
+      "endTime": "2026-06-02 12:03:00"
+    },
+    {
+      "id": "120002",
+      "title": "IEP Meeting — Byron Honea",
+      "clientId": "60002",
+      "startTime": "2026-06-01 12:00:00",
+      "endTime": "2026-06-01 12:03:00"
+    },
+    {
+      "id": "90001",
+      "title": "IEP Meeting — Byron Honea",
+      "clientId": "60002",
+      "startTime": "2026-05-29 12:00:00",
+      "endTime": "2026-05-29 12:03:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tclientId\tstartTime\tendTime\n150002\tIEP Meeting — Byron Honea\t60002\t2026-06-05 12:00:00\t2026-06-05 15:00:00\n150001\tIEP Meeting — Byron Honea\t60002\t2026-06-04 12:00:00\t2026-06-04 12:03:00\n120003\tIEP Meeting — Byron Honea\t60002\t2026-06-02 12:00:00\t2026-06-02 12:03:00\n120002\tIEP Meeting — Byron Honea\t60002\t2026-06-01 12:00:00\t2026-06-01 12:03:00\n90001\tIEP Meeting — Byron Honea\t60002\t2026-05-29 12:00:00\t2026-05-29 12:03:00\n",
+  "stderr": "",
+  "execution_time_ms": 595
+}

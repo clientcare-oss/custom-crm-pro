@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, title, startTime, endTime, clientId, status FROM appointments ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2hQLtGFTQQF4sFv.root --database gixQA33Udhd38D2dSPdEnX --execute SELECT id, title, startTime, endTime, clientId, status FROM appointments ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "150002",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-06-05 12:00:00",
+      "endTime": "2026-06-05 15:00:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "150001",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-06-04 12:00:00",
+      "endTime": "2026-06-04 12:03:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "120003",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-06-02 12:00:00",
+      "endTime": "2026-06-02 12:03:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "120002",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-06-01 12:00:00",
+      "endTime": "2026-06-01 12:03:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "120001",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-28 17:00:00",
+      "endTime": "2026-05-28 17:03:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "90002",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-25 17:00:00",
+      "endTime": "2026-05-25 17:03:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "90001",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-29 12:00:00",
+      "endTime": "2026-05-29 12:03:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "60001",
+      "title": "IEP Meeting — Byron Honea",
+      "startTime": "2026-05-15 13:00:00",
+      "endTime": "2026-05-15 13:03:00",
+      "clientId": "NULL",
+      "status": "Scheduled"
+    },
+    {
+      "id": "30001",
+      "title": "nuggs",
+      "startTime": "2026-05-12 12:18:00",
+      "endTime": "2026-05-12 19:00:00",
+      "clientId": "60001",
+      "status": "Confirmed"
+    },
+    {
+      "id": "1",
+      "title": "bark",
+      "startTime": "2026-05-13 12:54:00",
+      "endTime": "2026-05-13 16:55:00",
+      "clientId": "60001",
+      "status": "Cancelled"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstartTime\tendTime\tclientId\tstatus\n150002\tIEP Meeting — Byron Honea\t2026-06-05 12:00:00\t2026-06-05 15:00:00\tNULL\tScheduled\n150001\tIEP Meeting — Byron Honea\t2026-06-04 12:00:00\t2026-06-04 12:03:00\tNULL\tScheduled\n120003\tIEP Meeting — Byron Honea\t2026-06-02 12:00:00\t2026-06-02 12:03:00\tNULL\tScheduled\n120002\tIEP Meeting — Byron Honea\t2026-06-01 12:00:00\t2026-06-01 12:03:00\tNULL\tScheduled\n120001\tIEP Meeting — Byron Honea\t2026-05-28 17:00:00\t2026-05-28 17:03:00\tNULL\tScheduled\n90002\tIEP Meeting — Byron Honea\t2026-05-25 17:00:00\t2026-05-25 17:03:00\tNULL\tScheduled\n90001\tIEP Meeting — Byron Honea\t2026-05-29 12:00:00\t2026-05-29 12:03:00\tNULL\tScheduled\n60001\tIEP Meeting — Byron Honea\t2026-05-15 13:00:00\t2026-05-15 13:03:00\tNULL\tScheduled\n30001\tnuggs\t2026-05-12 12:18:00\t2026-05-12 19:00:00\t60001\tConfirmed\n1\tbark\t2026-05-13 12:54:00\t2026-05-13 16:55:00\t60001\tCancelled\n",
+  "stderr": "",
+  "execution_time_ms": 577
+}

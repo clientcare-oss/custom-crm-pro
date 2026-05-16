@@ -936,3 +936,5 @@
 - [x] Ensure portal login, set-password, and reset-password screens always render in navy theme (not dependent on localStorage)
 - [x] Fix session type duration display in portal scheduler — shows "3 min" instead of "3 hours" (now uses durationUnit field in ClientPortal and BookingPage)
 - [x] Fix calendar appointment duration when booking — server now recomputes endTime from sessionTypeId server-side, ignoring client-side duration calculation entirely (bulletproof fix)
+- [x] BUG: Portal booking does not link appointment to the logged-in portal user (parent) or their student — appointment floats with no clientId/studentId
+- [x] BUG: Student portal page shows no upcoming appointments because booked appointments are not linked to the student contact
