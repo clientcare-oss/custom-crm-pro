@@ -232,21 +232,21 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
               <Label htmlFor="portal-email">Email</Label>
               <Input id="portal-email" type="email" placeholder="you@example.com"
                 value={email} onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })} />
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); login.mutate({ email, password }); } }} />
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="portal-password">Password</Label>
                 <button type="button" onClick={() => setView("forgot")}
-                  className="text-xs text-primary hover:underline">
+                  className="text-xs text-primary hover:underline" style={{cursor: "pointer"}}>
                   Forgot password?
                 </button>
               </div>
               <Input id="portal-password" type="password" placeholder="••••••••"
                 value={password} onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && login.mutate({ email, password })} />
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); login.mutate({ email, password }); } }} />
             </div>
-            <Button className="w-full" onClick={() => login.mutate({ email, password })}
+            <Button type="button" className="w-full" onClick={() => login.mutate({ email, password })}
               disabled={login.isPending || !email || !password}>
               {login.isPending ? "Signing in…" : "Sign In"}
             </Button>
@@ -254,7 +254,7 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
               <p className="text-xs text-muted-foreground">
                 First time here?{" "}
                 <button type="button" onClick={() => setView("forgot")}
-                  className="text-primary hover:underline font-medium">
+                  className="text-primary hover:underline font-medium" style={{cursor: "pointer"}}>
                   Set up your password
                 </button>
               </p>

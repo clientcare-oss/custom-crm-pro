@@ -917,3 +917,12 @@
 
 ## Portal Self-Onboarding Fix
 - [x] Fix requestPasswordReset to work for contacts without existing credentials (look up contact by email, send setup link that creates credentials on first use)
+
+
+## Portal Login Bug Fixes (May 16, 2026)
+- [x] Fix portal login Google OAuth redirect issue (added portalProcedure, skip redirect for /portal paths)
+- [x] Fix requestPasswordReset to work for contacts without existing credentials (self-onboarding)
+- [x] Fix portal login button not triggering mutation (added type="button" to prevent form submission)
+- [x] Fix require() ESM error in auth.getOwner (replaced require() with proper import)
+- [x] Add portalProcedure for portal session authentication (separate from Manus OAuth)
+- [ ] Fix portal session cookie cross-domain issue (dev server vs production domain) — cookies work on production domain, dev testing requires local domain workaround
