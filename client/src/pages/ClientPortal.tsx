@@ -181,7 +181,12 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const login = trpc.portalAuth.portalLogin.useMutation({
-    onSuccess: () => { toast.success("Welcome back!"); onSuccess(); },
+    onSuccess: (data) => {
+      // Store token in localStorage as fallback for environments where httpOnly cookies don't persist
+      if (data?.token) localStorage.setItem("portal_token", data.token);
+      toast.success("Welcome back!");
+      onSuccess();
+    },
     onError: (err) => { toast.error(err.message || "Invalid email or password"); },
   });
 
@@ -384,7 +389,10 @@ export default function ClientPortal() {
   // Portal-specific session (separate from Manus OAuth)
   const { data: portalUser, refetch: refetchPortalMe } = trpc.portalAuth.portalMe.useQuery();
   const portalLogout = trpc.portalAuth.portalLogout.useMutation({
-    onSuccess: () => { refetchPortalMe(); },
+    onSuccess: () => {
+      localStorage.removeItem("portal_token");
+      refetchPortalMe();
+    },
   });
 
   // Allow preview mode for admins

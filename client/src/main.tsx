@@ -48,9 +48,20 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
+        // Include portal session token from localStorage as a header
+        // This is a fallback for environments where httpOnly cookies don't persist
+        const portalToken = localStorage.getItem("portal_token");
+        const headers: Record<string, string> = {};
+        if (portalToken) {
+          headers["x-portal-token"] = portalToken;
+        }
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers: {
+            ...(init?.headers as Record<string, string> ?? {}),
+            ...headers,
+          },
         });
       },
     }),

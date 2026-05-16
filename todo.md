@@ -926,3 +926,5 @@
 - [x] Fix require() ESM error in auth.getOwner (replaced require() with proper import)
 - [x] Add portalProcedure for portal session authentication (separate from Manus OAuth)
 - [ ] Fix portal session cookie cross-domain issue (dev server vs production domain) — cookies work on production domain, dev testing requires local domain workaround
+- [x] Fix portal session: store token in localStorage and send as X-Portal-Token header (cookie not persisting in production)
+- [x] Set navy as the default theme for the entire app (including portal login screen, ThemeProvider default, localStorage initial value)

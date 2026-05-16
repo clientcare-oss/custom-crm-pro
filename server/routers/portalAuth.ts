@@ -128,7 +128,8 @@ export const portalAuthRouter = router({
   portalMe: publicProcedure
     .query(async ({ ctx }) => {
       const req = (ctx as any).req;
-      const token = req?.cookies?.portal_session;
+      // Check cookie first, then X-Portal-Token header as fallback
+      const token = req?.cookies?.portal_session || req?.headers?.['x-portal-token'];
       if (!token) return null;
       const conn = await getDbConn();
       const now = new Date();
@@ -150,7 +151,8 @@ export const portalAuthRouter = router({
   portalLogout: publicProcedure
     .mutation(async ({ ctx }) => {
       const req = (ctx as any).req;
-      const token = req?.cookies?.portal_session;
+      // Check cookie first, then X-Portal-Token header as fallback
+      const token = req?.cookies?.portal_session || req?.headers?.['x-portal-token'];
       if (token) {
         const conn = await getDbConn();
         await conn.delete(portalSessions).where(eq(portalSessions.token, token));

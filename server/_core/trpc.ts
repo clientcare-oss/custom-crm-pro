@@ -48,7 +48,20 @@ export const adminProcedure = t.procedure.use(
 );
 
 /**
- * Portal procedure: authenticates via the portal_session cookie (email+password portal login).
+ * Resolve the portal session token from either:
+ * 1. The portal_session httpOnly cookie (preferred)
+ * 2. The X-Portal-Token request header (fallback for environments where cookies don't persist)
+ */
+function getPortalToken(ctx: TrpcContext): string | undefined {
+  const cookieToken = (ctx.req as any)?.cookies?.portal_session;
+  if (cookieToken) return cookieToken;
+  const headerToken = (ctx.req as any)?.headers?.['x-portal-token'];
+  if (headerToken) return headerToken as string;
+  return undefined;
+}
+
+/**
+ * Portal procedure: authenticates via the portal_session cookie or X-Portal-Token header.
  * Injects portalContactId into ctx. Also allows admin users to pass through (for preview mode).
  */
 export const portalProcedure = t.procedure.use(
@@ -66,8 +79,8 @@ export const portalProcedure = t.procedure.use(
       });
     }
 
-    // Read the portal session cookie
-    const token = (ctx.req as any)?.cookies?.portal_session;
+    // Read the portal session token (cookie first, then header fallback)
+    const token = getPortalToken(ctx);
     if (!token) {
       throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     }
