@@ -41,6 +41,10 @@ import AiConnections from "./pages/AiConnections";
 import BillGuardian from "./pages/BillGuardian";
 import PageIdShowcase from "./pages/PageIdShowcase";
 import PortalBook from "./pages/PortalBook";
+import SmartFiles from "./pages/SmartFiles";
+import SmartFileEditor from "./pages/SmartFileEditor";
+import SmartFileAssignments from "./pages/SmartFileAssignments";
+import SmartFilePortalViewer from "./pages/SmartFilePortalViewer";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -62,13 +66,15 @@ function Router() {
       window.location.pathname === '/portal/book' ||
       window.location.pathname === '/portal' ||
       window.location.pathname.startsWith('/portal?') ||
-      window.location.pathname === '/client-portal'
+      window.location.pathname === '/client-portal' ||
+      window.location.pathname.startsWith('/smart-files/response/')
     ) {
       return (
         <Switch>
           <Route path="/portal/book" component={PortalBook} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/client-portal" component={ClientPortal} />
+          <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
         </Switch>
       );
     }
@@ -95,6 +101,9 @@ function Router() {
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />
           <Route path="/contracts" component={Contracts} />
+          <Route path="/smart-files" component={SmartFiles} />
+          <Route path="/smart-files/:id/assignments" component={SmartFileAssignments} />
+          <Route path="/smart-files/:id" component={SmartFileEditor} />
           <Route path="/appointments" component={Appointments} />
           <Route path="/calendar" component={Appointments} />
           <Route path="/scheduler" component={Scheduler} />
@@ -136,6 +145,7 @@ function Router() {
       {/* Portal is public so email links work for unauthenticated clients */}
       <Route path="/portal" component={ClientPortal} />
       <Route path="/client-portal" component={ClientPortal} />
+      <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

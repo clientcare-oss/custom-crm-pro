@@ -465,6 +465,7 @@ export default function ClientPortal() {
     { enabled: !!effectiveStudentContactId }
   );
 
+  const { data: smartFileAssignments = [] } = trpc.smartFiles.portalListAssignments.useQuery();
   const { data: studentBilling } = trpc.portal.getStudentBilling.useQuery(
     { studentContactId: effectiveStudentContactId! },
     { enabled: !!effectiveStudentContactId }
@@ -760,6 +761,7 @@ export default function ClientPortal() {
                   { value: "compass", icon: Compass, label: "Compass" },
                   { value: "communication", icon: MessageSquare, label: "Communication" },
                   { value: "tasks", icon: CheckSquare, label: "Tasks" },
+                  { value: "smart-docs", icon: FileText, label: "Documents" },
                   { value: "files", icon: FolderOpen, label: "Files" },
                   { value: "tools", icon: Wrench, label: "Tools" },
                   { value: "cases", icon: Briefcase, label: "Cases" },
@@ -862,6 +864,38 @@ export default function ClientPortal() {
               </div>
             </TabsContent>
 
+            {/* ── Smart Documents Tab ── */}
+            <TabsContent value="smart-docs" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">Documents</h2>
+                  <p className="text-sm text-muted-foreground">Review and sign documents sent by your advocate.</p>
+                </div>
+                {smartFileAssignments.length === 0 && (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">No documents to review yet.</p>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {smartFileAssignments.map((a: any) => (
+                    <div key={a.id} className="flex items-center gap-4 p-4 border rounded-xl bg-card">
+                      <FileText className="w-5 h-5 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-foreground">{a.templateName ?? "Document"}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{a.status}</p>
+                      </div>
+                      <a
+                        href={`/smart-files/response/${a.id}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/80 transition-colors"
+                      >
+                        {a.status === "payment_completed" ? "View" : "Open"}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
             {/* ── Files Tab ── */}
             <TabsContent value="files" className="mt-0 border border-t-0 border-border rounded-b-xl bg-background">
               <div className="p-5 space-y-5">

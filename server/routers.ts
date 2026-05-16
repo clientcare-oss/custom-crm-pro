@@ -1,4 +1,5 @@
 import { brainDumpItems, brainDumpImages } from "../drizzle/schema";
+import { smartFilesRouter } from "./routers/smartFiles";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -4032,6 +4033,7 @@ export const appRouter = router({
         };
       }),
   }),
+  smartFiles: smartFilesRouter,
   brainDumpImages: router({
       upload: protectedProcedure
         .input(z.object({

@@ -938,3 +938,70 @@
 - [x] Fix calendar appointment duration when booking — server now recomputes endTime from sessionTypeId server-side, ignoring client-side duration calculation entirely (bulletproof fix)
 - [x] BUG: Portal booking does not link appointment to the logged-in portal user (parent) or their student — appointment floats with no clientId/studentId
 - [x] BUG: Student portal page shows no upcoming appointments because booked appointments are not linked to the student contact
+
+## Smart File Builder Module
+
+### Database Schema
+- [x] Create `smartFileTemplates` table (id, ownerId, name, description, status: draft/active/archived, createdAt, updatedAt)
+- [x] Create `smartFileBlocks` table (id, templateId, order, type: heading/text/image/contract/service/signature/initial/checkbox/field/payment/conditional/addon/internal_note, content JSON, settings JSON)
+- [x] Create `smartFileAddOns` table (id, templateId, name, description, price, contractText, isRequired)
+- [x] Create `smartFileAssignments` table (id, templateId, contactId, studentContactId, status: draft/sent/viewed/in_progress/completed/payment_selected/payment_completed/overdue/cancelled, sentAt, viewedAt, completedAt, signedAt, signatureData JSON, ipAddress, paymentOption: one_time/monthly, paymentAmount, dueDate, selectedAddOnIds JSON, fieldValues JSON, pdfUrl)
+- [x] Run migration and apply SQL via webdev_execute_sql
+
+### Server Procedures (tRPC)
+- [x] `smartFiles.listTemplates` — list all templates (admin)
+- [x] `smartFiles.getTemplate` — get template with all blocks and add-ons (admin)
+- [x] `smartFiles.createTemplate` — create new template (admin)
+- [x] `smartFiles.updateTemplate` — update template metadata (admin)
+- [x] `smartFiles.duplicateTemplate` — clone a template (admin)
+- [x] `smartFiles.deleteTemplate` — soft delete template (admin)
+- [x] `smartFiles.saveBlocks` — save/reorder all blocks for a template (admin)
+- [ ] `smartFiles.listAddOns` — list add-ons for a template (admin)
+- [x] `smartFiles.saveAddOns` — create/update/delete add-ons for a template (admin)
+- [x] `smartFiles.assignToClient` — create assignment for a contact/student (admin)
+- [x] `smartFiles.listAssignments` — list all assignments with status (admin)
+- [x] `smartFiles.getAssignment` — get full assignment with resolved smart fields (portal + admin)
+- [x] `smartFiles.submitAssignment` (portalSubmit) — client submits completed file with field values, signature, payment selection, add-on selections (portal)
+- [x] `smartFiles.markViewed` (portalMarkViewed) — mark assignment as viewed when client opens it (portal)
+- [x] `smartFiles.voidAssignment` — void/cancel an assignment (admin)
+- [ ] `smartFiles.resendReminder` — send reminder email to client (admin)
+
+### Admin UI — Template Builder
+- [x] Add "Smart Files" to sidebar navigation (admin only)
+- [x] Smart Files index page: list templates with status badges, Create New button, Duplicate, Delete actions
+- [x] Template editor page: block palette + canvas + block settings panel
+- [x] Block types: Heading, Text, Contract Language, Service Package, Signature Block, Initials Block, Checkbox, Required/Optional Field, Payment Section, Conditional Section, Add-On Section, Internal Note
+- [x] Drag-and-drop block reordering in the canvas
+- [x] Smart field insert menu: click to insert {{parent_name}}, {{student_name}}, {{advocate_name}}, {{case_id}}, {{date_created}}, {{email}}, {{phone}}
+- [x] Conditional block settings: yes/no branching question that shows/hides subsequent blocks
+- [x] Payment section settings: one-time amount, monthly amount, number of months
+- [x] Add-On manager: name, short description, price, full contract text, required toggle
+- [ ] Template preview mode: renders as client would see it with sample data
+- [x] Assign template to client: select contact + student, optional due date, send now
+
+### Client Portal — Smart File Viewer
+- [x] Smart Files tab (Documents) in client portal showing assigned files with status
+- [x] Smart File viewer page: renders all blocks in order, resolves smart fields with real contact data
+- [x] Conditional sections: show/hide blocks based on client's yes/no answers in real time
+- [x] Add-On selection: show name, short description, price; client clicks to add/remove
+- [x] Payment selection: show one-time vs monthly plan; client selects one
+- [x] Signature block: typed name input, cursive preview
+- [x] Initials block: typed initials input per block
+- [x] Checkbox acknowledgment blocks: must be checked before submit
+- [x] Required field validation before allowing submit
+- [x] Submit confirmation page with success state
+
+### PDF Generation & Records
+- [ ] On submit: generate PDF of completed Smart File including all selected add-on contract text, payment terms, signature, and field values
+- [ ] Store PDF in S3 via storagePut, save URL to assignment record
+- [ ] Admin can download completed PDF from assignment detail view
+
+### Status Tracking & Admin Controls
+- [ ] Assignment detail view: show full timeline (sent, viewed, in progress, signed, payment selected, completed)
+- [ ] Admin list view: filter by status, contact, template
+- [ ] Lock completed files (read-only after completion)
+- [ ] Void/cancel assignment with confirmation
+- [ ] Resend reminder email to client
+
+### Billing Integration
+- [ ] When client selects payment option in Smart File, update contact's billing section with: payment option, total amount, discount, monthly amount, due dates, autopay status, contract completion status

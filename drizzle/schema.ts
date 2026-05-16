@@ -981,3 +981,86 @@ export const passwordResetTokens = mysqlTable('password_reset_tokens', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// ─── Smart File Builder ──────────────────────────────────────────────────────
+
+/**
+ * Smart File templates — reusable document templates created by admins.
+ */
+export const smartFileTemplates = mysqlTable('smart_file_templates', {
+  id: int('id').primaryKey().autoincrement(),
+  ownerId: int('owner_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  status: mysqlEnum('status', ['draft', 'active', 'archived']).default('draft').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
+export type SmartFileTemplate = typeof smartFileTemplates.$inferSelect;
+
+/**
+ * Smart File blocks — ordered content blocks within a template.
+ * type options: heading | text | image | contract | service | signature | initial |
+ *               checkbox | field | payment | conditional | addon | internal_note
+ * content: JSON string holding block-specific data (text, label, options, etc.)
+ * settings: JSON string holding block-specific settings (required, placeholder, condition, etc.)
+ */
+export const smartFileBlocks = mysqlTable('smart_file_blocks', {
+  id: int('id').primaryKey().autoincrement(),
+  templateId: int('template_id').notNull(),
+  blockOrder: int('block_order').notNull().default(0),
+  type: varchar('type', { length: 50 }).notNull(),
+  content: text('content'),   // JSON
+  settings: text('settings'), // JSON
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
+export type SmartFileBlock = typeof smartFileBlocks.$inferSelect;
+
+/**
+ * Smart File add-ons — optional purchasable items attached to a template.
+ */
+export const smartFileAddOns = mysqlTable('smart_file_add_ons', {
+  id: int('id').primaryKey().autoincrement(),
+  templateId: int('template_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  shortDescription: text('short_description'),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull().default('0.00'),
+  contractText: text('contract_text'),
+  isRequired: tinyint('is_required').notNull().default(0),
+  sortOrder: int('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+export type SmartFileAddOn = typeof smartFileAddOns.$inferSelect;
+
+/**
+ * Smart File assignments — a template assigned to a specific client/student.
+ */
+export const smartFileAssignments = mysqlTable('smart_file_assignments', {
+  id: int('id').primaryKey().autoincrement(),
+  templateId: int('template_id').notNull(),
+  ownerId: int('owner_id').notNull(),
+  contactId: int('contact_id').notNull(),           // parent contact
+  studentContactId: int('student_contact_id'),       // student contact (optional)
+  status: mysqlEnum('status', [
+    'draft', 'sent', 'viewed', 'in_progress', 'completed',
+    'payment_selected', 'payment_completed', 'overdue', 'cancelled'
+  ]).default('draft').notNull(),
+  dueDate: datetime('due_date'),
+  sentAt: datetime('sent_at'),
+  viewedAt: datetime('viewed_at'),
+  completedAt: datetime('completed_at'),
+  signedAt: datetime('signed_at'),
+  signatureName: varchar('signature_name', { length: 255 }),
+  signatureIp: varchar('signature_ip', { length: 64 }),
+  initialsData: text('initials_data'),      // JSON: { blockId: initialsText }
+  fieldValues: text('field_values'),        // JSON: { blockId: value }
+  paymentOption: mysqlEnum('payment_option', ['one_time', 'monthly']),
+  paymentAmount: decimal('payment_amount', { precision: 10, scale: 2 }),
+  selectedAddOnIds: text('selected_add_on_ids'), // JSON: [id, id, ...]
+  pdfUrl: text('pdf_url'),
+  internalNotes: text('internal_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
+export type SmartFileAssignment = typeof smartFileAssignments.$inferSelect;
