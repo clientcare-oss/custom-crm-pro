@@ -60,6 +60,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: Calendar, label: "Calendar", path: "/calendar" },
     { icon: CalendarClock, label: "Scheduler", path: "/scheduler" },
     { icon: CheckSquare, label: "Tasks", path: "/tasks" },
+    { icon: Layers, label: "Tech Tasks", path: "/tech-tasks" },
     { icon: Wrench, label: "Tools", path: "/tools" },
     { icon: LayoutTemplate, label: "Templates", path: "/templates" },
     { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },

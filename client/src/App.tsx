@@ -45,6 +45,7 @@ import SmartFiles from "./pages/SmartFiles";
 import SmartFileEditor from "./pages/SmartFileEditor";
 import SmartFileAssignments from "./pages/SmartFileAssignments";
 import SmartFilePortalViewer from "./pages/SmartFilePortalViewer";
+import TechTasks from "./pages/TechTasks";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 
@@ -108,6 +109,7 @@ function Router() {
           <Route path="/calendar" component={Appointments} />
           <Route path="/scheduler" component={Scheduler} />
           <Route path="/tasks" component={Tasks} />
+          <Route path="/tech-tasks" component={TechTasks} />
           <Route path="/tools" component={Tools} />
           <Route path="/templates" component={Templates} />
           <Route path="/lead-forms" component={LeadForms} />

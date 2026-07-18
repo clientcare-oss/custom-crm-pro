@@ -1005,3 +1005,15 @@
 
 ### Billing Integration
 - [ ] When client selects payment option in Smart File, update contact's billing section with: payment option, total amount, discount, monthly amount, due dates, autopay status, contract completion status
+
+## Tech Tasks — Technology Department Section
+- [x] DB: create techTasks table (id, ownerId, title, description, status: Backlog/In Progress/In Review/Done/Stuck, priority: High/Medium/Low, category: Implementation/Refinement/Compliance/Bug Fix/Infrastructure, assignee text, dueDate, resourceUrl, completedAt, createdAt, updatedAt)
+- [x] DB: create techTaskSubtasks table (id, taskId, title, isComplete, sortOrder, createdAt)
+- [x] Run migration and apply SQL
+- [x] Backend: techTasks.list, create, update, delete, reorder procedures (protectedProcedure)
+- [x] Backend: techTasks.subtasks.create, update, delete procedures
+- [x] Tech Tasks page (/tech-tasks): list view grouped by status with progress bars showing subtask completion
+- [x] Task card: title, category badge, priority badge, assignee, due date, resource link, subtask progress bar
+- [x] Create/edit task dialog: all fields including subtask editor, resource URL, due date+time
+- [x] Sidebar nav: add "Tech Tasks" item under Tasks in sidebar nav
+- [x] Wire /tech-tasks route in App.tsx

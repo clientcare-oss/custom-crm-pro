@@ -365,6 +365,13 @@
       "when": 1778973759910,
       "tag": "0051_ambiguous_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "5",
+      "when": 1784413401678,
+      "tag": "0052_magical_thaddeus_ross",
+      "breakpoints": true
     }
   ]
 }

@@ -74,11 +74,13 @@ export const contacts = mysqlTable("contacts", {
   schoolName: varchar("schoolName", { length: 200 }),
   gradeLevel: varchar("gradeLevel", { length: 50 }),
   countyDistrict: varchar("countyDistrict", { length: 200 }),
-  challenges: text("challenges"),
+    challenges: text("challenges"),
+  // Archive fields
+  archivedAt: timestamp("archivedAt"),
+  archiveReason: text("archiveReason"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
-
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
 
@@ -1064,3 +1066,43 @@ export const smartFileAssignments = mysqlTable('smart_file_assignments', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
 });
 export type SmartFileAssignment = typeof smartFileAssignments.$inferSelect;
+
+/**
+ * Tech Tasks — internal technology department task tracker.
+ * Used for implementation, refinement, compliance, and bug fix work.
+ */
+export const techTasks = mysqlTable("techTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["Backlog", "In Progress", "In Review", "Done", "Stuck"])
+    .default("Backlog")
+    .notNull(),
+  priority: mysqlEnum("priority", ["High", "Medium", "Low"]).default("Medium").notNull(),
+  category: mysqlEnum("category", ["Implementation", "Refinement", "Compliance", "Bug Fix", "Infrastructure"])
+    .default("Implementation")
+    .notNull(),
+  assignee: varchar("assignee", { length: 200 }),
+  dueDate: datetime("dueDate"),
+  resourceUrl: text("resourceUrl"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TechTask = typeof techTasks.$inferSelect;
+export type InsertTechTask = typeof techTasks.$inferInsert;
+
+/**
+ * Tech Task Subtasks — checklist items for each tech task.
+ */
+export const techTaskSubtasks = mysqlTable("techTaskSubtasks", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  isComplete: boolean("isComplete").default(false).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TechTaskSubtask = typeof techTaskSubtasks.$inferSelect;
+export type InsertTechTaskSubtask = typeof techTaskSubtasks.$inferInsert;
