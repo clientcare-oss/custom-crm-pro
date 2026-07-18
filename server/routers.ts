@@ -2262,9 +2262,54 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    categories: adminProcedure.query(() => {
-      return ["Law Books", "Test Books", "OSEP Letters", "Work Documents", "Other"] as const;
+    // Dynamic categories from DB
+    categories: adminProcedure.query(async ({ ctx }) => {
+      const database = await db.getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const { kbCategories } = await import("../drizzle/schema");
+      const { eq: dbEq, asc: dbAsc } = await import("drizzle-orm");
+      const rows = await database
+        .select()
+        .from(kbCategories)
+        .where(dbEq(kbCategories.ownerId, ctx.user.id))
+        .orderBy(dbAsc(kbCategories.name));
+      return rows;
     }),
+
+    createCategory: adminProcedure
+      .input(z.object({ name: z.string().min(1).max(100) }))
+      .mutation(async ({ ctx, input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { kbCategories } = await import("../drizzle/schema");
+        const { eq: dbEq } = await import("drizzle-orm");
+        // Prevent duplicates
+        const allRows = await database
+          .select()
+          .from(kbCategories)
+          .where(dbEq(kbCategories.ownerId, ctx.user.id));
+        if (allRows.some(r => r.name.toLowerCase() === input.name.toLowerCase())) {
+          throw new TRPCError({ code: "CONFLICT", message: "Category already exists" });
+        }
+        const [result] = await database.insert(kbCategories).values({
+          ownerId: ctx.user.id,
+          name: input.name.trim(),
+        });
+        return { success: true, id: (result as any).insertId };
+      }),
+
+    deleteCategory: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { kbCategories } = await import("../drizzle/schema");
+        const { eq: dbEq, and: dbAnd } = await import("drizzle-orm");
+        await database
+          .delete(kbCategories)
+          .where(dbAnd(dbEq(kbCategories.id, input.id), dbEq(kbCategories.ownerId, ctx.user.id)));
+        return { success: true };
+      }),
   }),
 
   // ============ TIME TRACKER ============

@@ -372,6 +372,13 @@
       "when": 1784413401678,
       "tag": "0052_magical_thaddeus_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "5",
+      "when": 1784416054668,
+      "tag": "0053_rainy_caretaker",
+      "breakpoints": true
     }
   ]
 }

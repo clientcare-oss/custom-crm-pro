@@ -615,6 +615,16 @@ export const knowledgeBase = mysqlTable("knowledgeBase", {
 export type KnowledgeBase = typeof knowledgeBase.$inferSelect;
 export type InsertKnowledgeBase = typeof knowledgeBase.$inferInsert;
 
+// ============ KB CATEGORIES ============
+export const kbCategories = mysqlTable("kbCategories", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type KbCategory = typeof kbCategories.$inferSelect;
+export type InsertKbCategory = typeof kbCategories.$inferInsert;
+
 // ============ TIME ENTRIES ============
 export const timeEntries = mysqlTable("timeEntries", {
   id: int("id").autoincrement().primaryKey(),

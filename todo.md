@@ -1029,3 +1029,12 @@
 ## Lead View Contact Button
 - [x] Leads page: show "View Contact" button on lead card when lead.contactId is set
 - [x] Clicking "View Contact" navigates to /contacts/:contactId
+
+## Knowledge Base Categories
+- [x] DB: add category text column to knowledgeBaseArticles table (nullable, default null)
+- [x] Run migration and apply SQL
+- [x] Backend: update kb.create and kb.update procedures to accept category field
+- [x] Backend: add kb.categories query procedure (returns distinct categories for owner)
+- [x] UI: category input/select when creating or editing an article
+- [x] UI: category filter sidebar/tabs on the Knowledge Base page
+- [x] UI: category badge displayed on each article card

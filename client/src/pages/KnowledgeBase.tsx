@@ -1,34 +1,32 @@
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import VoiceInput from "@/components/VoiceInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   BookOpen, Upload, Search, FileText, Trash2, ExternalLink,
-  BookMarked, FlaskConical, Mail, Briefcase, FolderOpen, Plus,
+  FolderOpen, Plus, Tag, X,
 } from "lucide-react";
 
-const CATEGORIES = ["All", "Law Books", "Test Books", "OSEP Letters", "Work Documents", "Other"] as const;
+const CATEGORY_COLORS = [
+  "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+  "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300",
+  "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
+  "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+  "bg-gray-100 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300",
+];
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  "All": <BookOpen className="h-4 w-4" />,
-  "Law Books": <BookMarked className="h-4 w-4" />,
-  "Test Books": <FlaskConical className="h-4 w-4" />,
-  "OSEP Letters": <Mail className="h-4 w-4" />,
-  "Work Documents": <Briefcase className="h-4 w-4" />,
-  "Other": <FolderOpen className="h-4 w-4" />,
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  "Law Books": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  "Test Books": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-  "OSEP Letters": "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  "Work Documents": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  "Other": "bg-gray-100 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300",
-};
+function getCategoryColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return CATEGORY_COLORS[Math.abs(hash) % CATEGORY_COLORS.length];
+}
 
 function formatBytes(bytes?: number | null) {
   if (!bytes) return "";
@@ -41,25 +39,31 @@ export default function KnowledgeBase() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [search, setSearch] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [addCatOpen, setAddCatOpen] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     title: "",
     description: "",
-    category: "Other",
+    category: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const utils = trpc.useUtils();
+
+  // Fetch dynamic categories
+  const { data: categories = [] } = trpc.knowledgeBase.categories.useQuery();
 
   const { data: docs = [], refetch, isLoading } = trpc.knowledgeBase.list.useQuery({
     category: selectedCategory === "All" ? undefined : selectedCategory,
     search: search || undefined,
   });
 
+  // All docs for counts
+  const { data: allDocs = [] } = trpc.knowledgeBase.list.useQuery({});
+
   const deleteMutation = trpc.knowledgeBase.delete.useMutation({
-    onSuccess: () => {
-      toast.success("Document deleted");
-      refetch();
-    },
+    onSuccess: () => { toast.success("Document deleted"); refetch(); },
     onError: (e) => toast.error(e.message || "Delete failed"),
   });
 
@@ -68,31 +72,39 @@ export default function KnowledgeBase() {
       toast.success("Document uploaded successfully");
       refetch();
       setUploadOpen(false);
-      setUploadForm({ title: "", description: "", category: "Other" });
+      setUploadForm({ title: "", description: "", category: "" });
       setSelectedFile(null);
       setUploading(false);
     },
-    onError: (e) => {
-      toast.error(e.message || "Upload failed");
-      setUploading(false);
+    onError: (e) => { toast.error(e.message || "Upload failed"); setUploading(false); },
+  });
+
+  const createCategoryMutation = trpc.knowledgeBase.createCategory.useMutation({
+    onSuccess: () => {
+      toast.success("Category created");
+      utils.knowledgeBase.categories.invalidate();
+      setNewCategoryName("");
+      setAddCatOpen(false);
     },
+    onError: (e) => toast.error(e.message || "Failed to create category"),
+  });
+
+  const deleteCategoryMutation = trpc.knowledgeBase.deleteCategory.useMutation({
+    onSuccess: () => {
+      toast.success("Category deleted");
+      utils.knowledgeBase.categories.invalidate();
+      if (selectedCategory !== "All") setSelectedCategory("All");
+    },
+    onError: (e) => toast.error(e.message || "Failed to delete category"),
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== "application/pdf") {
-      toast.error("Only PDF files are accepted");
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error("File must be under 50 MB");
-      return;
-    }
+    if (file.type !== "application/pdf") { toast.error("Only PDF files are accepted"); return; }
+    if (file.size > 50 * 1024 * 1024) { toast.error("File must be under 50 MB"); return; }
     setSelectedFile(file);
-    if (!uploadForm.title) {
-      setUploadForm((f) => ({ ...f, title: file.name.replace(/\.pdf$/i, "") }));
-    }
+    if (!uploadForm.title) setUploadForm((f) => ({ ...f, title: file.name.replace(/\.pdf$/i, "") }));
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -106,7 +118,7 @@ export default function KnowledgeBase() {
       uploadMutation.mutate({
         title: uploadForm.title.trim(),
         description: uploadForm.description.trim() || undefined,
-        category: uploadForm.category,
+        category: uploadForm.category || "Other",
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
         fileData: base64,
@@ -116,43 +128,82 @@ export default function KnowledgeBase() {
   };
 
   const handleDelete = (id: number, title: string) => {
-    if (confirm(`Delete "${title}"? This cannot be undone.`)) {
-      deleteMutation.mutate({ id });
+    if (confirm(`Delete "${title}"? This cannot be undone.`)) deleteMutation.mutate({ id });
+  };
+
+  const handleDeleteCategory = (id: number, name: string) => {
+    if (confirm(`Delete category "${name}"? Documents in this category will keep their category label but the category will no longer appear in the sidebar.`)) {
+      deleteCategoryMutation.mutate({ id });
     }
   };
 
-  // Count per category
-  const allDocs = trpc.knowledgeBase.list.useQuery({}).data ?? [];
-  const categoryCounts = CATEGORIES.reduce((acc, cat) => {
-    if (cat === "All") acc[cat] = allDocs.length;
-    else acc[cat] = allDocs.filter((d) => d.category === cat).length;
-    return acc;
-  }, {} as Record<string, number>);
+  // Count docs per category
+  const categoryCounts: Record<string, number> = { All: allDocs.length };
+  for (const cat of categories) {
+    categoryCounts[cat.name] = allDocs.filter((d) => d.category === cat.name).length;
+  }
 
   return (
     <div className="flex h-full min-h-0">
       {/* Category Sidebar */}
-      <aside className="w-56 shrink-0 border-r bg-muted/30 p-4 flex flex-col gap-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2">Categories</p>
-        {CATEGORIES.map((cat) => (
+      <aside className="w-60 shrink-0 border-r bg-muted/30 p-4 flex flex-col gap-1">
+        <div className="flex items-center justify-between mb-3 px-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Categories</p>
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full text-left ${
-              selectedCategory === cat
-                ? "bg-accent text-accent-foreground"
-                : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={() => setAddCatOpen(true)}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            title="Add category"
           >
-            {CATEGORY_ICONS[cat]}
-            <span className="flex-1">{cat}</span>
-            <span className={`text-xs rounded-full px-1.5 py-0.5 font-mono ${
-              selectedCategory === cat ? "bg-accent-foreground/10" : "bg-muted"
-            }`}>
-              {categoryCounts[cat] ?? 0}
-            </span>
+            <Plus className="h-4 w-4" />
           </button>
+        </div>
+
+        {/* All */}
+        <button
+          onClick={() => setSelectedCategory("All")}
+          className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full text-left ${
+            selectedCategory === "All"
+              ? "bg-accent text-accent-foreground"
+              : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <BookOpen className="h-4 w-4" />
+          <span className="flex-1">All</span>
+          <span className={`text-xs rounded-full px-1.5 py-0.5 font-mono ${selectedCategory === "All" ? "bg-accent-foreground/10" : "bg-muted"}`}>
+            {categoryCounts["All"] ?? 0}
+          </span>
+        </button>
+
+        {/* Dynamic categories */}
+        {categories.map((cat) => (
+          <div key={cat.id} className="group relative flex items-center">
+            <button
+              onClick={() => setSelectedCategory(cat.name)}
+              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full text-left ${
+                selectedCategory === cat.name
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <FolderOpen className="h-4 w-4 shrink-0" />
+              <span className="flex-1 truncate">{cat.name}</span>
+              <span className={`text-xs rounded-full px-1.5 py-0.5 font-mono ${selectedCategory === cat.name ? "bg-accent-foreground/10" : "bg-muted"}`}>
+                {categoryCounts[cat.name] ?? 0}
+              </span>
+            </button>
+            <button
+              onClick={() => handleDeleteCategory(cat.id, cat.name)}
+              className="absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+              title="Delete category"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         ))}
+
+        {categories.length === 0 && (
+          <p className="text-xs text-muted-foreground px-3 py-2">No categories yet. Click + to add one.</p>
+        )}
 
         <div className="mt-auto pt-4 border-t">
           <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
@@ -176,13 +227,7 @@ export default function KnowledgeBase() {
                       : "border-muted-foreground/30 hover:border-accent hover:bg-accent/5"
                   }`}
                 >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
+                  <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
                   {selectedFile ? (
                     <div className="flex flex-col items-center gap-1">
                       <FileText className="h-8 w-8 text-green-500" />
@@ -215,12 +260,13 @@ export default function KnowledgeBase() {
                     onValueChange={(v) => setUploadForm((f) => ({ ...f, category: v }))}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select a category…" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.filter((c) => c !== "All").map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                       ))}
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -235,9 +281,7 @@ export default function KnowledgeBase() {
                 </div>
 
                 <div className="flex gap-2 pt-1">
-                  <Button type="button" variant="outline" className="flex-1" onClick={() => setUploadOpen(false)}>
-                    Cancel
-                  </Button>
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setUploadOpen(false)}>Cancel</Button>
                   <Button type="submit" className="flex-1 gap-2" disabled={uploading}>
                     {uploading ? (
                       <><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" /> Uploading…</>
@@ -251,6 +295,38 @@ export default function KnowledgeBase() {
           </Dialog>
         </div>
       </aside>
+
+      {/* Add Category Dialog */}
+      <Dialog open={addCatOpen} onOpenChange={setAddCatOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Tag className="h-4 w-4" /> New Category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="e.g. State Regulations"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newCategoryName.trim()) {
+                  createCategoryMutation.mutate({ name: newCategoryName.trim() });
+                }
+              }}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => { setAddCatOpen(false); setNewCategoryName(""); }}>Cancel</Button>
+              <Button
+                className="flex-1"
+                disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+                onClick={() => createCategoryMutation.mutate({ name: newCategoryName.trim() })}
+              >
+                {createCategoryMutation.isPending ? "Creating…" : "Create"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-auto">
@@ -267,7 +343,6 @@ export default function KnowledgeBase() {
               </p>
             </div>
           </div>
-          {/* Search */}
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <VoiceInput
@@ -292,7 +367,7 @@ export default function KnowledgeBase() {
               <BookOpen className="h-14 w-14 text-muted-foreground/30 mb-4" />
               <p className="text-lg font-semibold text-muted-foreground">No documents yet</p>
               <p className="text-sm text-muted-foreground mt-1 mb-4">
-                {search ? "No results for your search." : `Upload your first document to the ${selectedCategory === "All" ? "Knowledge Base" : selectedCategory} category.`}
+                {search ? "No results for your search." : `Upload your first document${selectedCategory !== "All" ? ` to "${selectedCategory}"` : ""}.`}
               </p>
               {!search && (
                 <Button onClick={() => setUploadOpen(true)} className="gap-2">
@@ -309,8 +384,8 @@ export default function KnowledgeBase() {
                 >
                   {/* Category badge */}
                   <div className="flex items-start justify-between gap-2">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-full ${CATEGORY_COLORS[doc.category] ?? CATEGORY_COLORS["Other"]}`}>
-                      {CATEGORY_ICONS[doc.category]}
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-full ${getCategoryColor(doc.category)}`}>
+                      <FolderOpen className="h-3 w-3" />
                       {doc.category}
                     </span>
                     <button
