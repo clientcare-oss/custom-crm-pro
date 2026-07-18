@@ -314,6 +314,26 @@ export default function ContactDetail() {
     nextMeetingDate: "",
   });
   const utils = trpc.useUtils();
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [archiveReason, setArchiveReason] = useState("");
+
+  const archiveMutation = trpc.contacts.archive.useMutation({
+    onSuccess: () => {
+      toast.success("Contact archived");
+      setShowArchiveDialog(false);
+      setArchiveReason("");
+      utils.contacts.detail.invalidate({ id: contactId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const unarchiveMutation = trpc.contacts.unarchive.useMutation({
+    onSuccess: () => {
+      toast.success("Contact unarchived");
+      utils.contacts.detail.invalidate({ id: contactId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const { data, isLoading, error } = trpc.contacts.detail.useQuery(
     { id: contactId },
@@ -416,6 +436,27 @@ export default function ContactDetail() {
                 Preview Portal
               </Button>
             )}
+            {/* Archive / Unarchive button */}
+            {(contact as any).archivedAt ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => unarchiveMutation.mutate({ id: contact.id })}
+                disabled={unarchiveMutation.isPending}
+                className="inline-flex items-center gap-1.5 text-xs border-green-500/40 text-green-600 hover:bg-green-500/10"
+              >
+                Unarchive
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowArchiveDialog(true)}
+                className="inline-flex items-center gap-1.5 text-xs border-amber-500/40 text-amber-600 hover:bg-amber-500/10"
+              >
+                Archive
+              </Button>
+            )}
           </div>
           <div className="flex flex-wrap gap-3 mt-1 text-sm text-muted-foreground">
             {contact.jobTitle && <span>{contact.jobTitle}</span>}
@@ -475,6 +516,41 @@ export default function ContactDetail() {
           utils={utils}
         />
       )}
+
+      {/* Archive Dialog */}
+      <Dialog open={showArchiveDialog} onOpenChange={(v) => { setShowArchiveDialog(v); if (!v) setArchiveReason(""); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Archive Contact</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Archiving <strong>{fullName}</strong> will hide them from active lists. You can unarchive at any time.
+            </p>
+            <div>
+              <Label htmlFor="archiveReason" className="text-sm font-medium">Reason for archiving *</Label>
+              <Textarea
+                id="archiveReason"
+                value={archiveReason}
+                onChange={(e) => setArchiveReason(e.target.value)}
+                placeholder="e.g. Case closed, no longer a client, moved to another provider..."
+                rows={3}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setShowArchiveDialog(false); setArchiveReason(""); }}>Cancel</Button>
+            <Button
+              onClick={() => archiveMutation.mutate({ id: contact.id, reason: archiveReason })}
+              disabled={!archiveReason.trim() || archiveMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {archiveMutation.isPending ? "Archiving..." : "Archive Contact"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

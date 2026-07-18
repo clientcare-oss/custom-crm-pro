@@ -248,6 +248,37 @@ export const appRouter = router({
           success: successCount > 0,
         };
       }),
+
+    // Archive a contact with a custom reason
+    archive: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        reason: z.string().min(1, "Archive reason is required"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { contacts: contactsTable } = await import("../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await dbConn
+          .update(contactsTable)
+          .set({ archivedAt: new Date(), archiveReason: input.reason })
+          .where(and(eq(contactsTable.id, input.id), eq(contactsTable.ownerId, ctx.user.id)));
+        return { success: true };
+      }),
+
+    // Unarchive a contact
+    unarchive: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { contacts: contactsTable } = await import("../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await dbConn
+          .update(contactsTable)
+          .set({ archivedAt: null, archiveReason: null })
+          .where(and(eq(contactsTable.id, input.id), eq(contactsTable.ownerId, ctx.user.id)));
+        return { success: true };
+      }),
   }),
 
   // ============ LEADS ============

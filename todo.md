@@ -877,7 +877,7 @@
 - [x] Workflow: Add hover "+" button at bottom-center of each card/sticky node to add a card below (inherits color, auto-connects with arrow)
 - [x] Calendar: clicking an event opens a detail popup showing title, date/time, video link with Join Meeting button, and participants as Parent/Student labels
 - [x] Calendar event popup: show Delete and Edit actions
-- [ ] Calendar event popup: add Cancel Meeting button with "Notify parent by email" checkbox — marks appointment as Cancelled and optionally sends cancellation email to parent
+- [x] Calendar event popup: add Cancel Meeting button with "Notify parent by email" checkbox — marks appointment as Cancelled and optionally sends cancellation email to parent
 - [x] Appointments: Add full edit form to popup — pre-filled with all fields (title, date/time, video link, parent name, parent phone, student name, location, description, status), save via tRPC update mutation
 
 ## BrainDump Image Attachments
@@ -1017,3 +1017,15 @@
 - [x] Create/edit task dialog: all fields including subtask editor, resource URL, due date+time
 - [x] Sidebar nav: add "Tech Tasks" item under Tasks in sidebar nav
 - [x] Wire /tech-tasks route in App.tsx
+
+## Archive Client Feature
+- [x] DB: archivedAt and archiveReason columns added to contacts table (migration applied)
+- [x] Backend: contacts.archive procedure (sets archivedAt + archiveReason)
+- [x] Backend: contacts.unarchive procedure (clears archivedAt + archiveReason)
+- [x] UI: Archive button on ContactDetail header (amber-colored, shown when not archived)
+- [x] UI: Archive dialog with required reason text area
+- [x] UI: Unarchive button on ContactDetail header (green-colored, shown when archived)
+
+## Lead View Contact Button
+- [x] Leads page: show "View Contact" button on lead card when lead.contactId is set
+- [x] Clicking "View Contact" navigates to /contacts/:contactId

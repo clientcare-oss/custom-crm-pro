@@ -18,16 +18,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Loader2, Zap } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
+import { useLocation } from "wouter";
 
 const LEAD_STATUSES = ["New", "Follow-up", "Qualified", "Won", "Lost"] as const;
 type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 export default function Leads() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -316,7 +318,17 @@ export default function Leads() {
                           >
                             <Edit2 className="h-3 w-3" />
                           </Button>
-
+                          {(lead as any).contactId && (
+                            <Button
+                              onClick={() => setLocation(`/contacts/${(lead as any).contactId}`)}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 rounded-md border border-accent/40 bg-accent/5 px-2 py-1 text-xs font-semibold text-accent shadow-sm transition-all hover:bg-accent/10 gap-1"
+                            >
+                              <UserCircle className="h-3 w-3" />
+                              View Contact
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </Card>

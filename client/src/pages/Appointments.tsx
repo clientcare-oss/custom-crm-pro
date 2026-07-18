@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X } from "lucide-react";
+import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ban } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import VoiceInput from "@/components/VoiceInput";
 import { useState } from "react";
@@ -302,7 +303,44 @@ export default function Appointments() {
                       >
                         Edit
                       </button>
-                      {!isDeletingApt ? (
+                      {/* Cancel Meeting button */}
+                      {selectedApt.status !== "Cancelled" && !isCancellingApt && !isDeletingApt && (
+                        <button
+                          onClick={() => setIsCancellingApt(true)}
+                          className="text-muted-foreground hover:text-orange-500 transition-colors"
+                          title="Cancel meeting"
+                        >
+                          <Ban className="h-4 w-4" />
+                        </button>
+                      )}
+                      {isCancellingApt && (
+                        <div className="flex flex-col gap-1.5 items-end">
+                          <div className="flex items-center gap-1.5">
+                            <Checkbox
+                              id="notifyParent"
+                              checked={notifyParentOnCancel}
+                              onCheckedChange={(v) => setNotifyParentOnCancel(!!v)}
+                            />
+                            <label htmlFor="notifyParent" className="text-xs text-muted-foreground cursor-pointer whitespace-nowrap">Notify parent</label>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => cancelWithNotifyMutation.mutate({ id: selectedApt.id, notifyParent: notifyParentOnCancel })}
+                              disabled={cancelWithNotifyMutation.isPending}
+                              className="text-xs px-2 py-0.5 rounded bg-orange-600 text-white hover:bg-orange-700 transition-colors font-medium disabled:opacity-50"
+                            >
+                              {cancelWithNotifyMutation.isPending ? '...' : 'Cancel Mtg'}
+                            </button>
+                            <button
+                              onClick={() => setIsCancellingApt(false)}
+                              className="text-xs px-2 py-0.5 rounded border border-muted-foreground/30 hover:bg-accent transition-colors"
+                            >
+                              No
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {!isDeletingApt && !isCancellingApt ? (
                         <button
                           onClick={() => setIsDeletingApt(true)}
                           className="text-muted-foreground hover:text-red-500 transition-colors"
@@ -310,7 +348,7 @@ export default function Appointments() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                      ) : (
+                      ) : !isCancellingApt ? (
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs text-red-500 font-medium">Delete?</span>
                           <button
@@ -327,7 +365,7 @@ export default function Appointments() {
                             No
                           </button>
                         </div>
-                      )}
+                      ) : null}
                     </>
                   )}
                   <button
