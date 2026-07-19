@@ -4229,6 +4229,8 @@ export const appRouter = router({
         leadId: z.number(),
         currentStepId: z.number().optional(),
         status: z.enum(["Preparing", "In Progress", "Completed", "Lost"]).optional(),
+        openingScript: z.string().optional(),
+        voicemailScript: z.string().optional(),
         callScriptNotes: z.string().optional(),
         theirStoryNotes: z.string().optional(),
         questionNotes: z.string().optional(),

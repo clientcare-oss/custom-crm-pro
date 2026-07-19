@@ -120,6 +120,16 @@ export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
   const [questionNotes, setQuestionNotes] = useState<Record<number, string>>({});
   const [expandedQuestions, setExpandedQuestions] = useState<Record<number, boolean>>({});
 
+  // Script content (editable)
+  const DEFAULT_OPENING_SCRIPT = `"Hi, is this [Parent Name]?"
+
+My name is [Your Name] with Waypoint Advocates. I'm calling because you requested a discovery call to talk about [Student Name] and how we might be able to help. Do you have a few minutes?`;
+  const DEFAULT_VOICEMAIL_SCRIPT = `"Hi, this is [Your Name] with Waypoint Advocates. I'm calling to connect with [Parent Name] about [Student Name]. Please give me a call back at your earliest convenience. Thanks, talk soon!"`;
+  const [openingScript, setOpeningScript] = useState(DEFAULT_OPENING_SCRIPT);
+  const [voicemailScript, setVoicemailScript] = useState(DEFAULT_VOICEMAIL_SCRIPT);
+  const [editingOpeningScript, setEditingOpeningScript] = useState(false);
+  const [editingVoicemailScript, setEditingVoicemailScript] = useState(false);
+
   // Section notes
   const [callScriptNotes, setCallScriptNotes] = useState("");
   const [theirStoryNotes, setTheirStoryNotes] = useState("");
@@ -218,6 +228,8 @@ export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
   // Load session data into state
   useEffect(() => {
     if (!callSession) return;
+    if (callSession.openingScript) setOpeningScript(callSession.openingScript);
+    if (callSession.voicemailScript) setVoicemailScript(callSession.voicemailScript);
     if (callSession.callScriptNotes) setCallScriptNotes(callSession.callScriptNotes);
     if (callSession.theirStoryNotes) setTheirStoryNotes(callSession.theirStoryNotes);
     if (callSession.howItWorksNotes) setHowItWorksNotes(callSession.howItWorksNotes);
@@ -245,6 +257,8 @@ export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
       setSaving(true);
       saveMutation.mutate({
         leadId,
+        openingScript,
+        voicemailScript,
         callScriptNotes,
         theirStoryNotes,
         questionNotes: JSON.stringify(questionNotes),
@@ -259,7 +273,7 @@ export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
         currentStepId: currentStepId ?? undefined,
       });
     }, 1500);
-  }, [leadId, callScriptNotes, theirStoryNotes, questionNotes, questionMode,
+  }, [leadId, openingScript, voicemailScript, callScriptNotes, theirStoryNotes, questionNotes, questionMode,
       howItWorksNotes, pricingNotes, closingResponse, nextStepsCompleted,
       lostStepsCompleted, additionalNotes, privateNotes, currentStepId]);
 
@@ -646,22 +660,63 @@ export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-400 uppercase tracking-wide">A. If They Answer – Opening Script</span>
-                    <CopyButton text={`"Hi, is this ${parentName}?"\n\nMy name is [Your Name] with Waypoint Advocates. I'm calling because you requested a discovery call to talk about ${studentName} and how we might be able to help. Do you have a few minutes?`} />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setEditingOpeningScript((v) => !v)}
+                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+                          editingOpeningScript ? "bg-amber-500 text-black font-semibold" : "bg-white/10 text-white/60 hover:bg-white/20"
+                        }`}
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        {editingOpeningScript ? "Done" : "Edit"}
+                      </button>
+                      <CopyButton text={openingScript} />
+                    </div>
                   </div>
-                  <div className="bg-[#071422] rounded-lg p-3 text-sm text-white/80 leading-relaxed border border-white/5">
-                    <p>"Hi, is this <strong className="text-amber-300">{parentName}</strong>?"</p>
-                    <p className="mt-2">My name is [Your Name] with Waypoint Advocates. I'm calling because you requested a discovery call to talk about <strong className="text-amber-300">{studentName}</strong> and how we might be able to help. Do you have a few minutes?</p>
-                  </div>
+                  {editingOpeningScript ? (
+                    <Textarea
+                      autoFocus
+                      value={openingScript}
+                      onChange={(e) => { setOpeningScript(e.target.value); triggerSave(); }}
+                      className="bg-[#071422] border-amber-400/50 text-white text-sm resize-none leading-relaxed"
+                      rows={6}
+                    />
+                  ) : (
+                    <div className="bg-[#071422] rounded-lg p-3 text-sm text-white/80 leading-relaxed border border-white/5 whitespace-pre-wrap">
+                      {openingScript}
+                    </div>
+                  )}
                 </div>
                 {/* Voicemail script */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white/50 uppercase tracking-wide">B. If No Answer – Voicemail Script</span>
-                    <CopyButton text={`"Hi, this is [Your Name] with Waypoint Advocates. I'm calling to connect with ${parentName} about ${studentName}. Please give me a call back at your earliest convenience. Thanks, talk soon!"`} />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setEditingVoicemailScript((v) => !v)}
+                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+                          editingVoicemailScript ? "bg-amber-500 text-black font-semibold" : "bg-white/10 text-white/60 hover:bg-white/20"
+                        }`}
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        {editingVoicemailScript ? "Done" : "Edit"}
+                      </button>
+                      <CopyButton text={voicemailScript} />
+                    </div>
                   </div>
-                  <div className="bg-[#071422] rounded-lg p-3 text-sm text-white/60 leading-relaxed border border-white/5">
-                    <p>"Hi, this is [Your Name] with Waypoint Advocates. I'm calling to connect with <strong className="text-white/80">{parentName}</strong> about <strong className="text-white/80">{studentName}</strong>. Please give me a call back at your earliest convenience. Thanks, talk soon!"</p>
-                  </div>
+                  {editingVoicemailScript ? (
+                    <Textarea
+                      autoFocus
+                      value={voicemailScript}
+                      onChange={(e) => { setVoicemailScript(e.target.value); triggerSave(); }}
+                      className="bg-[#071422] border-amber-400/50 text-white text-sm resize-none leading-relaxed"
+                      rows={4}
+                    />
+                  ) : (
+                    <div className="bg-[#071422] rounded-lg p-3 text-sm text-white/60 leading-relaxed border border-white/5 whitespace-pre-wrap">
+                      {voicemailScript}
+                    </div>
+                  )}
                 </div>
                 {/* Pro tip */}
                 <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
