@@ -555,19 +555,35 @@ export default function Appointments() {
                 </a>
               )}
 
-              {/* Client-submitted IEP Meeting Link */}
-              {selectedApt.clientMeetingLink && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-1.5">
-                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Client IEP Meeting Link</p>
-                  <a
-                    href={selectedApt.clientMeetingLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200 break-all transition-colors"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                    {selectedApt.clientMeetingLink}
-                  </a>
+              {/* IEP Meeting Link status */}
+              {selectedApt.meetingType === 'IEP Meeting' && (
+                <div className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">IEP Meeting Link</span>
+                    {selectedApt.clientMeetingLink ? (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
+                        Link Received
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400/80 border border-red-500/20">
+                        Link Not Received
+                      </span>
+                    )}
+                  </div>
+                  {selectedApt.clientMeetingLink && (
+                    <>
+                      <p className="text-xs text-muted-foreground break-all">{selectedApt.clientMeetingLink}</p>
+                      <a
+                        href={selectedApt.clientMeetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 w-full justify-center px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Go to Meeting
+                      </a>
+                    </>
+                  )}
                 </div>
               )}
 
