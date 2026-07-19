@@ -1,1 +1,0 @@
-ALTER TABLE `billGuardianBills` ADD `paymentStatus` enum('unpaid','paid','autopay_on','disputed','skipped') DEFAULT 'unpaid' NOT NULL;

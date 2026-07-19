@@ -1,1 +1,0 @@
-ALTER TABLE `appointments` ADD `meetingType` varchar(100);

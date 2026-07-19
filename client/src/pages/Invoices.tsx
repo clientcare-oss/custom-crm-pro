@@ -143,11 +143,11 @@ export default function Invoices() {
 
   const totalRevenue = invoices
     ?.filter((inv) => inv.status === "Paid")
-    .reduce((sum, inv) => sum + parseFloat(inv.amount || "0"), 0) || 0;
+    .reduce((sum, inv) => sum + Number(inv.amount || 0), 0) || 0;
 
   const totalPending = invoices
     ?.filter((inv) => inv.status === "Sent" || inv.status === "Overdue")
-    .reduce((sum, inv) => sum + parseFloat(inv.amount || "0"), 0) || 0;
+    .reduce((sum, inv) => sum + Number(inv.amount || 0), 0) || 0;
 
   return (
     <div className="space-y-6 p-8">
@@ -346,10 +346,10 @@ export default function Invoices() {
                       {invoice.invoiceNumber}
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-foreground">
-                      ${parseFloat(invoice.total || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      ${Number(invoice.total || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-foreground">
-                      ${parseFloat(invoice.amount || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      ${Number(invoice.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4">
                       <div

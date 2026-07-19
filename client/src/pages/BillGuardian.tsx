@@ -377,7 +377,7 @@ function DashboardTab({ onAddBill }: { onAddBill: () => void }) {
                 <p className="text-xs text-muted-foreground mt-0.5">{bill.category} · Due day {bill.dueDay} · {bill.frequency}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-semibold">${parseFloat(bill.expectedAmount).toFixed(2)}</p>
+                <p className="font-semibold">${Number(bill.expectedAmount).toFixed(2)}</p>
                 <StatusBadge status={status} />
               </div>
             </div>
@@ -438,7 +438,7 @@ function BillsTab({ onAdd }: { onAdd: () => void }) {
                 )}
               </div>
               <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
-                <span className="font-semibold">${parseFloat(bill.expectedAmount).toFixed(2)}</span>
+                <span className="font-semibold">${Number(bill.expectedAmount).toFixed(2)}</span>
                 <div className="flex items-center gap-1">
                   <PaymentStatusPill
                     billId={bill.id}
@@ -514,7 +514,7 @@ function TransactionsTab({ onImport }: { onImport: () => void }) {
                   {tx.isManuallyVerified && <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded-full">Verified</span>}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {new Date(tx.transactionDate).toLocaleDateString()} · ${parseFloat(tx.amount).toFixed(2)}
+                  {new Date(tx.transactionDate).toLocaleDateString()} · ${Number(tx.amount).toFixed(2)}
                   {tx.matchConfidence > 0 && ` · ${tx.matchConfidence}% confidence`}
                 </p>
                 {tx.matchNotes && <p className="text-xs text-muted-foreground mt-0.5 italic">{tx.matchNotes}</p>}

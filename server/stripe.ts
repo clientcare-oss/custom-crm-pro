@@ -3,10 +3,16 @@ import { ENV } from "./_core/env";
 import { Router, raw } from "express";
 import * as db from "./db";
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-04-30.basil" as any,
-});
+// Lazy-initialize Stripe — only created when an endpoint is hit
+let _stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
+    _stripe = new Stripe(key, { apiVersion: "2025-04-30.basil" as any });
+  }
+  return _stripe;
+}
 
 export function registerStripeRoutes(app: Router) {
   // Stripe webhook handler - MUST be registered before express.json()
@@ -21,7 +27,7 @@ export function registerStripeRoutes(app: Router) {
 
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      event = getStripe().webhooks.constructEvent(req.body, sig, webhookSecret);
     } catch (err: any) {
       console.error("[Stripe Webhook] Signature verification failed:", err.message);
       return res.status(400).json({ error: "Webhook signature verification failed" });
@@ -80,7 +86,7 @@ export function registerStripeRoutes(app: Router) {
     try {
       const { invoiceId, amount, customerEmail, customerName } = req.body;
 
-      const session = await stripe.checkout.sessions.create({
+      const session = await getStripe().checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
         customer_email: customerEmail,
@@ -121,15 +127,15 @@ export function registerStripeRoutes(app: Router) {
 
       // Find or create customer
       let customer: Stripe.Customer;
-      const existing = await stripe.customers.list({ email: customerEmail, limit: 1 });
+      const existing = await getStripe().customers.list({ email: customerEmail, limit: 1 });
 
       if (existing.data.length > 0) {
         customer = existing.data[0];
       } else {
-        customer = await stripe.customers.create({ email: customerEmail });
+        customer = await getStripe().customers.create({ email: customerEmail });
       }
 
-      const session = await stripe.billingPortal.sessions.create({
+      const session = await getStripe().billingPortal.sessions.create({
         customer: customer.id,
         return_url: `${req.headers.origin}/client-portal`,
       });
@@ -152,7 +158,7 @@ export function registerStripeRoutes(app: Router) {
         enterprise: 4900, // $49/month in cents
       };
 
-      const session = await stripe.checkout.sessions.create({
+      const session = await getStripe().checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "subscription",
         customer_email: customerEmail,
