@@ -1,15 +1,10 @@
 import { z } from "zod";
-import * as db from "../db";
-import { eq, and, asc, desc, inArray } from "drizzle-orm";
+import { router, adminProcedure, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
-import { ENV } from "../_core/env";
-import { storagePut } from "../storage";
-import { notifyOwner } from "../_core/notification";
-import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import { and, eq, desc, asc, gte } from "drizzle-orm";
+import * as db from "../db";
 
 export const resourcesRouter = router({
-
     list: adminProcedure.query(async ({ ctx }) => {
       const { resources: resourcesTable } = await import("../../drizzle/schema");
       const { eq: req, asc: rasc } = await import("drizzle-orm");
@@ -36,7 +31,7 @@ export const resourcesRouter = router({
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         const result = await dbConn.insert(resourcesTable).values({ ...input, ownerId: ctx.user.id });
-        return { id: Number((result as any).lastInsertRowid) };
+        return { id: (result as any).insertId };
       }),
 
     update: adminProcedure
@@ -134,5 +129,4 @@ export const resourcesRouter = router({
         }
         return { success: true, emailSent: !!contact.email, messageSent: !!contact.portalUserId };
       }),
-  
-});
+  });

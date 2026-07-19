@@ -1,15 +1,10 @@
 import { z } from "zod";
-import * as db from "../db";
-import { eq, and, asc, desc, inArray } from "drizzle-orm";
+import { router, adminProcedure, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
-import { ENV } from "../_core/env";
-import { storagePut } from "../storage";
-import { notifyOwner } from "../_core/notification";
-import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import { and, eq, desc, asc, gte } from "drizzle-orm";
+import * as db from "../db";
 
 export const discoveryRouter = router({
-
     // Get or create a discovery call session for a lead
     getOrCreate: adminProcedure
       .input(z.object({ leadId: z.number() }))
@@ -26,7 +21,7 @@ export const discoveryRouter = router({
         // Create new call session
         const result = await dbConn.insert(discoveryCalls).values({ leadId: input.leadId, ownerId: ctx.user.id });
         const [created] = await dbConn.select().from(discoveryCalls)
-          .where(deq(discoveryCalls.id, Number((result as any).lastInsertRowid)))
+          .where(deq(discoveryCalls.id, (result as any).insertId))
           .limit(1);
         return created;
       }),
@@ -37,6 +32,8 @@ export const discoveryRouter = router({
         leadId: z.number(),
         currentStepId: z.number().optional(),
         status: z.enum(["Preparing", "In Progress", "Completed", "Lost"]).optional(),
+        openingScript: z.string().optional(),
+        voicemailScript: z.string().optional(),
         callScriptNotes: z.string().optional(),
         theirStoryNotes: z.string().optional(),
         questionNotes: z.string().optional(),
@@ -142,6 +139,62 @@ export const discoveryRouter = router({
         return { success: true };
       }),
 
+    // Add a new pipeline step
+    createPipelineStep: adminProcedure
+      .input(z.object({ label: z.string().min(1), afterId: z.number().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const { discoveryPipelineSteps } = await import("../../drizzle/schema");
+        const { eq: deq, asc: dasc, gte: dgte } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const allSteps = await dbConn.select().from(discoveryPipelineSteps)
+          .where(deq(discoveryPipelineSteps.ownerId, ctx.user.id))
+          .orderBy(dasc(discoveryPipelineSteps.sortOrder));
+        let insertAt = allSteps.length; // default: append at end
+        if (input.afterId) {
+          const afterIdx = allSteps.findIndex((s: any) => s.id === input.afterId);
+          if (afterIdx !== -1) insertAt = afterIdx + 1;
+        }
+        // Shift all steps at or after insertAt up by 1
+        for (const step of allSteps.slice(insertAt)) {
+          await dbConn.update(discoveryPipelineSteps).set({ sortOrder: step.sortOrder + 1 })
+            .where(deq(discoveryPipelineSteps.id, step.id));
+        }
+        const result = await dbConn.insert(discoveryPipelineSteps).values({
+          ownerId: ctx.user.id, label: input.label, sortOrder: insertAt,
+        });
+        return { id: (result as any).insertId };
+      }),
+
+    // Delete a pipeline step
+    deletePipelineStep: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { discoveryPipelineSteps } = await import("../../drizzle/schema");
+        const { eq: deq } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await dbConn.delete(discoveryPipelineSteps)
+          .where(and(deq(discoveryPipelineSteps.id, input.id), deq(discoveryPipelineSteps.ownerId, ctx.user.id)));
+        return { success: true };
+      }),
+
+    // Reorder pipeline steps (accepts ordered array of ids)
+    reorderPipelineSteps: adminProcedure
+      .input(z.object({ orderedIds: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        const { discoveryPipelineSteps } = await import("../../drizzle/schema");
+        const { eq: deq } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        for (let i = 0; i < input.orderedIds.length; i++) {
+          await dbConn.update(discoveryPipelineSteps)
+            .set({ sortOrder: i })
+            .where(and(deq(discoveryPipelineSteps.id, input.orderedIds[i]), deq(discoveryPipelineSteps.ownerId, ctx.user.id)));
+        }
+        return { success: true };
+      }),
+
     // Get discovery questions (seeding defaults if none exist)
     getQuestions: adminProcedure.query(async ({ ctx }) => {
       const { discoveryQuestions } = await import("../../drizzle/schema");
@@ -188,7 +241,7 @@ export const discoveryRouter = router({
           ownerId: ctx.user.id, label: input.label,
           subLabel: input.subLabel ?? null, mode: input.mode ?? "both", sortOrder: nextSort,
         });
-        return { id: Number((result as any).lastInsertRowid) };
+        return { id: (result as any).insertId };
       }),
 
     // Update a discovery question
@@ -217,5 +270,4 @@ export const discoveryRouter = router({
           .where(and(deq(discoveryQuestions.id, input.id), deq(discoveryQuestions.ownerId, ctx.user.id)));
         return { success: true };
       }),
-  
-});
+  });

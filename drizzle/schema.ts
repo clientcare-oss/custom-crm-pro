@@ -1182,6 +1182,8 @@ export const discoveryCalls = mysqlTable("discoveryCalls", {
   currentStepId: int("currentStepId"),  // FK to discoveryPipelineSteps.id
   status: mysqlEnum("status", ["Preparing", "In Progress", "Completed", "Lost"]).default("Preparing").notNull(),
   // Section data stored as JSON blobs for flexibility
+  openingScript: text("openingScript"),             // section 1 editable opening script
+  voicemailScript: text("voicemailScript"),         // section 1 editable voicemail script
   callScriptNotes: text("callScriptNotes"),       // section 1 notes
   theirStoryNotes: text("theirStoryNotes"),        // section 2 notes
   questionNotes: text("questionNotes"),            // section 3: JSON {questionId: notes}

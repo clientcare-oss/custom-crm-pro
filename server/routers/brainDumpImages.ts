@@ -1,15 +1,10 @@
 import { z } from "zod";
-import * as db from "../db";
-import { eq, and, asc, desc, inArray } from "drizzle-orm";
+import { router, adminProcedure, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
-import { ENV } from "../_core/env";
-import { storagePut } from "../storage";
-import { notifyOwner } from "../_core/notification";
-import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import { and, eq, desc, asc, gte } from "drizzle-orm";
+import * as db from "../db";
 
 export const brainDumpImagesRouter = router({
-
       upload: protectedProcedure
         .input(z.object({
           brainDumpItemId: z.number(),
@@ -59,5 +54,4 @@ export const brainDumpImagesRouter = router({
           await dbConn.delete(bimg).where(beq(bimg.id, input.imageId));
           return { success: true };
         }),
-  
-});
+  });
