@@ -26,6 +26,8 @@ export const appointmentsRouter = router({
           sessionTypeId: z.number().optional(), // used to recompute endTime server-side
           location: z.string().optional(),
           meetingType: z.string().optional(),
+          parentName: z.string().optional(),
+          studentName: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {

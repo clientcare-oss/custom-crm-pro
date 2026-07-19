@@ -1332,7 +1332,7 @@ export default function ClientPortal() {
               <button onClick={() => setSchedulerSessionTypeId(null)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
                 <ChevronDown className="w-3 h-3 rotate-90" /> Back to meeting types
               </button>
-              <InlineScheduler sessionTypeId={schedulerSessionTypeId} sessionTypeName={schedulerSessionTypeName} parentName={user?.name ?? ""} parentEmail={user?.email ?? ""} clientId={effectiveStudentContactId} onBooked={handleSchedulerBooked} />
+              <InlineScheduler sessionTypeId={schedulerSessionTypeId} sessionTypeName={schedulerSessionTypeName} parentName={portalUser?.name ?? user?.name ?? ""} parentEmail={portalUser?.email ?? user?.email ?? ""} clientId={effectiveStudentContactId} studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : ""} onBooked={handleSchedulerBooked} />
             </div>
           )}
         </DialogContent>

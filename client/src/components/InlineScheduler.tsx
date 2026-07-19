@@ -9,6 +9,7 @@ interface InlineSchedulerProps {
   sessionDuration?: number; // minutes
   parentName: string;
   parentEmail: string;
+  studentName?: string; // student name for appointment title
   clientId?: number | null; // student contact ID to link appointment to
   onBooked: (date: string, time: string) => void;
   isPreview?: boolean;
@@ -49,6 +50,7 @@ export default function InlineScheduler({
   sessionDuration = 60,
   parentName,
   parentEmail,
+  studentName,
   clientId,
   onBooked,
   isPreview = false,
@@ -170,13 +172,15 @@ export default function InlineScheduler({
     console.log('[InlineScheduler] handleBook effectiveDurationMin:', effectiveDurationMin, 'sessionTypeData:', sessionTypeData);
     const endTime = new Date(startTime.getTime() + effectiveDurationMin * 60 * 1000);
     bookAppointment.mutate({
-      title: `${sessionTypeName || "Discovery Call"} — ${parentName}`,
+      title: `${sessionTypeName || "Discovery Call"} — ${studentName || parentName}`,
       startTime,
       endTime,
       sessionTypeId: sessionTypeId ?? undefined,
       clientId: clientId ?? undefined,
       meetingType: sessionTypeName || undefined,
-      description: `Session: ${sessionTypeName || "Discovery Call"}\nClient: ${parentName}\nEmail: ${parentEmail}`,
+      parentName: parentName || undefined,
+      studentName: studentName || undefined,
+      description: `Session: ${sessionTypeName || "Discovery Call"}\nParent: ${parentName}\nStudent: ${studentName || "N/A"}\nEmail: ${parentEmail}`,
     });
   };
 
