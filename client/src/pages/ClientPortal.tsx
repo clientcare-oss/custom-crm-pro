@@ -26,7 +26,7 @@ import SignaturePad from "@/components/SignaturePad";
 import InlineScheduler from "@/components/InlineScheduler";
 import { NotesSection } from "@/components/NotesSection";
 
-const LOGO_URL = "/manus-storage/waypoint-logo_92199447.png";
+const LOGO_URL = "/manus-storage/waypoint-logo-new_dbe73a36.png";
 
 // ── Compass Rose SVG Watermark ───────────────────────────────────────────────
 function CompassRose({ className }: { className?: string }) {

@@ -32,7 +32,7 @@ import { Button } from "./ui/button";
 import PageIdBadge from './PageIdBadge';
 import QuickSetupModal from './QuickSetupModal';
 
-const LOGO_URL = "/manus-storage/waypoint-logo_92199447.png";
+const LOGO_URL = "/manus-storage/waypoint-logo-new_dbe73a36.png";
 
 const ICON_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap,
