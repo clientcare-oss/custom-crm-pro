@@ -291,11 +291,6 @@ export default function Appointments() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold leading-tight">{isEditingApt ? 'Edit Appointment' : selectedApt.title}</h2>
-                  {!isEditingApt && (
-                    <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedApt.status)}`}>
-                      {selectedApt.status}
-                    </span>
-                  )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {!isEditingApt && (
@@ -521,14 +516,35 @@ export default function Appointments() {
               ) : (
                 /* ── View Mode ── */
                 <>
-              {/* Meeting Type */}
-              {selectedApt.meetingType && (
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                    {selectedApt.meetingType}
-                  </span>
-                </div>
-              )}
+              {/* Meeting Type + Participants */}
+              <div className="space-y-1.5">
+                {selectedApt.meetingType && (
+                  <div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                      {selectedApt.meetingType}
+                    </span>
+                  </div>
+                )}
+                {(selectedApt.parentName || selectedApt.parentPhone || selectedApt.studentName) && (
+                  <div className="text-sm space-y-0.5 pt-1">
+                    {selectedApt.parentName && (
+                      <p>
+                        <span className="font-medium text-muted-foreground">Parent:</span>{" "}
+                        {selectedApt.parentName}
+                        {selectedApt.parentPhone && (
+                          <> · <a href={`tel:${selectedApt.parentPhone}`} className="text-primary hover:underline">{selectedApt.parentPhone}</a></>
+                        )}
+                      </p>
+                    )}
+                    {selectedApt.studentName && (
+                      <p>
+                        <span className="font-medium text-muted-foreground">Student:</span>{" "}
+                        {selectedApt.studentName}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Date & Time */}
               <div className="flex items-start gap-3">
@@ -595,32 +611,7 @@ export default function Appointments() {
                 </div>
               )}
 
-              {/* Participants */}
-              {(selectedApt.parentName || selectedApt.parentPhone || selectedApt.studentName) && (
-                <div className="flex items-start gap-3">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <div className="text-sm space-y-1">
-                    {selectedApt.parentName && (
-                      <p>
-                        <span className="font-medium text-muted-foreground">Parent:</span>{" "}
-                        {selectedApt.parentName}
-                      </p>
-                    )}
-                    {selectedApt.parentPhone && (
-                      <p>
-                        <span className="font-medium text-muted-foreground">Parent Phone:</span>{" "}
-                        <a href={`tel:${selectedApt.parentPhone}`} className="text-primary hover:underline">{selectedApt.parentPhone}</a>
-                      </p>
-                    )}
-                    {selectedApt.studentName && (
-                      <p>
-                        <span className="font-medium text-muted-foreground">Student:</span>{" "}
-                        {selectedApt.studentName}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
+
 
               {/* Description */}
               {selectedApt.description && (
