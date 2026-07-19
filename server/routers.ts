@@ -4334,6 +4334,62 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Add a new pipeline step
+    createPipelineStep: adminProcedure
+      .input(z.object({ label: z.string().min(1), afterId: z.number().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const { discoveryPipelineSteps } = await import("../drizzle/schema");
+        const { eq: deq, asc: dasc, gte: dgte } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const allSteps = await dbConn.select().from(discoveryPipelineSteps)
+          .where(deq(discoveryPipelineSteps.ownerId, ctx.user.id))
+          .orderBy(dasc(discoveryPipelineSteps.sortOrder));
+        let insertAt = allSteps.length; // default: append at end
+        if (input.afterId) {
+          const afterIdx = allSteps.findIndex(s => s.id === input.afterId);
+          if (afterIdx !== -1) insertAt = afterIdx + 1;
+        }
+        // Shift all steps at or after insertAt up by 1
+        for (const step of allSteps.slice(insertAt)) {
+          await dbConn.update(discoveryPipelineSteps).set({ sortOrder: step.sortOrder + 1 })
+            .where(deq(discoveryPipelineSteps.id, step.id));
+        }
+        const result = await dbConn.insert(discoveryPipelineSteps).values({
+          ownerId: ctx.user.id, label: input.label, sortOrder: insertAt,
+        });
+        return { id: (result as any).insertId };
+      }),
+
+    // Delete a pipeline step
+    deletePipelineStep: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { discoveryPipelineSteps } = await import("../drizzle/schema");
+        const { eq: deq } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await dbConn.delete(discoveryPipelineSteps)
+          .where(and(deq(discoveryPipelineSteps.id, input.id), deq(discoveryPipelineSteps.ownerId, ctx.user.id)));
+        return { success: true };
+      }),
+
+    // Reorder pipeline steps (accepts ordered array of ids)
+    reorderPipelineSteps: adminProcedure
+      .input(z.object({ orderedIds: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        const { discoveryPipelineSteps } = await import("../drizzle/schema");
+        const { eq: deq } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        for (let i = 0; i < input.orderedIds.length; i++) {
+          await dbConn.update(discoveryPipelineSteps)
+            .set({ sortOrder: i })
+            .where(and(deq(discoveryPipelineSteps.id, input.orderedIds[i]), deq(discoveryPipelineSteps.ownerId, ctx.user.id)));
+        }
+        return { success: true };
+      }),
+
     // Get discovery questions (seeding defaults if none exist)
     getQuestions: adminProcedure.query(async ({ ctx }) => {
       const { discoveryQuestions } = await import("../drizzle/schema");
