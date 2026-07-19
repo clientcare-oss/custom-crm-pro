@@ -1253,7 +1253,7 @@ export default function ClientPortal() {
                   <button
                     key={s.id}
                     onClick={() => setSelectedStudentId(s.id)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all min-w-[200px] ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all min-w-[280px] flex-1 ${
                       isSelected
                         ? 'bg-[#0d1b2a] border-amber-400/50 shadow-lg shadow-amber-500/10'
                         : 'bg-[#0a1628] border-white/10 hover:border-white/20 hover:bg-[#0d1b2a]'
@@ -1264,20 +1264,22 @@ export default function ClientPortal() {
                     }`}>
                       {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className={`text-sm font-semibold truncate ${isSelected ? 'text-white' : 'text-white/80'}`}>
                         {s.firstName} {s.lastName}
                       </p>
-                      <p className="text-[11px] text-white/40 font-mono">{s.caseId ?? 'No case ID'}</p>
-                      <p className={`text-[11px] mt-0.5 flex items-center gap-1 ${
-                        nextAppt ? 'text-amber-400/80' : 'text-white/30'
-                      }`}>
-                        <Calendar className="h-3 w-3 shrink-0" />
-                        {nextAppt
-                          ? new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + new Date(nextAppt.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-                          : 'No upcoming meeting'
-                        }
-                      </p>
+                      <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                        <p className="text-[11px] text-white/40 font-mono shrink-0">{s.caseId ?? 'No case ID'}</p>
+                        <p className={`text-[11px] flex items-center gap-1 ${
+                          nextAppt ? 'text-amber-400/80' : 'text-white/30'
+                        }`}>
+                          <Calendar className="h-3 w-3 shrink-0" />
+                          {nextAppt
+                            ? new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + new Date(nextAppt.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                            : 'No upcoming meeting'
+                          }
+                        </p>
+                      </div>
                     </div>
                   </button>
                 );
