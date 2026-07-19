@@ -165,5 +165,27 @@ export const portalRouter = router({
           .where(eq(apptTable.id, input.appointmentId));
         return { success: true };
       }),
-  
+
+    // Portal: get all upcoming appointments for ALL of the parent's students (for selector cards)
+    getAllMyAppointments: portalProcedure.query(async ({ ctx }) => {
+      let studentIds: number[] = [];
+      if ((ctx as any).isAdminPreview) {
+        // Admin preview: return empty, selector uses per-student query
+        return [];
+      }
+      const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
+      studentIds = students.map((s: any) => s.id);
+      if (studentIds.length === 0) return [];
+      const { appointments: apptTable } = await import("../../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      const now = new Date();
+      const rows = await dbConn
+        .select()
+        .from(apptTable)
+        .where(inArray(apptTable.clientId, studentIds))
+        .orderBy(asc(apptTable.startTime));
+      return rows.filter((r: any) => new Date(r.startTime) >= now && r.status !== 'Cancelled');
+    }),
+
 });

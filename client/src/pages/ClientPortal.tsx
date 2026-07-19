@@ -538,6 +538,9 @@ export default function ClientPortal() {
   const { data: studentAppointments = [] } = trpc.portal.getStudentAppointments.useQuery(
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
   );
+  const { data: allMyAppointments = [] } = trpc.portal.getAllMyAppointments.useQuery(
+    undefined, { enabled: !!portalUser }
+  );
   const { data: studentFiles = [], refetch: refetchFiles } = trpc.portal.getStudentFiles.useQuery(
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
   );
@@ -1246,40 +1249,46 @@ export default function ClientPortal() {
             <div className="flex flex-wrap gap-3">
               {portalStudents.map((s: any) => {
                 const isSelected = effectiveStudent?.id === s.id;
-                const nextAppt = studentAppointments.find(
-                  (a: any) => a.contactId === s.id && new Date(a.startTime) >= new Date() && a.status !== 'Cancelled'
+                const nextAppt = allMyAppointments.find(
+                  (a: any) => a.clientId === s.id
                 );
                 return (
                   <button
                     key={s.id}
                     onClick={() => setSelectedStudentId(s.id)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all min-w-[280px] flex-1 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all min-w-[260px] flex-1 ${
                       isSelected
                         ? 'bg-[#0d1b2a] border-amber-400/50 shadow-lg shadow-amber-500/10'
                         : 'bg-[#0a1628] border-white/10 hover:border-white/20 hover:bg-[#0d1b2a]'
                     }`}
                   >
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                    {/* Avatar */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                       isSelected ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50' : 'bg-white/10 text-white/60 border border-white/10'
                     }`}>
                       {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-semibold truncate ${isSelected ? 'text-white' : 'text-white/80'}`}>
+                    {/* Name + case */}
+                    <div className="min-w-0 shrink-0">
+                      <p className={`text-sm font-semibold truncate leading-tight ${isSelected ? 'text-white' : 'text-white/80'}`}>
                         {s.firstName} {s.lastName}
                       </p>
-                      <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                        <p className="text-[11px] text-white/40 font-mono shrink-0">{s.caseId ?? 'No case ID'}</p>
-                        <p className={`text-[11px] flex items-center gap-1 ${
-                          nextAppt ? 'text-amber-400/80' : 'text-white/30'
-                        }`}>
-                          <Calendar className="h-3 w-3 shrink-0" />
-                          {nextAppt
-                            ? new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + new Date(nextAppt.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-                            : 'No upcoming meeting'
-                          }
-                        </p>
-                      </div>
+                      <p className="text-[10px] text-white/35 font-mono leading-tight">{s.caseId ?? 'No case ID'}</p>
+                    </div>
+                    {/* Vertical divider */}
+                    <div className="w-px self-stretch bg-white/10 shrink-0 mx-1" />
+                    {/* Upcoming appointment */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] text-white/30 uppercase tracking-wide leading-tight mb-0.5">Next Meeting</p>
+                      <p className={`text-[11px] flex items-center gap-1 leading-tight ${
+                        nextAppt ? 'text-amber-400/90' : 'text-white/25'
+                      }`}>
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        {nextAppt
+                          ? new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + new Date(nextAppt.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                          : 'None scheduled'
+                        }
+                      </p>
                     </div>
                   </button>
                 );
