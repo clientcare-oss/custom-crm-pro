@@ -759,7 +759,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
           </div>
 
           {/* Section 3: Discovery Questions */}
-          <div className="space-y-2 xl:col-span-2">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <SectionHeader number={3} title="Discovery Questions" isOpen={openSections[3]} onToggle={() => toggleSection(3)} />
