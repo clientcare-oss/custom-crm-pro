@@ -29,7 +29,7 @@ export default function Dashboard() {
   const openTasks = (allTasks as any[] | undefined)?.filter((t) => t.status !== "complete").length ?? 0;
   const newLeads = leads?.filter((l) => l.status === "New").length || 0;
   const qualifiedLeads = leads?.filter((l) => l.status === "Qualified").length || 0;
-  const totalRevenue = invoices?.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0) || 0;
+  const totalRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.total || 0), 0) || 0;
   const paidInvoices = invoices?.filter((inv) => inv.status === "Paid").length || 0;
 
   return (

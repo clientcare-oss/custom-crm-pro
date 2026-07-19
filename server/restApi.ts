@@ -62,6 +62,43 @@ async function fireWebhooks(event: string, payload: any) {
 }
 
 export function registerRestApiRoutes(app: ReturnType<typeof Router>) {
+  // DEV ONLY: Bypass login
+  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === undefined) {
+    app.get("/api/dev/login", async (req: Request, res: Response) => {
+      try {
+        const { getDb } = await import("./db");
+        const { users } = await import("../drizzle/schema");
+        const { sdk } = await import("./_core/sdk");
+        const { COOKIE_NAME } = await import("@shared/const");
+        const { getSessionCookieOptions } = await import("./_core/cookies");
+
+        const dbConn = await getDb();
+        if (!dbConn) throw new Error("DB unavailable");
+        
+        // Ensure dev admin user exists
+        await dbConn.insert(users).values({
+          id: 1,
+          openId: "dev-local-admin",
+          email: "admin@local.dev",
+          name: "Local Admin",
+          role: "admin",
+          lastSignedIn: new Date()
+        }).onDuplicateKeyUpdate({
+          set: { role: "admin", lastSignedIn: new Date() }
+        });
+
+        const token = await sdk.createSessionToken("dev-local-admin", { name: "Local Admin" });
+        const cookieOpts = getSessionCookieOptions(req);
+        res.cookie(COOKIE_NAME, token, { ...cookieOpts, maxAge: 365 * 24 * 60 * 60 * 1000 });
+
+        res.redirect("/");
+      } catch (err) {
+        console.error("Dev login failed:", err);
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+
   const router = Router();
 
   // Apply API key auth to all REST API routes

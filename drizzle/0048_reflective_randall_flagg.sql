@@ -1,1 +1,0 @@
-ALTER TABLE `users` ADD `portalDomain` varchar(320);

@@ -3,6 +3,7 @@ import {
   bigint,
   mysqlEnum,
   mysqlTable,
+  index,
   text,
   timestamp,
   varchar,
@@ -80,7 +81,11 @@ export const contacts = mysqlTable("contacts", {
   archiveReason: text("archiveReason"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  ownerIdIdx: index("contacts_ownerId_idx").on(t.ownerId),
+  parentContactIdIdx: index("contacts_parentContactId_idx").on(t.parentContactId),
+  portalUserIdIdx: index("contacts_portalUserId_idx").on(t.portalUserId),
+}));
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
 
@@ -106,7 +111,10 @@ export const leads = mysqlTable("leads", {
   discoveryCallDate: timestamp("discoveryCallDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  ownerIdIdx: index("leads_ownerId_idx").on(t.ownerId),
+  contactIdIdx: index("leads_contactId_idx").on(t.contactId),
+}));
 
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = typeof leads.$inferInsert;
@@ -135,7 +143,11 @@ export const projects = mysqlTable("projects", {
   budget: decimal("budget", { precision: 12, scale: 2 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  ownerIdIdx: index("projects_ownerId_idx").on(t.ownerId),
+  clientIdIdx: index("projects_clientId_idx").on(t.clientId),
+  leadIdIdx: index("projects_leadId_idx").on(t.leadId),
+}));
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
@@ -159,7 +171,10 @@ export const projectTasks = mysqlTable("projectTasks", {
   seenByClient: boolean("seenByClient").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  projectIdIdx: index("projectTasks_projectId_idx").on(t.projectId),
+  assignedToUserIdIdx: index("projectTasks_assignedToUserId_idx").on(t.assignedToUserId),
+}));
 
 export type ProjectTask = typeof projectTasks.$inferSelect;
 export type InsertProjectTask = typeof projectTasks.$inferInsert;
@@ -223,7 +238,11 @@ export const invoices = mysqlTable("invoices", {
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  ownerIdIdx: index("invoices_ownerId_idx").on(t.ownerId),
+  clientIdIdx: index("invoices_clientId_idx").on(t.clientId),
+  projectIdIdx: index("invoices_projectId_idx").on(t.projectId),
+}));
 
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = typeof invoices.$inferInsert;
@@ -585,7 +604,11 @@ export const internalTasks = mysqlTable("internalTasks", {
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  projectIdIdx: index("internalTasks_projectId_idx").on(t.projectId),
+  assigneeIdIdx: index("internalTasks_assigneeId_idx").on(t.assigneeId),
+  createdByIdx: index("internalTasks_createdBy_idx").on(t.createdBy),
+}));
 
 export type InternalTask = typeof internalTasks.$inferSelect;
 export type InsertInternalTask = typeof internalTasks.$inferInsert;
@@ -647,7 +670,10 @@ export const timeEntries = mysqlTable("timeEntries", {
   invoiced: boolean("invoiced").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  ownerIdIdx: index("timeEntries_ownerId_idx").on(t.ownerId),
+  studentIdIdx: index("timeEntries_studentId_idx").on(t.studentId),
+}));
 export type TimeEntry = typeof timeEntries.$inferSelect;
 export type InsertTimeEntry = typeof timeEntries.$inferInsert;
 
@@ -714,7 +740,10 @@ export const callLogs = mysqlTable("callLogs", {
   rawPayload: json("rawPayload"),                        // full raw event for debugging
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   assignedAt: timestamp("assignedAt"),
-});
+}, (t) => ({
+  ownerIdIdx: index("callLogs_ownerId_idx").on(t.ownerId),
+  studentIdIdx: index("callLogs_studentId_idx").on(t.studentId),
+}));
 export type CallLog = typeof callLogs.$inferSelect;
 export type InsertCallLog = typeof callLogs.$inferInsert;
 
@@ -831,7 +860,10 @@ export const billGuardianTransactions = mysqlTable("billGuardianTransactions", {
   matchNotes: text("matchNotes"),
   isManuallyVerified: boolean("isManuallyVerified").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => ({
+  ownerIdIdx: index("billGuardianTransactions_ownerId_idx").on(t.ownerId),
+  matchedBillIdIdx: index("billGuardianTransactions_matchedBillId_idx").on(t.matchedBillId),
+}));
 export type BillGuardianTransaction = typeof billGuardianTransactions.$inferSelect;
 export type InsertBillGuardianTransaction = typeof billGuardianTransactions.$inferInsert;
 

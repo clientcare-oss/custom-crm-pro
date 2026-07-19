@@ -96,7 +96,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = (createResult as any).insertId || 1;
+      const noteId = Number((createResult as any).lastInsertRowid) || 1;
 
       // Then update it
       const updateResult = await caller.notes.update({
@@ -122,7 +122,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = (createResult as any).insertId || 1;
+      const noteId = Number((createResult as any).lastInsertRowid) || 1;
 
       // Toggle visibility
       const updateResult = await caller.notes.update({
@@ -146,7 +146,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = (createResult as any).insertId || 1;
+      const noteId = Number((createResult as any).lastInsertRowid) || 1;
 
       // Update it to create history
       await caller.notes.update({
@@ -176,7 +176,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = (createResult as any).insertId || 1;
+      const noteId = Number((createResult as any).lastInsertRowid) || 1;
 
       // Delete it
       const deleteResult = await caller.notes.delete({
@@ -283,7 +283,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = (result as any).insertId || 1;
+      const noteId = Number((result as any).lastInsertRowid) || 1;
 
       // Verify admin can see it
       const adminNotes = await adminCaller.notes.list({ projectId });
@@ -310,7 +310,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: true,
       });
 
-      const noteId = (result as any).insertId || 1;
+      const noteId = Number((result as any).lastInsertRowid) || 1;
 
       // Verify admin can see it
       const adminNotes = await adminCaller.notes.list({ projectId });

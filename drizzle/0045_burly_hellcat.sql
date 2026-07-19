@@ -1,1 +1,0 @@
-ALTER TABLE `appointments` ADD `parentPhone` varchar(50);

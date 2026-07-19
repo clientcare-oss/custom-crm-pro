@@ -1,1 +1,0 @@
-ALTER TABLE `leadForms` ADD `confirmationHeadlineAlign` varchar(10) DEFAULT 'left';

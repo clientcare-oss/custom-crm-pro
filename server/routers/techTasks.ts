@@ -66,7 +66,7 @@ export const techTasksRouter = router({
       const dbConn = await db.getDb();
       if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const [result] = await dbConn.insert(techTasks).values({
+      const result = await dbConn.insert(techTasks).values({
         ownerId: ctx.user.id,
         title: input.title,
         description: input.description,
@@ -78,7 +78,7 @@ export const techTasksRouter = router({
         resourceUrl: input.resourceUrl,
       });
 
-      const taskId = (result as any).insertId as number;
+      const taskId = Number((result as any).lastInsertRowid) as number;
 
       if (input.subtasks && input.subtasks.length > 0) {
         await dbConn.insert(techTaskSubtasks).values(
@@ -181,13 +181,13 @@ export const techTasksRouter = router({
           .select()
           .from(techTaskSubtasks)
           .where(eq(techTaskSubtasks.taskId, input.taskId));
-        const [result] = await dbConn.insert(techTaskSubtasks).values({
+        const result = await dbConn.insert(techTaskSubtasks).values({
           taskId: input.taskId,
           title: input.title,
           isComplete: false,
           sortOrder: existing.length,
         });
-        return { success: true, id: (result as any).insertId as number };
+        return { success: true, id: Number((result as any).lastInsertRowid) as number };
       }),
 
     update: protectedProcedure

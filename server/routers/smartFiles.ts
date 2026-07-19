@@ -81,13 +81,13 @@ export const smartFilesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { smartFileTemplates: sft } = await import("../../drizzle/schema");
       const dbConn = await getDbConn();
-      const [result] = await dbConn.insert(sft).values({
+      const result = await dbConn.insert(sft).values({
         ownerId: ctx.user.id,
         name: input.name,
         description: input.description ?? null,
         status: "draft",
       });
-      return { id: (result as any).insertId as number };
+      return { id: Number((result as any).lastInsertRowid) as number };
     }),
 
   updateTemplate: protectedProcedure
@@ -121,13 +121,13 @@ export const smartFilesRouter = router({
         .where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id)))
         .limit(1);
       if (!original) throw new TRPCError({ code: "NOT_FOUND" });
-      const [newResult] = await dbConn.insert(sft).values({
+      const newResult = await dbConn.insert(sft).values({
         ownerId: ctx.user.id,
         name: `${original.name} (Copy)`,
         description: original.description,
         status: "draft",
       });
-      const newTemplateId = (newResult as any).insertId as number;
+      const newTemplateId = Number((newResult as any).lastInsertRowid) as number;
       const blocks = await dbConn.select().from(sfb).where(eq(sfb.templateId, input.templateId)).orderBy(asc(sfb.blockOrder));
       for (const block of blocks) {
         await dbConn.insert(sfb).values({
@@ -179,14 +179,14 @@ export const smartFilesRouter = router({
       if (!template) throw new TRPCError({ code: "NOT_FOUND" });
       // Delete all existing blocks and re-insert (simplest approach for reordering)
       await dbConn.delete(sfb).where(eq(sfb.templateId, input.templateId));
-      for (const block of input.blocks) {
-        await dbConn.insert(sfb).values({
+      if (input.blocks.length > 0) {
+        await dbConn.insert(sfb).values(input.blocks.map(block => ({
           templateId: input.templateId,
           blockOrder: block.blockOrder,
           type: block.type,
           content: block.content ?? null,
           settings: block.settings ?? null,
-        });
+        })));
       }
       return { success: true };
     }),
@@ -205,16 +205,16 @@ export const smartFilesRouter = router({
       const [template] = await dbConn.select().from(sft).where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id))).limit(1);
       if (!template) throw new TRPCError({ code: "NOT_FOUND" });
       await dbConn.delete(sfa).where(eq(sfa.templateId, input.templateId));
-      for (const addOn of input.addOns) {
-        await dbConn.insert(sfa).values({
+      if (input.addOns.length > 0) {
+        await dbConn.insert(sfa).values(input.addOns.map(addOn => ({
           templateId: input.templateId,
           name: addOn.name,
           shortDescription: addOn.shortDescription ?? null,
-          price: addOn.price,
+          price: addOn.price.toString(),
           contractText: addOn.contractText ?? null,
           isRequired: addOn.isRequired,
           sortOrder: addOn.sortOrder,
-        });
+        })));
       }
       return { success: true };
     }),
@@ -258,7 +258,7 @@ export const smartFilesRouter = router({
       const { smartFileAssignments: sfas } = await import("../../drizzle/schema");
       const dbConn = await getDbConn();
       const now = new Date();
-      const [result] = await dbConn.insert(sfas).values({
+      const result = await dbConn.insert(sfas).values({
         templateId: input.templateId,
         ownerId: ctx.user.id,
         contactId: input.contactId,
@@ -267,7 +267,7 @@ export const smartFilesRouter = router({
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
         sentAt: input.sendNow ? now : null,
       });
-      return { id: (result as any).insertId as number };
+      return { id: Number((result as any).lastInsertRowid) as number };
     }),
 
   getAssignment: protectedProcedure
