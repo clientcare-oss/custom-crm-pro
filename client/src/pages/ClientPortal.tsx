@@ -619,38 +619,7 @@ export default function ClientPortal() {
         )}
       </div>
 
-      {/* Student selector (compact) */}
-      {portalStudents.length > 0 && (
-        <div className="px-3 py-3 border-b border-white/8">
-          {portalStudents.length === 1 ? (
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-300 shrink-0">
-                {effectiveStudent?.firstName?.charAt(0)}{effectiveStudent?.lastName?.charAt(0)}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-white/90 truncate">{effectiveStudent?.firstName} {effectiveStudent?.lastName}</p>
-                <p className="text-[10px] text-white/40 font-mono">{effectiveCaseId}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase tracking-widest text-white/30 px-2 mb-1">Select Student</p>
-              {portalStudents.map((s: any) => {
-                const isSelected = effectiveStudent?.id === s.id;
-                return (
-                  <button key={s.id} onClick={() => setSelectedStudentId(s.id)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all ${isSelected ? "bg-amber-400/10 border border-amber-400/40" : "hover:bg-white/5 border border-transparent"}`}>
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isSelected ? "bg-amber-500/30 text-amber-300" : "bg-white/10 text-white/50"}`}>
-                      {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
-                    </div>
-                    <span className={`text-xs font-medium truncate ${isSelected ? "text-amber-300" : "text-white/70"}`}>{s.firstName} {s.lastName}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Student selector removed from sidebar - shown in main content area */}
 
       {/* Nav items */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
@@ -1208,14 +1177,45 @@ export default function ClientPortal() {
 
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto">
-          {/* Student identity strip (desktop) */}
-          {effectiveStudent && (
-            <div className="hidden md:flex items-center gap-3 px-5 py-3 border-b border-border bg-card/50 shrink-0">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
-                {effectiveStudent.firstName.charAt(0)}{effectiveStudent.lastName.charAt(0)}
-              </div>
-              <span className="font-semibold text-foreground text-sm">{effectiveStudent.firstName} {effectiveStudent.lastName}</span>
-              <span className="text-xs text-muted-foreground font-mono">{effectiveCaseId}</span>
+          {/* Student selector strip */}
+          {portalStudents.length > 0 && (
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-border bg-card/50 shrink-0 flex-wrap">
+              {portalStudents.length === 1 ? (
+                <>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold shrink-0">
+                    {effectiveStudent?.firstName?.charAt(0)}{effectiveStudent?.lastName?.charAt(0)}
+                  </div>
+                  <span className="font-semibold text-foreground text-sm">{effectiveStudent?.firstName} {effectiveStudent?.lastName}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{effectiveCaseId}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Select Student:</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {portalStudents.map((s: any) => {
+                      const isSelected = effectiveStudent?.id === s.id;
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => setSelectedStudentId(s.id)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                            isSelected
+                              ? "bg-amber-500/15 border-amber-400/60 text-amber-300"
+                              : "bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                            isSelected ? "bg-amber-500/30 text-amber-300" : "bg-muted text-muted-foreground"
+                          }`}>
+                            {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
+                          </div>
+                          {s.firstName} {s.lastName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )}
           {renderContent()}
