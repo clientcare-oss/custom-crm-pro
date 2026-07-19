@@ -1038,3 +1038,9 @@
 - [x] UI: category input/select when creating or editing an article
 - [x] UI: category filter sidebar/tabs on the Knowledge Base page
 - [x] UI: category badge displayed on each article card
+
+## Sidebar Navy Theme Redesign
+- [x] Upload lighthouse logo to webdev storage
+- [x] Admin sidebar: deep navy background (#0d1b2a), lighthouse logo at top, amber active state with rounded border, cream/white inactive items, compass rose watermark at bottom, motivational tagline in amber
+- [x] Admin sidebar: bottom area (Quick Setup button, theme toggle, user profile) styled for navy theme
+- [x] Client portal sidebar: converted from horizontal tabs to full vertical navy sidebar matching reference design
