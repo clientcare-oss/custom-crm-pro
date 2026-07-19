@@ -653,7 +653,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
 
       {/* ===== CALL GUIDE TAB ===== */}
       {activeTab === "call" && (
-        <div className="px-6 pb-10 grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="px-6 pb-10 grid grid-cols-1 gap-4">
 
           {/* Section 1: Call Script & Contact */}
           <div className="space-y-2">
