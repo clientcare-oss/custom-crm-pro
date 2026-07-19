@@ -437,34 +437,30 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
             </button>
           </div>
 
-          {/* Normal view — vertical single column */}
+          {/* Normal view */}
           {!pipelineEditMode && (
-            <div className="space-y-1.5">
+            <div className="flex items-center gap-1 overflow-x-auto pb-1">
               {steps?.map((step, i) => {
                 const isCompleted = currentStepId !== null && step.id <= currentStepId;
                 const isCurrent = step.id === currentStepId;
                 return (
-                  <div key={step.id} className="flex items-center gap-3">
-                    {/* Connector line above (except first) */}
-                    <div className="flex flex-col items-center self-stretch">
-                      <div className={`w-0.5 flex-1 ${i === 0 ? "invisible" : isCompleted ? "bg-amber-400" : "bg-white/20"}`} />
-                      <button
-                        onClick={() => { setCurrentStepId(step.id); triggerSave(); }}
-                        title={`Mark "${step.label}" as current step`}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all flex-shrink-0
-                          ${isCompleted ? "bg-amber-400 text-black" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
-                      >
-                        {isCompleted ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                      </button>
-                      <div className={`w-0.5 flex-1 ${i === (steps?.length ?? 0) - 1 ? "invisible" : isCompleted ? "bg-amber-400" : "bg-white/20"}`} />
-                    </div>
+                  <div key={step.id} className="flex items-center gap-1 flex-shrink-0">
+                    {i > 0 && (
+                      <div className={`w-4 h-0.5 flex-shrink-0 ${isCompleted ? "bg-amber-400" : "bg-white/20"}`} />
+                    )}
                     <button
                       onClick={() => { setCurrentStepId(step.id); triggerSave(); }}
-                      className={`flex-1 text-left py-1.5 px-3 rounded-lg transition-all text-sm
-                        ${isCurrent ? "bg-amber-400/15 text-amber-300 font-semibold border border-amber-400/30" :
-                          isCompleted ? "text-white/70" : "text-white/40 hover:text-white/60"}`}
+                      title={`Mark "${step.label}" as current step`}
+                      className="flex flex-col items-center gap-1 group transition-all"
                     >
-                      {step.label}
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
+                        ${isCompleted ? "bg-amber-400 text-black" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>
+                        {isCompleted ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                      </div>
+                      <span className={`text-[10px] text-center max-w-[64px] leading-tight
+                        ${isCurrent ? "text-amber-400 font-semibold" : isCompleted ? "text-white/70" : "text-white/40"}`}>
+                        {step.label}
+                      </span>
                     </button>
                   </div>
                 );
