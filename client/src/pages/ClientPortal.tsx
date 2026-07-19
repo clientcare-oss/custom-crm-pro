@@ -1363,7 +1363,7 @@ export default function ClientPortal() {
                 );
                 if (iepAppts.length === 0) {
                   return (
-                    <p className="text-sm text-white/40 italic px-1">No scheduled IEP or 504 meetings found. Your advocate will need to create one first.</p>
+                    <p className="text-sm text-white/40 italic px-1">No scheduled IEP or 504 meetings found. Please schedule your IEP or 504 meeting first, then return here to attach the link.</p>
                   );
                 }
                 return (
