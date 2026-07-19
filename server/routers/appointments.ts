@@ -53,10 +53,29 @@ export const appointmentsRouter = router({
           console.log('[book] no sessionTypeId, using client endTime, diff_min:', (input.endTime.getTime() - input.startTime.getTime()) / 60000);
         }
 
+        // Auto-fill parentPhone from the linked contact (student's parent)
+        let resolvedParentPhone: string | undefined = undefined;
+        if (input.clientId && dbConn2) {
+          try {
+            const { contacts: contactsTable } = await import("../../drizzle/schema");
+            const [student] = await dbConn2.select().from(contactsTable).where(eq(contactsTable.id, input.clientId)).limit(1);
+            if (student) {
+              // If student has a parentContactId, get the parent's phone
+              if ((student as any).parentContactId) {
+                const [parent] = await dbConn2.select().from(contactsTable).where(eq(contactsTable.id, (student as any).parentContactId)).limit(1);
+                if (parent?.phone) resolvedParentPhone = parent.phone;
+              } else if (student.phone) {
+                // No parent link — use the contact's own phone
+                resolvedParentPhone = student.phone;
+              }
+            }
+          } catch { /* ignore */ }
+        }
         const appointment = await db.createAppointment({
           ...input,
           endTime: computedEndTime,
           status: "Scheduled",
+          parentPhone: resolvedParentPhone ?? input.parentName ? resolvedParentPhone : undefined,
         }, owner.id);
         // Notify owner of new booking
         try {
