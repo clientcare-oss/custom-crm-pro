@@ -170,12 +170,13 @@ export default function InlineScheduler({
     console.log('[InlineScheduler] handleBook effectiveDurationMin:', effectiveDurationMin, 'sessionTypeData:', sessionTypeData);
     const endTime = new Date(startTime.getTime() + effectiveDurationMin * 60 * 1000);
     bookAppointment.mutate({
-      title: `${sessionTypeName || "Consultation"} — ${parentName}`,
+      title: `${sessionTypeName || "Discovery Call"} — ${parentName}`,
       startTime,
       endTime,
       sessionTypeId: sessionTypeId ?? undefined,
       clientId: clientId ?? undefined,
-      description: `Session: ${sessionTypeName || "Consultation"}\nClient: ${parentName}\nEmail: ${parentEmail}`,
+      meetingType: sessionTypeName || undefined,
+      description: `Session: ${sessionTypeName || "Discovery Call"}\nClient: ${parentName}\nEmail: ${parentEmail}`,
     });
   };
 
@@ -187,7 +188,7 @@ export default function InlineScheduler({
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/60 bg-slate-800/60">
         <div className="flex items-center gap-2 text-slate-200 text-sm font-semibold tracking-wide uppercase">
           <CalendarDays className="w-4 h-4 text-blue-400" />
-          {sessionTypeName || "FREE DISCOVERY CALL"}
+          {sessionTypeName || "DISCOVERY CALL"}
         </div>
         <div className="flex items-center gap-1.5 text-slate-400 text-xs">
           <Clock className="w-3.5 h-3.5 text-blue-400" />

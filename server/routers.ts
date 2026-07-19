@@ -783,6 +783,7 @@ export const appRouter = router({
           endTime: z.date(),
           sessionTypeId: z.number().optional(), // used to recompute endTime server-side
           location: z.string().optional(),
+          meetingType: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {

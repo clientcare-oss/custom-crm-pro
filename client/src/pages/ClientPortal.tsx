@@ -479,6 +479,7 @@ export default function ClientPortal() {
   const { theme, toggleTheme } = useTheme();
   const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
   const [schedulerSessionTypeId, setSchedulerSessionTypeId] = useState<number | null>(null);
+  const [schedulerSessionTypeName, setSchedulerSessionTypeName] = useState<string>("");
   const [schedulerBooked, setSchedulerBooked] = useState(false);
   const [activeTab, setActiveTab] = useState<NavId>("compass");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -607,7 +608,7 @@ export default function ClientPortal() {
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
   const displayName = portalUser?.name ?? user?.name ?? "Client";
 
-  const handleOpenScheduler = (sessionTypeId: number) => { setSchedulerSessionTypeId(sessionTypeId); setSchedulerBooked(false); };
+  const handleOpenScheduler = (sessionTypeId: number, sessionTypeName: string) => { setSchedulerSessionTypeId(sessionTypeId); setSchedulerSessionTypeName(sessionTypeName); setSchedulerBooked(false); };
   const handleSchedulerBooked = (date: string, time: string) => {
     setSchedulerBooked(true);
     toast.success(`Session booked for ${date} at ${time}!`);
@@ -1292,7 +1293,7 @@ export default function ClientPortal() {
       </div>
 
       {/* Meeting Scheduler Dialog */}
-      <Dialog open={showMeetingScheduler} onOpenChange={(open) => { setShowMeetingScheduler(open); if (!open) { setSchedulerSessionTypeId(null); setSchedulerBooked(false); } }}>
+      <Dialog open={showMeetingScheduler} onOpenChange={(open) => { setShowMeetingScheduler(open); if (!open) { setSchedulerSessionTypeId(null); setSchedulerSessionTypeName(""); setSchedulerBooked(false); } }}>
         <DialogContent className="max-w-2xl w-full">
           <DialogHeader><DialogTitle>Schedule a Meeting</DialogTitle></DialogHeader>
           {!schedulerSessionTypeId ? (
@@ -1300,7 +1301,7 @@ export default function ClientPortal() {
               <p className="text-sm text-muted-foreground">Select the type of meeting you'd like to schedule:</p>
               {(publicSessionTypes ?? []).length === 0 && <p className="text-sm text-muted-foreground italic">No session types available. Please contact us directly.</p>}
               {(publicSessionTypes ?? []).map((st: any) => (
-                <Button key={st.id} onClick={() => handleOpenScheduler(st.id)} variant="outline" className="w-full justify-start gap-3 px-4 py-3 font-semibold">
+                <Button key={st.id} onClick={() => handleOpenScheduler(st.id, st.name)} variant="outline" className="w-full justify-start gap-3 px-4 py-3 font-semibold">
                   <Clock className="h-4 w-4 flex-shrink-0" />
                   <span className="flex-1 text-left">{st.name}</span>
                   <span className="text-xs text-muted-foreground">{st.duration} {st.durationUnit === 'hours' ? (st.duration === 1 ? 'hour' : 'hours') : 'min'}</span>
@@ -1320,7 +1321,7 @@ export default function ClientPortal() {
               <button onClick={() => setSchedulerSessionTypeId(null)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
                 <ChevronDown className="w-3 h-3 rotate-90" /> Back to meeting types
               </button>
-              <InlineScheduler sessionTypeId={schedulerSessionTypeId} parentName={user?.name ?? ""} parentEmail={user?.email ?? ""} clientId={effectiveStudentContactId} onBooked={handleSchedulerBooked} />
+              <InlineScheduler sessionTypeId={schedulerSessionTypeId} sessionTypeName={schedulerSessionTypeName} parentName={user?.name ?? ""} parentEmail={user?.email ?? ""} clientId={effectiveStudentContactId} onBooked={handleSchedulerBooked} />
             </div>
           )}
         </DialogContent>
