@@ -1339,25 +1339,7 @@ export default function ClientPortal() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            {studentAppointments.filter((a: any) => a.status !== 'Cancelled').length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">Which appointment?</label>
-                <select
-                  value={iepLinkApptId ?? ""}
-                  onChange={(e) => setIepLinkApptId(e.target.value ? Number(e.target.value) : null)}
-                  className="w-full bg-[#071422] border border-white/15 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400/50"
-                >
-                  <option value="">Select an appointment...</option>
-                  {studentAppointments
-                    .filter((a: any) => a.status !== 'Cancelled')
-                    .map((a: any) => (
-                      <option key={a.id} value={a.id}>
-                        {a.title} — {new Date(a.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            )}
+            {/* Meeting Link input — first */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">Meeting Link</label>
               <input
@@ -1367,6 +1349,38 @@ export default function ClientPortal() {
                 onChange={(e) => setIepLinkUrl(e.target.value)}
                 className="w-full bg-[#071422] border border-white/15 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-400/50"
               />
+            </div>
+            {/* IEP/504 appointment selector — always visible below */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">Attach to Scheduled IEP/504 Meeting</label>
+              {(() => {
+                const iepAppts = studentAppointments.filter((a: any) =>
+                  a.status !== 'Cancelled' &&
+                  (a.meetingType?.toLowerCase().includes('iep') ||
+                   a.meetingType?.toLowerCase().includes('504') ||
+                   a.title?.toLowerCase().includes('iep') ||
+                   a.title?.toLowerCase().includes('504'))
+                );
+                if (iepAppts.length === 0) {
+                  return (
+                    <p className="text-sm text-white/40 italic px-1">No scheduled IEP or 504 meetings found. Your advocate will need to create one first.</p>
+                  );
+                }
+                return (
+                  <select
+                    value={iepLinkApptId ?? ""}
+                    onChange={(e) => setIepLinkApptId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-[#071422] border border-white/15 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400/50"
+                  >
+                    <option value="">Select your IEP/504 meeting...</option>
+                    {iepAppts.map((a: any) => (
+                      <option key={a.id} value={a.id}>
+                        {a.title} — {new Date(a.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </option>
+                    ))}
+                  </select>
+                );
+              })()}
             </div>
           </div>
           <DialogFooter className="gap-2">

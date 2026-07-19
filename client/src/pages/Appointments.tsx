@@ -220,6 +220,7 @@ export default function Appointments() {
       endTime: new Date(formData.endTime),
       location: formData.location || undefined,
       videoLink: formData.videoLink || undefined,
+      meetingType: formData.meetingType || undefined,
       parentName: formData.parentName || undefined,
       studentName: formData.studentName || undefined,
     });
