@@ -160,6 +160,14 @@ export default function Leads() {
         </div>
         <div className="flex items-center gap-2">
           <Button
+            onClick={() => setLocation("/leads/0/discovery")}
+            variant="outline"
+            className="gap-2 border-amber-500/40 text-amber-600 hover:bg-amber-500/10 dark:text-amber-400"
+          >
+            <PhoneCall className="w-4 h-4" />
+            View Discovery Call Process
+          </Button>
+          <Button
             onClick={() => setQuickSetupOpen(true)}
             className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
           >
