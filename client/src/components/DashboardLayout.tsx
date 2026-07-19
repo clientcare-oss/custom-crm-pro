@@ -212,10 +212,10 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           collapsible="icon"
           className="border-r-0"
           disableTransition={isResizing}
-          style={{ "--sidebar-background": "#0d1b2a" } as CSSProperties}
+          style={{ "--sidebar-background": "#071422" } as CSSProperties}
         >
           {/* ── Header: toggle + logo ── */}
-          <SidebarHeader className="px-3 pt-4 pb-3 bg-[#0d1b2a]">
+          <SidebarHeader className="px-3 pt-4 pb-3 bg-[#071422]">
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleSidebar}
@@ -248,8 +248,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarHeader>
 
           {/* ── Nav items ── */}
-          <SidebarContent className="gap-0 bg-[#0d1b2a]">
-            <SidebarMenu className="px-2 py-1">
+          <SidebarContent className="gap-0 bg-[#071422] px-2 py-1">
+            <div className="rounded-xl bg-[#0d1f33] border border-white/5 py-1.5 px-1 shadow-inner">
+            <SidebarMenu className="">
               {menuItems.map(item => {
                 const isActive = location === item.path;
                 return (
@@ -273,23 +274,11 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 );
               })}
             </SidebarMenu>
+            </div>
           </SidebarContent>
 
-          {/* ── Footer: compass rose + tagline + controls ── */}
-          <SidebarFooter className="bg-[#0d1b2a] p-3 space-y-2">
-            {/* Compass rose + tagline — hidden when collapsed */}
-            {!isCollapsed && (
-              <div className="relative flex flex-col items-center py-3 px-2 rounded-xl border border-white/8 bg-white/3 overflow-hidden">
-                <CompassRose className="w-14 h-14 text-white/20 mb-1" />
-                <p className="text-[11px] text-white/55 text-center leading-snug">
-                  No one should have to navigate special education alone.
-                </p>
-                <p className="text-[11px] font-semibold text-amber-400 text-center mt-0.5">
-                  We're here for you.
-                </p>
-              </div>
-            )}
-
+          {/* ── Footer: controls ── */}
+          <SidebarFooter className="bg-[#071422] p-3 space-y-2">
             {/* Quick Setup */}
             <button
               onClick={() => setQuickSetupOpen(true)}
