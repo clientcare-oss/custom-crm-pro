@@ -301,6 +301,12 @@ export const appRouter = router({
           status: z.enum(["New", "Follow-up", "Qualified", "Won", "Lost"]).optional(),
           value: z.string().optional(),
           notes: z.string().optional(),
+          parentName: z.string().optional(),
+          parentPhone: z.string().optional(),
+          studentName: z.string().optional(),
+          studentAge: z.number().optional(),
+          studentGrade: z.string().optional(),
+          discoveryCallDate: z.date().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -316,6 +322,12 @@ export const appRouter = router({
           status: z.enum(["New", "Follow-up", "Qualified", "Won", "Lost"]).optional(),
           value: z.string().optional(),
           notes: z.string().optional(),
+          parentName: z.string().optional(),
+          parentPhone: z.string().optional(),
+          studentName: z.string().optional(),
+          studentAge: z.number().optional(),
+          studentGrade: z.string().optional(),
+          discoveryCallDate: z.date().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {

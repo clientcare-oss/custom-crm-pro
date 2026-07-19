@@ -98,6 +98,12 @@ export const leads = mysqlTable("leads", {
     .notNull(),
   value: decimal("value", { precision: 12, scale: 2 }),
   notes: text("notes"),
+  parentName: varchar("parentName", { length: 200 }),
+  parentPhone: varchar("parentPhone", { length: 30 }),
+  studentName: varchar("studentName", { length: 200 }),
+  studentAge: int("studentAge"),
+  studentGrade: varchar("studentGrade", { length: 20 }),
+  discoveryCallDate: timestamp("discoveryCallDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -1051,3 +1051,12 @@
 - [ ] Backend: appointments.addMeetingLink portalProcedure - client can set meetingLink on their upcoming appointments
 - [ ] Client portal header: "Add IEP Link" button opens dialog to paste link + select which appointment
 - [ ] Admin appointments view: show meeting link badge/button when present on an appointment
+
+## Leads Page - Discovery Pipeline Updates
+- [x] Rename "Sales Pipeline" heading to "Discovery Pipeline"
+- [x] Rename "IEP Consultation Request" label to "Discovery Call" on lead cards in New column
+- [x] Show on each lead card: parent name, student name, student age, student grade, parent phone, date of discovery call
+- [x] Add "Begin Discovery Call" button on each lead card
+- [x] Update create/edit lead form to include new fields (parentName, parentPhone, studentName, studentAge, studentGrade, discoveryCallDate)
+- [x] Apply DB migration for new leads columns (parentName, parentPhone, studentName, studentAge, studentGrade, discoveryCallDate)
+- [x] Update routers.ts leads.create and leads.update to accept new fields
