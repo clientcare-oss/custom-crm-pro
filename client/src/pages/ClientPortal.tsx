@@ -1163,61 +1163,117 @@ export default function ClientPortal() {
         </div>
       )}
 
-      {/* Main content */}
+            {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-[#0d1b2a] shrink-0">
+        {/* Mobile hamburger bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-2 bg-[#071422] shrink-0 border-b border-white/8">
           <button onClick={() => setSidebarOpen(true)} className="text-white/60 hover:text-white">
             <Menu className="h-5 w-5" />
           </button>
-          <img src={LOGO_URL} alt="Waypoint" className="h-7 w-7 object-contain" />
-          <span className="text-sm font-bold tracking-widest text-white uppercase">Waypoint</span>
-          <span className="ml-auto text-xs text-white/50 capitalize">{NAV_ITEMS.find(n => n.id === activeTab)?.label}</span>
+          <span className="text-xs text-white/50 capitalize flex-1 text-center">{NAV_ITEMS.find(n => n.id === activeTab)?.label}</span>
+          <button onClick={toggleTheme} className="text-white/50 hover:text-white">
+            {theme === 'navy' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
         </div>
+
+        {/* Lighthouse hero header */}
+        <div
+          className="relative shrink-0 overflow-hidden"
+          style={{
+            background: `linear-gradient(to right, #071422 0%, #0d1b2a 40%, rgba(13,27,42,0.7) 70%, rgba(13,27,42,0.4) 100%), url('/manus-storage/lighthouse-header-bg_485f0bf3.jpg') center/cover no-repeat`,
+            minHeight: '90px',
+          }}
+        >
+          <div className="relative z-10 flex items-center justify-between px-5 py-4">
+            {/* Left: title + welcome */}
+            <div>
+              <h1 className="text-lg font-bold text-white tracking-wide">Client Portal</h1>
+              <p className="text-sm text-amber-400 font-medium">Welcome, {displayName}</p>
+            </div>
+            {/* Right: controls */}
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 transition-all"
+                title={theme === 'navy' ? 'Light mode' : 'Dark mode'}
+              >
+                {theme === 'navy' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+              <button
+                onClick={() => setShowMeetingScheduler(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#071422] font-semibold text-sm transition-all shadow-lg shadow-amber-500/20"
+              >
+                <Calendar className="h-4 w-4" />
+                Schedule Meeting
+              </button>
+              {/* User avatar dropdown */}
+              <div className="relative group">
+                <button className="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 font-bold text-sm hover:bg-amber-500/30 transition-all">
+                  {displayName?.charAt(0)?.toUpperCase() ?? 'C'}
+                </button>
+                <div className="absolute right-0 top-full mt-1 w-40 bg-[#0d1b2a] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all z-50">
+                  <button
+                    onClick={() => { if (portalUser) portalLogout.mutate(); else logoutMutation.mutate(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Student selector cards */}
+        {portalStudents.length > 0 && (
+          <div className="shrink-0 px-5 py-3 border-b border-white/8 bg-[#071422]">
+            <p className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-semibold">Select a Student</p>
+            <div className="flex flex-wrap gap-3">
+              {portalStudents.map((s: any) => {
+                const isSelected = effectiveStudent?.id === s.id;
+                const nextAppt = studentAppointments.find(
+                  (a: any) => a.contactId === s.id && new Date(a.startTime) >= new Date() && a.status !== 'Cancelled'
+                );
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedStudentId(s.id)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all min-w-[200px] ${
+                      isSelected
+                        ? 'bg-[#0d1b2a] border-amber-400/50 shadow-lg shadow-amber-500/10'
+                        : 'bg-[#0a1628] border-white/10 hover:border-white/20 hover:bg-[#0d1b2a]'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                      isSelected ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50' : 'bg-white/10 text-white/60 border border-white/10'
+                    }`}>
+                      {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold truncate ${isSelected ? 'text-white' : 'text-white/80'}`}>
+                        {s.firstName} {s.lastName}
+                      </p>
+                      <p className="text-[11px] text-white/40 font-mono">{s.caseId ?? 'No case ID'}</p>
+                      <p className={`text-[11px] mt-0.5 flex items-center gap-1 ${
+                        nextAppt ? 'text-amber-400/80' : 'text-white/30'
+                      }`}>
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        {nextAppt
+                          ? new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + new Date(nextAppt.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                          : 'No upcoming meeting'
+                        }
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto">
-          {/* Student selector strip */}
-          {portalStudents.length > 0 && (
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-border bg-card/50 shrink-0 flex-wrap">
-              {portalStudents.length === 1 ? (
-                <>
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold shrink-0">
-                    {effectiveStudent?.firstName?.charAt(0)}{effectiveStudent?.lastName?.charAt(0)}
-                  </div>
-                  <span className="font-semibold text-foreground text-sm">{effectiveStudent?.firstName} {effectiveStudent?.lastName}</span>
-                  <span className="text-xs text-muted-foreground font-mono">{effectiveCaseId}</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Select Student:</span>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {portalStudents.map((s: any) => {
-                      const isSelected = effectiveStudent?.id === s.id;
-                      return (
-                        <button
-                          key={s.id}
-                          onClick={() => setSelectedStudentId(s.id)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                            isSelected
-                              ? "bg-amber-500/15 border-amber-400/60 text-amber-300"
-                              : "bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:border-border/80"
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                            isSelected ? "bg-amber-500/30 text-amber-300" : "bg-muted text-muted-foreground"
-                          }`}>
-                            {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
-                          </div>
-                          {s.firstName} {s.lastName}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
           {renderContent()}
         </div>
       </div>
