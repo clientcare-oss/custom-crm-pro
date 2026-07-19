@@ -444,7 +444,7 @@ export default function Leads() {
                           {/* Begin Discovery Call — shown on New leads */}
                           {status === "New" && (
                             <Button
-                              onClick={() => toast.info("Begin Discovery Call — feature coming soon")}
+                              onClick={() => setLocation(`/leads/${lead.id}/discovery`)}
                               size="sm"
                               className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold gap-1.5"
                             >

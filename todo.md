@@ -1060,3 +1060,27 @@
 - [x] Update create/edit lead form to include new fields (parentName, parentPhone, studentName, studentAge, studentGrade, discoveryCallDate)
 - [x] Apply DB migration for new leads columns (parentName, parentPhone, studentName, studentAge, studentGrade, discoveryCallDate)
 - [x] Update routers.ts leads.create and leads.update to accept new fields
+
+## Discovery Call Page (PG-004)
+- [x] DB schema: discoveryCalls, discoveryPipelineSteps, discoveryQuestions, resources tables
+- [x] Backend: discovery.getOrCreate, discovery.save, discovery.syncNotes, discovery.getSteps, discovery.updateStep, discovery.getQuestions, discovery.createQuestion, discovery.updateQuestion, discovery.deleteQuestion
+- [x] Backend: resources.list, resources.create, resources.update, resources.delete, resources.share (email + portal message)
+- [x] Route: /leads/:leadId/discovery
+- [x] Begin Discovery Call button on lead cards navigates to discovery call page
+- [x] Discovery Call page: lead header with parent/student info, status selector
+- [x] Discovery Call page: 10-step pipeline progress tracker (click to advance, double-click to rename)
+- [x] Discovery Call page: Call Guide tab with 10 collapsible sections
+- [x] Section 1: Call Script (opening + voicemail with Copy button, pro tip)
+- [x] Section 2: Their Story (free-text notes)
+- [x] Section 3: Discovery Questions (IEP/504 vs General toggle, collapsible per-question notes, editable question bank)
+- [x] Section 4: How Does This Work? (talking points + notes)
+- [x] Section 5: Our Difference & Pricing (pitch + pricing callout + notes)
+- [x] Section 6: The Question (closing script + response radio)
+- [x] Section 7: Next Steps checklist + Move to Won button
+- [x] Section 8: Not Interested/Lost checklist + Mark as Lost button
+- [x] Section 9: Additional Notes (auto-syncs to client profile as advocate-only)
+- [x] Section 10: Private Advocate Notes (auto-syncs to client profile as advocate-only)
+- [x] Discovery Call page: Resources tab with add/edit/delete resource cards
+- [x] Resources: Share with Family button (sends email + portal message to contact)
+- [x] Autosave with 1.5s debounce, last-saved timestamp in header
+- [x] Notes sync to contact project notes with isVisibleToClient=false (advocate-only)

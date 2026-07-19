@@ -1124,3 +1124,83 @@ export const techTaskSubtasks = mysqlTable("techTaskSubtasks", {
 });
 export type TechTaskSubtask = typeof techTaskSubtasks.$inferSelect;
 export type InsertTechTaskSubtask = typeof techTaskSubtasks.$inferInsert;
+
+/**
+ * Discovery Call Pipeline Steps — editable step labels for the progress tracker.
+ * One set per owner; defaults seeded on first use.
+ */
+export const discoveryPipelineSteps = mysqlTable("discoveryPipelineSteps", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  label: varchar("label", { length: 100 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DiscoveryPipelineStep = typeof discoveryPipelineSteps.$inferSelect;
+
+/**
+ * Discovery Call Sessions — one record per lead call session.
+ * Stores current step, status, and all section notes/data as JSON.
+ */
+export const discoveryCalls = mysqlTable("discoveryCalls", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  leadId: int("leadId").notNull(),
+  currentStepId: int("currentStepId"),  // FK to discoveryPipelineSteps.id
+  status: mysqlEnum("status", ["Preparing", "In Progress", "Completed", "Lost"]).default("Preparing").notNull(),
+  // Section data stored as JSON blobs for flexibility
+  callScriptNotes: text("callScriptNotes"),       // section 1 notes
+  theirStoryNotes: text("theirStoryNotes"),        // section 2 notes
+  questionNotes: text("questionNotes"),            // section 3: JSON {questionId: notes}
+  questionMode: varchar("questionMode", { length: 10 }).default("IEP/504"),  // "IEP/504" | "General"
+  howItWorksNotes: text("howItWorksNotes"),        // section 4 notes
+  pricingNotes: text("pricingNotes"),              // section 5 notes
+  closingResponse: varchar("closingResponse", { length: 50 }),  // "Yes" | "Think about it" | "Not right now"
+  nextStepsCompleted: text("nextStepsCompleted"),  // JSON array of completed checklist keys
+  lostStepsCompleted: text("lostStepsCompleted"),  // JSON array of completed checklist keys
+  additionalNotes: text("additionalNotes"),        // section 9 — syncs to contact notes
+  privateNotes: text("privateNotes"),              // section 10 — advocate-only
+  callRecordingKey: text("callRecordingKey"),      // S3 key for uploaded recording
+  scheduledAt: timestamp("scheduledAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DiscoveryCall = typeof discoveryCalls.$inferSelect;
+
+/**
+ * Discovery Questions — editable per-owner question bank for section 3.
+ */
+export const discoveryQuestions = mysqlTable("discoveryQuestions", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  label: varchar("label", { length: 200 }).notNull(),
+  subLabel: varchar("subLabel", { length: 300 }),
+  mode: varchar("mode", { length: 10 }).default("both"),  // "IEP/504" | "General" | "both"
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DiscoveryQuestion = typeof discoveryQuestions.$inferSelect;
+
+/**
+ * Resources — directory of external contacts/resources (lawyers, therapists, etc.)
+ * that can be shared with clients via email and portal messages.
+ */
+export const resources = mysqlTable("resources", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  specialty: varchar("specialty", { length: 200 }),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 320 }),
+  website: varchar("website", { length: 500 }),
+  address: text("address"),
+  notes: text("notes"),
+  category: varchar("category", { length: 100 }),  // e.g. "Attorney", "Speech Therapy", "OT"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Resource = typeof resources.$inferSelect;

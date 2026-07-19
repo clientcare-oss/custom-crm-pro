@@ -400,6 +400,13 @@
       "when": 1784424221009,
       "tag": "0056_boring_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "5",
+      "when": 1784427280543,
+      "tag": "0057_rich_wither",
+      "breakpoints": true
     }
   ]
 }
