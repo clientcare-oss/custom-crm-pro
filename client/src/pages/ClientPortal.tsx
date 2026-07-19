@@ -644,15 +644,6 @@ export default function ClientPortal() {
 
       {/* Footer */}
       <div className="px-3 pb-4 pt-3 border-t border-white/8 space-y-3">
-        {/* Schedule button */}
-        <button
-          onClick={() => setShowMeetingScheduler(true)}
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors text-[#0d1b2a] font-bold text-sm"
-        >
-          <Calendar className="h-4 w-4 shrink-0" />
-          Schedule Meeting
-        </button>
-
         {/* Theme + logout row */}
         <div className="flex items-center justify-between gap-2">
           <button onClick={toggleTheme} title={theme === 'navy' ? 'Light mode' : 'Dark mode'}
