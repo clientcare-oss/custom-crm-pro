@@ -675,13 +675,6 @@ export default function ClientPortal() {
 
       {/* Footer */}
       <div className="px-3 pb-4 pt-3 border-t border-white/8 space-y-3">
-        {/* Compass rose + tagline */}
-        <div className="relative flex flex-col items-center py-3 px-2 rounded-xl border border-white/8 bg-white/3 overflow-hidden">
-          <CompassRose className="w-12 h-12 text-white/20 mb-1" />
-          <p className="text-[10px] text-white/50 text-center leading-snug">No one should have to navigate special education alone.</p>
-          <p className="text-[10px] font-semibold text-amber-400 text-center mt-0.5">We're here for you.</p>
-        </div>
-
         {/* Schedule button */}
         <button
           onClick={() => setShowMeetingScheduler(true)}
