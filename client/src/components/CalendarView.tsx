@@ -11,6 +11,7 @@ interface Appointment {
   status: string;
   description?: string | null;
   videoLink?: string | null;
+  meetingType?: string | null;
   parentName?: string | null;
   parentPhone?: string | null;
   studentName?: string | null;
@@ -67,20 +68,26 @@ export default function CalendarView({ appointments, onDateClick, onEventClick }
           {day}
         </span>
         <div className="mt-1 space-y-0.5 overflow-hidden">
-          {dayAppointments.slice(0, 2).map((apt) => (
-            <div
-              key={apt.id}
-              onClick={(e) => { e.stopPropagation(); onEventClick?.(apt); }}
-              className={`text-[10px] px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
-                apt.status === "Confirmed" ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" :
-                apt.status === "Cancelled" ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" :
-                apt.status === "Completed" ? "bg-gray-100 text-gray-600 dark:bg-gray-800/60 dark:text-gray-300" :
-                "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-              }`}
-            >
-              {apt.title}
-            </div>
-          ))}
+          {dayAppointments.slice(0, 2).map((apt) => {
+            const subtitle = [apt.meetingType, apt.studentName || apt.parentName].filter(Boolean).join(" · ");
+            return (
+              <div
+                key={apt.id}
+                onClick={(e) => { e.stopPropagation(); onEventClick?.(apt); }}
+                className={`text-[10px] px-1 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity overflow-hidden ${
+                  apt.status === "Confirmed" ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" :
+                  apt.status === "Cancelled" ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" :
+                  apt.status === "Completed" ? "bg-gray-100 text-gray-600 dark:bg-gray-800/60 dark:text-gray-300" :
+                  "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                }`}
+              >
+                <span className="block truncate font-medium">{apt.title}</span>
+                {subtitle && (
+                  <span className="block truncate opacity-75">{subtitle}</span>
+                )}
+              </div>
+            );
+          })}
           {dayAppointments.length > 2 && (
             <div className="text-[10px] text-muted-foreground px-1">+{dayAppointments.length - 2} more</div>
           )}

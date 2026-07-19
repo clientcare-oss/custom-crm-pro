@@ -25,6 +25,7 @@ interface Appointment {
   location: string | null;
   videoLink?: string | null;
   clientMeetingLink?: string | null;
+  meetingType?: string | null;
   parentName?: string | null;
   parentPhone?: string | null;
   studentName?: string | null;
@@ -520,6 +521,15 @@ export default function Appointments() {
               ) : (
                 /* ── View Mode ── */
                 <>
+              {/* Meeting Type */}
+              {selectedApt.meetingType && (
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                    {selectedApt.meetingType}
+                  </span>
+                </div>
+              )}
+
               {/* Date & Time */}
               <div className="flex items-start gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -654,7 +664,22 @@ export default function Appointments() {
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {contacts.map((c: any) => (
+                    {/* Students first */}
+                    {(contacts as any[]).filter((c: any) => c.jobTitle === 'Student').length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Students</div>
+                        {(contacts as any[]).filter((c: any) => c.jobTitle === 'Student').map((c: any) => {
+                          const parent = (contacts as any[]).find((p: any) => p.id === c.parentContactId);
+                          return (
+                            <SelectItem key={c.id} value={c.id.toString()}>
+                              {c.firstName} {c.lastName}{parent ? ` (${parent.firstName} ${parent.lastName})` : ''}
+                            </SelectItem>
+                          );
+                        })}
+                        <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">All Contacts</div>
+                      </>
+                    )}
+                    {(contacts as any[]).filter((c: any) => c.jobTitle !== 'Student').map((c: any) => (
                       <SelectItem key={c.id} value={c.id.toString()}>
                         {c.firstName} {c.lastName}
                       </SelectItem>
@@ -854,8 +879,13 @@ export default function Appointments() {
                       </span>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{apt.title}</p>
+                        {apt.meetingType && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+                            {apt.meetingType}
+                          </span>
+                        )}
                         {apt.videoLink && <Video className="h-3.5 w-3.5 text-blue-500" aria-label="Video meeting" />}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -864,11 +894,18 @@ export default function Appointments() {
                         {" – "}
                         {new Date(apt.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </div>
-                      {(apt.parentName || apt.studentName) && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {[apt.parentName, apt.studentName].filter(Boolean).join(" · ")}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {apt.parentName && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <User className="h-3 w-3" />{apt.parentName}
+                          </span>
+                        )}
+                        {apt.studentName && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="text-muted-foreground/50">·</span>{apt.studentName}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -993,13 +1030,22 @@ export default function Appointments() {
                 >
                   <div className="flex items-center gap-3">
                     <div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-medium text-sm">{apt.title}</p>
+                        {apt.meetingType && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                            {apt.meetingType}
+                          </span>
+                        )}
                         {apt.videoLink && <Video className="h-3 w-3 text-blue-500" />}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(apt.startTime).toLocaleDateString()}
-                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(apt.startTime).toLocaleDateString()}
+                        </p>
+                        {apt.parentName && <span className="text-xs text-muted-foreground">{apt.parentName}</span>}
+                        {apt.studentName && <span className="text-xs text-muted-foreground">· {apt.studentName}</span>}
+                      </div>
                     </div>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
