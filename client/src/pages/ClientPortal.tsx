@@ -5,7 +5,7 @@ import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
-  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X
+  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2
 } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -21,6 +21,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import SignaturePad from "@/components/SignaturePad";
 import InlineScheduler from "@/components/InlineScheduler";
@@ -484,6 +486,18 @@ export default function ClientPortal() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [showIepLinkDialog, setShowIepLinkDialog] = useState(false);
+  const [iepLinkUrl, setIepLinkUrl] = useState("");
+  const [iepLinkApptId, setIepLinkApptId] = useState<number | null>(null);
+  const submitMeetingLink = trpc.portal.submitMeetingLink.useMutation({
+    onSuccess: () => {
+      toast.success("Meeting link sent to your advocate!");
+      setShowIepLinkDialog(false);
+      setIepLinkUrl("");
+      setIepLinkApptId(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const { data: portalUser, refetch: refetchPortalMe } = trpc.portalAuth.portalMe.useQuery();
   const portalLogout = trpc.portalAuth.portalLogout.useMutation({
@@ -1191,6 +1205,14 @@ export default function ClientPortal() {
                 {theme === 'navy' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
               <button
+                onClick={() => setShowIepLinkDialog(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/20 hover:border-amber-400/50 text-white/70 hover:text-amber-300 text-sm transition-all"
+                title="Send Advocate My IEP Meeting Link"
+              >
+                <Link2 className="h-4 w-4" />
+                <span className="hidden lg:inline">Send Advocate My IEP Meeting Link</span>
+              </button>
+              <button
                 onClick={() => setShowMeetingScheduler(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#071422] font-semibold text-sm transition-all shadow-lg shadow-amber-500/20"
               >
@@ -1301,6 +1323,70 @@ export default function ClientPortal() {
               <InlineScheduler sessionTypeId={schedulerSessionTypeId} parentName={user?.name ?? ""} parentEmail={user?.email ?? ""} clientId={effectiveStudentContactId} onBooked={handleSchedulerBooked} />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* IEP Meeting Link Dialog */}
+      <Dialog open={showIepLinkDialog} onOpenChange={(open) => { setShowIepLinkDialog(open); if (!open) { setIepLinkUrl(""); setIepLinkApptId(null); } }}>
+        <DialogContent className="bg-[#0d1b2a] border border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-amber-400" />
+              Send Advocate My IEP Meeting Link
+            </DialogTitle>
+            <DialogDescription className="text-white/60 text-sm">
+              Paste the meeting link your school sent you. Your advocate will receive it attached to your appointment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {studentAppointments.filter((a: any) => a.status !== 'Cancelled').length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">Which appointment?</label>
+                <select
+                  value={iepLinkApptId ?? ""}
+                  onChange={(e) => setIepLinkApptId(e.target.value ? Number(e.target.value) : null)}
+                  className="w-full bg-[#071422] border border-white/15 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400/50"
+                >
+                  <option value="">Select an appointment...</option>
+                  {studentAppointments
+                    .filter((a: any) => a.status !== 'Cancelled')
+                    .map((a: any) => (
+                      <option key={a.id} value={a.id}>
+                        {a.title} — {new Date(a.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">Meeting Link</label>
+              <input
+                type="url"
+                placeholder="https://meet.google.com/... or https://zoom.us/..."
+                value={iepLinkUrl}
+                onChange={(e) => setIepLinkUrl(e.target.value)}
+                className="w-full bg-[#071422] border border-white/15 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-400/50"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <button
+              onClick={() => { setShowIepLinkDialog(false); setIepLinkUrl(""); setIepLinkApptId(null); }}
+              className="px-4 py-2 rounded-lg border border-white/15 text-white/60 hover:text-white text-sm transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={!iepLinkUrl.trim() || !iepLinkApptId || submitMeetingLink.isPending}
+              onClick={() => {
+                if (!iepLinkApptId || !effectiveStudentContactId) return;
+                submitMeetingLink.mutate({ appointmentId: iepLinkApptId, studentContactId: effectiveStudentContactId, meetingLink: iepLinkUrl.trim() });
+              }}
+              className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-[#071422] font-semibold text-sm transition-all"
+            >
+              {submitMeetingLink.isPending ? "Sending..." : "Send to Advocate"}
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

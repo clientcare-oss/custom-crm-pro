@@ -291,6 +291,7 @@ export const appointments = mysqlTable("appointments", {
   ])
     .default("Scheduled")
     .notNull(),
+  clientMeetingLink: varchar("clientMeetingLink", { length: 1024 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

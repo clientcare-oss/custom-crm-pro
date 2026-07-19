@@ -1044,3 +1044,10 @@
 - [x] Admin sidebar: deep navy background (#0d1b2a), lighthouse logo at top, amber active state with rounded border, cream/white inactive items, compass rose watermark at bottom, motivational tagline in amber
 - [x] Admin sidebar: bottom area (Quick Setup button, theme toggle, user profile) styled for navy theme
 - [x] Client portal sidebar: converted from horizontal tabs to full vertical navy sidebar matching reference design
+
+## IEP Meeting Link (Client Portal)
+- [ ] DB: add meetingLink column to appointments table (text, nullable)
+- [ ] Run migration and apply SQL
+- [ ] Backend: appointments.addMeetingLink portalProcedure - client can set meetingLink on their upcoming appointments
+- [ ] Client portal header: "Add IEP Link" button opens dialog to paste link + select which appointment
+- [ ] Admin appointments view: show meeting link badge/button when present on an appointment

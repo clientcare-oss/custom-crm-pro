@@ -1366,6 +1366,27 @@ export const appRouter = router({
         }
         return await db.getProjectsByClient(input.studentContactId);
       }),
+    // Portal: client submits their IEP meeting link to attach to an appointment
+    submitMeetingLink: portalProcedure
+      .input(z.object({
+        appointmentId: z.number(),
+        studentContactId: z.number(),
+        meetingLink: z.string().url("Please enter a valid URL"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { appointments: apptTable } = await import("../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await dbConn.update(apptTable)
+          .set({ clientMeetingLink: input.meetingLink })
+          .where(eq(apptTable.id, input.appointmentId));
+        return { success: true };
+      }),
   }),
 
   // ============ CASE COMPASS ============

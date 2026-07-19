@@ -24,6 +24,7 @@ interface Appointment {
   endTime: Date;
   location: string | null;
   videoLink?: string | null;
+  clientMeetingLink?: string | null;
   parentName?: string | null;
   parentPhone?: string | null;
   studentName?: string | null;
@@ -541,6 +542,22 @@ export default function Appointments() {
                   Join Meeting
                   <ExternalLink className="h-3.5 w-3.5 opacity-70" />
                 </a>
+              )}
+
+              {/* Client-submitted IEP Meeting Link */}
+              {selectedApt.clientMeetingLink && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-1.5">
+                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Client IEP Meeting Link</p>
+                  <a
+                    href={selectedApt.clientMeetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200 break-all transition-colors"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    {selectedApt.clientMeetingLink}
+                  </a>
+                </div>
               )}
 
               {/* Location */}
