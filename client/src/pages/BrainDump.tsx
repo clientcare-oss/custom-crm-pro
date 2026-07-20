@@ -909,9 +909,53 @@ export default function BrainDump() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Copy All / Print buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const text = items.map((item) => {
+                    let line = `${item.title}`;
+                    if (item.body) line += `\n${item.body}`;
+                    if (item.tags.length > 0) line += `\nTags: ${item.tags.join(", ")}`;
+                    line += `\nStatus: ${STATUS_CONFIG[item.status].label} | Priority: ${PRIORITY_CONFIG[item.priority].label} | Category: ${item.category}`;
+                    return line;
+                  }).join("\n\n---\n\n");
+                  navigator.clipboard.writeText(text);
+                  toast.success("Copied all ideas to clipboard");
+                }}
+                className="h-8 text-xs"
+              >
+                Copy All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const text = items.map((item) => {
+                    let line = `${item.title}`;
+                    if (item.body) line += `\n${item.body}`;
+                    if (item.tags.length > 0) line += `\nTags: ${item.tags.join(", ")}`;
+                    line += `\nStatus: ${STATUS_CONFIG[item.status].label} | Priority: ${PRIORITY_CONFIG[item.priority].label} | Category: ${item.category}`;
+                    return line;
+                  }).join("\n\n---\n\n");
+                  const printWindow = window.open("", "", "width=800,height=600");
+                  if (printWindow) {
+                    printWindow.document.write(`<pre style="font-family: monospace; white-space: pre-wrap; word-wrap: break-word; padding: 20px;">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`);
+                    printWindow.document.close();
+                    printWindow.print();
+                  }
+                }}
+                className="h-8 text-xs"
+              >
+                Print
+              </Button>
+            </div>
+
             {/* View mode toggle */}
             <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5 border border-border/50">
-              {([["list", LayoutList], ["kanban", Kanban], ["card", LayoutGrid]] as [ViewMode, any][]).map(([mode, Icon]) => (
+              {([['list', LayoutList], ['kanban', Kanban], ['card', LayoutGrid]] as [ViewMode, any][]).map(([mode, Icon]) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}

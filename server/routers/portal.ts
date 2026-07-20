@@ -169,13 +169,14 @@ export const portalRouter = router({
     // Portal: get all upcoming appointments for ALL of the parent's students (for selector cards)
     getAllMyAppointments: portalProcedure.query(async ({ ctx }) => {
       let studentIds: number[] = [];
-      if ((ctx as any).isAdminPreview) {
-        // Admin preview: return empty, selector uses per-student query
+      // Note: In preview mode, we still return appointments so admins can see and refine the display
+      const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
+      console.log('[getAllMyAppointments] portalContactId:', (ctx as any).portalContactId, 'students found:', students.length);
+      studentIds = students.map((s: any) => s.id);
+      if (studentIds.length === 0) {
+        console.log('[getAllMyAppointments] no students found, returning empty');
         return [];
       }
-      const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
-      studentIds = students.map((s: any) => s.id);
-      if (studentIds.length === 0) return [];
       const { appointments: apptTable } = await import("../../drizzle/schema");
       const dbConn = await db.getDb();
       if (!dbConn) return [];
@@ -185,7 +186,10 @@ export const portalRouter = router({
         .from(apptTable)
         .where(inArray(apptTable.clientId, studentIds))
         .orderBy(asc(apptTable.startTime));
-      return rows.filter((r: any) => new Date(r.startTime) >= now && r.status !== 'Cancelled');
+      console.log('[getAllMyAppointments] found', rows.length, 'appointments for studentIds:', studentIds);
+      const filtered = rows.filter((r: any) => new Date(r.startTime) >= now && r.status !== 'Cancelled');
+      console.log('[getAllMyAppointments] after filtering future/non-cancelled:', filtered.length);
+      return filtered;
     }),
 
 });

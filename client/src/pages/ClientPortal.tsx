@@ -539,7 +539,7 @@ export default function ClientPortal() {
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
   );
   const { data: allMyAppointments = [] } = trpc.portal.getAllMyAppointments.useQuery(
-    undefined, { enabled: !!portalUser }
+    undefined, { enabled: !!portalUser || isPreviewMode }
   );
   const { data: studentFiles = [], refetch: refetchFiles } = trpc.portal.getStudentFiles.useQuery(
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
