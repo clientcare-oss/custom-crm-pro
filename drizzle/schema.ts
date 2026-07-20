@@ -169,6 +169,8 @@ export const projectTasks = mysqlTable("projectTasks", {
   assignedToUserId: int("assignedToUserId"),
   priority: mysqlEnum("priority", ["High", "Medium", "Low"]).default("Medium").notNull(),
   seenByClient: boolean("seenByClient").default(false).notNull(),
+  /** Timestamp when task was first moved to "In Progress" status */
+  startedAt: timestamp("startedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

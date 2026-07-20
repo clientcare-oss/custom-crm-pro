@@ -1084,3 +1084,13 @@
 - [x] Resources: Share with Family button (sends email + portal message to contact)
 - [x] Autosave with 1.5s debounce, last-saved timestamp in header
 - [x] Notes sync to contact project notes with isVisibleToClient=false (advocate-only)
+
+## Task startedAt Timestamp Feature
+- [x] Add startedAt column to projectTasks table in Drizzle schema
+- [x] Generate and apply database migration for startedAt field
+- [x] Update updateTask function in server/db.ts to set startedAt when status changes to "In Progress"
+- [x] Add startedAt field to StudentTask type in Tasks.tsx
+- [x] Add startedAt display to StudentTaskRow metadata bar with amber styling
+- [x] Write vitest tests for startedAt functionality (4 tests passing)
+- [ ] Manual testing: verify startedAt displays on task cards when status changes to "In Progress"
+- [ ] Manual testing: verify startedAt persists and doesn't change when task status changes again

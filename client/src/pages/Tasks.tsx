@@ -69,6 +69,7 @@ type Task = {
   assigneeId: number | null;
   assigneeName: string | null;
   dueDate: Date | null;
+  startedAt: Date | null;
   resources: Resource[];
   subtasks: Subtask[];
   createdBy: number;
@@ -544,6 +545,7 @@ type StudentTask = {
   status: string | null;
   priority: string | null;
   dueDate: Date | null;
+  startedAt: Date | null;
   assignedTo: number | null;
   assignedToUserId: number | null;
   assignedToUserName: string | null;
@@ -652,6 +654,14 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
                 {(task.projectName || task.assignedToUserName) && <span className="text-muted-foreground/40 text-xs">|</span>}
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />{formatDateTime(task.dueDate)}
+                </span>
+              </>
+            )}
+            {task.startedAt && (
+              <>
+                {(task.projectName || task.assignedToUserName || task.dueDate) && <span className="text-muted-foreground/40 text-xs">|</span>}
+                <span className="text-xs text-amber-600 flex items-center gap-1 font-medium">
+                  Started: {formatDateTime(task.startedAt)}
                 </span>
               </>
             )}
@@ -944,7 +954,7 @@ export default function Tasks() {
   const { data: studentTasks = [], isLoading: studentTasksLoading } = trpc.tasks.getAll.useQuery();
   const utils = trpc.useUtils();
   const totalTasks = tasks.length;
-  const completedTasks = (tasks as Task[]).filter((t) => t.status === "complete").length;
+  const completedTasks = (tasks as unknown as Task[]).filter((t) => t.status === "complete").length;
   // Split into client-facing (visible to client) and case tasks (internal only)
   const clientFacingTasks = (studentTasks as StudentTask[]).filter((t) => t.seenByClient);
   const caseTasks = (studentTasks as StudentTask[]).filter((t) => !t.seenByClient);
@@ -976,7 +986,7 @@ export default function Tasks() {
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-base font-semibold text-foreground">General Tasks</h2>
           <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-            {(tasks as Task[]).filter((t) => t.status !== "complete").length} open
+            {(tasks as unknown as Task[]).filter((t) => t.status !== "complete").length} open
           </span>
         </div>
         {isLoading ? (
@@ -989,7 +999,7 @@ export default function Tasks() {
           </div>
         ) : (
           <div>
-            {(tasks as Task[]).map((task) => (
+            {(tasks as unknown as Task[]).map((task) => (
               <TaskRow key={task.id} task={task} users={users} projects={projects} />
             ))}
           </div>

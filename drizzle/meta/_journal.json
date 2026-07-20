@@ -414,6 +414,13 @@
       "when": 1784428989294,
       "tag": "0058_first_sharon_ventura",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "5",
+      "when": 1784549328852,
+      "tag": "0059_faithful_colonel_america",
+      "breakpoints": true
     }
   ]
 }

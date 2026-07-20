@@ -1,0 +1,23 @@
+ALTER TABLE `projectTasks` ADD `startedAt` timestamp;--> statement-breakpoint
+CREATE INDEX `billGuardianTransactions_ownerId_idx` ON `billGuardianTransactions` (`ownerId`);--> statement-breakpoint
+CREATE INDEX `billGuardianTransactions_matchedBillId_idx` ON `billGuardianTransactions` (`matchedBillId`);--> statement-breakpoint
+CREATE INDEX `callLogs_ownerId_idx` ON `callLogs` (`ownerId`);--> statement-breakpoint
+CREATE INDEX `callLogs_studentId_idx` ON `callLogs` (`studentId`);--> statement-breakpoint
+CREATE INDEX `contacts_ownerId_idx` ON `contacts` (`ownerId`);--> statement-breakpoint
+CREATE INDEX `contacts_parentContactId_idx` ON `contacts` (`parentContactId`);--> statement-breakpoint
+CREATE INDEX `contacts_portalUserId_idx` ON `contacts` (`portalUserId`);--> statement-breakpoint
+CREATE INDEX `internalTasks_projectId_idx` ON `internalTasks` (`projectId`);--> statement-breakpoint
+CREATE INDEX `internalTasks_assigneeId_idx` ON `internalTasks` (`assigneeId`);--> statement-breakpoint
+CREATE INDEX `internalTasks_createdBy_idx` ON `internalTasks` (`createdBy`);--> statement-breakpoint
+CREATE INDEX `invoices_ownerId_idx` ON `invoices` (`ownerId`);--> statement-breakpoint
+CREATE INDEX `invoices_clientId_idx` ON `invoices` (`clientId`);--> statement-breakpoint
+CREATE INDEX `invoices_projectId_idx` ON `invoices` (`projectId`);--> statement-breakpoint
+CREATE INDEX `leads_ownerId_idx` ON `leads` (`ownerId`);--> statement-breakpoint
+CREATE INDEX `leads_contactId_idx` ON `leads` (`contactId`);--> statement-breakpoint
+CREATE INDEX `projectTasks_projectId_idx` ON `projectTasks` (`projectId`);--> statement-breakpoint
+CREATE INDEX `projectTasks_assignedToUserId_idx` ON `projectTasks` (`assignedToUserId`);--> statement-breakpoint
+CREATE INDEX `projects_ownerId_idx` ON `projects` (`ownerId`);--> statement-breakpoint
+CREATE INDEX `projects_clientId_idx` ON `projects` (`clientId`);--> statement-breakpoint
+CREATE INDEX `projects_leadId_idx` ON `projects` (`leadId`);--> statement-breakpoint
+CREATE INDEX `timeEntries_ownerId_idx` ON `timeEntries` (`ownerId`);--> statement-breakpoint
+CREATE INDEX `timeEntries_studentId_idx` ON `timeEntries` (`studentId`);
