@@ -270,4 +270,17 @@ export const discoveryRouter = router({
           .where(and(deq(discoveryQuestions.id, input.id), deq(discoveryQuestions.ownerId, ctx.user.id)));
         return { success: true };
       }),
+
+    // Get the discovery worksheet
+    getWorksheet: adminProcedure.query(async ({ ctx }) => {
+      return await db.getDiscoveryWorksheet(ctx.user.id);
+    }),
+
+    // Upload/update the discovery worksheet
+    uploadWorksheet: adminProcedure
+      .input(z.object({ fileKey: z.string(), fileName: z.string(), fileSize: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.upsertDiscoveryWorksheet(ctx.user.id, input.fileKey, input.fileName, input.fileSize);
+        return { success: true };
+      }),
   });

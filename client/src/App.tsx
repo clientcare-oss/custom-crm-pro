@@ -80,13 +80,7 @@ function Router() {
         </Switch>
       );
     }
-    if (window.location.pathname.startsWith('/leads/') && window.location.pathname.endsWith('/discovery')) {
-      return (
-        <Switch>
-          <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
-        </Switch>
-      );
-    }
+
     if (window.location.pathname === '/intake' || window.location.pathname.startsWith('/form/')) {
       // Redirect /intake to /form/public-intake-form so it uses DynamicForm with the inline scheduler
       if (window.location.pathname === '/intake') {
@@ -106,6 +100,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/contacts" component={Contacts} />
+          <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />

@@ -1240,3 +1240,19 @@ export const resources = mysqlTable("resources", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type Resource = typeof resources.$inferSelect;
+
+/**
+ * Discovery Worksheet — stores the PDF file for discovery call lead forms
+ * One record per owner, stores the file key and metadata
+ */
+export const discoveryWorksheets = mysqlTable("discoveryWorksheets", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull().unique(),
+  fileKey: varchar("fileKey", { length: 500 }),  // S3 key for the PDF file
+  fileName: varchar("fileName", { length: 200 }),  // Original filename
+  fileSize: int("fileSize"),  // File size in bytes
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DiscoveryWorksheet = typeof discoveryWorksheets.$inferSelect;

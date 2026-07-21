@@ -421,6 +421,13 @@
       "when": 1784549328852,
       "tag": "0059_faithful_colonel_america",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "5",
+      "when": 1784650425413,
+      "tag": "0060_loose_silverclaw",
+      "breakpoints": true
     }
   ]
 }

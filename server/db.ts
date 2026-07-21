@@ -29,6 +29,7 @@ import {
   leadForms,
   brainDumpItems,
   brainDumpImages,
+  discoveryWorksheets,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1386,4 +1387,32 @@ export async function updateOwnerPortalDomain(openId: string, portalDomain: stri
 export async function getOwnerPortalDomain(openId: string): Promise<string | null> {
   const owner = await getUserByOpenId(openId);
   return owner?.portalDomain ?? null;
+}
+
+
+// Discovery Worksheet helpers
+export async function getDiscoveryWorksheet(ownerId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [worksheet] = await db
+    .select()
+    .from(discoveryWorksheets)
+    .where(eq(discoveryWorksheets.ownerId, ownerId))
+    .limit(1);
+  return worksheet || null;
+}
+
+export async function upsertDiscoveryWorksheet(ownerId: number, fileKey: string, fileName: string, fileSize: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getDiscoveryWorksheet(ownerId);
+  if (existing) {
+    return await db
+      .update(discoveryWorksheets)
+      .set({ fileKey, fileName, fileSize, uploadedAt: new Date() })
+      .where(eq(discoveryWorksheets.ownerId, ownerId));
+  } else {
+    return await db.insert(discoveryWorksheets).values({ ownerId, fileKey, fileName, fileSize });
+  }
 }
