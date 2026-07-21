@@ -209,12 +209,24 @@ export const leadFormsRouter = router({
         }, ownerId);
         // Increment submission count
         await db.incrementLeadFormSubmissionCount(input.slug);
+        
+        // Get worksheet if assigned to this form
+        let worksheetUrl: string | null = null;
+        if (form.worksheetId) {
+          const worksheet = await db.getDiscoveryWorksheet(ownerId);
+          if (worksheet?.fileKey) {
+            const { storageGet } = await import("../storage");
+            const presigned = await storageGet(worksheet.fileKey);
+            worksheetUrl = presigned.url;
+          }
+        }
+        
         // Notify
         await notifyOwner({
           title: `New Lead via "${form.name}": ${input.parentFirstName} ${input.parentLastName}`,
           content: `Form: ${form.name}\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${caseId}`,
         });
-        return { success: true, caseId, parentContactId, studentContactId };
+        return { success: true, caseId, parentContactId, studentContactId, worksheetUrl };
       }),
     // Upload a confirmation page image (QR code, logo, etc.)
     uploadConfirmationImage: adminProcedure

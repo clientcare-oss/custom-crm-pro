@@ -1094,3 +1094,16 @@
 - [x] Write vitest tests for startedAt functionality (4 tests passing)
 - [ ] Manual testing: verify startedAt displays on task cards when status changes to "In Progress"
 - [ ] Manual testing: verify startedAt persists and doesn't change when task status changes again
+
+
+## Discovery Call Worksheet Feature
+- [x] Add discoveryWorksheets table to database schema
+- [x] Add worksheetId field to leadForms table
+- [x] Create worksheet management procedures in discovery router
+- [x] Add assignWorksheet procedure to leadForms router
+- [x] Update leadForms submit to return worksheetUrl
+- [x] Add worksheetUrl state to DynamicForm component
+- [x] Add worksheet download section to confirmation page with custom message
+- [x] Add Discovery Worksheet management card to LeadForms admin page
+- [x] Create tests for worksheet feature
+- [x] Verify TypeScript compilation passes

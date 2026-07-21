@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, ChevronLeft, User, GraduationCap, Heart, Calendar, ExternalLink, Loader2, Eye, Phone, Check, Copy } from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronLeft, User, GraduationCap, Heart, Calendar, ExternalLink, Loader2, Eye, Phone, Check, Copy, FileText } from "lucide-react";
 import InlineScheduler from "@/components/InlineScheduler";
 import { ALL_FIELDS, DEFAULT_FIELDS } from "@/lib/formFields";
 import type { FieldKey } from "@/lib/formFields";
@@ -78,6 +78,7 @@ export default function DynamicForm() {
   const [caseId, setCaseId] = useState("");
   const [bookedSlot, setBookedSlot] = useState<{ date: string; time: string } | null>(null);
   const [copiedCaseId, setCopiedCaseId] = useState(false);
+  const [worksheetUrl, setWorksheetUrl] = useState<string | null>(null);
 
   const { data: businessPhoneData } = trpc.system.getBusinessPhone.useQuery(undefined, { enabled: true });
   const [businessPhone, setBusinessPhone] = useState("");
@@ -118,6 +119,7 @@ export default function DynamicForm() {
   const submitMutation = trpc.leadForms.submit.useMutation({
     onSuccess: (data) => {
       setCaseId(data.caseId);
+      setWorksheetUrl(data.worksheetUrl || null);
       setSubmitted(true);
     },
     onError: (e) => toast.error("Submission failed: " + e.message),
@@ -287,6 +289,26 @@ export default function DynamicForm() {
               <img src={confImageUrl} alt="Contact QR code" className="max-h-52 max-w-full object-contain rounded-xl" />
             </div>
           )}
+          {/* Worksheet section */}
+          {worksheetUrl && (
+            <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-2 justify-center mb-2">
+                <FileText className="w-5 h-5 text-blue-400" />
+                <p className="text-blue-300 font-semibold text-base">Check your email</p>
+              </div>
+              <p className="text-blue-100 text-sm leading-relaxed">We've sent you a discovery call worksheet to get prepared for your discovery call with your advocate.</p>
+              <p className="text-blue-200 italic text-sm font-semibold">Confidence starts now.</p>
+              <a
+                href={worksheetUrl}
+                download
+                className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Download Worksheet
+              </a>
+            </div>
+          )}
+
           {/* Save our number notice */}
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2 justify-center">

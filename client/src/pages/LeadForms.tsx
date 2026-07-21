@@ -562,6 +562,57 @@ export default function LeadForms() {
         </Card>
       </Collapsible>
 
+      {/* ── DISCOVERY WORKSHEET ── */}
+      <Card className="border-border/60 border-l-4 border-l-green-500">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+              <Upload className="w-5 h-5 text-green-500" />
+            </div>
+            <div>
+              <CardTitle className="text-sm font-semibold">Discovery Call Worksheet</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">PDF sent to families after form submission</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">Upload a PDF worksheet that will be sent to families who submit the discovery call form. They'll receive a download link in their confirmation email.</p>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '.pdf';
+              input.onchange = async (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async () => {
+                  const base64 = (reader.result as string).split(',')[1];
+                  try {
+                    const { key, url } = await (window as any).uploadToStorage(base64, file.name, 'application/pdf');
+                    const mutation = trpc.discovery.uploadWorksheet.useMutation();
+                    await mutation.mutateAsync({
+                      fileKey: key,
+                      fileName: file.name,
+                      fileSize: file.size,
+                    });
+                    toast.success('Worksheet uploaded successfully');
+                    refetch();
+                  } catch (err) {
+                    toast.error('Failed to upload worksheet');
+                  }
+                };
+                reader.readAsDataURL(file);
+              };
+              input.click();
+            }}>
+              <Upload className="w-3.5 h-3.5" />
+              Upload PDF
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* ── CUSTOM FORMS ── */}
       <div>
         <div className="flex items-center justify-between mb-3">
