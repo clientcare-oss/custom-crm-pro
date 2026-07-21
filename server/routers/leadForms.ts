@@ -235,5 +235,18 @@ export const leadFormsRouter = router({
         });
         return { success: true, key, url };
       }),
+
+    // Assign a worksheet to a lead form
+    assignWorksheet: adminProcedure
+      .input(z.object({
+        formId: z.number(),
+        worksheetId: z.number().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateLeadForm(input.formId, ctx.user.id, {
+          worksheetId: input.worksheetId,
+        });
+        return { success: true };
+      }),
   
 });

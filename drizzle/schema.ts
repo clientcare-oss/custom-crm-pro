@@ -977,6 +977,8 @@ export const leadForms = mysqlTable("leadForms", {
   confirmationImageKey: text("confirmationImageKey"),
   confirmationImageUrl: text("confirmationImageUrl"),
   confirmationHeadlineAlign: varchar("confirmationHeadlineAlign", { length: 10 }).default("left"),
+  // Discovery worksheet (optional, for discovery call forms)
+  worksheetId: int("worksheetId"),
   // Status
   isActive: boolean("isActive").default(true).notNull(),
   submissionCount: int("submissionCount").default(0).notNull(),
