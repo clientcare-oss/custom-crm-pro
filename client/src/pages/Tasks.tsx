@@ -546,6 +546,7 @@ type StudentTask = {
   priority: string | null;
   dueDate: Date | null;
   startedAt: Date | null;
+  completedAt: Date | null;
   assignedTo: number | null;
   assignedToUserId: number | null;
   assignedToUserName: string | null;
@@ -662,6 +663,14 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
                 {(task.projectName || task.assignedToUserName || task.dueDate) && <span className="text-muted-foreground/40 text-xs">|</span>}
                 <span className="text-xs text-amber-600 flex items-center gap-1 font-medium">
                   Started: {formatDateTime(task.startedAt)}
+                </span>
+              </>
+            )}
+            {task.completedAt && (
+              <>
+                {(task.projectName || task.assignedToUserName || task.dueDate || task.startedAt) && <span className="text-muted-foreground/40 text-xs">|</span>}
+                <span className="text-xs text-green-600 flex items-center gap-1 font-medium">
+                  Completed: {formatDateTime(task.completedAt)}
                 </span>
               </>
             )}

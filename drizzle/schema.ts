@@ -171,6 +171,8 @@ export const projectTasks = mysqlTable("projectTasks", {
   seenByClient: boolean("seenByClient").default(false).notNull(),
   /** Timestamp when task was first moved to "In Progress" status */
   startedAt: timestamp("startedAt"),
+  /** Timestamp when task was marked as "Done" */
+  completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

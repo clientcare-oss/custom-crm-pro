@@ -329,6 +329,16 @@ export async function updateTask(id: number, data: any) {
     const existingTask = await db.select().from(projectTasks).where(eq(projectTasks.id, id)).limit(1);
     if (existingTask.length > 0 && !existingTask[0].startedAt) {
       data.startedAt = new Date();
+      console.log(`[Task Log] Task ${id} started at ${data.startedAt.toISOString()}`);
+    }
+  }
+
+  // If status is being changed to "Done" and completedAt is not already set, set it now
+  if (data.status === "Done") {
+    const existingTask = await db.select().from(projectTasks).where(eq(projectTasks.id, id)).limit(1);
+    if (existingTask.length > 0 && !existingTask[0].completedAt) {
+      data.completedAt = new Date();
+      console.log(`[Task Log] Task ${id} completed at ${data.completedAt.toISOString()}`);
     }
   }
 
