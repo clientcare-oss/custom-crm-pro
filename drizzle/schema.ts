@@ -592,7 +592,7 @@ export const internalTasks = mysqlTable("internalTasks", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  status: mysqlEnum("status", ["not_started", "in_progress", "stuck", "complete"])
+  status: mysqlEnum("status", ["not_started", "in_progress", "paused", "stuck", "complete"])
     .default("not_started")
     .notNull(),
   projectId: int("projectId"),
@@ -608,6 +608,10 @@ export const internalTasks = mysqlTable("internalTasks", {
   createdBy: int("createdBy").notNull(),
   /** Timestamp when task was first moved to "in_progress" status */
   startedAt: timestamp("startedAt"),
+  /** Timestamp when task was marked as "paused" */
+  pausedAt: timestamp("pausedAt"),
+  /** Timestamp when task was marked as "stuck" */
+  stuckAt: timestamp("stuckAt"),
   /** Timestamp when task was marked as "complete" */
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

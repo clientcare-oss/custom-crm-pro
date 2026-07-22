@@ -63,13 +63,15 @@ type Task = {
   id: number;
   title: string;
   description: string | null;
-  status: "not_started" | "in_progress" | "stuck" | "complete";
+  status: "not_started" | "in_progress" | "paused" | "stuck" | "complete";
   projectId: number | null;
   projectName: string | null;
   assigneeId: number | null;
   assigneeName: string | null;
   dueDate: Date | null;
   startedAt: Date | null;
+  pausedAt: Date | null;
+  stuckAt: Date | null;
   completedAt: Date | null;
   resources: Resource[];
   subtasks: Subtask[];
@@ -92,6 +94,7 @@ type StudentWithFiles = {
 const STATUS_CONFIG = {
   not_started: { label: "Not Started", color: "bg-gray-100 text-gray-600 border-gray-200" },
   in_progress: { label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200" },
+  paused: { label: "Paused", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
   stuck: { label: "Stuck", color: "bg-red-100 text-red-700 border-red-200" },
   complete: { label: "Complete", color: "bg-green-100 text-green-700 border-green-200" },
 };
@@ -402,12 +405,22 @@ function TaskRow({
               </span>
             )}
             {task.startedAt && (
-              <span className="text-xs text-amber-600 flex items-center gap-1 font-medium">
+              <span className="text-sm text-amber-700 flex items-center gap-1 font-semibold tracking-tight">
                 Started: {formatDateTime(task.startedAt)}
               </span>
             )}
+            {task.pausedAt && (
+              <span className="text-sm text-yellow-700 flex items-center gap-1 font-semibold tracking-tight">
+                Paused: {formatDateTime(task.pausedAt)}
+              </span>
+            )}
+            {task.stuckAt && (
+              <span className="text-sm text-red-700 flex items-center gap-1 font-semibold tracking-tight">
+                Stuck: {formatDateTime(task.stuckAt)}
+              </span>
+            )}
             {task.completedAt && (
-              <span className="text-xs text-green-600 flex items-center gap-1 font-medium">
+              <span className="text-sm text-green-700 flex items-center gap-1 font-semibold tracking-tight">
                 Completed: {formatDateTime(task.completedAt)}
               </span>
             )}
@@ -992,7 +1005,7 @@ export default function Tasks() {
         </div>
         {/* Status filter */}
         <div className="flex gap-1 mb-5 border-b border-border pb-3 flex-wrap">
-          {(["all", "not_started", "in_progress", "stuck", "complete"] as const).map((s) => (
+          {(["all", "not_started", "in_progress", "paused", "stuck", "complete"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}

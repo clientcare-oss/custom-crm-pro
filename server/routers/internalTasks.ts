@@ -45,7 +45,7 @@ export const internalTasksRouter = router({
 
     list: protectedProcedure
       .input(z.object({
-        status: z.enum(["all", "not_started", "in_progress", "stuck", "complete"]).optional(),
+        status: z.enum(["all", "not_started", "in_progress", "paused", "stuck", "complete"]).optional(),
         assigneeId: z.number().optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
@@ -90,7 +90,7 @@ export const internalTasksRouter = router({
       .input(z.object({
         title: z.string().min(1),
         description: z.string().optional(),
-        status: z.enum(["not_started", "in_progress", "stuck", "complete"]).optional(),
+        status: z.enum(["not_started", "in_progress", "paused", "stuck", "complete"]).optional(),
         projectId: z.number().optional(),
         assigneeId: z.number().optional(),
         assigneeContactId: z.number().optional(),
@@ -130,7 +130,7 @@ export const internalTasksRouter = router({
         id: z.number(),
         title: z.string().min(1).optional(),
         description: z.string().optional(),
-        status: z.enum(["not_started", "in_progress", "stuck", "complete"]).optional(),
+        status: z.enum(["not_started", "in_progress", "paused", "stuck", "complete"]).optional(),
         projectId: z.number().nullable().optional(),
         assigneeId: z.number().nullable().optional(),
         assigneeContactId: z.number().nullable().optional(),
@@ -167,6 +167,26 @@ export const internalTasksRouter = router({
             const startedAtTime = new Date();
             updateData.startedAt = startedAtTime;
             console.log(`[Task Log] Internal task ${id} started at ${startedAtTime.toISOString()}`);
+          }
+        }
+        
+        // Set pausedAt when status changes to "paused"
+        if (data.status === "paused") {
+          const existingTask = await database.select().from(internalTasks).where(eq(internalTasks.id, id)).limit(1);
+          if (existingTask.length > 0 && !existingTask[0].pausedAt) {
+            const pausedAtTime = new Date();
+            updateData.pausedAt = pausedAtTime;
+            console.log(`[Task Log] Internal task ${id} paused at ${pausedAtTime.toISOString()}`);
+          }
+        }
+        
+        // Set stuckAt when status changes to "stuck"
+        if (data.status === "stuck") {
+          const existingTask = await database.select().from(internalTasks).where(eq(internalTasks.id, id)).limit(1);
+          if (existingTask.length > 0 && !existingTask[0].stuckAt) {
+            const stuckAtTime = new Date();
+            updateData.stuckAt = stuckAtTime;
+            console.log(`[Task Log] Internal task ${id} stuck at ${stuckAtTime.toISOString()}`);
           }
         }
         
