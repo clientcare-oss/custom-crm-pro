@@ -159,6 +159,27 @@ export const internalTasksRouter = router({
         if (data.linkedFileUrl !== undefined) updateData.linkedFileUrl = data.linkedFileUrl;
         if (data.linkedStudentId !== undefined) updateData.linkedStudentId = data.linkedStudentId;
         if (data.linkedStudentName !== undefined) updateData.linkedStudentName = data.linkedStudentName;
+        
+        // Set startedAt when status changes to "in_progress"
+        if (data.status === "in_progress") {
+          const existingTask = await database.select().from(internalTasks).where(eq(internalTasks.id, id)).limit(1);
+          if (existingTask.length > 0 && !existingTask[0].startedAt) {
+            const startedAtTime = new Date();
+            updateData.startedAt = startedAtTime;
+            console.log(`[Task Log] Internal task ${id} started at ${startedAtTime.toISOString()}`);
+          }
+        }
+        
+        // Set completedAt when status changes to "complete"
+        if (data.status === "complete") {
+          const existingTask = await database.select().from(internalTasks).where(eq(internalTasks.id, id)).limit(1);
+          if (existingTask.length > 0 && !existingTask[0].completedAt) {
+            const completedAtTime = new Date();
+            updateData.completedAt = completedAtTime;
+            console.log(`[Task Log] Internal task ${id} completed at ${completedAtTime.toISOString()}`);
+          }
+        }
+        
         await database.update(internalTasks).set(updateData).where(eq(internalTasks.id, id));
         return { success: true };
       }),

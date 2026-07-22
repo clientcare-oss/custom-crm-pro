@@ -70,6 +70,7 @@ type Task = {
   assigneeName: string | null;
   dueDate: Date | null;
   startedAt: Date | null;
+  completedAt: Date | null;
   resources: Resource[];
   subtasks: Subtask[];
   createdBy: number;
@@ -398,6 +399,16 @@ function TaskRow({
             {task.dueDate && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />{formatDateTime(task.dueDate)}
+              </span>
+            )}
+            {task.startedAt && (
+              <span className="text-xs text-amber-600 flex items-center gap-1 font-medium">
+                Started: {formatDateTime(task.startedAt)}
+              </span>
+            )}
+            {task.completedAt && (
+              <span className="text-xs text-green-600 flex items-center gap-1 font-medium">
+                Completed: {formatDateTime(task.completedAt)}
               </span>
             )}
             {task.linkedFileName && (

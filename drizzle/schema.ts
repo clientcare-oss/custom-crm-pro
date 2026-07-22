@@ -606,6 +606,10 @@ export const internalTasks = mysqlTable("internalTasks", {
   linkedStudentId: int("linkedStudentId"),
   linkedStudentName: varchar("linkedStudentName", { length: 255 }),
   createdBy: int("createdBy").notNull(),
+  /** Timestamp when task was first moved to "in_progress" status */
+  startedAt: timestamp("startedAt"),
+  /** Timestamp when task was marked as "complete" */
+  completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
