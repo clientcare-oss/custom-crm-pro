@@ -1177,3 +1177,11 @@
 ## Email Template Automation Badge
 - [x] Show lightning bolt (bright blue) on template cards connected to an automation
 - [x] On hover/click show tooltip: "Automation connected" + automation name(s)
+
+## PG-020 State Complaint Builder Transplant
+- [x] Pull complaint builder code from source project (GitHub remote)
+- [x] No separate DB tables needed (uses existing contacts + IEP data, AI generates complaint)
+- [x] Transplant server code (stateComplaint router with generate procedure)
+- [x] Transplant client page (StateComplaintBuilder.tsx)
+- [x] Wire State Complaint Builder into Tools nav (was already registered in routers.ts + App.tsx)
+- [x] Verify TypeScript compiles and full integration works
