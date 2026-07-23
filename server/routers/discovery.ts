@@ -283,4 +283,42 @@ export const discoveryRouter = router({
         await db.upsertDiscoveryWorksheet(ctx.user.id, input.fileKey, input.fileName, input.fileSize);
         return { success: true };
       }),
+    getPreliminaryNote: adminProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { projectNotes } = await import("../../drizzle/schema");
+        const { eq: deq, asc: dasc } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [note] = await dbConn.select().from(projectNotes)
+          .where(and(deq(projectNotes.projectId, input.projectId), deq(projectNotes.isVisibleToClient, false)))
+          .orderBy(dasc(projectNotes.createdAt))
+          .limit(1);
+        return note || null;
+      }),
+    updatePreliminaryNote: adminProcedure
+      .input(z.object({ projectId: z.number(), content: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { projectNotes } = await import("../../drizzle/schema");
+        const { eq: deq, asc: dasc } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [existing] = await dbConn.select().from(projectNotes)
+          .where(and(deq(projectNotes.projectId, input.projectId), deq(projectNotes.isVisibleToClient, false)))
+          .orderBy(dasc(projectNotes.createdAt))
+          .limit(1);
+        if (existing) {
+          await dbConn.update(projectNotes).set({ content: input.content }).where(deq(projectNotes.id, existing.id));
+          return { id: existing.id };
+        } else {
+          const result = await dbConn.insert(projectNotes).values({
+            projectId: input.projectId,
+            title: "Preliminary Notes",
+            content: input.content,
+            isVisibleToClient: false,
+            createdBy: ctx.user.id,
+          });
+          return { id: (result as any).insertId };
+        }
+      }),
   });

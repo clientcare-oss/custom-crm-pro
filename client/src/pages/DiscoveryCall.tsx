@@ -105,7 +105,7 @@ export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
   const [, setLocation] = useLocation();
 
   // Section open/close state
-  const [openSections, setOpenSections] = useState<Record<number, boolean>>({
+  const [openSections, setOpenSections] = useState<Record<number | string, boolean>>({
     1: true, 2: false, 3: false, 4: false, 5: false,
     6: false, 7: false, 8: false, 9: false, 10: false,
   });
@@ -138,6 +138,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
   const [closingResponse, setClosingResponse] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [privateNotes, setPrivateNotes] = useState("");
+  const [preliminaryNotes, setPreliminaryNotes] = useState("");
   const [nextStepsCompleted, setNextStepsCompleted] = useState<string[]>([]);
   const [lostStepsCompleted, setLostStepsCompleted] = useState<string[]>([]);
 
@@ -831,6 +832,22 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                 >
                   Expand all questions
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Preliminary Notes */}
+          <div className="space-y-2">
+            <SectionHeader number={"3.5" as any} title="Preliminary Notes" isOpen={openSections["3.5"]} onToggle={() => toggleSection("3.5" as any)} />
+            {openSections["3.5"] && (
+              <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4">
+                <Textarea
+                  value={preliminaryNotes}
+                  onChange={(e) => { setPreliminaryNotes(e.target.value); triggerSave(); }}
+                  placeholder="Preliminary notes (advocate-only, syncs with client profile)..."
+                  className="bg-[#071422] border-white/10 text-white placeholder:text-white/30 text-sm resize-none"
+                  rows={4}
+                />
               </div>
             )}
           </div>
