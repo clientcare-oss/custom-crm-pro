@@ -49,12 +49,42 @@ const GALLERY_TEMPLATES = [
 const EMAIL_CATEGORIES = ["Onboarding", "Reminders", "Follow-up", "Updates", "IEP", "Discovery", "General"];
 
 const FOLDER_COLORS: { value: string; label: string; bg: string; text: string; dot: string }[] = [
-  { value: "blue",   label: "Blue",   bg: "bg-blue-50 dark:bg-blue-900/20",   text: "text-blue-600 dark:text-blue-400",   dot: "bg-blue-500" },
-  { value: "green",  label: "Green",  bg: "bg-green-50 dark:bg-green-900/20", text: "text-green-600 dark:text-green-400", dot: "bg-green-500" },
-  { value: "purple", label: "Purple", bg: "bg-purple-50 dark:bg-purple-900/20",text: "text-purple-600 dark:text-purple-400",dot: "bg-purple-500" },
-  { value: "amber",  label: "Amber",  bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
-  { value: "rose",   label: "Rose",   bg: "bg-rose-50 dark:bg-rose-900/20",   text: "text-rose-600 dark:text-rose-400",   dot: "bg-rose-500" },
-  { value: "teal",   label: "Teal",   bg: "bg-teal-50 dark:bg-teal-900/20",   text: "text-teal-600 dark:text-teal-400",   dot: "bg-teal-500" },
+  // Blues
+  { value: "blue-light",  label: "Light Blue",  bg: "bg-blue-50 dark:bg-blue-900/10",   text: "text-blue-400 dark:text-blue-300",   dot: "bg-blue-300" },
+  { value: "blue",        label: "Blue",        bg: "bg-blue-50 dark:bg-blue-900/20",   text: "text-blue-600 dark:text-blue-400",   dot: "bg-blue-500" },
+  { value: "blue-dark",   label: "Dark Blue",   bg: "bg-blue-100 dark:bg-blue-900/40",  text: "text-blue-800 dark:text-blue-300",   dot: "bg-blue-700" },
+  // Greens
+  { value: "green-light", label: "Light Green", bg: "bg-green-50 dark:bg-green-900/10",  text: "text-green-400 dark:text-green-300",  dot: "bg-green-300" },
+  { value: "green",       label: "Green",       bg: "bg-green-50 dark:bg-green-900/20",  text: "text-green-600 dark:text-green-400",  dot: "bg-green-500" },
+  { value: "green-dark",  label: "Dark Green",  bg: "bg-green-100 dark:bg-green-900/40", text: "text-green-800 dark:text-green-300",  dot: "bg-green-700" },
+  // Purples
+  { value: "purple-light",label: "Light Purple",bg: "bg-purple-50 dark:bg-purple-900/10", text: "text-purple-400 dark:text-purple-300", dot: "bg-purple-300" },
+  { value: "purple",      label: "Purple",      bg: "bg-purple-50 dark:bg-purple-900/20", text: "text-purple-600 dark:text-purple-400", dot: "bg-purple-500" },
+  { value: "purple-dark", label: "Dark Purple", bg: "bg-purple-100 dark:bg-purple-900/40",text: "text-purple-800 dark:text-purple-300", dot: "bg-purple-700" },
+  // Amber/Orange
+  { value: "amber-light", label: "Light Amber", bg: "bg-amber-50 dark:bg-amber-900/10",  text: "text-amber-400 dark:text-amber-300",  dot: "bg-amber-300" },
+  { value: "amber",       label: "Amber",       bg: "bg-amber-50 dark:bg-amber-900/20",  text: "text-amber-600 dark:text-amber-400",  dot: "bg-amber-500" },
+  { value: "orange",      label: "Orange",      bg: "bg-orange-50 dark:bg-orange-900/20", text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
+  // Reds/Rose
+  { value: "rose-light",  label: "Light Rose",  bg: "bg-rose-50 dark:bg-rose-900/10",   text: "text-rose-400 dark:text-rose-300",   dot: "bg-rose-300" },
+  { value: "rose",        label: "Rose",        bg: "bg-rose-50 dark:bg-rose-900/20",   text: "text-rose-600 dark:text-rose-400",   dot: "bg-rose-500" },
+  { value: "red",         label: "Red",         bg: "bg-red-50 dark:bg-red-900/20",     text: "text-red-600 dark:text-red-400",     dot: "bg-red-500" },
+  // Teal/Cyan
+  { value: "teal-light",  label: "Light Teal",  bg: "bg-teal-50 dark:bg-teal-900/10",   text: "text-teal-400 dark:text-teal-300",   dot: "bg-teal-300" },
+  { value: "teal",        label: "Teal",        bg: "bg-teal-50 dark:bg-teal-900/20",   text: "text-teal-600 dark:text-teal-400",   dot: "bg-teal-500" },
+  { value: "cyan",        label: "Cyan",        bg: "bg-cyan-50 dark:bg-cyan-900/20",   text: "text-cyan-600 dark:text-cyan-400",   dot: "bg-cyan-500" },
+  // Pinks/Fuchsia
+  { value: "pink",        label: "Pink",        bg: "bg-pink-50 dark:bg-pink-900/20",   text: "text-pink-600 dark:text-pink-400",   dot: "bg-pink-500" },
+  { value: "fuchsia",     label: "Fuchsia",     bg: "bg-fuchsia-50 dark:bg-fuchsia-900/20",text: "text-fuchsia-600 dark:text-fuchsia-400",dot: "bg-fuchsia-500" },
+  // Neutrals
+  { value: "slate",       label: "Slate",       bg: "bg-slate-50 dark:bg-slate-900/20",  text: "text-slate-600 dark:text-slate-400",  dot: "bg-slate-500" },
+  { value: "zinc",        label: "Zinc",        bg: "bg-zinc-50 dark:bg-zinc-900/20",   text: "text-zinc-600 dark:text-zinc-400",   dot: "bg-zinc-500" },
+  // Indigo/Violet
+  { value: "indigo",      label: "Indigo",      bg: "bg-indigo-50 dark:bg-indigo-900/20", text: "text-indigo-600 dark:text-indigo-400", dot: "bg-indigo-500" },
+  { value: "violet",      label: "Violet",      bg: "bg-violet-50 dark:bg-violet-900/20", text: "text-violet-600 dark:text-violet-400", dot: "bg-violet-500" },
+  // Yellow/Lime
+  { value: "yellow",      label: "Yellow",      bg: "bg-yellow-50 dark:bg-yellow-900/20", text: "text-yellow-600 dark:text-yellow-400", dot: "bg-yellow-400" },
+  { value: "lime",        label: "Lime",        bg: "bg-lime-50 dark:bg-lime-900/20",   text: "text-lime-600 dark:text-lime-400",   dot: "bg-lime-500" },
 ];
 
 function getFolderStyle(color?: string | null) {
@@ -186,17 +216,18 @@ function FolderDialog({
             <Input placeholder="e.g. IEP Templates" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
           </div>
           <div className="space-y-1.5">
-            <Label>Color</Label>
-            <div className="flex gap-2 flex-wrap">
+            <Label>Color & Brightness</Label>
+            <div className="grid grid-cols-9 gap-1.5">
               {FOLDER_COLORS.map((c) => (
                 <button
                   key={c.value}
                   onClick={() => setColor(c.value)}
-                  className={`h-7 w-7 rounded-full ${c.dot} ring-2 transition-all ${color === c.value ? "ring-foreground ring-offset-2" : "ring-transparent"}`}
+                  className={`h-6 w-6 rounded-full ${c.dot} ring-2 transition-all hover:scale-110 ${color === c.value ? "ring-foreground ring-offset-2 ring-offset-background" : "ring-transparent"}`}
                   title={c.label}
                 />
               ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">Light → Dark variants per color family</p>
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={onClose} disabled={saving}><X className="h-4 w-4 mr-1" /> Cancel</Button>

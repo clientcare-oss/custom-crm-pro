@@ -1146,3 +1146,8 @@
 - [x] Wire RichTextEditor into Messages
 - [ ] Wire RichTextEditor into Smart Files
 - [ ] Wire RichTextEditor into all other text areas across CRM
+
+## Email Template Folder Color Customization
+- [x] Add color field to emailTemplateFolders table (already existed)
+- [x] Add color picker UI when creating/editing folders (expanded palette with brightness options — 25 colors)
+- [x] Apply folder color to folder icons in sidebar
