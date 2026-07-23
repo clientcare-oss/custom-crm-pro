@@ -1167,3 +1167,9 @@
 - [x] Add backend CRUD for services and folders
 - [x] Create Services page with folder sidebar organization (like Email Templates)
 - [x] Add Services to left sidebar navigation
+
+## Email Template Updates
+- [x] Add search bar to Email Templates page (search by name/keyword)
+- [x] Before deleting, check if template is connected to an active automation
+- [x] If connected, show warning with automation names and Cancel/Delete Anyway options
+- [x] Templates not connected to automation use standard delete confirmation

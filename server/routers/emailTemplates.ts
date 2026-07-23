@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { emailTemplates, emailTemplateFolders } from "../../drizzle/schema";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { emailTemplates, emailTemplateFolders, workflows } from "../../drizzle/schema";
+import { eq, and, isNull, desc, like } from "drizzle-orm";
 
 // ─── Folders ──────────────────────────────────────────────────────────────────
 
@@ -137,6 +137,25 @@ export const emailTemplatesRouter = router({
         .set(data)
         .where(and(eq(emailTemplates.id, id), eq(emailTemplates.ownerId, ctx.user.id)));
       return { success: true };
+    }),
+
+  checkAutomationUsage: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { linked: false, automationNames: [] as string[] };
+      // Check if any workflow's canvasData references this template ID
+      const allWorkflows = await db
+        .select({ id: workflows.id, title: workflows.title, canvasData: workflows.canvasData })
+        .from(workflows)
+        .where(eq(workflows.createdBy, ctx.user.id));
+      const linkedNames: string[] = [];
+      for (const wf of allWorkflows) {
+        if (wf.canvasData && wf.canvasData.includes(`"emailTemplateId":${input.id}`) || wf.canvasData?.includes(`"emailTemplateId": ${input.id}`) || wf.canvasData?.includes(`"templateId":${input.id}`) || wf.canvasData?.includes(`"templateId": ${input.id}`) || wf.canvasData?.includes(`"emailTemplate":${input.id}`) || wf.canvasData?.includes(`"emailTemplate": ${input.id}`)) {
+          linkedNames.push(wf.title);
+        }
+      }
+      return { linked: linkedNames.length > 0, automationNames: linkedNames };
     }),
 
   delete: adminProcedure

@@ -3,7 +3,7 @@ import {
   LayoutTemplate, FilePlus2, FileText, Mail, ShoppingBag,
   PlusCircle, Library, ArrowRight, Pencil, Trash2,
   Star, Package, ChevronRight, X, Save, Folder, FolderOpen,
-  FolderPlus, MoreHorizontal, MoveRight, Inbox,
+  FolderPlus, MoreHorizontal, MoveRight, Inbox, Search, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -250,15 +250,26 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
   const utils = trpc.useUtils();
   const { data: folders = [] } = trpc.emailTemplates.folders.list.useQuery();
   const [activeFolder, setActiveFolder] = useState<FolderFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Build query input based on active folder
   const queryInput = activeFolder === "all" ? undefined : { folderId: activeFolder };
   const { data: templates = [], isLoading } = trpc.emailTemplates.list.useQuery(queryInput);
 
+  // Filter templates by search query
+  const filteredTemplates = searchQuery.trim()
+    ? templates.filter((tpl: any) =>
+        tpl.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tpl.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tpl.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : templates;
+
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<(TemplateFormData & { id?: number }) | null>(null);
   const [folderDialog, setFolderDialog] = useState(false);
   const [editingFolder, setEditingFolder] = useState<{ id?: number; name: string; color: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; name: string; linked: boolean; automationNames: string[] } | null>(null);
 
   // Folder mutations
   const createFolder = trpc.emailTemplates.folders.create.useMutation({
@@ -340,6 +351,22 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
         <Button size="sm" className="gap-2" onClick={() => { setEditingTemplate(null); setTemplateDialog(true); }}>
           <PlusCircle className="h-4 w-4" /> New Template
         </Button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search templates by name, subject, or category..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Layout: sidebar + content */}
@@ -436,7 +463,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
             <div className="space-y-2">
               {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl border bg-card animate-pulse" />)}
             </div>
-          ) : templates.length === 0 ? (
+          ) : filteredTemplates.length === 0 ? (
             <Card className="flex flex-col items-center justify-center py-16 text-center border-dashed">
               <Mail className="h-10 w-10 text-muted-foreground/30 mb-3" />
               <p className="text-sm font-medium text-muted-foreground">
@@ -449,7 +476,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
             </Card>
           ) : (
             <div className="space-y-2">
-              {templates.map((tpl: any) => {
+              {filteredTemplates.map((tpl: any) => {
                 const tplFolder = folders.find((f: any) => f.id === tpl.folderId);
                 const folderStyle = tplFolder ? getFolderStyle(tplFolder.color) : null;
                 return (
@@ -500,7 +527,15 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
                           })}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      <button onClick={() => { if (confirm(`Delete "${tpl.name}"?`)) deleteTemplate.mutate({ id: tpl.id }); }} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Delete">
+                      <button onClick={async () => {
+                        // Check automation usage before deleting
+                        try {
+                          const usage = await utils.emailTemplates.checkAutomationUsage.fetch({ id: tpl.id });
+                          setDeleteConfirm({ id: tpl.id, name: tpl.name, linked: usage.linked, automationNames: usage.automationNames });
+                        } catch {
+                          setDeleteConfirm({ id: tpl.id, name: tpl.name, linked: false, automationNames: [] });
+                        }
+                      }} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Delete">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -528,6 +563,59 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
         onSave={handleSaveFolder}
         saving={folderSaving}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={(v) => { if (!v) setDeleteConfirm(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {deleteConfirm?.linked ? (
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              ) : (
+                <Trash2 className="h-5 w-5 text-red-500" />
+              )}
+              Delete Template
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {deleteConfirm?.linked ? (
+              <>
+                <p className="text-sm text-foreground">
+                  This email template is currently used by an automation. Deleting it may prevent that automation from working correctly. Are you sure you want to continue?
+                </p>
+                {deleteConfirm.automationNames.length > 0 && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                    <p className="text-xs font-medium text-amber-800 dark:text-amber-300 mb-1">Connected automations:</p>
+                    <ul className="text-xs text-amber-700 dark:text-amber-400 space-y-0.5">
+                      {deleteConfirm.automationNames.map((name, i) => (
+                        <li key={i} className="flex items-center gap-1">• {name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete "{deleteConfirm?.name}"? This action cannot be undone.
+              </p>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (deleteConfirm) {
+                    deleteTemplate.mutate({ id: deleteConfirm.id });
+                    setDeleteConfirm(null);
+                  }
+                }}
+              >
+                {deleteConfirm?.linked ? "Delete Anyway" : "Delete"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
