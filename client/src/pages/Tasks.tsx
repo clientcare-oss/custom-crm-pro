@@ -644,7 +644,7 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`font-bold text-base ${
+            <span className={`font-normal text-lg ${
               isDone ? "line-through text-muted-foreground" : "text-foreground"
             }`}>{task.title}</span>
             {task.priority && (
