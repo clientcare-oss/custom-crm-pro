@@ -1154,3 +1154,10 @@
 
 ## Tasks - Completed Tab
 - [x] Sort completed tasks to bottom of list on "All" tab in general tasks
+
+## Sponsor Page
+- [x] Create Sponsor page with two sections: Sponsor (foundation donations) and Gift (family-specific donations)
+- [x] Add Sponsor to left sidebar navigation
+- [x] Create sponsors/donations database table
+- [x] Add backend CRUD for sponsor entries
+- [x] Gift form has Case ID selector (linked to projects) with note that sponsor has NO access to client files unless explicitly allowed

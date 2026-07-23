@@ -72,6 +72,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: UserCheck, label: "Team", path: "/team" },
     { icon: Brain, label: "BrainDump", path: "/brain-dump" },
     { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
+    { icon: Heart, label: "Sponsors", path: "/sponsors" },
     { icon: Banknote, label: "Bill Guardian", path: "/bill-guardian" },
     { icon: Zap, label: "Automations", path: "/automations" },
     { icon: Plug, label: "Integrations", path: "/integrations" },

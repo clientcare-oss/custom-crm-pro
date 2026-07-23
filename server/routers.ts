@@ -41,6 +41,7 @@ import { brainDumpImagesRouter } from "./routers/brainDumpImages";
 import { discoveryRouter } from "./routers/discovery";
 import { resourcesRouter } from "./routers/resources";
 import { emailTemplatesRouter } from "./routers/emailTemplates";
+import { sponsorsRouter } from "./routers/sponsors";
 
 export const appRouter = router({
   portalAuth: portalAuthRouter,
@@ -85,6 +86,7 @@ export const appRouter = router({
   discovery: discoveryRouter,
   resources: resourcesRouter,
   emailTemplates: emailTemplatesRouter,
+  sponsors: sponsorsRouter,
 });
 
 export type AppRouter = typeof appRouter;

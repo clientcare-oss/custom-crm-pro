@@ -39,6 +39,7 @@ import IntakeForm from "./pages/IntakeForm";
 import DynamicForm from "./pages/DynamicForm";
 import AiConnections from "./pages/AiConnections";
 import BillGuardian from "./pages/BillGuardian";
+import Sponsors from "./pages/Sponsors";
 import PageIdShowcase from "./pages/PageIdShowcase";
 import PortalBook from "./pages/PortalBook";
 import SmartFiles from "./pages/SmartFiles";
@@ -126,6 +127,7 @@ function Router() {
           <Route path="/state-complaint-builder" component={StateComplaintBuilder} />
           <Route path="/brain-dump" component={BrainDump} />
           <Route path="/ai-connections" component={AiConnections} />
+              <Route path="/sponsors" component={Sponsors} />
               <Route path="/bill-guardian" component={BillGuardian} />
           <Route path="/page-id-showcase" component={PageIdShowcase} />
           <Route path="/portal/book" component={PortalBook} />

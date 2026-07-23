@@ -1301,3 +1301,25 @@ export const emailTemplates = mysqlTable("emailTemplates", {
 });
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;
+
+/**
+ * Sponsors & Gifts — tracks donations to the foundation (sponsor) or to a specific family (gift).
+ */
+export const sponsors = mysqlTable("sponsors", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  type: varchar("type", { length: 20 }).notNull(), // "sponsor" or "gift"
+  donorName: varchar("donorName", { length: 200 }).notNull(),
+  donorEmail: varchar("donorEmail", { length: 200 }),
+  donorPhone: varchar("donorPhone", { length: 50 }),
+  amount: int("amount"), // in cents
+  familyContactId: int("familyContactId"), // only for "gift" type — links to a contact/family
+  familyName: varchar("familyName", { length: 200 }), // display name for the family
+  notes: text("notes"),
+  status: varchar("status", { length: 30 }).default("received"), // received, acknowledged, pending
+  donatedAt: timestamp("donatedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Sponsor = typeof sponsors.$inferSelect;
+export type InsertSponsor = typeof sponsors.$inferInsert;
