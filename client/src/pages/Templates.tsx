@@ -3,12 +3,13 @@ import {
   LayoutTemplate, FilePlus2, FileText, Mail, ShoppingBag,
   PlusCircle, Library, ArrowRight, Pencil, Trash2,
   Star, Package, ChevronRight, X, Save, Folder, FolderOpen,
-  FolderPlus, MoreHorizontal, MoveRight, Inbox, Search, AlertTriangle,
+  FolderPlus, MoreHorizontal, MoveRight, Inbox, Search, AlertTriangle, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "@/components/RichTextEditor";
@@ -255,6 +256,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
   // Build query input based on active folder
   const queryInput = activeFolder === "all" ? undefined : { folderId: activeFolder };
   const { data: templates = [], isLoading } = trpc.emailTemplates.list.useQuery(queryInput);
+  const { data: automationMap = {} } = trpc.emailTemplates.checkAllAutomationUsage.useQuery();
 
   // Filter templates by search query
   const filteredTemplates = searchQuery.trim()
@@ -479,6 +481,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
               {filteredTemplates.map((tpl: any) => {
                 const tplFolder = folders.find((f: any) => f.id === tpl.folderId);
                 const folderStyle = tplFolder ? getFolderStyle(tplFolder.color) : null;
+                const linkedAutomations = (automationMap as Record<number, string[]>)[tpl.id] ?? [];
                 return (
                   <div key={tpl.id} className="group flex items-center gap-3 rounded-xl border bg-card px-4 py-3 hover:shadow-sm transition-shadow">
                     <div className="h-9 w-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
@@ -493,6 +496,22 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
                       <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${folderStyle.bg} ${folderStyle.text} shrink-0`}>
                         <Folder className="h-3 w-3" /> {tplFolder.name}
                       </span>
+                    )}
+                    {/* Automation connected badge */}
+                    {linkedAutomations.length > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium shrink-0 cursor-pointer">
+                            <Zap className="h-3 w-3 fill-current" /> Automation
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="font-medium text-xs">Automation connected:</p>
+                          {linkedAutomations.map((name: string, i: number) => (
+                            <p key={i} className="text-xs">{name}</p>
+                          ))}
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                     {tpl.category && (
                       <Badge variant="outline" className="text-xs shrink-0">{tpl.category}</Badge>

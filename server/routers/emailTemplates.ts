@@ -144,7 +144,6 @@ export const emailTemplatesRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { linked: false, automationNames: [] as string[] };
-      // Check if any workflow's canvasData references this template ID
       const allWorkflows = await db
         .select({ id: workflows.id, title: workflows.title, canvasData: workflows.canvasData })
         .from(workflows)
@@ -156,6 +155,36 @@ export const emailTemplatesRouter = router({
         }
       }
       return { linked: linkedNames.length > 0, automationNames: linkedNames };
+    }),
+
+  checkAllAutomationUsage: adminProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return {} as Record<number, string[]>;
+      const allWorkflows = await db
+        .select({ id: workflows.id, title: workflows.title, canvasData: workflows.canvasData })
+        .from(workflows)
+        .where(eq(workflows.createdBy, ctx.user.id));
+      // Build a map: templateId -> [workflow names]
+      const map: Record<number, string[]> = {};
+      for (const wf of allWorkflows) {
+        if (!wf.canvasData) continue;
+        // Extract all template IDs referenced in canvasData
+        const patterns = [
+          /"emailTemplateId":\s*(\d+)/g,
+          /"templateId":\s*(\d+)/g,
+          /"emailTemplate":\s*(\d+)/g,
+        ];
+        for (const pattern of patterns) {
+          let match;
+          while ((match = pattern.exec(wf.canvasData)) !== null) {
+            const tplId = parseInt(match[1]);
+            if (!map[tplId]) map[tplId] = [];
+            if (!map[tplId].includes(wf.title)) map[tplId].push(wf.title);
+          }
+        }
+      }
+      return map;
     }),
 
   delete: adminProcedure

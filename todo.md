@@ -1173,3 +1173,7 @@
 - [x] Before deleting, check if template is connected to an active automation
 - [x] If connected, show warning with automation names and Cancel/Delete Anyway options
 - [x] Templates not connected to automation use standard delete confirmation
+
+## Email Template Automation Badge
+- [x] Show lightning bolt (bright blue) on template cards connected to an automation
+- [x] On hover/click show tooltip: "Automation connected" + automation name(s)
