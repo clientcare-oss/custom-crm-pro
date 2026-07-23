@@ -449,7 +449,7 @@ function ListRow({ item, onEdit, onDelete, onTogglePin, onStatusChange, onConver
 
       {/* Title + thumbnails */}
       <div className="flex-1 min-w-0" onClick={() => onEdit(item)}>
-        <p className={`text-sm font-medium truncate ${item.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}>
+        <p className={`text-lg font-normal truncate ${item.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}>
           {item.pinned && <Star className="inline h-3 w-3 text-amber-400 mr-1 fill-amber-400" />}
           {item.title}
         </p>
@@ -524,7 +524,7 @@ function KanbanCard({ item, onEdit, onDelete, onTogglePin, onConvertToTask }: {
       onClick={() => onEdit(item)}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className={`text-xs font-semibold leading-snug flex-1 ${item.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+        <p className={`text-base font-normal leading-snug flex-1 ${item.status === "done" ? "line-through text-muted-foreground" : ""}`}>
           {item.pinned && <Star className="inline h-3 w-3 text-amber-400 mr-1 fill-amber-400" />}
           {item.title}
         </p>
@@ -583,7 +583,7 @@ function GridCard({ item, onEdit, onDelete, onTogglePin, onStatusChange, onConve
       onClick={() => onEdit(item)}
     >
       <div className="flex items-start justify-between gap-2 mb-3">
-        <p className={`text-sm font-semibold leading-snug flex-1 ${item.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+        <p className={`text-lg font-normal leading-snug flex-1 ${item.status === "done" ? "line-through text-muted-foreground" : ""}`}>
           {item.pinned && <Star className="inline h-3 w-3 text-amber-400 mr-1 fill-amber-400" />}
           {item.title}
         </p>
