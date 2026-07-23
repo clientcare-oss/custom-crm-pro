@@ -178,6 +178,11 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
   const { data: questions, refetch: refetchQuestions } = trpc.discovery.getQuestions.useQuery(undefined, { enabled: !!user });
   const { data: resources, refetch: refetchResources } = trpc.resources.list.useQuery(undefined, { enabled: !!user });
   const { data: contacts } = trpc.contacts.list.useQuery(undefined, { enabled: !!user });
+  const { data: preliminaryNote } = trpc.discovery.getPreliminaryNote.useQuery(
+    { projectId: leadId },
+    { enabled: !!leadId }
+  );
+  const updatePreliminaryNoteMutation = trpc.discovery.updatePreliminaryNote.useMutation();
 
   // Mutations
   const saveMutation = trpc.discovery.save.useMutation({
@@ -250,6 +255,13 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
       try { setQuestionNotes(JSON.parse(callSession.questionNotes)); } catch {}
     }
   }, [callSession]);
+
+  // Load preliminary notes from client account
+  useEffect(() => {
+    if (preliminaryNote?.content) {
+      setPreliminaryNotes(preliminaryNote.content);
+    }
+  }, [preliminaryNote?.id]);
 
   // Autosave
   const triggerSave = useCallback(() => {
@@ -836,7 +848,19 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                   <p className="text-xs font-semibold text-white/60 mb-2">Preliminary Notes</p>
                   <Textarea
                     value={preliminaryNotes}
-                    onChange={(e) => { setPreliminaryNotes(e.target.value); triggerSave(); }}
+                    onChange={(e) => {
+                      setPreliminaryNotes(e.target.value);
+                      if (saveTimer.current) clearTimeout(saveTimer.current);
+                      saveTimer.current = setTimeout(() => {
+                        if (preliminaryNotes) {
+                          setSaving(true);
+                          updatePreliminaryNoteMutation.mutate(
+                            { projectId: leadId, content: e.target.value },
+                            { onSuccess: () => { setSaving(false); setLastSaved(new Date()); } }
+                          );
+                        }
+                      }, 500);
+                    }}
                     placeholder="Advocate-only notes (syncs with client profile)..."
                     className="bg-[#071422] border-white/10 text-white placeholder:text-white/30 text-sm resize-none"
                     rows={3}
