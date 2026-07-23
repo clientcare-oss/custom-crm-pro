@@ -832,22 +832,16 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                 >
                   Expand all questions
                 </button>
-              </div>
-            )}
-          </div>
-
-          {/* Preliminary Notes */}
-          <div className="space-y-2">
-            <SectionHeader number={"3.5" as any} title="Preliminary Notes" isOpen={openSections["3.5"]} onToggle={() => toggleSection("3.5" as any)} />
-            {openSections["3.5"] && (
-              <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4">
-                <Textarea
-                  value={preliminaryNotes}
-                  onChange={(e) => { setPreliminaryNotes(e.target.value); triggerSave(); }}
-                  placeholder="Preliminary notes (advocate-only, syncs with client profile)..."
-                  className="bg-[#071422] border-white/10 text-white placeholder:text-white/30 text-sm resize-none"
-                  rows={4}
-                />
+                <div className="border-t border-white/10 pt-3 mt-3">
+                  <p className="text-xs font-semibold text-white/60 mb-2">Preliminary Notes</p>
+                  <Textarea
+                    value={preliminaryNotes}
+                    onChange={(e) => { setPreliminaryNotes(e.target.value); triggerSave(); }}
+                    placeholder="Advocate-only notes (syncs with client profile)..."
+                    className="bg-[#071422] border-white/10 text-white placeholder:text-white/30 text-sm resize-none"
+                    rows={3}
+                  />
+                </div>
               </div>
             )}
           </div>
