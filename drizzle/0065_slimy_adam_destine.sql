@@ -1,0 +1,1 @@
+ALTER TABLE `leads` MODIFY COLUMN `status` enum('New','14 Day Follow-up','30 Day Follow-up','60 Day Follow-up','90 Day Follow-up','Qualified','Won','Lost') NOT NULL DEFAULT 'New';

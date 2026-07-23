@@ -91,14 +91,14 @@ export type InsertContact = typeof contacts.$inferInsert;
 
 /**
  * Leads table for sales pipeline tracking.
- * Statuses: New, Follow-up, Qualified, Won, Lost
+ * Statuses: New, 14 Day Follow-up, 30 Day Follow-up, 60 Day Follow-up, 90 Day Follow-up, Qualified, Won, Lost
  */
 export const leads = mysqlTable("leads", {
   id: int("id").autoincrement().primaryKey(),
   ownerId: int("ownerId").notNull(),
   contactId: int("contactId"),
   source: varchar("source", { length: 100 }),
-  status: mysqlEnum("status", ["New", "Follow-up", "Qualified", "Won", "Lost"])
+  status: mysqlEnum("status", ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Qualified", "Won", "Lost"])
     .default("New")
     .notNull(),
   value: decimal("value", { precision: 12, scale: 2 }),

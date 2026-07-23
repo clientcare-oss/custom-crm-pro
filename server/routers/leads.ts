@@ -25,7 +25,7 @@ export const leadsRouter = router({
         z.object({
           contactId: z.number().optional(),
           source: z.string().optional(),
-          status: z.enum(["New", "Follow-up", "Qualified", "Won", "Lost"]).optional(),
+          status: z.enum(["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Qualified", "Won", "Lost"]).optional(),
           value: z.string().optional(),
           notes: z.string().optional(),
           parentName: z.string().optional(),
@@ -46,7 +46,7 @@ export const leadsRouter = router({
           id: z.number(),
           contactId: z.number().optional(),
           source: z.string().optional(),
-          status: z.enum(["New", "Follow-up", "Qualified", "Won", "Lost"]).optional(),
+          status: z.enum(["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Qualified", "Won", "Lost"]).optional(),
           value: z.string().optional(),
           notes: z.string().optional(),
           parentName: z.string().optional(),

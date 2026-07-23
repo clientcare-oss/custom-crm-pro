@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
 import { useLocation } from "wouter";
 
-const LEAD_STATUSES = ["New", "Follow-up", "Qualified", "Won", "Lost"] as const;
+const LEAD_STATUSES = ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Qualified", "Won", "Lost"] as const;
 type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 const emptyForm = {
@@ -138,7 +138,13 @@ export default function Leads() {
   const getStatusColor = (status: LeadStatus) => {
     const colors: Record<LeadStatus, string> = {
       New: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      "Follow-up":
+      "14 Day Follow-up":
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+      "30 Day Follow-up":
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+      "60 Day Follow-up":
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+      "90 Day Follow-up":
         "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
       Qualified:
         "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
@@ -356,11 +362,28 @@ export default function Leads() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           {LEAD_STATUSES.map((status) => (
             <div key={status} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">{status}</h3>
-                <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
-                  {leadsByStatus[status].length}
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground">{status}</h3>
+                  <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
+                    {leadsByStatus[status].length}
+                  </span>
+                </div>
+                {status.includes("Follow-up") && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <Zap className="w-3 h-3 text-yellow-500" />
+                    <Select>
+                      <SelectTrigger className="h-7 text-xs bg-muted border-muted-foreground/20">
+                        <SelectValue placeholder="Select email template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="template1">Template 1</SelectItem>
+                        <SelectItem value="template2">Template 2</SelectItem>
+                        <SelectItem value="template3">Template 3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
               <div className="space-y-3">
                 {leadsByStatus[status].length > 0 ? (
