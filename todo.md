@@ -1124,3 +1124,25 @@
 - [ ] Create folder dialog with name and color picker
 - [ ] Move template to folder via dropdown on template row
 - [ ] Unfiled / All Templates view
+
+## Universal Rich Text Editor Component
+- [x] Install Tiptap editor with extensions (bold, italic, underline, text-align, color, highlight, lists, link, image, divider, placeholder)
+- [x] Build RichTextEditor component with full formatting toolbar
+- [x] Add font picker, font size selector
+- [x] Add text color and highlight color pickers
+- [x] Add alignment buttons (left, center, right)
+- [x] Add bullet list, numbered list, remove formatting, divider
+- [x] Add emoji picker insert
+- [x] Add insert link dialog
+- [x] Add insert smart field (merge tags) dropdown
+- [x] Add insert signature button
+- [x] Add insert image/file button
+- [x] Add insert unsubscribe link button
+- [x] Add insert calendar link to session type availability
+- [x] Add AI rewrite suggestion button (accept & replace OR insert below)
+- [x] Add AI rephrase sentence option
+- [x] Wire RichTextEditor into Email Templates body (remove category, keep folder)
+- [x] Wire RichTextEditor into Notes
+- [x] Wire RichTextEditor into Messages
+- [ ] Wire RichTextEditor into Smart Files
+- [ ] Wire RichTextEditor into all other text areas across CRM

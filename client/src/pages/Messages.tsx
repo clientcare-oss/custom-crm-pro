@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
 import { MessageSquare, Send, User } from "lucide-react";
-import VoiceTextarea from "@/components/VoiceTextarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -208,23 +208,24 @@ export default function Messages() {
 
             {/* Message Input */}
             <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <VoiceTextarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={handleKeyPress}
+              <div className="space-y-2">
+                <RichTextEditor
+                  content={newMessage}
+                  onChange={(html: string) => setNewMessage(html)}
                   placeholder="Type a message..."
-                  className="flex-1 resize-none rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px] max-h-[120px]"
-                  rows={1}
+                  minHeight="80px"
+                  showInsertOptions={false}
                 />
-                <Button
-                  onClick={handleSend}
-                  disabled={!newMessage.trim() || sendMutation.isPending}
-                  size="icon"
-                  className="h-11 w-11 rounded-lg"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSend}
+                    disabled={!newMessage.trim() || sendMutation.isPending}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Send className="h-4 w-4" /> Send
+                  </Button>
+                </div>
               </div>
             </div>
           </>

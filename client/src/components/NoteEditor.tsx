@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import VoiceInput from "@/components/VoiceInput";
-import VoiceTextarea from "@/components/VoiceTextarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import { Eye, EyeOff, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -230,13 +230,14 @@ export function NoteEditor({
 
       {/* Rich Text Editor / Read-only view */}
       {isReadOnly ? (
-        <div className="w-full min-h-24 p-3 border rounded-md bg-muted/30 text-sm whitespace-pre-wrap text-foreground">{content}</div>
+        <div className="w-full min-h-24 p-3 border rounded-md bg-muted/30 text-sm prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
       ) : (
-        <VoiceTextarea
+        <RichTextEditor
+          content={content}
+          onChange={(html: string) => setContent(html)}
           placeholder="Start typing your note..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full h-48 p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          minHeight="180px"
+          showInsertOptions={false}
         />
       )}
 

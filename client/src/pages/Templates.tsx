@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -118,25 +118,20 @@ function EmailTemplateDialog({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Category</Label>
-              <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {EMAIL_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Subject Line</Label>
-              <Input placeholder="e.g. Reminder: IEP Meeting on {{date}}" value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
-            </div>
+          <div className="space-y-1.5">
+            <Label>Subject Line</Label>
+            <Input placeholder="e.g. Reminder: IEP Meeting on {{date}}" value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
+            <p className="text-xs text-muted-foreground">Use {"{{name}}"}, {"{{date}}"}, {"{{student}}"} as merge tags</p>
           </div>
-          <p className="text-xs text-muted-foreground -mt-2">Use {"{{name}}"}, {"{{date}}"}, {"{{student}}"} as merge tags in subject or body</p>
           <div className="space-y-1.5">
             <Label>Email Body</Label>
-            <Textarea placeholder="Write your email body here..." value={form.body} onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))} rows={12} className="font-mono text-sm resize-y" />
+            <RichTextEditor
+              content={form.body}
+              onChange={(html: string) => setForm((f) => ({ ...f, body: html }))}
+              placeholder="Write your email body here..."
+              minHeight="250px"
+              showInsertOptions={true}
+            />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose} disabled={saving}><X className="h-4 w-4 mr-1" /> Cancel</Button>

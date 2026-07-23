@@ -101,5 +101,25 @@ export const aiRouter = router({
           date: new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
         };
       }),
-  
+
+    rewriteText: protectedProcedure
+      .input(z.object({
+        text: z.string().min(1),
+        mode: z.enum(["rewrite", "rephrase"]),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM } = await import("../_core/llm");
+        const systemPrompt = input.mode === "rewrite"
+          ? "You are a professional writing assistant. Rewrite the following text to be clearer, more professional, and well-structured. Keep the same meaning and intent. Return only the rewritten text, no explanations."
+          : "You are a professional writing assistant. Rephrase the following sentence to be clearer and more professional while keeping the same meaning. Return only the rephrased sentence, no explanations.";
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: input.text },
+          ],
+        });
+        const result = response.choices?.[0]?.message?.content ?? input.text;
+        return { text: result };
+      }),
+
 });
