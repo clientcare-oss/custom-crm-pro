@@ -1272,11 +1272,26 @@ export type DiscoveryWorksheet = typeof discoveryWorksheets.$inferSelect;
 
 
 /**
+ * Folders for organizing email templates.
+ */
+export const emailTemplateFolders = mysqlTable("emailTemplateFolders", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  color: varchar("color", { length: 30 }).default("blue"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EmailTemplateFolder = typeof emailTemplateFolders.$inferSelect;
+export type InsertEmailTemplateFolder = typeof emailTemplateFolders.$inferInsert;
+
+/**
  * Email templates for reusable outreach, reminders, and follow-ups.
  */
 export const emailTemplates = mysqlTable("emailTemplates", {
   id: int("id").autoincrement().primaryKey(),
   ownerId: int("ownerId").notNull(),
+  folderId: int("folderId"),  // null = unfiled
   name: varchar("name", { length: 200 }).notNull(),
   subject: varchar("subject", { length: 500 }).notNull(),
   body: text("body").notNull(),

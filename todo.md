@@ -1114,3 +1114,13 @@
 - [x] Add Discovery Worksheet management card to LeadForms admin page
 - [x] Create tests for worksheet feature
 - [x] Verify TypeScript compilation passes
+
+## Email Templates Folder Organization (PG-011)
+- [ ] Add emailTemplateFolders table (id, ownerId, name, color, createdAt)
+- [ ] Add folderId column to emailTemplates table
+- [ ] Add folder CRUD backend procedures (list, create, rename, delete)
+- [ ] Update emailTemplates.list to accept optional folderId filter
+- [ ] Rebuild Email Templates UI with folder sidebar and template browsing by folder
+- [ ] Create folder dialog with name and color picker
+- [ ] Move template to folder via dropdown on template row
+- [ ] Unfiled / All Templates view
