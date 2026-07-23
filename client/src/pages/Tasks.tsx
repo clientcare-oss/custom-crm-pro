@@ -1032,7 +1032,11 @@ export default function Tasks() {
           </div>
         ) : (
           <div>
-            {(tasks as unknown as Task[]).map((task) => (
+            {[...(tasks as unknown as Task[])].sort((a, b) => {
+              if (a.status === "complete" && b.status !== "complete") return 1;
+              if (a.status !== "complete" && b.status === "complete") return -1;
+              return 0;
+            }).map((task) => (
               <TaskRow key={task.id} task={task} users={users} projects={projects} />
             ))}
           </div>

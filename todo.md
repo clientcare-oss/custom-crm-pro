@@ -1151,3 +1151,6 @@
 - [x] Add color field to emailTemplateFolders table (already existed)
 - [x] Add color picker UI when creating/editing folders (expanded palette with brightness options — 25 colors)
 - [x] Apply folder color to folder icons in sidebar
+
+## Tasks - Completed Tab
+- [x] Sort completed tasks to bottom of list on "All" tab in general tasks
