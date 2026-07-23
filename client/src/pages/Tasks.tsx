@@ -386,7 +386,7 @@ function TaskRow({
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`font-medium text-sm ${isComplete ? "line-through text-muted-foreground" : "text-foreground"}`}>
+            <span className={`font-normal text-lg ${isComplete ? "line-through text-muted-foreground" : "text-foreground"}`}>
               {task.title}
             </span>
             {task.projectName && (
