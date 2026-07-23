@@ -1161,3 +1161,9 @@
 - [x] Create sponsors/donations database table
 - [x] Add backend CRUD for sponsor entries
 - [x] Gift form has Case ID selector (linked to projects) with note that sponsor has NO access to client files unless explicitly allowed
+
+## Services Page
+- [x] Create services and serviceFolders database tables
+- [x] Add backend CRUD for services and folders
+- [x] Create Services page with folder sidebar organization (like Email Templates)
+- [x] Add Services to left sidebar navigation

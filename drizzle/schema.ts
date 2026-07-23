@@ -1323,3 +1323,35 @@ export const sponsors = mysqlTable("sponsors", {
 });
 export type Sponsor = typeof sponsors.$inferSelect;
 export type InsertSponsor = typeof sponsors.$inferInsert;
+
+/**
+ * Service folders for organizing services into categories.
+ */
+export const serviceFolders = mysqlTable("serviceFolders", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  color: varchar("color", { length: 30 }).default("blue"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ServiceFolder = typeof serviceFolders.$inferSelect;
+export type InsertServiceFolder = typeof serviceFolders.$inferInsert;
+
+/**
+ * Services that clients can choose from.
+ */
+export const services = mysqlTable("services", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  folderId: int("folderId"), // null = unfiled
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  price: int("price"), // in cents
+  duration: int("duration"), // in minutes
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Service = typeof services.$inferSelect;
+export type InsertService = typeof services.$inferInsert;
