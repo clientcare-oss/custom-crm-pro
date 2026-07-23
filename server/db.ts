@@ -997,22 +997,23 @@ export async function getStudentsWithSummary(parentContactId: number) {
   const students = await getStudentsByParentContactId(parentContactId);
   if (students.length === 0) return [];
 
-  const now = new Date();
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const enriched = await Promise.all(
-    students.map(async (student) => {
-      // Next upcoming appointment
-      const appts = await db
-        .select()
-        .from(appointments)
-        .where(
-          and(
-            eq(appointments.clientId, student.id),
-            gt(appointments.startTime, now)
-          )
-        )
-        .orderBy(asc(appointments.startTime))
-        .limit(1);
+      const enriched = await Promise.all(
+        students.map(async (student) => {
+          // Next upcoming appointment (including today)
+          const appts = await db
+            .select()
+            .from(appointments)
+            .where(
+              and(
+                eq(appointments.clientId, student.id),
+                gte(appointments.startTime, todayStart)
+              )
+            )
+            .orderBy(asc(appointments.startTime))
+            .limit(1);
 
       const nextMeeting = appts[0] ?? null;
 
