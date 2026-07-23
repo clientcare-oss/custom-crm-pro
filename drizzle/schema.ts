@@ -303,6 +303,7 @@ export const appointments = mysqlTable("appointments", {
   id: int("id").autoincrement().primaryKey(),
   ownerId: int("ownerId").notNull(),
   clientId: int("clientId"),
+  caseId: varchar("caseId", { length: 20 }),  // links to contacts.caseId for student appointments
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   startTime: datetime("startTime").notNull(),

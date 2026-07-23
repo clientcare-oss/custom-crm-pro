@@ -1,0 +1,1 @@
+ALTER TABLE `appointments` ADD `caseId` varchar(20);

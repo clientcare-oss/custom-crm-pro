@@ -1,5 +1,12 @@
 # Custom CRM Pro # Project TODO
 
+## Case ID Linking for Appointments (PG-030 Fix)
+- [x] Add caseId field to appointments table to link appointments to projects
+- [x] Update getStudentsWithSummary to fetch appointments by Case ID instead of contact ID
+- [x] Display Case ID in student block header
+- [x] Show upcoming meetings for that Case ID in the student block
+- [x] Test with Barbara Sheep's appointment (updated to 7/27/2026, caseId WP-2026-0003 linked)
+
 ## Task Edit (Active)
 - [x] BUG: BrainDump Convert to Task dropdown simplified to show only staff (parent contacts can be assigned via task editing)
 - [x] Verify pencil icon edit modal works correctly for all task types (General Tasks, Client Facing Tasks, Case Tasks)

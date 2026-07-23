@@ -99,6 +99,7 @@ export const appointmentsRouter = router({
       .input(
         z.object({
           clientId: z.number().optional(),
+          caseId: z.string().optional(),
           title: z.string().min(1),
           description: z.string().optional(),
           startTime: z.date(),
@@ -119,6 +120,7 @@ export const appointmentsRouter = router({
       .input(
         z.object({
           id: z.number(),
+          caseId: z.string().optional(),
           title: z.string().optional(),
           description: z.string().optional(),
           startTime: z.date().optional(),

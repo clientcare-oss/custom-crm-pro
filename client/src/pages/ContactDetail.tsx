@@ -584,6 +584,13 @@ function ParentTabs({
     { parentContactId: contactId },
     { enabled: !!contactId }
   );
+  
+  // Debug logging
+  useEffect(() => {
+    if (students.length > 0) {
+      console.log('[DEBUG ContactDetail] Students fetched:', students.map(s => ({ id: s.id, name: s.firstName, nextMeeting: s.nextMeeting })));
+    }
+  }, [students]);
 
   return (
     <Tabs defaultValue="students">
@@ -671,20 +678,39 @@ function ParentTabs({
                       </p>
                     )}
                     {student.nextMeeting ? (
-                      <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3 flex-shrink-0" />
-                        <span>
-                          Next: {new Date(student.nextMeeting.startTime).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                          {" "}
-                          {new Date(student.nextMeeting.startTime).toLocaleTimeString(undefined, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                      <div className="mt-2 flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3 flex-shrink-0" />
+                          <span>
+                            Next: {new Date(student.nextMeeting.startTime).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                            {" "}
+                            {new Date(student.nextMeeting.startTime).toLocaleTimeString(undefined, {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        {/* IEP meeting link status pill — only for IEP-type meetings */}
+                        {student.nextMeeting.meetingType && /iep|504/i.test(student.nextMeeting.meetingType) && (
+                          <span className={`inline-flex items-center gap-1 self-start rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${
+                            student.nextMeeting.videoLink || student.nextMeeting.clientMeetingLink
+                              ? 'bg-green-500/15 text-green-600 dark:text-green-400'
+                              : 'bg-red-500/15 text-red-600 dark:text-red-400'
+                          }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${
+                              student.nextMeeting.videoLink || student.nextMeeting.clientMeetingLink
+                                ? 'bg-green-500'
+                                : 'bg-red-500'
+                            }`} />
+                            {student.nextMeeting.videoLink || student.nextMeeting.clientMeetingLink
+                              ? 'Link sent to advocate'
+                              : 'Link not sent to advocate'}
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <p className="mt-2 text-xs text-muted-foreground/60 italic">No upcoming meeting</p>
