@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutTemplate, FilePlus2, FileText, Mail, ShoppingBag,
   PlusCircle, Library, ArrowRight, Pencil, Trash2,
@@ -83,10 +83,22 @@ function EmailTemplateDialog({
     folderId: initial?.folderId ?? null,
   });
 
+  // Reset form whenever dialog opens or initial changes
+  useEffect(() => {
+    if (open) {
+      setForm({
+        name: initial?.name ?? "",
+        subject: initial?.subject ?? "",
+        body: initial?.body ?? "",
+        category: initial?.category ?? "General",
+        folderId: initial?.folderId ?? null,
+      });
+    }
+  }, [open, initial]);
+
   return (
     <Dialog open={open} onOpenChange={(v) => {
       if (!v) onClose();
-      else setForm({ name: initial?.name ?? "", subject: initial?.subject ?? "", body: initial?.body ?? "", category: initial?.category ?? "General", folderId: initial?.folderId ?? null });
     }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
