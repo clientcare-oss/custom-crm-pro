@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
 import { useLocation } from "wouter";
 
-const LEAD_STATUSES = ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Qualified", "Won", "Lost"] as const;
+const LEAD_STATUSES = ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Ready for Archive", "Won", "Lost"] as const;
 type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 const emptyForm = {
@@ -146,8 +146,8 @@ export default function Leads() {
         "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
       "90 Day Follow-up":
         "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-      Qualified:
-        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      "Ready for Archive":
+        "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400",
       Won: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
       Lost: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
     };

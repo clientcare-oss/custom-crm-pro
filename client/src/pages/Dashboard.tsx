@@ -28,7 +28,7 @@ export default function Dashboard() {
   // Calculate metrics
   const openTasks = (allTasks as any[] | undefined)?.filter((t) => t.status !== "complete").length ?? 0;
   const newLeads = leads?.filter((l) => l.status === "New").length || 0;
-  const qualifiedLeads = leads?.filter((l) => l.status === "Qualified").length || 0;
+  const readyForArchiveLeads = leads?.filter((l) => l.status === "Ready for Archive").length || 0;
   const totalRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.total || 0), 0) || 0;
   const paidInvoices = invoices?.filter((inv) => inv.status === "Paid").length || 0;
 
@@ -191,7 +191,7 @@ export default function Dashboard() {
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">New Leads</p>
               <p className="text-3xl font-bold">{leadsLoading ? "-" : newLeads}</p>
-              <p className="text-xs text-muted-foreground">{qualifiedLeads} qualified</p>
+              <p className="text-xs text-muted-foreground">{readyForArchiveLeads} ready for archive</p>
             </div>
             <div className="rounded-lg bg-emerald-100 p-3 dark:bg-emerald-900/30">
               <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />

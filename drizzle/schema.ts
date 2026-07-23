@@ -98,7 +98,7 @@ export const leads = mysqlTable("leads", {
   ownerId: int("ownerId").notNull(),
   contactId: int("contactId"),
   source: varchar("source", { length: 100 }),
-  status: mysqlEnum("status", ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Qualified", "Won", "Lost"])
+  status: mysqlEnum("status", ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Ready for Archive", "Won", "Lost"])
     .default("New")
     .notNull(),
   value: decimal("value", { precision: 12, scale: 2 }),
