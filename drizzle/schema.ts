@@ -11,6 +11,7 @@ import {
   boolean,
   tinyint,
   datetime,
+  date,
 } from "drizzle-orm/mysql-core";
 
 /**
@@ -1355,3 +1356,235 @@ export const services = mysqlTable("services", {
 });
 export type Service = typeof services.$inferSelect;
 export type InsertService = typeof services.$inferInsert;
+
+
+// ============================================================
+// Waypoint Complaint Engine (PG-020) — Georgia IDEA State Complaint Builder
+// ============================================================
+
+export const complaintCases = mysqlTable("complaint_cases", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: varchar("caseId", { length: 32 }).notNull().unique(), // e.g. GA-2026-0142
+  status: mysqlEnum("status", ["draft", "in_review", "ready_to_file", "filed", "investigation", "closed"]).default("draft").notNull(),
+  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal").notNull(),
+  // Complainant
+  complainantName: varchar("complainantName", { length: 255 }),
+  complainantRelationship: varchar("complainantRelationship", { length: 120 }),
+  complainantAddress: text("complainantAddress"),
+  complainantPhone: varchar("complainantPhone", { length: 40 }),
+  complainantEmail: varchar("complainantEmail", { length: 320 }),
+  // Student
+  studentName: varchar("studentName", { length: 255 }),
+  studentDob: datetime("studentDob"),
+  studentAddress: text("studentAddress"),
+  studentGrade: varchar("studentGrade", { length: 32 }),
+  studentGtid: varchar("studentGtid", { length: 32 }),
+  studentSchool: varchar("studentSchool", { length: 255 }),
+  studentDistrict: varchar("studentDistrict", { length: 255 }),
+  disabilityCategories: json("disabilityCategories").$type<string[]>(),
+  isHomeless: boolean("isHomeless").default(false).notNull(),
+  homelessContactInfo: text("homelessContactInfo"),
+  // Parent (when different from complainant)
+  parentDifferent: boolean("parentDifferent").default(false).notNull(),
+  parentName: varchar("parentName", { length: 255 }),
+  parentAddress: text("parentAddress"),
+  parentPhone: varchar("parentPhone", { length: 40 }),
+  parentEmail: varchar("parentEmail", { length: 320 }),
+  // Public agency
+  agencyName: varchar("agencyName", { length: 255 }),
+  agencyContact: varchar("agencyContact", { length: 255 }),
+  agencyAddress: text("agencyAddress"),
+  // Internal metadata
+  advocateName: varchar("advocateName", { length: 255 }),
+  intakeDate: datetime("intakeDate"),
+  complaintOwner: varchar("complaintOwner", { length: 255 }),
+  targetFilingDate: datetime("targetFilingDate"),
+  // Confirmed issues (user-confirmed issue category keys)
+  confirmedIssues: json("confirmedIssues").$type<string[]>(),
+  // Mediation & signature & delivery
+  mediationRequested: mysqlEnum("mediationRequested", ["undecided", "yes", "no"]).default("undecided").notNull(),
+  signatureName: varchar("signatureName", { length: 255 }),
+  signatureDate: datetime("signatureDate"),
+  districtCopyDelivered: boolean("districtCopyDelivered").default(false).notNull(),
+  districtCopyRecipient: varchar("districtCopyRecipient", { length: 255 }),
+  districtCopyDate: datetime("districtCopyDate"),
+  districtCopyMethod: varchar("districtCopyMethod", { length: 120 }),
+  // Final confirmations before export/file
+  confirmedAccuracy: boolean("confirmedAccuracy").default(false).notNull(),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const storyAnswers = mysqlTable("story_answers", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  promptKey: varchar("promptKey", { length: 64 }).notNull(), // what_happened, when_noticed, school_agreed, school_did, student_affected, asked_to_correct
+  answerText: text("answerText"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const extractedFacts = mysqlTable("extracted_facts", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  factType: mysqlEnum("factType", ["date", "person", "service", "meeting", "decision", "denial", "delay", "missed_action", "issue_category", "other"]).notNull(),
+  factText: text("factText").notNull(),
+  sourcePrompt: varchar("sourcePrompt", { length: 64 }),
+  status: mysqlEnum("status", ["unconfirmed", "confirmed", "rejected"]).default("unconfirmed").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const timelineEvents = mysqlTable("timeline_events", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  dateCertainty: mysqlEnum("dateCertainty", ["exact", "approximate", "month_year", "before", "after", "unknown"]).default("exact").notNull(),
+  eventDate: datetime("eventDate"),
+  eventEndDate: datetime("eventEndDate"),
+  details: text("details"),
+  peopleInvolved: text("peopleInvolved"),
+  schoolResponse: text("schoolResponse"),
+  parentResponse: text("parentResponse"),
+  linkedAllegationIds: json("linkedAllegationIds").$type<number[]>(),
+  linkedEvidenceIds: json("linkedEvidenceIds").$type<number[]>(),
+  aiDrafted: boolean("aiDrafted").default(false).notNull(),
+  confirmed: boolean("confirmed").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const allegations = mysqlTable("allegations", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  seqNumber: int("seqNumber").notNull(), // stable Allegation 01, 02...
+  plainTitle: varchar("plainTitle", { length: 500 }).notNull(),
+  formalTitle: varchar("formalTitle", { length: 500 }),
+  status: mysqlEnum("status", ["suggested", "accepted", "needs_facts", "needs_evidence", "drafted", "ready_for_review", "excluded", "rejected"]).default("suggested").notNull(),
+  issueCategories: json("issueCategories").$type<string[]>(),
+  confidence: mysqlEnum("confidence", ["possible", "likely", "strong"]).default("possible").notNull(),
+  reasonSuggested: text("reasonSuggested"),
+  requiredElements: json("requiredElements").$type<{ text: string; met: boolean }[]>(),
+  missingInfo: json("missingInfo").$type<string[]>(),
+  factsUsed: json("factsUsed").$type<{ type: string; refId: number | null; text: string }[]>(),
+  districtNotice: text("districtNotice"),
+  districtResponse: mysqlEnum("districtResponse", ["none", "action", "denial", "delay", "no_response", "incomplete", "disputed"]).default("none").notNull(),
+  districtResponseDetail: text("districtResponseDetail"),
+  impactSummary: text("impactSummary"),
+  draftStatement: text("draftStatement"),
+  draftFacts: text("draftFacts"),
+  aiSuggested: boolean("aiSuggested").default(false).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const legalAuthorities = mysqlTable("legal_authorities", {
+  id: int("id").autoincrement().primaryKey(),
+  allegationId: int("allegationId").notNull(),
+  group: mysqlEnum("group", ["federal", "georgia", "guidance", "case_law"]).notNull(),
+  citation: varchar("citation", { length: 255 }).notNull(), // e.g. 34 CFR §300.323
+  subject: varchar("subject", { length: 500 }),
+  whyApplies: text("whyApplies"),
+  status: mysqlEnum("status", ["suggested", "confirmed", "removed"]).default("suggested").notNull(),
+  verifiedForFilingDate: boolean("verifiedForFilingDate").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const evidenceItems = mysqlTable("evidence_items", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  evidenceId: varchar("evidenceId", { length: 24 }).notNull().unique(), // immutable e.g. EV-0001
+  title: varchar("title", { length: 500 }).notNull(),
+  category: varchar("category", { length: 64 }).default("other").notNull(), // iep, evaluation, pwn, email, meeting_notice, service_log, progress_data, behavior, discipline, medical, parent_record, school_record, other
+  fileKey: text("fileKey"),
+  fileUrl: text("fileUrl"),
+  fileName: varchar("fileName", { length: 500 }),
+  mimeType: varchar("mimeType", { length: 120 }),
+  fileSize: int("fileSize"),
+  pageCount: int("pageCount"),
+  docDate: datetime("docDate"),
+  source: varchar("source", { length: 255 }),
+  summary: text("summary"),
+  summaryVerified: boolean("summaryVerified").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const evidenceLinks = mysqlTable("evidence_links", {
+  id: int("id").autoincrement().primaryKey(),
+  evidenceItemId: int("evidenceItemId").notNull(),
+  targetType: mysqlEnum("targetType", ["allegation", "timeline_event"]).notNull(),
+  targetId: int("targetId").notNull(),
+  pageSelection: varchar("pageSelection", { length: 255 }), // e.g. "3-5, 9"
+  pageNotes: text("pageNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const studentImpacts = mysqlTable("student_impacts", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  allegationId: int("allegationId"),
+  category: varchar("category", { length: 64 }).notNull(), // academic, functional, behavioral, communication, safety, emotional, attendance, regression, lost_access, other
+  whatChanged: text("whatChanged"),
+  frequency: varchar("frequency", { length: 255 }),
+  duration: varchar("duration", { length: 255 }),
+  supportBasis: mysqlEnum("supportBasis", ["direct_evidence", "parent_observation", "student_report", "school_report", "inference"]).default("parent_observation").notNull(),
+  supportDetail: text("supportDetail"),
+  narrative: text("narrative"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const requestedRemedies = mysqlTable("requested_remedies", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  allegationId: int("allegationId"), // null = global remedy
+  remedyType: varchar("remedyType", { length: 64 }).notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  detail: text("detail"),
+  purpose: text("purpose"),
+  quantification: text("quantification"),
+  aiSuggested: boolean("aiSuggested").default(false).notNull(),
+  accepted: boolean("accepted").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const draftBlocks = mysqlTable("draft_blocks", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  sectionKey: varchar("sectionKey", { length: 64 }).notNull(), // parties, agency, jurisdiction, violations, facts, impact, resolution, mediation, signature, certification, exhibit_index, cover_letter, intro
+  allegationId: int("allegationId"),
+  content: text("content"),
+  builtFrom: json("builtFrom").$type<{ type: string; refId: number | null; label: string }[]>(),
+  aiGenerated: boolean("aiGenerated").default(false).notNull(),
+  userAccepted: boolean("userAccepted").default(false).notNull(),
+  version: int("version").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const aiSuggestionRecords = mysqlTable("ai_suggestion_records", {
+  id: int("id").autoincrement().primaryKey(),
+  caseId: int("caseId").notNull(),
+  kind: varchar("kind", { length: 64 }).notNull(), // fact_extraction, allegation_suggestion, writing, remedy_suggestion, evidence_summary
+  inputSummary: text("inputSummary"),
+  outputSummary: text("outputSummary"),
+  action: mysqlEnum("action", ["generated", "accepted", "rejected", "edited", "regenerated"]).default("generated").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ComplaintCase = typeof complaintCases.$inferSelect;
+export type StoryAnswer = typeof storyAnswers.$inferSelect;
+export type ExtractedFact = typeof extractedFacts.$inferSelect;
+export type TimelineEvent = typeof timelineEvents.$inferSelect;
+export type Allegation = typeof allegations.$inferSelect;
+export type LegalAuthority = typeof legalAuthorities.$inferSelect;
+export type EvidenceItem = typeof evidenceItems.$inferSelect;
+export type EvidenceLink = typeof evidenceLinks.$inferSelect;
+export type StudentImpact = typeof studentImpacts.$inferSelect;
+export type RequestedRemedy = typeof requestedRemedies.$inferSelect;
+export type DraftBlock = typeof draftBlocks.$inferSelect;
+export type AiSuggestionRecord = typeof aiSuggestionRecords.$inferSelect;

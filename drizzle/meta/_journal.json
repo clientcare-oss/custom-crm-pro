@@ -505,6 +505,13 @@
       "when": 1784827170135,
       "tag": "0071_complete_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "5",
+      "when": 1784888096279,
+      "tag": "0072_rapid_sersi",
+      "breakpoints": true
     }
   ]
 }
