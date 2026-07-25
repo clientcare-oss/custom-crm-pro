@@ -33,7 +33,8 @@ import KnowledgeBase from "./pages/KnowledgeBase";
 import Walkthroughs from "./pages/Walkthroughs";
 import UnassignedCallLogs from "./pages/UnassignedCallLogs";
 import Team from "./pages/Team";
-import StateComplaintBuilder from "./pages/StateComplaintBuilder";
+import ComplaintCases from "./pages/complaint/ComplaintCases";
+import ComplaintWorkspace from "./pages/complaint/ComplaintWorkspace";
 import BrainDump from "./pages/BrainDump";
 import IntakeForm from "./pages/IntakeForm";
 import DynamicForm from "./pages/DynamicForm";
@@ -125,7 +126,8 @@ function Router() {
           <Route path="/walkthroughs" component={Walkthroughs} />
           <Route path="/call-logs" component={UnassignedCallLogs} />
           <Route path="/team" component={Team} />
-          <Route path="/state-complaint-builder" component={StateComplaintBuilder} />
+          <Route path="/tools/state-complaint-builder/:id/:section?" component={ComplaintWorkspace} />
+          <Route path="/tools/state-complaint-builder" component={ComplaintCases} />
           <Route path="/brain-dump" component={BrainDump} />
           <Route path="/ai-connections" component={AiConnections} />
               <Route path="/services" component={Services} />
