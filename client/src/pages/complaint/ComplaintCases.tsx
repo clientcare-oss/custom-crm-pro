@@ -5,8 +5,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { GoldButton, PageIdBadge, SectionCard, StatusPill, inputCls, Field } from "@/components/complaint/atoms";
 import { COMPLAINT_STATUS_LABELS, calcAge } from "@shared/complaintEngine";
 import { Compass, FileText, Loader2, Plus } from "lucide-react";
-import { startLogin } from "@/const";
-import CrmShell from "@/components/CrmShell";
+import { getLoginUrl } from "@/const";
 
 const statusKind: Record<string, "ok" | "warning" | "error" | "info" | "gold"> = {
   draft: "warning", in_review: "info", ready_to_file: "gold", filed: "ok", investigation: "info", closed: "ok",
@@ -31,7 +30,7 @@ export default function ComplaintCases() {
           <Compass className="mx-auto h-10 w-10 text-[#D9A441]" />
           <h1 className="mt-4 text-xl font-semibold text-slate-100">Waypoint Complaint Engine</h1>
           <p className="mt-2 text-sm text-slate-400">Sign in to build and manage Georgia IDEA state complaints.</p>
-          <GoldButton className="mt-6" onClick={() => startLogin()}>Sign In</GoldButton>
+          <GoldButton className="mt-6" onClick={() => window.location.href = getLoginUrl()}>Sign In</GoldButton>
         </div>
       </Shell>
     );
@@ -106,5 +105,5 @@ export default function ComplaintCases() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <CrmShell><div className="min-h-screen bg-[#07162B]">{children}</div></CrmShell>;
+  return <div className="min-h-screen bg-[#07162B]">{children}</div>;
 }

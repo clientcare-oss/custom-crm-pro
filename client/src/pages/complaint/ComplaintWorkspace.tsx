@@ -9,7 +9,7 @@ import {
   ArrowLeft, ArrowRight, BookOpenCheck, CalendarClock, ClipboardCheck, Compass,
   FileDown, FileText, FolderOpen, Gavel, HeartPulse, LayoutDashboard, ListChecks, Loader2, Scale,
 } from "lucide-react";
-import { startLogin } from "@/const";
+import { getLoginUrl } from "@/const";
 import { SectionOverview } from "./sections/SectionOverview";
 import { SectionCaseInfo } from "./sections/SectionCaseInfo";
 import { SectionIssues } from "./sections/SectionIssues";
@@ -75,7 +75,7 @@ export default function ComplaintWorkspace() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#07162B]">
         <Compass className="h-10 w-10 text-[#D9A441]" />
-        <GoldButton className="mt-6" onClick={() => startLogin()}>Sign In</GoldButton>
+        <GoldButton className="mt-6" onClick={() => window.location.href = getLoginUrl()}>Sign In</GoldButton>
       </div>
     );
   }
