@@ -128,6 +128,7 @@ function Router() {
           <Route path="/team" component={Team} />
           <Route path="/tools/state-complaint-builder/:id/:section?" component={ComplaintWorkspace} />
           <Route path="/tools/state-complaint-builder" component={ComplaintCases} />
+          <Route path="/state-complaint-builder" component={() => { window.location.href = '/tools/state-complaint-builder' + window.location.search; return null; }} />
           <Route path="/brain-dump" component={BrainDump} />
           <Route path="/ai-connections" component={AiConnections} />
               <Route path="/services" component={Services} />
