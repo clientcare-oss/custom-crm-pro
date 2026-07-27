@@ -1,8 +1,13 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "custom-crm-pro",
+  "main": "server/worker.ts",
   "compatibility_date": "2026-01-01",
   "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/public",
+    "not_found_handling": "single-page-application"
+  },
   "d1_databases": [
     {
       "binding": "DB",
