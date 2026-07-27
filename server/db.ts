@@ -1,5 +1,6 @@
 import { eq, and, desc, asc, gte, lte, like, inArray, or, gt, ne } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/sqlite-proxy";
+import { queryCloudflareD1 } from "./_core/d1Client";
 import {
   InsertUser,
   users,
@@ -33,15 +34,22 @@ import {
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
-let _db: ReturnType<typeof drizzle> | null = null;
+let _db: any = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = drizzle(async (sql, params, method) => {
+        const res = await queryCloudflareD1(sql, params);
+        const rows = res.results || [];
+        if (method === 'get') {
+          return { rows: rows[0] ? Object.values(rows[0]) : [] };
+        }
+        return { rows: rows.map((r: any) => Object.values(r)) };
+      });
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.warn("[Database] Failed to connect to Cloudflare D1:", error);
       _db = null;
     }
   }
@@ -98,7 +106,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -920,7 +929,7 @@ export async function upsertCaseCompass(caseId: string, data: {
   // Upsert the current compass
   await db.insert(caseCompass)
     .values({ caseId, ...data })
-    .onDuplicateKeyUpdate({ set: data });
+    .onConflictDoUpdate({ target: caseCompass.caseId, set: data });
 
   return await getCaseCompass(caseId);
 }

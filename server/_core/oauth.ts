@@ -1,6 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
+import { users } from "../../drizzle/schema";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
@@ -48,6 +49,36 @@ export function registerOAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
+    }
+  });
+
+  // Local dev login endpoint to bypass external OAuth in development
+  app.get("/api/auth/dev-login", async (req: Request, res: Response) => {
+    try {
+      const email = getQueryParam(req, "email") || "katkins@veritastech.io";
+      const conn = await db.getDb();
+      let targetUser: any;
+
+      if (conn) {
+        const usersList = await conn.select().from(users);
+        targetUser = usersList.find((u: any) => u.email === email || u.openId === email) || usersList.find((u: any) => u.role === 'admin') || usersList[0];
+      }
+
+      const openId = targetUser?.openId || "katkins-admin-openid";
+      const name = targetUser?.name || "Kyle Atkins";
+
+      const sessionToken = await sdk.createSessionToken(openId, {
+        name,
+        expiresInMs: ONE_YEAR_MS,
+      });
+
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      res.redirect(302, "/");
+    } catch (error) {
+      console.error("[Dev Login] Failed", error);
+      res.status(500).json({ error: "Dev login failed", details: String(error) });
     }
   });
 }

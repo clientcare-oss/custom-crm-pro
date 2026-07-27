@@ -211,7 +211,7 @@ export const portalAuthRouter = router({
           contactId,
           email: normalizedEmail,
           passwordHash: placeholderHash,
-        }).onDuplicateKeyUpdate({ set: { email: normalizedEmail } });
+        }).onConflictDoUpdate({ target: clientCredentials.contactId, set: { email: normalizedEmail } });
       }
 
       // Generate a secure token

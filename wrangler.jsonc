@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "custom-crm-pro",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "custom-crm-pro-db",
+      "database_id": "f90072b5-4842-4423-a221-ab62a01a25a6"
+    }
+  ]
+}

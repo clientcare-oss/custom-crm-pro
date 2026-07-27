@@ -83,7 +83,8 @@ export function registerRestApiRoutes(app: ReturnType<typeof Router>) {
           name: "Local Admin",
           role: "admin",
           lastSignedIn: new Date()
-        }).onDuplicateKeyUpdate({
+        }).onConflictDoUpdate({
+          target: users.openId,
           set: { role: "admin", lastSignedIn: new Date() }
         });
 
