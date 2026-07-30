@@ -1,5 +1,6 @@
 import { eq, and, desc, asc, gte, lte, like, inArray, or, gt, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
+import { drizzle as drizzleD1 } from "drizzle-orm/d1";
 import { queryCloudflareD1 } from "./_core/d1Client";
 import {
   InsertUser,
@@ -38,6 +39,11 @@ let _db: any = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
+  const cfDb = (globalThis as any).__CF_ENV_DB__;
+  if (cfDb) {
+    return drizzleD1(cfDb);
+  }
+
   if (!_db) {
     try {
       _db = drizzle(async (sql, params, method) => {
