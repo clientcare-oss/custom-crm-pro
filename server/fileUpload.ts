@@ -1,36 +1,6 @@
 import { Express, Request, Response } from "express";
-import { ENV } from "./_core/env";
+import { getR2SignedUploadUrl } from "./_core/r2Client";
 import { createClientFile } from "./db";
-
-/**
- * File upload endpoint that supports large PDF files (up to 1GB).
- * Uses a two-step flow:
- * 1. Client requests a presigned upload URL from the server
- * 2. Client uploads directly to S3 using the presigned URL
- * 3. Client confirms the upload, and server saves metadata to DB
- *
- * This avoids passing file bytes through the Express server.
- */
-
-async function getPresignedUploadUrl(fileKey: string): Promise<string> {
-  const forgeUrl = ENV.forgeApiUrl.replace(/\/+$/, "");
-  const forgeKey = ENV.forgeApiKey;
-
-  const presignUrl = new URL("v1/storage/presign/put", forgeUrl + "/");
-  presignUrl.searchParams.set("path", fileKey);
-
-  const resp = await fetch(presignUrl, {
-    headers: { Authorization: `Bearer ${forgeKey}` },
-  });
-
-  if (!resp.ok) {
-    const msg = await resp.text().catch(() => resp.statusText);
-    throw new Error(`Storage presign failed (${resp.status}): ${msg}`);
-  }
-
-  const { url } = (await resp.json()) as { url: string };
-  return url;
-}
 
 export function registerFileUploadRoutes(app: Express) {
   // Step 1: Request a presigned upload URL
@@ -55,12 +25,12 @@ export function registerFileUploadRoutes(app: Express) {
       const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
       const fileKey = `client-files/${Date.now()}_${hash}_${sanitizedName}`;
 
-      const uploadUrl = await getPresignedUploadUrl(fileKey);
+      const uploadUrl = await getR2SignedUploadUrl(fileKey, "application/pdf");
 
       return res.json({
         uploadUrl,
         fileKey,
-        fileUrl: `/manus-storage/${fileKey}`,
+        fileUrl: `/storage/${fileKey}`,
       });
     } catch (error: any) {
       console.error("[FileUpload] Presign error:", error);
@@ -86,11 +56,11 @@ export function registerFileUploadRoutes(app: Express) {
       const hash = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
       const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
       const fileKey = `iep-documents/${Date.now()}_${hash}_${sanitizedName}`;
-      const uploadUrl = await getPresignedUploadUrl(fileKey);
+      const uploadUrl = await getR2SignedUploadUrl(fileKey);
       return res.json({
         uploadUrl,
         fileKey,
-        fileUrl: `/manus-storage/${fileKey}`,
+        fileUrl: `/storage/${fileKey}`,
       });
     } catch (error: any) {
       console.error("[IEPUpload] Presign error:", error);
