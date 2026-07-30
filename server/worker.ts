@@ -22,7 +22,7 @@ export default {
         req: request,
         router: appRouter,
         createContext: async () => {
-          let user = null;
+          let user: any = null;
           try {
             user = await sdk.authenticateRequest(request as any);
           } catch (e) {

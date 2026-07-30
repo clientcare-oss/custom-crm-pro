@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 
-describe("Gmail email configuration", () => {
+const hasGmailCreds = Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+
+describe.runIf(hasGmailCreds)("Gmail email configuration", () => {
   it("should have GMAIL_USER set", () => {
     expect(process.env.GMAIL_USER).toBeTruthy();
     expect(process.env.GMAIL_USER).toContain("@");
@@ -21,7 +23,7 @@ describe("Gmail email configuration", () => {
       },
     });
     expect(transporter).toBeTruthy();
-    // Verify the transporter config is correct
     await expect(transporter.verify()).resolves.toBe(true);
   });
 });
+

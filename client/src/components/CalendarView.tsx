@@ -49,7 +49,7 @@ export default function CalendarView({ appointments, onDateClick, onEventClick }
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const today = new Date().toISOString().split("T")[0];
 
-  const days = [];
+  const days: React.ReactNode[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
     days.push(<div key={`empty-${i}`} className="h-24 border border-border/30" />);
   }

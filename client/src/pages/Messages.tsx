@@ -172,7 +172,7 @@ export default function Messages() {
                     </p>
                   ) : (
                     messages.map((msg: Message) => {
-                      const isOwn = msg.senderId === user?.id;
+                      const isOwn = String(msg.senderId) === String(user?.id);
                       return (
                         <div
                           key={msg.id}

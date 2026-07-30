@@ -16,14 +16,22 @@ export const notesRouter = router({
         // Verify project ownership
         const project = await db.getProjectById(input.projectId, ctx.user.id, ctx.user.role);
         if (!project) throw new TRPCError({ code: "NOT_FOUND" });
-        return await db.getProjectNotes(input.projectId);
+        const notes = await db.getProjectNotes(input.projectId);
+        return notes.map(n => ({
+          ...n,
+          isVisibleToClient: n.isVisibleToClient === true || (n.isVisibleToClient as any) === 1 || (n.isVisibleToClient as any) === "1" || (n.isVisibleToClient as any) === "true",
+        }));
       }),
 
     listForClient: protectedProcedure
       .input(z.object({ projectId: z.number() }))
       .query(async ({ input }) => {
         // Client can only see notes marked as visible
-        return await db.getProjectNotesForClient(input.projectId);
+        const notes = await db.getProjectNotesForClient(input.projectId);
+        return notes.map(n => ({
+          ...n,
+          isVisibleToClient: n.isVisibleToClient === true || (n.isVisibleToClient as any) === 1 || (n.isVisibleToClient as any) === "1" || (n.isVisibleToClient as any) === "true",
+        }));
       }),
 
     create: adminProcedure

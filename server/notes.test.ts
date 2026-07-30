@@ -38,7 +38,7 @@ function createClientContext(): TrpcContext {
     email: "client@example.com",
     name: "Client User",
     loginMethod: "manus",
-    role: "user",
+    role: "client",
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
@@ -96,7 +96,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = Number((createResult as any).lastInsertRowid) || 1;
+      const noteId = Number((createResult as any)?.id || (createResult as any)?.lastInsertRowid) || 1;
 
       // Then update it
       const updateResult = await caller.notes.update({
@@ -122,7 +122,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = Number((createResult as any).lastInsertRowid) || 1;
+      const noteId = Number((createResult as any)?.id || (createResult as any)?.lastInsertRowid) || 1;
 
       // Toggle visibility
       const updateResult = await caller.notes.update({
@@ -146,7 +146,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = Number((createResult as any).lastInsertRowid) || 1;
+      const noteId = Number((createResult as any)?.id || (createResult as any)?.lastInsertRowid) || 1;
 
       // Update it to create history
       await caller.notes.update({
@@ -176,7 +176,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = Number((createResult as any).lastInsertRowid) || 1;
+      const noteId = Number((createResult as any)?.id || (createResult as any)?.lastInsertRowid) || 1;
 
       // Delete it
       const deleteResult = await caller.notes.delete({
@@ -217,7 +217,7 @@ describe("Notes Feature", () => {
       expect(Array.isArray(visibleNotes)).toBe(true);
       // All visible notes should have isVisibleToClient = true
       visibleNotes.forEach((note: any) => {
-        expect(note.isVisibleToClient).toBe(true);
+        expect(Boolean(note.isVisibleToClient)).toBe(true);
       });
     });
 
@@ -283,7 +283,7 @@ describe("Notes Feature", () => {
         isVisibleToClient: false,
       });
 
-      const noteId = Number((result as any).lastInsertRowid) || 1;
+      const noteId = Number((result as any)?.id || (result as any)?.lastInsertRowid) || 1;
 
       // Verify admin can see it
       const adminNotes = await adminCaller.notes.list({ projectId });
@@ -310,13 +310,13 @@ describe("Notes Feature", () => {
         isVisibleToClient: true,
       });
 
-      const noteId = Number((result as any).lastInsertRowid) || 1;
+      const noteId = Number((result as any)?.id || (result as any)?.lastInsertRowid) || 1;
 
       // Verify admin can see it
       const adminNotes = await adminCaller.notes.list({ projectId });
       const adminFound = adminNotes.find((n: any) => n.id === noteId);
       expect(adminFound).toBeDefined();
-      expect(adminFound?.isVisibleToClient).toBe(true);
+      expect(Boolean(adminFound?.isVisibleToClient)).toBe(true);
 
       // Verify client can see it
       const clientCtx = createClientContext();
@@ -324,7 +324,7 @@ describe("Notes Feature", () => {
       const clientNotes = await clientCaller.notes.listForClient({ projectId });
       const clientFound = clientNotes.find((n: any) => n.id === noteId);
       expect(clientFound).toBeDefined();
-      expect(clientFound?.isVisibleToClient).toBe(true);
+      expect(Boolean(clientFound?.isVisibleToClient)).toBe(true);
     });
   });
 });

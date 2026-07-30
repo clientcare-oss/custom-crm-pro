@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, gte, lte, like, inArray, or, gt, ne } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, like, inArray, or, gt, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { drizzle as drizzleD1 } from "drizzle-orm/d1";
 import { queryCloudflareD1 } from "./_core/d1Client";
@@ -1083,8 +1083,11 @@ export async function createProjectNote(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(projectNotes).values(data);
-  return result;
+  const result = await db.insert(projectNotes).values({
+    ...data,
+    isVisibleToClient: data.isVisibleToClient ? (1 as any) : (0 as any),
+  }).returning();
+  return result[0] || result;
 }
 
 export async function updateProjectNote(
@@ -1120,13 +1123,18 @@ export async function updateProjectNote(
     savedAt: new Date(),
   });
 
+  const updateData: any = {
+    ...data,
+    updatedAt: new Date(),
+  };
+  if (typeof data.isVisibleToClient === "boolean") {
+    updateData.isVisibleToClient = data.isVisibleToClient ? 1 : 0;
+  }
+
   // Update the note
   return await db
     .update(projectNotes)
-    .set({
-      ...data,
-      updatedAt: new Date(),
-    })
+    .set(updateData)
     .where(eq(projectNotes.id, id));
 }
 
@@ -1162,7 +1170,7 @@ export async function getProjectNotesForClient(projectId: number) {
     .where(
       and(
         eq(projectNotes.projectId, projectId),
-        eq(projectNotes.isVisibleToClient, true)
+        sql`${projectNotes.isVisibleToClient} = 1 OR ${projectNotes.isVisibleToClient} = true`
       )
     )
     .orderBy(desc(projectNotes.updatedAt));

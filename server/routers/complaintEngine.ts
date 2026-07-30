@@ -516,7 +516,7 @@ export const complaintEngineRouter = router({
           sources.push({ type: "fact", refId: f.id, label: `Confirmed fact (${f.factType})`, content: f.factText });
         }
       }
-      let allegation = null;
+      let allegation: any = null;
       if (input.allegationId) {
         allegation = await cdb.getAllegation(input.allegationId);
         if (allegation) {

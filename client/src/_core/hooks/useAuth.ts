@@ -17,6 +17,7 @@ export function useAuth(options?: UseAuthOptions) {
       name: clerkUser.fullName || clerkUser.firstName || clerkUser.primaryEmailAddress?.emailAddress || "User",
       email: clerkUser.primaryEmailAddress?.emailAddress || "",
       avatarUrl: clerkUser.imageUrl,
+      role: (clerkUser.publicMetadata?.role as string) || "admin",
     };
   }, [isSignedIn, clerkUser]);
 
