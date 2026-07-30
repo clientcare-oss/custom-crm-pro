@@ -40,7 +40,7 @@ function createClientContext(userId: number = 99): TrpcContext {
       email: "client@example.com",
       name: "Test Client",
       loginMethod: "manus",
-      role: "user",
+      role: "client",
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSignedIn: new Date(),
@@ -68,7 +68,7 @@ describe("internalTasks", () => {
     const caller = appRouter.createCaller(createAdminContext());
     const result = await caller.internalTasks.create({
       title: "Test General Task",
-      status: "Todo",
+      status: "not_started",
       priority: "Medium",
     });
     expect(result).toBeDefined();

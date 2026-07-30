@@ -3,6 +3,7 @@ import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
+import { ClerkProvider } from "@clerk/react";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
@@ -14,8 +15,6 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
-  // Never redirect to Manus/Google login from the client portal or booking pages
-  // — those pages have their own auth systems
   const pathname = window.location.pathname;
   if (pathname.startsWith('/portal') || pathname.startsWith('/form/') || pathname === '/book') return;
 
@@ -48,8 +47,6 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
-        // Include portal session token from localStorage as a header
-        // This is a fallback for environments where httpOnly cookies don't persist
         const portalToken = localStorage.getItem("portal_token");
         const headers: Record<string, string> = {};
         if (portalToken) {
@@ -69,9 +66,12 @@ const trpcClient = trpc.createClient({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </trpc.Provider>
+  <ClerkProvider afterSignOutUrl="/">
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </trpc.Provider>
+  </ClerkProvider>
 );
+

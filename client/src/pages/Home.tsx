@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Database, ArrowRight, UserCheck, LayoutDashboard } from "lucide-react";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/react";
 
 export default function Home() {
   return (
@@ -21,12 +22,22 @@ export default function Home() {
                 Client Portal
               </Button>
             </a>
-            <a href="/api/auth/dev-login">
-              <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium shadow-md shadow-cyan-500/20">
-                Admin Dashboard
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </a>
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium shadow-md shadow-cyan-500/20">
+                  Sign In / Admin
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </SignInButton>
+            </Show>
+            <Show when="signed-in">
+              <a href="/dashboard">
+                <Button variant="outline" className="border-slate-700 bg-slate-900/60 text-slate-200 hover:bg-slate-800">
+                  Dashboard
+                </Button>
+              </a>
+              <UserButton afterSignOutUrl="/" />
+            </Show>
           </div>
         </div>
       </header>
@@ -50,12 +61,22 @@ export default function Home() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <a href="/api/auth/dev-login">
-            <Button size="lg" className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-base shadow-xl shadow-cyan-500/25 transition-all">
-              <LayoutDashboard className="w-5 h-5 mr-2" />
-              Launch Admin Dashboard
-            </Button>
-          </a>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <Button size="lg" className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-base shadow-xl shadow-cyan-500/25 transition-all">
+                <LayoutDashboard className="w-5 h-5 mr-2" />
+                Sign In to Admin Dashboard
+              </Button>
+            </SignInButton>
+          </Show>
+          <Show when="signed-in">
+            <a href="/">
+              <Button size="lg" className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-base shadow-xl shadow-cyan-500/25 transition-all">
+                <LayoutDashboard className="w-5 h-5 mr-2" />
+                Open Admin Dashboard
+              </Button>
+            </a>
+          </Show>
           <a href="/portal">
             <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-8 border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold text-base">
               <UserCheck className="w-5 h-5 mr-2" />
