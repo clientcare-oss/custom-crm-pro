@@ -28,7 +28,7 @@ import SignaturePad from "@/components/SignaturePad";
 import InlineScheduler from "@/components/InlineScheduler";
 import { NotesSection } from "@/components/NotesSection";
 
-const LOGO_URL = "/manus-storage/waypoint-logo-new_dbe73a36.png";
+const LOGO_URL = "/storage/waypoint-logo-new_dbe73a36.png";
 
 // ── Compass Rose SVG Watermark ───────────────────────────────────────────────
 function CompassRose({ className }: { className?: string }) {
@@ -1189,7 +1189,7 @@ export default function ClientPortal() {
         <div
           className="relative shrink-0 overflow-hidden"
           style={{
-            background: `linear-gradient(to right, #071422 0%, #0d1b2a 40%, rgba(13,27,42,0.7) 70%, rgba(13,27,42,0.4) 100%), url('/manus-storage/lighthouse-header-bg_485f0bf3.jpg') center/cover no-repeat`,
+            background: `linear-gradient(to right, #071422 0%, #0d1b2a 40%, rgba(13,27,42,0.7) 70%, rgba(13,27,42,0.4) 100%), url('/storage/lighthouse-header-bg_485f0bf3.jpg') center/cover no-repeat`,
             minHeight: '90px',
           }}
         >

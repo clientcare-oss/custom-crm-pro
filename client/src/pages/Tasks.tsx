@@ -154,7 +154,7 @@ function ResourcePanel({
       {resources.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-1">
           {resources.map((r) => {
-            const isImage = r.label === "image" || /\.(png|jpe?g|gif|webp|svg)$/i.test(r.url) || r.url.includes('/manus-storage/');
+            const isImage = r.label === "image" || /\.(png|jpe?g|gif|webp|svg)$/i.test(r.url) || r.url.includes('/storage/');
             if (isImage) {
               return (
                 <div key={r.id} className="relative group">

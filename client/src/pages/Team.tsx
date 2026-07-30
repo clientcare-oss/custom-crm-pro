@@ -388,7 +388,7 @@ export default function TeamPage() {
                 <Check className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-foreground">Invite link ready!</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Share this link with <strong>{inviteEmail}</strong>. They'll need to log in with Manus to accept.
+                  Share this link with <strong>{inviteEmail}</strong> to accept their invitation.
                 </p>
               </div>
               <div className="flex items-center gap-2">
