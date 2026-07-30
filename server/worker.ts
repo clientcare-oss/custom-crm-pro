@@ -72,7 +72,16 @@ export default {
       }
     }
 
-    // 3. Fall back to asset handling / single-page application routing (handled by Cloudflare Workers Assets)
-    return env.ASSETS.fetch(request);
+    // 3. Handle favicon requests gracefully
+    if (url.pathname === "/favicon.ico") {
+      return new Response(null, { status: 204 });
+    }
+
+    // 4. Fall back to asset handling / single-page application routing
+    try {
+      return await env.ASSETS.fetch(request);
+    } catch (err) {
+      return new Response(null, { status: 404 });
+    }
   }
 };

@@ -52,6 +52,8 @@ jobs:
         run: npm ci
 
       - name: Build Application
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: pk_test_aGFwcHktbGlvbmZpc2gtNzAuY2xlcmsuYWNjb3VudHMuZGV2JA
         run: npm run build
 
       - name: Deploy Worker to Cloudflare
