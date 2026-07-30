@@ -14,5 +14,8 @@
       "database_name": "custom-crm-pro-db",
       "database_id": "f90072b5-4842-4423-a221-ab62a01a25a6"
     }
-  ]
+  ],
+  "ai": {
+    "binding": "AI"
+  }
 }

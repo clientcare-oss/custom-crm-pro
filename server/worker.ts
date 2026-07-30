@@ -8,9 +8,12 @@ import { getSessionCookieOptions } from "./_core/cookies";
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    // Attach native D1 binding if present
+    // Attach native D1 & Workers AI bindings if present
     if (env.DB) {
       (globalThis as any).__CF_ENV_DB__ = env.DB;
+    }
+    if (env.AI) {
+      (globalThis as any).__CF_ENV_AI__ = env.AI;
     }
 
     const url = new URL(request.url);
