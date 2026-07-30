@@ -44,8 +44,10 @@ import { emailTemplatesRouter } from "./routers/emailTemplates";
 import { sponsorsRouter } from "./routers/sponsors";
 import { servicesRouter } from "./routers/services";
 import { complaintEngineRouter } from "./routers/complaintEngine";
+import { portalProvisioningRouter } from "./routers/portalProvisioning";
 
 export const appRouter = router({
+  portalProvisioning: portalProvisioningRouter,
   portalAuth: portalAuthRouter,
   smartFiles: smartFilesRouter,
   techTasks: techTasksRouter,

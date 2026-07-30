@@ -301,11 +301,24 @@ export default function Contacts() {
                         href={`tel:${contact.phone}`}
                         className="text-accent hover:underline"
                       >
-                        {contact.phone}
+                        {formatPhone(contact.phone)}
                       </a>
                     </div>
                   )}
                 </div>
+
+                {/* Provision Portal Access Button */}
+                <div className="pt-2 border-t border-border flex items-center justify-between">
+                  {contact.portalUserId ? (
+                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-md flex items-center gap-1">
+                      ✓ Portal Active
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Portal Inactive</span>
+                  )}
+                  <ProvisionPortalModal contact={contact} onSuccess={refetch} />
+                </div>
+
                 <div className="flex gap-2 pt-2">
                   <Button
                     onClick={() => setLocation(`/contacts/${contact.id}`)}
@@ -345,5 +358,85 @@ export default function Contacts() {
         </Card>
       )}
     </div>
+  );
+}
+
+function ProvisionPortalModal({ contact, onSuccess }: { contact: any; onSuccess: () => void }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [email, setEmail] = useState(contact.email || "");
+  const [password, setPassword] = useState("TestParent2026!");
+  const [result, setResult] = useState<any>(null);
+
+  const provisionMutation = trpc.portalProvisioning.provisionPortalAccess.useMutation({
+    onSuccess: (data) => {
+      setResult(data);
+      toast.success(data.message);
+      onSuccess();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to provision portal access");
+    },
+  });
+
+  return (
+    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant={contact.portalUserId ? "outline" : "default"} className="gap-1 text-xs">
+          <ExternalLink className="h-3.5 w-3.5" />
+          {contact.portalUserId ? "Manage Access" : "Provision Portal"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Provision Client Portal Access</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-xs text-muted-foreground">
+            Create or activate a portal account for <strong>{contact.firstName} {contact.lastName}</strong> to access their child's case workspace.
+          </p>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold">Parent Login Email</label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="parent@example.com" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold">Pre-Activated Password</label>
+            <Input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="TestParent2026!" />
+            <p className="text-[11px] text-muted-foreground">Pre-activated accounts bypass email verification so you can log in instantly.</p>
+          </div>
+
+          <Button
+            onClick={() => provisionMutation.mutate({ contactId: contact.id, email, password, skipEmailVerification: true })}
+            disabled={provisionMutation.isPending || !email.trim()}
+            className="w-full gap-2"
+          >
+            {provisionMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Activate Portal Account"}
+          </Button>
+
+          {result && (
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 space-y-2 text-xs">
+              <p className="font-semibold text-emerald-800 dark:text-emerald-300">✓ Account Provisioned!</p>
+              <div className="font-mono bg-background p-2 rounded border space-y-1">
+                <div><strong>URL:</strong> https://custom-crm-pro.clientcare-fa6.workers.dev/portal</div>
+                <div><strong>Email:</strong> {result.email}</div>
+                {result.preActivatedPassword && <div><strong>Password:</strong> {result.preActivatedPassword}</div>}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs gap-1"
+                onClick={() => {
+                  navigator.clipboard.writeText(`Email: ${result.email}\nPassword: ${result.preActivatedPassword}\nURL: https://custom-crm-pro.clientcare-fa6.workers.dev/portal`);
+                  toast.success("Login details copied!");
+                }}
+              >
+                Copy Login Credentials
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
