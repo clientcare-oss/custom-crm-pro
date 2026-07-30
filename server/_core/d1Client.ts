@@ -4,9 +4,11 @@ import path from 'path';
 let cachedToken: string | null = null;
 
 export function getCloudflareToken(): string | null {
-  if (process.env.CLOUDFLARE_API_TOKEN) {
-    return process.env.CLOUDFLARE_API_TOKEN;
+  const tokenFromEnv = process.env.CLOUDFLARE_API_TOKEN;
+  if (tokenFromEnv && tokenFromEnv.trim()) {
+    return tokenFromEnv.trim();
   }
+
   if (cachedToken) {
     return cachedToken;
   }
@@ -48,7 +50,7 @@ export async function queryCloudflareD1(sql: string, params: any[] = []) {
   const token = getCloudflareToken();
 
   if (!token) {
-    const errorMsg = 'Cloudflare D1 credentials missing. Please run "npx wrangler login" in terminal or set CLOUDFLARE_API_TOKEN in your .env file.';
+    const errorMsg = 'Cloudflare D1 credentials missing. Please set CLOUDFLARE_API_TOKEN in your .env file.';
     console.error(`[Cloudflare D1] ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -75,5 +77,5 @@ export async function queryCloudflareD1(sql: string, params: any[] = []) {
     throw new Error(`Cloudflare D1 Query Failed: ${errorMsg}`);
   }
 
-  return json.result[0];
+  return json.result?.[0]?.results ?? [];
 }

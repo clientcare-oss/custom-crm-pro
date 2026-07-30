@@ -79,6 +79,18 @@ export const portalProcedure = t.procedure.use(
       });
     }
 
+    // Clerk Client users with role === 'client'
+    if (ctx.user?.role === 'client') {
+      const contactId = (ctx.user as any).contactId ?? ctx.user.id;
+      return next({
+        ctx: {
+          ...ctx,
+          portalContactId: Number(contactId),
+          isAdminPreview: false,
+        },
+      });
+    }
+
     // Read the portal session token (cookie first, then header fallback)
     const token = getPortalToken(ctx);
     if (!token) {

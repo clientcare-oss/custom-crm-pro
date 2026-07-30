@@ -1,3 +1,4 @@
+import { useClerk } from "@clerk/react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
@@ -176,6 +177,8 @@ function PortalTaskRow({ task, studentContactId }: { task: any; studentContactId
 
 // ── Portal Login Form ────────────────────────────────────────────────────────
 function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const clerk = useClerk();
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [view, setView] = useState<"login" | "forgot" | "forgot-sent" | "reset" | "reset-done">(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("reset_token") ? "reset" : "login";
@@ -194,6 +197,37 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
     onSuccess: () => onSuccess(),
     onError: (err) => toast.error(err.message || "Invalid email or password"),
   });
+
+  const handlePortalSignIn = async () => {
+    if (!email || !password) return;
+    setIsSigningIn(true);
+
+    if (clerk && clerk.client) {
+      try {
+        const result = await clerk.client.signIn.create({
+          identifier: email,
+          password: password,
+        });
+        if (result.status === "complete") {
+          await clerk.setActive({ session: result.createdSessionId });
+          toast.success("Signed in to Client Portal!");
+          onSuccess();
+          setIsSigningIn(false);
+          return;
+        }
+      } catch (clerkErr: any) {
+        console.warn("[Clerk Sign In error]", clerkErr);
+        const msg = clerkErr.errors?.[0]?.message || clerkErr.message;
+        toast.error(msg || "Invalid email or password");
+        setIsSigningIn(false);
+        return;
+      }
+    }
+
+    login.mutate({ email, password });
+    setIsSigningIn(false);
+  };
+
   const requestReset = trpc.portalAuth.requestPasswordReset.useMutation({
     onSuccess: () => setView("forgot-sent"),
     onError: (err) => toast.error(err.message || "Failed to send reset email"),
@@ -258,7 +292,7 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
                 <Label htmlFor="portal-email" className="text-white/70">Email</Label>
                 <Input id="portal-email" type="email" placeholder="you@example.com"
                   value={email} onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") login.mutate({ email, password }); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handlePortalSignIn(); }}
                   className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-amber-400" />
               </div>
               <div className="space-y-1.5">
@@ -268,13 +302,13 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
                 </div>
                 <Input id="portal-password" type="password" placeholder="••••••••"
                   value={password} onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") login.mutate({ email, password }); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handlePortalSignIn(); }}
                   className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-amber-400" />
               </div>
               <Button type="button" className="w-full bg-amber-500 hover:bg-amber-400 text-[#0d1b2a] font-bold"
-                onClick={() => login.mutate({ email, password })}
-                disabled={login.isPending || !email || !password}>
-                {login.isPending ? "Signing in…" : "Sign In"}
+                onClick={handlePortalSignIn}
+                disabled={isSigningIn || login.isPending || !email || !password}>
+                {isSigningIn || login.isPending ? "Signing in…" : "Sign In"}
               </Button>
               <div className="text-center space-y-1">
                 <p className="text-xs text-white/40">First time here?{" "}
@@ -506,9 +540,9 @@ export default function ClientPortal() {
   });
 
   const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
-  const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser;
+  const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser || user?.role === "client";
 
-  const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, { enabled: !!portalUser });
+  const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, { enabled: !!portalUser || user?.role === "client" });
 
   const previewParentContactId = (() => {
     if (typeof window === "undefined") return null;
