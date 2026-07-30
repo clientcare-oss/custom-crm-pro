@@ -38,7 +38,7 @@ import { ENV } from './_core/env';
 import { getDb } from "./db/connection";
 import { upsertUser, getUserByOpenId, getUserByEmail, getUserById } from "./db/users";
 import { getCaseCompass, updateCaseCompass, upsertCaseCompass, getCaseCompassHistory } from "./db/compass";
-import { getContactsByOwner, getContactById, createContact, updateContact, deleteContact, getStudentsByParentContactId } from "./db/contacts";
+import { getContactsByOwner, getContactById, getContactByEmail, createContact, updateContact, updateContactById, deleteContact, getStudentsByParentContactId } from "./db/contacts";
 import { getTasksByProject, createTask, updateTask, deleteTask, getTaskSteps } from "./db/tasks";
 import { getInvoicesByClient, getInvoiceById, getInvoiceLineItems, getContractsByClient, getVaultSubscription } from "./db/billing";
 
@@ -54,8 +54,10 @@ export {
   getCaseCompassHistory,
   getContactsByOwner,
   getContactById,
+  getContactByEmail,
   createContact,
   updateContact,
+  updateContactById,
   deleteContact,
   getStudentsByParentContactId,
   getTasksByProject,

@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerFileUploadRoutes } from "../fileUpload";
 import { registerStripeRoutes } from "../stripe";
 import { registerQuoWebhookRoutes } from "../quoWebhook";
+import { registerClerkWebhookRoutes } from "../clerkWebhook";
 import { registerRestApiRoutes } from "../restApi";
 import { registerVoiceUploadRoutes } from "../voiceUpload";
 import { registerImageUploadRoutes } from "../imageUpload";
@@ -41,6 +42,8 @@ async function startServer() {
   registerStripeRoutes(app);
   // Quo (OpenPhone) webhook — also before body parsers for raw body access
   registerQuoWebhookRoutes(app);
+  // Clerk webhook — before body parsers for raw body signature verification
+  registerClerkWebhookRoutes(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

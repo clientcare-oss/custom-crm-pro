@@ -13,17 +13,34 @@ export async function getContactsByOwner(ownerId: number) {
     .orderBy(desc(contacts.createdAt));
 }
 
-export async function getContactById(id: number, ownerId: number) {
+export async function getContactById(id: number, ownerId?: number) {
   const db = await getDb();
   if (!db) return undefined;
+
+  const query = ownerId
+    ? and(eq(contacts.id, id), eq(contacts.ownerId, ownerId))
+    : eq(contacts.id, id);
 
   const result = await db
     .select()
     .from(contacts)
-    .where(and(eq(contacts.id, id), eq(contacts.ownerId, ownerId)))
+    .where(query)
     .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getContactByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const [result] = await db
+    .select()
+    .from(contacts)
+    .where(eq(contacts.email, email))
+    .limit(1);
+
+  return result ?? undefined;
 }
 
 export async function createContact(data: any, ownerId: number) {
@@ -53,6 +70,16 @@ export async function updateContact(id: number, ownerId: number, data: any) {
     .update(contacts)
     .set(data)
     .where(and(eq(contacts.id, id), eq(contacts.ownerId, ownerId)));
+}
+
+export async function updateContactById(id: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .update(contacts)
+    .set(data)
+    .where(eq(contacts.id, id));
 }
 
 export async function deleteContact(id: number, ownerId: number) {
