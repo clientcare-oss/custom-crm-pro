@@ -209,15 +209,26 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+const getAiConfig = () => {
+  const accountId =
+    process.env.CLOUDFLARE_ACCOUNT_ID || "fa65a33e99b08d8202d3afa0b305a1c4";
+  const cfToken = process.env.CLOUDFLARE_API_TOKEN || ENV.forgeApiKey || "";
+  const openAiKey = process.env.OPENAI_API_KEY || "";
 
-const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (openAiKey) {
+    return {
+      url: "https://api.openai.com/v1/chat/completions",
+      apiKey: openAiKey,
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    };
   }
+
+  return {
+    url: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1/chat/completions`,
+    apiKey: cfToken,
+    model:
+      process.env.CF_AI_MODEL || "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  };
 };
 
 const normalizeResponseFormat = ({
@@ -266,7 +277,13 @@ const normalizeResponseFormat = ({
 };
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+  const { url, apiKey, model } = getAiConfig();
+
+  if (!apiKey) {
+    throw new Error(
+      "AI API key missing: please configure CLOUDFLARE_API_TOKEN or OPENAI_API_KEY"
+    );
+  }
 
   const {
     messages,
@@ -280,7 +297,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model,
     messages: messages.map(normalizeMessage),
   };
 
@@ -296,11 +313,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
-
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
     response_format,
@@ -312,11 +324,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(payload),
   });
