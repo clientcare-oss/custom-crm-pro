@@ -24,6 +24,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { KeyRound } from "lucide-react";
+import ContactCompassTab from "@/components/contact/ContactCompassTab";
+import ContactNotesTab from "@/components/contact/ContactNotesTab";
+import ContactFilesTab from "@/components/contact/ContactFilesTab";
+import ContactStudentsTab from "@/components/contact/ContactStudentsTab";
+import ContactFinancialsTab from "@/components/contact/ContactFinancialsTab";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -639,136 +644,15 @@ function ParentTabs({
 
       {/* STUDENTS TAB */}
       <TabsContent value="students" className="mt-4">
-        {studentsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : students.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border bg-muted/20 py-12 text-center">
-            <Users className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-            <p className="text-sm font-semibold text-foreground mb-1">No students linked yet</p>
-            <p className="text-xs text-muted-foreground">
-              Add a student and select this contact as their parent.
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {students.map((student: any) => (
-              <Card
-                key={student.id}
-                onClick={() => setLocation(`/contacts/${student.id}`)}
-                className="rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent font-bold text-base">
-                    {student.firstName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-foreground group-hover:text-accent transition-colors truncate">
-                        {student.firstName} {student.lastName}
-                      </p>
-                      {student.pendingTaskCount > 0 && (
-                        <span title={`${student.pendingTaskCount} task${student.pendingTaskCount > 1 ? 's' : ''} waiting`} className="text-base leading-none">⚠️</span>
-                      )}
-                    </div>
-                    {student.caseId && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Case ID: <span className="font-mono font-semibold">{student.caseId}</span>
-                      </p>
-                    )}
-                    {student.nextMeeting ? (
-                      <div className="mt-2 flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3 flex-shrink-0" />
-                          <span>
-                            Next: {new Date(student.nextMeeting.startTime).toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                            {" "}
-                            {new Date(student.nextMeeting.startTime).toLocaleTimeString(undefined, {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
-                        {/* IEP meeting link status pill — only for IEP-type meetings */}
-                        {student.nextMeeting.meetingType && /iep|504/i.test(student.nextMeeting.meetingType) && (
-                          <span className={`inline-flex items-center gap-1 self-start rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${
-                            student.nextMeeting.videoLink || student.nextMeeting.clientMeetingLink
-                              ? 'bg-green-500/15 text-green-600 dark:text-green-400'
-                              : 'bg-red-500/15 text-red-600 dark:text-red-400'
-                          }`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${
-                              student.nextMeeting.videoLink || student.nextMeeting.clientMeetingLink
-                                ? 'bg-green-500'
-                                : 'bg-red-500'
-                            }`} />
-                            {student.nextMeeting.videoLink || student.nextMeeting.clientMeetingLink
-                              ? 'Link sent to advocate'
-                              : 'Link not sent to advocate'}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-xs text-muted-foreground/60 italic">No upcoming meeting</p>
-                    )}
-                    {student.pendingTaskCount > 0 && (
-                      <p className="mt-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                        {student.pendingTaskCount} task{student.pendingTaskCount > 1 ? 's' : ''} waiting
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+        <ContactStudentsTab
+          students={students}
+          onSelectStudent={(id) => setLocation(`/contacts/${id}`)}
+        />
       </TabsContent>
 
       {/* BILLING / FINANCIALS TAB */}
       <TabsContent value="financials" className="mt-4 space-y-3">
-        {invoices.length === 0 && contracts.length === 0 ? (
-          <EmptyState icon={<DollarSign className="h-8 w-8" />} text="No billing records for this client" />
-        ) : (
-          <>
-            {invoices.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Invoices</p>
-                {invoices.map((inv: any) => (
-                  <Card key={inv.id} className="p-4 rounded-lg border border-border flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">#{inv.invoiceNumber}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {inv.dueDate ? `Due ${new Date(inv.dueDate).toLocaleDateString()}` : "No due date"}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">${inv.total}</p>
-                      <StatusBadge status={inv.status} />
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-            {contracts.length > 0 && (
-              <div className="space-y-2 pt-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contracts</p>
-                {contracts.map((c: any) => (
-                  <Card key={c.id} className="p-4 rounded-lg border border-border flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ScrollText className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm font-semibold text-foreground">{c.title}</p>
-                    </div>
-                    <StatusBadge status={c.status} />
-                  </Card>
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        <ContactFinancialsTab invoices={invoices} contracts={contracts} />
       </TabsContent>
 
       {/* ACTIVITY */}
@@ -792,24 +676,7 @@ function ParentTabs({
 
       {/* FILES */}
       <TabsContent value="files" className="mt-4 space-y-3">
-        {files.length === 0 ? (
-          <EmptyState icon={<Folder className="h-8 w-8" />} text="No files uploaded" />
-        ) : (
-          files.map((f: any) => (
-            <Card key={f.id} className="p-4 rounded-lg border border-border flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-foreground">{f.fileName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {f.fileSize ? `${(f.fileSize / 1024 / 1024).toFixed(2)} MB · ` : ""}
-                  {new Date(f.uploadedAt).toLocaleDateString()}
-                </p>
-              </div>
-              <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline font-semibold">
-                Open
-              </a>
-            </Card>
-          ))
-        )}
+        <ContactFilesTab files={files} />
       </TabsContent>
 
       {/* APPOINTMENTS */}

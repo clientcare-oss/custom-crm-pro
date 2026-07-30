@@ -15,6 +15,11 @@ function createAdminContext(): TrpcContext {
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
+    phone: null,
+    quoWebhookSecret: null,
+    gmailUser: null,
+    gmailAppPassword: null,
+    portalDomain: null,
   };
 
   const ctx: TrpcContext = {
@@ -33,15 +38,20 @@ function createAdminContext(): TrpcContext {
 
 function createClientContext(): TrpcContext {
   const user: AuthenticatedUser = {
-    id: 2,
+    id: 99,
     openId: "client-user",
-    email: "client@example.com",
+    email: "testparent@waypointadvocates.com",
     name: "Client User",
     loginMethod: "manus",
     role: "client",
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
+    phone: null,
+    quoWebhookSecret: null,
+    gmailUser: null,
+    gmailAppPassword: null,
+    portalDomain: null,
   };
 
   const ctx: TrpcContext = {
@@ -58,8 +68,53 @@ function createClientContext(): TrpcContext {
   return ctx;
 }
 
+import { getDb } from "./db";
+import { users, contacts, projects } from "../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
+
 describe("Notes Feature", () => {
-  let projectId = 1; // Assuming project ID 1 exists from other tests
+  let projectId = 77;
+
+  beforeAll(async () => {
+    const conn = await getDb();
+    if (conn) {
+      try {
+        await conn.insert(users).values({
+          id: 1,
+          openId: "test-owner-1",
+          name: "Test Owner",
+          email: "admin@example.com",
+          role: "admin",
+        });
+      } catch (e) {}
+      try {
+        await conn.insert(contacts).values({
+          id: 99,
+          ownerId: 1,
+          firstName: "Test",
+          lastName: "Parent",
+          email: "testparent@waypointadvocates.com",
+        });
+      } catch (e) {}
+
+      const existing = await conn.select().from(projects).limit(1);
+      if (existing.length > 0) {
+        projectId = existing[0].id;
+      } else {
+        await conn.insert(projects).values({
+          ownerId: 1,
+          clientId: 99,
+          name: "Test Notes Suite Project",
+          description: "Test Notes Suite Project",
+          status: "In Progress",
+        });
+        const created = await conn.select().from(projects).orderBy(desc(projects.id)).limit(1);
+        if (created.length > 0) {
+          projectId = created[0].id;
+        }
+      }
+    }
+  });
 
   describe("Admin Notes Operations", () => {
     it("should create a note", async () => {

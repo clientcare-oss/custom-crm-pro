@@ -86,6 +86,15 @@ export const portalProvisioningRouter = router({
 
           clerkUserId = newClerkUser.id;
           isNewUser = true;
+
+          // Mark primary email as verified
+          if (newClerkUser.emailAddresses) {
+            for (const emailObj of newClerkUser.emailAddresses) {
+              try {
+                await clerkClient.emailAddresses.updateEmailAddress(emailObj.id, { verified: true });
+              } catch (e) {}
+            }
+          }
         } else {
           // 4. Send an invitation email via Clerk
           await clerkClient.invitations.createInvitation({

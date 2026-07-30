@@ -31,6 +31,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import PageIdBadge from './PageIdBadge';
 import QuickSetupModal from './QuickSetupModal';
+import ScopedErrorBoundary from "./ScopedErrorBoundary";
 
 const LOGO_URL = "/storage/waypoint-logo-new_dbe73a36.png";
 
@@ -357,7 +358,11 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-4">
+          <ScopedErrorBoundary moduleName={activeMenuItem?.label ?? "Page"}>
+            {children}
+          </ScopedErrorBoundary>
+        </main>
       </SidebarInset>
 
       <AIAssistant />

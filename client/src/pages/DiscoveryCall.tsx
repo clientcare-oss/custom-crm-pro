@@ -27,6 +27,8 @@ import {
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import DiscoveryHeader from "@/components/discovery/DiscoveryHeader";
+import DiscoverySectionHeader from "@/components/discovery/DiscoverySectionHeader";
 
 interface DiscoveryCallPageProps {
   leadId: number;
@@ -47,41 +49,8 @@ const LOST_STEPS_KEYS = [
   { key: "archive", label: "Archive Lead" },
 ];
 
-function SectionHeader({
-  number,
-  title,
-  isOpen,
-  onToggle,
-  badge,
-}: {
-  number: number;
-  title: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  badge?: string;
-}) {
-  return (
-    <button
-      onClick={onToggle}
-      className="w-full flex items-center gap-3 py-3 px-4 rounded-lg bg-[#0d1f33] hover:bg-[#112440] transition-colors text-left group"
-    >
-      <span className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">
-        {number}
-      </span>
-      <span className="flex-1 font-semibold text-white text-sm tracking-wide uppercase">
-        {title}
-      </span>
-      {badge && (
-        <Badge className="bg-blue-500/20 text-blue-300 text-xs border-0">{badge}</Badge>
-      )}
-      {isOpen ? (
-        <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-      ) : (
-        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-      )}
-    </button>
-  );
-}
+// SectionHeader component imported from @/components/discovery/DiscoverySectionHeader
+const SectionHeader = DiscoverySectionHeader;
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);

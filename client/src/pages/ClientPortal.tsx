@@ -1,4 +1,4 @@
-import { useClerk } from "@clerk/react";
+import { useClerk, SignIn } from "@clerk/react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,12 @@ import {
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "@/components/CaseCompassCard";
+import ClientPortalDashboard from "@/components/ClientPortalDashboard";
+import { ClientPortalSidebar } from "@/components/ClientPortalSidebar";
+import { ClientPortalHeader } from "@/components/ClientPortalHeader";
+import PortalCommunicationTab from "@/components/portal/PortalCommunicationTab";
+import PortalTasksTab from "@/components/portal/PortalTasksTab";
+import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -214,6 +220,10 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
           onSuccess();
           setIsSigningIn(false);
           return;
+        } else {
+          toast.error(`Sign in status: ${result.status}`);
+          setIsSigningIn(false);
+          return;
         }
       } catch (clerkErr: any) {
         console.warn("[Clerk Sign In error]", clerkErr);
@@ -270,7 +280,7 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
 
       {/* Right login form */}
       <div className="flex flex-1 items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md border border-white/15 rounded-xl px-8 py-6 bg-white/[0.02]">
           <div className="lg:hidden text-center mb-8">
             <img src={LOGO_URL} alt="Waypoint Advocates" className="w-16 h-16 object-contain mx-auto mb-3" />
             <p className="text-sm font-bold tracking-widest text-white uppercase">Waypoint Advocates</p>
@@ -288,34 +298,85 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
 
           {view === "login" && (
             <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="portal-email" className="text-white/70">Email</Label>
-                <Input id="portal-email" type="email" placeholder="you@example.com"
-                  value={email} onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handlePortalSignIn(); }}
-                  className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-amber-400" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="portal-password" className="text-white/70">Password</Label>
-                  <button type="button" onClick={() => setView("forgot")} className="text-xs text-amber-400 hover:text-amber-300">Forgot password?</button>
-                </div>
-                <Input id="portal-password" type="password" placeholder="••••••••"
-                  value={password} onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handlePortalSignIn(); }}
-                  className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-amber-400" />
-              </div>
-              <Button type="button" className="w-full bg-amber-500 hover:bg-amber-400 text-[#0d1b2a] font-bold"
-                onClick={handlePortalSignIn}
-                disabled={isSigningIn || login.isPending || !email || !password}>
-                {isSigningIn || login.isPending ? "Signing in…" : "Sign In"}
-              </Button>
-              <div className="text-center space-y-1">
-                <p className="text-xs text-white/40">First time here?{" "}
-                  <button type="button" onClick={() => setView("forgot")} className="text-amber-400 hover:text-amber-300 font-medium">Set up your password</button>
-                </p>
-                <p className="text-xs text-white/30">Don't have access? Contact your advocate.</p>
-              </div>
+              {clerk && clerk.loaded ? (
+                <SignIn
+                  forceRedirectUrl="/portal"
+                  appearance={{
+                    variables: {
+                      colorPrimary: "#f59e0b",
+                      colorBackground: "transparent",
+                      colorForeground: "#ffffff",
+                      colorMutedForeground: "rgba(255,255,255,0.6)",
+                      colorNeutral: "white",
+                      colorInput: "rgba(255,255,255,0.08)",
+                      colorInputForeground: "#ffffff",
+                      colorBorder: "rgba(255,255,255,0.15)",
+                    },
+                    elements: {
+                      rootBox: { width: "100%" },
+                      card: { backgroundColor: "transparent", boxShadow: "none", border: "none", padding: 0, width: "100%" },
+                      headerTitle: { display: "none" },
+                      headerSubtitle: { display: "none" },
+                      socialButtonsBlockButton: { backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.25)" },
+                      socialButtonsBlockButtonText: { color: "#ffffff" },
+                      formButtonPrimary: { backgroundColor: "#f59e0b", color: "#0d1b2a", fontWeight: 700, border: "none", boxShadow: "0 2px 8px rgba(245,158,11,0.3)" },
+                      formFieldLabel: { color: "rgba(255,255,255,0.7)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.05em" },
+                      formFieldInput: { backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.15)", color: "#ffffff" },
+                      formFieldAction: { color: "#fbbf24" },
+                      formFieldHintText: { color: "rgba(255,255,255,0.5)" },
+                      formFieldErrorText: { color: "#f87171" },
+                      formFieldSuccessText: { color: "#4ade80" },
+                      formHeaderTitle: { color: "#ffffff" },
+                      formHeaderSubtitle: { color: "rgba(255,255,255,0.6)" },
+                      dividerLine: { backgroundColor: "rgba(255,255,255,0.15)" },
+                      dividerText: { color: "rgba(255,255,255,0.4)" },
+                      alternativeMethodsBlockButton: { color: "rgba(255,255,255,0.7)", borderColor: "rgba(255,255,255,0.15)" },
+                      identityPreviewText: { color: "#ffffff", fontWeight: 500 },
+                      identityPreviewEditButton: { color: "#fbbf24" },
+                      otpCodeFieldInput: { color: "#ffffff", borderColor: "rgba(255,255,255,0.2)", backgroundColor: "rgba(255,255,255,0.05)" },
+                      footer: { backgroundColor: "transparent", border: "none" },
+                      footerAction: { display: "none" },
+                      footerActionText: { display: "none" },
+                      footerActionLink: { display: "none" },
+                      footerPages: { color: "rgba(255,255,255,0.4)" },
+                      footerPagesLink: { color: "rgba(255,255,255,0.5)" },
+                      alert: { backgroundColor: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)", color: "#fca5a5" },
+                      alertText: { color: "#fca5a5" },
+                    },
+                  }}
+                />
+              ) : (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="portal-email" className="text-white/70">Email</Label>
+                    <Input id="portal-email" type="email" placeholder="you@example.com"
+                      value={email} onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handlePortalSignIn(); }}
+                      className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-amber-400" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="portal-password" className="text-white/70">Password</Label>
+                      <button type="button" onClick={() => setView("forgot")} className="text-xs text-amber-400 hover:text-amber-300">Forgot password?</button>
+                    </div>
+                    <Input id="portal-password" type="password" placeholder="••••••••"
+                      value={password} onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handlePortalSignIn(); }}
+                      className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-amber-400" />
+                  </div>
+                  <Button type="button" className="w-full bg-amber-500 hover:bg-amber-400 text-[#0d1b2a] font-bold"
+                    onClick={handlePortalSignIn}
+                    disabled={isSigningIn || login.isPending || !email || !password}>
+                    {isSigningIn || login.isPending ? "Signing in…" : "Sign In"}
+                  </Button>
+                  <div className="text-center space-y-1">
+                    <p className="text-xs text-white/40">First time here?{" "}
+                      <button type="button" onClick={() => setView("forgot")} className="text-amber-400 hover:text-amber-300 font-medium">Set up your password</button>
+                    </p>
+                    <p className="text-xs text-white/30">Don't have access? Contact your advocate.</p>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -540,7 +601,8 @@ export default function ClientPortal() {
   });
 
   const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
-  const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser || user?.role === "client";
+  const isOnPortalRoute = typeof window !== "undefined" && (window.location.pathname === "/portal" || window.location.pathname === "/client-portal");
+  const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser || user?.role === "client" || (!!user && isOnPortalRoute);
 
   const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, { enabled: !!portalUser || user?.role === "client" });
 
@@ -583,11 +645,18 @@ export default function ClientPortal() {
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
   );
   const { data: vaultSubscription } = trpc.vault.getSubscription.useQuery(undefined, { enabled: !!portalUser || isPreviewMode });
-  const { data: studentTasks = [] } = trpc.portal.getAssignedTasks.useQuery(
+  const { data: studentTasks = [], refetch: refetchTasks } = trpc.portal.getAssignedTasks.useQuery(
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
   );
+  const updateTaskStatusMutation = trpc.portal.updateTaskStatus.useMutation({
+    onSuccess: () => { refetchTasks(); },
+    onError: (err) => toast.error(err.message || "Failed to update task status"),
+  });
   const { data: studentProjects = [] } = trpc.portal.getStudentProjects.useQuery(
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
+  );
+  const { data: studentCompass } = trpc.portal.getStudentCompass.useQuery(
+    { caseId: effectiveCaseId! }, { enabled: !!effectiveCaseId }
   );
 
   const [newMessage, setNewMessage] = useState("");
@@ -722,7 +791,7 @@ export default function ClientPortal() {
 
   // ── Active tab content ──
   const renderContent = () => {
-    if (!effectiveStudent) {
+    if (!effectiveStudent && activeTab !== "compass") {
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8">
           <Compass className="h-14 w-14 mb-4 text-muted-foreground opacity-40" />
@@ -734,75 +803,41 @@ export default function ClientPortal() {
 
     switch (activeTab) {
       case "compass":
-        return <CaseCompassCard caseId={effectiveCaseId ?? undefined} />;
+        return (
+          <ClientPortalDashboard
+            displayName={displayName}
+            effectiveStudent={effectiveStudent}
+            studentAppointments={studentAppointments}
+            messages={messages}
+            studentTasks={studentTasks}
+            studentFiles={studentFiles}
+            studentCompass={studentCompass}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenScheduler={() => setShowMeetingScheduler(true)}
+            onUploadClick={() => fileInputRef.current?.click()}
+          />
+        );
 
       case "communication":
         return (
-          <div className="p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Communication</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Communicate directly with your advocate</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card">
-              <div className="h-[380px] overflow-y-auto p-4 space-y-3">
-                {messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <MessageSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-                      <p className="text-sm text-muted-foreground">No messages yet. Start a conversation!</p>
-                    </div>
-                  </div>
-                ) : (
-                  messages.map((msg: any) => {
-                    const isOwn = msg.senderId === user?.id;
-                    return (
-                      <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${isOwn ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm"}`}>
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                          <p className={`text-[10px] mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-              <div className="border-t border-border p-3">
-                <div className="flex gap-2">
-                  <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                    placeholder="Type a message..."
-                    className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim() || sendMessageMutation.isPending} size="sm" className="px-4">Send</Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PortalCommunicationTab
+            messages={messages}
+            currentUserId={user?.id ? Number(user.id) : undefined}
+            onSendMessage={(msgText) => {
+              setNewMessage(msgText);
+              handleSendMessage();
+            }}
+          />
         );
 
       case "tasks":
         return (
-          <div className="p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Tasks</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Action items for {effectiveStudent.firstName}'s case</p>
-            </div>
-            {studentTasks.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
-                <CheckSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                <p className="text-sm font-semibold text-foreground mb-1">No tasks assigned</p>
-                <p className="text-xs text-muted-foreground">Your advocate will assign tasks here when there are action items</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {studentTasks.map((task: any) => (
-                  <PortalTaskRow key={task.id} task={task} studentContactId={effectiveStudentContactId!} />
-                ))}
-              </div>
-            )}
-          </div>
+          <PortalTasksTab
+            tasks={studentTasks}
+            onToggleTaskStatus={(taskId, status) => {
+              updateTaskStatusMutation.mutate({ taskId, status, studentContactId: effectiveStudentContactId! });
+            }}
+          />
         );
 
       case "smart-docs":
@@ -948,9 +983,10 @@ export default function ClientPortal() {
 
       case "cases":
         return (
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-6">
+            <CaseCompassCard caseId={effectiveCaseId ?? undefined} />
             <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Cases</h2>
+              <h2 className="text-lg font-bold tracking-tight text-foreground">Cases & Projects</h2>
               <p className="text-sm text-muted-foreground mt-0.5">Active cases and projects for {effectiveStudent.firstName}</p>
             </div>
             {studentProjects.length > 0 ? (
@@ -1189,11 +1225,23 @@ export default function ClientPortal() {
     }
   };
 
+  const handleLogout = () => {
+    if (portalUser) portalLogout.mutate();
+    else logoutMutation.mutate();
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-[#040C16]">
       {/* Desktop sidebar */}
-      <div className="hidden md:flex flex-col h-full border-r border-white/8 shrink-0">
-        <Sidebar />
+      <div className="hidden md:flex flex-col h-full shrink-0">
+        <ClientPortalSidebar
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          displayName={displayName}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onLogout={handleLogout}
+        />
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -1201,12 +1249,21 @@ export default function ClientPortal() {
         <div className="fixed inset-0 z-50 flex md:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
           <div className="relative z-10 flex flex-col h-full">
-            <Sidebar mobile />
+            <ClientPortalSidebar
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              mobile
+              onCloseMobile={() => setSidebarOpen(false)}
+              displayName={displayName}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+              onLogout={handleLogout}
+            />
           </div>
         </div>
       )}
 
-            {/* Main content */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile hamburger bar */}
         <div className="md:hidden flex items-center gap-3 px-4 py-2 bg-[#071422] shrink-0 border-b border-white/8">
@@ -1219,62 +1276,15 @@ export default function ClientPortal() {
           </button>
         </div>
 
-        {/* Lighthouse hero header */}
-        <div
-          className="relative shrink-0 overflow-hidden"
-          style={{
-            background: `linear-gradient(to right, #071422 0%, #0d1b2a 40%, rgba(13,27,42,0.7) 70%, rgba(13,27,42,0.4) 100%), url('/storage/lighthouse-header-bg_485f0bf3.jpg') center/cover no-repeat`,
-            minHeight: '90px',
-          }}
-        >
-          <div className="relative z-10 flex items-center justify-between px-5 py-4">
-            {/* Left: title + welcome */}
-            <div>
-              <h1 className="text-lg font-bold text-white tracking-wide">Client Portal</h1>
-              <p className="text-sm text-amber-400 font-medium">Welcome, {displayName}</p>
-            </div>
-            {/* Right: controls */}
-            <div className="hidden md:flex items-center gap-2">
-              <button
-                onClick={toggleTheme}
-                className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 transition-all"
-                title={theme === 'navy' ? 'Light mode' : 'Dark mode'}
-              >
-                {theme === 'navy' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </button>
-              <button
-                onClick={() => setShowIepLinkDialog(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/20 hover:border-amber-400/50 text-white/70 hover:text-amber-300 text-sm transition-all"
-                title="Send Advocate My IEP Meeting Link"
-              >
-                <Link2 className="h-4 w-4" />
-                <span className="hidden lg:inline">Send Advocate My IEP Meeting Link</span>
-              </button>
-              <button
-                onClick={() => setShowMeetingScheduler(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#071422] font-semibold text-sm transition-all shadow-lg shadow-amber-500/20"
-              >
-                <Calendar className="h-4 w-4" />
-                Schedule Meeting
-              </button>
-              {/* User avatar dropdown */}
-              <div className="relative group">
-                <button className="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 font-bold text-sm hover:bg-amber-500/30 transition-all">
-                  {displayName?.charAt(0)?.toUpperCase() ?? 'C'}
-                </button>
-                <div className="absolute right-0 top-full mt-1 w-40 bg-[#0d1b2a] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all z-50">
-                  <button
-                    onClick={() => { if (portalUser) portalLogout.mutate(); else logoutMutation.mutate(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    Sign out
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Modular Header */}
+        <ClientPortalHeader
+          displayName={displayName}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenIepLinkDialog={() => setShowIepLinkDialog(true)}
+          onOpenScheduler={() => setShowMeetingScheduler(true)}
+          onLogout={handleLogout}
+        />
 
         {/* Student selector cards */}
         {portalStudents.length > 0 && (
@@ -1333,7 +1343,9 @@ export default function ClientPortal() {
 
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto">
-          {renderContent()}
+          <ScopedErrorBoundary moduleName={NAV_ITEMS.find(n => n.id === activeTab)?.label ?? "Portal Tab"}>
+            {renderContent()}
+          </ScopedErrorBoundary>
         </div>
       </div>
 
