@@ -57,5 +57,6 @@ Open your browser to `http://localhost:3000` (or `http://localhost:5173`).
 
 ## 5. Deployment Pipeline
 
-- **Staging Preview**: Pushes to `staging` branch automatically deploy to Cloudflare Workers preview environment.
-- **Production**: Merges into `main` deploy directly to production workers.
+- **Automated CI/CD**: Managed via GitHub Actions (`.github/workflows/deploy.yml`).
+- **Pushes & PRs**: Runs `npm run check` (TypeScript typechecking) and `npm run test` (Vitest unit testing) on every push and pull request.
+- **Production Deployment**: Every push merged into `main` automatically runs type checks, unit tests, builds the application, and deploys directly to Cloudflare Workers via `CLOUDFLARE_API_TOKEN`.

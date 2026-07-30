@@ -1,0 +1,59 @@
+name: CI/CD Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-typecheck:
+    name: Typecheck & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Type Check
+        run: npm run check
+
+      - name: Run Tests
+        run: npm run test
+
+  deploy:
+    name: Deploy to Cloudflare Workers
+    needs: test-and-typecheck
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Deploy Worker to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy
