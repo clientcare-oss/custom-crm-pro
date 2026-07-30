@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ScrollText, Copy, Download, CheckCircle2, Loader2, AlertTriangle, User } from "lucide-react";
+import { ArrowLeft, ScrollText, Copy, Download, CheckCircle2, Loader2, AlertTriangle, User, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +24,7 @@ export default function StateComplaintBuilder() {
   const [additionalContext, setAdditionalContext] = useState("");
   const [result, setResult] = useState<{ complaint: string; studentName: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [savedToFile, setSavedToFile] = useState(false);
 
   // Load all contacts to populate student picker (only when no contactId in URL)
   const { data: allContacts, isLoading: contactsLoading } = trpc.contacts.list.useQuery(undefined, {
@@ -46,6 +47,14 @@ export default function StateComplaintBuilder() {
     onSuccess: (data) => {
       setResult(data);
       toast.success("State complaint draft generated.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const saveFileMutation = trpc.clientFiles.saveGeneratedDocument.useMutation({
+    onSuccess: () => {
+      setSavedToFile(true);
+      toast.success("State complaint saved to student's Formal Escalation Files.");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -75,6 +84,16 @@ export default function StateComplaintBuilder() {
     a.download = `state-complaint-${result.studentName.replace(/\s+/g, "-").toLowerCase()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleSaveToFile = () => {
+    if (!result || !contactId) return;
+    const fileName = `State-Complaint-${result.studentName.replace(/\s+/g, "-")}.txt`;
+    saveFileMutation.mutate({
+      clientId: contactId,
+      fileName,
+      content: result.complaint,
+    });
   };
 
   const selectedContact = pickerOptions.find((c: any) => c.id === contactId);
@@ -255,6 +274,22 @@ export default function StateComplaintBuilder() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSaveToFile}
+                disabled={saveFileMutation.isPending || savedToFile}
+                className="inline-flex items-center gap-1.5 text-xs border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/40"
+              >
+                {saveFileMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : savedToFile ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                ) : (
+                  <FolderPlus className="h-3.5 w-3.5 text-rose-500" />
+                )}
+                {savedToFile ? "Saved to Files" : "Save to Escalation Files"}
+              </Button>
               <Button size="sm" variant="outline" onClick={handleCopy} className="inline-flex items-center gap-1.5 text-xs">
                 {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied ? "Copied!" : "Copy"}
@@ -263,7 +298,7 @@ export default function StateComplaintBuilder() {
                 <Download className="h-3.5 w-3.5" />
                 Download .txt
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setResult(null)} className="text-xs text-muted-foreground">
+              <Button size="sm" variant="ghost" onClick={() => { setResult(null); setSavedToFile(false); }} className="text-xs text-muted-foreground">
                 Start over
               </Button>
             </div>

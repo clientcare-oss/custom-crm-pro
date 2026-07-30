@@ -69,5 +69,29 @@ export const clientFilesRouter = router({
       .mutation(async ({ ctx, input }) => {
         return await db.deleteClientFile(input.id, ctx.user.id);
       }),
-  
+
+    saveGeneratedDocument: adminProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          fileName: z.string().min(1),
+          content: z.string().min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const buffer = Buffer.from(input.content, "utf-8");
+        const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const fileKey = `formal-escalations/${input.clientId}/${Date.now()}-${safeName}`;
+        const { key, url } = await storagePut(fileKey, buffer, "text/plain");
+
+        return await db.createClientFile({
+          clientId: input.clientId,
+          fileName: input.fileName,
+          fileUrl: url,
+          fileKey: key,
+          fileSize: buffer.length,
+          mimeType: "text/plain",
+          uploadedBy: ctx.user.id,
+        });
+      }),
 });
