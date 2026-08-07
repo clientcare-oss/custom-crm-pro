@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import DashboardLayout from "@/components/DashboardLayout";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,7 +150,7 @@ export default function TeamPage() {
   const pendingInvites = invites.filter((i) => i.status === "pending");
 
   return (
-    <DashboardLayout>
+    <>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -432,6 +432,6 @@ export default function TeamPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import DashboardLayout from "@/components/DashboardLayout";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -635,7 +635,7 @@ export default function TechTasks() {
   const stuck = (tasks as TechTask[]).filter((t) => t.status === "Stuck").length;
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -771,6 +771,6 @@ export default function TechTasks() {
           onSaved={() => {}}
         />
       )}
-    </DashboardLayout>
+    </>
   );
 }

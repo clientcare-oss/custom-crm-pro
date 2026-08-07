@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,7 @@ export default function SmartFiles() {
   const archivedTemplates = templates.filter((t) => t.status === "archived");
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-6 max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -202,6 +202,6 @@ export default function SmartFiles() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 }
