@@ -253,15 +253,61 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
             <div className="col-span-1 md:col-span-5 flex justify-center">
               <div className="relative w-[260px] h-[260px] select-none">
                 <svg viewBox="0 0 260 260" className="w-full h-full text-muted-foreground/30">
+                  <defs>
+                    {/* Metallic Gold Gradient for realistic metal reflection */}
+                    <linearGradient id="gold-metallic" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#CF9F3D" />
+                      <stop offset="20%" stopColor="#FFF2B2" />
+                      <stop offset="40%" stopColor="#AF8326" />
+                      <stop offset="60%" stopColor="#FFF2B2" />
+                      <stop offset="85%" stopColor="#AA7C11" />
+                      <stop offset="100%" stopColor="#F7DF97" />
+                    </linearGradient>
+                    {/* Glossy shine overlay gradient */}
+                    <linearGradient id="gold-shine" x1="100%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4" />
+                      <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0" />
+                      <stop offset="65%" stopColor="#000000" stopOpacity="0" />
+                      <stop offset="100%" stopColor="#000000" stopOpacity="0.3" />
+                    </linearGradient>
+                    {/* Drop shadow for 3D depth */}
+                    <filter id="ring-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000000" floodOpacity="0.4" />
+                    </filter>
+                  </defs>
+
                   {/* Decorative outer ticks and outer circles */}
                   <circle cx={cx} cy={cy} r="124" stroke="currentColor" strokeWidth="0.75" className="opacity-15 text-muted-foreground" />
                   <circle cx={cx} cy={cy} r="115" stroke="currentColor" strokeWidth="1" strokeDasharray="3 4" className="opacity-25 text-muted-foreground" />
                   
-                  {/* Cardinal direction markers - premium geometric typography */}
-                  <text x={cx} y="22" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/75 tracking-wider select-none font-sans">N</text>
-                  <text x="248" y="135" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">E</text>
-                  <text x={cx} y="248" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">S</text>
-                  <text x="12" y="135" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">W</text>
+                  {/* Shiny Metallic Gold Outer Ring */}
+                  <circle 
+                    cx={cx} 
+                    cy={cy} 
+                    r="103" 
+                    stroke="url(#gold-metallic)" 
+                    strokeWidth="8" 
+                    fill="none" 
+                    filter="url(#ring-shadow)"
+                  />
+                  {/* Glossy shine overlay for realistic metallic look */}
+                  <circle 
+                    cx={cx} 
+                    cy={cy} 
+                    r="103" 
+                    stroke="url(#gold-shine)" 
+                    strokeWidth="8" 
+                    fill="none" 
+                  />
+                  {/* Outer and inner highlights of the gold ring */}
+                  <circle cx={cx} cy={cy} r="107" stroke="#FFF2B2" strokeWidth="0.75" fill="none" className="opacity-70" />
+                  <circle cx={cx} cy={cy} r="99" stroke="#AA7C11" strokeWidth="0.75" fill="none" className="opacity-70" />
+
+                  {/* Cardinal direction markers - repositioned to clear the outer ring */}
+                  <text x={cx} y="14" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/75 tracking-wider select-none font-sans">N</text>
+                  <text x="250" y="135" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">E</text>
+                  <text x={cx} y="253" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">S</text>
+                  <text x="10" y="135" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">W</text>
 
                   {/* Wedge/Sector group */}
                   <g className="cursor-pointer">
@@ -301,8 +347,10 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                     <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},215 ${cx + 7},${cy}`} className="fill-muted-foreground/35" />
                     
                     {/* Needle pivot cap with brass/gold styling */}
-                    <circle cx={cx} cy={cy} r="10" className="fill-card stroke-accent" strokeWidth="2" />
-                    <circle cx={cx} cy={cy} r="4" className="fill-accent" />
+                    <circle cx={cx} cy={cy} r="12" fill="url(#gold-metallic)" filter="url(#ring-shadow)" />
+                    <circle cx={cx} cy={cy} r="12" fill="url(#gold-shine)" />
+                    <circle cx={cx} cy={cy} r="6" fill="#4A3B18" className="opacity-40" />
+                    <circle cx={cx} cy={cy} r="3.5" fill="#FFF2B2" />
                   </g>
                 </svg>
 
