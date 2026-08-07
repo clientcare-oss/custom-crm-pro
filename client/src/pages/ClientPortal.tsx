@@ -649,12 +649,19 @@ export default function ClientPortal() {
     { enabled: isPreviewMode && !!previewStudentContactId }
   );
 
+  const { data: allContacts = [] } = trpc.contacts.list.useQuery(undefined, {
+    enabled: isPreviewMode && typeof window !== "undefined" && !new URLSearchParams(window.location.search).get("parentContactId") && !studentDetail?.contact?.parentContactId,
+  });
+
   const previewParentContactId = (() => {
     if (typeof window === "undefined") return null;
     const parentId = new URLSearchParams(window.location.search).get("parentContactId");
     if (parentId) return parseInt(parentId, 10);
     if (studentDetail?.contact?.parentContactId) return studentDetail.contact.parentContactId;
-    return null;
+    
+    // Fallback to the first parent contact in the system if no ID was provided
+    const parent = allContacts.find((c: any) => c.type === "parent" || c.type === "contact");
+    return parent?.id || null;
   })();
 
   const { data: previewStudents = [] } = trpc.portal.getStudentsForParent.useQuery(
