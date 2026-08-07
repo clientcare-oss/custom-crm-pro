@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
@@ -19,6 +19,7 @@ import BookingPage from "./pages/BookingPage";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import Settings from "./pages/Settings";
+import PortalManagement from "./pages/PortalManagement";
 import CaseCompassAdmin from "./pages/CaseCompassAdmin";
 import ContactDetail from "./pages/ContactDetail";
 import Students from "./pages/Students";
@@ -50,11 +51,14 @@ import SmartFileAssignments from "./pages/SmartFileAssignments";
 import SmartFilePortalViewer from "./pages/SmartFilePortalViewer";
 import TechTasks from "./pages/TechTasks";
 import DiscoveryCallPage from "./pages/DiscoveryCallPage";
+import Workspace from "./pages/Workspace";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
+import PageIdBadge from "./components/PageIdBadge";
 
 function Router() {
   const { user, loading } = useAuth();
+  const [location] = useLocation();
 
   if (loading) {
     return (
@@ -72,13 +76,15 @@ function Router() {
       window.location.pathname === '/portal' ||
       window.location.pathname.startsWith('/portal?') ||
       window.location.pathname === '/client-portal' ||
-      window.location.pathname.startsWith('/smart-files/response/')
+      window.location.pathname.startsWith('/smart-files/response/') ||
+      window.location.pathname.startsWith('/project-workspace/')
     ) {
       return (
         <Switch>
           <Route path="/portal/book" component={PortalBook} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/client-portal" component={ClientPortal} />
+          <Route path="/project-workspace/:studentId" component={ClientPortal} />
           <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
         </Switch>
       );
@@ -137,6 +143,8 @@ function Router() {
           <Route path="/page-id-showcase" component={PageIdShowcase} />
           <Route path="/portal/book" component={PortalBook} />
           <Route path="/settings" component={Settings} />
+          <Route path="/portal-management" component={PortalManagement} />
+          <Route path="/workspace" component={Workspace} />
           <Route path="/case-compass" component={CaseCompassAdmin} />
           <Route path="/book" component={BookingPage} />
           <Route path="/404" component={NotFound} />
@@ -157,6 +165,7 @@ function Router() {
       {/* Portal is public so email links work for unauthenticated clients */}
       <Route path="/portal" component={ClientPortal} />
       <Route path="/client-portal" component={ClientPortal} />
+      <Route path="/project-workspace/:studentId" component={ClientPortal} />
       <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
@@ -172,6 +181,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <PageIdBadge />
           </TooltipProvider>
         </TerminologyProvider>
       </ThemeProvider>

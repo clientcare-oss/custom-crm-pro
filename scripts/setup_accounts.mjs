@@ -11,7 +11,7 @@ async function setupAccounts() {
 
   // Check if admin user already exists
   const existingAdmin = await queryCloudflareD1('SELECT * FROM users WHERE openId = ? OR email = ?', [adminOpenId, adminEmail]);
-  if (existingAdmin.results.length === 0) {
+  if (existingAdmin.length === 0) {
     console.log('Inserting Admin account for katkins@veritastech.io...');
     await queryCloudflareD1(
       `INSERT INTO users (openId, name, email, loginMethod, role, createdAt, updatedAt, lastSignedIn)
@@ -34,21 +34,22 @@ async function setupAccounts() {
   // Check if contact exists
   let contactId;
   const existingContact = await queryCloudflareD1('SELECT id FROM contacts WHERE email = ?', [clientEmail]);
-  if (existingContact.results.length === 0) {
+  if (existingContact.length === 0) {
     console.log('Inserting Demo Client contact...');
-    const insertRes = await queryCloudflareD1(
+    await queryCloudflareD1(
       `INSERT INTO contacts (ownerId, firstName, lastName, email, company, jobTitle, createdAt, updatedAt)
        VALUES (1, 'Demo', 'Client', ?, 'Acme Corp', 'Parent / Client', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [clientEmail]
     );
-    contactId = insertRes.meta.last_row_id;
+    const newContact = await queryCloudflareD1('SELECT id FROM contacts WHERE email = ?', [clientEmail]);
+    contactId = newContact[0].id;
   } else {
-    contactId = existingContact.results[0].id;
+    contactId = existingContact[0].id;
   }
 
   // Insert or update client credentials
   const existingCreds = await queryCloudflareD1('SELECT id FROM client_credentials WHERE contact_id = ?', [contactId]);
-  if (existingCreds.results.length === 0) {
+  if (existingCreds.length === 0) {
     console.log('Inserting Client Portal credentials for client@example.com...');
     await queryCloudflareD1(
       `INSERT INTO client_credentials (contact_id, email, password_hash, created_at, updated_at)

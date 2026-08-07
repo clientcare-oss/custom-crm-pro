@@ -14,7 +14,7 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
@@ -340,6 +340,33 @@ export default function ContactDetail() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [editingAttorney, setEditingAttorney] = useState(false);
+  const [attorneyForm, setAttorneyForm] = useState({
+    attorneyName: "",
+    attorneyFirm: "",
+    attorneyPhone: "",
+    attorneyEmail: "",
+    attorneyAddress: "",
+  });
+
+  const updateContactMutation = trpc.contacts.update.useMutation();
+
+  const handleSaveAttorney = () => {
+    updateContactMutation.mutate({
+      id: contactId,
+      ...attorneyForm,
+    }, {
+      onSuccess: () => {
+        toast.success("Attorney details updated successfully");
+        setEditingAttorney(false);
+        utils.contacts.detail.invalidate({ id: contactId });
+      },
+      onError: (err) => {
+        toast.error("Failed to update attorney details: " + err.message);
+      }
+    });
+  };
+
   const { data, isLoading, error } = trpc.contacts.detail.useQuery(
     { id: contactId },
     { enabled: !!contactId }
@@ -360,6 +387,18 @@ export default function ContactDetail() {
       });
     }
   }, [data?.compass]);
+
+  useEffect(() => {
+    if (data?.contact) {
+      setAttorneyForm({
+        attorneyName: data.contact.attorneyName || "",
+        attorneyFirm: data.contact.attorneyFirm || "",
+        attorneyPhone: data.contact.attorneyPhone || "",
+        attorneyEmail: data.contact.attorneyEmail || "",
+        attorneyAddress: data.contact.attorneyAddress || "",
+      });
+    }
+  }, [data?.contact]);
 
   // Compass upsert mutation — MUST be before any early returns
   const compassUpsert = trpc.caseCompass.upsert.useMutation({
@@ -496,6 +535,12 @@ export default function ContactDetail() {
           files={files}
           messages={messages}
           utils={utils}
+          editingAttorney={editingAttorney}
+          setEditingAttorney={setEditingAttorney}
+          attorneyForm={attorneyForm}
+          setAttorneyForm={setAttorneyForm}
+          handleSaveAttorney={handleSaveAttorney}
+          updateContactMutation={updateContactMutation}
         />
       ) : (
         <StudentTabs
@@ -519,6 +564,12 @@ export default function ContactDetail() {
           handleCompassSave={handleCompassSave}
           compassUpsert={compassUpsert}
           utils={utils}
+          editingAttorney={editingAttorney}
+          setEditingAttorney={setEditingAttorney}
+          attorneyForm={attorneyForm}
+          setAttorneyForm={setAttorneyForm}
+          handleSaveAttorney={handleSaveAttorney}
+          updateContactMutation={updateContactMutation}
         />
       )}
 
@@ -572,6 +623,12 @@ function ParentTabs({
   files,
   messages,
   utils,
+  editingAttorney,
+  setEditingAttorney,
+  attorneyForm,
+  setAttorneyForm,
+  handleSaveAttorney,
+  updateContactMutation,
 }: {
   contact: any;
   contactId: number;
@@ -581,6 +638,12 @@ function ParentTabs({
   files: any[];
   messages: any[];
   utils: any;
+  editingAttorney: boolean;
+  setEditingAttorney: (v: boolean) => void;
+  attorneyForm: any;
+  setAttorneyForm: (v: any) => void;
+  handleSaveAttorney: () => void;
+  updateContactMutation: any;
 }) {
   const [, setLocation] = useLocation();
 
@@ -723,6 +786,98 @@ function ParentTabs({
             Added {new Date(contact.createdAt).toLocaleDateString()}
           </div>
         </Card>
+
+        {/* Legal Representation Card */}
+        <Card className="rounded-xl border border-border p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Scale className="h-5 w-5 text-red-500" />
+              Legal Representation (Attorney)
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingAttorney(!editingAttorney)}
+              className="h-8 w-8 p-0"
+            >
+              {editingAttorney ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {editingAttorney ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Attorney Name</Label>
+                  <Input
+                    value={attorneyForm.attorneyName}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyName: e.target.value })}
+                    placeholder="Jane Doe, Esq."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Law Firm / Business</Label>
+                  <Input
+                    value={attorneyForm.attorneyFirm}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyFirm: e.target.value })}
+                    placeholder="Doe Legal Group"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <Input
+                    value={attorneyForm.attorneyPhone}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyPhone: e.target.value })}
+                    placeholder="(555) 019-2834"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Address</Label>
+                  <Input
+                    value={attorneyForm.attorneyEmail}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyEmail: e.target.value })}
+                    placeholder="jane.doe@lawfirm.com"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Office Address</Label>
+                <Textarea
+                  value={attorneyForm.attorneyAddress}
+                  onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyAddress: e.target.value })}
+                  placeholder="123 Law Lane, Suite 400, Atlanta GA 30303"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setEditingAttorney(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveAttorney} disabled={updateContactMutation.isPending}>
+                  {updateContactMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {contact.attorneyName ? (
+                <>
+                  <DetailRow label="Attorney Name" value={contact.attorneyName} />
+                  <DetailRow label="Law Firm" value={contact.attorneyFirm || "—"} />
+                  <DetailRow label="Attorney Phone" value={contact.attorneyPhone || "—"} />
+                  <DetailRow label="Attorney Email" value={contact.attorneyEmail || "—"} />
+                  <DetailRow label="Office Address" value={contact.attorneyAddress || "—"} />
+                </>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                  <p className="font-semibold text-sm">No attorney assigned to this case</p>
+                  <p className="text-xs mt-1">Click the pencil icon above to record representation.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
       </TabsContent>
     </Tabs>
   );
@@ -848,6 +1003,12 @@ function StudentTabs({
   handleCompassSave,
   compassUpsert,
   utils,
+  editingAttorney,
+  setEditingAttorney,
+  attorneyForm,
+  setAttorneyForm,
+  handleSaveAttorney,
+  updateContactMutation,
 }: {
   contact: any;
   contactId: number;
@@ -869,6 +1030,12 @@ function StudentTabs({
   handleCompassSave: () => void;
   compassUpsert: any;
   utils: any;
+  editingAttorney: boolean;
+  setEditingAttorney: (v: boolean) => void;
+  attorneyForm: any;
+  setAttorneyForm: (v: any) => void;
+  handleSaveAttorney: () => void;
+  updateContactMutation: any;
 }) {
   return (
     <Tabs defaultValue="compass">
@@ -1255,6 +1422,98 @@ function StudentTabs({
           <div className="pt-2 border-t border-border text-xs text-muted-foreground">
             Added {new Date(contact.createdAt).toLocaleDateString()}
           </div>
+        </Card>
+
+        {/* Legal Representation Card */}
+        <Card className="rounded-xl border border-border p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Scale className="h-5 w-5 text-red-500" />
+              Legal Representation (Attorney)
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingAttorney(!editingAttorney)}
+              className="h-8 w-8 p-0"
+            >
+              {editingAttorney ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {editingAttorney ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Attorney Name</Label>
+                  <Input
+                    value={attorneyForm.attorneyName}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyName: e.target.value })}
+                    placeholder="Jane Doe, Esq."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Law Firm / Business</Label>
+                  <Input
+                    value={attorneyForm.attorneyFirm}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyFirm: e.target.value })}
+                    placeholder="Doe Legal Group"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <Input
+                    value={attorneyForm.attorneyPhone}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyPhone: e.target.value })}
+                    placeholder="(555) 019-2834"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Address</Label>
+                  <Input
+                    value={attorneyForm.attorneyEmail}
+                    onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyEmail: e.target.value })}
+                    placeholder="jane.doe@lawfirm.com"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Office Address</Label>
+                <Textarea
+                  value={attorneyForm.attorneyAddress}
+                  onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyAddress: e.target.value })}
+                  placeholder="123 Law Lane, Suite 400, Atlanta GA 30303"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setEditingAttorney(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveAttorney} disabled={updateContactMutation.isPending}>
+                  {updateContactMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {contact.attorneyName ? (
+                <>
+                  <DetailRow label="Attorney Name" value={contact.attorneyName} />
+                  <DetailRow label="Law Firm" value={contact.attorneyFirm || "—"} />
+                  <DetailRow label="Attorney Phone" value={contact.attorneyPhone || "—"} />
+                  <DetailRow label="Attorney Email" value={contact.attorneyEmail || "—"} />
+                  <DetailRow label="Office Address" value={contact.attorneyAddress || "—"} />
+                </>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                  <p className="font-semibold text-sm">No attorney assigned to this case</p>
+                  <p className="text-xs mt-1">Click the pencil icon above to record representation.</p>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       </TabsContent>
     </Tabs>

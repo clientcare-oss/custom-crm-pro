@@ -1145,6 +1145,14 @@ export async function updateOwnerPhone(openId: string, phone: string) {
     .set({ phone: phone || null })
     .where(eq(users.openId, openId));
 }
+export async function updateOwnerLogo(openId: string, logoUrl: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(users)
+    .set({ logoUrl: logoUrl || null })
+    .where(eq(users.openId, openId));
+}
 export async function updateOwnerQuoSecret(openId: string, secret: string | null) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

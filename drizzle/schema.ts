@@ -33,6 +33,7 @@ export const users = mysqlTable("users", {
   gmailUser: varchar("gmailUser", { length: 320 }),  // Gmail address for sending emails
   gmailAppPassword: varchar("gmailAppPassword", { length: 255 }),  // Gmail app-specific password
   portalDomain: varchar("portalDomain", { length: 320 }),  // Custom domain for portal links (e.g. portal.waypointadvocates.com)
+  logoUrl: varchar("logoUrl", { length: 2048 }),  // Custom logo URL for the company
 });
 
 export type User = typeof users.$inferSelect;
@@ -58,6 +59,7 @@ export const contacts = mysqlTable("contacts", {
   country: varchar("country", { length: 100 }),
   notes: text("notes"),
   portalUserId: int("portalUserId"),  // links to users.id when client has a portal account
+  portalAccess: varchar("portalAccess", { length: 50 }),  // "active", "apps_only", or null/inactive
   caseId: varchar("caseId", { length: 20 }),  // unique case identifier e.g. WP-2026-0001
   parentContactId: int("parentContactId"),  // for students: links to parent contact's id
   hourlyRate: decimal("hourlyRate", { precision: 10, scale: 2 }),  // billing rate per hour
@@ -77,6 +79,12 @@ export const contacts = mysqlTable("contacts", {
   gradeLevel: varchar("gradeLevel", { length: 50 }),
   countyDistrict: varchar("countyDistrict", { length: 200 }),
     challenges: text("challenges"),
+  // Attorney / Legal representation fields
+  attorneyName: varchar("attorneyName", { length: 200 }),
+  attorneyPhone: varchar("attorneyPhone", { length: 50 }),
+  attorneyEmail: varchar("attorneyEmail", { length: 320 }),
+  attorneyFirm: varchar("attorneyFirm", { length: 200 }),
+  attorneyAddress: text("attorneyAddress"),
   // Archive fields
   archivedAt: timestamp("archivedAt"),
   archiveReason: text("archiveReason"),
@@ -170,6 +178,7 @@ export const projectTasks = mysqlTable("projectTasks", {
   assignedToUserId: int("assignedToUserId"),
   priority: mysqlEnum("priority", ["High", "Medium", "Low"]).default("Medium").notNull(),
   seenByClient: boolean("seenByClient").default(false).notNull(),
+  smartFileAssignmentId: int("smartFileAssignmentId"),
   /** Timestamp when task was first moved to "In Progress" status */
   startedAt: timestamp("startedAt"),
   /** Timestamp when task was marked as "Done" */
@@ -1588,3 +1597,11 @@ export type StudentImpact = typeof studentImpacts.$inferSelect;
 export type RequestedRemedy = typeof requestedRemedies.$inferSelect;
 export type DraftBlock = typeof draftBlocks.$inferSelect;
 export type AiSuggestionRecord = typeof aiSuggestionRecords.$inferSelect;
+
+export const developerRules = mysqlTable("developer_rules", {
+  tabKey: varchar("tabKey", { length: 100 }).primaryKey(),
+  content: text("content"),
+});
+
+export type DeveloperRule = typeof developerRules.$inferSelect;
+export type InsertDeveloperRule = typeof developerRules.$inferInsert;

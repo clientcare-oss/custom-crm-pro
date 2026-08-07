@@ -46,6 +46,20 @@ export const systemRouter = router({
       return { success: true };
     }),
 
+  // Returns the owner's custom company logo URL
+  getCompanyLogo: publicProcedure.query(async () => {
+    const owner = await resolveOwner();
+    return { logoUrl: owner?.logoUrl ?? null };
+  }),
+
+  // Sets the owner's custom company logo URL
+  setCompanyLogo: protectedProcedure
+    .input(z.object({ logoUrl: z.string().max(2048).nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.updateOwnerLogo(ctx.user.openId, input.logoUrl);
+      return { success: true };
+    }),
+
   // Get whether Quo webhook secret is configured (returns status only, not the secret)
   getQuoStatus: adminProcedure.query(async () => {
     const owner = await resolveOwner();

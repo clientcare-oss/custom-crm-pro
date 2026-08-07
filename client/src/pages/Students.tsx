@@ -1,7 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight, ChevronLeft, ArrowUpDown, User } from "lucide-react";
+import { Plus, ChevronRight, ChevronLeft, ArrowUpDown, User, Compass } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import {
@@ -219,18 +219,19 @@ export default function Students() {
                 <th className="px-4 py-3 text-left font-semibold text-foreground hidden lg:table-cell">Type</th>
                 <th className="px-4 py-3 text-left font-semibold text-foreground hidden xl:table-cell">Last Updated</th>
                 <th className="px-4 py-3 text-left font-semibold text-foreground hidden xl:table-cell">Status</th>
+                <th className="px-4 py-3 text-right font-semibold text-foreground">Workspace</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     Loading students...
                   </td>
                 </tr>
               ) : sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     No students yet. Click <strong>Add Student</strong> to get started.
                   </td>
                 </tr>
@@ -287,6 +288,17 @@ export default function Students() {
                       <span className="rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-semibold">
                         Active
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setLocation(`/project-workspace/${contact.id}`)}
+                        className="h-8 px-2.5 text-xs font-semibold gap-1 hover:bg-accent hover:text-accent-foreground transition-all"
+                      >
+                        <Compass className="h-3.5 w-3.5 text-accent" />
+                        Workspace
+                      </Button>
                     </td>
                   </tr>
                 ))

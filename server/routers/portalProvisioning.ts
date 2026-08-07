@@ -184,4 +184,62 @@ export const portalProvisioningRouter = router({
         portalUserId: contact.portalUserId,
       };
     }),
+
+  /**
+   * Resends a Client Portal invitation email via Clerk.
+   */
+  resendPortalLink: protectedProcedure
+    .input(
+      z.object({
+        contactId: z.number(),
+        email: z.string().email(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database connection failed",
+        });
+      }
+
+      // 1. Verify parent contact exists
+      const parentContactList = await db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.id, input.contactId))
+        .limit(1);
+
+      if (parentContactList.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Parent contact not found",
+        });
+      }
+
+      const parentContact = parentContactList[0];
+
+      try {
+        // 2. Send invitation email via Clerk
+        await clerkClient.invitations.createInvitation({
+          emailAddress: input.email,
+          publicMetadata: {
+            role: "client",
+            contactId: parentContact.id,
+          },
+        });
+
+        return {
+          success: true,
+          message: `Portal invitation link resent to ${input.email}!`,
+        };
+      } catch (err: any) {
+        console.error("[Portal Resend Error]", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to resend portal link: ${err.message || String(err)}`,
+        });
+      }
+    }),
 });

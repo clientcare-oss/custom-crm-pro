@@ -32,10 +32,15 @@ const PAGE_IDS: Record<string, { id: string; name: string }> = {
   "/settings":                { id: "PG-024", name: "Settings" },
   "/case-compass":            { id: "PG-025", name: "Case Compass" },
   "/page-id-showcase":        { id: "PG-026", name: "Page ID Showcase" },
+  "/portal-management":       { id: "PG-027", name: "Portal Management" },
+  "/intake":                  { id: "PG-028", name: "Intake Form" },
+  "/book":                    { id: "PG-029", name: "Booking" },
+  "/workspace":               { id: "PG-031", name: "Workspace" },
 };
 
 const DYNAMIC_ROUTES: Array<{ prefix: string; id: string; name: string }> = [
   { prefix: "/contacts/", id: "PG-030", name: "Contact Detail" },
+  { prefix: "/project-workspace/", id: "PG-023", name: "Client Portal" },
 ];
 
 function resolvePageId(path: string): { id: string; name: string } | null {

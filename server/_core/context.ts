@@ -2,6 +2,9 @@ import type { CreateExpressContextOptions } from "@trpc/server/adapters/express"
 import type { User } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { createClerkClient, verifyToken } from "@clerk/backend";
+import { getDb } from "../db";
+import { users } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 const clerkSecretKey =
   process.env.CLERK_SECRET_KEY ||
@@ -58,6 +61,25 @@ export async function createContext(
             "";
           const role = (clerkUser.publicMetadata?.role as string) || "admin";
           const contactId = clerkUser.publicMetadata?.contactId as number | undefined;
+
+          // Auto-upsert the user to database in local development
+          try {
+            const dbConn = await getDb();
+            if (dbConn) {
+              const [existing] = await dbConn.select().from(users).where(eq(users.openId, clerkUser.id)).limit(1);
+              if (!existing) {
+                await dbConn.insert(users).values({
+                  openId: clerkUser.id,
+                  name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || email,
+                  email,
+                  loginMethod: "clerk",
+                  role: role as "admin" | "client",
+                });
+              }
+            }
+          } catch (dbErr) {
+            console.error("[Context] Failed to auto-upsert Clerk user to DB:", dbErr);
+          }
 
           user = {
             id: contactId ?? 1,

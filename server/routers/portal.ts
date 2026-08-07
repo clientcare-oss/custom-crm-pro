@@ -192,4 +192,158 @@ export const portalRouter = router({
       return filtered;
     }),
 
+    // Portal: get list of smart files bookable/assigned for a student
+    getSmartFilesForStudent: portalProcedure
+      .input(z.object({ studentContactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { smartFileAssignments: sfTable, smartFileTemplates: templateTable } = await import("../../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) return [];
+        return await dbConn
+          .select({
+            id: sfTable.id,
+            templateId: sfTable.templateId,
+            status: sfTable.status,
+            createdAt: sfTable.createdAt,
+            name: templateTable.name,
+          })
+          .from(sfTable)
+          .leftJoin(templateTable, eq(sfTable.templateId, templateTable.id))
+          .where(eq(sfTable.studentContactId, input.studentContactId));
+      }),
+
+    // Portal: create a task for a student contact (Advocate View)
+    createPortalTask: adminProcedure
+      .input(z.object({
+        projectId: z.number(),
+        title: z.string().min(1),
+        description: z.string().optional(),
+        dueDate: z.string().optional(),
+        assignedTo: z.number(), // student contact ID
+        priority: z.enum(["High", "Medium", "Low"]).default("Medium"),
+        smartFileAssignmentId: z.number().optional().nullable(),
+      }))
+      .mutation(async ({ input }) => {
+        const { projectTasks: taskTable } = await import("../../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await dbConn.insert(taskTable).values({
+          projectId: input.projectId,
+          title: input.title,
+          description: input.description,
+          status: "Todo",
+          dueDate: input.dueDate ? new Date(input.dueDate) : null,
+          assignedTo: input.assignedTo,
+          priority: input.priority,
+          smartFileAssignmentId: input.smartFileAssignmentId,
+        });
+        return { success: true };
+      }),
+
+    // Portal: update a task for a student contact (Advocate View)
+    updatePortalTask: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().min(1),
+        description: z.string().optional(),
+        dueDate: z.string().optional(),
+        priority: z.enum(["High", "Medium", "Low"]),
+        status: z.enum(["Todo", "In Progress", "Done"]),
+        smartFileAssignmentId: z.number().optional().nullable(),
+      }))
+      .mutation(async ({ input }) => {
+        const { projectTasks: taskTable } = await import("../../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await dbConn.update(taskTable)
+          .set({
+            title: input.title,
+            description: input.description,
+            dueDate: input.dueDate ? new Date(input.dueDate) : null,
+            priority: input.priority,
+            status: input.status,
+            smartFileAssignmentId: input.smartFileAssignmentId,
+            completedAt: input.status === "Done" ? new Date() : null,
+          })
+          .where(eq(taskTable.id, input.id));
+        return { success: true };
+      }),
+
+    // Portal: delete a task for a student contact (Advocate View)
+    deletePortalTask: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { projectTasks: taskTable } = await import("../../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await dbConn.delete(taskTable).where(eq(taskTable.id, input.id));
+        return { success: true };
+      }),
+
+    // Portal: complete a task for a student contact (Client View)
+    completePortalTask: portalProcedure
+      .input(z.object({
+        taskId: z.number(),
+        studentContactId: z.number()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!(ctx as any).isAdminPreview) {
+          const students = await db.getStudentsByParentContactId((ctx as any).portalContactId);
+          const isOwned = students.some((s) => s.id === input.studentContactId);
+          if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
+        }
+
+        const { projectTasks: taskTable, smartFileAssignments: sfTable } = await import("../../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+        const [task] = await dbConn.select().from(taskTable).where(eq(taskTable.id, input.taskId));
+        if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
+
+        if (task.smartFileAssignmentId) {
+          const [sf] = await dbConn.select().from(sfTable).where(eq(sfTable.id, task.smartFileAssignmentId));
+          if (sf && sf.status !== "completed") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Must complete attached smart file first" });
+          }
+        }
+
+        await dbConn.update(taskTable)
+          .set({ status: "Done", completedAt: new Date() })
+          .where(eq(taskTable.id, input.taskId));
+
+        return { success: true };
+      }),
+
+    // Portal: get developer rules/guidelines for all tabs
+    getDevRules: portalProcedure.query(async () => {
+      const { developerRules: rulesTable } = await import("../../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      return await dbConn.select().from(rulesTable);
+    }),
+
+    // Portal: save developer guidelines for a specific tab (Advocate View only)
+    saveDevRules: adminProcedure
+      .input(z.object({
+        tabKey: z.string(),
+        content: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { developerRules: rulesTable } = await import("../../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await dbConn.insert(rulesTable)
+          .values({ tabKey: input.tabKey, content: input.content })
+          .onConflictDoUpdate({
+            target: rulesTable.tabKey,
+            set: { content: input.content }
+          });
+        return { success: true };
+      }),
+
 });

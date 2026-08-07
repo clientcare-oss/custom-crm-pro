@@ -6,7 +6,7 @@ import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
-  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2
+  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen
 } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -21,8 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { useState, useRef, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,7 @@ import SignaturePad from "@/components/SignaturePad";
 import InlineScheduler from "@/components/InlineScheduler";
 import { NotesSection } from "@/components/NotesSection";
 
-const LOGO_URL = "/storage/waypoint-logo-new_dbe73a36.png";
+const LOGO_URL = "/waypoint-logo.png";
 
 // ── Compass Rose SVG Watermark ───────────────────────────────────────────────
 function CompassRose({ className }: { className?: string }) {
@@ -562,6 +563,7 @@ const NAV_ITEMS = [
   { id: "financials",    icon: DollarSign,      label: "Billing" },
   { id: "appointments",  icon: Calendar,        label: "Appointments" },
   { id: "notes",         icon: StickyNote,      label: "Notes" },
+  { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
   { id: "details",       icon: Info,            label: "Details" },
 ] as const;
 
@@ -578,7 +580,37 @@ export default function ClientPortal() {
   const [schedulerBooked, setSchedulerBooked] = useState(false);
   const [activeTab, setActiveTab] = useState<NavId>("compass");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Workspace Mode (Admin Editing)
+  const params = useParams<{ studentId?: string }>();
+  const routeStudentId = params.studentId ? parseInt(params.studentId, 10) : null;
+  const isWorkspaceMode = !!routeStudentId;
+  const [isAdminView, setIsAdminView] = useState(isWorkspaceMode);
+
+  useEffect(() => {
+    setIsAdminView(isWorkspaceMode);
+  }, [isWorkspaceMode]);
+
+  // Compass edit state in Workspace Mode
+  const [editingCompass, setEditingCompass] = useState(false);
+  const [compassForm, setCompassForm] = useState({
+    currentStatus: "",
+    lastMeetingSummary: "",
+    nextStep: "",
+    whoHasBall: "",
+  });
   const { data: publicSessionTypes } = trpc.sessionTypes.listAll.useQuery(undefined, { retry: false });
+
+  // Attorney edit state in Workspace Mode
+  const [editingAttorney, setEditingAttorney] = useState(false);
+  const [attorneyForm, setAttorneyForm] = useState({
+    attorneyName: "",
+    attorneyFirm: "",
+    attorneyPhone: "",
+    attorneyEmail: "",
+    attorneyAddress: "",
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -600,24 +632,69 @@ export default function ClientPortal() {
     onSuccess: () => { localStorage.removeItem("portal_token"); refetchPortalMe(); },
   });
 
-  const isPreviewMode = typeof window !== "undefined" && window.location.search.includes("preview=true");
-  const isOnPortalRoute = typeof window !== "undefined" && (window.location.pathname === "/portal" || window.location.pathname === "/client-portal");
+  const isPreviewMode = (typeof window !== "undefined" && window.location.search.includes("preview=true")) || isWorkspaceMode;
+  const isOnPortalRoute = typeof window !== "undefined" && (window.location.pathname === "/portal" || window.location.pathname === "/client-portal" || window.location.pathname.startsWith("/project-workspace/"));
   const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser || user?.role === "client" || (!!user && isOnPortalRoute);
 
   const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, { enabled: !!portalUser || user?.role === "client" });
 
-  const previewParentContactId = (() => {
+  const previewStudentContactId = routeStudentId || (() => {
     if (typeof window === "undefined") return null;
-    const v = new URLSearchParams(window.location.search).get("parentContactId");
+    const v = new URLSearchParams(window.location.search).get("contactId");
     return v ? parseInt(v, 10) : null;
   })();
+
+  const { data: studentDetail } = trpc.contacts.detail.useQuery(
+    { id: previewStudentContactId! },
+    { enabled: isPreviewMode && !!previewStudentContactId }
+  );
+
+  const previewParentContactId = (() => {
+    if (typeof window === "undefined") return null;
+    const parentId = new URLSearchParams(window.location.search).get("parentContactId");
+    if (parentId) return parseInt(parentId, 10);
+    if (studentDetail?.contact?.parentContactId) return studentDetail.contact.parentContactId;
+    return null;
+  })();
+
   const { data: previewStudents = [] } = trpc.portal.getStudentsForParent.useQuery(
     { parentContactId: previewParentContactId! },
     { enabled: isPreviewMode && !!previewParentContactId }
   );
 
-  const portalStudents = isPreviewMode ? previewStudents : myStudents;
+  // Workspace Student payload reconstruction
+  const workspaceStudents = studentDetail?.contact
+    ? [{
+        id: studentDetail.contact.id,
+        firstName: studentDetail.contact.firstName,
+        lastName: studentDetail.contact.lastName,
+        email: studentDetail.contact.email,
+        phone: studentDetail.contact.phone,
+        company: studentDetail.contact.company,
+        caseId: studentDetail.contact.caseId,
+        parentContactId: studentDetail.contact.parentContactId,
+        attorneyName: studentDetail.contact.attorneyName,
+        attorneyFirm: studentDetail.contact.attorneyFirm,
+        attorneyPhone: studentDetail.contact.attorneyPhone,
+        attorneyEmail: studentDetail.contact.attorneyEmail,
+        attorneyAddress: studentDetail.contact.attorneyAddress,
+      }]
+    : [];
+
+  const portalStudents = isWorkspaceMode 
+    ? workspaceStudents 
+    : isPreviewMode 
+      ? previewStudents 
+      : myStudents;
+
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isWorkspaceMode && previewStudentContactId) {
+      setSelectedStudentId(previewStudentContactId);
+    }
+  }, [isWorkspaceMode, previewStudentContactId]);
+
   const effectiveStudent = selectedStudentId
     ? portalStudents.find((s) => s.id === selectedStudentId) ?? portalStudents[0]
     : portalStudents[0];
@@ -658,6 +735,106 @@ export default function ClientPortal() {
   const { data: studentCompass } = trpc.portal.getStudentCompass.useQuery(
     { caseId: effectiveCaseId! }, { enabled: !!effectiveCaseId }
   );
+  const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
+
+  const filteredNavItems = NAV_ITEMS.filter(({ id }) => {
+    if (id === "attorney" && !effectiveStudent?.attorneyName && (!isWorkspaceMode || !isAdminView)) return false;
+    const isInternalTab = id === "notes" || id === "tools" || id === "cases";
+    if (isInternalTab && (!isWorkspaceMode || !isAdminView)) return false;
+    return true;
+  });
+
+  const utils = trpc.useUtils();
+
+  const updateContactMutation = trpc.contacts.update.useMutation({
+    onSuccess: () => {
+      if (previewStudentContactId) {
+        utils.contacts.detail.invalidate({ id: previewStudentContactId });
+      }
+      utils.portal.getMyStudents.invalidate();
+      toast.success("Legal counsel details updated successfully.");
+      setEditingAttorney(false);
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to save attorney details.");
+    }
+  });
+
+  const handleSaveAttorney = () => {
+    if (!effectiveStudentContactId) return;
+    updateContactMutation.mutate({
+      id: effectiveStudentContactId,
+      ...attorneyForm,
+    });
+  };
+
+  useEffect(() => {
+    if (effectiveStudent) {
+      setAttorneyForm({
+        attorneyName: effectiveStudent.attorneyName || "",
+        attorneyFirm: effectiveStudent.attorneyFirm || "",
+        attorneyPhone: effectiveStudent.attorneyPhone || "",
+        attorneyEmail: effectiveStudent.attorneyEmail || "",
+        attorneyAddress: effectiveStudent.attorneyAddress || "",
+      });
+    }
+  }, [effectiveStudent]);
+
+  useEffect(() => {
+    if (studentCompass) {
+      setCompassForm({
+        currentStatus: studentCompass.currentStatus || "",
+        lastMeetingSummary: studentCompass.lastMeetingSummary || "",
+        nextStep: studentCompass.nextStep || "",
+        whoHasBall: studentCompass.whoHasBall || "",
+      });
+    }
+  }, [studentCompass]);
+
+  const compassUpsert = trpc.caseCompass.upsert.useMutation({
+    onSuccess: () => {
+      toast.success("Case Compass updated successfully");
+      setEditingCompass(false);
+      utils.portal.getStudentCompass.invalidate({ caseId: effectiveCaseId! });
+    },
+    onError: (err) => {
+      toast.error("Failed to update Compass: " + err.message);
+    }
+  });
+
+  const handleSaveCompass = () => {
+    if (!effectiveCaseId) return;
+    compassUpsert.mutate({
+      caseId: effectiveCaseId,
+      ...compassForm,
+    });
+  };
+
+  // Developer Rules state & queries
+  const [isDevRulesOpen, setIsDevRulesOpen] = useState(false);
+  const [devRuleText, setDevRuleText] = useState("");
+
+  const { data: devRules = [], refetch: refetchDevRules } = trpc.portal.getDevRules.useQuery(undefined, {
+    enabled: isAdminView
+  });
+
+  const saveDevRulesMutation = trpc.portal.saveDevRules.useMutation({
+    onSuccess: () => {
+      toast.success("Developer guidelines saved");
+      refetchDevRules();
+      setIsDevRulesOpen(false);
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to save developer rules");
+    }
+  });
+
+  const handleSaveDevRules = () => {
+    saveDevRulesMutation.mutate({
+      tabKey: activeTab,
+      content: devRuleText
+    });
+  };
 
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -712,7 +889,10 @@ export default function ClientPortal() {
   };
 
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
-  const displayName = portalUser?.name ?? user?.name ?? "Client";
+  const parentDisplayName = portalUser?.name ?? (studentDetail?.parentContact ? `${studentDetail.parentContact.firstName} ${studentDetail.parentContact.lastName}` : "Client");
+  const advocateDisplayName = user?.name ? (user.name.toLowerCase().includes("byron") ? "Master IEP Coach Byron Honea" : `Advocate ${user.name}`) : "Advocate";
+  const displayName = isAdminView ? advocateDisplayName : parentDisplayName;
+  const parentContactId = isAdminView ? null : (studentDetail?.contact?.parentContactId ?? effectiveStudent?.parentContactId);
 
   const handleOpenScheduler = (sessionTypeId: number, sessionTypeName: string) => { setSchedulerSessionTypeId(sessionTypeId); setSchedulerSessionTypeName(sessionTypeName); setSchedulerBooked(false); };
   const handleSchedulerBooked = (date: string, time: string) => {
@@ -744,7 +924,7 @@ export default function ClientPortal() {
 
       {/* Nav items */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+        {NAV_ITEMS.filter(({ id }) => id !== "attorney" || !!effectiveStudent?.attorneyName).map(({ id, icon: Icon, label }) => {
           const isActive = activeTab === id;
           return (
             <button
@@ -804,18 +984,82 @@ export default function ClientPortal() {
     switch (activeTab) {
       case "compass":
         return (
-          <ClientPortalDashboard
-            displayName={displayName}
-            effectiveStudent={effectiveStudent}
-            studentAppointments={studentAppointments}
-            messages={messages}
-            studentTasks={studentTasks}
-            studentFiles={studentFiles}
-            studentCompass={studentCompass}
-            onNavigateTab={(tab) => setActiveTab(tab as any)}
-            onOpenScheduler={() => setShowMeetingScheduler(true)}
-            onUploadClick={() => fileInputRef.current?.click()}
-          />
+          <div className="space-y-6">
+            <ClientPortalDashboard
+              displayName={displayName}
+              effectiveStudent={effectiveStudent}
+              studentAppointments={studentAppointments}
+              messages={messages}
+              studentTasks={studentTasks}
+              studentFiles={studentFiles}
+              studentCompass={studentCompass}
+              onNavigateTab={(tab) => setActiveTab(tab as any)}
+              onOpenScheduler={() => setShowMeetingScheduler(true)}
+              onUploadClick={() => fileInputRef.current?.click()}
+              portalStudents={portalStudents}
+              selectedStudentId={selectedStudentId}
+              onSelectStudent={setSelectedStudentId}
+              onOpenIepLinkDialog={() => setShowIepLinkDialog(true)}
+              allMyAppointments={allMyAppointments}
+            />
+
+            {/* Admin Compass Edit Form */}
+            {isWorkspaceMode && isAdminView && (
+              <div className="px-5 pb-6">
+                <Card className="rounded-xl border border-border p-6 bg-card space-y-4 max-w-4xl">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                      <Compass className="h-5 w-5 text-accent" />
+                      Edit Case Compass (Admin Controls)
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Current Status / Phase</Label>
+                      <Input
+                        value={compassForm.currentStatus}
+                        onChange={(e) => setCompassForm({ ...compassForm, currentStatus: e.target.value })}
+                        placeholder="e.g. Preparing for IEP Review"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Who Has the Ball?</Label>
+                      <Input
+                        value={compassForm.whoHasBall}
+                        onChange={(e) => setCompassForm({ ...compassForm, whoHasBall: e.target.value })}
+                        placeholder="e.g. Waypoint Advocates"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Next Action / Step</Label>
+                    <Input
+                      value={compassForm.nextStep}
+                      onChange={(e) => setCompassForm({ ...compassForm, nextStep: e.target.value })}
+                      placeholder="e.g. Schedule IEP meeting with school"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Meeting Summary Notes</Label>
+                    <Textarea
+                      value={compassForm.lastMeetingSummary}
+                      onChange={(e) => setCompassForm({ ...compassForm, lastMeetingSummary: e.target.value })}
+                      placeholder="Enter a brief summary of the last meeting or status updates for the client portal..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" onClick={handleSaveCompass} disabled={compassUpsert.isPending}>
+                      {compassUpsert.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Update Compass
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            )}
+          </div>
         );
 
       case "communication":
@@ -834,9 +1078,10 @@ export default function ClientPortal() {
         return (
           <PortalTasksTab
             tasks={studentTasks}
-            onToggleTaskStatus={(taskId, status) => {
-              updateTaskStatusMutation.mutate({ taskId, status, studentContactId: effectiveStudentContactId! });
-            }}
+            studentContactId={effectiveStudentContactId}
+            projectId={studentProjects[0]?.id || 0}
+            isAdminView={isAdminView}
+            refetchTasks={refetchTasks}
           />
         );
 
@@ -971,7 +1216,59 @@ export default function ClientPortal() {
         );
 
       case "tools":
-        return (
+        return isAdminView ? (
+          <div className="p-5 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-foreground">Advocacy Tools</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">IEP comparison and state complaint builders.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-5 rounded-xl border border-border bg-card">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <Wrench className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">IEP/504 Comparison</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Compare two versions of the student's IEP or 504 plan to highlight all additions, deletions, and updates.
+                    </p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setLocation(`/tools?contactId=${effectiveStudentContactId}`)}
+                      className="mt-3 text-xs font-semibold"
+                    >
+                      Open Comparison Tool
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-5 rounded-xl border border-border bg-card">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <PenTool className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">State Complaint Builder</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Draft legal special education state complaints using historical notes, case timeline records, and templates.
+                    </p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setLocation("/tools/state-complaint-builder")}
+                      className="mt-3 text-xs font-semibold"
+                    >
+                      Open Complaint Builder
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        ) : (
           <div className="p-5 space-y-4">
             <div>
               <h2 className="text-lg font-bold tracking-tight text-foreground">Tools</h2>
@@ -1053,7 +1350,7 @@ export default function ClientPortal() {
                 <p className="text-xs text-muted-foreground mt-1">Notes will appear here once your advocate creates a case.</p>
               </div>
             ) : studentProjects.length === 1 ? (
-              <NotesSection projectId={studentProjects[0].id} studentName={effectiveStudent.firstName} isClientView={true} />
+              <NotesSection projectId={studentProjects[0].id} studentName={effectiveStudent.firstName} isClientView={!isAdminView} />
             ) : (
               <div className="space-y-6">
                 {studentProjects.map((proj: any) => (
@@ -1063,7 +1360,7 @@ export default function ClientPortal() {
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2">{proj.name}</span>
                       <div className="h-px flex-1 bg-border" />
                     </div>
-                    <NotesSection projectId={proj.id} studentName={effectiveStudent.firstName} isClientView={true} />
+                    <NotesSection projectId={proj.id} studentName={effectiveStudent.firstName} isClientView={!isAdminView} />
                   </div>
                 ))}
               </div>
@@ -1196,7 +1493,166 @@ export default function ClientPortal() {
           </div>
         );
 
+      case "attorney":
+        return (
+          <div className="p-5 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <Scale className="h-6 w-6 text-red-500" />
+                Legal Representation (Attorney)
+              </h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Assigned attorney and contact info for {effectiveStudent?.firstName || "the student"}'s case.
+              </p>
+            </div>
+
+            <Card className="rounded-xl border border-border p-6 max-w-2xl bg-card shadow-sm space-y-6">
+              <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center font-bold text-lg">
+                    {effectiveStudent?.attorneyName?.charAt(0).toUpperCase() || "A"}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-foreground">{effectiveStudent?.attorneyName || "No attorney assigned"}</h3>
+                    <p className="text-xs text-white/40 uppercase tracking-wider font-semibold">
+                      {effectiveStudent?.attorneyFirm || "—"}
+                    </p>
+                  </div>
+                </div>
+                {isWorkspaceMode && isAdminView && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingAttorney(!editingAttorney)}
+                    className="h-8 w-8 p-0"
+                  >
+                    {editingAttorney ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                  </Button>
+                )}
+              </div>
+
+              {editingAttorney ? (
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Attorney Name</Label>
+                      <Input
+                        value={attorneyForm.attorneyName}
+                        onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyName: e.target.value })}
+                        placeholder="Jane Doe, Esq."
+                        className="bg-[#0d1e33] border-white/10 text-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Law Firm / Business</Label>
+                      <Input
+                        value={attorneyForm.attorneyFirm}
+                        onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyFirm: e.target.value })}
+                        placeholder="Doe Legal Group"
+                        className="bg-[#0d1e33] border-white/10 text-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Phone Number</Label>
+                      <Input
+                        value={attorneyForm.attorneyPhone}
+                        onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyPhone: e.target.value })}
+                        placeholder="(555) 019-2834"
+                        className="bg-[#0d1e33] border-white/10 text-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Email Address</Label>
+                      <Input
+                        value={attorneyForm.attorneyEmail}
+                        onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyEmail: e.target.value })}
+                        placeholder="jane.doe@lawfirm.com"
+                        className="bg-[#0d1e33] border-white/10 text-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white/80">Office Address</Label>
+                    <Textarea
+                      value={attorneyForm.attorneyAddress}
+                      onChange={(e) => setAttorneyForm({ ...attorneyForm, attorneyAddress: e.target.value })}
+                      placeholder="123 Law Lane, Suite 400, Atlanta GA 30303"
+                      rows={3}
+                      className="bg-[#0d1e33] border-white/10 text-white"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => setEditingAttorney(false)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveAttorney} disabled={updateContactMutation.isPending} className="bg-amber-500 hover:bg-amber-400 text-background font-bold">
+                      {updateContactMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Save Changes
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6 pt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <span className="text-xs font-semibold text-white/45 uppercase">Phone Number</span>
+                      {effectiveStudent?.attorneyPhone ? (
+                        <a href={`tel:${effectiveStudent.attorneyPhone}`} className="block text-sm font-semibold text-amber-400 hover:underline">
+                          {effectiveStudent.attorneyPhone}
+                        </a>
+                      ) : (
+                        <p className="text-sm text-white/30">—</p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs font-semibold text-white/45 uppercase">Email Address</span>
+                      {effectiveStudent?.attorneyEmail ? (
+                        <a href={`mailto:${effectiveStudent.attorneyEmail}`} className="block text-sm font-semibold text-amber-400 hover:underline">
+                          {effectiveStudent.attorneyEmail}
+                        </a>
+                      ) : (
+                        <p className="text-sm text-white/30">—</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {effectiveStudent?.attorneyAddress ? (
+                    <div className="space-y-1 border-t border-white/10 pt-4">
+                      <span className="text-xs font-semibold text-white/45 uppercase">Office Address</span>
+                      <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+                        {effectiveStudent.attorneyAddress}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 border-t border-white/10 pt-4">
+                      <span className="text-xs font-semibold text-white/45 uppercase">Office Address</span>
+                      <p className="text-sm text-white/30">—</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
+        );
+
+
       case "details":
+        const detailsList = [
+          { label: "Full Name", value: `${effectiveStudent.firstName} ${effectiveStudent.lastName}` },
+          { label: "Case ID", value: effectiveCaseId },
+          { label: "School / District", value: effectiveStudent.company || "—" },
+          { label: "Email", value: effectiveStudent.email || "—" },
+          { label: "Phone", value: effectiveStudent.phone || "—" },
+        ];
+
+        if (studentDetail?.parentContact) {
+          const parent = studentDetail.parentContact;
+          detailsList.push({
+            label: "Family / Parent",
+            value: `${parent.firstName} ${parent.lastName}${parent.email ? ` (${parent.email})` : ""}`
+          });
+        }
+
         return (
           <div className="p-5 space-y-4">
             <div>
@@ -1204,13 +1660,7 @@ export default function ClientPortal() {
               <p className="text-sm text-muted-foreground mt-0.5">Student information on file</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
-              {[
-                { label: "Full Name", value: `${effectiveStudent.firstName} ${effectiveStudent.lastName}` },
-                { label: "Case ID", value: effectiveCaseId },
-                { label: "School / District", value: effectiveStudent.company || "—" },
-                { label: "Email", value: effectiveStudent.email || "—" },
-                { label: "Phone", value: effectiveStudent.phone || "—" },
-              ].map(({ label, value }) => (
+              {detailsList.map(({ label, value }) => (
                 <div key={label} className="flex items-start justify-between gap-4 py-2 border-b border-border/50 last:border-0">
                   <span className="text-sm text-muted-foreground">{label}</span>
                   <span className="text-sm font-semibold text-foreground text-right">{value}</span>
@@ -1230,8 +1680,59 @@ export default function ClientPortal() {
     else logoutMutation.mutate();
   };
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-[#040C16]">
+    const isLight = theme === "blue";
+    return (
+      <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-[3000ms] ease-in-out ${isLight ? "bg-[#f0f4f8] text-slate-900" : "bg-[#040C16] text-white"}`}>
+        {/* Workspace Admin Bar */}
+        {isWorkspaceMode && (
+          <div className={`border-b px-5 py-2.5 flex items-center justify-between gap-4 shrink-0 select-none z-10 transition-colors duration-[3000ms] ease-in-out ${
+            isLight ? "bg-slate-100 border-slate-200 text-slate-800" : "bg-slate-900 border-white/10 text-white"
+          }`}>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+              <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-600" : "text-slate-300"}`}>Project Workspace (Admin)</span>
+              <span className={`text-xs ${isLight ? "text-slate-300" : "text-white/40"}`}>|</span>
+              <span className={`text-xs font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>{effectiveStudent?.firstName} {effectiveStudent?.lastName}</span>
+            </div>
+  
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={isAdminView ? "secondary" : "ghost"}
+                onClick={() => setIsAdminView(true)}
+                className={`text-xs h-7 px-3 rounded-md font-semibold ${
+                  isLight && !isAdminView ? "text-slate-605 hover:bg-slate-200/60 text-slate-700" : ""
+                }`}
+              >
+                💼 Advocate Master View
+              </Button>
+              <Button
+                size="sm"
+                variant={!isAdminView ? "secondary" : "ghost"}
+                onClick={() => setIsAdminView(false)}
+                className={`text-xs h-7 px-3 rounded-md font-semibold ${
+                  isLight && isAdminView ? "text-slate-605 hover:bg-slate-200/60 text-slate-700" : ""
+                }`}
+              >
+                👀 Client Master View
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLocation("/projects")}
+                className={`text-xs h-7 px-3 rounded-md font-semibold ${
+                  isLight 
+                    ? "border-slate-250 bg-white text-slate-800 hover:bg-slate-50 hover:text-slate-900" 
+                    : "border-white/10 text-white/80 hover:text-white"
+                }`}
+              >
+                Back to Students
+              </Button>
+            </div>
+          </div>
+        )}
+
+      <div className="flex-1 flex overflow-hidden">
       {/* Desktop sidebar */}
       <div className="hidden md:flex flex-col h-full shrink-0">
         <ClientPortalSidebar
@@ -1241,6 +1742,11 @@ export default function ClientPortal() {
           theme={theme}
           onToggleTheme={toggleTheme}
           onLogout={handleLogout}
+          logoUrl={logoData?.logoUrl}
+          hasAttorney={!!effectiveStudent?.attorneyName}
+          navItems={filteredNavItems}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
       </div>
 
@@ -1258,6 +1764,9 @@ export default function ClientPortal() {
               theme={theme}
               onToggleTheme={toggleTheme}
               onLogout={handleLogout}
+              logoUrl={logoData?.logoUrl}
+              hasAttorney={!!effectiveStudent?.attorneyName}
+              navItems={filteredNavItems}
             />
           </div>
         </div>
@@ -1279,6 +1788,7 @@ export default function ClientPortal() {
         {/* Modular Header */}
         <ClientPortalHeader
           displayName={displayName}
+          parentContactId={parentContactId}
           theme={theme}
           onToggleTheme={toggleTheme}
           onOpenIepLinkDialog={() => setShowIepLinkDialog(true)}
@@ -1286,66 +1796,56 @@ export default function ClientPortal() {
           onLogout={handleLogout}
         />
 
-        {/* Student selector cards */}
-        {portalStudents.length > 0 && (
-          <div className="shrink-0 px-5 py-3 border-b border-white/8 bg-[#071422]">
-            <p className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-semibold">Select a Student</p>
-            <div className="flex flex-wrap gap-3">
-              {portalStudents.map((s: any) => {
-                const isSelected = effectiveStudent?.id === s.id;
-                const nextAppt = allMyAppointments.find(
-                  (a: any) => a.clientId === s.id
-                );
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => setSelectedStudentId(s.id)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all min-w-[260px] flex-1 ${
-                      isSelected
-                        ? 'bg-[#0d1b2a] border-amber-400/50 shadow-lg shadow-amber-500/10'
-                        : 'bg-[#0a1628] border-white/10 hover:border-white/20 hover:bg-[#0d1b2a]'
-                    }`}
-                  >
-                    {/* Avatar */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                      isSelected ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50' : 'bg-white/10 text-white/60 border border-white/10'
-                    }`}>
-                      {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
-                    </div>
-                    {/* Name + case */}
-                    <div className="min-w-0 shrink-0">
-                      <p className={`text-sm font-semibold truncate leading-tight ${isSelected ? 'text-white' : 'text-white/80'}`}>
-                        {s.firstName} {s.lastName}
-                      </p>
-                      <p className="text-[10px] text-white/35 font-mono leading-tight">{s.caseId ?? 'No case ID'}</p>
-                    </div>
-                    {/* Vertical divider */}
-                    <div className="w-px self-stretch bg-white/10 shrink-0 mx-1" />
-                    {/* Upcoming appointment */}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] text-white/30 uppercase tracking-wide leading-tight mb-0.5">Next Meeting</p>
-                      <p className={`text-[11px] flex items-center gap-1 leading-tight ${
-                        nextAppt ? 'text-amber-400/90' : 'text-white/25'
-                      }`}>
-                        <Calendar className="h-3 w-3 shrink-0" />
-                        {nextAppt
-                          ? new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + new Date(nextAppt.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-                          : 'None scheduled'
-                        }
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+
+
+        {/* Red Alert Attorney banner */}
+        {effectiveStudent?.attorneyName && (
+          <div className={`shrink-0 px-5 py-2.5 border-b flex items-center justify-between gap-3 text-xs transition-colors duration-[3000ms] ease-in-out ${
+            isLight
+              ? "bg-red-50 border-red-200 text-red-700"
+              : "bg-red-500/10 border-red-500/25 text-red-200"
+          }`}>
+            <div className="flex items-center gap-2">
+              <Scale className={`h-4 w-4 animate-pulse shrink-0 ${isLight ? "text-red-700" : "text-red-500"}`} />
+              <span>
+                <strong>Legal representation assigned:</strong> An attorney ({effectiveStudent.attorneyName}) is active on this case.
+              </span>
             </div>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => setActiveTab("attorney")}
+              className={`p-0 h-auto text-xs font-semibold shrink-0 transition-colors duration-[3000ms] ease-in-out ${
+                isLight ? "text-red-700 hover:text-red-800" : "text-red-400 hover:text-red-300"
+              }`}
+            >
+              View Counsel Info →
+            </Button>
           </div>
         )}
 
         {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto relative">
           <ScopedErrorBoundary moduleName={NAV_ITEMS.find(n => n.id === activeTab)?.label ?? "Portal Tab"}>
             {renderContent()}
           </ScopedErrorBoundary>
+
+          {/* Golden Developer Guidelines Floating Button */}
+          {isAdminView && (
+            <div className="absolute top-4 right-4 z-20">
+              <Button
+                onClick={() => {
+                  const rule = devRules.find((r: any) => r.tabKey === activeTab);
+                  setDevRuleText(rule?.content || "");
+                  setIsDevRulesOpen(true);
+                }}
+                className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all"
+                title="Developer Guidelines & Page Rules"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> Dev Info
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1461,6 +1961,51 @@ export default function ClientPortal() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Developer Guidelines Editor Dialog */}
+      <Dialog open={isDevRulesOpen} onOpenChange={setIsDevRulesOpen}>
+        <DialogContent className="bg-[#0A1628] border border-slate-800 text-white rounded-xl max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              Developer Guidelines: <span className="capitalize text-amber-300 font-semibold">{activeTab}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Use this space to store guidelines, ideas, or constraints for this tab. This popup is visible **only to advocates/developers** in Advocate View, not to clients.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="dev-rules" className="text-xs font-semibold text-slate-350">Guidelines & Ideas</Label>
+              <Textarea
+                id="dev-rules"
+                value={devRuleText}
+                onChange={(e) => setDevRuleText(e.target.value)}
+                placeholder="Write rules or details for this page here..."
+                rows={8}
+                className="bg-[#07111E] border-slate-800 text-white focus:border-amber-400 rounded-lg text-xs leading-relaxed"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex justify-between sm:justify-between items-center border-t border-slate-800/80 pt-4">
+            <Button 
+              onClick={() => setIsDevRulesOpen(false)} 
+              className="bg-transparent hover:bg-slate-850 text-slate-400 rounded-lg px-4 py-1.5 text-xs border border-transparent"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveDevRules}
+              disabled={saveDevRulesMutation.isPending}
+              className="bg-amber-400 hover:bg-amber-500 text-[#07111E] font-bold rounded-lg px-4 py-1.5 text-xs gap-1.5 shadow-lg shadow-amber-400/10"
+            >
+              {saveDevRulesMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Save Guidelines
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  </div>
   );
 }

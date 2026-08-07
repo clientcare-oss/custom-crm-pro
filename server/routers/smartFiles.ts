@@ -401,6 +401,16 @@ export const smartFilesRouter = router({
         paymentOption: input.paymentOption ?? null,
         selectedAddOnIds: input.selectedAddOnIds ?? null,
       }).where(eq(sfas.id, input.assignmentId));
+
+      try {
+        const { projectTasks: taskTable } = await import("../../drizzle/schema");
+        await dbConn.update(taskTable)
+          .set({ status: "Done", completedAt: now })
+          .where(eq(taskTable.smartFileAssignmentId, input.assignmentId));
+      } catch (err) {
+        console.error("Error auto-completing task for smart file submission:", err);
+      }
+
       return { success: true };
     }),
 });

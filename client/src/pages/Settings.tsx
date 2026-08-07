@@ -39,6 +39,58 @@ export default function Settings() {
     }
   }, [phoneData]);
 
+  // Company logo state
+  const [logoUrlValue, setLogoUrlValue] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
+  const setLogoMutation = trpc.system.setCompanyLogo.useMutation({
+    onSuccess: () => {
+      toast.success("Company logo saved");
+    },
+    onError: () => {
+      toast.error("Failed to save logo");
+    },
+  });
+
+  useEffect(() => {
+    if (logoData?.logoUrl) {
+      setLogoUrlValue(logoData.logoUrl);
+    }
+  }, [logoData]);
+
+  const handleLogoSave = () => {
+    setLogoMutation.mutate({ logoUrl: logoUrlValue.trim() || null });
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are accepted.");
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/images/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      if (data.url) {
+        setLogoUrlValue(data.url);
+        toast.success("Logo uploaded. Click 'Save' to apply changes.");
+      }
+    } catch (error) {
+      toast.error("Failed to upload logo image");
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSelect = (value: string) => {
     setSelected(value);
     if (value !== "__custom__") {
@@ -117,6 +169,75 @@ export default function Settings() {
                 Currently saved: <span className="font-medium">{phoneData.phone}</span>
               </p>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Company Logo Section */}
+      <Card className="rounded-xl border border-border shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg">Company Logo</CardTitle>
+          <CardDescription>
+            Customize the logo image shown in the top-left corner of the sidebar and customer portal.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold flex items-center gap-2">
+              Logo URL
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={logoUrlValue}
+                onChange={(e) => setLogoUrlValue(e.target.value)}
+                placeholder="e.g. https://example.com/logo.png or upload below"
+                className="flex-1"
+              />
+              <Button
+                onClick={handleLogoSave}
+                disabled={setLogoMutation.isPending}
+                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {setLogoMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-4 pt-2">
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  id="logo-upload-input"
+                  disabled={uploadingLogo}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploadingLogo}
+                  onClick={() => document.getElementById("logo-upload-input")?.click()}
+                >
+                  {uploadingLogo ? "Uploading..." : "Upload Logo Image"}
+                </Button>
+              </div>
+
+              {logoUrlValue && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-muted-foreground">Preview:</span>
+                  <div className="h-12 w-12 rounded-lg border border-border bg-[#071422] p-1 flex items-center justify-center">
+                    <img
+                      src={logoUrlValue}
+                      alt="Logo Preview"
+                      className="h-full w-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

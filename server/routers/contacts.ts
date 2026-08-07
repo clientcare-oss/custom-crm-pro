@@ -60,6 +60,12 @@ export const contactsRouter = router({
           zipCode: z.string().optional(),
           country: z.string().optional(),
           notes: z.string().optional(),
+          attorneyName: z.string().optional(),
+          attorneyFirm: z.string().optional(),
+          attorneyPhone: z.string().optional(),
+          attorneyEmail: z.string().optional(),
+          attorneyAddress: z.string().optional(),
+          portalAccess: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -79,13 +85,16 @@ export const contactsRouter = router({
       .query(async ({ ctx, input }) => {
         const contact = await db.getContactById(input.id, ctx.user.id);
         if (!contact) throw new TRPCError({ code: "NOT_FOUND" });
-        const [projects, invoices, contracts, appointments, files, messages] = await Promise.all([
+        const [projects, invoices, contracts, appointments, files, messages, parentContact] = await Promise.all([
           db.getProjectsByClient(input.id),
           db.getInvoicesByClient(input.id),
           db.getContractsByClient(input.id),
           db.getAppointmentsByClient(input.id),
           db.getClientFilesByClient(input.id),
           db.getMessagesBetween(ctx.user.id, input.id),
+          contact.parentContactId
+            ? db.getContactById(contact.parentContactId, ctx.user.id)
+            : Promise.resolve(null),
         ]);
         // Fetch compass using caseId (unique per student)
         const compass = contact.caseId
@@ -94,7 +103,7 @@ export const contactsRouter = router({
         const compassHistory = contact.caseId
           ? await db.getCaseCompassHistory(contact.caseId)
           : [];
-        return { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory };
+        return { contact, projects, invoices, contracts, appointments, files, messages, compass, compassHistory, parentContact };
       }),
 
     // Get students linked to a parent contact with next meeting + task summary

@@ -32,9 +32,9 @@ export const ICON_OPTIONS: { key: ProjectIconKey; label: string; emoji: string }
 ];
 
 const PRESET_OPTIONS: { value: ProjectLabel; label: string }[] = [
-  { value: "Project", label: "Project (default)" },
+  { value: "Student", label: "Student (default)" },
+  { value: "Project", label: "Project" },
   { value: "Case", label: "Case" },
-  { value: "Student", label: "Student" },
   { value: "Matter", label: "Matter" },
   { value: "Client File", label: "Client File" },
 ];
@@ -77,7 +77,7 @@ function writeStorage(key: string, value: string) {
 
 export function TerminologyProvider({ children }: { children: ReactNode }) {
   const [projectLabel, setProjectLabelState] = useState<ProjectLabel>(
-    () => readStorage(LABEL_KEY, "Project") as ProjectLabel
+    () => readStorage(LABEL_KEY, "Student") as ProjectLabel
   );
   const [projectIconKey, setProjectIconKeyState] = useState<ProjectIconKey>(
     () => readStorage(ICON_KEY, "GraduationCap") as ProjectIconKey

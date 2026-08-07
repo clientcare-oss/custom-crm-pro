@@ -22,18 +22,31 @@ import {
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
-import PageIdBadge from './PageIdBadge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import QuickSetupModal from './QuickSetupModal';
 import ScopedErrorBoundary from "./ScopedErrorBoundary";
 
-const LOGO_URL = "/storage/waypoint-logo-new_dbe73a36.png";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
+
+const LOGO_URL = "/waypoint-logo.png";
 
 const ICON_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap,
@@ -78,6 +91,8 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: Banknote, label: "Bill Guardian", path: "/bill-guardian" },
     { icon: Zap, label: "Automations", path: "/automations" },
     { icon: Plug, label: "Integrations", path: "/integrations" },
+    { icon: Compass, label: "Client Portal", path: "/portal-management" },
+    { icon: LayoutGrid, label: "Workspace", path: "/workspace" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 }
@@ -170,6 +185,7 @@ type DashboardLayoutContentProps = {
 function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
   const { projectLabel, projectIconKey } = useTerminology();
   const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
   const menuItems = buildMenuItems(projectLabel, projectIcon);
@@ -178,6 +194,33 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
+  const [goToPageOpen, setGoToPageOpen] = useState(false);
+
+  // Developer Rules state & queries
+  const [isDevRulesOpen, setIsDevRulesOpen] = useState(false);
+  const [devRuleText, setDevRuleText] = useState("");
+
+  const pageKey = "crm:path:" + (location === "/" ? "dashboard" : location.replace(/^\//, "").replaceAll("/", ":"));
+
+  const { data: devRules = [], refetch: refetchDevRules } = trpc.portal.getDevRules.useQuery();
+
+  const saveDevRulesMutation = trpc.portal.saveDevRules.useMutation({
+    onSuccess: () => {
+      toast.success("Developer guidelines saved");
+      refetchDevRules();
+      setIsDevRulesOpen(false);
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to save developer rules");
+    }
+  });
+
+  const handleSaveDevRules = () => {
+    saveDevRulesMutation.mutate({
+      tabKey: pageKey,
+      content: devRuleText
+    });
+  };
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
@@ -230,7 +273,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               {!isCollapsed && (
                 <div className="flex items-center gap-2.5 min-w-0">
                   <img
-                    src={LOGO_URL}
+                    src={logoData?.logoUrl || LOGO_URL}
                     alt="Waypoint Advocates"
                     className="h-9 w-9 object-contain shrink-0"
                   />
@@ -242,7 +285,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               )}
               {isCollapsed && (
                 <img
-                  src={LOGO_URL}
+                  src={logoData?.logoUrl || LOGO_URL}
                   alt="Waypoint Advocates"
                   className="h-8 w-8 object-contain mx-auto"
                 />
@@ -309,35 +352,45 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               </span>
             </button>
 
-            {/* User profile */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-white/10 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
-                  <Avatar className="h-8 w-8 border border-amber-400/30 shrink-0">
-                    <AvatarFallback className="text-xs font-semibold bg-amber-500/20 text-amber-300">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none text-white/90">
-                      {user?.name || "-"}
-                    </p>
-                    <p className="text-xs text-white/40 truncate mt-1">
-                      {user?.email || "-"}
-                    </p>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={logout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* User profile with Go to Page button */}
+            <div className="flex items-center justify-between gap-1.5 w-full">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-white/10 transition-colors flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0">
+                    <Avatar className="h-8 w-8 border border-amber-400/30 shrink-0">
+                      <AvatarFallback className="text-xs font-semibold bg-amber-500/20 text-amber-300">
+                        {user?.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                      <p className="text-sm font-medium truncate leading-none text-white/90">
+                        {user?.name || "-"}
+                      </p>
+                      <p className="text-xs text-white/40 truncate mt-1">
+                        {user?.email || "-"}
+                      </p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <button
+                onClick={() => setGoToPageOpen(true)}
+                title="Go to Page"
+                className="h-8 w-8 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center text-white/50 hover:text-white shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400"
+              >
+                <Compass className="h-4.5 w-4.5 text-amber-400" />
+              </button>
+            </div>
           </SidebarFooter>
         </Sidebar>
 
@@ -358,16 +411,218 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
         )}
-        <main className="flex-1 p-4">
+        <main className="flex-1 p-4 relative">
           <ScopedErrorBoundary moduleName={activeMenuItem?.label ?? "Page"}>
             {children}
           </ScopedErrorBoundary>
+
+          {/* Golden Developer Guidelines Floating Button */}
+          <div className="absolute top-4 right-4 z-20">
+            <Button
+              onClick={() => {
+                const rule = devRules.find((r: any) => r.tabKey === pageKey);
+                setDevRuleText(rule?.content || "");
+                setIsDevRulesOpen(true);
+              }}
+              className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all"
+              title="Developer Guidelines & Page Rules"
+            >
+              <BookOpen className="w-3.5 h-3.5" /> Dev Info
+            </Button>
+          </div>
         </main>
       </SidebarInset>
 
       <AIAssistant />
-      <PageIdBadge />
       <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
+      <GoToPageModal open={goToPageOpen} onClose={() => setGoToPageOpen(false)} />
+
+      {/* Developer Guidelines Editor Dialog */}
+      <Dialog open={isDevRulesOpen} onOpenChange={setIsDevRulesOpen}>
+        <DialogContent className="bg-[#0A1628] border border-slate-800 text-white rounded-xl max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              Developer Guidelines: <span className="capitalize text-amber-300 font-semibold">{location === "/" ? "dashboard" : location.replace(/^\//, "").replaceAll("/", " ")}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Use this space to store guidelines, ideas, or constraints for this page. This popup is visible **only to developer/staff** users.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="dev-rules" className="text-xs font-semibold text-slate-350">Guidelines & Ideas</Label>
+              <Textarea
+                id="dev-rules"
+                value={devRuleText}
+                onChange={(e) => setDevRuleText(e.target.value)}
+                placeholder="Write rules or details for this page here..."
+                rows={8}
+                className="bg-[#07111E] border-slate-800 text-white focus:border-amber-400 rounded-lg text-xs leading-relaxed"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex justify-between sm:justify-between items-center border-t border-slate-800/80 pt-4">
+            <Button 
+              onClick={() => setIsDevRulesOpen(false)} 
+              className="bg-transparent hover:bg-slate-850 text-slate-400 rounded-lg px-4 py-1.5 text-xs border border-transparent"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveDevRules}
+              disabled={saveDevRulesMutation.isPending}
+              className="bg-amber-400 hover:bg-amber-500 text-[#07111E] font-bold rounded-lg px-4 py-1.5 text-xs gap-1.5 shadow-lg shadow-amber-400/10"
+            >
+              {saveDevRulesMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Save Guidelines
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+  );
+}
+
+const PAGE_LIST = [
+  { id: "PG-001", name: "Dashboard", path: "/" },
+  { id: "PG-002", name: "Contacts", path: "/contacts" },
+  { id: "PG-003", name: "Leads", path: "/leads" },
+  { id: "PG-004", name: "Students", path: "/projects" },
+  { id: "PG-005", name: "Invoices", path: "/invoices" },
+  { id: "PG-006", name: "Contracts", path: "/contracts" },
+  { id: "PG-007", name: "Appointments / Calendar", path: "/calendar" },
+  { id: "PG-008", name: "Scheduler", path: "/scheduler" },
+  { id: "PG-009", name: "Tasks", path: "/tasks" },
+  { id: "PG-010", name: "Tools", path: "/tools" },
+  { id: "PG-011", name: "Templates", path: "/templates" },
+  { id: "PG-012", name: "Lead Forms", path: "/lead-forms" },
+  { id: "PG-013", name: "Automations", path: "/automations" },
+  { id: "PG-014", name: "Integrations", path: "/integrations" },
+  { id: "PG-015", name: "Workflows", path: "/workflows" },
+  { id: "PG-016", name: "Knowledge Base", path: "/knowledge-base" },
+  { id: "PG-017", name: "Walkthroughs", path: "/walkthroughs" },
+  { id: "PG-018", name: "Call Logs", path: "/call-logs" },
+  { id: "PG-019", name: "Team", path: "/team" },
+  { id: "PG-020", name: "State Complaint Builder", path: "/state-complaint-builder" },
+  { id: "PG-021", name: "Brain Dump", path: "/brain-dump" },
+  { id: "PG-022", name: "Bill Guardian", path: "/bill-guardian" },
+  { id: "PG-023", name: "Client Portal", path: "/client-portal" },
+  { id: "PG-024", name: "Settings", path: "/settings" },
+  { id: "PG-025", name: "Case Compass", path: "/case-compass" },
+  { id: "PG-026", name: "Page ID Showcase", path: "/page-id-showcase" },
+  { id: "PG-027", name: "Portal Management", path: "/portal-management" },
+  { id: "PG-028", name: "Intake Form", path: "/intake" },
+  { id: "PG-029", name: "Booking", path: "/book" },
+];
+
+function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [search, setSearch] = useState("");
+  const [, setLocation] = useLocation();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setSearch("");
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  const query = search.trim().toLowerCase();
+
+  const filtered = PAGE_LIST.filter(item => {
+    if (!query) return true;
+    const digitsOnly = query.replace(/\D/g, "");
+    if (digitsOnly) {
+      const itemDigits = item.id.replace(/\D/g, "");
+      const queryVal = parseInt(digitsOnly, 10);
+      const itemVal = parseInt(itemDigits, 10);
+      if (itemDigits.includes(digitsOnly) || itemVal === queryVal) {
+        return true;
+      }
+    }
+    return (
+      item.name.toLowerCase().includes(query) ||
+      item.id.toLowerCase().includes(query) ||
+      item.path.toLowerCase().includes(query)
+    );
+  }).sort((a, b) => {
+    if (!query) return 0;
+    const digitsOnly = query.replace(/\D/g, "");
+    if (digitsOnly) {
+      const aVal = parseInt(a.id.replace(/\D/g, ""), 10);
+      const bVal = parseInt(b.id.replace(/\D/g, ""), 10);
+      const queryVal = parseInt(digitsOnly, 10);
+      if (aVal === queryVal && bVal !== queryVal) return -1;
+      if (bVal === queryVal && aVal !== queryVal) return 1;
+    }
+    return 0;
+  });
+
+  const handleSelect = (path: string) => {
+    setLocation(path);
+    onClose();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && filtered.length > 0) {
+      handleSelect(filtered[0].path);
+    } else if (e.key === "Escape") {
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-md bg-[#0b192c]/95 border border-white/10 text-white backdrop-blur shadow-2xl rounded-2xl p-6">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            <Compass className="h-5 w-5 text-amber-400" />
+            Go to Page
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 mt-2">
+          <div className="relative">
+            <Input
+              ref={inputRef}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type page number (e.g. 4, 23) or name..."
+              className="w-full bg-[#0d1e33] border-white/10 text-white placeholder-white/45 focus:border-amber-400 focus:ring-amber-400 pr-10 rounded-xl"
+            />
+            <div className="absolute right-3 top-2.5 text-[9px] text-white/40 border border-white/10 px-1.5 py-0.5 rounded font-mono">
+              ENTER
+            </div>
+          </div>
+
+          <div className="max-h-60 overflow-y-auto space-y-1 pr-1">
+            {filtered.length > 0 ? (
+              filtered.map((item, idx) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelect(item.path)}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all border border-transparent
+                    ${idx === 0 
+                      ? "bg-amber-400/10 border-amber-400/30 text-amber-300" 
+                      : "hover:bg-white/5 text-white/80"
+                    }`}
+                >
+                  <span className="font-semibold text-sm">{item.name}</span>
+                  <span className="text-xs font-mono opacity-60 bg-white/5 px-2 py-0.5 rounded">
+                    {item.id}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="text-center py-6 text-white/40 text-sm">
+                No pages found matching "{search}"
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

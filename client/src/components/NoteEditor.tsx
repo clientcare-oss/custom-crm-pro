@@ -118,15 +118,26 @@ export function NoteEditor({
     });
   };
 
-  const handleToggleVisibility = async () => {
-    if (!note) return;
+  // Sync state with note when note prop updates
+  useEffect(() => {
+    if (note) {
+      setTitle(note.title);
+      setContent(note.content);
+      setIsVisibleToClient(note.isVisibleToClient);
+    }
+  }, [note]);
 
-    setIsVisibleToClient(!isVisibleToClient);
-    await updateMutation.mutateAsync({
-      id: note.id,
-      projectId,
-      isVisibleToClient: !isVisibleToClient,
-    });
+  const handleToggleVisibility = async () => {
+    const nextVal = !isVisibleToClient;
+    setIsVisibleToClient(nextVal);
+
+    if (note) {
+      await updateMutation.mutateAsync({
+        id: note.id,
+        projectId,
+        isVisibleToClient: nextVal,
+      });
+    }
   };
 
   const handleDelete = async () => {
@@ -147,16 +158,27 @@ export function NoteEditor({
   return (
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        {isReadOnly ? (
-          <h3 className="flex-1 font-semibold text-foreground">{title}</h3>
-        ) : (
-          <VoiceInput
-            placeholder="Note title..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="flex-1 font-semibold"
-          />
-        )}
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          {!isReadOnly && (
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shrink-0 border transition-colors duration-300 ${
+              isVisibleToClient 
+                ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
+                : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+            }`}>
+              {isVisibleToClient ? "Shared" : "Advocate Only"}
+            </span>
+          )}
+          {isReadOnly ? (
+            <h3 className="flex-1 font-semibold text-foreground truncate">{title}</h3>
+          ) : (
+            <VoiceInput
+              placeholder="Note title..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="flex-1 font-semibold"
+            />
+          )}
+        </div>
         <div className="flex items-center gap-2 ml-4">
           {/* Visibility Toggle — hidden in read-only mode */}
           {!isReadOnly && (
@@ -246,7 +268,7 @@ export function NoteEditor({
         <div className="space-x-2">
           {!isReadOnly && (
             <span>
-              {isVisibleToClient ? "✓ Visible to client" : "🔒 Advocate only"}
+              {isVisibleToClient ? "✓ Shared" : "🔒 Advocate Only"}
             </span>
           )}
           {isSaving && <span className="text-blue-500">Saving...</span>}

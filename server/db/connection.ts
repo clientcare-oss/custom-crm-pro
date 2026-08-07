@@ -14,7 +14,7 @@ export async function getDb() {
     try {
       _db = drizzle(async (sql, params, method) => {
         const res = await queryCloudflareD1(sql, params);
-        const rows = res.results || [];
+        const rows = Array.isArray(res) ? res : (res?.results || []);
         if (method === "get") {
           return { rows: rows[0] ? Object.values(rows[0]) : [] };
         }
