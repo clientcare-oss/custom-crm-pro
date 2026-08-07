@@ -22,7 +22,7 @@ interface ClientPortalDashboardProps {
   portalStudents?: any[];
   selectedStudentId?: number | null;
   onSelectStudent?: (id: number) => void;
-  onOpenIepLinkDialog?: () => void;
+  onOpenIepLinkDialog?: (studentId: number, studentName: string) => void;
   allMyAppointments?: any[];
 }
 
@@ -253,7 +253,7 @@ export default function ClientPortalDashboard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (onOpenIepLinkDialog) onOpenIepLinkDialog();
+                  if (onOpenIepLinkDialog) onOpenIepLinkDialog(student.id, `${student.firstName} ${student.lastName}`);
                 }}
                 className={`flex items-center justify-center gap-1.5 w-full rounded-lg py-1.5 text-xs font-semibold transition-all border ${
                   isLight 

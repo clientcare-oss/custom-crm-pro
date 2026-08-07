@@ -617,12 +617,19 @@ export default function ClientPortal() {
   const [showIepLinkDialog, setShowIepLinkDialog] = useState(false);
   const [iepLinkUrl, setIepLinkUrl] = useState("");
   const [iepLinkApptId, setIepLinkApptId] = useState<number | null>(null);
+  const [iepLinkStudentName, setIepLinkStudentName] = useState("");
+  const [iepLinkStudentId, setIepLinkStudentId] = useState<number | null>(null);
+  const [confirmStudent, setConfirmStudent] = useState(false);
+
   const submitMeetingLink = trpc.portal.submitMeetingLink.useMutation({
     onSuccess: () => {
       toast.success("Meeting link sent to your advocate!");
       setShowIepLinkDialog(false);
       setIepLinkUrl("");
       setIepLinkApptId(null);
+      setIepLinkStudentName("");
+      setIepLinkStudentId(null);
+      setConfirmStudent(false);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -1006,7 +1013,12 @@ export default function ClientPortal() {
               portalStudents={portalStudents}
               selectedStudentId={selectedStudentId}
               onSelectStudent={setSelectedStudentId}
-              onOpenIepLinkDialog={() => setShowIepLinkDialog(true)}
+              onOpenIepLinkDialog={(studentId, studentName) => {
+                setIepLinkStudentId(studentId);
+                setIepLinkStudentName(studentName);
+                setConfirmStudent(false);
+                setShowIepLinkDialog(true);
+              }}
               allMyAppointments={allMyAppointments}
             />
 
@@ -1891,8 +1903,7 @@ export default function ClientPortal() {
         </DialogContent>
       </Dialog>
 
-      {/* IEP Meeting Link Dialog */}
-      <Dialog open={showIepLinkDialog} onOpenChange={(open) => { setShowIepLinkDialog(open); if (!open) { setIepLinkUrl(""); setIepLinkApptId(null); } }}>
+      <Dialog open={showIepLinkDialog} onOpenChange={(open) => { setShowIepLinkDialog(open); if (!open) { setIepLinkUrl(""); setIepLinkApptId(null); setIepLinkStudentName(""); setIepLinkStudentId(null); setConfirmStudent(false); } }}>
         <DialogContent className="bg-[#0d1b2a] border border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
@@ -1947,19 +1958,34 @@ export default function ClientPortal() {
                 );
               })()}
             </div>
+
+            {/* Confirmation checkbox */}
+            <div className="flex items-start gap-2 pt-2">
+              <input
+                type="checkbox"
+                id="confirm-iep-student"
+                checked={confirmStudent}
+                onChange={(e) => setConfirmStudent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-white/15 bg-[#071422] text-amber-500 focus:ring-amber-500"
+              />
+              <label htmlFor="confirm-iep-student" className="text-xs text-white/80 cursor-pointer select-none leading-normal">
+                I confirm this is for <span className="font-bold text-amber-400">{iepLinkStudentName || (effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}` : "")}</span>
+              </label>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <button
-              onClick={() => { setShowIepLinkDialog(false); setIepLinkUrl(""); setIepLinkApptId(null); }}
+              onClick={() => { setShowIepLinkDialog(false); setIepLinkUrl(""); setIepLinkApptId(null); setIepLinkStudentName(""); setIepLinkStudentId(null); setConfirmStudent(false); }}
               className="px-4 py-2 rounded-lg border border-white/15 text-white/60 hover:text-white text-sm transition-all"
             >
               Cancel
             </button>
             <button
-              disabled={!iepLinkUrl.trim() || !iepLinkApptId || submitMeetingLink.isPending}
+              disabled={!iepLinkUrl.trim() || !iepLinkApptId || !confirmStudent || submitMeetingLink.isPending}
               onClick={() => {
-                if (!iepLinkApptId || !effectiveStudentContactId) return;
-                submitMeetingLink.mutate({ appointmentId: iepLinkApptId, studentContactId: effectiveStudentContactId, meetingLink: iepLinkUrl.trim() });
+                const targetStudentId = iepLinkStudentId || effectiveStudentContactId;
+                if (!iepLinkApptId || !targetStudentId) return;
+                submitMeetingLink.mutate({ appointmentId: iepLinkApptId, studentContactId: targetStudentId, meetingLink: iepLinkUrl.trim() });
               }}
               className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-[#071422] font-semibold text-sm transition-all"
             >
