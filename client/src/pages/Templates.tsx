@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import {
   LayoutTemplate, FilePlus2, FileText, Mail, ShoppingBag,
   PlusCircle, Library, ArrowRight, Pencil, Trash2,
@@ -641,8 +642,22 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
 
 // ─── Saved Smart Files ────────────────────────────────────────────────────────
 
-function SavedSmartFiles({ onBack }: { onBack: () => void }) {
-  const [files, setFiles] = useState(MOCK_SMART_FILES);
+function SavedSmartFiles({ onBack, onCreateNew }: { onBack: () => void; onCreateNew: () => void }) {
+  const [, navigate] = useLocation();
+  const { data: templates = [], isLoading, refetch } = trpc.smartFiles.listTemplates.useQuery();
+  const deleteMutation = trpc.smartFiles.deleteTemplate.useMutation();
+
+  const handleDelete = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete the template "${name}"?`)) return;
+    try {
+      await deleteMutation.mutateAsync({ templateId: id });
+      toast.success("Template deleted!");
+      refetch();
+    } catch {
+      toast.error("Failed to delete template");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -653,30 +668,29 @@ function SavedSmartFiles({ onBack }: { onBack: () => void }) {
           <span className="text-muted-foreground">/</span>
           <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="h-5 w-5 text-violet-500" /> Saved Smart Files</h2>
         </div>
-        <Button size="sm" className="gap-2" onClick={() => toast.info("Feature coming soon")}><PlusCircle className="h-4 w-4" /> New Smart File</Button>
+        <Button size="sm" className="gap-2" onClick={onCreateNew}><PlusCircle className="h-4 w-4" /> New Smart File</Button>
       </div>
-      {files.length === 0 ? (
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading smart files...</p>
+      ) : templates.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-16 text-center border-dashed">
           <FileText className="h-10 w-10 text-muted-foreground/30 mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">No smart files saved yet</p>
+          <p className="text-sm font-medium text-muted-foreground">No smart files saved yet. Click "New Smart File" to create one.</p>
         </Card>
       ) : (
         <div className="space-y-2">
-          {files.map((file) => (
+          {templates.map((file) => (
             <div key={file.id} className="group flex items-center gap-4 rounded-xl border bg-card px-4 py-3 hover:shadow-sm transition-shadow">
               <div className="h-9 w-9 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center shrink-0">
                 <FileText className="h-4 w-4 text-violet-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">{file.name}</p>
-                <p className="text-xs text-muted-foreground">{file.type} · Updated {file.updatedAt}</p>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {file.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
+                <p className="text-xs text-muted-foreground">Status: <span className="capitalize font-semibold">{file.status}</span> · Updated {new Date(file.updatedAt).toLocaleDateString()}</p>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => toast.info("Feature coming soon")} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                <button onClick={() => { if (confirm(`Delete "${file.name}"?`)) setFiles((f) => f.filter((x) => x.id !== file.id)); }} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                <button onClick={() => navigate(`/smart-files/${file.id}`)} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                <button onClick={() => handleDelete(file.id, file.name)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             </div>
           ))}
@@ -732,16 +746,56 @@ type View = "hub" | "smart-files" | "create-smart-file" | "email-templates" | "p
 export default function Templates() {
   const [view, setView] = useState<View>("hub");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const [, navigate] = useLocation();
+
   const { data: emailTemplatesList = [] } = trpc.emailTemplates.list.useQuery();
+  const { data: smartFilesList = [], refetch: refetchSmartFiles } = trpc.smartFiles.listTemplates.useQuery();
+  const createSmartFileMutation = trpc.smartFiles.createTemplate.useMutation();
+
+  const handleCreateSmartFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFileName.trim()) {
+      toast.error("Please enter a name for the smart file");
+      return;
+    }
+    try {
+      const res = await createSmartFileMutation.mutateAsync({
+        name: newFileName,
+        description: "Custom smart file template",
+      });
+      setCreateDialogOpen(false);
+      setNewFileName("");
+      toast.success("Template created successfully!");
+      refetchSmartFiles();
+      navigate(`/smart-files/${res.id}`);
+    } catch {
+      toast.error("Failed to create smart file template");
+    }
+  };
+
+  const handleGalleryClick = async (templateName: string) => {
+    try {
+      const res = await createSmartFileMutation.mutateAsync({
+        name: `${templateName} Template`,
+        description: `Pre-built starter layout for ${templateName}`,
+      });
+      toast.success(`Starter ${templateName} template initialized!`);
+      refetchSmartFiles();
+      navigate(`/smart-files/${res.id}`);
+    } catch {
+      toast.error("Failed to initialize template");
+    }
+  };
 
   const HUB_BLOCKS = [
-    { id: "smart-files" as View, icon: FileText, iconBg: "bg-violet-50 dark:bg-violet-900/20", iconColor: "text-violet-500", accent: "hover:border-violet-300 dark:hover:border-violet-700", title: "Saved Smart Files", description: "Access and manage your saved smart document files — IEP forms, evaluation reports, progress logs, and more.", cta: "View Files", count: MOCK_SMART_FILES.length },
+    { id: "smart-files" as View, icon: FileText, iconBg: "bg-violet-50 dark:bg-violet-900/20", iconColor: "text-violet-500", accent: "hover:border-violet-300 dark:hover:border-violet-700", title: "Saved Smart Files", description: "Access and manage your saved smart document files — IEP forms, evaluation reports, progress logs, and more.", cta: "View Files", count: smartFilesList.length },
     { id: "create-smart-file" as View, icon: FilePlus2, iconBg: "bg-emerald-50 dark:bg-emerald-900/20", iconColor: "text-emerald-500", accent: "hover:border-emerald-300 dark:hover:border-emerald-700", title: "Create Smart File", description: "Build a new smart file from scratch with a blank canvas, or jump-start with a pre-built template from the gallery.", cta: "Create Now", count: null },
     { id: "email-templates" as View, icon: Mail, iconBg: "bg-blue-50 dark:bg-blue-900/20", iconColor: "text-blue-500", accent: "hover:border-blue-300 dark:hover:border-blue-700", title: "Email Templates", description: "Manage reusable email templates for parent communication, meeting reminders, progress updates, and outreach.", cta: "View Templates", count: emailTemplatesList.length },
     { id: "purchasables" as View, icon: ShoppingBag, iconBg: "bg-amber-50 dark:bg-amber-900/20", iconColor: "text-amber-500", accent: "hover:border-amber-300 dark:hover:border-amber-700", title: "Purchasables", description: "Browse and manage purchasable document packs, template bundles, and resource kits available for your clients.", cta: "Browse Items", count: MOCK_PURCHASABLES.length },
   ];
 
-  if (view === "smart-files") return <div className="p-6 max-w-4xl mx-auto"><SavedSmartFiles onBack={() => setView("hub")} /></div>;
+  if (view === "smart-files") return <div className="p-6 max-w-4xl mx-auto"><SavedSmartFiles onBack={() => setView("hub")} onCreateNew={() => setCreateDialogOpen(true)} /></div>;
   if (view === "email-templates") return <div className="p-6 max-w-5xl mx-auto"><EmailTemplates onBack={() => setView("hub")} /></div>;
   if (view === "purchasables") return <div className="p-6 max-w-4xl mx-auto"><Purchasables onBack={() => setView("hub")} /></div>;
 
@@ -789,7 +843,7 @@ export default function Templates() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {GALLERY_TEMPLATES.map((t) => (
-            <button key={t.id} onClick={() => toast.info("Feature coming soon")} className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-4 hover:shadow-sm hover:border-accent/40 transition-all text-center">
+            <button key={t.id} onClick={() => handleGalleryClick(t.name)} className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-4 hover:shadow-sm hover:border-accent/40 transition-all text-center">
               <span className="text-2xl">{t.icon}</span>
               <p className="text-xs font-medium leading-tight">{t.name}</p>
               <span className="text-[10px] text-muted-foreground">{t.category}</span>
@@ -799,12 +853,28 @@ export default function Templates() {
       </div>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><FilePlus2 className="h-5 w-5 text-emerald-500" /> Create Smart File</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">Smart file creation is coming soon. You'll be able to build custom document templates with dynamic fields.</p>
-          <Button className="mt-2" onClick={() => setCreateDialogOpen(false)}>Got it</Button>
+          <form onSubmit={handleCreateSmartFile} className="space-y-4 mt-2">
+            <div>
+              <Label className="text-xs">Smart File Name</Label>
+              <Input
+                className="mt-1"
+                placeholder="e.g. Annual IEP Review Strategy Proposal"
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={createSmartFileMutation.isPending} className="bg-emerald-500 text-slate-900 font-semibold hover:bg-emerald-600">
+                {createSmartFileMutation.isPending ? "Creating..." : "Create & Edit"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

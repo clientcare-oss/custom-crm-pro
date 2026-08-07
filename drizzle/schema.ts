@@ -1070,6 +1070,7 @@ export const smartFileTemplates = mysqlTable('smart_file_templates', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   status: mysqlEnum('status', ['draft', 'active', 'archived']).default('draft').notNull(),
+  settings: text('settings'), // JSON string for custom theme fonts/colors, expiration rules, and redirect URLs
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
 });

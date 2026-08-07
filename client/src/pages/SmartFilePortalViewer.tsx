@@ -47,6 +47,8 @@ interface BlockRendererProps {
   onConditionalChange: (blockId: string, value: "yes" | "no") => void;
   selectedAddOns: number[];
   onAddOnToggle: (id: number) => void;
+  selectedServices: string[];
+  onServiceToggle: (id: string) => void;
   addOns: any[];
   paymentOption: "one_time" | "monthly" | null;
   onPaymentChange: (v: "one_time" | "monthly") => void;
@@ -57,6 +59,7 @@ interface BlockRendererProps {
 function BlockRenderer({
   block, fieldValues, onFieldChange, checkboxValues, onCheckboxChange,
   conditionalAnswers, onConditionalChange, selectedAddOns, onAddOnToggle,
+  selectedServices, onServiceToggle,
   addOns, paymentOption, onPaymentChange, smartCtx, isHidden
 }: BlockRendererProps) {
   if (isHidden) return null;
@@ -86,22 +89,43 @@ function BlockRenderer({
         </div>
       );
 
-    case "service":
+    case "service": {
+      const isSelected = selectedServices.includes(blockId);
       return (
-        <Card className="border-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{replaceSmartFields(content.title ?? "", smartCtx)}</CardTitle>
+        <Card
+          className={`border-2 transition-all duration-300 cursor-pointer ${
+            isSelected ? "border-amber-500 bg-amber-500/5 shadow-sm scale-[1.01]" : "border-border hover:border-muted-foreground/30 hover:shadow-xs"
+          }`}
+          onClick={() => onServiceToggle(blockId)}
+        >
+          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base font-bold">{replaceSmartFields(content.title ?? "", smartCtx)}</CardTitle>
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? "border-amber-500 bg-amber-500" : "border-muted"}`}>
+              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+            </div>
           </CardHeader>
-          <CardContent className="space-y-1">
-            {content.description && (
-              <p className="text-sm text-muted-foreground">{replaceSmartFields(content.description, smartCtx)}</p>
+          <CardContent className="space-y-2">
+            {Boolean(content.showDescription ?? true) && content.description && (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {replaceSmartFields(content.description, smartCtx)}
+              </p>
             )}
-            {content.price && (
-              <p className="text-sm font-semibold">{replaceSmartFields(content.price, smartCtx)}</p>
+            {Boolean(content.showPrice ?? true) && content.price && (
+              <p className="text-sm font-bold text-amber-500">
+                Price: {replaceSmartFields(content.price, smartCtx)}
+              </p>
+            )}
+            {Boolean(content.showSubItems ?? false) && content.subItemsText && (
+              <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground mt-2 border-t pt-2">
+                {String(content.subItemsText).split("\n").filter(line => line.trim() !== "").map((item, idx) => (
+                  <li key={idx}>{replaceSmartFields(item, smartCtx)}</li>
+                ))}
+              </ul>
             )}
           </CardContent>
         </Card>
       );
+    }
 
     case "field":
       return (
@@ -296,6 +320,7 @@ export default function SmartFilePortalViewer() {
   const [checkboxValues, setCheckboxValues] = useState<Record<string, boolean>>({});
   const [conditionalAnswers, setConditionalAnswers] = useState<Record<string, "yes" | "no">>({});
   const [selectedAddOns, setSelectedAddOns] = useState<number[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [paymentOption, setPaymentOption] = useState<"one_time" | "monthly" | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -311,6 +336,13 @@ export default function SmartFilePortalViewer() {
     if (data?.addOns) {
       const required = data.addOns.filter((a: any) => a.isRequired).map((a: any) => a.id);
       setSelectedAddOns(required);
+    }
+    // Default auto-select single service block
+    if (data?.blocks) {
+      const serviceBlocks = data.blocks.filter((b: any) => b.type === "service");
+      if (serviceBlocks.length === 1) {
+        setSelectedServices([String(serviceBlocks[0].id)]);
+      }
     }
     if (data?.assignment.status === "payment_completed" || data?.assignment.status === "in_progress") {
       setSubmitted(true);
@@ -334,7 +366,55 @@ export default function SmartFilePortalViewer() {
   }
 
   const { assignment, template, blocks, addOns, contact, student } = data;
-  const smartCtx = buildSmartFieldContext(contact, student);
+
+  // Compute selections prices dynamically
+  let contractTotal = 0;
+  let selectedServiceTitles: string[] = [];
+
+  for (const sId of selectedServices) {
+    const block = blocks.find((b: any) => String(b.id) === sId);
+    if (block) {
+      const content = block.content ? JSON.parse(block.content) : {};
+      const priceStr = content.price || "$0.00";
+      const val = parseFloat(priceStr.replace(/[^0-9.]/g, "")) || 0;
+      contractTotal += val;
+      selectedServiceTitles.push(content.title || "Service Package");
+    }
+  }
+
+  for (const aId of selectedAddOns) {
+    const a = addOns.find((item: any) => item.id === aId);
+    if (a) {
+      const val = parseFloat(String(a.price).replace(/[^0-9.]/g, "")) || 0;
+      contractTotal += val;
+      selectedServiceTitles.push(a.name);
+    }
+  }
+
+  // Generate detailed selected items recap list
+  const selectedItemsListText = selectedServiceTitles.map((title) => {
+    const sBlock = blocks.find((b: any) => b.type === "service" && (b.content ? JSON.parse(b.content).title === title : false));
+    if (sBlock) {
+      const content = JSON.parse(sBlock.content);
+      return `- Service Package: ${title} (${content.price || "$0.00"})`;
+    }
+    const addOn = addOns.find((a: any) => a.name === title);
+    if (addOn) {
+      return `- Add-On: ${title} ($${addOn.price})`;
+    }
+    return `- ${title}`;
+  }).join("\n");
+
+  const selectionsRecap = selectedServiceTitles.length > 0
+    ? `Services Selected:\n${selectedItemsListText}\n\nTotal Contract Amount: $${contractTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : "(No service packages or add-ons selected yet)";
+
+  const smartCtx = {
+    ...buildSmartFieldContext(contact, student),
+    contract_total: `$${contractTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+    service_package: selectedServiceTitles.join(", ") || "(none)",
+    client_selections_recap: selectionsRecap,
+  };
 
   // Compute which blocks are hidden due to conditional logic
   const hiddenBlocks = new Set<number>();
@@ -357,11 +437,16 @@ export default function SmartFilePortalViewer() {
     }
   }
 
-  // Find the primary signature block
-  const sigBlock = blocks.find((b: any) => b.type === "signature");
-  const sigValue = sigBlock ? (fieldValues[`sig-${sigBlock.id}`] ?? "") : "";
+  const handleServiceToggle = (id: string) => {
+    setSelectedServices((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async () => {
+    const sigBlock = blocks.find((b: any) => b.type === "signature");
+    const sigValue = sigBlock ? (fieldValues[`sig-${sigBlock.id}`] ?? "") : "";
+
     // Validate required fields
     for (const block of blocks) {
       if (hiddenBlocks.has(block.id)) continue;
@@ -386,7 +471,7 @@ export default function SmartFilePortalViewer() {
     try {
       await submitMutation.mutateAsync({
         assignmentId,
-        fieldValues: JSON.stringify(fieldValues),
+        fieldValues: JSON.stringify({ ...fieldValues, selectedServices }),
         initialsData: JSON.stringify(
           Object.fromEntries(
             Object.entries(fieldValues).filter(([k]) => k.startsWith("init-"))
@@ -452,6 +537,8 @@ export default function SmartFilePortalViewer() {
             onAddOnToggle={(id) => setSelectedAddOns((prev) =>
               prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
             )}
+            selectedServices={selectedServices}
+            onServiceToggle={handleServiceToggle}
             addOns={addOns}
             paymentOption={paymentOption}
             onPaymentChange={setPaymentOption}

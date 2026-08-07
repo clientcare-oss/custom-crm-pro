@@ -96,6 +96,7 @@ export const smartFilesRouter = router({
       name: z.string().min(1).optional(),
       description: z.string().optional().nullable(),
       status: z.enum(["draft", "active", "archived"]).optional(),
+      settings: z.string().optional().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { smartFileTemplates: sft } = await import("../../drizzle/schema");
@@ -105,9 +106,11 @@ export const smartFilesRouter = router({
       if (input.name !== undefined) updates.name = input.name;
       if (input.description !== undefined) updates.description = input.description;
       if (input.status !== undefined) updates.status = input.status;
+      if (input.settings !== undefined) updates.settings = input.settings;
       await dbConn.update(sft).set(updates).where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id)));
       return { success: true };
     }),
+
 
   duplicateTemplate: protectedProcedure
     .input(z.object({ templateId: z.number() }))

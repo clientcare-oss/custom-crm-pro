@@ -231,52 +231,104 @@ export async function getTasksAssignedToStudent(studentContactId: number) {
 export async function getAllTasksForOwner(ownerId: number) {
   const db = await getDb();
   if (!db) return [];
+
+  // 1. Get all projects owned by the owner and left join contacts to resolve clients
   const ownerProjects = await db
-    .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
+    .select({
+      id: projects.id,
+      name: projects.name,
+      clientId: projects.clientId,
+      clientFirstName: contacts.firstName,
+      clientLastName: contacts.lastName,
+    })
     .from(projects)
+    .leftJoin(contacts, eq(contacts.id, projects.clientId))
     .where(eq(projects.ownerId, ownerId));
-  const result: any[] = [];
-  for (const proj of ownerProjects) {
-    const tasks = await db
-      .select()
-      .from(projectTasks)
-      .where(eq(projectTasks.projectId, proj.id))
-      .orderBy(asc(projectTasks.dueDate));
-    let clientName: string | null = null;
-    if (proj.clientId) {
-      const [c] = await db
-        .select({ firstName: contacts.firstName, lastName: contacts.lastName })
-        .from(contacts)
-        .where(eq(contacts.id, proj.clientId))
-        .limit(1);
-      if (c) clientName = `${c.firstName} ${c.lastName}`;
+
+  if (ownerProjects.length === 0) return [];
+
+  const projectIds = ownerProjects.map((p) => p.id);
+
+  // 2. Query all tasks belonging to those projects in one query
+  const tasks = await db
+    .select()
+    .from(projectTasks)
+    .where(inArray(projectTasks.projectId, projectIds))
+    .orderBy(asc(projectTasks.dueDate));
+
+  if (tasks.length === 0) return [];
+
+  const taskIds = tasks.map((t) => t.id);
+
+  // 3. Query all task steps for those tasks in one query
+  const steps = await db
+    .select()
+    .from(projectTaskSteps)
+    .where(inArray(projectTaskSteps.taskId, taskIds))
+    .orderBy(asc(projectTaskSteps.sortOrder));
+
+  // Group steps by taskId
+  const stepsByTaskId: Record<number, typeof steps> = {};
+  for (const step of steps) {
+    if (!stepsByTaskId[step.taskId]) {
+      stepsByTaskId[step.taskId] = [];
     }
-    for (const task of tasks) {
-      const steps = await db
-        .select()
-        .from(projectTaskSteps)
-        .where(eq(projectTaskSteps.taskId, (task as any).id))
-        .orderBy(asc(projectTaskSteps.sortOrder));
-      // Resolve assignee name: prefer assignedToUserId (team member), fallback to assignedTo (parent contact)
-      let assignedToUserName: string | null = null;
-      if ((task as any).assignedToUserId) {
-        const [u] = await db
-          .select({ name: users.name })
-          .from(users)
-          .where(eq(users.id, (task as any).assignedToUserId))
-          .limit(1);
-        if (u) assignedToUserName = u.name;
-      } else if ((task as any).assignedTo) {
-        const [c] = await db
-          .select({ firstName: contacts.firstName, lastName: contacts.lastName })
-          .from(contacts)
-          .where(eq(contacts.id, (task as any).assignedTo))
-          .limit(1);
-        if (c) assignedToUserName = `${c.firstName} ${c.lastName}`;
-      }
-      result.push({ ...task, projectName: proj.name, clientName, assignedToUserName, studentContactId: proj.clientId, steps });
-    }
+    stepsByTaskId[step.taskId].push(step);
   }
+
+  // 4. Resolve assignees in bulk
+  const userIds = tasks.map((t) => t.assignedToUserId).filter(Boolean) as number[];
+  const contactIds = tasks.map((t) => t.assignedTo).filter(Boolean) as number[];
+
+  const usersList = userIds.length > 0
+    ? await db
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(inArray(users.id, userIds))
+    : [];
+
+  const contactsList = contactIds.length > 0
+    ? await db
+        .select({ id: contacts.id, firstName: contacts.firstName, lastName: contacts.lastName })
+        .from(contacts)
+        .where(inArray(contacts.id, contactIds))
+    : [];
+
+  const usersMap = new Map<number, string>(usersList.map((u) => [u.id, u.name]));
+  const contactsMap = new Map<number, string>(contactsList.map((c) => [c.id, `${c.firstName} ${c.lastName}`]));
+
+  const projectsMap = new Map<number, { name: string; clientId: number | null; clientName: string | null }>(
+    ownerProjects.map((p) => [
+      p.id,
+      {
+        name: p.name,
+        clientId: p.clientId,
+        clientName: p.clientFirstName || p.clientLastName ? `${p.clientFirstName ?? ""} ${p.clientLastName ?? ""}`.trim() : null,
+      },
+    ])
+  );
+
+  // 5. Construct final results map
+  const result: any[] = [];
+  for (const task of tasks) {
+    const proj = projectsMap.get(task.projectId);
+    let assignedToUserName: string | null = null;
+    if (task.assignedToUserId) {
+      assignedToUserName = usersMap.get(task.assignedToUserId) ?? null;
+    } else if (task.assignedTo) {
+      assignedToUserName = contactsMap.get(task.assignedTo) ?? null;
+    }
+
+    result.push({
+      ...task,
+      projectName: proj?.name ?? "",
+      clientName: proj?.clientName ?? null,
+      assignedToUserName,
+      studentContactId: proj?.clientId ?? null,
+      steps: stepsByTaskId[task.id] ?? [],
+    });
+  }
+
   return result;
 }
 
