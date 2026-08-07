@@ -329,41 +329,41 @@ export default function ClientPortalDashboard({
         </div>
       </div>
 
-      {/* Messages Block (repositioned below Student Selector Cards) */}
-      <div 
-        onClick={() => onNavigateTab("communication")}
-        className={`border rounded-xl p-5 flex items-center justify-between gap-4 shadow-xl backdrop-blur-sm transition-all duration-[3000ms] ease-in-out cursor-pointer group ${
-          isLight 
-            ? "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow-md" 
-            : "bg-[#0A1628]/90 border-slate-700/50 hover:border-amber-400/40"
-        }`}
-      >
-        <div className="flex items-center gap-4 min-w-0">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
-            isLight ? "bg-blue-500/10 border border-blue-500/20" : "bg-blue-500/10 border border-blue-400/30"
-          }`}>
-            <MessageSquare className={`w-5 h-5 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
-          </div>
-          <div className="min-w-0">
-            <p className={`text-sm font-bold ${isLight ? "text-slate-800" : "text-white"}`}>Unread Messages</p>
-            <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-300/80"}`}>
-              {unreadCount > 0 ? `${unreadCount} new message(s) from your advocate` : messages.length > 0 ? "All messages read" : "No messages yet"}
-            </p>
-          </div>
-        </div>
-        <button className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-[3000ms] ease-in-out shrink-0 ${
-          isLight ? "text-amber-600 hover:text-amber-700" : "text-amber-400 hover:text-amber-300"
-        }`}>
-          View Messages <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
       {/* ── ROW 2: ADVOCACY JOURNEY & WHAT'S NEW ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left (8 Cols): YOUR ADVOCACY JOURNEY */}
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-8 space-y-6">
           <CaseCompassCard caseId={effectiveStudent?.caseId ?? undefined} />
+
+          {/* Messages Block (repositioned below Case Compass Card) */}
+          <div 
+            onClick={() => onNavigateTab("communication")}
+            className={`border rounded-xl p-5 flex items-center justify-between gap-4 shadow-xl backdrop-blur-sm transition-all duration-[3000ms] ease-in-out cursor-pointer group ${
+              isLight 
+                ? "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow-md" 
+                : "bg-[#0A1628]/90 border-slate-700/50 hover:border-amber-400/40"
+            }`}
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                isLight ? "bg-blue-500/10 border border-blue-500/20" : "bg-blue-500/10 border border-blue-400/30"
+              }`}>
+                <MessageSquare className={`w-5 h-5 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
+              </div>
+              <div className="min-w-0">
+                <p className={`text-sm font-bold ${isLight ? "text-slate-800" : "text-white"}`}>Unread Messages</p>
+                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-300/80"}`}>
+                  {unreadCount > 0 ? `${unreadCount} new message(s) from your advocate` : messages.length > 0 ? "All messages read" : "No messages yet"}
+                </p>
+              </div>
+            </div>
+            <button className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-[3000ms] ease-in-out shrink-0 ${
+              isLight ? "text-amber-600 hover:text-amber-700" : "text-amber-400 hover:text-amber-300"
+            }`}>
+              View Messages <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Right (4 Cols): WHAT'S NEW */}
