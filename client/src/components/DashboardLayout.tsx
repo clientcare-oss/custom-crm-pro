@@ -256,19 +256,18 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r-0"
+          className="border-r-0 transition-all duration-[3000ms] ease-in-out"
           disableTransition={isResizing}
-          style={{ "--sidebar-background": "#071422" } as CSSProperties}
         >
           {/* ── Header: toggle + logo ── */}
-          <SidebarHeader className="px-3 pt-4 pb-3 bg-[#071422]">
+          <SidebarHeader className="px-3 pt-4 pb-3 bg-sidebar">
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shrink-0"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4 text-white/60" />
+                <PanelLeft className="h-4 w-4 text-sidebar-foreground/60" />
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -278,8 +277,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                     className="h-9 w-9 object-contain shrink-0"
                   />
                   <div className="flex flex-col leading-tight min-w-0">
-                    <span className="text-sm font-bold tracking-widest text-white uppercase truncate">Waypoint</span>
-                    <span className="text-[10px] tracking-[0.2em] text-white/50 uppercase truncate">Advocates</span>
+                    <span className="text-sm font-bold tracking-widest text-sidebar-foreground uppercase truncate">Waypoint</span>
+                    <span className="text-[10px] tracking-[0.2em] text-sidebar-foreground/50 uppercase truncate">Advocates</span>
                   </div>
                 </div>
               )}
@@ -294,8 +293,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarHeader>
 
           {/* ── Nav items ── */}
-          <SidebarContent className="gap-0 bg-[#071422] px-2 py-1">
-            <div className="rounded-xl bg-[#0d1f33] border border-white/5 py-1.5 px-1 shadow-inner">
+          <SidebarContent className="gap-0 bg-sidebar px-2 py-1">
+            <div className="rounded-xl bg-black/20 border border-white/5 py-1.5 px-1 shadow-inner">
             <SidebarMenu className="">
               {menuItems.map(item => {
                 const isActive = location === item.path;
@@ -307,12 +306,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       tooltip={item.label}
                       className={`h-9 transition-all font-normal rounded-lg
                         ${isActive
-                          ? "border border-amber-400/70 text-amber-300 bg-amber-400/10 hover:bg-amber-400/15 hover:text-amber-300"
-                          : "text-white/75 hover:text-white hover:bg-white/8 border border-transparent"
+                          ? "border border-amber-500/70 text-amber-600 navy:text-amber-300 bg-amber-500/10 hover:bg-amber-500/15 hover:text-amber-600 navy:hover:text-amber-300"
+                          : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-transparent"
                         }`}
                     >
                       {item.icon && (
-                        <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : "text-white/50"}`} />
+                        <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-600 navy:text-amber-400" : "text-sidebar-foreground/50"}`} />
                       )}
                       <span>{item.label}</span>
                     </SidebarMenuButton>
@@ -324,7 +323,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarContent>
 
           {/* ── Footer: controls ── */}
-          <SidebarFooter className="bg-[#071422] p-3 space-y-2">
+          <SidebarFooter className="bg-sidebar p-3 space-y-2">
             {/* Quick Setup */}
             <button
               onClick={() => setQuickSetupOpen(true)}
@@ -341,13 +340,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             <button
               onClick={toggleTheme}
               title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
-              className="flex items-center justify-center gap-2 w-full rounded-lg p-2 hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-white/50 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto"
+              className="flex items-center justify-center gap-2 w-full rounded-lg p-2 hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-sidebar-foreground/50 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto"
               aria-label="Toggle theme"
             >
               {theme === 'navy'
                 ? <Sun className="h-4 w-4 text-amber-400 shrink-0" />
-                : <Moon className="h-4 w-4 text-indigo-300 shrink-0" />}
-              <span className="text-xs font-medium group-data-[collapsible=icon]:hidden text-white/60">
+                : <Moon className="h-4 w-4 text-indigo-600 navy:text-indigo-300 shrink-0" />}
+              <span className="text-xs font-medium group-data-[collapsible=icon]:hidden text-sidebar-foreground/60">
                 {theme === 'navy' ? 'Light mode' : 'Dark mode'}
               </span>
             </button>
@@ -356,17 +355,17 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             <div className="flex items-center justify-between gap-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-white/10 transition-colors flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0">
+                  <button className="flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-sidebar-accent transition-colors flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0">
                     <Avatar className="h-8 w-8 border border-amber-400/30 shrink-0">
                       <AvatarFallback className="text-xs font-semibold bg-amber-500/20 text-amber-300">
                         {user?.name?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                      <p className="text-sm font-medium truncate leading-none text-white/90">
+                      <p className="text-sm font-medium truncate leading-none text-sidebar-foreground/90">
                         {user?.name || "-"}
                       </p>
-                      <p className="text-xs text-white/40 truncate mt-1">
+                      <p className="text-xs text-sidebar-foreground/50 truncate mt-1">
                         {user?.email || "-"}
                       </p>
                     </div>
@@ -386,9 +385,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={() => setGoToPageOpen(true)}
                 title="Go to Page"
-                className="h-8 w-8 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center text-white/50 hover:text-white shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400"
+                className="h-8 w-8 rounded-lg hover:bg-sidebar-accent transition-colors flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400"
               >
-                <Compass className="h-4.5 w-4.5 text-amber-400" />
+                <Compass className="h-4.5 w-4.5 text-amber-550 navy:text-amber-400" />
               </button>
             </div>
           </SidebarFooter>

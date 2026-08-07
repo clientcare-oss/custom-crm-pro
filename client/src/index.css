@@ -143,13 +143,13 @@
   --chart-3: oklch(0.42 0.18 270);
   --chart-4: oklch(0.68 0.15 220);
   --chart-5: oklch(0.38 0.20 255);
-  /* Deep navy sidebar */
-  --sidebar: oklch(0.18 0.07 255);
-  --sidebar-foreground: oklch(0.93 0.01 240);
-  --sidebar-accent: oklch(0.26 0.09 255);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.25 0.08 255);
-  --sidebar-ring: oklch(0.65 0.22 255);
+  /* Light sidebar */
+  --sidebar: oklch(0.97 0.005 240);
+  --sidebar-foreground: oklch(0.12 0.02 255);
+  --sidebar-accent: oklch(0.93 0.015 240);
+  --sidebar-accent-foreground: oklch(0.20 0.03 255);
+  --sidebar-border: oklch(0.88 0.015 240);
+  --sidebar-ring: oklch(0.52 0.22 255);
 }
 
 /* Navy theme — full dark navy (matches portal booking page) */
@@ -276,4 +276,46 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+/* Global 3-second Twilight Theme Transition */
+html,
+body,
+.bg-background,
+.bg-card,
+.bg-popover,
+.bg-muted,
+.bg-accent,
+.bg-sidebar,
+.bg-sidebar-accent,
+.text-foreground,
+.text-card-foreground,
+.text-muted-foreground,
+.text-popover-foreground,
+.border-border,
+.border-white\/5,
+.border-white\/10 {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 3000ms;
+}
+
+/* Responsive, snappy hover state transitions */
+button,
+a,
+[role="button"],
+.hover\:bg-white\/10:hover,
+.hover\:bg-accent:hover,
+.hover\:bg-muted:hover,
+.hover\:bg-slate-50:hover,
+.hover\:bg-slate-100:hover,
+.hover\:bg-slate-200:hover,
+.hover\:bg-slate-900:hover,
+.hover\:bg-red-200:hover,
+.hover\:bg-emerald-500\/10:hover,
+.hover\:text-white:hover,
+.hover\:text-amber-500:hover,
+.hover\:text-amber-400:hover,
+.hover\:text-amber-300:hover {
+  transition-duration: 150ms !important;
 }

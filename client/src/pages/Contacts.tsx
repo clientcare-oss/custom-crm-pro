@@ -141,8 +141,8 @@ export default function Contacts() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-white">Contacts</h1>
-          <p className="text-sm text-white/60">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Contacts</h1>
+          <p className="text-sm text-muted-foreground">
             Manage your business contacts and leads
           </p>
         </div>
@@ -277,38 +277,38 @@ export default function Contacts() {
             >
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {contact.firstName} {contact.lastName}
                   </h3>
                   {contact.company && (
-                    <p className="text-sm text-white/70">
+                    <p className="text-sm text-muted-foreground">
                       {contact.company}
                     </p>
                   )}
                   {contact.jobTitle && (
-                    <p className="text-sm text-white/50">
+                    <p className="text-sm text-muted-foreground/80">
                       {contact.jobTitle}
                     </p>
                   )}
                 </div>
                 <div className="space-y-2">
                   {contact.email && (
-                    <div className="flex items-center gap-2 text-sm text-white/80">
-                      <Mail className="h-4 w-4 text-white/40 shrink-0" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                       <a
                         href={`mailto:${contact.email}`}
-                        className="text-white hover:text-amber-400 hover:underline transition-colors"
+                        className="text-foreground hover:text-amber-500 hover:underline transition-colors font-medium"
                       >
                         {contact.email}
                       </a>
                     </div>
                   )}
                   {contact.phone && (
-                    <div className="flex items-center gap-2 text-sm text-white/80">
-                      <Phone className="h-4 w-4 text-white/40 shrink-0" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Phone className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                       <a
                         href={`tel:${contact.phone}`}
-                        className="text-white hover:text-amber-400 hover:underline transition-colors"
+                        className="text-foreground hover:text-amber-500 hover:underline transition-colors font-medium"
                       >
                         {formatPhone(contact.phone)}
                       </a>
