@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import CaseCompassCard from "./CaseCompassCard";
 
 interface ClientPortalDashboardProps {
   displayName: string;
@@ -361,88 +362,8 @@ export default function ClientPortalDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left (8 Cols): YOUR ADVOCACY JOURNEY */}
-        <div className={`lg:col-span-8 border rounded-xl p-6 shadow-xl backdrop-blur-sm flex flex-col justify-between space-y-6 ${
-          isLight 
-            ? "bg-white border-slate-200" 
-            : "bg-[#0A1628]/90 border-slate-700/50"
-        }`}>
-          
-          <div className={`flex items-center justify-between border-b pb-4 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
-            <p className={`text-[11px] font-bold tracking-[0.2em] uppercase ${isLight ? "text-amber-650" : "text-amber-400/90"}`}>YOUR ADVOCACY JOURNEY</p>
-            <button 
-              onClick={() => onNavigateTab("cases")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-                isLight 
-                  ? "border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-700" 
-                  : "border-amber-400/30 bg-amber-400/5 hover:bg-amber-400/15 text-amber-300"
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" /> View Journey Map
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-            
-            {/* Large Compass Graphic */}
-            <div className="md:col-span-4 flex items-center justify-center p-2">
-              <GoldCompassRose className="w-36 h-36 drop-shadow-[0_0_15px_rgba(212,175,55,0.25)]" />
-            </div>
-
-            {/* Current Focus & Step Bar */}
-            <div className="md:col-span-8 space-y-4">
-              <div>
-                <p className={`text-[10px] font-bold tracking-[0.18em] uppercase ${isLight ? "text-amber-750" : "text-amber-400"}`}>CURRENT FOCUS</p>
-                <h3 className={`text-xl font-serif font-bold mt-1 ${isLight ? "text-slate-800" : "text-white"}`}>
-                  {currentFocus}
-                </h3>
-              </div>
-
-              {/* 5-Step Pipeline */}
-              <div className="pt-2">
-                <div className="flex items-center justify-between relative">
-                  {/* Connecting Line */}
-                  <div className={`absolute left-4 right-4 top-1/2 -translate-y-1/2 h-0.5 z-0 ${
-                    isLight ? "bg-slate-200" : "bg-slate-700/80"
-                  }`} />
-                  
-                  {journeySteps.map((step, idx) => {
-                    const isDone = step.status === "completed";
-                    const isActive = step.status === "active";
-                    const IconComp = step.icon;
-                    return (
-                      <div key={idx} className="relative z-10 flex flex-col items-center group cursor-pointer">
-                        <div 
-                          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                            isDone 
-                              ? "bg-amber-500 text-slate-950 border border-amber-400 shadow-md shadow-amber-500/20"
-                              : isActive
-                              ? "bg-amber-400 text-slate-950 border-2 border-amber-300 shadow-lg shadow-amber-400/40 ring-4 ring-amber-400/20 scale-110"
-                              : isLight
-                              ? "bg-slate-100 text-slate-400 border border-slate-200"
-                              : "bg-[#0d1e36] text-slate-400 border border-slate-700"
-                          }`}
-                        >
-                          <IconComp className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[10px] font-medium mt-2 text-center max-w-[65px] leading-tight transition-colors ${
-                          isActive 
-                            ? isLight ? "text-amber-700 font-bold" : "text-amber-300 font-bold"
-                            : isDone 
-                            ? isLight ? "text-slate-700" : "text-slate-200"
-                            : isLight ? "text-slate-400" : "text-slate-500"
-                        }`}>
-                          {step.title}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-
+        <div className="lg:col-span-8">
+          <CaseCompassCard caseId={effectiveStudent?.caseId ?? undefined} />
         </div>
 
         {/* Right (4 Cols): WHAT'S NEW */}
