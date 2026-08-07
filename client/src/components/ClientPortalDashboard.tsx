@@ -190,7 +190,7 @@ export default function ClientPortalDashboard({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <h3 className={`text-sm font-bold truncate transition-colors ${
+              <h3 className={`text-sm font-bold transition-colors ${
                 isLight ? "text-slate-800" : "text-white"
               }`} style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}>
                 {student.firstName} {student.lastName}
