@@ -583,14 +583,14 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
         {isEditingBg && (
           <div 
             onClick={() => setIsEditingBg(false)}
-            className="absolute top-0 bottom-[60%] inset-x-0 z-20 cursor-pointer"
+            className="absolute top-0 bottom-[82%] inset-x-0 z-20 cursor-pointer"
             title="Click to return to Dial"
           />
         )}
 
         {/* Sliding Crop Editor Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-x-0 bottom-0 h-[60%] z-30 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
+          className={`absolute inset-x-0 bottom-0 h-[82%] z-30 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
             isEditingBg && isAdminView ? "pointer-events-auto" : "pointer-events-none"
           }`}
           style={{ 
@@ -599,7 +599,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
             transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-          <div className="flex items-center justify-between border-b border-white/10 pb-5 mb-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-3">
             <span className="text-sm font-bold text-amber-300">Background Crop Settings</span>
             <button 
               onClick={() => setIsEditingBg(false)} 
@@ -609,7 +609,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
             </button>
           </div>
           
-          <div className="flex-1 space-y-6 py-4">
+          <div className="flex-1 space-y-4 py-2 overflow-y-auto pr-1">
             {/* Vertical Position Slider */}
             <div className="space-y-2 text-left">
               <div className="flex justify-between text-xs text-slate-300">
