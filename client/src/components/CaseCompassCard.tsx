@@ -278,6 +278,12 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                       <stop offset="85%" stopColor="#AA7C11" />
                       <stop offset="100%" stopColor="#4A3403" />
                     </radialGradient>
+                    {/* Dark textured metal gradient for watch ring band */}
+                    <linearGradient id="dark-metal" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#101419" />
+                      <stop offset="50%" stopColor="#222831" />
+                      <stop offset="100%" stopColor="#0B0E11" />
+                    </linearGradient>
                     {/* Drop shadow for 3D depth */}
                     <filter id="ring-shadow" x="-20%" y="-20%" width="140%" height="140%">
                       <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000000" floodOpacity="0.4" />
@@ -285,40 +291,69 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                   </defs>
 
                   {/* Brushed Gold Dial Face Background (under sectors) */}
-                  <circle cx={cx} cy={cy} r="100" fill="url(#gold-brushed)" className="opacity-[0.15]" />
+                  <circle cx={cx} cy={cy} r="110" fill="url(#gold-brushed)" className="opacity-[0.22]" />
 
-                  {/* Decorative outer ticks and outer circles (Gold thin circle passing through the letters at radius 128) */}
-                  <circle cx={cx} cy={cy} r="128" stroke="url(#gold-metallic)" strokeWidth="1.5" fill="none" className="opacity-95" />
-                  <circle cx={cx} cy={cy} r="118" stroke="url(#gold-metallic)" strokeWidth="1.25" strokeDasharray="3 3" fill="none" className="opacity-80" />
+                  {/* Dark metal track band for dial degree markings and N/E/S/W */}
+                  <circle cx={cx} cy={cy} r="126.5" stroke="url(#dark-metal)" strokeWidth="33" fill="none" />
+
+                  {/* Concentric gold boundaries (inside and outside of the dark band) */}
+                  <circle cx={cx} cy={cy} r="110" stroke="url(#gold-metallic)" strokeWidth="1.5" fill="none" />
+                  <circle cx={cx} cy={cy} r="143" stroke="url(#gold-metallic)" strokeWidth="1.5" fill="none" />
+
+                  {/* Dashed outer guideline inside dark band */}
+                  <circle cx={cx} cy={cy} r="135" stroke="url(#gold-metallic)" strokeWidth="0.75" strokeDasharray="3 4" fill="none" className="opacity-45" />
+
+                  {/* Radial Tick Lines inside dark band */}
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const angle = i * 15;
+                    if (angle % 90 === 0) return null; // skip cardinal positions
+                    const rad = (angle * Math.PI) / 180;
+                    const x1 = cx + 131 * Math.cos(rad);
+                    const y1 = cy + 131 * Math.sin(rad);
+                    const x2 = cx + 137 * Math.cos(rad);
+                    const y2 = cy + 137 * Math.sin(rad);
+                    return (
+                      <line 
+                        key={i} 
+                        x1={x1} 
+                        y1={y1} 
+                        x2={x2} 
+                        y2={y2} 
+                        stroke="url(#gold-metallic)" 
+                        strokeWidth="1" 
+                        className="opacity-60" 
+                      />
+                    );
+                  })}
                   
-                  {/* Shiny Metallic Gold Outer Ring */}
+                  {/* Heavy Beveled Metallic Gold Outer Ring */}
                   <circle 
                     cx={cx} 
                     cy={cy} 
-                    r="103" 
+                    r="149" 
                     stroke="url(#gold-metallic)" 
-                    strokeWidth="8" 
+                    strokeWidth="12" 
                     fill="none" 
                     filter="url(#ring-shadow)"
                   />
-                  {/* Glossy shine overlay for realistic metallic look */}
+                  {/* Bezel glossy shine overlay */}
                   <circle 
                     cx={cx} 
                     cy={cy} 
-                    r="103" 
+                    r="149" 
                     stroke="url(#gold-shine)" 
-                    strokeWidth="8" 
+                    strokeWidth="12" 
                     fill="none" 
                   />
-                  {/* Outer and inner highlights of the gold ring */}
-                  <circle cx={cx} cy={cy} r="107" stroke="#FFF2B2" strokeWidth="0.75" fill="none" className="opacity-70" />
-                  <circle cx={cx} cy={cy} r="99" stroke="#AA7C11" strokeWidth="0.75" fill="none" className="opacity-70" />
+                  {/* High contrast bevel highlights */}
+                  <circle cx={cx} cy={cy} r="155" stroke="#FFF2B2" strokeWidth="0.75" fill="none" className="opacity-80" />
+                  <circle cx={cx} cy={cy} r="143" stroke="#AA7C11" strokeWidth="0.75" fill="none" className="opacity-80" />
 
-                  {/* Cardinal direction markers - positioned exactly on the thin gold circle (radius 128) */}
-                  <text x={cx} y="77" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/75 tracking-wider select-none font-sans">N</text>
-                  <text x="328" y="205" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">E</text>
-                  <text x={cx} y="333" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">S</text>
-                  <text x="72" y="205" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">W</text>
+                  {/* Cardinal direction markers - stylized serif text centered in the dark track */}
+                  <text x={cx} y="81.5" textAnchor="middle" className="text-[15px] font-bold select-none fill-[#FFF2B2] opacity-95 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>N</text>
+                  <text x="326.5" y="204.5" textAnchor="middle" className="text-[15px] font-bold select-none fill-[#FFF2B2] opacity-80 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>E</text>
+                  <text x={cx} y="327.5" textAnchor="middle" className="text-[15px] font-bold select-none fill-[#FFF2B2] opacity-80 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>S</text>
+                  <text x="73.5" y="204.5" textAnchor="middle" className="text-[15px] font-bold select-none fill-[#FFF2B2] opacity-80 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>W</text>
 
                   {/* Wedge/Sector group */}
                   <g className="cursor-pointer">
@@ -354,15 +389,15 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                   }}>
                     {/* Top needle tip - 3D faceted gold shading */}
                     {/* Left half (Light Highlight) */}
-                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},115`} fill="#FFF8D2" filter="url(#ring-shadow)" />
+                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},95`} fill="#FFF8D2" filter="url(#ring-shadow)" />
                     {/* Right half (Shadow) */}
-                    <polygon points={`${cx},${cy} ${cx + 7},${cy} ${cx},115`} fill="#C59632" filter="url(#ring-shadow)" />
+                    <polygon points={`${cx},${cy} ${cx + 7},${cy} ${cx},95`} fill="#C59632" filter="url(#ring-shadow)" />
 
                     {/* Bottom needle tip - 3D faceted brass shading */}
                     {/* Left half (Light Highlight) */}
-                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},285`} fill="#A4802F" />
+                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},305`} fill="#A4802F" />
                     {/* Right half (Shadow) */}
-                    <polygon points={`${cx},${cy} ${cx + 7},${cy} ${cx},285`} fill="#6B5115" />
+                    <polygon points={`${cx},${cy} ${cx + 7},${cy} ${cx},305`} fill="#6B5115" />
                     
                     {/* Needle pivot cap with brass/gold styling */}
                     <circle cx={cx} cy={cy} r="12" fill="url(#gold-metallic)" filter="url(#ring-shadow)" />
