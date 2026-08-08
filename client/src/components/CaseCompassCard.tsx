@@ -150,7 +150,8 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
   const [bgSettings, setBgSettings] = useState({
     yOffset: 30, // Default Y offset (30% from top highlights the lighthouse beacon and ship beautifully!)
     xOffset: 50, // Default X offset
-    zoom: 100    // Default zoom
+    zoom: 100,   // Default zoom
+    overlayOpacity: 90 // Default opacity for overlays (90%)
   });
   const [isEditingBg, setIsEditingBg] = useState(false);
 
@@ -459,9 +460,10 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
         {/* Sliding Details Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-x-0 bottom-0 h-[60%] z-20 transition-all duration-500 ease-in-out p-5 md:p-6 flex flex-col justify-between bg-slate-950/90 backdrop-blur-md border-t border-white/10 ${
+          className={`absolute inset-x-0 bottom-0 h-[60%] z-20 transition-transform duration-[750ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
             isDetailsOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
           }`}
+          style={{ backgroundColor: `rgba(2, 6, 23, ${(bgSettings.overlayOpacity ?? 90) / 100})` }}
         >
           {/* Details Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
@@ -525,9 +527,10 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
         {/* Sliding Crop Editor Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-x-0 bottom-0 h-[60%] z-30 transition-all duration-500 ease-in-out p-5 md:p-6 flex flex-col justify-between bg-slate-950/90 backdrop-blur-md border-t border-white/10 ${
+          className={`absolute inset-x-0 bottom-0 h-[60%] z-30 transition-transform duration-[750ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
             isEditingBg ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
           }`}
+          style={{ backgroundColor: `rgba(2, 6, 23, ${(bgSettings.overlayOpacity ?? 90) / 100})` }}
         >
           <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
             <span className="text-sm font-bold text-amber-300">Background Crop Settings</span>
@@ -584,6 +587,22 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                 max="250" 
                 value={bgSettings.zoom} 
                 onChange={(e) => saveSettings({ ...bgSettings, zoom: Number(e.target.value) })}
+                className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400"
+              />
+            </div>
+
+            {/* Info Sheet Opacity Slider */}
+            <div className="space-y-2 text-left">
+              <div className="flex justify-between text-xs text-slate-300">
+                <span>Info Sheet Opacity (Transparency)</span>
+                <span className="font-mono">{bgSettings.overlayOpacity ?? 90}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="30" 
+                max="100" 
+                value={bgSettings.overlayOpacity ?? 90} 
+                onChange={(e) => saveSettings({ ...bgSettings, overlayOpacity: Number(e.target.value) })}
                 className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400"
               />
             </div>
