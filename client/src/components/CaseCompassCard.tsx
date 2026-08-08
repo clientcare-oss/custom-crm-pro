@@ -460,11 +460,12 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
         <div 
           className={`absolute inset-x-0 bottom-0 h-[60%] z-20 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
-            isDetailsOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
+            isDetailsOpen ? "pointer-events-auto" : "pointer-events-none"
           }`}
           style={{ 
             backgroundColor: `rgba(2, 6, 23, ${(bgSettings.overlayOpacity ?? 90) / 100})`,
-            transition: 'transform 1000ms cubic-bezier(0.16, 1, 0.3, 1)'
+            transform: isDetailsOpen ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           {/* Details Header */}
@@ -530,11 +531,12 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
         {/* Sliding Crop Editor Overlay: Slides up over the compass dial */}
         <div 
           className={`absolute inset-x-0 bottom-0 h-[60%] z-30 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
-            isEditingBg ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
+            isEditingBg ? "pointer-events-auto" : "pointer-events-none"
           }`}
           style={{ 
             backgroundColor: `rgba(2, 6, 23, ${(bgSettings.overlayOpacity ?? 90) / 100})`,
-            transition: 'transform 1000ms cubic-bezier(0.16, 1, 0.3, 1)'
+            transform: isEditingBg ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
