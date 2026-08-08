@@ -1729,14 +1729,14 @@ export default function ClientPortal() {
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsAdminView(true)}
-                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
+                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer border ${
                   isAdminView
                     ? isLight
-                      ? "bg-blue-700 text-white opacity-100"
-                      : "bg-blue-600 text-white opacity-100"
+                      ? "bg-white border-amber-500 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] ring-1 ring-amber-500/10 opacity-100"
+                      : "bg-[#0A1628]/90 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/20 opacity-100"
                     : isLight
-                      ? "text-slate-700 hover:bg-blue-700 hover:text-white"
-                      : "text-white/80 hover:bg-blue-600 hover:text-white"
+                      ? "bg-white border-slate-200 text-slate-700 hover:border-amber-500/40"
+                      : "bg-[#0A1628]/90 border-slate-700/50 text-white/80 hover:border-amber-400/30"
                 }`}
               >
                 Advocate Master View
@@ -1745,14 +1745,14 @@ export default function ClientPortal() {
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsAdminView(false)}
-                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
+                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer border ${
                   !isAdminView
                     ? isLight
-                      ? "bg-blue-700 text-white opacity-100"
-                      : "bg-blue-600 text-white opacity-100"
+                      ? "bg-white border-amber-500 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] ring-1 ring-amber-500/10 opacity-100"
+                      : "bg-[#0A1628]/90 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/20 opacity-100"
                     : isLight
-                      ? "text-slate-700 hover:bg-blue-700 hover:text-white"
-                      : "text-white/80 hover:bg-blue-600 hover:text-white"
+                      ? "bg-white border-slate-200 text-slate-700 hover:border-amber-500/40"
+                      : "bg-[#0A1628]/90 border-slate-700/50 text-white/80 hover:border-amber-400/30"
                 }`}
               >
                 Client Master View
