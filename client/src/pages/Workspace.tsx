@@ -40,7 +40,8 @@ import {
   Eye, 
   FileText, 
   BookOpen, 
-  Briefcase 
+  Briefcase,
+  Compass
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -170,14 +171,23 @@ export default function Workspace() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
-          <LayoutGrid className="h-8 w-8 text-amber-500" />
-          Workspace Manager
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl leading-relaxed">
-          Configure layout presets, customize student visible tabs, and manage employee roles, access policies, and operational scopes.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
+            <LayoutGrid className="h-8 w-8 text-amber-500" />
+            Workspace Manager
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl leading-relaxed">
+            Configure layout presets, customize student visible tabs, and manage employee roles, access policies, and operational scopes.
+          </p>
+        </div>
+        <Button 
+          onClick={handlePreviewWorkspace} 
+          className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/10 flex items-center gap-2"
+        >
+          <Compass className="h-4 w-4" />
+          Preview Workspace (Baaarbra)
+        </Button>
       </div>
 
       <Tabs defaultValue="designer" className="w-full">
