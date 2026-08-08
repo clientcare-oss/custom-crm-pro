@@ -1300,7 +1300,7 @@ export default function ClientPortal() {
       case "cases":
         return (
           <div className="p-5 space-y-6">
-            <CaseCompassCard caseId={effectiveCaseId ?? undefined} />
+            <CaseCompassCard caseId={effectiveCaseId ?? undefined} isAdminView={isAdminView} />
             <div>
               <h2 className="text-lg font-bold tracking-tight text-foreground">Cases & Projects</h2>
               <p className="text-sm text-muted-foreground mt-0.5">Active cases and projects for {effectiveStudent.firstName}</p>

@@ -138,9 +138,10 @@ function CompassIcon({ className }: { className?: string }) {
 
 interface CaseCompassCardProps {
   caseId?: string;
+  isAdminView?: boolean;
 }
 
-export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
+export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCompassCardProps) {
   const [activeSection, setActiveSection] = useState<SectionKey>("currentStatus");
   const [hoveredSection, setHoveredSection] = useState<SectionKey | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -271,13 +272,15 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
           }}
         >
           {/* Background crop editor toggle button */}
-          <button
-            onClick={() => setIsEditingBg(true)}
-            className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-slate-950/60 hover:bg-slate-950/90 border border-white/10 text-slate-400 hover:text-white transition-all shadow-sm"
-            title="Adjust background layout crop"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
+          {isAdminView && (
+            <button
+              onClick={() => setIsEditingBg(true)}
+              className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-slate-950/60 hover:bg-slate-950/90 border border-white/10 text-slate-400 hover:text-white transition-all shadow-sm"
+              title="Adjust background layout crop"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          )}
 
         {/* Dial Body Area: Centered Full Size Compass Rose */}
         <div className="flex flex-col items-center justify-center my-auto py-2">
