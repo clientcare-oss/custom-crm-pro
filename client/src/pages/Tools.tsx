@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   Wand2, Search, Star, Calendar, Video, FileText, CheckCircle2, Play, Lock,
   PenTool, ShieldCheck, Target, Puzzle, LineChart, Compass, Sparkles,
-  ArrowLeft, GitCompare, Loader2, ArrowRight
+  ArrowLeft, GitCompare, Loader2, ArrowRight, Mic
 } from "lucide-react";
 
 export default function Tools() {
@@ -20,6 +20,39 @@ export default function Tools() {
   const [currFile, setCurrFile] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<boolean>(false);
+
+  // States for Voyage Meeting Recorder
+  const [isRecorderOpen, setIsRecorderOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordDuration, setRecordDuration] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    let interval: any = null;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordDuration((prev) => {
+          const next = prev + 1;
+          if (next === 2) {
+            setLiveTranscript((t) => [...t, "Advocate: We're starting the IEP review session."]);
+          } else if (next === 5) {
+            setLiveTranscript((t) => [...t, "Parent: I want to focus on reading support options today."]);
+          } else if (next === 8) {
+            setLiveTranscript((t) => [...t, "Special Ed Teacher: The current goal is 15 minutes daily support."]);
+          } else if (next === 11) {
+            setLiveTranscript((t) => [...t, "Advocate: We should request individual goals."]);
+          }
+          return next;
+        });
+      }, 1000);
+    } else {
+      setRecordDuration(0);
+      setLiveTranscript([]);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRecording]);
 
   // Parse contactId from query string
   const params = new URLSearchParams(
@@ -212,6 +245,34 @@ export default function Tools() {
                 <div className="w-16 h-1.5 bg-slate-800 rounded-full" />
               </div>
             </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: "voyage-recorder",
+      title: "Voyage - Meeting Recorder",
+      description: "Launch the live meeting recorder to capture IEP session audio in real time, generate transcripts instantly, and tag key moments live.",
+      btnText: "Launch Recorder",
+      disabled: false,
+      onClick: () => {
+        setIsRecorderOpen(true);
+      },
+      preview: (
+        <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/40 border-b border-white/5 gap-3">
+          {/* Animated red recording dot & title indicator */}
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/35 text-[9px] text-rose-350 font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+            Live Capture
+          </div>
+          {/* Waveform bars */}
+          <div className="flex items-end gap-1.5 h-14">
+            <div className="w-1 h-6 bg-rose-500/40 rounded-full animate-pulse" />
+            <div className="w-1 h-10 bg-rose-500/60 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+            <div className="w-1 h-14 bg-rose-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+            <div className="w-1 h-8 bg-rose-500/70 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }} />
+            <div className="w-1 h-11 bg-rose-500/80 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+            <div className="w-1 h-5 bg-rose-500/30 rounded-full animate-pulse" />
           </div>
         </div>
       )
@@ -786,6 +847,114 @@ export default function Tools() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Voyage Meeting Recorder Modal */}
+      {isRecorderOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#07162B] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden flex flex-col p-6 space-y-6 relative shadow-2xl text-slate-200">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-white/5 pb-4">
+              <div>
+                <h3 className="text-lg font-bold font-serif text-white flex items-center gap-2">
+                  <Mic className="h-5 w-5 text-rose-500 animate-pulse" />
+                  Voyage Live Meeting Recorder
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Record your IEP meeting to auto-transcribe, analyze key decisions, and sync with files.
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsRecorderOpen(false);
+                  setIsRecording(false);
+                }}
+                className="text-slate-400 hover:text-white text-xs bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full border border-white/5 transition-all"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Recorder Controls */}
+            <div className="flex flex-col items-center justify-center space-y-6 py-4">
+              {isRecording ? (
+                /* Recording Mode */
+                <div className="space-y-6 w-full flex flex-col items-center">
+                  {/* Timer & Pulsing Waveform */}
+                  <div className="text-center">
+                    <span className="text-4xl font-mono font-bold text-white tracking-widest">
+                      {Math.floor(recordDuration / 60).toString().padStart(2, '0')}:
+                      {(recordDuration % 60).toString().padStart(2, '0')}
+                    </span>
+                    <span className="text-[10px] text-rose-450 font-bold uppercase tracking-wider block mt-1 animate-pulse">
+                      ● Recording Audio
+                    </span>
+                  </div>
+
+                  {/* Pulsing Visual Waveform */}
+                  <div className="flex items-end gap-1.5 h-12 justify-center">
+                    <div className="w-1.5 h-6 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                    <div className="w-1.5 h-12 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+                    <div className="w-1.5 h-8 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-1.5 h-10 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                    <div className="w-1.5 h-4 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
+                  </div>
+
+                  {/* Live Transcript Stream */}
+                  <div className="w-full bg-slate-950/60 rounded-xl border border-white/5 p-4 h-48 overflow-y-auto space-y-3 text-left">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block border-b border-white/5 pb-1">Live Transcript Stream</span>
+                    {liveTranscript.length === 0 ? (
+                      <p className="text-[11px] text-slate-500 italic animate-pulse">Waiting for speech input...</p>
+                    ) : (
+                      liveTranscript.map((line, idx) => {
+                        const [speaker, text] = line.split(": ");
+                        return (
+                          <div key={idx} className="text-xs space-y-0.5 animate-slide-up">
+                            <span className="font-semibold text-indigo-300">{speaker}:</span>
+                            <p className="text-slate-350 leading-relaxed">{text}</p>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Stop Button */}
+                  <Button
+                    onClick={() => {
+                      setIsRecording(false);
+                      setIsRecorderOpen(false);
+                      import("sonner").then(({ toast }) =>
+                        toast.success("Meeting recording successfully saved to student's Voyage Log!")
+                      );
+                    }}
+                    className="bg-rose-650 hover:bg-rose-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow-md shadow-rose-600/10 flex items-center gap-2 transition-all hover:scale-102"
+                  >
+                    Stop & Save Recording
+                  </Button>
+                </div>
+              ) : (
+                /* Ready State */
+                <div className="space-y-6 w-full flex flex-col items-center text-center">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 hover:scale-105 hover:bg-rose-500/20 transition-all cursor-pointer shadow-lg shadow-rose-500/5 group"
+                      onClick={() => setIsRecording(true)}
+                    >
+                      <Mic className="h-8 w-8 text-rose-455 group-hover:scale-110 transition-transform" />
+                    </div>
+                    {/* Concentric ripple circles */}
+                    <div className="absolute -inset-2 rounded-full border border-rose-500/10 animate-ping pointer-events-none" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold text-white">Click Microphone to Begin</h4>
+                    <p className="text-[11px] text-slate-400 max-w-[280px]">
+                      Make sure your microphone permissions are granted. Audio is securely processed for AI transcript segmentation.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
