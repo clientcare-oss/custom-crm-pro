@@ -461,9 +461,7 @@ export default function Tools() {
         {filteredTools.map((tool) => (
           <div 
             key={tool.id} 
-            className={`flex flex-col bg-[#07162B]/40 border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/2 transition-all group max-w-sm mx-auto w-full ${
-              tool.featured ? "ring-1 ring-indigo-500/20" : ""
-            }`}
+            className="flex flex-col bg-[#07162B]/40 border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/2 transition-all group max-w-sm mx-auto w-full ring-1 ring-indigo-500/20"
           >
             {/* Visual Preview Illustration block */}
             <div className="h-44 sm:h-48 w-full flex-shrink-0">
