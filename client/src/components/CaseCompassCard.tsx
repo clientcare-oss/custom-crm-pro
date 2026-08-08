@@ -448,9 +448,18 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
           </div>
         </div>
 
+        {/* Backdrop overlay for closing details card when clicking on the top exposed part of the compass card */}
+        {isDetailsOpen && (
+          <div 
+            onClick={() => setIsDetailsOpen(false)}
+            className="absolute top-0 bottom-[60%] inset-x-0 z-10 cursor-pointer"
+            title="Click to return to Dial"
+          />
+        )}
+
         {/* Sliding Details Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-x-0 bottom-0 top-0 z-20 transition-all duration-500 ease-in-out p-6 md:p-8 flex flex-col justify-between bg-slate-950/85 backdrop-blur-md border-t border-white/10 ${
+          className={`absolute inset-x-0 bottom-0 h-[60%] z-20 transition-all duration-500 ease-in-out p-5 md:p-6 flex flex-col justify-between bg-slate-950/90 backdrop-blur-md border-t border-white/10 ${
             isDetailsOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
           }`}
         >
@@ -505,9 +514,18 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
           </div>
         </div>
 
+        {/* Backdrop overlay for closing settings card when clicking on the top exposed part */}
+        {isEditingBg && (
+          <div 
+            onClick={() => setIsEditingBg(false)}
+            className="absolute top-0 bottom-[60%] inset-x-0 z-20 cursor-pointer"
+            title="Click to return to Dial"
+          />
+        )}
+
         {/* Sliding Crop Editor Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-x-0 bottom-0 top-0 z-30 transition-all duration-500 ease-in-out p-6 md:p-8 flex flex-col justify-between bg-slate-950/85 backdrop-blur-md border-t border-white/10 ${
+          className={`absolute inset-x-0 bottom-0 h-[60%] z-30 transition-all duration-500 ease-in-out p-5 md:p-6 flex flex-col justify-between bg-slate-950/90 backdrop-blur-md border-t border-white/10 ${
             isEditingBg ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
           }`}
         >
