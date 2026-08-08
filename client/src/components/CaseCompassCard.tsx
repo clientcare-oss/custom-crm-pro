@@ -449,7 +449,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                         y={labelY}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`text-[10px] font-black tracking-widest pointer-events-none transition-all select-none duration-300 ${
+                        className={`text-[10px] font-black pointer-events-none transition-all select-none duration-300 ${
                           isActive 
                             ? "fill-amber-300 opacity-100 font-black scale-105" 
                             : isHovered 
@@ -465,6 +465,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                           <tspan
                             key={word}
                             x={labelX}
+                            textAnchor="middle"
                             dy={wIdx === 0 ? `-${(arr.length - 1) * 5}px` : "11px"}
                           >
                             {word}
