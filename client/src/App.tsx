@@ -25,6 +25,7 @@ import ContactDetail from "./pages/ContactDetail";
 import Students from "./pages/Students";
 import Tasks from "./pages/Tasks";
 import Tools from "./pages/Tools";
+import VoyageRecorder from "./pages/VoyageRecorder";
 import Templates from "./pages/Templates";
 import LeadForms from "./pages/LeadForms";
 import Automations from "./pages/Automations";
@@ -123,6 +124,7 @@ function Router() {
           <Route path="/tasks" component={Tasks} />
           <Route path="/tech-tasks" component={TechTasks} />
           <Route path="/tools" component={Tools} />
+          <Route path="/tools/voyage-recorder" component={VoyageRecorder} />
           <Route path="/templates" component={Templates} />
           <Route path="/lead-forms" component={LeadForms} />
           <Route path="/automations" component={Automations} />

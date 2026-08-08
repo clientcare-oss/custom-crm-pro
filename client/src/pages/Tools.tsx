@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   Wand2, Search, Star, Calendar, Video, FileText, CheckCircle2, Play, Lock,
   PenTool, ShieldCheck, Target, Puzzle, LineChart, Compass, Sparkles,
-  ArrowLeft, GitCompare, Loader2, ArrowRight, Mic
+  ArrowLeft, GitCompare, Loader2, ArrowRight, Mic, Settings2
 } from "lucide-react";
 
 export default function Tools() {
@@ -21,7 +21,7 @@ export default function Tools() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<boolean>(false);
 
-  // States for Voyage Meeting Recorder
+  // States for Voyage Meeting Recorder Modal
   const [isRecorderOpen, setIsRecorderOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
@@ -53,6 +53,8 @@ export default function Tools() {
       if (interval) clearInterval(interval);
     };
   }, [isRecording]);
+
+
 
   // Parse contactId from query string
   const params = new URLSearchParams(
@@ -541,7 +543,7 @@ export default function Tools() {
               </div>
 
               {/* Action Button */}
-              <div className="text-left pt-1">
+              <div className="flex items-center gap-2 text-left pt-1">
                 <Button
                   size="sm"
                   onClick={tool.onClick}
@@ -553,6 +555,17 @@ export default function Tools() {
                   {tool.btnText}
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </Button>
+
+                {tool.id === "voyage-recorder" && (
+                  <Button
+                    size="sm"
+                    onClick={() => setLocation(contactId ? `/tools/voyage-recorder?contactId=${contactId}` : "/tools/voyage-recorder")}
+                    className="h-8 w-8 inline-flex bg-slate-900/60 hover:bg-indigo-650/10 text-slate-350 hover:text-white border border-white/10 rounded-lg items-center justify-center transition-all hover:border-indigo-500/35 hover:shadow-sm"
+                    title="Configure Recorder Specs & Settings"
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -850,6 +863,7 @@ export default function Tools() {
           </div>
         </div>
       )}
+
       {/* Voyage Meeting Recorder Modal */}
       {isRecorderOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
