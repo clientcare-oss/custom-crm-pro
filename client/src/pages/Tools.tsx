@@ -391,7 +391,7 @@ export default function Tools() {
   );
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 p-6 md:p-8">
+    <div className="min-h-screen bg-background text-slate-100 p-6 md:p-8">
       <div className="max-w-6xl mx-auto w-full space-y-10">
         {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
