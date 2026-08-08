@@ -235,7 +235,7 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
   return (
     <div className="space-y-3">
-      <Card className="rounded-2xl border border-white/10 shadow-xl overflow-hidden bg-slate-950 text-slate-100 flex flex-col">
+      <Card className="rounded-2xl border border-white/10 shadow-xl overflow-hidden bg-slate-950 text-slate-100 flex flex-col p-0 gap-0">
         {/* Panel Header: Solid Dark Background with compact padding to match the spinner icon */}
         <div className="flex items-center gap-3 border-b border-white/10 bg-slate-900/60 px-6 py-2.5">
           <div className={`flex-shrink-0 ${isRecentlyUpdated ? "animate-[spin_8s_linear_infinite]" : ""}`}>
