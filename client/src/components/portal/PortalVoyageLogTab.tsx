@@ -259,55 +259,55 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         )}
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className={`p-4 rounded-xl border flex items-center gap-3 shadow-sm ${
-          isLight ? "bg-white border-slate-200" : "bg-[#07162B]/80 border-white/10"
-        }`}>
-          <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+      {/* Metrics Panel */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border rounded-2xl p-5 gap-6 sm:gap-4 divide-y lg:divide-y-0 lg:divide-x ${
+        isLight 
+          ? "bg-white border-slate-200 divide-slate-200" 
+          : "bg-[#07162B]/30 border-white/10 divide-white/10"
+      }`}>
+        {/* Item 1 */}
+        <div className="flex items-center gap-4 py-2 sm:py-0 first:pt-0 last:pb-0 lg:first:pl-0 lg:pl-6">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
             <Clapperboard className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-foreground">14</p>
-            <p className="text-[11px] text-muted-foreground">Recorded Meetings</p>
+            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-[#b0bfff]"}`}>14</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Recorded Meetings</p>
           </div>
-        </Card>
+        </div>
 
-        <Card className={`p-4 rounded-xl border flex items-center gap-3 shadow-sm ${
-          isLight ? "bg-white border-slate-200" : "bg-[#07162B]/80 border-white/10"
-        }`}>
-          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400">
+        {/* Item 2 */}
+        <div className="flex items-center gap-4 py-4 sm:py-0 lg:pl-8">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-foreground">32.4</p>
-            <p className="text-[11px] text-muted-foreground">Total Hours Recorded</p>
+            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-[#b0bfff]"}`}>32.4</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Total Hours Recorded</p>
           </div>
-        </Card>
+        </div>
 
-        <Card className={`p-4 rounded-xl border flex items-center gap-3 shadow-sm ${
-          isLight ? "bg-white border-slate-200" : "bg-[#07162B]/80 border-white/10"
-        }`}>
-          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
+        {/* Item 3 */}
+        <div className="flex items-center gap-4 py-4 sm:py-0 lg:pl-8">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-sky-500/10 text-sky-400">
             <FileText className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-foreground">100%</p>
-            <p className="text-[11px] text-muted-foreground">Meetings Transcribed</p>
+            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-[#aae4ff]"}`}>100%</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Meetings Transcribed</p>
           </div>
-        </Card>
+        </div>
 
-        <Card className={`p-4 rounded-xl border flex items-center gap-3 shadow-sm ${
-          isLight ? "bg-white border-slate-200" : "bg-[#07162B]/80 border-white/10"
-        }`}>
-          <div className="p-2 rounded-lg bg-sky-500/10 text-sky-500 dark:text-sky-400">
+        {/* Item 4 */}
+        <div className="flex items-center gap-4 py-4 sm:py-0 lg:pl-8">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-400">
             <Shield className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-foreground leading-tight">Secure & Private</p>
-            <p className="text-[10px] text-muted-foreground leading-snug">Only you and your advocate can access</p>
+            <p className={`text-sm font-bold leading-tight ${isLight ? "text-slate-800" : "text-[#b0bfff]"}`}>Secure & Private</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">Only you and your advocate can access</p>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Main 2 Column Section */}
