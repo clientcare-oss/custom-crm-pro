@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Clock, Settings, MapPin, Target, User, Scale } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Settings, MapPin, Target, User, Scale, Dribbble } from "lucide-react";
 
 // ─── Compass Config and Calculations ──────────────────────────────────────────
 
@@ -39,7 +39,7 @@ const SECTIONS = [
     key: "whoHasBall" as const,
     label: "Who Has the Ball",
     shortLabel: ["WHO HAS", "THE BALL"],
-    icon: User,
+    icon: Dribbble,
     angle: 144,
     accent: "text-violet-500 dark:text-violet-400",
     bg: "from-violet-500/10 to-violet-500/5",
@@ -529,7 +529,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
           }}
         >
           {/* Details Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-6 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
                 <activeSectionObj.icon className="h-5 w-5 text-amber-300" />
@@ -598,7 +598,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
             transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-          <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-5 mb-4">
             <span className="text-sm font-bold text-amber-300">Background Crop Settings</span>
             <button 
               onClick={() => setIsEditingBg(false)} 
