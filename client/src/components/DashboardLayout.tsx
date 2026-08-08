@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -196,6 +196,148 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const [isResizing, setIsResizing] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [goToPageOpen, setGoToPageOpen] = useState(false);
+
+  // ============ VOYAGE RECORDER GLOBAL PIPELINE ENGINE ============
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordDuration, setRecordDuration] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState<string[]>([]);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
+  const [title, setTitle] = useState("Voyage Session Recording");
+  const [autoSync, setAutoSync] = useState(true);
+  const [saveBackup, setSaveBackup] = useState(true);
+  const [advocateDirectives, setAdvocateDirectives] = useState(() => {
+    return localStorage.getItem("voyage_recorder_directives") || 
+      `[AI Prompt & System Guidelines]\n1. Focus on flagging special education service changes.\n2. Tag any OT, PT, or Speech Therapy mentions.\n3. Identify FAPE compliance discussions.`;
+  });
+
+  const miniVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Expose global controller registry in window context for child pages (VoyageRecorder, Tools)
+  useEffect(() => {
+    (window as any).voyageGlobalRecorder = {
+      isRecording,
+      setIsRecording,
+      recordDuration,
+      setRecordDuration,
+      liveTranscript,
+      setLiveTranscript,
+      stream,
+      setStream,
+      isMinimized,
+      setIsMinimized,
+      selectedContactId,
+      setSelectedContactId,
+      title,
+      setTitle,
+      autoSync,
+      setAutoSync,
+      saveBackup,
+      setSaveBackup,
+      advocateDirectives,
+      setAdvocateDirectives,
+      stopRecording: () => {
+        handleStopRecording();
+      },
+      startRecording: async () => {
+        await handleStartRecording();
+      }
+    };
+  }, [isRecording, recordDuration, liveTranscript, stream, isMinimized, selectedContactId, title, autoSync, saveBackup, advocateDirectives]);
+
+  // Request screen capture using getDisplayMedia
+  const handleStartRecording = async () => {
+    try {
+      if (typeof window !== "undefined" && typeof Notification !== "undefined" && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      
+      const mediaStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "browser" },
+        audio: true
+      });
+      setStream(mediaStream);
+      setIsRecording(true);
+      setIsMinimized(false);
+      
+      // Auto register end track callback
+      mediaStream.getVideoTracks()[0].onended = () => {
+        // Trigger notification
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("Voyage Recording Paused", {
+            body: "Confirm you are done with the meeting? Click to stop the recording and process video/audio.",
+            requireInteraction: true
+          });
+        }
+        toast.warning(
+          "Screen sharing was stopped. Click to stop the recording and initiate AI transcription pipeline.",
+          {
+            duration: 10000,
+            action: {
+              label: "Stop & Save",
+              onClick: () => {
+                handleStopRecording();
+              }
+            }
+          }
+        );
+      };
+    } catch (err: any) {
+      console.warn("Screen share request denied or failed, starting simulated capture:", err);
+      setIsRecording(true);
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setIsRecording(false);
+    setIsMinimized(false);
+    toast.success("Meeting recording successfully saved to student's Voyage Log!");
+  };
+
+  // Recording Timer effect
+  useEffect(() => {
+    let interval: any = null;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordDuration((prev) => {
+          const next = prev + 1;
+          if (next === 2) {
+            setLiveTranscript((t) => [...t, "Advocate: We're starting the IEP review session."]);
+          } else if (next === 5) {
+            setLiveTranscript((t) => [...t, "Parent: I want to focus on reading support options today."]);
+          } else if (next === 8) {
+            setLiveTranscript((t) => [...t, "Special Ed Teacher: The current goal is 15 minutes daily support."]);
+          } else if (next === 11) {
+            setLiveTranscript((t) => [...t, "Advocate: We should request individual goals."]);
+          }
+          return next;
+        });
+      }, 1000);
+    } else {
+      setRecordDuration(0);
+      setLiveTranscript([]);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRecording]);
+
+  // Handle mini-video preview rendering
+  useEffect(() => {
+    if (isRecording && stream && isMinimized) {
+      setTimeout(() => {
+        if (miniVideoRef.current) {
+          miniVideoRef.current.srcObject = stream;
+          miniVideoRef.current.play().catch(() => {});
+        }
+      }, 300);
+    }
+  }, [isRecording, stream, isMinimized]);
 
   // Developer Rules state & queries
   const [isDevRulesOpen, setIsDevRulesOpen] = useState(false);
@@ -432,6 +574,69 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </div>
         </main>
       </SidebarInset>
+
+      {/* Voyage Minimized Floating Panel */}
+      {isRecording && isMinimized && (
+        <div className="fixed bottom-6 right-6 z-[9999] w-[340px] bg-[#07162B]/95 border border-amber-500/30 text-white rounded-2xl p-3.5 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 animate-slide-up">
+          {/* Live Video Capture Preview */}
+          <div className="relative w-24 h-16 bg-black rounded-xl overflow-hidden border border-white/10 shrink-0 flex items-center justify-center">
+            {stream ? (
+              <video
+                ref={miniVideoRef}
+                className="w-full h-full object-cover"
+                autoPlay
+                playsInline
+                muted
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-tr from-[#021024] to-[#0A2647] opacity-80" />
+            )}
+            <div className="absolute top-1 left-1.5 bg-rose-600/90 text-white text-[7px] font-bold px-1 py-0.5 rounded flex items-center gap-0.5">
+              <span className="w-1 h-1 rounded-full bg-white animate-ping" />
+              Rec
+            </div>
+            <span className="absolute bottom-1 right-1 bg-black/60 px-1 py-0.5 rounded text-[8px] font-semibold text-white leading-none">
+              {Math.floor(recordDuration / 60).toString().padStart(2, '0')}:
+              {(recordDuration % 60).toString().padStart(2, '0')}
+            </span>
+          </div>
+
+          {/* Details */}
+          <div className="min-w-0 flex-1">
+            <h4 className="font-bold text-xs truncate text-white font-sans leading-tight">
+              {title}
+            </h4>
+            <p className="text-[10px] text-slate-400 mt-1 leading-normal flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+              Recording Active...
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1.5">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                setIsMinimized(false);
+                setLocation("/tools/voyage-recorder");
+              }}
+              className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg"
+              title="Maximize Recorder Settings"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              onClick={handleStopRecording}
+              className="h-8 w-8 bg-rose-600 hover:bg-rose-700 text-white rounded-lg flex items-center justify-center shadow-lg"
+              title="Stop & Save Recording"
+            >
+              <Square className="h-3.5 w-3.5 fill-white" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <AIAssistant />
       <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />

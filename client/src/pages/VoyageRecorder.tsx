@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, Mic, Settings2, Play, Circle, Square, 
-  Volume2, Sliders, Sparkles, CheckCircle2, Loader2, Compass, Check, Monitor, AlertCircle
+  Volume2, Sliders, Sparkles, CheckCircle2, Loader2, Compass, Check, Monitor, AlertCircle, Minimize2
 } from "lucide-react";
 
 export default function VoyageRecorder() {
@@ -41,6 +41,8 @@ export default function VoyageRecorder() {
   const [recordDuration, setRecordDuration] = useState(0);
   const [liveTranscript, setLiveTranscript] = useState<string[]>([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // AI Directives Sandbox State & Handler
   const [advocateDirectives, setAdvocateDirectives] = useState<string>(() => {
@@ -60,7 +62,41 @@ export default function VoyageRecorder() {
     }, 800);
   };
 
-  // Handle active record timer simulation
+  const [title, setTitle] = useState("Voyage Session Recording");
+
+  // Synchronize with global recorder context if active
+  useEffect(() => {
+    const globalRec = (window as any).voyageGlobalRecorder;
+    if (globalRec) {
+      if (globalRec.isRecording) {
+        setIsRecording(true);
+        setRecordDuration(globalRec.recordDuration);
+        setLiveTranscript(globalRec.liveTranscript);
+        setStream(globalRec.stream);
+        setSelectedContactId(globalRec.selectedContactId);
+        setTitle(globalRec.title);
+        setAutoSync(globalRec.autoSync);
+        setSaveBackup(globalRec.saveBackup);
+        setAdvocateDirectives(globalRec.advocateDirectives);
+      }
+    }
+  }, []);
+
+  // Whenever local inputs change, propagate to global context
+  useEffect(() => {
+    const globalRec = (window as any).voyageGlobalRecorder;
+    if (globalRec) {
+      globalRec.setIsRecording(isRecording);
+      globalRec.setRecordDuration(recordDuration);
+      globalRec.setLiveTranscript(liveTranscript);
+      globalRec.setStream(stream);
+      globalRec.setSelectedContactId(selectedContactId);
+      globalRec.setTitle(title);
+      globalRec.setAutoSync(autoSync);
+      globalRec.setSaveBackup(saveBackup);
+      globalRec.setAdvocateDirectives(advocateDirectives);
+    }
+  }, [isRecording, recordDuration, liveTranscript, stream, selectedContactId, title, autoSync, saveBackup, advocateDirectives]);
   useEffect(() => {
     let interval: any = null;
     if (isRecording) {
@@ -98,9 +134,7 @@ export default function VoyageRecorder() {
     }
   };
 
-  // Screen capturing states
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+
 
   const handleStartRecording = async () => {
     try {
@@ -187,6 +221,18 @@ export default function VoyageRecorder() {
             <div className="flex items-center gap-2 border-b border-white/5 pb-3">
               <Settings2 className="h-4 w-4 text-indigo-400" />
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">Recorder Specs & Settings</h3>
+            </div>
+
+            {/* Meeting Session Title */}
+            <div className="space-y-2 text-left">
+              <label className="text-xs font-bold text-slate-350">Meeting Session Title</label>
+              <input 
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="IEP Strategy Capture Session"
+                className="w-full bg-slate-900/80 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
             </div>
 
             {/* Student linkage Selector */}
@@ -426,14 +472,35 @@ export default function VoyageRecorder() {
                     )}
                   </div>
 
-                  {/* Stop Capture Trigger */}
-                  <Button
-                    onClick={handleStopRecording}
-                    className="bg-rose-650 hover:bg-rose-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow-md shadow-rose-600/10 flex items-center gap-2 transition-all hover:scale-102"
-                  >
-                    <Square className="h-3.5 w-3.5 fill-white" />
-                    Stop & Save Recording
-                  </Button>
+                  {/* Stop & Minimize Capture Triggers */}
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    <Button
+                      onClick={handleStopRecording}
+                      className="bg-rose-650 hover:bg-rose-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow-md shadow-rose-600/10 flex items-center gap-2 transition-all hover:scale-102"
+                    >
+                      <Square className="h-3.5 w-3.5 fill-white" />
+                      Stop & Save Recording
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const globalRec = (window as any).voyageGlobalRecorder;
+                        if (globalRec) {
+                          globalRec.setIsMinimized(true);
+                        }
+                        // Navigate back
+                        if (selectedContactId) {
+                          setLocation(`/contacts/${selectedContactId}?tab=voyage-log`);
+                        } else {
+                          setLocation("/tools");
+                        }
+                      }}
+                      className="border-white/10 hover:bg-white/5 text-slate-350 font-bold px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 transition-all"
+                    >
+                      <Minimize2 className="h-3.5 w-3.5" />
+                      Minimize Recorder
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 /* Ready State */
