@@ -14,6 +14,13 @@ export default function Tools() {
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Modal Dialog States for IEP Comparison
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
+  const [prevFile, setPrevFile] = useState<string | null>(null);
+  const [currFile, setCurrFile] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<boolean>(false);
+
   // Parse contactId from query string
   const params = new URLSearchParams(
     typeof window !== "undefined" ? window.location.search : ""
@@ -34,25 +41,24 @@ export default function Tools() {
   const hasBothVersions = !!(iepDoc?.currentFileKey && iepDoc?.previousFileKey);
   const isLoading = iepLoading || contactLoading;
 
+  React.useEffect(() => {
+    if (iepDoc) {
+      if (iepDoc.previousFileName) setPrevFile(iepDoc.previousFileName);
+      if (iepDoc.currentFileName) setCurrFile(iepDoc.currentFileName);
+    }
+  }, [iepDoc]);
+
   // Tools configuration
   const toolsList = [
     {
       id: "iep-comparison",
       title: "IEP Comparison",
       description: "Compare IEPs side-by-side and instantly see what changed. Highlighted differences, connected insights, and advocacy notes keep you prepared.",
-      btnText: hasBothVersions ? "Open Comparison" : "Locked — Upload 2 IEPs",
-      disabled: !hasBothVersions,
+      btnText: "Open Comparison",
+      disabled: false,
       featured: true,
       onClick: () => {
-        if (hasBothVersions) {
-          import("sonner").then(({ toast }) =>
-            toast.success("IEP Comparison AI engine ready to run!")
-          );
-        } else {
-          import("sonner").then(({ toast }) =>
-            toast.error("Please upload two IEP versions in the student's Files tab to unlock.")
-          );
-        }
+        setIsComparisonOpen(true);
       },
       preview: (
         <div className="relative w-full h-full flex items-center justify-center bg-slate-950/40 border-b border-white/5 group">
@@ -562,6 +568,229 @@ export default function Tools() {
           </div>
         </div>
       </div>
+
+      {/* IEP Comparison Modal */}
+      {isComparisonOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#07162B] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col p-6 space-y-6 relative shadow-2xl text-slate-200">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-white/5 pb-4">
+              <div>
+                <h3 className="text-lg font-bold font-serif text-white">IEP / 504 Comparison Analyzer</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Upload a previous version and a current version to run a side-by-side comparison.
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsComparisonOpen(false);
+                  setIsAnalyzing(false);
+                  setAnalysisResult(false);
+                }}
+                className="text-slate-400 hover:text-white text-xs bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full border border-white/5 transition-all"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Main content */}
+            {!analysisResult ? (
+              <div className="space-y-6">
+                {/* Drag and Drop Zone row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Previous Version */}
+                  <div className="border border-dashed border-white/10 rounded-xl p-5 bg-slate-900/40 flex flex-col items-center justify-center text-center space-y-3 min-h-[140px] relative">
+                    <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Previous IEP Version</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 max-w-[180px] mx-auto truncate">
+                        {prevFile || "Drag and drop or browse to upload"}
+                      </p>
+                    </div>
+                    <input 
+                      type="file" 
+                      accept=".pdf"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setPrevFile(e.target.files[0].name);
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    {prevFile && (
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPrevFile(null);
+                        }}
+                        className="text-[10px] text-rose-450 hover:underline relative z-25 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Current Version */}
+                  <div className="border border-dashed border-white/10 rounded-xl p-5 bg-slate-900/40 flex flex-col items-center justify-center text-center space-y-3 min-h-[140px] relative">
+                    <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Current IEP Version</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 max-w-[180px] mx-auto truncate">
+                        {currFile || "Drag and drop or browse to upload"}
+                      </p>
+                    </div>
+                    <input 
+                      type="file" 
+                      accept=".pdf"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setCurrFile(e.target.files[0].name);
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    {currFile && (
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrFile(null);
+                        }}
+                        className="text-[10px] text-rose-455 hover:underline relative z-25 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Analysis Info */}
+                <div className="bg-indigo-950/20 border border-indigo-500/10 rounded-xl p-4 flex gap-3 text-left">
+                  <Compass className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-indigo-300">Waypoint AI Comparison Engine</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                      Waypoint will parse both documents, highlight additions and deletions, and categorize FAPE variances, accommodations changes, and modified services side-by-side.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Submit Action */}
+                <div className="flex justify-end pt-2">
+                  <Button
+                    onClick={() => {
+                      if (!prevFile || !currFile) {
+                        import("sonner").then(({ toast }) =>
+                          toast.error("Please select or upload both documents first.")
+                        );
+                        return;
+                      }
+                      setIsAnalyzing(true);
+                      setTimeout(() => {
+                        setIsAnalyzing(false);
+                        setAnalysisResult(true);
+                      }, 2500);
+                    }}
+                    disabled={isAnalyzing}
+                    className="bg-indigo-650 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs flex items-center gap-2 shadow-md"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Analyzing and comparing documents...
+                      </>
+                    ) : (
+                      <>
+                        <GitCompare className="h-3.5 w-3.5" />
+                        Run AI Comparison
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Display Mock Analysis results */
+              <div className="space-y-5 text-left">
+                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-450">
+                    <CheckCircle2 className="h-4 w-4" />
+                    AI Comparison Completed Successfully!
+                  </div>
+                  <button 
+                    onClick={() => setAnalysisResult(false)}
+                    className="text-xs text-indigo-300 hover:underline"
+                  >
+                    Compare other files
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Changes Summary</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-slate-900/60 p-3 rounded-lg border border-white/5 text-center">
+                      <span className="text-lg font-bold text-emerald-400">3</span>
+                      <span className="text-[10px] text-slate-450 block mt-0.5">Additions</span>
+                    </div>
+                    <div className="bg-slate-900/60 p-3 rounded-lg border border-white/5 text-center">
+                      <span className="text-lg font-bold text-rose-450">1</span>
+                      <span className="text-[10px] text-slate-450 block mt-0.5">Deletions</span>
+                    </div>
+                    <div className="bg-slate-900/60 p-3 rounded-lg border border-white/5 text-center">
+                      <span className="text-lg font-bold text-amber-400">2</span>
+                      <span className="text-[10px] text-slate-450 block mt-0.5">Modifications</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Diff Preview Rows */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Detailed Variance Analysis</h4>
+                  <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                    {/* Diff 1 */}
+                    <div className="border border-white/5 bg-slate-900/30 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Accommodation Added</span>
+                        <span className="text-[9px] text-slate-500">Page 4 · Section IV</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        "Student will receive extra time (double time) on all math quizzes, exams, and standardized testing assessments."
+                      </p>
+                    </div>
+
+                    {/* Diff 2 */}
+                    <div className="border border-white/5 bg-slate-900/30 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-450 border border-rose-500/20">Service Reduced</span>
+                        <span className="text-[9px] text-slate-500">Page 7 · Section VII</span>
+                      </div>
+                      <p className="text-xs text-slate-350 leading-relaxed line-through">
+                        "Occupational therapy group sessions: 60 minutes per week."
+                      </p>
+                      <p className="text-xs text-emerald-400 leading-relaxed font-semibold">
+                        + "Occupational therapy individual sessions: 30 minutes per week."
+                      </p>
+                    </div>
+
+                    {/* Diff 3 */}
+                    <div className="border border-white/5 bg-slate-900/30 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold font-serif">Goal Modified</span>
+                        <span className="text-[9px] text-slate-500">Page 11 · Section IX</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        Modified accuracy criteria for conversational turns target from 80% to 90% over consecutive trial weeks.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   </div>
 );
