@@ -248,10 +248,10 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
         {/* Interactive Interactive Layout */}
         <div className="p-6 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Side: SVG Compass Rose */}
-            <div className="col-span-1 md:col-span-5 flex justify-center">
-              <div className="relative w-[320px] h-[320px] select-none">
+            <div className="col-span-1 lg:col-span-6 flex justify-center w-full">
+              <div className="relative w-full max-w-[420px] aspect-square select-none">
                 <svg viewBox="0 0 400 400" className="w-full h-full text-muted-foreground/30">
                   <defs>
                     {/* Metallic Gold Gradient for realistic metal reflection */}
@@ -270,11 +270,22 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                       <stop offset="65%" stopColor="#000000" stopOpacity="0" />
                       <stop offset="100%" stopColor="#000000" stopOpacity="0.3" />
                     </linearGradient>
+                    {/* Radial brushed gold gradient for the background dial face */}
+                    <radialGradient id="gold-brushed" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+                      <stop offset="0%" stopColor="#FFFDF7" />
+                      <stop offset="30%" stopColor="#F9ECA7" />
+                      <stop offset="65%" stopColor="#D4AF37" />
+                      <stop offset="85%" stopColor="#AA7C11" />
+                      <stop offset="100%" stopColor="#4A3403" />
+                    </radialGradient>
                     {/* Drop shadow for 3D depth */}
                     <filter id="ring-shadow" x="-20%" y="-20%" width="140%" height="140%">
                       <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000000" floodOpacity="0.4" />
                     </filter>
                   </defs>
+
+                  {/* Brushed Gold Dial Face Background (under sectors) */}
+                  <circle cx={cx} cy={cy} r="100" fill="url(#gold-brushed)" className="opacity-[0.15]" />
 
                   {/* Decorative outer ticks and outer circles (Gold thin circle passing through the letters at radius 128) */}
                   <circle cx={cx} cy={cy} r="128" stroke="url(#gold-metallic)" strokeWidth="0.75" fill="none" className="opacity-60" />
@@ -323,10 +334,10 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                         <path
                           key={sec.key}
                           d={pathStr}
-                          fill={isActive ? sec.fill : isHovered ? sec.hoverFill : "transparent"}
-                          stroke={isActive ? sec.activeStroke : isHovered ? sec.stroke : "currentColor"}
-                          strokeWidth={isActive ? "2" : "1.25"}
-                          className="transition-all duration-200 ease-out"
+                          fill={isActive ? sec.fill : isHovered ? sec.hoverFill : "rgba(212, 175, 55, 0.03)"}
+                          stroke={isActive ? sec.activeStroke : isHovered ? sec.stroke : "url(#gold-metallic)"}
+                          strokeWidth={isActive ? "2.5" : "1.25"}
+                          className={`transition-all duration-200 ease-out ${isActive ? "opacity-100" : isHovered ? "opacity-85" : "opacity-35"}`}
                           onClick={() => setActiveSection(sec.key)}
                           onMouseEnter={() => setHoveredSection(sec.key)}
                           onMouseLeave={() => setHoveredSection(null)}
@@ -341,10 +352,17 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                     transformOrigin: `${cx}px ${cy}px`,
                     transition: 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)'
                   }}>
-                    {/* Top needle tip point */}
-                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},115 ${cx + 7},${cy}`} className="fill-accent filter drop-shadow-md" />
-                    {/* Bottom needle tip point */}
-                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},285 ${cx + 7},${cy}`} className="fill-muted-foreground/35" />
+                    {/* Top needle tip - 3D faceted gold shading */}
+                    {/* Left half (Light Highlight) */}
+                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},115`} fill="#FFF8D2" filter="url(#ring-shadow)" />
+                    {/* Right half (Shadow) */}
+                    <polygon points={`${cx},${cy} ${cx + 7},${cy} ${cx},115`} fill="#C59632" filter="url(#ring-shadow)" />
+
+                    {/* Bottom needle tip - 3D faceted brass shading */}
+                    {/* Left half (Light Highlight) */}
+                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},285`} fill="#A4802F" />
+                    {/* Right half (Shadow) */}
+                    <polygon points={`${cx},${cy} ${cx + 7},${cy} ${cx},285`} fill="#6B5115" />
                     
                     {/* Needle pivot cap with brass/gold styling */}
                     <circle cx={cx} cy={cy} r="12" fill="url(#gold-metallic)" filter="url(#ring-shadow)" />
@@ -357,7 +375,7 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
             </div>
 
             {/* Right Side: Animated Segment Details Box */}
-            <div className="col-span-1 md:col-span-7 flex flex-col justify-center">
+            <div className="col-span-1 lg:col-span-6 flex flex-col justify-center">
               <div className={`p-6 rounded-2xl border-2 transition-all duration-300 bg-gradient-to-br bg-card shadow-sm border-border`}>
                 {/* Segment Heading */}
                 <div className="flex items-center gap-3 border-b border-border pb-3 mb-4">
