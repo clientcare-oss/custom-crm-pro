@@ -317,17 +317,17 @@ export default function Contacts() {
                 </div>
 
                 {/* Provision Portal Access Button */}
-                <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
                   {!contact.portalUserId ? (
-                    <span className="text-xs font-semibold text-red-400 bg-red-950/40 border border-red-500/20 px-2 py-1 rounded-md flex items-center gap-1">
+                    <span className="text-xs font-semibold text-red-400 bg-red-950/40 border border-red-500/20 px-2 py-1 rounded-md flex items-center gap-1 shrink-0">
                       ✗ Portal Inactive
                     </span>
                   ) : contact.portalAccess === "apps_only" ? (
-                    <span className="text-xs font-semibold text-purple-400 bg-purple-950/40 border border-purple-500/25 px-2 py-1 rounded-md flex items-center gap-1">
+                    <span className="text-xs font-semibold text-purple-400 bg-purple-950/40 border border-purple-500/25 px-2 py-1 rounded-md flex items-center gap-1 shrink-0">
                       ✦ Apps Only
                     </span>
                   ) : (
-                    <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-1 rounded-md flex items-center gap-1">
+                    <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-1 rounded-md flex items-center gap-1 shrink-0">
                       ✓ Portal Active
                     </span>
                   )}
