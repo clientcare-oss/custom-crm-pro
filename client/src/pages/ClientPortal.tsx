@@ -1729,14 +1729,14 @@ export default function ClientPortal() {
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsAdminView(true)}
-                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
+                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer border ${
                   isAdminView
                     ? isLight
-                      ? "bg-white border-2 border-amber-500 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
-                      : "bg-[#061A33] border-2 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.35)] opacity-100"
+                      ? "bg-white border-amber-500 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
+                      : "bg-[#061A33] border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.35)] opacity-100"
                     : isLight
-                      ? "bg-transparent border-2 border-amber-500/25 text-slate-600 hover:bg-[#ebf3fc] hover:border-amber-500/50 hover:text-amber-700"
-                      : "bg-transparent border-2 border-amber-500/30 text-slate-300 hover:bg-[#061A33] hover:border-amber-400/50 hover:text-amber-300"
+                      ? "bg-transparent border-amber-500/25 text-slate-600 hover:bg-[#ebf3fc] hover:border-amber-500/50 hover:text-amber-700"
+                      : "bg-transparent border-amber-500/30 text-slate-300 hover:bg-[#061A33] hover:border-amber-400/50 hover:text-amber-300"
                 }`}
               >
                 💼 Advocate Master View
@@ -1745,14 +1745,14 @@ export default function ClientPortal() {
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsAdminView(false)}
-                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
+                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer border ${
                   !isAdminView
                     ? isLight
-                      ? "bg-white border-2 border-amber-500 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
-                      : "bg-[#061A33] border-2 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.35)] opacity-100"
+                      ? "bg-white border-amber-500 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
+                      : "bg-[#061A33] border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.35)] opacity-100"
                     : isLight
-                      ? "bg-transparent border-2 border-amber-500/25 text-slate-600 hover:bg-[#ebf3fc] hover:border-amber-500/50 hover:text-amber-700"
-                      : "bg-transparent border-2 border-amber-500/30 text-slate-300 hover:bg-[#061A33] hover:border-amber-400/50 hover:text-amber-300"
+                      ? "bg-transparent border-amber-500/25 text-slate-600 hover:bg-[#ebf3fc] hover:border-amber-500/50 hover:text-amber-700"
+                      : "bg-transparent border-amber-500/30 text-slate-300 hover:bg-[#061A33] hover:border-amber-400/50 hover:text-amber-300"
                 }`}
               >
                 👀 Client Master View
