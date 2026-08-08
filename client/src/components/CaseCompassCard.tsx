@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Clock, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, Settings } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Settings, MapPin, Target, User, Scale } from "lucide-react";
 
 // ─── Compass Config and Calculations ──────────────────────────────────────────
 
@@ -10,7 +10,8 @@ const SECTIONS = [
   {
     key: "currentStatus" as const,
     label: "Current Status",
-    icon: Activity,
+    shortLabel: ["CURRENT", "STATUS"],
+    icon: MapPin,
     angle: 0,
     accent: "text-blue-500 dark:text-blue-400",
     bg: "from-blue-500/10 to-blue-500/5",
@@ -21,23 +22,11 @@ const SECTIONS = [
     activeStroke: "rgba(59, 130, 246, 0.7)",
   },
   {
-    key: "nextMeetingDate" as const,
-    label: "Next Meeting",
-    icon: CalendarCheck,
-    angle: 72,
-    accent: "text-rose-500 dark:text-rose-400",
-    bg: "from-rose-500/10 to-rose-500/5",
-    border: "border-rose-500/30",
-    fill: "rgba(244, 63, 94, 0.08)",
-    hoverFill: "rgba(244, 63, 94, 0.2)",
-    stroke: "rgba(244, 63, 94, 0.2)",
-    activeStroke: "rgba(244, 63, 94, 0.7)",
-  },
-  {
     key: "nextStep" as const,
     label: "Next Step",
-    icon: ArrowRightCircle,
-    angle: 144,
+    shortLabel: ["NEXT", "STEP"],
+    icon: Target,
+    angle: 72,
     accent: "text-emerald-500 dark:text-emerald-400",
     bg: "from-emerald-500/10 to-emerald-500/5",
     border: "border-emerald-500/30",
@@ -47,10 +36,11 @@ const SECTIONS = [
     activeStroke: "rgba(16, 185, 129, 0.7)",
   },
   {
-    key: "lastMeetingSummary" as const,
-    label: "Last Meeting",
-    icon: BookOpen,
-    angle: 216,
+    key: "whoHasBall" as const,
+    label: "Who Has the Ball",
+    shortLabel: ["WHO HAS", "THE BALL"],
+    icon: User,
+    angle: 144,
     accent: "text-violet-500 dark:text-violet-400",
     bg: "from-violet-500/10 to-violet-500/5",
     border: "border-violet-500/30",
@@ -60,10 +50,11 @@ const SECTIONS = [
     activeStroke: "rgba(139, 92, 246, 0.7)",
   },
   {
-    key: "whoHasBall" as const,
-    label: "Who Has the Ball",
-    icon: Zap,
-    angle: 288,
+    key: "lastUpdated" as const,
+    label: "Last Updated",
+    shortLabel: ["LAST", "UPDATED"],
+    icon: Clock,
+    angle: 216,
     accent: "text-amber-500 dark:text-amber-400",
     bg: "from-amber-500/10 to-amber-500/5",
     border: "border-amber-500/30",
@@ -71,6 +62,20 @@ const SECTIONS = [
     hoverFill: "rgba(245, 158, 11, 0.2)",
     stroke: "rgba(245, 158, 11, 0.2)",
     activeStroke: "rgba(245, 158, 11, 0.7)",
+  },
+  {
+    key: "ideaRiskLevel" as const,
+    label: "IDEA Risk Level",
+    shortLabel: ["IDEA RISK", "LEVEL"],
+    icon: Scale,
+    angle: 288,
+    accent: "text-rose-500 dark:text-rose-400",
+    bg: "from-rose-500/10 to-rose-500/5",
+    border: "border-rose-500/30",
+    fill: "rgba(244, 63, 94, 0.08)",
+    hoverFill: "rgba(244, 63, 94, 0.2)",
+    stroke: "rgba(244, 63, 94, 0.2)",
+    activeStroke: "rgba(244, 63, 94, 0.7)",
   },
 ] as const;
 
@@ -212,18 +217,34 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
     );
   }
 
-  const rawValue = compass[activeSectionObj.key];
-  const displayValue =
-    activeSectionObj.key === "nextMeetingDate" && rawValue
-      ? new Date(rawValue).toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })
-      : String(rawValue ?? "");
+  const getSectionValue = (key: SectionKey) => {
+    if (!compass) return "";
+    switch (key) {
+      case "currentStatus":
+        return compass.currentStatus || "";
+      case "nextStep":
+        return compass.nextStep || "";
+      case "whoHasBall":
+        return compass.whoHasBall || "";
+      case "lastUpdated":
+        return compass.updatedAt
+          ? new Date(compass.updatedAt).toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })
+          : "";
+      case "ideaRiskLevel":
+        return compass.lastMeetingSummary || "";
+      default:
+        return "";
+    }
+  };
+
+  const displayValue = getSectionValue(activeSectionObj.key);
 
   const isRecentlyUpdated =
     compass.updatedAt &&
@@ -399,24 +420,58 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                   const endAngle = sec.angle + 36;
                   const pathStr = getSectorPath(cx, cy, rInner, rOuter, startAngle, endAngle);
 
+                  // Calculate position for text (middle of sector)
+                  const labelRad = ((sec.angle - 90) * Math.PI) / 180;
+                  const labelDist = 78; // Perfect radius distance for 40-110 range
+                  const labelX = cx + labelDist * Math.cos(labelRad);
+                  const labelY = cy + labelDist * Math.sin(labelRad);
+
                   return (
-                    <path
-                      key={sec.key}
-                      d={pathStr}
-                      fill={isActive ? sec.fill : isHovered ? sec.hoverFill : "rgba(212, 175, 55, 0.03)"}
-                      stroke={isActive ? sec.activeStroke : isHovered ? sec.stroke : "url(#gold-metallic)"}
-                      strokeWidth={isActive ? "2.5" : "1.25"}
-                      className={`transition-all duration-200 ease-out ${isActive ? "opacity-100" : isHovered ? "opacity-85" : "opacity-35"}`}
-                      onClick={() => {
-                        setActiveSection(sec.key);
-                        setIsDetailsOpen(true);
-                      }}
-                      onMouseEnter={() => {
-                        setHoveredSection(sec.key);
-                        setActiveSection(sec.key);
-                      }}
-                      onMouseLeave={() => setHoveredSection(null)}
-                    />
+                    <g key={sec.key}>
+                      <path
+                        d={pathStr}
+                        fill={isActive ? sec.fill : isHovered ? sec.hoverFill : "rgba(212, 175, 55, 0.03)"}
+                        stroke={isActive ? sec.activeStroke : isHovered ? sec.stroke : "url(#gold-metallic)"}
+                        strokeWidth={isActive ? "2.5" : "1.25"}
+                        className={`transition-all duration-200 ease-out ${isActive ? "opacity-100" : isHovered ? "opacity-85" : "opacity-35"}`}
+                        onClick={() => {
+                          setActiveSection(sec.key);
+                          setIsDetailsOpen(true);
+                        }}
+                        onMouseEnter={() => {
+                          setHoveredSection(sec.key);
+                          setActiveSection(sec.key);
+                        }}
+                        onMouseLeave={() => setHoveredSection(null)}
+                      />
+                      <text
+                        x={labelX}
+                        y={labelY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className={`text-[8px] font-extrabold tracking-wider pointer-events-none transition-all select-none duration-300 ${
+                          isActive 
+                            ? "fill-amber-300 opacity-100 font-black" 
+                            : isHovered 
+                              ? "fill-white opacity-95" 
+                              : "opacity-0"
+                        }`}
+                        style={{
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          textShadow: '0px 1px 3px rgba(0,0,0,0.95), 0px 0px 1px rgba(0,0,0,0.9)'
+                        }}
+                      >
+                        {sec.shortLabel.map((word, wIdx, arr) => (
+                          <tspan
+                            key={wIdx}
+                            x={labelX}
+                            dy={wIdx === 0 ? `-${(arr.length - 1) * 4}px` : "8px"}
+                          >
+                            {word}
+                          </tspan>
+                        ))}
+                      </text>
+                    </g>
                   );
                 })}
               </g>

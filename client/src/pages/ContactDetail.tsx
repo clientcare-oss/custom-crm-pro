@@ -261,10 +261,10 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
 // ─── Compass section block (shared between admin + portal views) ───────────────
 const COMPASS_SECTIONS = {
   status: { icon: Activity, label: "Current Status", accent: "text-blue-600 dark:text-blue-400 navy:text-blue-300", bg: "bg-blue-50 dark:bg-blue-950/40 navy:bg-blue-900/30", border: "border-blue-200 dark:border-blue-800 navy:border-blue-600/40" },
-  meeting: { icon: BookOpen, label: "Last Meeting", accent: "text-violet-600 dark:text-violet-400 navy:text-violet-300", bg: "bg-violet-50 dark:bg-violet-950/40 navy:bg-violet-900/30", border: "border-violet-200 dark:border-violet-800 navy:border-violet-600/40" },
+  meeting: { icon: Scale, label: "IDEA Risk Level", accent: "text-rose-600 dark:text-rose-400 navy:text-rose-300", bg: "bg-rose-50 dark:bg-rose-950/40 navy:bg-rose-900/30", border: "border-rose-200 dark:border-rose-800 navy:border-rose-600/40" },
   nextStep: { icon: ArrowRightCircle, label: "Next Step", accent: "text-emerald-600 dark:text-emerald-400 navy:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-950/40 navy:bg-emerald-900/30", border: "border-emerald-200 dark:border-emerald-800 navy:border-emerald-600/40" },
   ball: { icon: Zap, label: "Who Has the Ball", accent: "text-amber-600 dark:text-amber-400 navy:text-amber-300", bg: "bg-amber-50 dark:bg-amber-950/40 navy:bg-amber-900/30", border: "border-amber-200 dark:border-amber-800 navy:border-amber-600/40" },
-  nextMeeting: { icon: CalendarCheck, label: "Next Meeting Date", accent: "text-rose-600 dark:text-rose-400 navy:text-rose-300", bg: "bg-rose-50 dark:bg-rose-950/40 navy:bg-rose-900/30", border: "border-rose-200 dark:border-rose-800 navy:border-rose-600/40" },
+  nextMeeting: { icon: Clock, label: "Last Updated", accent: "text-violet-600 dark:text-violet-400 navy:text-violet-300", bg: "bg-violet-50 dark:bg-violet-950/40 navy:bg-violet-900/30", border: "border-violet-200 dark:border-violet-800 navy:border-violet-600/40" },
 } as const;
 
 function CompassSection({ type, children }: { type: keyof typeof COMPASS_SECTIONS; children: React.ReactNode }) {
@@ -1121,9 +1121,9 @@ function StudentTabs({
                   {(compass as any).whoHasBall && (
                     <CompassSection type="ball"><RichText text={(compass as any).whoHasBall} /></CompassSection>
                   )}
-                  {(compass as any).nextMeetingDate && (
+                  {(compass as any).updatedAt && (
                     <CompassSection type="nextMeeting">
-                      <p className="font-semibold">{new Date((compass as any).nextMeetingDate).toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="font-semibold">{new Date((compass as any).updatedAt).toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                     </CompassSection>
                   )}
                 </div>
@@ -1141,8 +1141,8 @@ function StudentTabs({
                   <VoiceTextarea rows={2} value={compassForm.currentStatus} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, currentStatus: e.target.value }))} placeholder="Brief snapshot of where the case stands..." className="text-sm" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Summary of Last Meeting</label>
-                  <VoiceTextarea rows={2} value={compassForm.lastMeetingSummary} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, lastMeetingSummary: e.target.value }))} placeholder="Key takeaways and decisions..." className="text-sm" />
+                  <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">IDEA Risk Level</label>
+                  <VoiceTextarea rows={2} value={compassForm.lastMeetingSummary} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, lastMeetingSummary: e.target.value }))} placeholder="IDEA Risk Level (e.g. Low, Moderate, High...) and details..." className="text-sm" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Step</label>
@@ -1151,10 +1151,6 @@ function StudentTabs({
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Who Has the Ball</label>
                   <VoiceTextarea rows={2} value={compassForm.whoHasBall} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, whoHasBall: e.target.value }))} placeholder="Parent, School, District, Waypoint..." className="text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next Meeting Date</label>
-                  <VoiceInput type="datetime-local" value={compassForm.nextMeetingDate} onChange={(e: any) => setCompassForm((f: any) => ({ ...f, nextMeetingDate: e.target.value }))} className="text-sm" />
                 </div>
               </div>
             )}

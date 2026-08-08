@@ -121,10 +121,10 @@ export default function CaseCompassAdmin() {
                 rows={2}
               />
             </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Summary of Last Meeting</label>
+             <div>
+              <label className="text-sm font-medium mb-1 block">IDEA Risk Level</label>
               <VoiceTextarea
-                placeholder="Key takeaways, decisions made, concerns raised..."
+                placeholder="IDEA Risk Level (e.g. Low, Moderate, High...) and details..."
                 value={formData.lastMeetingSummary}
                 onChange={(e) => setFormData({ ...formData, lastMeetingSummary: e.target.value })}
                 rows={3}
@@ -146,14 +146,6 @@ export default function CaseCompassAdmin() {
                 value={formData.whoHasBall}
                 onChange={(e) => setFormData({ ...formData, whoHasBall: e.target.value })}
                 rows={2}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Next Meeting Date</label>
-              <VoiceInput
-                type="datetime-local"
-                value={formData.nextMeetingDate}
-                onChange={(e) => setFormData({ ...formData, nextMeetingDate: e.target.value })}
               />
             </div>
             <Button onClick={handleSave} disabled={upsertMutation.isPending} className="w-full">
