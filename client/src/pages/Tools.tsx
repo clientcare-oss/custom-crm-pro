@@ -207,6 +207,42 @@ export default function Tools() {
       )
     },
     {
+      id: "worksheet-builder",
+      title: "Worksheet Studio",
+      description: "Interactive builder to customize intake worksheets. Define company branding, edit questions, apply AI directives, and print pixel-perfect PDFs.",
+      btnText: "Open Studio",
+      disabled: false,
+      onClick: () => {
+        setLocation("/tools/worksheet-builder");
+      },
+      preview: (
+        <div className="relative w-full h-full flex items-center justify-between bg-slate-950/40 border-b border-white/5 px-6 gap-4">
+          <div className="w-[125px] h-[90px] rounded-lg bg-slate-900 border border-white/10 relative overflow-hidden flex flex-col justify-between p-2 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="h-2 w-14 bg-indigo-500/40 rounded-sm" />
+              <div className="h-2.5 w-6 bg-amber-500/20 border border-amber-500/35 rounded-xs" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full border border-indigo-500/40" />
+                <div className="h-1 w-10 bg-slate-700 rounded-sm" />
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full border border-indigo-500/40" />
+                <div className="h-1 w-14 bg-slate-700 rounded-sm" />
+              </div>
+            </div>
+            <div className="h-1.5 w-10 bg-slate-800 rounded-sm" />
+          </div>
+          <div className="flex-1 space-y-1.5 bg-[#0A101E]/80 border border-white/5 rounded-lg p-2 shadow-md">
+            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-widest block">Intake Studio</span>
+            <div className="h-1 w-16 bg-slate-700 rounded-sm" />
+            <div className="h-1 w-20 bg-slate-800 rounded-sm" />
+          </div>
+        </div>
+      )
+    },
+    {
       id: "timeline-builder",
       title: "Timeline Builder",
       description: "Visualize your child's journey. See meetings, evaluations, services, and milestones in chronological order.",

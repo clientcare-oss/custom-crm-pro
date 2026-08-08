@@ -40,12 +40,10 @@ const MOCK_PURCHASABLES: Purchasable[] = [
 ];
 
 const GALLERY_TEMPLATES = [
-  { id: 1, name: "IEP Document", icon: "📋", category: "Special Ed" },
-  { id: 2, name: "Meeting Agenda", icon: "📅", category: "Meetings" },
-  { id: 3, name: "Evaluation Report", icon: "📊", category: "Evaluation" },
-  { id: 4, name: "Progress Report", icon: "📈", category: "Progress" },
-  { id: 5, name: "Accommodation Plan", icon: "🎯", category: "Planning" },
-  { id: 6, name: "Behavior Plan", icon: "🧩", category: "Behavior" },
+  { id: "discovery-call", name: "Discovery Call Intake", icon: "📋", category: "Intake" },
+  { id: "meltdown-reflection", name: "Meltdown Reflection", icon: "🧩", category: "Behavior" },
+  { id: "behavior-log", name: "Daily Behavior Log", icon: "📈", category: "Logs" },
+  { id: "scratch", name: "Blank Canvas", icon: "✨", category: "Custom" },
 ];
 
 const EMAIL_CATEGORIES = ["Onboarding", "Reminders", "Follow-up", "Updates", "IEP", "Discovery", "General"];
@@ -741,61 +739,45 @@ function Purchasables({ onBack }: { onBack: () => void }) {
 
 // ─── Main Hub ─────────────────────────────────────────────────────────────────
 
-type View = "hub" | "smart-files" | "create-smart-file" | "email-templates" | "purchasables";
+type View = "hub" | "email-templates" | "purchasables";
 
 export default function Templates() {
   const [view, setView] = useState<View>("hub");
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newFileName, setNewFileName] = useState("");
   const [, navigate] = useLocation();
+  const [savedWorksheetsCount, setSavedWorksheetsCount] = useState(0);
 
   const { data: emailTemplatesList = [] } = trpc.emailTemplates.list.useQuery();
-  const { data: smartFilesList = [], refetch: refetchSmartFiles } = trpc.smartFiles.listTemplates.useQuery();
-  const createSmartFileMutation = trpc.smartFiles.createTemplate.useMutation();
 
-  const handleCreateSmartFile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFileName.trim()) {
-      toast.error("Please enter a name for the smart file");
-      return;
+  useEffect(() => {
+    const saved = localStorage.getItem("waypoint_saved_worksheets");
+    if (saved) {
+      try {
+        setSavedWorksheetsCount(JSON.parse(saved).length);
+      } catch (e) {}
     }
-    try {
-      const res = await createSmartFileMutation.mutateAsync({
-        name: newFileName,
-        description: "Custom smart file template",
-      });
-      setCreateDialogOpen(false);
-      setNewFileName("");
-      toast.success("Template created successfully!");
-      refetchSmartFiles();
-      navigate(`/smart-files/${res.id}`);
-    } catch {
-      toast.error("Failed to create smart file template");
-    }
-  };
+  }, [view]);
 
-  const handleGalleryClick = async (templateName: string) => {
-    try {
-      const res = await createSmartFileMutation.mutateAsync({
-        name: `${templateName} Template`,
-        description: `Pre-built starter layout for ${templateName}`,
-      });
-      toast.success(`Starter ${templateName} template initialized!`);
-      refetchSmartFiles();
-      navigate(`/smart-files/${res.id}`);
-    } catch {
-      toast.error("Failed to initialize template");
-    }
+  const handleGalleryClick = (templateId: string) => {
+    navigate(`/tools/worksheet-builder?tab=create&template=${templateId}`);
   };
 
   const HUB_BLOCKS = [
-    { id: "smart-files" as View, icon: FileText, iconBg: "bg-violet-50 dark:bg-violet-900/20", iconColor: "text-violet-500", accent: "hover:border-violet-300 dark:hover:border-violet-700", title: "Saved Smart Files", description: "Access and manage your saved smart document files — IEP forms, evaluation reports, progress logs, and more.", cta: "View Files", count: smartFilesList.length },
-    { id: "create-smart-file" as View, icon: FilePlus2, iconBg: "bg-emerald-50 dark:bg-emerald-900/20", iconColor: "text-emerald-500", accent: "hover:border-emerald-300 dark:hover:border-emerald-700", title: "Create Smart File", description: "Build a new smart file from scratch with a blank canvas, or jump-start with a pre-built template from the gallery.", cta: "Create Now", count: null },
+    { id: "worksheets", icon: FileText, iconBg: "bg-indigo-500/10", iconColor: "text-indigo-400", accent: "hover:border-indigo-500/35 hover:shadow-lg dark:hover:border-indigo-500/25", title: "Saved Worksheets", description: "Access and manage your saved custom worksheets — intake forms, reflection sheets, logs, and more.", cta: "View Worksheets", count: savedWorksheetsCount },
+    { id: "create-worksheet", icon: FilePlus2, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-400", accent: "hover:border-emerald-500/35 hover:shadow-lg dark:hover:border-emerald-500/25", title: "Create Worksheet", description: "Build a new worksheet from scratch with a blank canvas, or jump-start with a pre-built template from the gallery.", cta: "Create Now", count: null },
     { id: "email-templates" as View, icon: Mail, iconBg: "bg-blue-50 dark:bg-blue-900/20", iconColor: "text-blue-500", accent: "hover:border-blue-300 dark:hover:border-blue-700", title: "Email Templates", description: "Manage reusable email templates for parent communication, meeting reminders, progress updates, and outreach.", cta: "View Templates", count: emailTemplatesList.length },
     { id: "purchasables" as View, icon: ShoppingBag, iconBg: "bg-amber-50 dark:bg-amber-900/20", iconColor: "text-amber-500", accent: "hover:border-amber-300 dark:hover:border-amber-700", title: "Purchasables", description: "Browse and manage purchasable document packs, template bundles, and resource kits available for your clients.", cta: "Browse Items", count: MOCK_PURCHASABLES.length },
   ];
 
-  if (view === "smart-files") return <div className="p-6 max-w-4xl mx-auto"><SavedSmartFiles onBack={() => setView("hub")} onCreateNew={() => setCreateDialogOpen(true)} /></div>;
+  const handleBlockClick = (blockId: string) => {
+    if (blockId === "worksheets") {
+      navigate("/tools/worksheet-builder?tab=saved");
+    } else if (blockId === "create-worksheet") {
+      navigate("/tools/worksheet-builder?tab=create");
+    } else {
+      setView(blockId as View);
+    }
+  };
+
   if (view === "email-templates") return <div className="p-6 max-w-5xl mx-auto"><EmailTemplates onBack={() => setView("hub")} /></div>;
   if (view === "purchasables") return <div className="p-6 max-w-4xl mx-auto"><Purchasables onBack={() => setView("hub")} /></div>;
 
@@ -807,7 +789,7 @@ export default function Templates() {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Templates</h1>
-          <p className="text-sm text-muted-foreground">Your document hub — smart files, email templates, and more</p>
+          <p className="text-sm text-muted-foreground">Your document hub — worksheets, email templates, and more</p>
         </div>
       </div>
 
@@ -815,7 +797,7 @@ export default function Templates() {
         {HUB_BLOCKS.map((block) => {
           const Icon = block.icon;
           return (
-            <button key={block.id} onClick={() => block.id === "create-smart-file" ? setCreateDialogOpen(true) : setView(block.id)} className={`group text-left rounded-2xl border bg-card p-6 hover:shadow-md transition-all ${block.accent}`}>
+            <button key={block.id} onClick={() => handleBlockClick(block.id)} className={`group text-left rounded-2xl border bg-card p-6 hover:shadow-md transition-all ${block.accent}`}>
               <div className="flex items-start gap-4">
                 <div className={`h-11 w-11 rounded-xl ${block.iconBg} flex items-center justify-center shrink-0`}>
                   <Icon className={`h-5 w-5 ${block.iconColor}`} />
@@ -841,42 +823,16 @@ export default function Templates() {
           <Library className="h-4 w-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Template Gallery</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {GALLERY_TEMPLATES.map((t) => (
-            <button key={t.id} onClick={() => handleGalleryClick(t.name)} className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-4 hover:shadow-sm hover:border-accent/40 transition-all text-center">
-              <span className="text-2xl">{t.icon}</span>
-              <p className="text-xs font-medium leading-tight">{t.name}</p>
-              <span className="text-[10px] text-muted-foreground">{t.category}</span>
+            <button key={t.id} onClick={() => handleGalleryClick(t.id)} className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-5 hover:shadow-md hover:border-accent/40 transition-all text-center">
+              <span className="text-3xl mb-1">{t.icon}</span>
+              <p className="text-xs font-bold leading-tight">{t.name}</p>
+              <span className="text-[10px] text-muted-foreground font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">{t.category}</span>
             </button>
           ))}
         </div>
       </div>
-
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><FilePlus2 className="h-5 w-5 text-emerald-500" /> Create Smart File</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateSmartFile} className="space-y-4 mt-2">
-            <div>
-              <Label className="text-xs">Smart File Name</Label>
-              <Input
-                className="mt-1"
-                placeholder="e.g. Annual IEP Review Strategy Proposal"
-                value={newFileName}
-                onChange={(e) => setNewFileName(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={createSmartFileMutation.isPending} className="bg-emerald-500 text-slate-900 font-semibold hover:bg-emerald-600">
-                {createSmartFileMutation.isPending ? "Creating..." : "Create & Edit"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

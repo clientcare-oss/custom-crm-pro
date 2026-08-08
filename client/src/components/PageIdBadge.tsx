@@ -16,6 +16,7 @@ const PAGE_IDS: Record<string, { id: string; name: string }> = {
   "/tasks":                   { id: "PG-009", name: "Tasks" },
   "/tools":                   { id: "PG-010", name: "Tools" },
   "/tools/voyage-recorder":   { id: "PG-010-REC", name: "Voyage Meeting Recorder" },
+  "/tools/worksheet-builder": { id: "PG-010-WS", name: "Worksheet Studio" },
   "/templates":               { id: "PG-011", name: "Templates" },
   "/lead-forms":              { id: "PG-012", name: "Lead Forms" },
   "/automations":             { id: "PG-013", name: "Automations" },
