@@ -134,7 +134,7 @@ export default function Tools() {
       disabled: false,
       featured: true,
       onClick: () => {
-        setIsComparisonOpen(true);
+        setLocation("/tools/iep-comparator");
       },
       preview: (
         <div className="relative w-full h-full flex items-center justify-center bg-slate-950/40 border-b border-white/5 group">

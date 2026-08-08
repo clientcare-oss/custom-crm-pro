@@ -53,6 +53,7 @@ import SmartFilePortalViewer from "./pages/SmartFilePortalViewer";
 import TechTasks from "./pages/TechTasks";
 import DiscoveryCallPage from "./pages/DiscoveryCallPage";
 import Workspace from "./pages/Workspace";
+import IepComparator from "./pages/IepComparator";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import PageIdBadge from "./components/PageIdBadge";
@@ -124,6 +125,7 @@ function Router() {
           <Route path="/tasks" component={Tasks} />
           <Route path="/tech-tasks" component={TechTasks} />
           <Route path="/tools" component={Tools} />
+          <Route path="/tools/iep-comparator" component={IepComparator} />
           <Route path="/tools/voyage-recorder" component={VoyageRecorder} />
           <Route path="/templates" component={Templates} />
           <Route path="/lead-forms" component={LeadForms} />
