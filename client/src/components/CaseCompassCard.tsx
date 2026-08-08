@@ -360,9 +360,9 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                     {SECTIONS.map((sec, idx) => {
                       const isActive = activeSection === sec.key;
                       const isHovered = hoveredSection === sec.key;
-                      // 72 degrees per wedge. Gap of 2 degrees -> wedge span of 70 degrees
-                      const startAngle = sec.angle - 35;
-                      const endAngle = sec.angle + 35;
+                      // 72 degrees per wedge. Gap of 0 degrees -> wedge span of 72 degrees
+                      const startAngle = sec.angle - 36;
+                      const endAngle = sec.angle + 36;
                       const pathStr = getSectorPath(cx, cy, rInner, rOuter, startAngle, endAngle);
 
                       return (
