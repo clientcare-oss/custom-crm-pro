@@ -422,7 +422,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
                   // Calculate position for text (middle of sector)
                   const labelRad = ((sec.angle - 90) * Math.PI) / 180;
-                  const labelDist = 78; // Perfect radius distance for 40-110 range
+                  const labelDist = 77; // Centered beautifully between rInner (40) and rOuter (110)
                   const labelX = cx + labelDist * Math.cos(labelRad);
                   const labelY = cy + labelDist * Math.sin(labelRad);
 
@@ -449,9 +449,9 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                         y={labelY}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`text-[8px] font-extrabold tracking-wider pointer-events-none transition-all select-none duration-300 ${
+                        className={`text-[10px] font-black tracking-widest pointer-events-none transition-all select-none duration-300 ${
                           isActive 
-                            ? "fill-amber-300 opacity-100 font-black" 
+                            ? "fill-amber-300 opacity-100 font-black scale-105" 
                             : isHovered 
                               ? "fill-white opacity-95" 
                               : "opacity-0"
@@ -463,9 +463,9 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                       >
                         {sec.shortLabel.map((word, wIdx, arr) => (
                           <tspan
-                            key={wIdx}
+                            key={word}
                             x={labelX}
-                            dy={wIdx === 0 ? `-${(arr.length - 1) * 4}px` : "8px"}
+                            dy={wIdx === 0 ? `-${(arr.length - 1) * 5}px` : "11px"}
                           >
                             {word}
                           </tspan>
@@ -480,7 +480,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
               <g style={{
                 transform: `rotate(${activeSectionObj.angle}deg)`,
                 transformOrigin: `${cx}px ${cy}px`,
-                transition: 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                transition: 'transform 1600ms cubic-bezier(0.25, 1, 0.5, 1)'
               }}>
                 {/* Top needle tip - 3D faceted gold shading */}
                 {/* Left half (Light Highlight) */}
