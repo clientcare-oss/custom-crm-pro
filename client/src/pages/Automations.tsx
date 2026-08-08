@@ -52,7 +52,7 @@ interface Automation {
   triggerConfig?: {
     meetingType?: string;
     googleReviewUrl?: string;
-    testimonialUrl?: string;
+    emailTemplateId?: string;
   };
 }
 
@@ -118,9 +118,8 @@ Thank you for choosing Waypoint Advocates to support you and {{studentName}}!
 
 We recently completed our consultation / IEP meeting milestone, and we would love to hear about your experience. Your feedback helps us refine our coaching and guides other Atlanta families searching for master advocacy support.
 
-Could you take 2 minutes to leave us a Google review or submit feedback?
+Could you take 2 minutes to leave us a Google review?
 Google Review: {{googleReviewUrl}}
-Testimonial Form: {{testimonialUrl}}
 
 Thank you so much for your trust and partnership!
 
@@ -304,7 +303,7 @@ export default function Automations() {
         triggerConfig: a.triggerConfig || {
           meetingType: "Any Meeting",
           googleReviewUrl: "https://g.page/r/waypoint-advocates/review",
-          testimonialUrl: "https://waypointadvocates.com/testimonial"
+          emailTemplateId: "review-request"
         },
         steps: (a.steps || []).map((s: any) => ({
           id: String(s.id),
@@ -398,7 +397,7 @@ export default function Automations() {
           triggerConfig: {
             meetingType: "Any Meeting",
             googleReviewUrl: "https://g.page/r/waypoint-advocates/review",
-            testimonialUrl: "https://waypointadvocates.com/testimonial"
+            emailTemplateId: "review-request"
           },
           steps: auto.steps.map((s) => ({
             type: s.type,
@@ -1090,24 +1089,27 @@ export default function Automations() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-slate-350 uppercase tracking-wider block">Testimonial Form Link</label>
-                          <input
-                            type="text"
-                            value={selectedAutomation.triggerConfig?.testimonialUrl || "https://waypointadvocates.com/testimonial"}
+                          <label className="text-[10px] font-bold text-slate-350 uppercase tracking-wider block">Email Template to Use</label>
+                          <select
+                            value={selectedAutomation.triggerConfig?.emailTemplateId || "review-request"}
                             onChange={(e) => {
                               const updated = {
                                 ...selectedAutomation,
                                 triggerConfig: {
                                   ...(selectedAutomation.triggerConfig || {}),
-                                  testimonialUrl: e.target.value
+                                  emailTemplateId: e.target.value
                                 }
                               };
                               setSelectedAutomation(updated);
                               setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
                             }}
-                            placeholder="https://waypointadvocates.com/..."
-                            className="w-full bg-slate-900 border border-white/10 text-white rounded p-2 text-xs focus:border-indigo-500"
-                          />
+                            className="w-full bg-slate-900 border border-white/10 text-white rounded p-2 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                          >
+                            <option value="review-request">Milestone Review Request</option>
+                            <option value="welcome-email">Advocate Welcome & Calendar Invite</option>
+                            <option value="iep-parent-prep">IEP Prep: Parent Goal Formulation Guide</option>
+                            <option value="pwn-review">Post-IEP: PWN Document Review Checklist</option>
+                          </select>
                         </div>
                       </div>
                     )}
@@ -1591,8 +1593,7 @@ export default function Automations() {
               <pre className="whitespace-pre-wrap leading-relaxed font-sans text-slate-300">
                 {EMAIL_TEMPLATES[previewTemplateId].body
                   .replace("{{studentName}}", previewTargetName)
-                  .replace("{{googleReviewUrl}}", selectedAutomation?.triggerConfig?.googleReviewUrl || "https://g.page/r/waypoint-advocates/review")
-                  .replace("{{testimonialUrl}}", selectedAutomation?.triggerConfig?.testimonialUrl || "https://waypointadvocates.com/testimonial")}
+                  .replace("{{googleReviewUrl}}", selectedAutomation?.triggerConfig?.googleReviewUrl || "https://g.page/r/waypoint-advocates/review")}
               </pre>
             </div>
 
