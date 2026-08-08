@@ -266,7 +266,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
           : "bg-[#07162B]/30 border-white/10 divide-white/10"
       }`}>
         {/* Item 1 */}
-        <div className="flex items-center gap-4 py-2 sm:py-0 first:pt-0 last:pb-0 lg:first:pl-0 lg:pl-6">
+        <div className="flex items-center justify-center gap-4 py-2 sm:py-0">
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
             <Clapperboard className="h-5 w-5" />
           </div>
@@ -277,7 +277,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         </div>
 
         {/* Item 2 */}
-        <div className="flex items-center gap-4 py-4 sm:py-0 lg:pl-8">
+        <div className="flex items-center justify-center gap-4 py-4 sm:py-0">
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
             <Clock className="h-5 w-5" />
           </div>
@@ -288,7 +288,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         </div>
 
         {/* Item 3 */}
-        <div className="flex items-center gap-4 py-4 sm:py-0 lg:pl-8">
+        <div className="flex items-center justify-center gap-4 py-4 sm:py-0">
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-sky-500/10 text-sky-400">
             <FileText className="h-5 w-5" />
           </div>
@@ -299,7 +299,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         </div>
 
         {/* Item 4 */}
-        <div className="flex items-center gap-4 py-4 sm:py-0 lg:pl-8">
+        <div className="flex items-center justify-center gap-4 py-4 sm:py-0">
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-400">
             <Shield className="h-5 w-5" />
           </div>
