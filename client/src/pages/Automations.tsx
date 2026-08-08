@@ -257,6 +257,11 @@ export default function Automations() {
   // Sidebar context triggers & steps configuration
   const [configuringTrigger, setConfiguringTrigger] = useState(false);
 
+  // Request trigger Dialog overlay state
+  const [requestTriggerOpen, setRequestTriggerOpen] = useState(false);
+  const [newTriggerText, setNewTriggerText] = useState("");
+  const [isSubmittingTriggerRequest, setIsSubmittingTriggerRequest] = useState(false);
+
   // Simulator state
   const { data: contactsList } = trpc.contacts.list.useQuery();
   const [selectedContactId, setSelectedContactId] = useState<number | null>(3); // Baaarbra Sheep default
@@ -267,6 +272,21 @@ export default function Automations() {
   const saveAutomations = (list: Automation[]) => {
     setAutomations(list);
     localStorage.setItem("crm_automations", JSON.stringify(list));
+  };
+
+  const handleSubmitTriggerRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTriggerText.trim()) return;
+    setIsSubmittingTriggerRequest(true);
+    setTimeout(() => {
+      setIsSubmittingTriggerRequest(false);
+      setRequestTriggerOpen(false);
+      toast.success("Trigger request submitted to developer queue! We will notify you once implemented.");
+      setSimLogs((logs) => [
+        ...logs,
+        `[${new Date().toLocaleTimeString()}] 📩 [Tech Queue] Received custom trigger request: "${newTriggerText}"`
+      ]);
+    }, 1200);
   };
 
   const handleToggleActive = (id: string) => {
@@ -965,6 +985,22 @@ export default function Automations() {
                         );
                       })}
                     </div>
+
+                    {/* Request New Trigger button */}
+                    <div className="border-t border-white/5 pt-4 mt-4">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setNewTriggerText("");
+                          setRequestTriggerOpen(true);
+                        }}
+                        className="w-full bg-[#0b1e36] hover:bg-[#122846] border border-white/10 text-slate-300 text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1.5"
+                      >
+                        <HelpCircle className="h-4 w-4 text-indigo-400" />
+                        <span>Request New Trigger</span>
+                      </Button>
+                    </div>
+
                   </div>
                 ) : activeStepId ? (
                   /* ── SUB-VIEW B: CONFIGURE ACTION STEP ── */
@@ -1394,6 +1430,67 @@ export default function Automations() {
                 Done
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── REQUEST NEW TRIGGER DIALOG MODAL ── */}
+      {requestTriggerOpen && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm text-left animate-fade-in">
+          <div className="w-full max-w-md bg-[#081628] border border-white/10 rounded-2xl shadow-2xl p-6 relative flex flex-col">
+            <button
+              onClick={() => setRequestTriggerOpen(false)}
+              className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-lg bg-slate-900 border border-white/10 text-slate-400 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-4">
+              <Sparkles className="h-5 w-5 text-indigo-400" />
+              <div>
+                <h3 className="font-bold text-sm text-white">Request New Trigger Event</h3>
+                <p className="text-[10px] text-slate-400">Submit a request to our tech department to add a custom event</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmitTriggerRequest} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-350">Describe the trigger event & condition</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={newTriggerText}
+                  onChange={(e) => setNewTriggerText(e.target.value)}
+                  placeholder="e.g., Trigger when school calendar changes, or when advocate logs a voice memo note"
+                  className="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-white/5 pt-4 mt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setRequestTriggerOpen(false)}
+                  className="hover:bg-white/5 text-slate-400 text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingTriggerRequest}
+                  className="bg-indigo-650 hover:bg-indigo-600 text-white text-xs font-bold px-5"
+                >
+                  {isSubmittingTriggerRequest ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Submit Request"
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
