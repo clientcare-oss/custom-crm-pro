@@ -14,7 +14,7 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
@@ -29,6 +29,7 @@ import ContactNotesTab from "@/components/contact/ContactNotesTab";
 import ContactFilesTab from "@/components/contact/ContactFilesTab";
 import ContactStudentsTab from "@/components/contact/ContactStudentsTab";
 import ContactFinancialsTab from "@/components/contact/ContactFinancialsTab";
+import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -1041,6 +1042,7 @@ function StudentTabs({
     <Tabs defaultValue="compass">
       <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-xl">
         <TabsTrigger value="compass" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
+        <TabsTrigger value="voyage-log" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Video className="h-3.5 w-3.5" />Voyage Log</TabsTrigger>
         <TabsTrigger value="activity" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Messages</TabsTrigger>
         <TabsTrigger value="tasks" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
         <TabsTrigger value="files" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
@@ -1175,6 +1177,11 @@ function StudentTabs({
             </div>
           )}
         </div>
+      </TabsContent>
+
+      {/* VOYAGE LOG */}
+      <TabsContent value="voyage-log" className="mt-4">
+        <PortalVoyageLogTab isAdminView={true} isLight={false} studentId={contactId} />
       </TabsContent>
 
       {/* ACTIVITY */}

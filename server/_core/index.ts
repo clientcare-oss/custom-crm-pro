@@ -12,6 +12,7 @@ import { registerClerkWebhookRoutes } from "../clerkWebhook";
 import { registerRestApiRoutes } from "../restApi";
 import { registerVoiceUploadRoutes } from "../voiceUpload";
 import { registerImageUploadRoutes } from "../imageUpload";
+import { registerVoyageWebhookRoutes } from "../voyageWebhook";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -51,6 +52,7 @@ async function startServer() {
   registerFileUploadRoutes(app);
   registerVoiceUploadRoutes(app);
   registerImageUploadRoutes(app);
+  registerVoyageWebhookRoutes(app);
   registerRestApiRoutes(app);
   registerOAuthRoutes(app);
   // tRPC API

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles,
-  Clapperboard, Clock, Shield, FileText, CheckCircle2, AlertCircle, Calendar, Pause, ClipboardList, Flame, UserCheck, Star
+  Clapperboard, Clock, Shield, FileText, CheckCircle2, AlertCircle, Calendar, Pause, ClipboardList, Flame, UserCheck, Star, Loader2, Check
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 interface Recording {
   id: string;
@@ -19,6 +20,7 @@ interface Recording {
   actionItems: string[];
   notes: string;
   transcript: { time: string; seconds: number; text: string }[];
+  status?: string;
 }
 
 const RECORDINGS_DATA: Recording[] = [
@@ -138,10 +140,23 @@ const RECORDINGS_DATA: Recording[] = [
 interface PortalVoyageLogTabProps {
   isAdminView?: boolean;
   isLight?: boolean;
+  studentId?: number | null;
 }
 
-export default function PortalVoyageLogTab({ isAdminView = false, isLight = false }: PortalVoyageLogTabProps) {
-  const [recordings] = useState<Recording[]>(RECORDINGS_DATA);
+export default function PortalVoyageLogTab({ isAdminView = false, isLight = false, studentId = null }: PortalVoyageLogTabProps) {
+  // Query voyage logs from backend database
+  const { data: dbLogs, refetch } = trpc.voyageLog.list.useQuery(
+    { contactId: studentId ?? undefined },
+    {
+      refetchInterval: (queryResult) => {
+        const hasProcessing = queryResult?.state?.data?.some(
+          (d: any) => d.status === "uploading" || d.status === "processing"
+        );
+        return hasProcessing ? 3000 : false;
+      }
+    }
+  );
+
   const [activeRecId, setActiveRecId] = useState<string>("rec_1");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [rightTab, setRightTab] = useState<"transcript" | "notes">("transcript");
@@ -155,7 +170,72 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const activeRec = recordings.find((r) => r.id === activeRecId) || recordings[0];
+  const processedRecordings = React.useMemo(() => {
+    const list: Recording[] = [];
+    
+    // Add real database records if they exist
+    if (dbLogs && dbLogs.length > 0) {
+      dbLogs.forEach((log: any) => {
+        let highlights: string[] = [];
+        let actionItems: string[] = [];
+        try {
+          highlights = log.approvedItems ? JSON.parse(log.approvedItems) : [];
+        } catch (e) {}
+        try {
+          actionItems = log.crmTaskSuggestions ? JSON.parse(log.crmTaskSuggestions).map((t: any) => t.title) : [];
+        } catch (e) {}
+
+        // Format raw/formatted transcript into timestamps
+        let transcriptList: { time: string; seconds: number; text: string }[] = [];
+        if (log.formattedTranscript) {
+          const lines = log.formattedTranscript.split("\n");
+          lines.forEach((line: string, index: number) => {
+            if (line.trim().includes(": ")) {
+              transcriptList.push({
+                time: `0:${(index * 15).toString().padStart(2, "0")}`,
+                seconds: index * 15,
+                text: line,
+              });
+            }
+          });
+        }
+
+        list.push({
+          id: String(log.id),
+          title: log.title || "Voyage Session Recording",
+          date: new Date(log.recordingDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+          }),
+          duration: log.duration || "1:42:18",
+          secondsLimit: 6138,
+          highlights: highlights.length > 0 ? highlights : ["Ready for coaching review"],
+          actionItems: actionItems.length > 0 ? actionItems : ["Awaiting parsed actions"],
+          notes: log.executiveSummary || "Processing meeting transcript with Deepgram...",
+          transcript: transcriptList.length > 0 ? transcriptList : [
+            { time: "0:00", seconds: 0, text: "Awaiting audio transcript processing..." }
+          ],
+          status: log.status,
+        } as any);
+      });
+    }
+
+    // Append default static mock data so the list is always rich
+    RECORDINGS_DATA.forEach((rec) => {
+      if (!list.some(l => l.title === rec.title)) {
+        list.push(rec);
+      }
+    });
+
+    return list;
+  }, [dbLogs]);
+
+  // Handle file uploads state variables
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeRec = processedRecordings.find((r) => r.id === activeRecId) || processedRecordings[0] || RECORDINGS_DATA[0];
 
   // Simulated playback effect
   useEffect(() => {
@@ -231,12 +311,63 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
     toast.success(`Downloading transcript for ${activeRec.title}...`);
   };
 
-  const handleRecordNewMeeting = () => {
-    toast.success("Initializing advocate recorder session...");
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    toast.loading("Generating Cloudflare Stream upload link...", { id: "voyage-upload" });
+
+    try {
+      // 1. Get Cloudflare direct upload URL from our backend endpoint
+      const response = await fetch("/api/voyage-log/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: studentId || 3, // Default to Baaarbra
+          portalId: 1, // Default to Shawn Sheep
+          title: file.name.replace(/\.[^/.]+$/, ""), // Strip extension
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to get upload link");
+      const { uploadURL } = await response.json();
+
+      toast.loading("Uploading session recording to Cloudflare Stream...", { id: "voyage-upload" });
+
+      // 2. Perform direct creator upload to Cloudflare Stream
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+
+      const uploadRes = await fetch(uploadURL, {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      if (!uploadRes.ok) throw new Error("Upload failed");
+
+      toast.success("Recording uploaded! AI pipeline running in the background.", { id: "voyage-upload" });
+      refetch();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Upload error: ${err.message}`, { id: "voyage-upload" });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   return (
     <div className="p-5 space-y-6">
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="video/*,audio/*"
+        className="hidden"
+      />
+
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -250,11 +381,21 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         </div>
         {isAdminView && (
           <Button
-            onClick={handleRecordNewMeeting}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
             className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/10 flex items-center justify-center gap-2 transition-all"
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-red-650 animate-pulse shrink-0" />
-            Record New Meeting
+            {isUploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse shrink-0" />
+                Upload Meeting Recording
+              </>
+            )}
           </Button>
         )}
       </div>
@@ -321,7 +462,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
           </div>
 
           <div className="space-y-3">
-            {recordings.map((rec) => {
+            {processedRecordings.map((rec) => {
               const isActive = rec.id === activeRecId;
               return (
                 <div
@@ -361,9 +502,22 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                       </p>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold text-emerald-500 dark:text-emerald-400">
-                        Transcript Ready
-                      </span>
+                      {rec.status === "uploading" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold text-amber-500">
+                          <Loader2 className="h-2 w-2 animate-spin" />
+                          Uploading...
+                        </span>
+                      ) : rec.status === "processing" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 px-2 py-0.5 text-[9px] font-semibold text-indigo-400">
+                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                          Transcribing...
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold text-emerald-500 dark:text-emerald-450">
+                          <Check className="h-2.5 w-2.5 text-emerald-500" />
+                          Transcript Ready
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

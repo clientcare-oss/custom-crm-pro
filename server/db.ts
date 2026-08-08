@@ -32,6 +32,7 @@ import {
   brainDumpItems,
   brainDumpImages,
   discoveryWorksheets,
+  voyageLogs,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -41,8 +42,14 @@ import { getCaseCompass, updateCaseCompass, upsertCaseCompass, getCaseCompassHis
 import { getContactsByOwner, getContactById, getContactByEmail, createContact, updateContact, updateContactById, deleteContact, getStudentsByParentContactId } from "./db/contacts";
 import { getTasksByProject, createTask, updateTask, deleteTask, getTaskSteps } from "./db/tasks";
 import { getInvoicesByClient, getInvoiceById, getInvoiceLineItems, getContractsByClient, getVaultSubscription } from "./db/billing";
+import { getVoyageLogsForStudent, getVoyageLogsForParent, createVoyageLog, updateVoyageLog, getVoyageLogById } from "./db/voyageLog";
 
 export {
+  getVoyageLogsForStudent,
+  getVoyageLogsForParent,
+  createVoyageLog,
+  updateVoyageLog,
+  getVoyageLogById,
   getDb,
   upsertUser,
   getUserByOpenId,

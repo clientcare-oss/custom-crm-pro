@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -77,6 +77,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: CheckSquare, label: "Tasks", path: "/tasks" },
     { icon: Layers, label: "Tech Tasks", path: "/tech-tasks" },
     { icon: Wrench, label: "Tools", path: "/tools" },
+    { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
     { icon: LayoutTemplate, label: "Templates", path: "/templates" },
     { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
     { icon: GitBranch, label: "Workflows", path: "/workflows" },

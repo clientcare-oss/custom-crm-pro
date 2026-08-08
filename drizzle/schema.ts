@@ -1606,3 +1606,26 @@ export const developerRules = mysqlTable("developer_rules", {
 
 export type DeveloperRule = typeof developerRules.$inferSelect;
 export type InsertDeveloperRule = typeof developerRules.$inferInsert;
+
+export const voyageLogs = mysqlTable("voyage_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  contactId: int("contactId").notNull(),
+  portalUserId: int("portalUserId"),
+  cloudflareStreamId: varchar("cloudflareStreamId", { length: 255 }),
+  title: varchar("title", { length: 255 }).notNull(),
+  status: varchar("status", { length: 50 }).default("processing").notNull(),
+  duration: varchar("duration", { length: 50 }).default("0:00").notNull(),
+  rawTranscript: text("rawTranscript"),
+  formattedTranscript: text("formattedTranscript"),
+  executiveSummary: text("executiveSummary"),
+  approvedItems: text("approvedItems"),
+  unapprovedItems: text("unapprovedItems"),
+  crmTaskSuggestions: text("crmTaskSuggestions"),
+  caseCompassSummary: text("caseCompassSummary"),
+  recordingDate: timestamp("recordingDate").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type VoyageLog = typeof voyageLogs.$inferSelect;
+export type InsertVoyageLog = typeof voyageLogs.$inferInsert;

@@ -45,8 +45,10 @@ import { sponsorsRouter } from "./routers/sponsors";
 import { servicesRouter } from "./routers/services";
 import { complaintEngineRouter } from "./routers/complaintEngine";
 import { portalProvisioningRouter } from "./routers/portalProvisioning";
+import { voyageLogRouter } from "./routers/voyageLog";
 
 export const appRouter = router({
+  voyageLog: voyageLogRouter,
   portalProvisioning: portalProvisioningRouter,
   portalAuth: portalAuthRouter,
   smartFiles: smartFilesRouter,

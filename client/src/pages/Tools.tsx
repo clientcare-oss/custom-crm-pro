@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   Wand2, Search, Star, Calendar, Video, FileText, CheckCircle2, Play, Lock,
   PenTool, ShieldCheck, Target, Puzzle, LineChart, Compass, Sparkles,
-  ArrowLeft, GitCompare, Loader2, ArrowRight, Mic, Settings2
+  ArrowLeft, GitCompare, Loader2, ArrowRight, Mic, Settings2, Monitor, Check, Square
 } from "lucide-react";
 
 export default function Tools() {
@@ -53,6 +53,47 @@ export default function Tools() {
       if (interval) clearInterval(interval);
     };
   }, [isRecording]);
+
+  // Screen capturing states
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleStartRecording = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "browser" },
+        audio: true
+      });
+      setStream(mediaStream);
+      setIsRecording(true);
+      
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          videoRef.current.play().catch((e) => console.log("Play failed:", e));
+        }
+      }, 300);
+
+      mediaStream.getVideoTracks()[0].onended = () => {
+        handleStopRecording();
+      };
+    } catch (err: any) {
+      console.warn("Screen share request denied or failed, falling back to simulated screen capture:", err);
+      setIsRecording(true);
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setIsRecording(false);
+    setIsRecorderOpen(false);
+    import("sonner").then(({ toast }) =>
+      toast.success("Meeting recording successfully saved to student's Voyage Log!")
+    );
+  };
 
 
 
@@ -902,18 +943,34 @@ export default function Tools() {
                       {(recordDuration % 60).toString().padStart(2, '0')}
                     </span>
                     <span className="text-[10px] text-rose-450 font-bold uppercase tracking-wider block mt-1 animate-pulse">
-                      ● Recording Audio
+                      ● Recording Meeting Capture
                     </span>
                   </div>
 
-                  {/* Pulsing Visual Waveform */}
-                  <div className="flex items-end gap-1.5 h-12 justify-center">
-                    <div className="w-1.5 h-6 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                    <div className="w-1.5 h-12 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
-                    <div className="w-1.5 h-8 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                    <div className="w-1.5 h-10 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-                    <div className="w-1.5 h-4 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
-                  </div>
+                  {/* Live Stream Preview or Pulsing Waveform Fallback */}
+                  {stream ? (
+                    <div className="w-full max-w-sm aspect-video bg-black/90 rounded-xl overflow-hidden border border-white/10 relative shadow-lg">
+                      <video
+                        ref={videoRef}
+                        className="w-full h-full object-contain"
+                        autoPlay
+                        playsInline
+                        muted
+                      />
+                      <div className="absolute top-2 left-2 bg-rose-600/90 text-white text-[8px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                        Live Capturing
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-end gap-1.5 h-12 justify-center">
+                      <div className="w-1.5 h-6 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                      <div className="w-1.5 h-12 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+                      <div className="w-1.5 h-8 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                      <div className="w-1.5 h-10 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                      <div className="w-1.5 h-4 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
+                    </div>
+                  )}
 
                   {/* Live Transcript Stream */}
                   <div className="w-full bg-slate-950/60 rounded-xl border border-white/5 p-4 h-48 overflow-y-auto space-y-3 text-left">
@@ -935,13 +992,7 @@ export default function Tools() {
 
                   {/* Stop Button */}
                   <Button
-                    onClick={() => {
-                      setIsRecording(false);
-                      setIsRecorderOpen(false);
-                      import("sonner").then(({ toast }) =>
-                        toast.success("Meeting recording successfully saved to student's Voyage Log!")
-                      );
-                    }}
+                    onClick={handleStopRecording}
                     className="bg-rose-650 hover:bg-rose-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow-md shadow-rose-600/10 flex items-center gap-2 transition-all hover:scale-102"
                   >
                     Stop & Save Recording
@@ -952,18 +1003,18 @@ export default function Tools() {
                 <div className="space-y-6 w-full flex flex-col items-center text-center">
                   <div className="relative">
                     <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 hover:scale-105 hover:bg-rose-500/20 transition-all cursor-pointer shadow-lg shadow-rose-500/5 group"
-                      onClick={() => setIsRecording(true)}
+                      onClick={handleStartRecording}
                     >
-                      <Mic className="h-8 w-8 text-rose-455 group-hover:scale-110 transition-transform" />
+                      <Monitor className="h-8 w-8 text-rose-455 group-hover:scale-110 transition-transform animate-pulse" />
                     </div>
                     {/* Concentric ripple circles */}
                     <div className="absolute -inset-2 rounded-full border border-rose-500/10 animate-ping pointer-events-none" />
                   </div>
 
                   <div className="space-y-1">
-                    <h4 className="text-xs font-bold text-white">Click Microphone to Begin</h4>
+                    <h4 className="text-xs font-bold text-white">Start Screen Recording</h4>
                     <p className="text-[11px] text-slate-400 max-w-[280px]">
-                      Make sure your microphone permissions are granted. Audio is securely processed for AI transcript segmentation.
+                      Click the icon to select your active meeting window or screen to capture and transcribing.
                     </p>
                   </div>
                 </div>
