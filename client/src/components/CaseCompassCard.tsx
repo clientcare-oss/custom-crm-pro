@@ -447,8 +447,8 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
         {/* Sliding Details Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-0 z-20 transition-all duration-500 ease-in-out p-6 md:p-8 flex flex-col justify-between bg-slate-950/95 backdrop-blur-md border border-white/10 rounded-2xl ${
-            isDetailsOpen ? "translate-y-0 opacity-100 pointer-events-auto" : "translate-y-full opacity-0 pointer-events-none"
+          className={`absolute inset-x-0 bottom-0 top-0 z-20 transition-all duration-500 ease-in-out p-6 md:p-8 flex flex-col justify-between bg-slate-950/85 backdrop-blur-md border-t border-white/10 ${
+            isDetailsOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
           }`}
         >
           {/* Details Header */}
@@ -504,8 +504,8 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
         {/* Sliding Crop Editor Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-0 z-30 transition-all duration-500 ease-in-out p-6 md:p-8 flex flex-col justify-between bg-slate-950/95 backdrop-blur-md border border-white/10 rounded-2xl ${
-            isEditingBg ? "translate-y-0 opacity-100 pointer-events-auto" : "translate-y-full opacity-0 pointer-events-none"
+          className={`absolute inset-x-0 bottom-0 top-0 z-30 transition-all duration-500 ease-in-out p-6 md:p-8 flex flex-col justify-between bg-slate-950/85 backdrop-blur-md border-t border-white/10 ${
+            isEditingBg ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
           }`}
         >
           <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
