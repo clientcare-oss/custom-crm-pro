@@ -205,6 +205,21 @@ export function ClientPortalSidebar({
             {(!isCollapsed || mobile) && <span>{isLight ? "Dark" : "Light"}</span>}
           </button>
 
+          {isWorkspace && (
+            <button
+              onClick={() => setLocation("/projects")}
+              title="Back to CRM"
+              className={`flex items-center gap-1.5 rounded-lg transition-colors text-xs font-semibold
+                ${isLight 
+                  ? "text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25" 
+                  : "text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 hover:shadow-[0_0_8px_rgba(250,204,21,0.2)] border border-amber-400/20"}
+                ${isCollapsed && !mobile ? "p-2 justify-center w-8 h-8 shrink-0" : "px-2 py-1.5"}`}
+            >
+              <Home className="h-3.5 w-3.5 shrink-0" />
+              {(!isCollapsed || mobile) && <span>Back to CRM</span>}
+            </button>
+          )}
+
           <button
             onClick={onLogout}
             title="Logout"
