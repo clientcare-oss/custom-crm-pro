@@ -6,7 +6,8 @@ import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
-  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home
+  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
+  Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard
 } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -16,6 +17,7 @@ import { ClientPortalSidebar } from "@/components/ClientPortalSidebar";
 import { ClientPortalHeader } from "@/components/ClientPortalHeader";
 import PortalCommunicationTab from "@/components/portal/PortalCommunicationTab";
 import PortalTasksTab from "@/components/portal/PortalTasksTab";
+import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -562,6 +564,7 @@ const NAV_ITEMS = [
   { id: "cases",         icon: Briefcase,       label: "Cases" },
   { id: "financials",    icon: DollarSign,      label: "Billing" },
   { id: "appointments",  icon: Calendar,        label: "Appointments" },
+  { id: "voyage-log",    icon: Video,          label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,      label: "Notes" },
   { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
   { id: "details",       icon: Info,            label: "Details" },
@@ -1511,6 +1514,13 @@ export default function ClientPortal() {
               </div>
             )}
           </div>
+        );
+
+      case "voyage-log":
+        return (
+          <ScopedErrorBoundary>
+            <PortalVoyageLogTab isAdminView={isAdminView} isLight={isLight} />
+          </ScopedErrorBoundary>
         );
 
       case "attorney":

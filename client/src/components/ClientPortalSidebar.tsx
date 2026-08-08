@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
-  ChevronLeft, ChevronRight, Home
+  ChevronLeft, ChevronRight, Home, Video
 } from "lucide-react";
 
 const LOGO_URL = "/waypoint-logo.png";
@@ -18,6 +18,7 @@ export const NAV_ITEMS = [
   { id: "cases",         icon: Briefcase,       label: "Cases" },
   { id: "financials",    icon: DollarSign,      label: "Billing" },
   { id: "appointments",  icon: Calendar,        label: "Appointments" },
+  { id: "voyage-log",    icon: Video,          label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,      label: "Notes" },
   { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
   { id: "details",       icon: Info,            label: "Details" },
