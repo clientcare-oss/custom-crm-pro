@@ -10,7 +10,9 @@ import {
   Zap, Plus, Trash2, Play, Sliders, Clock, Mail, FileText, CheckSquare,
   ArrowRight, ChevronRight, Info, X, Check, Loader2, RefreshCw, User,
   Calendar, Layers, Sparkles, AlertCircle, ShieldAlert, Eye, Settings,
-  AlertTriangle, CheckCircle2, FileCheck, Send, HelpCircle, Split
+  AlertTriangle, CheckCircle2, FileCheck, Send, HelpCircle, Split,
+  FileSignature, DollarSign, Tag, Landmark, CalendarDays, Maximize,
+  Minimize2, ZoomIn, ZoomOut, CheckSquare as CheckIcon, MoreVertical
 } from "lucide-react";
 
 // ============ TYPES & SCHEMAS ============
@@ -41,7 +43,7 @@ interface AutomationStep {
 interface Automation {
   id: string;
   name: string;
-  triggerEvent: "lead_submitted" | "contract_signed" | "first_payment" | "meeting_scheduled" | "meeting_ended" | "file_uploaded" | "manual";
+  triggerEvent: string;
   isActive: boolean;
   steps: AutomationStep[];
   description: string;
@@ -104,13 +106,35 @@ Byron Honea, Master IEP Coach®`
   }
 };
 
+// ============ TRIGGERS DATABASE ============
+const TRIGGER_OPTIONS = [
+  { id: "meeting_scheduled", label: "Meeting scheduled", category: "Scheduling", desc: "Triggers when a discovery call or consultation is booked" },
+  { id: "lead_form_submitted", label: "Lead form submitted", category: "Inquiry", desc: "Triggers when a new client submits the intake form" },
+  { id: "session_scheduled", label: "Session scheduled", category: "Scheduling", desc: "Triggers when an advocacy session is booked on the calendar" },
+  { id: "session_starts", label: "Session starts", category: "Session Lifecycle", desc: "Triggers at the exact start time of an advocacy session" },
+  { id: "session_ends", label: "Session ends", category: "Session Lifecycle", desc: "Triggers immediately when an advocacy session wraps up" },
+  { id: "file_completed", label: "File is completed", category: "Files & Documents", desc: "Triggers when all forms/templates in a smart file are completed" },
+  { id: "questionnaire_submitted", label: "Questionnaire submitted", category: "Inquiry", desc: "Triggers when a parent submits their IEP intake questions" },
+  { id: "first_payment_paid", label: "First payment paid", category: "Billing", desc: "Triggers when the first retainer payment is cleared" },
+  { id: "invoice_paid_in_full", label: "Invoice paid in full", category: "Billing", desc: "Triggers when the balance of an invoice is paid to 100%" },
+  { id: "contract_signed", label: "Contract signed", category: "Agreement", desc: "Triggers when the parent signs the advocacy contract" },
+  { id: "all_signatures_collected", label: "All required signatures collected", category: "Agreement", desc: "Triggers when both parent and advocate execute the contract" },
+  { id: "project_date", label: "Project date", category: "Project Timeline", desc: "Triggers relative to a key student project milestone date" },
+  { id: "stage_changed", label: "Project stage changed", category: "Project Status", desc: "Triggers when a student transitions to a new advocacy stage" },
+  { id: "tags_added", label: "Tags added to project", category: "Project Status", desc: "Triggers when custom tags (e.g. IEP, 504) are appended" },
+  { id: "manual_trigger", label: "Manual trigger", category: "Quick Start", desc: "Runs only when manually triggered by the advocate" }
+];
+
+// Grouped triggers list for display in the sidebar categories
+const TRIGGER_CATEGORIES = ["Quick Start", "Scheduling", "Inquiry", "Session Lifecycle", "Files & Documents", "Billing", "Agreement", "Project Timeline", "Project Status"];
+
 // ============ STARTER SEEDS ============
 const DEFAULT_AUTOMATIONS: Automation[] = [
   {
     id: "auto-1",
     name: "Client Intake & Onboarding Flow",
     description: "Automates initial welcome emails, questionnaire requests, and scheduling links when a new lead submits the intake form.",
-    triggerEvent: "lead_submitted",
+    triggerEvent: "lead_form_submitted",
     isActive: true,
     activeRunsCount: 4,
     steps: [
@@ -208,42 +232,6 @@ const DEFAULT_AUTOMATIONS: Automation[] = [
         }
       }
     ]
-  },
-  {
-    id: "auto-3",
-    name: "Post-IEP Meeting Debrief & PWN Review",
-    description: "Fires post-meeting debrief guides, outlines PWN document audit steps, and tracks school compliance follow-ups.",
-    triggerEvent: "meeting_ended",
-    isActive: true,
-    activeRunsCount: 0,
-    steps: [
-      {
-        id: "step-3-1",
-        type: "email",
-        title: "Send PWN Review Guide",
-        delayValue: 1,
-        delayUnit: "days",
-        delayAnchor: "after_event",
-        config: {
-          templateName: "Post-IEP: PWN Document Review Checklist",
-          templateId: "pwn-review",
-          emailSubject: EMAIL_TEMPLATES["pwn-review"].subject,
-          emailBody: EMAIL_TEMPLATES["pwn-review"].body
-        }
-      },
-      {
-        id: "step-3-2",
-        type: "task",
-        title: "Audit PWN paperwork once received",
-        delayValue: 7,
-        delayUnit: "days",
-        delayAnchor: "after_prev",
-        config: {
-          taskTitle: "Verify school did not reject proposed accommodations without legal justification",
-          taskPriority: "high"
-        }
-      }
-    ]
   }
 ];
 
@@ -260,10 +248,14 @@ export default function Automations() {
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [zoomLevel, setZoomLevel] = useState(100);
 
   // Email template preview drawer overlay state
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const [previewTargetName, setPreviewTargetName] = useState("Baaarbra Sheep");
+
+  // Sidebar context triggers & steps configuration
+  const [configuringTrigger, setConfiguringTrigger] = useState(false);
 
   // Simulator state
   const { data: contactsList } = trpc.contacts.list.useQuery();
@@ -290,14 +282,15 @@ export default function Automations() {
       id: "auto-" + Date.now(),
       name: "New Custom Automation Sequence",
       description: "Custom trigger-based workspace flow builder template.",
-      triggerEvent: "manual",
-      isActive: true,
+      triggerEvent: "", // Set empty initially to show "Set a trigger in the sidebar" warning card!
+      isActive: false,
       activeRunsCount: 0,
       steps: []
     };
     saveAutomations([newAuto, ...automations]);
     setSelectedAutomation(newAuto);
     setActiveView("edit");
+    setConfiguringTrigger(true); // Open trigger side menu automatically!
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -341,6 +334,7 @@ export default function Automations() {
     setSelectedAutomation(updatedAuto);
     saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updatedAuto : a)));
     setActiveStepId(newStep.id);
+    setConfiguringTrigger(false);
     toast.success("Action step added to workflow");
   };
 
@@ -491,65 +485,41 @@ export default function Automations() {
     a.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Trigger labels helper
+  const getTriggerLabel = (id: string) => {
+    return TRIGGER_OPTIONS.find((t) => t.id === id)?.label || id;
+  };
+
   return (
     <div className="min-h-screen bg-background text-slate-100 p-6 md:p-8">
       <div className="max-w-6xl mx-auto w-full space-y-8">
 
-        {/* Header Block */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
-                HoneyBook Engine
-              </span>
-              <h1 className="text-2xl font-bold tracking-tight text-white font-serif">Workflow Automations</h1>
-            </div>
-            <p className="text-sm text-slate-400 mt-1">
-              Build trigger-based action flows to automate communication, smart file requests, and internal task queues.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {activeView !== "list" && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setActiveView("list");
-                  setSelectedAutomation(null);
-                  setActiveStepId(null);
-                }}
-                className="border-white/10 hover:bg-white/5 text-slate-300"
-              >
-                Back to Dashboard
-              </Button>
-            )}
-            {activeView === "list" ? (
-              <>
+        {/* ── VIEW 1: DASHBOARD LISTING ── */}
+        {activeView === "list" && (
+          <div className="space-y-6">
+            {/* Header Block */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 gap-4 text-left">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
+                    HoneyBook Engine
+                  </span>
+                  <h1 className="text-2xl font-bold tracking-tight text-white font-serif">Workflow Automations</h1>
+                </div>
+                <p className="text-sm text-slate-400 mt-1">
+                  Build trigger-based action flows to automate communication, smart file requests, and internal task queues.
+                </p>
+              </div>
+              <div className="flex gap-2">
                 <Button variant="outline" onClick={handleSeedStarters} className="border-white/10 text-slate-300 hover:bg-white/5">
                   <RefreshCw className="h-4 w-4 mr-2" /> Seed Starters
                 </Button>
                 <Button onClick={handleCreateNew} className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">
                   <Plus className="h-4 w-4 mr-2" /> New Automation
                 </Button>
-              </>
-            ) : activeView === "edit" && (
-              <Button
-                onClick={() => {
-                  setSimLogs([]);
-                  setIsSimulating(false);
-                  setActiveView("simulate");
-                }}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
-                disabled={!selectedAutomation?.steps.length}
-              >
-                <Play className="h-4 w-4 mr-2 fill-white" /> Test Simulation
-              </Button>
-            )}
-          </div>
-        </div>
+              </div>
+            </div>
 
-        {/* ── VIEW 1: AUTOMATIONS LIST DASHBOARD ── */}
-        {activeView === "list" && (
-          <div className="space-y-6">
             <div className="flex items-center bg-[#07162B]/50 border border-white/5 rounded-xl px-4 py-2">
               <Sliders className="h-4 w-4 text-slate-400 mr-3" />
               <input
@@ -566,7 +536,7 @@ export default function Automations() {
                 <Zap className="h-12 w-12 text-slate-500/40 mx-auto mb-4" />
                 <h3 className="text-base font-bold text-white mb-1">No automations configured</h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  Seed the starter automation templates or create a custom sequence to get started.
+                  Seed the starter templates or create a custom sequence to get started.
                 </p>
               </div>
             ) : (
@@ -577,6 +547,7 @@ export default function Automations() {
                     onClick={() => {
                       setSelectedAutomation(item);
                       setActiveView("edit");
+                      setConfiguringTrigger(false);
                     }}
                     className="bg-[#07162B]/40 hover:bg-[#07162B]/60 border border-white/5 hover:border-amber-500/20 rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between min-h-[190px] group text-left"
                   >
@@ -591,7 +562,7 @@ export default function Automations() {
                           </p>
                           <div className="flex flex-wrap items-center gap-2 mt-3.5">
                             <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-900 border border-white/10 px-2 py-0.5 rounded text-slate-400">
-                              Trigger: {item.triggerEvent.replace("_", " ")}
+                              Trigger: {getTriggerLabel(item.triggerEvent) || "Set trigger in sidebar"}
                             </span>
                             <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded text-indigo-400">
                               {item.steps.length} {item.steps.length === 1 ? 'Step' : 'Steps'}
@@ -618,7 +589,7 @@ export default function Automations() {
                     </div>
 
                     <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-4">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-505 text-slate-500">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <User className="h-3.5 w-3.5" />
                         <span>Active runs: {item.activeRunsCount} students</span>
                       </div>
@@ -638,173 +609,219 @@ export default function Automations() {
           </div>
         )}
 
-        {/* ── VIEW 2: HONEYBOOK STYLE FLOW EDITOR ── */}
+        {/* ── VIEW 2: HONEYBOOK STYLE CANVAS EDITOR ── */}
         {activeView === "edit" && selectedAutomation && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            {/* Editor Canvas (Left 8 Cols) */}
-            <div className="lg:col-span-8 space-y-6">
-
-              {/* Flow title settings */}
-              <div className="bg-[#07162B]/40 border border-white/5 rounded-2xl p-5 text-left space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Automation Workflow Name</label>
-                    <input
-                      type="text"
-                      value={selectedAutomation.name}
-                      onChange={(e) => {
-                        const updated = { ...selectedAutomation, name: e.target.value };
-                        setSelectedAutomation(updated);
-                        saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
-                      }}
-                      className="w-full bg-slate-950/40 border border-white/5 rounded-lg p-2 text-xs text-white focus:border-indigo-500"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Short Description / Objective</label>
-                    <input
-                      type="text"
-                      value={selectedAutomation.description}
-                      onChange={(e) => {
-                        const updated = { ...selectedAutomation, description: e.target.value };
-                        setSelectedAutomation(updated);
-                        saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
-                      }}
-                      placeholder="Brief note to describe the purpose of this flow"
-                      className="w-full bg-slate-950/40 border border-white/5 rounded-lg p-2 text-xs text-white focus:border-indigo-500"
-                    />
-                  </div>
+          <div className="space-y-6">
+            
+            {/* Screenshot Header Bar */}
+            <div className="flex items-center justify-between bg-[#07162B]/80 border border-white/10 rounded-xl p-3 md:px-5">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setActiveView("list");
+                    setSelectedAutomation(null);
+                    setActiveStepId(null);
+                  }}
+                  className="text-slate-400 hover:text-white"
+                  title="Back to Dashboard"
+                >
+                  <ChevronRight className="h-5 w-5 transform rotate-180" />
+                </button>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={selectedAutomation.name}
+                    onChange={(e) => {
+                      const updated = { ...selectedAutomation, name: e.target.value };
+                      setSelectedAutomation(updated);
+                      saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                    }}
+                    className="bg-transparent border-0 font-bold text-sm md:text-base text-white focus:ring-0 focus:outline-none p-0 w-48 md:w-72"
+                  />
+                  <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] uppercase tracking-wider font-mono">
+                    {getTriggerLabel(selectedAutomation.triggerEvent) || "Trigger Pending"}
+                  </Badge>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Initial Flow Trigger</label>
-                    <select
-                      value={selectedAutomation.triggerEvent}
-                      onChange={(e) => {
-                        const updated = { ...selectedAutomation, triggerEvent: e.target.value as any };
-                        setSelectedAutomation(updated);
-                        saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
-                      }}
-                      className="w-full bg-slate-950/40 border border-white/5 text-white rounded-lg p-2 text-xs"
-                    >
-                      <option value="lead_submitted">Lead Form Submitted</option>
-                      <option value="contract_signed">Agreement Signed</option>
-                      <option value="first_payment">First Retainer Payment Verified</option>
-                      <option value="meeting_scheduled">IEP Meeting Scheduled</option>
-                      <option value="meeting_ended">IEP Meeting Ended</option>
-                      <option value="file_uploaded">Client Uploaded File to Portal</option>
-                      <option value="manual">Manual Trigger</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Instances</label>
-                    <div className="w-full bg-slate-950/40 border border-white/5 rounded-lg p-2 text-xs text-slate-350">
-                      {selectedAutomation.activeRunsCount} active student records
-                    </div>
-                  </div>
-                </div>
+                
+                {/* Active switch */}
+                <div className="h-4 w-px bg-white/10 mx-2" />
+                <label className="relative inline-flex items-center cursor-pointer scale-90">
+                  <input
+                    type="checkbox"
+                    checked={selectedAutomation.isActive}
+                    onChange={() => {
+                      const updated = { ...selectedAutomation, isActive: !selectedAutomation.isActive };
+                      setSelectedAutomation(updated);
+                      saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                      toast.success(updated.isActive ? "Automation activated" : "Automation paused");
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-950/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-amber-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500/20 peer-checked:border peer-checked:border-amber-500/35"></div>
+                  <span className="text-[10px] text-slate-400 ml-2 font-bold uppercase tracking-wider group-data-[collapsible=icon]:hidden">
+                    {selectedAutomation.isActive ? "Active" : "Draft"}
+                  </span>
+                </label>
               </div>
 
-              {/* Node Sequence Diagram */}
-              <div className="relative pl-6 space-y-6">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSimLogs([]);
+                    setIsSimulating(false);
+                    setActiveView("simulate");
+                  }}
+                  className="border-white/10 text-slate-300 hover:bg-white/5 text-xs h-9 px-3.5"
+                  disabled={!selectedAutomation.steps.length}
+                >
+                  <Play className="h-3.5 w-3.5 mr-1.5 fill-slate-300" /> Test run
+                </Button>
+                <Button
+                  onClick={() => {
+                    toast.success("Automation sequence saved to database!");
+                  }}
+                  className="bg-indigo-650 hover:bg-indigo-600 text-white text-xs h-9 px-4 font-bold"
+                >
+                  Save
+                </Button>
+                <Button
+                  onClick={() => {
+                    const updated = { ...selectedAutomation, isActive: true };
+                    setSelectedAutomation(updated);
+                    saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                    toast.success("Automation published & activated!");
+                  }}
+                  className="bg-amber-500 hover:bg-amber-450 text-slate-950 text-xs h-9 px-4 font-bold"
+                >
+                  Activate
+                </Button>
+              </div>
+            </div>
 
-                {/* Vertical Dotted Connection Guide Line */}
-                <div className="absolute left-10 top-12 bottom-6 w-0.5 border-l-2 border-dashed border-white/10 z-0" />
+            {/* Split layout: Canvas editor vs Config Drawer */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              
+              {/* Canvas Board Area (Left 8 Cols) */}
+              <div className="lg:col-span-8 bg-[#030e1e] bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:18px_18px] border border-white/5 rounded-2xl p-6 min-h-[580px] relative flex flex-col justify-between overflow-hidden">
+                
+                {/* Visual Node Sequence Canvas */}
+                <div className="flex-1 flex flex-col items-center justify-start py-8 space-y-6 relative">
+                  
+                  {/* Dotted Vertical Connector line */}
+                  <div className="absolute left-1/2 top-14 bottom-14 w-0.5 border-l-2 border-dashed border-white/10 -translate-x-1/2 z-0" />
 
-                {/* Trigger Start Node */}
-                <div className="relative flex items-center gap-4 z-10 text-left">
-                  <div className="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-                    <Zap className="h-4 w-4" />
-                  </div>
-                  <div className="bg-[#07162B]/50 border border-white/5 p-3.5 rounded-xl min-w-[280px]">
-                    <span className="text-[9px] font-bold text-amber-450 uppercase tracking-widest block">Flow Trigger Event</span>
-                    <p className="text-xs font-bold text-white mt-1">
-                      {selectedAutomation.triggerEvent === "lead_submitted" && "When a client submits the Discovery Intake lead form"}
-                      {selectedAutomation.triggerEvent === "contract_signed" && "When a parent signs the service agreement contract"}
-                      {selectedAutomation.triggerEvent === "first_payment" && "When the first invoice retainer payment is cleared"}
-                      {selectedAutomation.triggerEvent === "meeting_scheduled" && "When an IEP consultation meeting is scheduled"}
-                      {selectedAutomation.triggerEvent === "meeting_ended" && "When a logged IEP meeting is finished"}
-                      {selectedAutomation.triggerEvent === "file_uploaded" && "When a client uploads a document in the Parent Portal"}
-                      {selectedAutomation.triggerEvent === "manual" && "When manually triggered by coach/advocate"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Inline plus trigger to add step */}
-                <div className="relative pl-4 z-10">
-                  <button
-                    onClick={() => handleAddStep(0)}
-                    className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-950 border border-white/10 hover:border-amber-500/40 text-slate-455 hover:text-white transition-all transform hover:scale-110"
-                    title="Insert step action"
+                  {/* Trigger Node Card (HoneyBook style) */}
+                  <div
+                    onClick={() => {
+                      setConfiguringTrigger(true);
+                      setActiveStepId(null);
+                    }}
+                    className={`relative z-10 w-full max-w-md bg-[#07162B]/95 border rounded-2xl p-4 flex items-center justify-between gap-4 cursor-pointer transition-all hover:scale-102 hover:shadow-xl ${
+                      configuringTrigger 
+                        ? "border-amber-500 shadow-md shadow-amber-500/5 bg-[#08182e]" 
+                        : selectedAutomation.triggerEvent 
+                          ? "border-white/10" 
+                          : "border-rose-500/40 animate-pulse bg-rose-500/5"
+                    }`}
                   >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                {/* Action step node items list */}
-                {selectedAutomation.steps.length === 0 ? (
-                  <div className="text-center py-10 bg-slate-950/20 border border-dashed border-white/5 rounded-2xl relative z-10 ml-8 text-slate-500 text-xs">
-                    No action steps in this sequence. Click "+" to insert your first email or task node.
+                    <div className="flex items-center gap-3.5 text-left">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                        <Zap className="h-5 w-5 animate-pulse" />
+                      </div>
+                      <div>
+                        {selectedAutomation.triggerEvent ? (
+                          <>
+                            <h4 className="font-serif font-black text-sm text-white">{getTriggerLabel(selectedAutomation.triggerEvent)}</h4>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 block">Trigger Event</span>
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="font-sans font-bold text-sm text-rose-350">Set a trigger in the sidebar</h4>
+                            <span className="text-[9px] font-bold text-rose-455 uppercase tracking-widest mt-0.5 block">Trigger Required</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      {!selectedAutomation.triggerEvent ? (
+                        <AlertTriangle className="h-4 w-4 text-rose-500" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  selectedAutomation.steps.map((step, idx) => {
-                    const isSelected = activeStepId === step.id;
-                    const hasCondition = step.config?.hasCondition;
-                    return (
-                      <React.Fragment key={step.id}>
-                        {/* Action Step Card */}
-                        <div
-                          onClick={() => setActiveStepId(step.id)}
-                          className={`relative flex items-center gap-4 z-10 text-left transition-all cursor-pointer ${
-                            isSelected ? "scale-[1.01]" : "hover:scale-[1.005]"
-                          }`}
-                        >
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border z-10 ${
-                            isSelected
-                              ? "bg-indigo-500/20 border-indigo-500 text-indigo-400"
-                              : "bg-slate-900 border-white/10 text-slate-400"
-                          }`}>
-                            {step.type === "email" && <Mail className="h-4 w-4" />}
-                            {step.type === "file" && <FileText className="h-4 w-4" />}
-                            {step.type === "task" && <CheckSquare className="h-4 w-4" />}
-                          </div>
 
-                          <div className={`bg-[#07162B]/50 border rounded-xl p-4 flex-1 flex justify-between items-center transition-all ${
-                            isSelected ? "border-indigo-500 shadow-md shadow-indigo-500/5 bg-[#07162B]" : "border-white/5 hover:border-white/10"
-                          }`}>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                                  step.type === "email" ? "bg-indigo-500/10 text-indigo-455 border border-indigo-500/20" :
-                                  step.type === "file" ? "bg-emerald-500/10 text-emerald-450 border border-emerald-500/20" :
-                                  "bg-amber-500/10 text-amber-455 border border-amber-500/20"
-                                }`}>
-                                  {step.type === "email" && "Send Email"}
-                                  {step.type === "file" && "Send Smart File"}
-                                  {step.type === "task" && "Create Task"}
-                                </span>
-                                <span className="text-[9px] font-semibold bg-slate-950/60 px-2 py-0.5 rounded text-slate-450 flex items-center gap-1">
-                                  <Clock className="h-3 w-3 text-slate-500" />
-                                  Delay: {step.delayValue === 0 ? 'Immediately' : `${step.delayValue} ${step.delayUnit} ${step.delayAnchor.replace('_', ' ')}`}
-                                </span>
-                                {hasCondition && (
-                                  <span className="text-[8px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 border border-amber-500/25 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                    <Split className="h-2.5 w-2.5" />
-                                    Conditional
-                                  </span>
-                                )}
+                  {/* Add action button node link */}
+                  <div className="relative z-10 flex justify-center">
+                    <button
+                      onClick={() => handleAddStep(0)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-950 border border-white/10 hover:border-amber-500/40 text-slate-400 hover:text-white transition-all transform hover:scale-110 shadow-lg"
+                      title="Insert action step"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Steps nodes list */}
+                  {selectedAutomation.steps.length === 0 ? (
+                    <div className="w-full max-w-sm text-center py-8 bg-slate-950/20 border border-dashed border-white/5 rounded-2xl relative z-10 text-slate-500 text-xs">
+                      No actions in this automation flow. Click the "+" button to add an email or task.
+                    </div>
+                  ) : (
+                    selectedAutomation.steps.map((step, idx) => {
+                      const isSelected = activeStepId === step.id;
+                      const hasCondition = step.config?.hasCondition;
+                      return (
+                        <React.Fragment key={step.id}>
+                          {/* Action Node Card (HoneyBook style) */}
+                          <div
+                            onClick={() => {
+                              setActiveStepId(step.id);
+                              setConfiguringTrigger(false);
+                            }}
+                            className={`relative z-10 w-full max-w-md bg-[#07162B]/95 border rounded-2xl p-4 flex items-center justify-between gap-4 cursor-pointer transition-all hover:scale-102 hover:shadow-xl ${
+                              isSelected ? "border-indigo-500 shadow-md shadow-indigo-500/5 bg-[#08182e]" : "border-white/10"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3.5 text-left min-w-0 flex-1">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-inner ${
+                                step.type === "email" ? "bg-indigo-500/10 border-indigo-500/25 text-indigo-400" :
+                                step.type === "file" ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-450" :
+                                "bg-amber-500/10 border-amber-500/25 text-amber-450"
+                              }`}>
+                                {step.type === "email" && <Mail className="h-4.5 w-4.5" />}
+                                {step.type === "file" && <FileText className="h-4.5 w-4.5" />}
+                                {step.type === "task" && <CheckSquare className="h-4.5 w-4.5" />}
                               </div>
-                              <h4 className="font-bold text-sm text-white mt-2 truncate">{step.title}</h4>
-                              <p className="text-[10px] text-slate-500 mt-0.5 truncate max-w-md">
-                                {step.type === "email" && `Template: ${step.config.templateName || 'Welcome response email'}`}
-                                {step.type === "file" && `File model: ${step.config.fileName || 'Intake questionnaire'}`}
-                                {step.type === "task" && `Task: ${step.config.taskTitle || 'Review IEP file'} (Priority: ${step.config.taskPriority || 'medium'})`}
-                              </p>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {step.type === "email" && "Send Email"}
+                                    {step.type === "file" && "Send Smart File"}
+                                    {step.type === "task" && "Create Task"}
+                                  </span>
+                                  <span className="text-[9px] font-semibold bg-slate-950/60 px-1.5 py-0.5 rounded text-slate-500 flex items-center gap-0.5">
+                                    <Clock className="h-3 w-3 text-slate-500" />
+                                    {step.delayValue === 0 ? 'Immediately' : `${step.delayValue} ${step.delayUnit}`}
+                                  </span>
+                                  {hasCondition && (
+                                    <span className="text-[8px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 border border-amber-500/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                      <Split className="h-2.5 w-2.5" />
+                                      Rule
+                                    </span>
+                                  )}
+                                </div>
+                                <h4 className="font-serif font-black text-sm text-white mt-1 truncate">{step.title}</h4>
+                                <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                                  {step.type === "email" && `Template: ${step.config.templateName || 'Welcome response'}`}
+                                  {step.type === "file" && `Smart File: ${step.config.fileName || 'Intake questionnaire'}`}
+                                  {step.type === "task" && `Task: ${step.config.taskTitle || 'Review file'} (Priority: ${step.config.taskPriority || 'medium'})`}
+                                </p>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 ml-4 shrink-0">
+                            <div className="flex items-center gap-1 shrink-0">
                               {step.type === "email" && step.config.templateId && (
                                 <Button
                                   type="button"
@@ -815,7 +832,6 @@ export default function Automations() {
                                     setPreviewTemplateId(step.config.templateId || null);
                                   }}
                                   className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg"
-                                  title="Preview email template content"
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
@@ -831,279 +847,397 @@ export default function Automations() {
                               </Button>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Inline plus trigger to add next step */}
-                        <div className="relative pl-4 z-10">
+                          {/* Inline plus trigger to add next step */}
+                          <div className="relative z-10 flex justify-center">
+                            <button
+                              onClick={() => handleAddStep(idx + 1)}
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-950 border border-white/10 hover:border-amber-500/40 text-slate-400 hover:text-white transition-all transform hover:scale-110 shadow-lg"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+
+                  {/* End Node */}
+                  <div className="relative z-10 flex flex-col items-center text-center pt-2">
+                    <div className="w-5 h-5 rounded-full bg-slate-950 border-2 border-white/10 shrink-0" />
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1.5">End automation</span>
+                  </div>
+
+                </div>
+
+                {/* Bottom-left zoom controls widget (HoneyBook style) */}
+                <div className="absolute bottom-4 left-4 bg-slate-950/80 border border-white/10 rounded-lg p-1 flex items-center gap-1.5 shadow-lg select-none">
+                  <button
+                    onClick={() => setZoomLevel(100)}
+                    className="h-6 px-1.5 rounded text-[10px] font-bold text-slate-400 hover:text-white hover:bg-white/5 flex items-center gap-0.5"
+                    title="Fit Canvas"
+                  >
+                    <Maximize className="h-3 w-3" />
+                    <span>{zoomLevel}%</span>
+                  </button>
+                  <div className="w-px h-3.5 bg-white/15" />
+                  <button
+                    onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
+                    className="h-6 w-6 rounded text-slate-400 hover:text-white hover:bg-white/5 flex items-center justify-center"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
+                    className="h-6 w-6 rounded text-slate-400 hover:text-white hover:bg-white/5 flex items-center justify-center"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Sidebar Config Panel Drawer (Right 4 Cols) */}
+              <div className="lg:col-span-4 bg-[#07162B]/40 border border-white/5 rounded-2xl p-6 text-left space-y-6 self-start max-h-[600px] overflow-y-auto">
+                
+                {/* ── SUB-VIEW A: SELECT A TRIGGER (Drawer state) ── */}
+                {configuringTrigger ? (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4.5 w-4.5 text-amber-400" />
+                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Select a trigger</h3>
+                      </div>
+                      <button
+                        onClick={() => setConfiguringTrigger(false)}
+                        className="text-slate-450 hover:text-white rounded"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Choose the event that initiates this automated flow. You can change this trigger at any time.
+                    </p>
+
+                    {/* Grouped triggers categories */}
+                    <div className="space-y-5">
+                      {TRIGGER_CATEGORIES.map((category) => {
+                        const categoryTriggers = TRIGGER_OPTIONS.filter((t) => t.category === category);
+                        if (categoryTriggers.length === 0) return null;
+                        return (
+                          <div key={category} className="space-y-2">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block border-b border-white/5 pb-1">
+                              {category}
+                            </span>
+                            <div className="space-y-1.5">
+                              {categoryTriggers.map((trig) => (
+                                <button
+                                  key={trig.id}
+                                  type="button"
+                                  onClick={() => {
+                                    if (selectedAutomation) {
+                                      const updated = { ...selectedAutomation, triggerEvent: trig.id };
+                                      setSelectedAutomation(updated);
+                                      saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                                      setConfiguringTrigger(false);
+                                      toast.success(`Workflow trigger set to: "${trig.label}"`);
+                                    }
+                                  }}
+                                  className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all flex flex-col gap-0.5 group ${
+                                    selectedAutomation.triggerEvent === trig.id
+                                      ? "bg-amber-500/10 border-amber-500 text-white font-semibold"
+                                      : "bg-slate-900 border-white/5 text-slate-400 hover:border-white/10 hover:bg-slate-900/60"
+                                  }`}
+                                >
+                                  <span className="text-white group-hover:text-amber-400 transition-colors">
+                                    {trig.label}
+                                  </span>
+                                  <span className="text-[9px] text-slate-550 leading-normal">
+                                    {trig.desc}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : activeStepId ? (
+                  /* ── SUB-VIEW B: CONFIGURE ACTION STEP ── */
+                  (() => {
+                    const step = selectedAutomation.steps.find((s) => s.id === activeStepId);
+                    if (!step) return null;
+                    return (
+                      <div className="space-y-6 animate-fade-in">
+                        
+                        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                          <div className="flex items-center gap-2">
+                            <Sliders className="h-4.5 w-4.5 text-indigo-400" />
+                            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Configure Action</h3>
+                          </div>
                           <button
-                            onClick={() => handleAddStep(idx + 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-950 border border-white/10 hover:border-amber-500/40 text-slate-455 hover:text-white transition-all transform hover:scale-110"
+                            onClick={() => setActiveStepId(null)}
+                            className="text-slate-450 hover:text-white rounded"
                           >
-                            <Plus className="h-3.5 w-3.5" />
+                            <X className="h-4 w-4" />
                           </button>
                         </div>
-                      </React.Fragment>
-                    );
-                  })
-                )}
 
-                {/* Connection End Dot */}
-                <div className="relative flex items-center justify-start pl-8 z-10 text-left">
-                  <div className="w-4 h-4 rounded-full bg-slate-900 border border-white/10 shrink-0" />
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-3">End of Sequence</span>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Config Sidebar Panel Drawer (Right 4 Cols) */}
-            <div className="lg:col-span-4 bg-[#07162B]/40 border border-white/5 rounded-2xl p-6 text-left space-y-6 self-start">
-              <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-                <Sliders className="h-4 w-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Configure Node Step</h3>
-              </div>
-
-              {!activeStepId ? (
-                <div className="py-12 text-center text-slate-500 space-y-2">
-                  <Info className="h-8 w-8 text-slate-500/40 mx-auto" />
-                  <p className="text-xs leading-relaxed max-w-[200px] mx-auto">Click on any action step card in the editor sequence to adjust its parameters.</p>
-                </div>
-              ) : (
-                (() => {
-                  const step = selectedAutomation.steps.find((s) => s.id === activeStepId);
-                  if (!step) return null;
-                  return (
-                    <div className="space-y-6">
-
-                      {/* Step type selector */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-350">Action Node Type</label>
-                        <select
-                          value={step.type}
-                          onChange={(e) => handleUpdateStep(step.id, { type: e.target.value as any })}
-                          className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
-                        >
-                          <option value="email">Send Automated Email</option>
-                          <option value="file">Send Portal Smart File</option>
-                          <option value="task">Create Internal Team Task</option>
-                        </select>
-                      </div>
-
-                      {/* Title label input */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-350">Step Action Title</label>
-                        <input
-                          type="text"
-                          value={step.title}
-                          onChange={(e) => handleUpdateStep(step.id, { title: e.target.value })}
-                          className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
-                        />
-                      </div>
-
-                      {/* Timing Config delays */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-350 flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-slate-400" />
-                          Timing & Delays
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            value={step.delayValue}
-                            onChange={(e) => handleUpdateStep(step.id, { delayValue: parseInt(e.target.value, 10) || 0 })}
-                            className="w-16 bg-slate-900 border border-white/10 text-white rounded-lg p-2 text-xs text-center focus:border-indigo-500"
-                          />
+                        {/* Step type selector */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-350">Action Node Type</label>
                           <select
-                            value={step.delayUnit}
-                            onChange={(e) => handleUpdateStep(step.id, { delayUnit: e.target.value as any })}
-                            className="flex-1 bg-slate-900 border border-white/10 text-white rounded-lg p-2 text-xs focus:border-indigo-500"
+                            value={step.type}
+                            onChange={(e) => handleUpdateStep(step.id, { type: e.target.value as any })}
+                            className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                           >
-                            <option value="minutes">Minutes</option>
-                            <option value="hours">Hours</option>
-                            <option value="days">Days</option>
-                            <option value="weeks">Weeks</option>
+                            <option value="email">Send Automated Email</option>
+                            <option value="file">Send Portal Smart File</option>
+                            <option value="task">Create Internal Team Task</option>
                           </select>
                         </div>
 
-                        <select
-                          value={step.delayAnchor}
-                          onChange={(e) => handleUpdateStep(step.id, { delayAnchor: e.target.value as any })}
-                          className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2 text-xs mt-2 focus:border-indigo-500"
-                        >
-                          <option value="after_trigger">After Initial Trigger</option>
-                          <option value="after_prev">After Previous Step Completed</option>
-                          <option value="before_event">Before Scheduled Event Date</option>
-                          <option value="after_event">After Scheduled Event Date</option>
-                        </select>
-                      </div>
+                        {/* Title label input */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-350">Step Action Title</label>
+                          <input
+                            type="text"
+                            value={step.title}
+                            onChange={(e) => handleUpdateStep(step.id, { title: e.target.value })}
+                            className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
+                          />
+                        </div>
 
-                      {/* Node Config detail options */}
-                      <div className="border-t border-white/5 pt-4 space-y-4">
-                        {step.type === "email" && (
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <label className="text-xs font-bold text-slate-350">Email Template Target</label>
-                              <select
-                                value={step.config.templateId || ""}
-                                onChange={(e) => {
-                                  const opt = e.target.selectedOptions[0];
-                                  handleUpdateStepConfig(step.id, {
-                                    templateId: e.target.value,
-                                    templateName: opt.text
-                                  });
-                                }}
-                                className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
-                              >
-                                <option value="welcome-email">Advocate Welcome & Calendar Invite</option>
-                                <option value="iep-parent-prep">IEP Prep: Parent Goal Formulation Guide</option>
-                                <option value="pwn-review">Post-IEP: PWN Document Review Checklist</option>
-                              </select>
-                            </div>
-
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Email Subject</span>
-                              <div className="bg-slate-950/60 border border-white/5 rounded-lg p-2.5 text-xs text-slate-350">
-                                {step.config.emailSubject || "Workflow message"}
-                              </div>
-                            </div>
-
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setPreviewTemplateId(step.config.templateId || null)}
-                              className="w-full border-white/10 text-slate-300 hover:bg-white/5 text-xs"
-                            >
-                              <Eye className="h-3.5 w-3.5 mr-2" /> View Email Text
-                            </Button>
-                          </div>
-                        )}
-
-                        {step.type === "file" && (
-                          <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-350">Attachment Smart File</label>
+                        {/* Timing Config delays */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-350 flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5 text-slate-400" />
+                            Timing & Delays
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              min="0"
+                              value={step.delayValue}
+                              onChange={(e) => handleUpdateStep(step.id, { delayValue: parseInt(e.target.value, 10) || 0 })}
+                              className="w-16 bg-slate-900 border border-white/10 text-white rounded-lg p-2 text-xs text-center focus:border-indigo-500"
+                            />
                             <select
-                              value={step.config.fileName || ""}
-                              onChange={(e) => handleUpdateStepConfig(step.id, { fileName: e.target.value })}
-                              className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
+                              value={step.delayUnit}
+                              onChange={(e) => handleUpdateStep(step.id, { delayUnit: e.target.value as any })}
+                              className="flex-1 bg-slate-900 border border-white/10 text-white rounded-lg p-2 text-xs focus:border-indigo-500"
                             >
-                              <option value="Client IEP Onboarding Form">Client IEP Onboarding Form</option>
-                              <option value="Standard Service Agreement">Standard Service Agreement</option>
-                              <option value="Classroom Accommodations sheet">Classroom Accommodations Checklist</option>
+                              <option value="minutes">Minutes</option>
+                              <option value="hours">Hours</option>
+                              <option value="days">Days</option>
+                              <option value="weeks">Weeks</option>
                             </select>
                           </div>
-                        )}
 
-                        {step.type === "task" && (
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <label className="text-xs font-bold text-slate-350">Task Description</label>
-                              <textarea
-                                value={step.config.taskTitle || ""}
-                                onChange={(e) => handleUpdateStepConfig(step.id, { taskTitle: e.target.value })}
-                                className="w-full h-20 bg-slate-900 border border-white/10 rounded-lg p-2 text-xs focus:border-indigo-500"
-                              />
+                          <select
+                            value={step.delayAnchor}
+                            onChange={(e) => handleUpdateStep(step.id, { delayAnchor: e.target.value as any })}
+                            className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2 text-xs mt-2 focus:border-indigo-500"
+                          >
+                            <option value="after_trigger">After Initial Trigger</option>
+                            <option value="after_prev">After Previous Step Completed</option>
+                            <option value="before_event">Before Scheduled Event Date</option>
+                            <option value="after_event">After Scheduled Event Date</option>
+                          </select>
+                        </div>
+
+                        {/* Node Config detail options */}
+                        <div className="border-t border-white/5 pt-4 space-y-4">
+                          {step.type === "email" && (
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-350">Email Template Target</label>
+                                <select
+                                  value={step.config.templateId || ""}
+                                  onChange={(e) => {
+                                    const opt = e.target.selectedOptions[0];
+                                    handleUpdateStepConfig(step.id, {
+                                      templateId: e.target.value,
+                                      templateName: opt.text
+                                    });
+                                  }}
+                                  className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
+                                >
+                                  <option value="welcome-email">Advocate Welcome & Calendar Invite</option>
+                                  <option value="iep-parent-prep">IEP Prep: Parent Goal Formulation Guide</option>
+                                  <option value="pwn-review">Post-IEP: PWN Document Review Checklist</option>
+                                </select>
+                              </div>
+
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Email Subject</span>
+                                <div className="bg-slate-950/60 border border-white/5 rounded-lg p-2.5 text-xs text-slate-350 truncate">
+                                  {step.config.emailSubject || "Workflow message"}
+                                </div>
+                              </div>
+
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setPreviewTemplateId(step.config.templateId || null)}
+                                className="w-full border-white/10 text-slate-300 hover:bg-white/5 text-xs"
+                              >
+                                <Eye className="h-3.5 w-3.5 mr-2" /> View Email Text
+                              </Button>
                             </div>
+                          )}
+
+                          {step.type === "file" && (
                             <div className="space-y-2">
-                              <label className="text-xs font-bold text-slate-350">Task Priority Level</label>
-                              <div className="grid grid-cols-3 gap-2">
-                                {["low", "medium", "high"].map((p) => (
-                                  <button
-                                    key={p}
-                                    type="button"
-                                    onClick={() => handleUpdateStepConfig(step.id, { taskPriority: p })}
-                                    className={`py-1.5 rounded text-[10px] font-bold uppercase transition-all ${
-                                      step.config.taskPriority === p
-                                        ? "bg-amber-500 text-slate-950 border border-amber-500/20"
-                                        : "bg-slate-900 text-slate-400 hover:bg-slate-900/60 border border-white/5"
-                                    }`}
-                                  >
-                                    {p}
-                                  </button>
-                                ))}
+                              <label className="text-xs font-bold text-slate-350">Attachment Smart File</label>
+                              <select
+                                value={step.config.fileName || ""}
+                                onChange={(e) => handleUpdateStepConfig(step.id, { fileName: e.target.value })}
+                                className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
+                              >
+                                <option value="Client IEP Onboarding Form">Client IEP Onboarding Form</option>
+                                <option value="Standard Service Agreement">Standard Service Agreement</option>
+                                <option value="Classroom Accommodations sheet">Classroom Accommodations Checklist</option>
+                              </select>
+                            </div>
+                          )}
+
+                          {step.type === "task" && (
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-350">Task Description</label>
+                                <textarea
+                                  value={step.config.taskTitle || ""}
+                                  onChange={(e) => handleUpdateStepConfig(step.id, { taskTitle: e.target.value })}
+                                  className="w-full h-20 bg-slate-900 border border-white/10 rounded-lg p-2 text-xs focus:border-indigo-500"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-350">Task Priority Level</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {["low", "medium", "high"].map((p) => (
+                                    <button
+                                      key={p}
+                                      type="button"
+                                      onClick={() => handleUpdateStepConfig(step.id, { taskPriority: p })}
+                                      className={`py-1.5 rounded text-[10px] font-bold uppercase transition-all ${
+                                        step.config.taskPriority === p
+                                          ? "bg-amber-500 text-slate-950 border border-amber-500/20"
+                                          : "bg-slate-900 text-slate-400 hover:bg-slate-900/60 border border-white/5"
+                                      }`}
+                                    >
+                                      {p}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
 
-                      {/* CONDITIONAL LOGIC EXPANSION */}
-                      <div className="border-t border-white/5 pt-4 space-y-4">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={step.config.hasCondition || false} 
-                            onChange={(e) => handleUpdateStepConfig(step.id, { hasCondition: e.target.checked })} 
-                            className="rounded border-white/10 bg-slate-900 text-indigo-650 focus:ring-0 focus:ring-offset-0 h-4 w-4"
-                          />
-                          <span className="text-xs font-bold text-slate-350">Apply Conditional Logic Rule</span>
-                        </label>
+                        {/* CONDITIONAL LOGIC */}
+                        <div className="border-t border-white/5 pt-4 space-y-4">
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={step.config.hasCondition || false} 
+                              onChange={(e) => handleUpdateStepConfig(step.id, { hasCondition: e.target.checked })} 
+                              className="rounded border-white/10 bg-slate-900 text-indigo-650 focus:ring-0 focus:ring-offset-0 h-4 w-4"
+                            />
+                            <span className="text-xs font-bold text-slate-350">Apply Conditional Logic Rule</span>
+                          </label>
 
-                        {step.config.hasCondition && (
-                          <div className="space-y-3 bg-slate-950/40 p-3 rounded-lg border border-white/5">
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Condition Field</label>
-                              <select
-                                value={step.config.conditionField || "student_tag"}
-                                onChange={(e) => handleUpdateStepConfig(step.id, { conditionField: e.target.value })}
-                                className="w-full bg-slate-900 border border-white/10 text-white rounded p-1 text-[11px]"
-                              >
-                                <option value="student_tag">Student Tag</option>
-                                <option value="contact_status">Contact Status</option>
-                                <option value="contract_status">Contract Status</option>
-                              </select>
+                          {step.config.hasCondition && (
+                            <div className="space-y-3 bg-slate-950/40 p-3 rounded-lg border border-white/5">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Condition Field</label>
+                                <select
+                                  value={step.config.conditionField || "student_tag"}
+                                  onChange={(e) => handleUpdateStepConfig(step.id, { conditionField: e.target.value })}
+                                  className="w-full bg-slate-900 border border-white/10 text-white rounded p-1 text-[11px]"
+                                >
+                                  <option value="student_tag">Student Tag</option>
+                                  <option value="contact_status">Contact Status</option>
+                                  <option value="contract_status">Contract Status</option>
+                                </select>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Operator</label>
+                                <select
+                                  value={step.config.conditionOperator || "equals"}
+                                  onChange={(e) => handleUpdateStepConfig(step.id, { conditionOperator: e.target.value })}
+                                  className="w-full bg-slate-900 border border-white/10 text-white rounded p-1 text-[11px]"
+                                >
+                                  <option value="equals">Equals</option>
+                                  <option value="contains">Contains</option>
+                                  <option value="not_equals">Does Not Equal</option>
+                                </select>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Value to Compare</label>
+                                <input
+                                  type="text"
+                                  value={step.config.conditionValue || ""}
+                                  onChange={(e) => handleUpdateStepConfig(step.id, { conditionValue: e.target.value })}
+                                  placeholder="e.g. IEP, lead, active, signed"
+                                  className="w-full bg-slate-900 border border-white/10 text-white rounded p-1 text-[11px]"
+                                />
+                              </div>
                             </div>
+                          )}
+                        </div>
 
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Operator</label>
-                              <select
-                                value={step.config.conditionOperator || "equals"}
-                                onChange={(e) => handleUpdateStepConfig(step.id, { conditionOperator: e.target.value })}
-                                className="w-full bg-slate-900 border border-white/10 text-white rounded p-1 text-[11px]"
-                              >
-                                <option value="equals">Equals</option>
-                                <option value="contains">Contains</option>
-                                <option value="not_equals">Does Not Equal</option>
-                              </select>
-                            </div>
+                        <div className="border-t border-white/5 pt-4">
+                          <Button
+                            onClick={() => setActiveStepId(null)}
+                            className="w-full bg-indigo-650 hover:bg-indigo-600 text-white text-xs font-bold"
+                          >
+                            Confirm & Save Config
+                          </Button>
+                        </div>
 
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Value to Compare</label>
-                              <input
-                                type="text"
-                                value={step.config.conditionValue || ""}
-                                onChange={(e) => handleUpdateStepConfig(step.id, { conditionValue: e.target.value })}
-                                placeholder="e.g. IEP, lead, active, signed"
-                                className="w-full bg-slate-900 border border-white/10 text-white rounded p-1 text-[11px]"
-                              />
-                            </div>
-                          </div>
-                        )}
                       </div>
-
-                      <div className="border-t border-white/5 pt-4">
-                        <Button
-                          onClick={() => setActiveStepId(null)}
-                          className="w-full bg-indigo-650 hover:bg-indigo-600 text-white text-xs font-bold"
-                        >
-                          Confirm & Save Config
-                        </Button>
-                      </div>
-
+                    );
+                  })()
+                ) : (
+                  /* ── SUB-VIEW C: IDLE INSTRUCTIONS ── */
+                  <div className="py-12 text-center text-slate-500 space-y-3">
+                    <Settings className="h-8 w-8 text-slate-500/40 mx-auto" />
+                    <p className="text-xs max-w-[200px] mx-auto leading-relaxed">
+                      Click the **Trigger Node** or any **Action Card** in the center sequence canvas to configure its settings.
+                    </p>
+                    <div className="pt-4 border-t border-white/5 mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setConfiguringTrigger(true);
+                          setActiveStepId(null);
+                        }}
+                        className="w-full border-white/10 text-slate-300 text-xs"
+                      >
+                        Change Flow Trigger
+                      </Button>
                     </div>
-                  );
-                })()
-              )}
-            </div>
+                  </div>
+                )}
 
+              </div>
+
+            </div>
           </div>
         )}
 
         {/* ── VIEW 3: FLOW SIMULATOR DRY RUN ── */}
         {activeView === "simulate" && selectedAutomation && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
-
+            
             {/* Simulation Setup card (Left 5 Cols) */}
             <div className="lg:col-span-5 bg-[#07162B]/40 border border-white/5 rounded-2xl p-6 space-y-6 self-start">
               <div className="flex items-center gap-2 border-b border-white/5 pb-3">
@@ -1137,7 +1271,7 @@ export default function Automations() {
                 </p>
                 <div className="text-[10px] text-slate-400 space-y-2 border-t border-white/5 pt-2 mt-2">
                   <div><strong>Total Steps queued:</strong> {selectedAutomation.steps.length}</div>
-                  <div><strong>Triggering event:</strong> {selectedAutomation.triggerEvent.replace('_', ' ')}</div>
+                  <div><strong>Triggering event:</strong> {getTriggerLabel(selectedAutomation.triggerEvent) || "Manual Trigger"}</div>
                 </div>
               </div>
 
