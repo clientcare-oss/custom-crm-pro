@@ -1002,6 +1002,7 @@ export default function ClientPortal() {
             <ClientPortalDashboard
               displayName={displayName}
               effectiveStudent={effectiveStudent}
+              isAdminView={isAdminView}
               studentAppointments={studentAppointments}
               messages={messages}
               studentTasks={studentTasks}

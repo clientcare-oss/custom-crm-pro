@@ -24,6 +24,7 @@ interface ClientPortalDashboardProps {
   onSelectStudent?: (id: number) => void;
   onOpenIepLinkDialog?: (studentId: number, studentName: string) => void;
   allMyAppointments?: any[];
+  isAdminView?: boolean;
 }
 
 // ── Detailed Gold Compass Rose SVG ──────────────────────────────────────────
@@ -82,6 +83,7 @@ export default function ClientPortalDashboard({
   onSelectStudent,
   onOpenIepLinkDialog,
   allMyAppointments = [],
+  isAdminView = false,
 }: ClientPortalDashboardProps) {
 
   const { theme } = useTheme();
@@ -334,7 +336,7 @@ export default function ClientPortalDashboard({
         
         {/* Left (8 Cols): YOUR ADVOCACY JOURNEY */}
         <div className="lg:col-span-8 space-y-6">
-          <CaseCompassCard caseId={effectiveStudent?.caseId ?? undefined} />
+          <CaseCompassCard caseId={effectiveStudent?.caseId ?? undefined} isAdminView={isAdminView} />
 
           {/* Messages Block (repositioned below Case Compass Card) */}
           <div 
