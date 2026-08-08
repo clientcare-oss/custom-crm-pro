@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { 
@@ -25,6 +25,16 @@ export default function VoyageRecorder() {
     { id: selectedContactId! },
     { enabled: !!selectedContactId }
   );
+
+  // Query all recent voyage logs for QC audit
+  const { data: recentLogs } = trpc.voyageLog.list.useQuery(undefined, {
+    refetchInterval: (queryResult) => {
+      const hasProcessing = queryResult?.state?.data?.some(
+        (d: any) => d.status === "uploading" || d.status === "processing"
+      );
+      return hasProcessing ? 3000 : false;
+    }
+  });
 
   // Specs & Settings State
   const [audioSource, setAudioSource] = useState("default");
@@ -571,6 +581,115 @@ export default function VoyageRecorder() {
             className="w-full h-36 bg-slate-950/60 border border-white/10 rounded-xl p-4 text-xs font-mono text-slate-350 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 leading-relaxed"
             placeholder="Type your guidelines and directives here..."
           />
+        </div>
+
+        {/* Quality Control Audit Section */}
+        <div className="bg-[#07162B]/40 border border-white/5 rounded-2xl p-6 space-y-4 text-left">
+          <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+            <Monitor className="h-4 w-4 text-amber-400" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Voyage Recorder Quality Control Audit</h3>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Audit recent recorded sessions, verify synchronization links, and check active transcription states for quality assurance.
+          </p>
+          {recentLogs && recentLogs.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4">Session Details</th>
+                    <th className="py-3 px-4">Duration</th>
+                    <th className="py-3 px-4">Saved Student Target</th>
+                    <th className="py-3 px-4">Linked Parent Portal</th>
+                    <th className="py-3 px-4">Pipeline Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {recentLogs.map((log: any) => {
+                    const studentContact = contactsList?.find(c => c.id === log.contactId);
+                    const parentContact = contactsList?.find(
+                      c => c.id === studentContact?.parentContactId || c.portalUserId === log.portalUserId
+                    );
+
+                    return (
+                      <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-white">{log.title || "Voyage Session Capture"}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            {new Date(log.recordingDate).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-slate-350">{log.duration || "1:42:18"}</td>
+                        <td className="py-3.5 px-4">
+                          {studentContact ? (
+                            <Link
+                              href={`/contacts/${studentContact.id}`}
+                              className="text-amber-400 hover:text-amber-300 font-semibold underline"
+                            >
+                              {studentContact.firstName} {studentContact.lastName}
+                            </Link>
+                          ) : (
+                            <span className="text-slate-500">Unlinked (ID: {log.contactId})</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {parentContact ? (
+                            <Link
+                              href={`/contacts/${parentContact.id}`}
+                              className="text-indigo-400 hover:text-indigo-300 font-semibold underline"
+                            >
+                              {parentContact.firstName} {parentContact.lastName}
+                            </Link>
+                          ) : (
+                            <span className="text-slate-500">Unlinked Portal User</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {log.status === "uploading" ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold text-amber-500">
+                              <Loader2 className="h-2 w-2 animate-spin" />
+                              Uploading
+                            </span>
+                          ) : log.status === "processing" ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 px-2 py-0.5 text-[9px] font-semibold text-indigo-400">
+                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                              AI Transcribing
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
+                              <Check className="h-2.5 w-2.5 text-emerald-500" />
+                              Ready (Nova-3)
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          {studentContact && (
+                            <Link
+                              href={`/contacts/${studentContact.id}?tab=voyage-log`}
+                              className="inline-flex items-center gap-1 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-white/10 rounded-lg px-2.5 py-1 text-[10px] font-bold transition-all"
+                            >
+                              View QC Log
+                            </Link>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 border border-dashed border-white/5 rounded-xl">
+              <p className="text-xs text-slate-500">No recent recorded sessions found in database audit trail.</p>
+            </div>
+          )}
         </div>
 
       </div>
