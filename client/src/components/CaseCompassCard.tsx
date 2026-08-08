@@ -529,14 +529,13 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
           }}
         >
           {/* Details Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
                 <activeSectionObj.icon className="h-5 w-5 text-amber-300" />
               </div>
               <div className="text-left">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-sans">Case Dimension</span>
-                <h3 className="font-extrabold text-white text-base leading-none mt-0.5">{activeSectionObj.label}</h3>
+                <h3 className="font-extrabold text-white text-base">{activeSectionObj.label}</h3>
               </div>
             </div>
             <button
