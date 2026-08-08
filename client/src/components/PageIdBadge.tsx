@@ -37,6 +37,7 @@ const PAGE_IDS: Record<string, { id: string; name: string }> = {
   "/intake":                  { id: "PG-028", name: "Intake Form" },
   "/book":                    { id: "PG-029", name: "Booking" },
   "/workspace":               { id: "PG-031", name: "Workspace" },
+  "/ai-connections":          { id: "PG-032", name: "AI Connections" },
 };
 
 const DYNAMIC_ROUTES: Array<{ prefix: string; id: string; name: string }> = [

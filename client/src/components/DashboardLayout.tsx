@@ -86,11 +86,11 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
     { icon: UserCheck, label: "Team", path: "/team" },
     { icon: Brain, label: "BrainDump", path: "/brain-dump" },
-    { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
-    { icon: Briefcase, label: "Services", path: "/services" },
+    {icon: Briefcase, label: "Services", path: "/services" },
     { icon: Heart, label: "Sponsors", path: "/sponsors" },
     { icon: Banknote, label: "Bill Guardian", path: "/bill-guardian" },
     { icon: Zap, label: "Automations", path: "/automations" },
+    { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
     { icon: Plug, label: "Integrations", path: "/integrations" },
     { icon: Compass, label: "Client Portal", path: "/portal-management" },
     { icon: LayoutGrid, label: "Workspace", path: "/workspace" },
@@ -719,6 +719,8 @@ const PAGE_LIST = [
   { id: "PG-027", name: "Portal Management", path: "/portal-management" },
   { id: "PG-028", name: "Intake Form", path: "/intake" },
   { id: "PG-029", name: "Booking", path: "/book" },
+  { id: "PG-031", name: "Workspace", path: "/workspace" },
+  { id: "PG-032", name: "AI Connections", path: "/ai-connections" },
 ];
 
 function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }) {
