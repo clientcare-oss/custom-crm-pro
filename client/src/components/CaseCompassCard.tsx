@@ -590,11 +590,11 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
         {/* Sliding Crop Editor Overlay: Slides up over the compass dial */}
         <div 
           className={`absolute inset-x-0 bottom-0 h-[60%] z-30 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
-            isEditingBg ? "pointer-events-auto" : "pointer-events-none"
+            isEditingBg && isAdminView ? "pointer-events-auto" : "pointer-events-none"
           }`}
           style={{ 
-            backgroundColor: `rgba(2, 6, 23, ${(bgSettings.overlayOpacity ?? 90) / 100})`,
-            transform: isEditingBg ? 'translateY(0)' : 'translateY(100%)',
+            backgroundColor: 'rgba(2, 6, 23, 0.3)',
+            transform: isEditingBg && isAdminView ? 'translateY(0)' : 'translateY(100%)',
             transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
