@@ -26,6 +26,7 @@ export async function listAutomations() {
     results.push({
       ...item,
       isActive: Boolean(item.isActive),
+      triggerConfig: item.triggerConfig ? JSON.parse(item.triggerConfig) : null,
       steps: steps.map((s) => ({
         ...s,
         config: JSON.parse(s.config)
@@ -52,6 +53,7 @@ export async function getAutomationById(id: number) {
   return {
     ...item,
     isActive: Boolean(item.isActive),
+    triggerConfig: item.triggerConfig ? JSON.parse(item.triggerConfig) : null,
     steps: steps.map((s) => ({
       ...s,
       config: JSON.parse(s.config)
@@ -74,6 +76,7 @@ export async function saveAutomation(data: {
   description?: string;
   triggerEvent: string;
   isActive: boolean;
+  triggerConfig?: any;
   steps: any[];
 }) {
   const db = await getDb();
@@ -90,6 +93,7 @@ export async function saveAutomation(data: {
         description: data.description || "",
         triggerEvent: data.triggerEvent,
         isActive: data.isActive,
+        triggerConfig: data.triggerConfig ? JSON.stringify(data.triggerConfig) : null,
         updatedAt: new Date()
       })
       .where(eq(honeybookAutomations.id, automationId));
@@ -102,7 +106,8 @@ export async function saveAutomation(data: {
       name: data.name,
       description: data.description || "",
       triggerEvent: data.triggerEvent,
-      isActive: data.isActive
+      isActive: data.isActive,
+      triggerConfig: data.triggerConfig ? JSON.stringify(data.triggerConfig) : null
     });
     automationId = Number((result as any).lastInsertRowid);
   }
@@ -156,6 +161,7 @@ export async function triggerAutomationFlow(triggerEvent: string, contactId: num
 
   for (const auto of matchedAutomations) {
     logs.push(`⚙️ Processing matching workflow sequence: "${auto.name}"`);
+    const triggerConfig = auto.triggerConfig ? JSON.parse(auto.triggerConfig) : {};
     
     // Fetch steps
     const steps = await db
@@ -204,8 +210,8 @@ export async function triggerAutomationFlow(triggerEvent: string, contactId: num
       if (dryRun) {
         // Log dry-run actions
         if (step.type === "email") {
-          const googleUrl = config.googleReviewUrl || "https://g.page/r/waypoint-advocates/review";
-          const testimonialUrl = config.testimonialUrl || "https://waypointadvocates.com/testimonial";
+          const googleUrl = triggerConfig.googleReviewUrl || config.googleReviewUrl || "https://g.page/r/waypoint-advocates/review";
+          const testimonialUrl = triggerConfig.testimonialUrl || config.testimonialUrl || "https://waypointadvocates.com/testimonial";
           logs.push(`📧 [Dry Run] Email template "${config.templateName || 'Intake Guide'}" would send to ${studentName}`);
           logs.push(`   └─ Resolved links -> Google: ${googleUrl} | Testimonial: ${testimonialUrl}`);
         } else if (step.type === "file") {
@@ -241,8 +247,8 @@ export async function triggerAutomationFlow(triggerEvent: string, contactId: num
           });
           logs.push(`✅ Created CRM Task: "${step.title}" linked to project ID ${proj.id}`);
         } else if (step.type === "email") {
-          const googleUrl = config.googleReviewUrl || "https://g.page/r/waypoint-advocates/review";
-          const testimonialUrl = config.testimonialUrl || "https://waypointadvocates.com/testimonial";
+          const googleUrl = triggerConfig.googleReviewUrl || config.googleReviewUrl || "https://g.page/r/waypoint-advocates/review";
+          const testimonialUrl = triggerConfig.testimonialUrl || config.testimonialUrl || "https://waypointadvocates.com/testimonial";
           // Simulating email dispatch logs for Waypoint advocates logs panel
           logs.push(`📧 Dispatched template "${config.templateName || 'Welcome response'}" to client.`);
           logs.push(`   └─ Resolved links -> Google: ${googleUrl} | Testimonial: ${testimonialUrl}`);

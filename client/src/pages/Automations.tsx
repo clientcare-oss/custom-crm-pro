@@ -49,6 +49,11 @@ interface Automation {
   steps: AutomationStep[];
   description: string;
   activeRunsCount: number;
+  triggerConfig?: {
+    meetingType?: string;
+    googleReviewUrl?: string;
+    testimonialUrl?: string;
+  };
 }
 
 // ============ MOCK EMAIL TEMPLATES PREVIEW DATA ============
@@ -296,6 +301,11 @@ export default function Automations() {
         triggerEvent: a.triggerEvent,
         isActive: Boolean(a.isActive),
         activeRunsCount: 0,
+        triggerConfig: a.triggerConfig || {
+          meetingType: "Any Meeting",
+          googleReviewUrl: "https://g.page/r/waypoint-advocates/review",
+          testimonialUrl: "https://waypointadvocates.com/testimonial"
+        },
         steps: (a.steps || []).map((s: any) => ({
           id: String(s.id),
           type: s.type,
@@ -329,6 +339,7 @@ export default function Automations() {
         description: item.description,
         triggerEvent: item.triggerEvent,
         isActive: !item.isActive,
+        triggerConfig: item.triggerConfig,
         steps: item.steps.map((s) => ({
           type: s.type,
           title: s.title,
@@ -384,6 +395,11 @@ export default function Automations() {
           description: auto.description || "",
           triggerEvent: auto.triggerEvent,
           isActive: auto.isActive,
+          triggerConfig: {
+            meetingType: "Any Meeting",
+            googleReviewUrl: "https://g.page/r/waypoint-advocates/review",
+            testimonialUrl: "https://waypointadvocates.com/testimonial"
+          },
           steps: auto.steps.map((s) => ({
             type: s.type,
             title: s.title,
@@ -495,6 +511,7 @@ export default function Automations() {
         description: selectedAutomation.description,
         triggerEvent: selectedAutomation.triggerEvent,
         isActive: selectedAutomation.isActive,
+        triggerConfig: selectedAutomation.triggerConfig,
         steps: selectedAutomation.steps.map((s) => ({
           type: s.type,
           title: s.title,
@@ -775,6 +792,7 @@ export default function Automations() {
                       description: selectedAutomation.description,
                       triggerEvent: selectedAutomation.triggerEvent,
                       isActive: true,
+                      triggerConfig: selectedAutomation.triggerConfig,
                       steps: selectedAutomation.steps.map((s) => ({
                         type: s.type,
                         title: s.title,
@@ -1016,6 +1034,83 @@ export default function Automations() {
                     <p className="text-[11px] text-slate-400 leading-relaxed">
                       Choose the event that initiates this automated flow. You can change this trigger at any time.
                     </p>
+
+                    {/* Trigger Options Configuration Block */}
+                    {selectedAutomation.triggerEvent === "review_request_point" && (
+                      <div className="bg-[#0b1e36]/60 border border-amber-500/20 rounded-xl p-4 space-y-4">
+                        <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sliders className="h-3.5 w-3.5 text-amber-400" />
+                          Trigger Settings
+                        </h4>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-350 uppercase tracking-wider block">Completed Meeting Type</label>
+                          <select
+                            value={selectedAutomation.triggerConfig?.meetingType || "Any Meeting"}
+                            onChange={(e) => {
+                              const updated = {
+                                ...selectedAutomation,
+                                triggerConfig: {
+                                  ...(selectedAutomation.triggerConfig || {}),
+                                  meetingType: e.target.value
+                                }
+                              };
+                              setSelectedAutomation(updated);
+                              setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                            }}
+                            className="w-full bg-slate-900 border border-white/10 text-white rounded p-2 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                          >
+                            <option value="Any Meeting">Any Meeting / Session Type</option>
+                            <option value="Discovery Consultation">Discovery Consultation Session</option>
+                            <option value="First IEP Meeting">First IEP Meeting</option>
+                            <option value="Annual IEP Review">Annual IEP Review Session</option>
+                            <option value="Eligibility Meeting">Eligibility/Consent Meeting</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-350 uppercase tracking-wider block">Google Review Link</label>
+                          <input
+                            type="text"
+                            value={selectedAutomation.triggerConfig?.googleReviewUrl || "https://g.page/r/waypoint-advocates/review"}
+                            onChange={(e) => {
+                              const updated = {
+                                ...selectedAutomation,
+                                triggerConfig: {
+                                  ...(selectedAutomation.triggerConfig || {}),
+                                  googleReviewUrl: e.target.value
+                                }
+                              };
+                              setSelectedAutomation(updated);
+                              setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                            }}
+                            placeholder="https://g.page/r/..."
+                            className="w-full bg-slate-900 border border-white/10 text-white rounded p-2 text-xs focus:border-indigo-500"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-350 uppercase tracking-wider block">Testimonial Form Link</label>
+                          <input
+                            type="text"
+                            value={selectedAutomation.triggerConfig?.testimonialUrl || "https://waypointadvocates.com/testimonial"}
+                            onChange={(e) => {
+                              const updated = {
+                                ...selectedAutomation,
+                                triggerConfig: {
+                                  ...(selectedAutomation.triggerConfig || {}),
+                                  testimonialUrl: e.target.value
+                                }
+                              };
+                              setSelectedAutomation(updated);
+                              setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                            }}
+                            placeholder="https://waypointadvocates.com/..."
+                            className="w-full bg-slate-900 border border-white/10 text-white rounded p-2 text-xs focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Grouped triggers categories */}
                     <div className="space-y-5">
@@ -1496,8 +1591,8 @@ export default function Automations() {
               <pre className="whitespace-pre-wrap leading-relaxed font-sans text-slate-300">
                 {EMAIL_TEMPLATES[previewTemplateId].body
                   .replace("{{studentName}}", previewTargetName)
-                  .replace("{{googleReviewUrl}}", selectedAutomation?.steps.find(s => s.config?.templateId === "review-request")?.config?.googleReviewUrl || "https://g.page/r/waypoint-advocates/review")
-                  .replace("{{testimonialUrl}}", selectedAutomation?.steps.find(s => s.config?.templateId === "review-request")?.config?.testimonialUrl || "https://waypointadvocates.com/testimonial")}
+                  .replace("{{googleReviewUrl}}", selectedAutomation?.triggerConfig?.googleReviewUrl || "https://g.page/r/waypoint-advocates/review")
+                  .replace("{{testimonialUrl}}", selectedAutomation?.triggerConfig?.testimonialUrl || "https://waypointadvocates.com/testimonial")}
               </pre>
             </div>
 

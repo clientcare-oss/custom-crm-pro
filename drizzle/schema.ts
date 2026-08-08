@@ -1637,6 +1637,7 @@ export const honeybookAutomations = mysqlTable("honeybook_automations", {
   description: text("description"),
   triggerEvent: varchar("triggerEvent", { length: 128 }).notNull(),
   isActive: boolean("isActive").default(false).notNull(),
+  triggerConfig: text("triggerConfig"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

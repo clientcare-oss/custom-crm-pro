@@ -28,6 +28,7 @@ export const automationsRouter = router({
         description: z.string().optional(),
         triggerEvent: z.string(),
         isActive: z.boolean(),
+        triggerConfig: z.any().optional(),
         steps: z.array(
           z.object({
             type: z.enum(["email", "task", "file"]),
