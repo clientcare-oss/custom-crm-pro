@@ -235,48 +235,49 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
   return (
     <div className="space-y-3">
-      {/* Interactive Instrument Panel Wrapper */}
-      <div 
-        className="relative rounded-2xl border border-white/10 shadow-xl overflow-hidden bg-cover bg-center text-slate-100 p-6 md:p-8 flex flex-col justify-between min-h-[420px]"
-        style={{ 
-          backgroundImage: "linear-gradient(rgba(10, 16, 26, 0.84), rgba(10, 16, 26, 0.88)), url('/compass-bg.jpg')",
-          backgroundPosition: `${bgSettings.xOffset}% ${bgSettings.yOffset}%`,
-          backgroundSize: `${bgSettings.zoom}%`
-        }}
-      >
-        {/* Background crop editor toggle button */}
-        <button
-          onClick={() => setIsEditingBg(true)}
-          className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-slate-950/60 hover:bg-slate-950/90 border border-white/10 text-slate-400 hover:text-white transition-all shadow-sm"
-          title="Adjust background layout crop"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
-
-        {/* Panel Header */}
-        <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-6">
+      <Card className="rounded-2xl border border-white/10 shadow-xl overflow-hidden bg-slate-950 text-slate-100 flex flex-col">
+        {/* Panel Header: Solid Dark Background with compact padding to match the spinner icon */}
+        <div className="flex items-center gap-3 border-b border-white/10 bg-slate-900/60 px-6 py-2.5">
           <div className={`flex-shrink-0 ${isRecentlyUpdated ? "animate-[spin_8s_linear_infinite]" : ""}`}>
             <CompassIcon className="h-9 w-9 text-amber-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-white text-base tracking-tight">
+            <h2 className="font-bold text-white text-sm tracking-tight leading-tight">
               Waypoint Case Compass™
             </h2>
-            <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
-              <Clock className="h-3 w-3 flex-shrink-0 text-slate-400" />
+            <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 leading-none">
+              <Clock className="h-2.5 w-2.5 flex-shrink-0 text-slate-500" />
               Updated {new Date(compass.updatedAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
               })}
               {isRecentlyUpdated && (
-                <span className="ml-2 inline-flex items-center rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-semibold text-amber-300">
-                  New update
+                <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
+                  New
                 </span>
               )}
             </p>
           </div>
         </div>
+
+        {/* Dial Body Area: Contains background image below header */}
+        <div 
+          className="relative p-6 md:p-8 flex flex-col justify-between min-h-[380px] bg-cover bg-center"
+          style={{ 
+            backgroundImage: "linear-gradient(rgba(10, 16, 26, 0.84), rgba(10, 16, 26, 0.88)), url('/compass-bg.jpg')",
+            backgroundPosition: `${bgSettings.xOffset}% ${bgSettings.yOffset}%`,
+            backgroundSize: `${bgSettings.zoom}%`
+          }}
+        >
+          {/* Background crop editor toggle button */}
+          <button
+            onClick={() => setIsEditingBg(true)}
+            className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-slate-950/60 hover:bg-slate-950/90 border border-white/10 text-slate-400 hover:text-white transition-all shadow-sm"
+            title="Adjust background layout crop"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
 
         {/* Dial Body Area: Centered Full Size Compass Rose */}
         <div className="flex flex-col items-center justify-center my-auto py-2">
@@ -567,9 +568,9 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
             </div>
           </div>
         </div>
-
       </div>
-    </div>
-  );
+    </Card>
+  </div>
+);
 }
 
