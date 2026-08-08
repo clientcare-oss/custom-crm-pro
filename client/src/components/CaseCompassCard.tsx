@@ -422,7 +422,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
                   // Calculate position for text (middle of sector)
                   const labelRad = ((sec.angle - 90) * Math.PI) / 180;
-                  const labelDist = 77; // Centered beautifully between rInner (40) and rOuter (110)
+                  const labelDist = 86; // Positioned in the wider outer half of the wedge for spacious boundary margins
                   const labelX = cx + labelDist * Math.cos(labelRad);
                   const labelY = cy + labelDist * Math.sin(labelRad);
 
@@ -451,7 +451,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                         dominantBaseline="middle"
                         className={`text-[10px] font-black pointer-events-none transition-all select-none duration-300 ${
                           isActive 
-                            ? "fill-amber-300 opacity-100 font-black scale-105" 
+                            ? "fill-amber-300 opacity-100 font-black" 
                             : isHovered 
                               ? "fill-white opacity-95" 
                               : "opacity-0"
