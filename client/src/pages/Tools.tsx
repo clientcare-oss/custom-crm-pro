@@ -453,9 +453,9 @@ export default function Tools() {
       {/* Main Grid Section (3 Columns on desktop) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
         {filteredTools.map((tool) => (
-          <Card 
+          <div 
             key={tool.id} 
-            className={`flex flex-col bg-[#07162B]/40 border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/2 transition-all group lg:aspect-[9/10] max-w-sm mx-auto w-full ${
+            className={`flex flex-col bg-[#07162B]/40 border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/2 transition-all group max-w-sm mx-auto w-full ${
               tool.featured ? "ring-1 ring-indigo-500/20" : ""
             }`}
           >
@@ -476,7 +476,7 @@ export default function Tools() {
               </div>
 
               {/* Action Button */}
-              <div className="text-left">
+              <div className="text-left pt-1">
                 <Button
                   size="sm"
                   onClick={tool.onClick}
@@ -490,7 +490,7 @@ export default function Tools() {
                 </Button>
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
