@@ -1629,3 +1629,46 @@ export const voyageLogs = mysqlTable("voyage_logs", {
 
 export type VoyageLog = typeof voyageLogs.$inferSelect;
 export type InsertVoyageLog = typeof voyageLogs.$inferInsert;
+
+// ── HoneyBook Trigger-based Automations Engine Tables ──────────────────────────────
+export const honeybookAutomations = mysqlTable("honeybook_automations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  triggerEvent: varchar("triggerEvent", { length: 128 }).notNull(),
+  isActive: boolean("isActive").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type HoneybookAutomation = typeof honeybookAutomations.$inferSelect;
+export type InsertHoneybookAutomation = typeof honeybookAutomations.$inferInsert;
+
+export const honeybookAutomationSteps = mysqlTable("honeybook_automation_steps", {
+  id: int("id").autoincrement().primaryKey(),
+  automationId: int("automationId").notNull(),
+  stepNumber: int("stepNumber").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'email' | 'task' | 'file'
+  title: varchar("title", { length: 255 }).notNull(),
+  delayValue: int("delayValue").default(0).notNull(),
+  delayUnit: varchar("delayUnit", { length: 50 }).default("minutes").notNull(), // 'minutes' | 'hours' | 'days' | 'weeks'
+  delayAnchor: varchar("delayAnchor", { length: 100 }).default("after_trigger").notNull(),
+  config: text("config").notNull(), // JSON string storing priorities, template ids, template texts, and conditional logic
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HoneybookAutomationStep = typeof honeybookAutomationSteps.$inferSelect;
+export type InsertHoneybookAutomationStep = typeof honeybookAutomationSteps.$inferInsert;
+
+export const honeybookAutomationRuns = mysqlTable("honeybook_automation_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  automationId: int("automationId").notNull(),
+  contactId: int("contactId").notNull(), // target student contact
+  status: varchar("status", { length: 55 }).default("completed").notNull(), // completed | skipped | active
+  logText: text("logText"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HoneybookAutomationRun = typeof honeybookAutomationRuns.$inferSelect;
+export type InsertHoneybookAutomationRun = typeof honeybookAutomationRuns.$inferInsert;
+

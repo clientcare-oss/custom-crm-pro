@@ -46,6 +46,7 @@ import { servicesRouter } from "./routers/services";
 import { complaintEngineRouter } from "./routers/complaintEngine";
 import { portalProvisioningRouter } from "./routers/portalProvisioning";
 import { voyageLogRouter } from "./routers/voyageLog";
+import { automationsRouter } from "./routers/automations";
 
 export const appRouter = router({
   voyageLog: voyageLogRouter,
@@ -95,6 +96,7 @@ export const appRouter = router({
   sponsors: sponsorsRouter,
   services: servicesRouter,
   complaintEngine: complaintEngineRouter,
+  automations: automationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

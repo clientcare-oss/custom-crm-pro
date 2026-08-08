@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,10 +9,9 @@ import { toast } from "sonner";
 import {
   Zap, Plus, Trash2, Play, Sliders, Clock, Mail, FileText, CheckSquare,
   ArrowRight, ChevronRight, Info, X, Check, Loader2, RefreshCw, User,
-  Calendar, Layers, Sparkles, AlertCircle, ShieldAlert, Eye, Settings,
-  AlertTriangle, CheckCircle2, FileCheck, Send, HelpCircle, Split,
-  FileSignature, DollarSign, Tag, Landmark, CalendarDays, Maximize,
-  Minimize2, ZoomIn, ZoomOut, CheckSquare as CheckIcon, MoreVertical
+  Layers, Sparkles, AlertCircle, Eye, Settings,
+  AlertTriangle, CheckCircle2, Split, HelpCircle, Maximize,
+  ZoomIn, ZoomOut
 } from "lucide-react";
 
 // ============ TYPES & SCHEMAS ============
@@ -31,6 +30,8 @@ interface AutomationStep {
     fileName?: string;
     emailSubject?: string;
     emailBody?: string;
+    googleReviewUrl?: string;
+    testimonialUrl?: string;
     
     // Conditional logic rule configurations
     hasCondition?: boolean;
@@ -97,9 +98,26 @@ Congratulations on completing today's IEP meeting!
 The school will follow up by issuing a **Prior Written Notice (PWN)** document detailing what services they agreed to or refused. Once you receive this paperwork:
 1. Upload it directly to the "Files" section of {{studentName}}'s Parent Portal.
 2. Do not sign consent until we audit the document together.
-3. We will cross-reference the draft agreement against the team notes to ensure all accommodations were recorded correctly.
+3. We will cross-reference the draft agreement against the team notes to ensure all accommodations were recorded recorded correctly.
 
 I have created an internal check task to follow up on this with you next week.
+
+Warmly,
+Byron Honea, Master IEP Coach®`
+  },
+  "review-request": {
+    subject: "How did we do? Support other families with {{studentName}}'s story",
+    body: `Dear Family,
+
+Thank you for choosing Waypoint Advocates to support you and {{studentName}}! 
+
+We recently completed our consultation / IEP meeting milestone, and we would love to hear about your experience. Your feedback helps us refine our coaching and guides other Atlanta families searching for master advocacy support.
+
+Could you take 2 minutes to leave us a Google review or submit feedback?
+Google Review: {{googleReviewUrl}}
+Testimonial Form: {{testimonialUrl}}
+
+Thank you so much for your trust and partnership!
 
 Warmly,
 Byron Honea, Master IEP Coach®`
@@ -122,6 +140,7 @@ const TRIGGER_OPTIONS = [
   { id: "project_date", label: "Project date", category: "Project Timeline", desc: "Triggers relative to a key student project milestone date" },
   { id: "stage_changed", label: "Project stage changed", category: "Project Status", desc: "Triggers when a student transitions to a new advocacy stage" },
   { id: "tags_added", label: "Tags added to project", category: "Project Status", desc: "Triggers when custom tags (e.g. IEP, 504) are appended" },
+  { id: "review_request_point", label: "Meeting completed (Review request)", category: "Project Timeline", desc: "Triggers after a specific milestone meeting (discovery, first IEP) completes to request feedback" },
   { id: "manual_trigger", label: "Manual trigger", category: "Quick Start", desc: "Runs only when manually triggered by the advocate" }
 ];
 
@@ -129,14 +148,13 @@ const TRIGGER_OPTIONS = [
 const TRIGGER_CATEGORIES = ["Quick Start", "Scheduling", "Inquiry", "Session Lifecycle", "Files & Documents", "Billing", "Agreement", "Project Timeline", "Project Status"];
 
 // ============ STARTER SEEDS ============
-const DEFAULT_AUTOMATIONS: Automation[] = [
+const DEFAULT_AUTOMATIONS: Omit<Automation, "id">[] = [
   {
-    id: "auto-1",
     name: "Client Intake & Onboarding Flow",
     description: "Automates initial welcome emails, questionnaire requests, and scheduling links when a new lead submits the intake form.",
     triggerEvent: "lead_form_submitted",
     isActive: true,
-    activeRunsCount: 4,
+    activeRunsCount: 0,
     steps: [
       {
         id: "step-1-1",
@@ -182,12 +200,11 @@ const DEFAULT_AUTOMATIONS: Automation[] = [
     ]
   },
   {
-    id: "auto-2",
     name: "IEP Pre-Meeting Strategy Sequence",
     description: "Coordinates pre-meeting prep questionnaire dispatch, requests draft documentation, and queues up audit checklists for the advocate.",
     triggerEvent: "meeting_scheduled",
     isActive: true,
-    activeRunsCount: 2,
+    activeRunsCount: 0,
     steps: [
       {
         id: "step-2-1",
@@ -238,12 +255,13 @@ const DEFAULT_AUTOMATIONS: Automation[] = [
 export default function Automations() {
   const [, setLocation] = useLocation();
 
-  // Load custom list or seed defaults
-  const [automations, setAutomations] = useState<Automation[]>(() => {
-    const saved = localStorage.getItem("crm_automations");
-    return saved ? JSON.parse(saved) : DEFAULT_AUTOMATIONS;
-  });
+  // Load from backend Drizzle D1 via tRPC
+  const { data: dbAutomations, refetch } = trpc.automations.list.useQuery();
+  const saveMutation = trpc.automations.save.useMutation();
+  const deleteMutation = trpc.automations.delete.useMutation();
+  const simulateMutation = trpc.automations.simulate.useMutation();
 
+  const [automations, setAutomations] = useState<Automation[]>([]);
   const [activeView, setActiveView] = useState<"list" | "edit" | "simulate">("list");
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
@@ -267,34 +285,64 @@ export default function Automations() {
   const [selectedContactId, setSelectedContactId] = useState<number | null>(3); // Baaarbra Sheep default
   const [isSimulating, setIsSimulating] = useState(false);
   const [simLogs, setSimLogs] = useState<string[]>([]);
-  const [currentSimStep, setCurrentSimStep] = useState(0);
 
-  const saveAutomations = (list: Automation[]) => {
-    setAutomations(list);
-    localStorage.setItem("crm_automations", JSON.stringify(list));
-  };
+  // Sync state whenever D1 backend returns loaded automations list
+  useEffect(() => {
+    if (dbAutomations) {
+      const mapped = dbAutomations.map((a: any) => ({
+        id: String(a.id),
+        name: a.name,
+        description: a.description || "",
+        triggerEvent: a.triggerEvent,
+        isActive: Boolean(a.isActive),
+        activeRunsCount: 0,
+        steps: (a.steps || []).map((s: any) => ({
+          id: String(s.id),
+          type: s.type,
+          title: s.title,
+          delayValue: s.delayValue,
+          delayUnit: s.delayUnit,
+          delayAnchor: s.delayAnchor,
+          config: s.config
+        }))
+      }));
+      setAutomations(mapped);
+      
+      // Update active selection reference if currently editing
+      if (selectedAutomation) {
+        const updatedSelection = mapped.find(m => m.name === selectedAutomation.name);
+        if (updatedSelection) {
+          setSelectedAutomation(updatedSelection);
+        }
+      }
+    }
+  }, [dbAutomations]);
 
-  const handleSubmitTriggerRequest = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTriggerText.trim()) return;
-    setIsSubmittingTriggerRequest(true);
-    setTimeout(() => {
-      setIsSubmittingTriggerRequest(false);
-      setRequestTriggerOpen(false);
-      toast.success("Trigger request submitted to developer queue! We will notify you once implemented.");
-      setSimLogs((logs) => [
-        ...logs,
-        `[${new Date().toLocaleTimeString()}] 📩 [Tech Queue] Received custom trigger request: "${newTriggerText}"`
-      ]);
-    }, 1200);
-  };
-
-  const handleToggleActive = (id: string) => {
-    const updated = automations.map((a) =>
-      a.id === id ? { ...a, isActive: !a.isActive } : a
-    );
-    saveAutomations(updated);
-    toast.success("Workflow status updated");
+  const handleToggleActive = async (id: string) => {
+    const item = automations.find((a) => a.id === id);
+    if (!item) return;
+    
+    try {
+      await saveMutation.mutateAsync({
+        id: id.startsWith("auto-") ? undefined : Number(id),
+        name: item.name,
+        description: item.description,
+        triggerEvent: item.triggerEvent,
+        isActive: !item.isActive,
+        steps: item.steps.map((s) => ({
+          type: s.type,
+          title: s.title,
+          delayValue: s.delayValue,
+          delayUnit: s.delayUnit,
+          delayAnchor: s.delayAnchor,
+          config: s.config
+        }))
+      });
+      toast.success("Workflow status updated");
+      refetch();
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
   };
 
   const handleCreateNew = () => {
@@ -302,27 +350,55 @@ export default function Automations() {
       id: "auto-" + Date.now(),
       name: "New Custom Automation Sequence",
       description: "Custom trigger-based workspace flow builder template.",
-      triggerEvent: "", // Set empty initially to show "Set a trigger in the sidebar" warning card!
+      triggerEvent: "", // Empty trigger initially
       isActive: false,
       activeRunsCount: 0,
       steps: []
     };
-    saveAutomations([newAuto, ...automations]);
+    setAutomations([newAuto, ...automations]);
     setSelectedAutomation(newAuto);
     setActiveView("edit");
-    setConfiguringTrigger(true); // Open trigger side menu automatically!
+    setConfiguringTrigger(true); // Open trigger selector right away
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const filtered = automations.filter((a) => a.id !== id);
-    saveAutomations(filtered);
-    toast.success("Automation workflow deleted");
+    try {
+      if (id.startsWith("auto-")) {
+        setAutomations(automations.filter((a) => a.id !== id));
+      } else {
+        await deleteMutation.mutateAsync({ id: Number(id) });
+      }
+      toast.success("Automation workflow deleted");
+      refetch();
+    } catch (err) {
+      toast.error("Failed to delete automation");
+    }
   };
 
-  const handleSeedStarters = () => {
-    saveAutomations(DEFAULT_AUTOMATIONS);
-    toast.success("Default templates seeded successfully!");
+  const handleSeedStarters = async () => {
+    try {
+      for (const auto of DEFAULT_AUTOMATIONS) {
+        await saveMutation.mutateAsync({
+          name: auto.name,
+          description: auto.description || "",
+          triggerEvent: auto.triggerEvent,
+          isActive: auto.isActive,
+          steps: auto.steps.map((s) => ({
+            type: s.type,
+            title: s.title,
+            delayValue: s.delayValue,
+            delayUnit: s.delayUnit,
+            delayAnchor: s.delayAnchor,
+            config: s.config
+          }))
+        });
+      }
+      toast.success("Default templates seeded successfully!");
+      refetch();
+    } catch (err) {
+      toast.error("Failed to seed templates");
+    }
   };
 
   // Step Node actions inside Editor
@@ -349,13 +425,13 @@ export default function Automations() {
     };
     const stepsCopy = [...selectedAutomation.steps];
     stepsCopy.splice(index, 0, newStep);
+    
     const updatedAuto = { ...selectedAutomation, steps: stepsCopy };
-
     setSelectedAutomation(updatedAuto);
-    saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updatedAuto : a)));
+    setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updatedAuto : a)));
     setActiveStepId(newStep.id);
     setConfiguringTrigger(false);
-    toast.success("Action step added to workflow");
+    toast.success("Action step added to local design view");
   };
 
   const handleDeleteStep = (stepId: string, e: React.MouseEvent) => {
@@ -365,7 +441,7 @@ export default function Automations() {
     const updatedAuto = { ...selectedAutomation, steps: updatedSteps };
 
     setSelectedAutomation(updatedAuto);
-    saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updatedAuto : a)));
+    setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updatedAuto : a)));
     if (activeStepId === stepId) setActiveStepId(null);
     toast.success("Action step removed");
   };
@@ -390,7 +466,7 @@ export default function Automations() {
 
     const updatedAuto = { ...selectedAutomation, steps: updatedSteps };
     setSelectedAutomation(updatedAuto);
-    saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updatedAuto : a)));
+    setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updatedAuto : a)));
   };
 
   const handleUpdateStepConfig = (stepId: string, configUpdates: any) => {
@@ -404,108 +480,94 @@ export default function Automations() {
     handleUpdateStep(stepId, updatedStep);
   };
 
-  // Run Test simulation sequence
-  const startSimulation = () => {
-    if (!selectedAutomation || selectedAutomation.steps.length === 0) return;
-    const student = contactsList?.find(c => c.id === selectedContactId);
-    const parent = contactsList?.find(c => c.id === student?.parentContactId);
-    const studentName = student ? `${student.firstName} ${student.lastName}` : "Baaarbra Sheep";
-    const parentName = parent ? `${parent.firstName} ${parent.lastName}` : "Shawn Sheep";
-
-    setIsSimulating(true);
-    setCurrentSimStep(0);
-    setSimLogs([
-      `[${new Date().toLocaleTimeString()}] 🚀 Initiating dry-run simulation for workflow: "${selectedAutomation.name}"`,
-      `[${new Date().toLocaleTimeString()}] 🔗 Student Target: ${studentName} (ID: ${selectedContactId})`,
-      `[${new Date().toLocaleTimeString()}] 🔗 Parent Portal target: ${parentName}`,
-      `[${new Date().toLocaleTimeString()}] ⚙️ Loading automated action pipeline triggers...`
-    ]);
+  // Save the full automation canvas to database
+  const handleSaveAutomation = async () => {
+    if (!selectedAutomation) return;
+    if (!selectedAutomation.triggerEvent) {
+      toast.error("Please configure a trigger event before saving");
+      return;
+    }
+    
+    try {
+      const result = await saveMutation.mutateAsync({
+        id: selectedAutomation.id.startsWith("auto-") ? undefined : Number(selectedAutomation.id),
+        name: selectedAutomation.name,
+        description: selectedAutomation.description,
+        triggerEvent: selectedAutomation.triggerEvent,
+        isActive: selectedAutomation.isActive,
+        steps: selectedAutomation.steps.map((s) => ({
+          type: s.type,
+          title: s.title,
+          delayValue: s.delayValue,
+          delayUnit: s.delayUnit,
+          delayAnchor: s.delayAnchor,
+          config: s.config
+        }))
+      });
+      toast.success("Automation workflow saved to database!");
+      refetch();
+      if (selectedAutomation.id.startsWith("auto-")) {
+        setSelectedAutomation({
+          ...selectedAutomation,
+          id: String(result.id)
+        });
+      }
+    } catch (err) {
+      toast.error("Failed to save automation to database");
+    }
   };
 
-  useEffect(() => {
-    let timer: any = null;
-    if (isSimulating && selectedAutomation) {
-      if (currentSimStep < selectedAutomation.steps.length) {
-        timer = setTimeout(() => {
-          const step = selectedAutomation.steps[currentSimStep];
-          let message = "";
-
-          const student = contactsList?.find(c => c.id === selectedContactId);
-          const studentName = student ? `${student.firstName} ${student.lastName}` : "Baaarbra Sheep";
-
-          // Evaluate conditional logic if step specifies it
-          let conditionPassed = true;
-          if (step.config?.hasCondition) {
-            const field = step.config.conditionField || "student_tag";
-            const val = (step.config.conditionValue || "").toLowerCase();
-            const op = step.config.conditionOperator || "equals";
-
-            let testFieldValue = "";
-            if (field === "contact_status") {
-              testFieldValue = student?.status || "lead";
-            } else if (field === "student_tag") {
-              // Mock resolved tag parameters for Baaarbra Sheep (ID: 3)
-              testFieldValue = selectedContactId === 3 ? "iep, speech therapy" : "504 plan";
-            } else if (field === "contract_status") {
-              testFieldValue = "signed";
-            }
-
-            if (op === "equals") {
-              conditionPassed = testFieldValue.toLowerCase() === val;
-            } else if (op === "contains") {
-              conditionPassed = testFieldValue.toLowerCase().includes(val);
-            } else if (op === "not_equals") {
-              conditionPassed = testFieldValue.toLowerCase() !== val;
-            }
-
-            setSimLogs((logs) => [
-              ...logs,
-              `🔍 [Rule Check] Evaluating condition: If ${field.replace('_', ' ')} ${op} "${val}" (Resolved: "${testFieldValue}")`
-            ]);
-          }
-
-          if (conditionPassed) {
-            if (step.type === "email") {
-              const subject = (step.config.emailSubject || "Hello").replace("{{studentName}}", studentName);
-              message = `📧 [Step ${currentSimStep + 1}/${selectedAutomation.steps.length}] Email template "${step.config.templateName || 'Inquiry Guide'}" dispatched. \n   └─ Subject: "${subject}"`;
-            } else if (step.type === "file") {
-              message = `📄 [Step ${currentSimStep + 1}/${selectedAutomation.steps.length}] Smart File "${step.config.fileName || 'Intake questionnaire'}" sent to Parent Portal interface.`;
-            } else {
-              message = `✅ [Step ${currentSimStep + 1}/${selectedAutomation.steps.length}] Created CRM Task: "${step.config.taskTitle || step.title}" (Priority: ${step.config.taskPriority?.toUpperCase() || 'MEDIUM'}).`;
-            }
-          } else {
-            message = `⚠️ [Step ${currentSimStep + 1}/${selectedAutomation.steps.length}] Action SKIPPED. Conditional logic rules were not met.`;
-          }
-
-          setSimLogs((logs) => [
-            ...logs,
-            `[${new Date().toLocaleTimeString()}] ${message}`,
-            `[${new Date().toLocaleTimeString()}] ⏳ Wait parameter: ${step.delayValue} ${step.delayUnit} (${step.delayAnchor.replace('_', ' ')})`
-          ]);
-          setCurrentSimStep(currentSimStep + 1);
-        }, 1500);
-      } else {
-        timer = setTimeout(() => {
-          setSimLogs((logs) => [
-            ...logs,
-            `[${new Date().toLocaleTimeString()}] 🎉 Dry-run audit completed! All tasks generated and email nodes verified for quality control.`
-          ]);
-          setIsSimulating(false);
-        }, 1200);
-      }
+  // Run tRPC server-side simulation sandbox
+  const startSimulation = async () => {
+    if (!selectedAutomation) return;
+    if (!selectedAutomation.triggerEvent) {
+      toast.error("Trigger event must be set to simulate");
+      return;
     }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [isSimulating, currentSimStep, selectedAutomation]);
+    setIsSimulating(true);
+    setSimLogs([`[${new Date().toLocaleTimeString()}] 🚀 Initiating backend simulator sandbox dry-run...`]);
 
-  // Filtered automations list
+    try {
+      const res = await simulateMutation.mutateAsync({
+        triggerEvent: selectedAutomation.triggerEvent,
+        contactId: selectedContactId || 3,
+        dryRun: true
+      });
+      
+      if (res && res.logs) {
+        setSimLogs(res.logs.map(log => `[${new Date().toLocaleTimeString()}] ${log}`));
+      }
+      setIsSimulating(false);
+    } catch (err) {
+      setSimLogs((logs) => [
+        ...logs,
+        `[${new Date().toLocaleTimeString()}] ❌ Backend simulator query crashed: ${(err as any).message}`
+      ]);
+      setIsSimulating(false);
+    }
+  };
+
+  const handleSubmitTriggerRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTriggerText.trim()) return;
+    setIsSubmittingTriggerRequest(true);
+    setTimeout(() => {
+      setIsSubmittingTriggerRequest(false);
+      setRequestTriggerOpen(false);
+      toast.success("Trigger request submitted to developer queue! We will notify you once implemented.");
+      setSimLogs((logs) => [
+        ...logs,
+        `[${new Date().toLocaleTimeString()}] 📩 [Tech Queue] Received custom trigger request: "${newTriggerText}"`
+      ]);
+    }, 1200);
+  };
+
+  // Filtered list
   const filteredAutomations = automations.filter((a) =>
     a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     a.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Trigger labels helper
   const getTriggerLabel = (id: string) => {
     return TRIGGER_OPTIONS.find((t) => t.id === id)?.label || id;
   };
@@ -654,7 +716,7 @@ export default function Automations() {
                     onChange={(e) => {
                       const updated = { ...selectedAutomation, name: e.target.value };
                       setSelectedAutomation(updated);
-                      saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                      setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
                     }}
                     className="bg-transparent border-0 font-bold text-sm md:text-base text-white focus:ring-0 focus:outline-none p-0 w-48 md:w-72"
                   />
@@ -672,13 +734,12 @@ export default function Automations() {
                     onChange={() => {
                       const updated = { ...selectedAutomation, isActive: !selectedAutomation.isActive };
                       setSelectedAutomation(updated);
-                      saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
-                      toast.success(updated.isActive ? "Automation activated" : "Automation paused");
+                      setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
                     }}
                     className="sr-only peer"
                   />
                   <div className="w-9 h-5 bg-slate-950/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-amber-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500/20 peer-checked:border peer-checked:border-amber-500/35"></div>
-                  <span className="text-[10px] text-slate-400 ml-2 font-bold uppercase tracking-wider group-data-[collapsible=icon]:hidden">
+                  <span className="text-[10px] text-slate-400 ml-2 font-bold uppercase tracking-wider">
                     {selectedAutomation.isActive ? "Active" : "Draft"}
                   </span>
                 </label>
@@ -698,19 +759,33 @@ export default function Automations() {
                   <Play className="h-3.5 w-3.5 mr-1.5 fill-slate-300" /> Test run
                 </Button>
                 <Button
-                  onClick={() => {
-                    toast.success("Automation sequence saved to database!");
-                  }}
+                  onClick={handleSaveAutomation}
                   className="bg-indigo-650 hover:bg-indigo-600 text-white text-xs h-9 px-4 font-bold"
                 >
                   Save
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
                     const updated = { ...selectedAutomation, isActive: true };
                     setSelectedAutomation(updated);
-                    saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                    // Force update DB values to true
+                    await saveMutation.mutateAsync({
+                      id: selectedAutomation.id.startsWith("auto-") ? undefined : Number(selectedAutomation.id),
+                      name: selectedAutomation.name,
+                      description: selectedAutomation.description,
+                      triggerEvent: selectedAutomation.triggerEvent,
+                      isActive: true,
+                      steps: selectedAutomation.steps.map((s) => ({
+                        type: s.type,
+                        title: s.title,
+                        delayValue: s.delayValue,
+                        delayUnit: s.delayUnit,
+                        delayAnchor: s.delayAnchor,
+                        config: s.config
+                      }))
+                    });
                     toast.success("Automation published & activated!");
+                    refetch();
                   }}
                   className="bg-amber-500 hover:bg-amber-450 text-slate-950 text-xs h-9 px-4 font-bold"
                 >
@@ -961,7 +1036,7 @@ export default function Automations() {
                                     if (selectedAutomation) {
                                       const updated = { ...selectedAutomation, triggerEvent: trig.id };
                                       setSelectedAutomation(updated);
-                                      saveAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
+                                      setAutomations(automations.map((a) => (a.id === selectedAutomation.id ? updated : a)));
                                       setConfiguringTrigger(false);
                                       toast.success(`Workflow trigger set to: "${trig.label}"`);
                                     }
@@ -1251,6 +1326,7 @@ export default function Automations() {
                     </p>
                     <div className="pt-4 border-t border-white/5 mt-4">
                       <Button
+                        type="button"
                         variant="outline"
                         onClick={() => {
                           setConfiguringTrigger(true);
@@ -1365,7 +1441,7 @@ export default function Automations() {
                 )}
               </div>
 
-              <div className="border-t border-white/5 pt-4 text-slate-550 text-[10px] leading-normal flex items-start gap-2">
+              <div className="border-t border-white/5 pt-4 text-slate-555 text-[10px] leading-normal flex items-start gap-2">
                 <Info className="h-4 w-4 shrink-0 text-slate-500" />
                 <p>
                   All simulated actions generated above mimic standard integrations logic. Dispatched templates use context parameters (student name, advocate profile) to ensure templates format properly.
@@ -1418,7 +1494,10 @@ export default function Automations() {
                 <div><span className="text-slate-500 font-semibold">From:</span> <span className="text-slate-300">Byron Honea &lt;byron@waypointadvocates.com&gt;</span></div>
               </div>
               <pre className="whitespace-pre-wrap leading-relaxed font-sans text-slate-300">
-                {EMAIL_TEMPLATES[previewTemplateId].body.replace("{{studentName}}", previewTargetName)}
+                {EMAIL_TEMPLATES[previewTemplateId].body
+                  .replace("{{studentName}}", previewTargetName)
+                  .replace("{{googleReviewUrl}}", selectedAutomation?.steps.find(s => s.config?.templateId === "review-request")?.config?.googleReviewUrl || "https://g.page/r/waypoint-advocates/review")
+                  .replace("{{testimonialUrl}}", selectedAutomation?.steps.find(s => s.config?.templateId === "review-request")?.config?.testimonialUrl || "https://waypointadvocates.com/testimonial")}
               </pre>
             </div>
 

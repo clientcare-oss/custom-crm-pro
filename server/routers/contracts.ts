@@ -101,6 +101,17 @@ export const contractsRouter = router({
           })
           .where(eq(schema.contracts.id, input.id));
 
+        // Trigger contract_signed automation
+        if (contract.clientId) {
+          try {
+            const { triggerAutomationFlow } = await import("../db/automations");
+            await triggerAutomationFlow("contract_signed", contract.clientId);
+            await triggerAutomationFlow("all_signatures_collected", contract.clientId);
+          } catch (e) {
+            console.error("Failed to execute contract automation trigger:", e);
+          }
+        }
+
         return { success: true, signatureUrl: url };
       }),
 

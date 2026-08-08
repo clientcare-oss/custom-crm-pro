@@ -209,6 +209,14 @@ export const leadFormsRouter = router({
         }, ownerId);
         // Increment submission count
         await db.incrementLeadFormSubmissionCount(input.slug);
+
+        // Trigger lead_form_submitted automation
+        try {
+          const { triggerAutomationFlow } = await import("../db/automations");
+          await triggerAutomationFlow("lead_form_submitted", studentContactId);
+        } catch (e) {
+          console.error("Failed to run lead form automation flow:", e);
+        }
         
         // Get worksheet if assigned to this form
         let worksheetUrl: string | null = null;
