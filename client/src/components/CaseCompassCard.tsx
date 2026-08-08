@@ -106,7 +106,7 @@ function RichText({ value }: { value: string }) {
           <span key={li}>
             {parts.map((part, pi) =>
               part.startsWith("**") && part.endsWith("**") ? (
-                <strong key={pi} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+                <strong key={pi} className="font-semibold text-amber-200 dark:text-amber-200">{part.slice(2, -2)}</strong>
               ) : (
                 <span key={pi}>{part}</span>
               )
@@ -220,25 +220,28 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
   return (
     <div className="space-y-3">
-      <Card className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      <Card 
+        className="relative rounded-xl border border-white/10 shadow-xl overflow-hidden bg-cover bg-center text-slate-100"
+        style={{ backgroundImage: "linear-gradient(rgba(10, 16, 26, 0.84), rgba(10, 16, 26, 0.88)), url('/compass-bg.jpg')" }}
+      >
         {/* Card Header */}
-        <div className="flex items-center gap-3 border-b border-border bg-accent/5 px-6 py-4">
+        <div className="flex items-center gap-3 border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur-sm">
           <div className={`flex-shrink-0 ${isRecentlyUpdated ? "animate-[spin_8s_linear_infinite]" : ""}`}>
-            <CompassIcon className="h-9 w-9 text-accent" />
+            <CompassIcon className="h-9 w-9 text-amber-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-foreground text-base tracking-tight">
+            <h2 className="font-bold text-white text-base tracking-tight">
               Waypoint Case Compass™
             </h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-              <Clock className="h-3 w-3 flex-shrink-0" />
+            <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
+              <Clock className="h-3 w-3 flex-shrink-0 text-slate-400" />
               Updated {new Date(compass.updatedAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
               })}
               {isRecentlyUpdated && (
-                <span className="ml-2 inline-flex items-center rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
+                <span className="ml-2 inline-flex items-center rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-semibold text-amber-300">
                   New update
                 </span>
               )}
@@ -411,41 +414,41 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
             {/* Right Side: Animated Segment Details Box */}
             <div className="col-span-1 lg:col-span-6 flex flex-col justify-center">
-              <div className={`p-6 rounded-2xl border-2 transition-all duration-300 bg-gradient-to-br bg-card shadow-sm border-border`}>
+              <div className="p-6 rounded-2xl border border-white/10 transition-all duration-300 bg-slate-950/45 backdrop-blur-md shadow-lg">
                 {/* Segment Heading */}
-                <div className="flex items-center gap-3 border-b border-border pb-3 mb-4">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-accent/10`}>
-                    <activeSectionObj.icon className={`h-5 w-5 ${activeSectionObj.accent}`} />
+                <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+                    <activeSectionObj.icon className="h-5 w-5 text-amber-300" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Case Dimension</span>
-                    <h3 className="font-extrabold text-foreground text-lg leading-none mt-0.5">{activeSectionObj.label}</h3>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Case Dimension</span>
+                    <h3 className="font-extrabold text-white text-lg leading-none mt-0.5">{activeSectionObj.label}</h3>
                   </div>
                 </div>
 
                 {/* Segment Details Text */}
                 <div className="min-h-[110px] flex flex-col justify-center">
                   {displayValue ? (
-                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                    <div className="text-sm text-slate-100 leading-relaxed whitespace-pre-line">
                       <RichText value={displayValue} />
                     </div>
                   ) : (
                     <div className="text-center py-4">
-                      <p className="text-sm text-muted-foreground/60 italic font-medium">No details registered for this phase yet.</p>
-                      <p className="text-xs text-muted-foreground/45 mt-1">Your Master IEP Coach® will update this section as the case progresses.</p>
+                      <p className="text-sm text-slate-300 italic font-medium">No details registered for this phase yet.</p>
+                      <p className="text-xs text-slate-400 mt-1">Your Master IEP Coach® will update this section as the case progresses.</p>
                     </div>
                   )}
                 </div>
 
                 {/* Sub-nav quick switcher dots */}
-                <div className="flex items-center gap-1.5 mt-6 pt-4 border-t border-border/60">
-                  <span className="text-xs font-semibold text-muted-foreground mr-1.5">Switch view:</span>
+                <div className="flex items-center gap-1.5 mt-6 pt-4 border-t border-white/10">
+                  <span className="text-xs font-semibold text-slate-400 mr-1.5">Switch view:</span>
                   {SECTIONS.map((sec) => (
                     <button
                       key={sec.key}
                       onClick={() => setActiveSection(sec.key)}
                       className={`h-2.5 rounded-full transition-all duration-300 ${
-                        activeSection === sec.key ? "w-6 bg-accent" : "w-2.5 bg-muted-foreground/20 hover:bg-muted-foreground/40"
+                        activeSection === sec.key ? "w-6 bg-amber-400" : "w-2.5 bg-white/20 hover:bg-white/40"
                       }`}
                       title={sec.label}
                     />
@@ -457,14 +460,14 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
         </div>
 
         {/* History Toggle */}
-        <div className="border-t border-border px-6 py-3">
+        <div className="border-t border-white/10 px-6 py-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowHistory(!showHistory)}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5"
           >
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className="h-3.5 w-3.5 text-slate-450 text-slate-450" />
             {showHistory ? "Hide" : "View"} Case History
             {showHistory ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </Button>
@@ -473,11 +476,11 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
 
       {/* History Panel */}
       {showHistory && (
-        <div className="space-y-3 pl-2 border-l-2 border-accent/20">
+        <div className="space-y-3 pl-2 border-l-2 border-amber-500/30">
           {history && history.length > 0 ? (
             history.map((entry) => (
-              <Card key={entry.id} className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+              <Card key={entry.id} className="rounded-lg border border-white/10 bg-slate-950/30 p-4 space-y-3 text-slate-200">
+                <p className="text-xs font-semibold text-slate-400 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {new Date(entry.savedAt).toLocaleDateString("en-US", {
                     month: "short",
@@ -487,26 +490,26 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                 </p>
                 {entry.currentStatus && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 navy:text-blue-300 mb-1">Status</p>
-                    <p className="text-sm text-foreground">{entry.currentStatus}</p>
+                     <p className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">Status</p>
+                     <p className="text-sm text-slate-100">{entry.currentStatus}</p>
                   </div>
                 )}
                 {entry.nextStep && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 navy:text-emerald-300 mb-1">Next Step</p>
-                    <p className="text-sm text-foreground">{entry.nextStep}</p>
+                     <p className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-1">Next Step</p>
+                     <p className="text-sm text-slate-100">{entry.nextStep}</p>
                   </div>
                 )}
                 {entry.whoHasBall && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 navy:text-amber-300 mb-1">Who Had the Ball</p>
-                    <p className="text-sm text-foreground">{entry.whoHasBall}</p>
+                     <p className="text-xs font-bold uppercase tracking-widest text-amber-300 mb-1">Who Had the Ball</p>
+                     <p className="text-sm text-slate-100">{entry.whoHasBall}</p>
                   </div>
                 )}
               </Card>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground py-2">
+            <p className="text-sm text-slate-400 py-2">
               No history yet — your advocate's updates will appear here over time.
             </p>
           )}
