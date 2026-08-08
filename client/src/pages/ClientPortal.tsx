@@ -6,7 +6,7 @@ import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
-  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen
+  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home
 } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -1703,13 +1703,22 @@ export default function ClientPortal() {
     const isLight = theme === "blue";
     return (
       <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-[3000ms] ease-in-out ${isLight ? "bg-[#f0f4f8] text-slate-900" : "bg-[#040C16] text-white"}`}>
-        {/* Workspace Admin Bar */}
+        {/* Workspace Admin Bar with downward yellow neon glow */}
         {isWorkspaceMode && (
-          <div className={`border-b px-5 py-2.5 flex items-center justify-between gap-4 shrink-0 select-none z-10 transition-colors duration-[3000ms] ease-in-out ${
-            isLight ? "bg-slate-100 border-slate-200 text-slate-800" : "bg-slate-900 border-white/10 text-white"
-          }`}>
+          <div 
+            className={`border-b-2 px-5 py-2.5 flex items-center justify-between gap-4 shrink-0 select-none z-10 transition-colors duration-[3000ms] ease-in-out ${
+              isLight ? "bg-slate-100 text-slate-800" : "bg-slate-900 text-white"
+            }`}
+            style={{
+              borderBottomColor: 'rgba(250, 204, 21, 0.75)',
+              boxShadow: '0 4px 20px rgba(250, 204, 21, 0.45), 0 1px 5px rgba(250, 204, 21, 0.3)'
+            }}
+          >
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+              <div className="relative flex h-2.5 w-2.5 shrink-0 items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-90"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.95)]"></span>
+              </div>
               <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-600" : "text-slate-300"}`}>Project Workspace (Admin)</span>
               <span className={`text-xs ${isLight ? "text-slate-300" : "text-white/40"}`}>|</span>
               <span className={`text-xs font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>{effectiveStudent?.firstName} {effectiveStudent?.lastName}</span>
@@ -1718,35 +1727,43 @@ export default function ClientPortal() {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                variant={isAdminView ? "secondary" : "ghost"}
+                variant="ghost"
                 onClick={() => setIsAdminView(true)}
-                className={`text-xs h-7 px-3 rounded-md font-semibold ${
-                  isLight && !isAdminView ? "text-slate-605 hover:bg-slate-200/60 text-slate-700" : ""
+                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
+                  isAdminView
+                    ? isLight
+                      ? "border border-amber-500 bg-amber-500/10 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
+                      : "border border-amber-400 bg-amber-400/15 text-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.3)] opacity-100"
+                    : isLight
+                      ? "border border-amber-500/25 text-slate-700 hover:bg-slate-200/60 hover:border-amber-500/50"
+                      : "border border-amber-500/30 text-white/80 hover:bg-white/5 hover:border-amber-400/50"
                 }`}
               >
-                💼 Advocate Master View
+                Advocate Master View
               </Button>
               <Button
                 size="sm"
-                variant={!isAdminView ? "secondary" : "ghost"}
+                variant="ghost"
                 onClick={() => setIsAdminView(false)}
-                className={`text-xs h-7 px-3 rounded-md font-semibold ${
-                  isLight && isAdminView ? "text-slate-605 hover:bg-slate-200/60 text-slate-700" : ""
+                className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
+                  !isAdminView
+                    ? isLight
+                      ? "border border-amber-500 bg-amber-500/10 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
+                      : "border border-amber-400 bg-amber-400/15 text-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.3)] opacity-100"
+                    : isLight
+                      ? "border border-amber-500/25 text-slate-700 hover:bg-slate-200/60 hover:border-amber-500/50"
+                      : "border border-amber-500/30 text-white/80 hover:bg-white/5 hover:border-amber-400/50"
                 }`}
               >
-                👀 Client Master View
+                Client Master View
               </Button>
               <Button
                 size="sm"
-                variant="outline"
                 onClick={() => setLocation("/projects")}
-                className={`text-xs h-7 px-3 rounded-md font-semibold ${
-                  isLight 
-                    ? "border-slate-250 bg-white text-slate-800 hover:bg-slate-50 hover:text-slate-900" 
-                    : "border-white/10 text-white/80 hover:text-white"
-                }`}
+                className="text-xs h-7 px-3.5 rounded-md font-medium bg-yellow-400 hover:bg-yellow-500 text-slate-950 border border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.35)] flex items-center gap-1 cursor-pointer transition-all duration-200"
               >
-                Back to Students
+                <Home className="h-3 w-3 shrink-0" />
+                <span>Back to CRM</span>
               </Button>
             </div>
           </div>

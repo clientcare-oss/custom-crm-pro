@@ -1,8 +1,9 @@
 import React from "react";
+import { useLocation } from "wouter";
 import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Home
 } from "lucide-react";
 
 const LOGO_URL = "/waypoint-logo.png";
@@ -55,6 +56,8 @@ export function ClientPortalSidebar({
   isCollapsed = false,
   onToggleCollapse,
 }: ClientPortalSidebarProps) {
+  const [location, setLocation] = useLocation();
+  const isWorkspace = location.startsWith("/projects/");
   const itemsToRender = navItems || NAV_ITEMS.filter(({ id }) => id !== "attorney" || hasAttorney);
 
   const isLight = theme === "blue";
@@ -64,37 +67,87 @@ export function ClientPortalSidebar({
       ${isLight ? "bg-white border-slate-200" : "bg-[#071422] border-white/10"}
       ${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64 shrink-0"}`}>
       {/* Header Logo */}
-      <div className={`pt-5 pb-4 flex items-center border-b transition-colors duration-[3000ms] ease-in-out
+      <div className={`pt-5 pb-4 flex flex-col items-center border-b transition-colors duration-[3000ms] ease-in-out
         ${isLight ? "border-slate-200" : "border-white/8"}
-        ${isCollapsed && !mobile ? "justify-center px-2" : "justify-between px-5"}`}>
-        <div className="flex items-center gap-3">
-          <img src={logoUrl || LOGO_URL} alt="Waypoint Advocates" className="h-10 w-10 object-contain shrink-0" />
-          {(!isCollapsed || mobile) && (
-            <div>
-              <p className={`text-sm font-bold tracking-widest uppercase leading-tight font-serif transition-colors duration-[3000ms] ease-in-out ${
-                isLight ? "text-slate-800" : "text-white"
-              }`}>Waypoint</p>
-              <p className={`text-[10px] tracking-[0.2em] uppercase transition-colors duration-[3000ms] ease-in-out ${
-                isLight ? "text-slate-400" : "text-white/40"
-              }`}>Advocates</p>
+        ${isCollapsed && !mobile ? "px-2 gap-3" : "px-5"}`}>
+        
+        <div className={`flex w-full items-center ${isCollapsed && !mobile ? "justify-center" : "justify-between"}`}>
+          <div className="flex items-center gap-3">
+            <img src={logoUrl || LOGO_URL} alt="Waypoint Advocates" className="h-10 w-10 object-contain shrink-0" />
+            {(!isCollapsed || mobile) && (
+              <div>
+                <p className={`text-sm font-bold tracking-widest uppercase leading-tight font-serif transition-colors duration-[3000ms] ease-in-out ${
+                  isLight ? "text-slate-800" : "text-white"
+                }`}>Waypoint</p>
+                <p className={`text-[10px] tracking-[0.2em] uppercase transition-colors duration-[3000ms] ease-in-out ${
+                  isLight ? "text-slate-400" : "text-white/40"
+                }`}>Advocates</p>
+              </div>
+            )}
+          </div>
+
+          {mobile ? (
+            <button onClick={onCloseMobile} className={`transition-colors duration-[3000ms] ease-in-out ${isLight ? "text-slate-400 hover:text-slate-700" : "text-white/40 hover:text-white"}`}>
+              <X className="h-5 w-5" />
+            </button>
+          ) : !isCollapsed ? (
+            <div className="flex items-center gap-2">
+              {isWorkspace && (
+                <button
+                  onClick={() => setLocation("/projects")}
+                  className={`p-1.5 rounded-lg transition-all duration-300 flex items-center justify-center hover:scale-105 border ${
+                    isLight 
+                      ? "bg-amber-500/10 border-amber-500/25 text-amber-700 hover:bg-amber-500/20" 
+                      : "bg-amber-400/10 border-amber-400/20 text-amber-300 hover:bg-amber-400/20 hover:shadow-[0_0_8px_rgba(250,204,21,0.2)]"
+                  }`}
+                  title="Back to CRM Dashboard"
+                >
+                  <Home className="h-4 w-4" />
+                </button>
+              )}
+              {onToggleCollapse && (
+                <button
+                  onClick={onToggleCollapse}
+                  className={`p-1.5 rounded transition-colors duration-[3000ms] ease-in-out ${
+                    isLight ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100" : "text-white/40 hover:text-white hover:bg-white/10"
+                  }`}
+                  title="Collapse Sidebar"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              )}
             </div>
-          )}
+          ) : null}
         </div>
-        {mobile ? (
-          <button onClick={onCloseMobile} className={`transition-colors duration-[3000ms] ease-in-out ${isLight ? "text-slate-400 hover:text-slate-700" : "text-white/40 hover:text-white"}`}>
-            <X className="h-5 w-5" />
-          </button>
-        ) : onToggleCollapse ? (
-          <button
-            onClick={onToggleCollapse}
-            className={`p-1 rounded transition-colors duration-[3000ms] ease-in-out ml-auto ${
-              isLight ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100" : "text-white/40 hover:text-white hover:bg-white/10"
-            }`}
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
-        ) : null}
+
+        {isCollapsed && !mobile && (
+          <div className="flex flex-col items-center gap-2 w-full pt-1 animate-fadeIn">
+            {isWorkspace && (
+              <button
+                onClick={() => setLocation("/projects")}
+                className={`p-2 rounded-lg transition-all duration-300 flex items-center justify-center hover:scale-105 border w-10 h-10 ${
+                  isLight 
+                    ? "bg-amber-500/10 border-amber-500/25 text-amber-700 hover:bg-amber-500/20" 
+                    : "bg-amber-400/10 border-amber-400/20 text-amber-300 hover:bg-amber-400/20 hover:shadow-[0_0_8px_rgba(250,204,21,0.2)]"
+                }`}
+                title="Back to CRM Dashboard"
+              >
+                <Home className="h-4 w-4" />
+              </button>
+            )}
+            {onToggleCollapse && (
+              <button
+                onClick={onToggleCollapse}
+                className={`p-2 rounded transition-colors duration-[3000ms] ease-in-out w-10 h-10 flex items-center justify-center ${
+                  isLight ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100" : "text-white/40 hover:text-white hover:bg-white/10"
+                }`}
+                title="Expand Sidebar"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Nav Items */}
