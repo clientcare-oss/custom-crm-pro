@@ -69,6 +69,8 @@ const SECTIONS = [
     shortLabel: ["IDEA RISK", "LEVEL"],
     icon: Scale,
     angle: 288,
+    dx: 7,
+    dy: 1,
     accent: "text-rose-500 dark:text-rose-400",
     bg: "from-rose-500/10 to-rose-500/5",
     border: "border-rose-500/30",
@@ -423,8 +425,10 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                   // Calculate position for text (middle of sector)
                   const labelRad = ((sec.angle - 90) * Math.PI) / 180;
                   const labelDist = 81; // Positioned in the visual center sweet spot to touch neither the inner nor outer line
-                  const labelX = cx + labelDist * Math.cos(labelRad);
-                  const labelY = cy + labelDist * Math.sin(labelRad);
+                  const dx = (sec as any).dx || 0;
+                  const dy = (sec as any).dy || 0;
+                  const labelX = cx + labelDist * Math.cos(labelRad) + dx;
+                  const labelY = cy + labelDist * Math.sin(labelRad) + dy;
 
                   return (
                     <g key={sec.key}>
