@@ -1732,11 +1732,11 @@ export default function ClientPortal() {
                 className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
                   isAdminView
                     ? isLight
-                      ? "border border-amber-500 bg-amber-500/10 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
-                      : "border border-amber-400 bg-amber-400/15 text-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.3)] opacity-100"
+                      ? "border border-amber-500 bg-blue-700 text-white shadow-[0_0_8px_rgba(245,158,11,0.3)] opacity-100"
+                      : "border border-amber-400 bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.4)] opacity-100"
                     : isLight
-                      ? "border border-amber-500/25 text-slate-700 hover:bg-slate-200/60 hover:border-amber-500/50"
-                      : "border border-amber-500/30 text-white/80 hover:bg-white/5 hover:border-amber-400/50"
+                      ? "border border-amber-500/25 text-slate-700 hover:bg-blue-700 hover:text-white hover:border-amber-500/50"
+                      : "border border-amber-500/30 text-white/80 hover:bg-blue-600 hover:text-white hover:border-amber-400/50"
                 }`}
               >
                 Advocate Master View
@@ -1748,11 +1748,11 @@ export default function ClientPortal() {
                 className={`text-xs h-7 px-3 rounded-md font-medium transition-all duration-200 cursor-pointer ${
                   !isAdminView
                     ? isLight
-                      ? "border border-amber-500 bg-amber-500/10 text-amber-800 shadow-[0_0_6px_rgba(245,158,11,0.25)] opacity-100"
-                      : "border border-amber-400 bg-amber-400/15 text-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.3)] opacity-100"
+                      ? "border border-amber-500 bg-blue-700 text-white shadow-[0_0_8px_rgba(245,158,11,0.3)] opacity-100"
+                      : "border border-amber-400 bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.4)] opacity-100"
                     : isLight
-                      ? "border border-amber-500/25 text-slate-700 hover:bg-slate-200/60 hover:border-amber-500/50"
-                      : "border border-amber-500/30 text-white/80 hover:bg-white/5 hover:border-amber-400/50"
+                      ? "border border-amber-500/25 text-slate-700 hover:bg-blue-700 hover:text-white hover:border-amber-500/50"
+                      : "border border-amber-500/30 text-white/80 hover:bg-blue-600 hover:text-white hover:border-amber-400/50"
                 }`}
               >
                 Client Master View
