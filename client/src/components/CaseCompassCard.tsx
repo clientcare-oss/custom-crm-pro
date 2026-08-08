@@ -288,8 +288,8 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                   <circle cx={cx} cy={cy} r="100" fill="url(#gold-brushed)" className="opacity-[0.15]" />
 
                   {/* Decorative outer ticks and outer circles (Gold thin circle passing through the letters at radius 128) */}
-                  <circle cx={cx} cy={cy} r="128" stroke="url(#gold-metallic)" strokeWidth="0.75" fill="none" className="opacity-60" />
-                  <circle cx={cx} cy={cy} r="118" stroke="url(#gold-metallic)" strokeWidth="0.75" strokeDasharray="2 3" fill="none" className="opacity-35" />
+                  <circle cx={cx} cy={cy} r="128" stroke="url(#gold-metallic)" strokeWidth="1.5" fill="none" className="opacity-95" />
+                  <circle cx={cx} cy={cy} r="118" stroke="url(#gold-metallic)" strokeWidth="1.25" strokeDasharray="3 3" fill="none" className="opacity-80" />
                   
                   {/* Shiny Metallic Gold Outer Ring */}
                   <circle 
