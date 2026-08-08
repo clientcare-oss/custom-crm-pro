@@ -215,7 +215,7 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
   const cx = 200;
   const cy = 200;
   const rInner = 40;
-  const rOuter = 95;
+  const rOuter = 110;
   const rMid = 148;
 
   return (
