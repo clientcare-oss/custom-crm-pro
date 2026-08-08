@@ -158,7 +158,8 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
     yOffset: 30, // Default Y offset (30% from top highlights the lighthouse beacon and ship beautifully!)
     xOffset: 50, // Default X offset
     zoom: 100,   // Default zoom
-    overlayOpacity: 90 // Default opacity for overlays (90%)
+    overlayOpacity: 90, // Default opacity for overlays (90%)
+    bgOpacity: 85 // Default background image overlay opacity (85%)
   });
   const [isEditingBg, setIsEditingBg] = useState(false);
 
@@ -290,7 +291,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
         <div 
           className="relative p-6 md:p-8 flex flex-col justify-between min-h-[380px] bg-cover bg-center"
           style={{ 
-            backgroundImage: "linear-gradient(rgba(10, 16, 26, 0.84), rgba(10, 16, 26, 0.88)), url('/compass-bg.jpg')",
+            backgroundImage: `linear-gradient(rgba(10, 16, 26, ${(bgSettings.bgOpacity ?? 85) / 100}), rgba(10, 16, 26, ${((bgSettings.bgOpacity ?? 85) + 4) / 100})), url('/compass-bg.jpg')`,
             backgroundPosition: `${bgSettings.xOffset}% ${bgSettings.yOffset}%`,
             backgroundSize: `${bgSettings.zoom}%`
           }}
@@ -669,6 +670,22 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
                 max="100" 
                 value={bgSettings.overlayOpacity ?? 90} 
                 onChange={(e) => saveSettings({ ...bgSettings, overlayOpacity: Number(e.target.value) })}
+                className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400"
+              />
+            </div>
+
+            {/* Background Image Opacity Slider */}
+            <div className="space-y-2 text-left">
+              <div className="flex justify-between text-xs text-slate-300">
+                <span>Background Overlay Opacity</span>
+                <span className="font-mono">{bgSettings.bgOpacity ?? 85}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="10" 
+                max="95" 
+                value={bgSettings.bgOpacity ?? 85} 
+                onChange={(e) => saveSettings({ ...bgSettings, bgOpacity: Number(e.target.value) })}
                 className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400"
               />
             </div>
