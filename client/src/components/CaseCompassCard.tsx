@@ -212,11 +212,11 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
     Date.now() - new Date(compass.updatedAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   // Center coordinate math for SVG
-  const cx = 130;
-  const cy = 130;
+  const cx = 200;
+  const cy = 200;
   const rInner = 40;
   const rOuter = 95;
-  const rMid = 67.5;
+  const rMid = 148;
 
   return (
     <div className="space-y-3">
@@ -251,8 +251,8 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
             {/* Left Side: SVG Compass Rose */}
             <div className="col-span-1 md:col-span-5 flex justify-center">
-              <div className="relative w-[260px] h-[260px] select-none">
-                <svg viewBox="0 0 260 260" className="w-full h-full text-muted-foreground/30">
+              <div className="relative w-[320px] h-[320px] select-none">
+                <svg viewBox="0 0 400 400" className="w-full h-full text-muted-foreground/30">
                   <defs>
                     {/* Metallic Gold Gradient for realistic metal reflection */}
                     <linearGradient id="gold-metallic" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -276,9 +276,9 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                     </filter>
                   </defs>
 
-                  {/* Decorative outer ticks and outer circles */}
-                  <circle cx={cx} cy={cy} r="120" stroke="url(#gold-metallic)" strokeWidth="0.75" fill="none" className="opacity-50" />
-                  <circle cx={cx} cy={cy} r="114" stroke="url(#gold-metallic)" strokeWidth="0.75" strokeDasharray="2 3" fill="none" className="opacity-35" />
+                  {/* Decorative outer ticks and outer circles (Gold thin circle passing through the letters at radius 128) */}
+                  <circle cx={cx} cy={cy} r="128" stroke="url(#gold-metallic)" strokeWidth="0.75" fill="none" className="opacity-60" />
+                  <circle cx={cx} cy={cy} r="118" stroke="url(#gold-metallic)" strokeWidth="0.75" strokeDasharray="2 3" fill="none" className="opacity-35" />
                   
                   {/* Shiny Metallic Gold Outer Ring */}
                   <circle 
@@ -303,11 +303,11 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                   <circle cx={cx} cy={cy} r="107" stroke="#FFF2B2" strokeWidth="0.75" fill="none" className="opacity-70" />
                   <circle cx={cx} cy={cy} r="99" stroke="#AA7C11" strokeWidth="0.75" fill="none" className="opacity-70" />
 
-                  {/* Cardinal direction markers - repositioned to clear the outer ring */}
-                  <text x={cx} y="14" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/75 tracking-wider select-none font-sans">N</text>
-                  <text x="250" y="135" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">E</text>
-                  <text x={cx} y="253" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">S</text>
-                  <text x="10" y="135" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">W</text>
+                  {/* Cardinal direction markers - positioned exactly on the thin gold circle (radius 128) */}
+                  <text x={cx} y="77" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/75 tracking-wider select-none font-sans">N</text>
+                  <text x="328" y="205" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">E</text>
+                  <text x={cx} y="333" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">S</text>
+                  <text x="72" y="205" textAnchor="middle" className="text-[14px] font-extrabold fill-foreground/50 tracking-wider select-none font-sans">W</text>
 
                   {/* Wedge/Sector group */}
                   <g className="cursor-pointer">
@@ -341,10 +341,10 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                     transformOrigin: `${cx}px ${cy}px`,
                     transition: 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)'
                   }}>
-                    {/* Top needle cap pointer */}
-                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},45 ${cx + 7},${cy}`} className="fill-accent filter drop-shadow-md" />
-                    {/* Bottom needle cap pointer */}
-                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},215 ${cx + 7},${cy}`} className="fill-muted-foreground/35" />
+                    {/* Top needle tip point */}
+                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},115 ${cx + 7},${cy}`} className="fill-accent filter drop-shadow-md" />
+                    {/* Bottom needle tip point */}
+                    <polygon points={`${cx},${cy} ${cx - 7},${cy} ${cx},285 ${cx + 7},${cy}`} className="fill-muted-foreground/35" />
                     
                     {/* Needle pivot cap with brass/gold styling */}
                     <circle cx={cx} cy={cy} r="12" fill="url(#gold-metallic)" filter="url(#ring-shadow)" />
@@ -353,36 +353,6 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                     <circle cx={cx} cy={cy} r="3.5" fill="#FFF2B2" />
                   </g>
                 </svg>
-
-                {/* Absolutely positioned Lucide icons layered over wedge centerpoints */}
-                {SECTIONS.map((sec) => {
-                  const IconComp = sec.icon;
-                  const isActive = activeSection === sec.key;
-                  const isHovered = hoveredSection === sec.key;
-                  const angleRad = ((sec.angle - 90) * Math.PI) / 180;
-                  const iconX = cx + rMid * Math.cos(angleRad);
-                  const iconY = cy + rMid * Math.sin(angleRad);
-
-                  return (
-                    <button
-                      key={sec.key}
-                      style={{ left: `${iconX}px`, top: `${iconY}px` }}
-                      onClick={() => setActiveSection(sec.key)}
-                      onMouseEnter={() => setHoveredSection(sec.key)}
-                      onMouseLeave={() => setHoveredSection(null)}
-                      className={`absolute -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-card/90 shadow-sm border transition-all duration-200 ${
-                        isActive
-                          ? "border-accent text-accent scale-110"
-                          : isHovered
-                          ? "border-muted-foreground/40 text-foreground scale-105"
-                          : "border-border text-muted-foreground/80 hover:text-foreground"
-                      }`}
-                      title={sec.label}
-                    >
-                      <IconComp className="h-4 w-4" />
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
