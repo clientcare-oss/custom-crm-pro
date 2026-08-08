@@ -277,8 +277,8 @@ export default function CaseCompassCard({ caseId }: CaseCompassCardProps) {
                   </defs>
 
                   {/* Decorative outer ticks and outer circles */}
-                  <circle cx={cx} cy={cy} r="124" stroke="currentColor" strokeWidth="0.75" className="opacity-15 text-muted-foreground" />
-                  <circle cx={cx} cy={cy} r="115" stroke="currentColor" strokeWidth="1" strokeDasharray="3 4" className="opacity-25 text-muted-foreground" />
+                  <circle cx={cx} cy={cy} r="120" stroke="url(#gold-metallic)" strokeWidth="0.75" fill="none" className="opacity-50" />
+                  <circle cx={cx} cy={cy} r="114" stroke="url(#gold-metallic)" strokeWidth="0.75" strokeDasharray="2 3" fill="none" className="opacity-35" />
                   
                   {/* Shiny Metallic Gold Outer Ring */}
                   <circle 
