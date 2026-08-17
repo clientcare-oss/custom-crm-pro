@@ -10,6 +10,9 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -22,10 +25,10 @@ import {
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
@@ -63,39 +66,80 @@ const ICON_MAP: Record<ProjectIconKey, LucideIcon> = {
   Layers,
 };
 
-function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
+export interface MenuItem {
+  icon: LucideIcon;
+  label: string;
+  path: string;
+}
+
+export interface MenuGroup {
+  groupLabel: string;
+  items: MenuItem[];
+}
+
+function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGroup[] {
   return [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: Users, label: "Contacts", path: "/contacts" },
-    { icon: TrendingUp, label: "Leads", path: "/leads" },
-    { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
-    { icon: FileText, label: "Invoices", path: "/invoices" },
-    { icon: ScrollText, label: "Contracts", path: "/contracts" },
-    { icon: LayoutTemplate, label: "Smart Files", path: "/smart-files" },
-    { icon: Calendar, label: "Calendar", path: "/calendar" },
-    { icon: CalendarClock, label: "Scheduler", path: "/scheduler" },
-    { icon: CheckSquare, label: "Tasks", path: "/tasks" },
-    { icon: Layers, label: "Tech Tasks", path: "/tech-tasks" },
-    { icon: Wrench, label: "Tools", path: "/tools" },
-    { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
-    { icon: LayoutTemplate, label: "Templates", path: "/templates" },
-    { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
-    { icon: GitBranch, label: "Workflows", path: "/workflows" },
-    { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
-    { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
-    { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
-    { icon: UserCheck, label: "Team", path: "/team" },
-    { icon: Brain, label: "BrainDump", path: "/brain-dump" },
-    {icon: Briefcase, label: "Services", path: "/services" },
-    { icon: Heart, label: "Sponsors", path: "/sponsors" },
-    { icon: Banknote, label: "Bill Guardian", path: "/bill-guardian" },
-    { icon: Zap, label: "Automations", path: "/automations" },
-    { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
-    { icon: Plug, label: "Integrations", path: "/integrations" },
-    { icon: Compass, label: "Case Compass", path: "/case-compass" },
-    { icon: Compass, label: "Client Portal", path: "/portal-management" },
-    { icon: LayoutGrid, label: "Workspace", path: "/workspace" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    {
+      groupLabel: "Overview",
+      items: [
+        { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+        { icon: LayoutGrid, label: "Workspace", path: "/workspace" },
+        { icon: Calendar, label: "Calendar", path: "/calendar" },
+        { icon: CalendarClock, label: "Scheduler", path: "/scheduler" },
+      ],
+    },
+    {
+      groupLabel: "Cases & Clients",
+      items: [
+        { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
+        { icon: Users, label: "Contacts", path: "/contacts" },
+        { icon: TrendingUp, label: "Leads", path: "/leads" },
+        { icon: Compass, label: "Case Compass", path: "/case-compass" },
+        { icon: Shield, label: "Client Portal", path: "/portal-management" },
+      ],
+    },
+    {
+      groupLabel: "Documents & Billing",
+      items: [
+        { icon: LayoutTemplate, label: "Smart Files", path: "/smart-files" },
+        { icon: ScrollText, label: "Contracts", path: "/contracts" },
+        { icon: FileText, label: "Invoices", path: "/invoices" },
+        { icon: Briefcase, label: "Services", path: "/services" },
+        { icon: Banknote, label: "Bill Guardian", path: "/bill-guardian" },
+      ],
+    },
+    {
+      groupLabel: "Advocacy & AI Tools",
+      items: [
+        { icon: Wrench, label: "Tools", path: "/tools" },
+        { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
+        { icon: Zap, label: "Automations", path: "/automations" },
+        { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
+        { icon: GitBranch, label: "Workflows", path: "/workflows" },
+        { icon: Brain, label: "BrainDump", path: "/brain-dump" },
+      ],
+    },
+    {
+      groupLabel: "Practice & Operations",
+      items: [
+        { icon: CheckSquare, label: "Tasks", path: "/tasks" },
+        { icon: Layers, label: "Tech Tasks", path: "/tech-tasks" },
+        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
+        { icon: LayoutTemplate, label: "Templates", path: "/templates" },
+        { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
+        { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
+        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
+        { icon: UserCheck, label: "Team", path: "/team" },
+        { icon: Heart, label: "Sponsors", path: "/sponsors" },
+      ],
+    },
+    {
+      groupLabel: "System & Config",
+      items: [
+        { icon: Plug, label: "Integrations", path: "/integrations" },
+        { icon: Settings, label: "Settings", path: "/settings" },
+      ],
+    },
   ];
 }
 
@@ -190,13 +234,68 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
   const { projectLabel, projectIconKey } = useTerminology();
   const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
-  const menuItems = buildMenuItems(projectLabel, projectIcon);
+  const menuGroups = useMemo(() => buildMenuGroups(projectLabel, projectIcon), [projectLabel, projectIcon]);
+  const menuItems = useMemo(() => menuGroups.flatMap(g => g.items), [menuGroups]);
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [goToPageOpen, setGoToPageOpen] = useState(false);
+
+  // ============ COLLAPSIBLE SECTIONS & SEARCH STATE ============
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem("crm_sidebar_collapsed_sections");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {};
+  });
+
+  const toggleSection = (groupLabel: string) => {
+    setCollapsedSections((prev) => {
+      const next = { ...prev, [groupLabel]: !prev[groupLabel] };
+      localStorage.setItem("crm_sidebar_collapsed_sections", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut: ⌘K or Ctrl+K to quickly focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Filter menu groups and items based on search query in real time
+  const filteredMenuGroups = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return menuGroups;
+
+    return menuGroups
+      .map((group) => {
+        const matchingItems = group.items.filter(
+          (item) =>
+            item.label.toLowerCase().includes(q) ||
+            item.path.toLowerCase().includes(q)
+        );
+        return {
+          ...group,
+          items: matchingItems,
+        };
+      })
+      .filter((group) => group.items.length > 0);
+  }, [menuGroups, searchQuery]);
 
   // ============ VOYAGE RECORDER GLOBAL PIPELINE ENGINE ============
   const [isRecording, setIsRecording] = useState(false);
@@ -403,12 +502,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           className="border-r-0 transition-all duration-[3000ms] ease-in-out"
           disableTransition={isResizing}
         >
-          {/* ── Header: toggle + logo ── */}
-          <SidebarHeader className="px-3 pt-4 pb-3 bg-sidebar">
+          {/* ── Header: toggle + logo + search ── */}
+          <SidebarHeader className="px-3 pt-4 pb-2 bg-sidebar gap-2.5">
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shrink-0 cursor-pointer"
                 aria-label="Toggle navigation"
               >
                 <PanelLeft className="h-4 w-4 text-sidebar-foreground/60" />
@@ -434,36 +533,107 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 />
               )}
             </div>
+
+            {/* Live Module Search Bar */}
+            {!isCollapsed && (
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/40 pointer-events-none" />
+                <Input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search modules... (⌘K)"
+                  className="h-8 pl-8 pr-7 bg-black/25 border-white/10 text-xs rounded-lg placeholder:text-sidebar-foreground/35 focus-visible:ring-1 focus-visible:ring-amber-400 text-sidebar-foreground"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-sidebar-foreground/40 hover:text-sidebar-foreground p-0.5 rounded-sm cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
           </SidebarHeader>
 
-          {/* ── Nav items ── */}
-          <SidebarContent className="gap-0 bg-sidebar px-2 py-1">
-            <div className="rounded-xl bg-black/20 border border-white/5 py-1.5 px-1 shadow-inner">
-            <SidebarMenu className="">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
+          {/* ── Nav items with Expandable/Collapsible Sections ── */}
+          <SidebarContent className="bg-sidebar px-2 py-2 overflow-y-auto space-y-3">
+            {filteredMenuGroups.length === 0 && searchQuery ? (
+              <div className="text-center py-8 px-3">
+                <Search className="h-6 w-6 mx-auto text-sidebar-foreground/30 mb-2" />
+                <p className="text-xs font-semibold text-sidebar-foreground/80">No modules found</p>
+                <p className="text-[10px] text-sidebar-foreground/40 mt-0.5">No match for "{searchQuery}"</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="mt-2 text-xs h-7 text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 cursor-pointer"
+                >
+                  Clear Search
+                </Button>
+              </div>
+            ) : (
+              filteredMenuGroups.map((group) => {
+                const isSearching = searchQuery.trim().length > 0;
+                const hasActiveItem = group.items.some((item) => item.path === location);
+                // When searching or if active, default to open unless manually collapsed
+                const isCollapsedSection = !isSearching && (collapsedSections[group.groupLabel] ?? false);
+
                 return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className={`h-9 transition-all font-normal rounded-lg
-                        ${isActive
-                          ? "border border-amber-500/70 text-amber-600 navy:text-amber-300 bg-amber-500/10 hover:bg-amber-500/15 hover:text-amber-600 navy:hover:text-amber-300"
-                          : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-transparent"
-                        }`}
+                  <div key={group.groupLabel} className="space-y-1">
+                    {/* Collapsible Section Header Button */}
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(group.groupLabel)}
+                      className="w-full flex items-center justify-between px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
                     >
-                      {item.icon && (
-                        <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-600 navy:text-amber-400" : "text-sidebar-foreground/50"}`} />
-                      )}
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                      <span className={hasActiveItem ? "text-amber-500/90 font-extrabold" : ""}>
+                        {group.groupLabel}
+                      </span>
+                      <span className="text-sidebar-foreground/40 group-hover/header:text-sidebar-foreground transition-transform">
+                        {isCollapsedSection ? (
+                          <ChevronRight className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                      </span>
+                    </button>
+
+                    {/* Section Items Card */}
+                    {!isCollapsedSection && (
+                      <div className="rounded-xl bg-black/20 border border-white/5 p-1 shadow-inner animate-in fade-in duration-150">
+                        <SidebarMenu className="gap-0.5">
+                          {group.items.map((item) => {
+                            const isActive = location === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton
+                                  isActive={isActive}
+                                  onClick={() => setLocation(item.path)}
+                                  tooltip={item.label}
+                                  className={`h-8 transition-all font-normal rounded-lg text-xs cursor-pointer
+                                    ${isActive
+                                      ? "border border-amber-500/70 text-amber-600 navy:text-amber-300 bg-amber-500/10 hover:bg-amber-500/15 hover:text-amber-600 navy:hover:text-amber-300 font-semibold shadow-xs"
+                                      : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-transparent"
+                                    }`}
+                                >
+                                  {item.icon && (
+                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-amber-600 navy:text-amber-400" : "text-sidebar-foreground/50"}`} />
+                                  )}
+                                  <span className="truncate">{item.label}</span>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </div>
+                    )}
+                  </div>
                 );
-              })}
-            </SidebarMenu>
-            </div>
+              })
+            )}
           </SidebarContent>
 
           {/* ── Footer: controls ── */}

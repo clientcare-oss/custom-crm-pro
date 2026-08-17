@@ -43,7 +43,7 @@ export function ClientPortalHeader({
       <div 
         className="absolute inset-0 transition-opacity duration-[3000ms] ease-in-out pointer-events-none"
         style={{
-          background: `linear-gradient(to right, #071422 0%, #0d1b2a 40%, rgba(13,27,42,0.7) 70%, rgba(13,27,42,0.4) 100%), url('/storage/lighthouse-header-bg_485f0bf3.jpg') center/cover no-repeat`,
+          background: `linear-gradient(to right, #071422 0%, #0d1b2a 40%, rgba(13,27,42,0.7) 70%, rgba(13,27,42,0.4) 100%), url('/compass-bg.jpg') center/cover no-repeat`,
           opacity: isLight ? 0 : 1,
         }}
       />
@@ -51,7 +51,7 @@ export function ClientPortalHeader({
       <div 
         className="absolute inset-0 transition-opacity duration-[3000ms] ease-in-out pointer-events-none"
         style={{
-          background: `linear-gradient(to right, #f8fafc 0%, #e2e8f0 40%, rgba(226,232,240,0.7) 70%, rgba(226,232,240,0.4) 100%), url('/storage/lighthouse-header-bg_485f0bf3.jpg') center/cover no-repeat`,
+          background: `linear-gradient(to right, #f8fafc 0%, #e2e8f0 40%, rgba(226,232,240,0.7) 70%, rgba(226,232,240,0.4) 100%), url('/compass-bg.jpg') center/cover no-repeat`,
           opacity: isLight ? 1 : 0,
         }}
       />

@@ -3,7 +3,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
 import { getDb } from "../db";
-import { portalSessions } from "../../drizzle/schema";
+import { contacts, portalSessions } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 const t = initTRPC.context<TrpcContext>().create({
@@ -81,11 +81,22 @@ export const portalProcedure = t.procedure.use(
 
     // Clerk Client users with role === 'client'
     if (ctx.user?.role === 'client') {
-      const contactId = (ctx.user as any).contactId ?? ctx.user.id;
+      const conn = await getDb();
+      let contactId = (ctx.user as any).contactId;
+      if (!contactId && conn) {
+        const [contact] = await conn
+          .select()
+          .from(contacts)
+          .where(eq(contacts.portalUserId, ctx.user.id))
+          .limit(1);
+        if (contact) {
+          contactId = contact.id;
+        }
+      }
       return next({
         ctx: {
           ...ctx,
-          portalContactId: Number(contactId),
+          portalContactId: Number(contactId ?? ctx.user.id),
           isAdminPreview: false,
         },
       });

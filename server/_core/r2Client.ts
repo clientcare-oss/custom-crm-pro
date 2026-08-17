@@ -25,6 +25,7 @@ export const r2Client = new S3Client({
     accessKeyId: R2_CONFIG.accessKeyId,
     secretAccessKey: R2_CONFIG.secretAccessKey,
   },
+  forcePathStyle: true,
 });
 
 /**

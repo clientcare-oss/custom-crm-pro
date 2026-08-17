@@ -571,7 +571,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
             {/* Custom Video Player simulator */}
             <div className="relative aspect-video rounded-xl bg-slate-950 border border-white/10 overflow-hidden flex flex-col justify-between group">
               {/* Thumbnail background image */}
-              <div className="absolute inset-0 bg-cover bg-center animate-pulse" style={{ backgroundImage: "url('/storage/lighthouse-header-bg_485f0bf3.jpg')" }}>
+              <div className="absolute inset-0 bg-cover bg-center animate-pulse" style={{ backgroundImage: "url('/compass-bg.jpg')" }}>
                 {/* Simulated dusk/dawn gradient mask */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80" />
               </div>
