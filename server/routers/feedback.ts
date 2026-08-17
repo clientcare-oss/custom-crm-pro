@@ -57,8 +57,8 @@ export const feedbackRouter = router({
   submitIssue: protectedProcedure
     .input(
       z.object({
-        title: z.string().min(3, "Title must be at least 3 characters"),
-        description: z.string().min(5, "Please provide more details"),
+        title: z.string().min(1, "Please provide a title"),
+        description: z.string().min(1, "Please provide description details"),
         issueType: z.enum(["bug", "feature", "improvement", "question"]).default("bug"),
         priority: z.number().min(0).max(4).default(3), // 1: Urgent, 2: High, 3: Medium, 4: Low
         routeContext: z.object({

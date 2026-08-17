@@ -80,6 +80,17 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
     }
   }, [open]);
 
+  function formatErrorMessage(rawMessage?: string): string {
+    if (!rawMessage) return "Failed to submit issue";
+    try {
+      const parsed = JSON.parse(rawMessage);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.message) {
+        return parsed[0].message;
+      }
+    } catch (_) {}
+    return rawMessage;
+  }
+
   const submitMutation = trpc.feedback.submitIssue.useMutation({
     onSuccess: (data) => {
       toast.success(`Issue ${data.issue.identifier} submitted to Linear backlog!`);
@@ -93,7 +104,7 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
       utils.feedback.listRecentIssues.invalidate();
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to submit issue");
+      toast.error(formatErrorMessage(err.message));
     },
   });
 
