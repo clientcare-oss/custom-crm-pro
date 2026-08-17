@@ -2,7 +2,21 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 
-const LINEAR_API_KEY = process.env.LINEAR_API_KEY || "";
+import dotenv from "dotenv";
+
+function getLinearApiKey(): string {
+  if (process.env.LINEAR_API_KEY) {
+    return process.env.LINEAR_API_KEY;
+  }
+  try {
+    const result = dotenv.config();
+    if (result.parsed?.LINEAR_API_KEY) {
+      return result.parsed.LINEAR_API_KEY;
+    }
+  } catch (_) {}
+  return process.env.LINEAR_API_KEY || "";
+}
+
 const PROJECT_ID = "a8036307-5566-45e5-93b2-7bf9fe06b4e7"; // Waypoint Advocates
 const TEAM_ID = "8c97d3e4-9744-4a46-9ad0-1c0ee992b3c2"; // VER team
 const BACKLOG_STATE_ID = "1145e40e-7e1a-4f03-ab19-c46640b44fe2";
@@ -15,15 +29,16 @@ const LABEL_MAP: Record<string, string> = {
 };
 
 async function linearGraphQL(query: string, variables: any = {}) {
-  if (!LINEAR_API_KEY) {
-    throw new Error("LINEAR_API_KEY is not configured on the server");
+  const apiKey = getLinearApiKey();
+  if (!apiKey) {
+    throw new Error("LINEAR_API_KEY is not configured in .env or server environment");
   }
 
   const res = await fetch("https://api.linear.app/graphql", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: LINEAR_API_KEY,
+      Authorization: apiKey,
     },
     body: JSON.stringify({ query, variables }),
   });
