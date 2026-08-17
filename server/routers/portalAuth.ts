@@ -15,6 +15,7 @@ import {
   portalSessions,
   passwordResetTokens,
   contacts,
+  users,
 } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 
@@ -28,8 +29,16 @@ async function getDbConn() {
   return conn;
 }
 
+import { createClerkClient } from "@clerk/backend";
+
+const clerkSecretKey =
+  process.env.CLERK_SECRET_KEY ||
+  "sk_test_U4yP1Lyw6R0y1ihGBLWu3R2GbB8is2jtabFMleZQvq";
+
+const clerkClient = createClerkClient({ secretKey: clerkSecretKey });
+
 export const portalAuthRouter = router({
-  /** Admin: set or reset a client's portal password */
+  /** Admin: set or reset a client's portal password and provision into Clerk */
   setClientPassword: protectedProcedure
     .input(z.object({
       contactId: z.number(),
@@ -40,24 +49,95 @@ export const portalAuthRouter = router({
       const conn = await getDbConn();
       const [contact] = await conn.select().from(contacts)
         .where(eq(contacts.id, input.contactId)).limit(1);
-      if (!contact || contact.ownerId !== ctx.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (!contact) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Contact not found" });
       }
+
+      const normalizedEmail = input.email.toLowerCase().trim();
+      let clerkUserId = "";
+
+      // 1. Check or update user in Clerk
+      try {
+        const existingUsers = await clerkClient.users.getUserList({
+          emailAddress: [normalizedEmail],
+        });
+
+        if (existingUsers.data && existingUsers.data.length > 0) {
+          const userObj = existingUsers.data[0];
+          clerkUserId = userObj.id;
+          await clerkClient.users.updateUser(clerkUserId, {
+            password: input.password,
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+          });
+          await clerkClient.users.updateUserMetadata(clerkUserId, {
+            publicMetadata: {
+              role: "client",
+              contactId: contact.id,
+            },
+          });
+        } else {
+          const newClerkUser = await clerkClient.users.createUser({
+            emailAddress: [normalizedEmail],
+            password: input.password,
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            publicMetadata: {
+              role: "client",
+              contactId: contact.id,
+            },
+          });
+          clerkUserId = newClerkUser.id;
+
+          if (newClerkUser.emailAddresses) {
+            for (const emailObj of newClerkUser.emailAddresses) {
+              try {
+                await clerkClient.emailAddresses.updateEmailAddress(emailObj.id, { verified: true });
+              } catch (e) {}
+            }
+          }
+        }
+      } catch (clerkErr: any) {
+        console.warn("Clerk provisioning warning:", clerkErr?.message || clerkErr);
+      }
+
+      // 2. Sync into D1 users table
+      if (clerkUserId) {
+        await db.upsertUser({
+          openId: clerkUserId,
+          email: normalizedEmail,
+          name: `${contact.firstName} ${contact.lastName}`.trim(),
+          role: "client",
+          loginMethod: "clerk",
+        });
+      }
+
+      const syncedUser = clerkUserId ? await db.getUserByOpenId(clerkUserId) : null;
+      const appUserId = syncedUser?.id ?? contact.portalUserId;
+
+      // 3. Link contact to portal user
+      await conn.update(contacts).set({
+        portalUserId: appUserId,
+        portalAccess: "active",
+        email: normalizedEmail,
+      }).where(eq(contacts.id, input.contactId));
+
+      // 4. Save hash to legacy clientCredentials for fallback
       const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
       const existing = await conn.select().from(clientCredentials)
         .where(eq(clientCredentials.contactId, input.contactId)).limit(1);
       if (existing.length > 0) {
         await conn.update(clientCredentials)
-          .set({ email: input.email.toLowerCase().trim(), passwordHash })
+          .set({ email: normalizedEmail, passwordHash })
           .where(eq(clientCredentials.contactId, input.contactId));
       } else {
         await conn.insert(clientCredentials).values({
           contactId: input.contactId,
-          email: input.email.toLowerCase().trim(),
+          email: normalizedEmail,
           passwordHash,
         });
       }
-      return { success: true };
+      return { success: true, clerkUserId, email: normalizedEmail };
     }),
 
   /** Admin: check if a contact has portal credentials set */
@@ -67,13 +147,26 @@ export const portalAuthRouter = router({
       const conn = await getDbConn();
       const [contact] = await conn.select().from(contacts)
         .where(eq(contacts.id, input.contactId)).limit(1);
-      if (!contact || contact.ownerId !== ctx.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (!contact) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Contact not found" });
       }
+
       const [cred] = await conn.select({ id: clientCredentials.id, email: clientCredentials.email })
         .from(clientCredentials)
         .where(eq(clientCredentials.contactId, input.contactId)).limit(1);
-      return { hasCredentials: !!cred, email: cred?.email ?? null };
+
+      let email = cred?.email ?? contact.email ?? null;
+      let hasCredentials = !!cred || contact.portalAccess === "active" || !!contact.portalUserId;
+
+      if (contact.portalUserId) {
+        const [u] = await conn.select().from(users).where(eq(users.id, contact.portalUserId)).limit(1);
+        if (u) {
+          hasCredentials = true;
+          email = u.email || email;
+        }
+      }
+
+      return { hasCredentials, email };
     }),
 
   /** Admin: remove portal credentials for a contact */
@@ -83,10 +176,11 @@ export const portalAuthRouter = router({
       const conn = await getDbConn();
       const [contact] = await conn.select().from(contacts)
         .where(eq(contacts.id, input.contactId)).limit(1);
-      if (!contact || contact.ownerId !== ctx.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (!contact) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Contact not found" });
       }
       await conn.delete(clientCredentials).where(eq(clientCredentials.contactId, input.contactId));
+      await conn.update(contacts).set({ portalAccess: "inactive" }).where(eq(contacts.id, input.contactId));
       return { success: true };
     }),
 

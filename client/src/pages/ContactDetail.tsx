@@ -119,26 +119,26 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
 
   return (
     <>
-    <Card className="border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-sm">
+    <Card className="border border-border/80 bg-card/60 backdrop-blur-sm shadow-sm rounded-xl overflow-hidden">
       <div className="flex items-start justify-between p-6">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="h-5 w-5 text-accent" />
-            <h3 className="font-bold text-foreground">Client portal</h3>
-            <div className="ml-auto flex items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <Users className="h-4 w-4 text-accent flex-shrink-0" />
+            <h3 className="font-bold text-foreground text-sm">Client Portal Access</h3>
+            <div className="ml-auto flex items-center gap-2 flex-wrap">
               {portalStatus?.hasCredentials ? (
-                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1.5">
                   <KeyRound className="h-3 w-3" /> Access enabled
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <KeyRound className="h-3 w-3" /> No access yet
+                <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1.5">
+                  <KeyRound className="h-3 w-3" /> No login created
                 </span>
               )}
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-xs text-accent hover:bg-accent/10"
+                className="h-7 text-xs border-accent/40 text-accent hover:bg-accent/10 hover:text-accent font-semibold cursor-pointer"
                 onClick={() => { setPwEmail(portalStatus?.email ?? contact.email ?? ""); setShowSetPassword(true); }}
               >
                 {portalStatus?.hasCredentials ? "Update Login" : "Set Login"}
@@ -147,7 +147,7 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-destructive hover:bg-destructive/10"
+                  className="h-7 text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
                   onClick={() => removeCredsMutation.mutate({ contactId: contact.id })}
                 >
                   Remove
@@ -155,19 +155,26 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 mb-4 bg-muted/50 rounded px-3 py-2 text-sm text-muted-foreground font-mono">
-            <span className="truncate">{portalLink.substring(0, 50)}...</span>
-            <Button variant="ghost" size="sm" onClick={handleCopyLink} className="ml-auto h-6 w-6 p-0">
-              <Copy className="h-4 w-4" />
+          <div className="flex items-center gap-2 mb-4 bg-muted/40 border border-border/70 rounded-lg px-3 py-2 text-xs text-muted-foreground font-mono">
+            <span className="truncate flex-1">{portalLink}</span>
+            <Button variant="ghost" size="sm" onClick={handleCopyLink} className="h-6 w-6 p-0 hover:text-accent cursor-pointer">
+              <Copy className="h-3.5 w-3.5" />
             </Button>
           </div>
-          <div className="text-xs text-muted-foreground mb-3">
-            Select the connected contacts you want to send the client portal link to.
+          <div className="text-xs text-muted-foreground mb-2.5">
+            Select connected parent contacts to email the client portal link:
           </div>
           {parentContacts.length > 0 ? (
             <div className="flex gap-2 mb-4 flex-wrap">
               {parentContacts.map((parent) => (
-                <label key={parent.id} className="flex items-center gap-2 rounded-full border border-accent/40 bg-accent/5 px-3 py-1.5 cursor-pointer hover:bg-accent/10 transition-colors">
+                <label
+                  key={parent.id}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 cursor-pointer transition-all ${
+                    selectedParents.includes(parent.id)
+                      ? "border-accent bg-accent/15 text-foreground font-semibold shadow-xs"
+                      : "border-border/80 bg-muted/30 text-muted-foreground hover:bg-muted/60"
+                  }`}
+                >
                   <Checkbox
                     checked={selectedParents.includes(parent.id)}
                     onCheckedChange={(checked) => {
@@ -178,34 +185,35 @@ function ClientPortalCard({ contact, parentContactId }: { contact: any; parentCo
                       }
                     }}
                   />
-                  <span className="text-xs font-semibold text-accent">{parent.initials}</span>
-                  <span className="text-xs text-foreground">{parent.firstName} {parent.lastName}</span>
-                  <span className="text-xs font-semibold text-accent uppercase">{parent.role}</span>
+                  <span className="text-xs font-bold text-accent">{parent.initials}</span>
+                  <span className="text-xs text-foreground font-medium">{parent.firstName} {parent.lastName}</span>
+                  <span className="text-[10px] font-bold text-accent/80 uppercase tracking-wider">{parent.role}</span>
                 </label>
               ))}
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground mb-4">No parent contacts linked to this student.</div>
+            <div className="text-xs text-muted-foreground mb-4 italic">No parent contacts linked to this student.</div>
           )}
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox checked={includeInEmails} onCheckedChange={(checked) => setIncludeInEmails(checked === true)} />
               <span className="text-xs text-foreground">Include client portal links in files and emails</span>
             </label>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <Eye className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
         </div>
         <Button 
           onClick={handleSendEmail} 
           disabled={sendPortalLinkMutation.isPending || selectedParents.length === 0}
           size="sm" 
-          className="ml-4 h-10 w-10 p-0 flex-shrink-0"
+          className="ml-4 h-9 px-3 text-xs font-semibold gap-1.5 flex-shrink-0 bg-accent text-accent-foreground hover:bg-accent/90 cursor-pointer shadow-sm"
         >
           {sendPortalLinkMutation.isPending ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4" />
           )}
+          <span>Send Link</span>
         </Button>
       </div>
     </Card>
@@ -1044,28 +1052,28 @@ function StudentTabs({
 }) {
   return (
     <Tabs defaultValue="compass">
-      <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-xl">
-        <TabsTrigger value="compass" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
-        <TabsTrigger value="voyage-log" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Video className="h-3.5 w-3.5" />Voyage Log</TabsTrigger>
-        <TabsTrigger value="activity" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Messages</TabsTrigger>
-        <TabsTrigger value="tasks" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
-        <TabsTrigger value="files" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
-          <Folder className="h-3.5 w-3.5" />Files{files.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{files.length}</span>}
+      <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/40 p-1.5 rounded-xl border border-border/60">
+        <TabsTrigger value="compass" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
+        <TabsTrigger value="voyage-log" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Video className="h-3.5 w-3.5" />Voyage Log</TabsTrigger>
+        <TabsTrigger value="activity" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><MessageSquare className="h-3.5 w-3.5" />Messages</TabsTrigger>
+        <TabsTrigger value="tasks" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
+        <TabsTrigger value="files" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
+          <Folder className="h-3.5 w-3.5" />Files{files.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{files.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="time-tracker" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Timer className="h-3.5 w-3.5" />Time</TabsTrigger>
-        <TabsTrigger value="call-logs" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />Calls</TabsTrigger>
-        <TabsTrigger value="tools" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Tools</TabsTrigger>
-        <TabsTrigger value="projects" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
-          <FileText className="h-3.5 w-3.5" />Cases{projects.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{projects.length}</span>}
+        <TabsTrigger value="time-tracker" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Timer className="h-3.5 w-3.5" />Time</TabsTrigger>
+        <TabsTrigger value="call-logs" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Phone className="h-3.5 w-3.5" />Calls</TabsTrigger>
+        <TabsTrigger value="tools" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Wrench className="h-3.5 w-3.5" />Tools</TabsTrigger>
+        <TabsTrigger value="projects" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
+          <FileText className="h-3.5 w-3.5" />Cases{projects.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{projects.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="financials" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
-          <DollarSign className="h-3.5 w-3.5" />Billing{invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{invoices.length}</span>}
+        <TabsTrigger value="financials" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
+          <DollarSign className="h-3.5 w-3.5" />Billing{invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{invoices.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="appointments" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5" />Appts{appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs font-medium">{appointments.length}</span>}
+        <TabsTrigger value="appointments" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
+          <Calendar className="h-3.5 w-3.5" />Appts{appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{appointments.length}</span>}
         </TabsTrigger>
-        <TabsTrigger value="notes" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Notes</TabsTrigger>
-        <TabsTrigger value="details" className="rounded-lg text-sm px-3 py-1.5 flex items-center gap-1.5"><Info className="h-3.5 w-3.5" />Details</TabsTrigger>
+        <TabsTrigger value="notes" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><FileText className="h-3.5 w-3.5" />Notes</TabsTrigger>
+        <TabsTrigger value="details" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Info className="h-3.5 w-3.5" />Details</TabsTrigger>
       </TabsList>
 
       {/* COMPASS TAB */}

@@ -93,28 +93,28 @@ export function CaseParticipants({ contactId, contactName, parentContactId }: Ca
         <Popover open={parentPopoverOpen} onOpenChange={setParentPopoverOpen}>
           <PopoverTrigger asChild>
             <button
-              className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-full pl-0.5 pr-3 py-0.5 h-8 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full pl-0.5 pr-3 py-0.5 h-8 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-sm"
               title={parentName ? `${parentName} (Parent / Guardian)` : "Loading parent…"}
             >
-              <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-300 flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                 {parentContact ? getInitials(parentName) : "…"}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-foreground leading-none truncate max-w-[100px]">
+                <p className="text-xs font-semibold text-foreground leading-none truncate max-w-[120px]">
                   {parentName ?? "Loading…"}
                 </p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 leading-none mt-0.5 font-medium">PARENT</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 leading-none mt-0.5 font-bold tracking-wider">PARENT</p>
               </div>
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-64 p-3">
+          <PopoverContent align="start" className="w-64 p-3 bg-card border border-border/80 shadow-xl">
             <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-sm font-bold text-emerald-700 dark:text-emerald-300 flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                 {parentContact ? getInitials(parentName) : "…"}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{parentName ?? "Loading…"}</p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium uppercase tracking-wide">Parent / Guardian</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Parent / Guardian</p>
               </div>
             </div>
 
