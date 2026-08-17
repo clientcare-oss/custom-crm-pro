@@ -79,15 +79,13 @@ function Router() {
       window.location.pathname === '/portal' ||
       window.location.pathname.startsWith('/portal?') ||
       window.location.pathname === '/client-portal' ||
-      window.location.pathname.startsWith('/smart-files/response/') ||
-      window.location.pathname.startsWith('/project-workspace/')
+      window.location.pathname.startsWith('/smart-files/response/')
     ) {
       return (
         <Switch>
           <Route path="/portal/book" component={PortalBook} />
           <Route path="/portal" component={ClientPortal} />
           <Route path="/client-portal" component={ClientPortal} />
-          <Route path="/project-workspace/:studentId" component={ClientPortal} />
           <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
         </Switch>
       );
@@ -111,7 +109,10 @@ function Router() {
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/contacts/:id" component={ContactDetail} />
+          <Route path="/students/:id" component={ContactDetail} />
+          <Route path="/project-workspace/:id" component={ContactDetail} />
           <Route path="/contacts" component={Contacts} />
+          <Route path="/students" component={Students} />
           <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Students} />

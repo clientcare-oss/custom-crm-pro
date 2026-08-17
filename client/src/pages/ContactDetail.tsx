@@ -469,18 +469,22 @@ export default function ContactDetail() {
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">{fullName}</h1>
-            {/* Preview Portal button — only for parent contacts with a linked portal account */}
-            {isParent && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(`/portal?preview=true&parentContactId=${contact.id}`, "_blank")}
-                className="inline-flex items-center gap-1.5 text-xs"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Preview Portal
-              </Button>
-            )}
+            {/* Preview Portal button for both students and parents */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const url = isParent
+                  ? `/portal?preview=true&parentContactId=${contact.id}`
+                  : `/portal?preview=true&contactId=${contact.id}${contact.parentContactId ? `&parentContactId=${contact.parentContactId}` : ""}`;
+                window.open(url, "_blank");
+              }}
+              className="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 cursor-pointer"
+              title="Preview how this case appears to the parent in the Client Portal"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Preview Parent Portal
+            </Button>
             {/* Archive / Unarchive button */}
             {(contact as any).archivedAt ? (
               <Button

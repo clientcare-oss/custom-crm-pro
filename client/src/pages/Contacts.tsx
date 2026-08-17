@@ -386,15 +386,15 @@ export default function Contacts() {
                   </div>
                   {(() => {
                     const student = contacts.find((c: any) => c.parentContactId === contact.id && c.jobTitle === "Student");
-                    const targetPath = student ? `/project-workspace/${student.id}` : `/contacts/${contact.id}`;
+                    const targetPath = student ? `/contacts/${student.id}` : `/contacts/${contact.id}`;
                     return (
                       <Button
                         onClick={() => setLocation(targetPath)}
                         variant="outline"
                         size="sm"
-                        className="w-full rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-xs font-bold text-amber-500 hover:text-amber-400 shadow-sm transition-all hover:bg-amber-500/10 flex items-center justify-center"
+                        className="w-full rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-xs font-bold text-amber-500 hover:text-amber-400 shadow-sm transition-all hover:bg-amber-500/10 flex items-center justify-center cursor-pointer"
                       >
-                        <Compass className="h-3.5 w-3.5 mr-1 shrink-0" /> Go to Workspace
+                        <Compass className="h-3.5 w-3.5 mr-1 shrink-0" /> {student ? "Open Student Case" : "View Contact Details"}
                       </Button>
                     );
                   })()}

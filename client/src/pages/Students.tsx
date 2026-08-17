@@ -1,7 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight, ChevronLeft, ArrowUpDown, User, Compass } from "lucide-react";
+import { Plus, ChevronRight, ChevronLeft, ArrowUpDown, User, Compass, Eye } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import {
@@ -290,15 +290,30 @@ export default function Students() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setLocation(`/project-workspace/${contact.id}`)}
-                        className="h-8 px-2.5 text-xs font-semibold gap-1 hover:bg-accent hover:text-accent-foreground transition-all"
-                      >
-                        <Compass className="h-3.5 w-3.5 text-accent" />
-                        Workspace
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            const url = `/portal?preview=true&contactId=${contact.id}${contact.parentContactId ? `&parentContactId=${contact.parentContactId}` : ""}`;
+                            window.open(url, "_blank");
+                          }}
+                          title="Preview what the parent sees in Client Portal"
+                          className="h-8 px-2 text-xs text-muted-foreground hover:text-amber-500 inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span className="hidden xl:inline">Preview</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setLocation(`/contacts/${contact.id}`)}
+                          className="h-8 px-2.5 text-xs font-semibold gap-1 hover:bg-accent hover:text-accent-foreground transition-all cursor-pointer"
+                        >
+                          <Compass className="h-3.5 w-3.5 text-accent" />
+                          Case Details
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
