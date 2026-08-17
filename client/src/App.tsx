@@ -151,6 +151,7 @@ function Router() {
           <Route path="/settings" component={Settings} />
           <Route path="/portal-management" component={PortalManagement} />
           <Route path="/workspace" component={Workspace} />
+          <Route path="/tools/case-compass" component={CaseCompassAdmin} />
           <Route path="/case-compass" component={CaseCompassAdmin} />
           <Route path="/book" component={BookingPage} />
           <Route path="/404" component={NotFound} />

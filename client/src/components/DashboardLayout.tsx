@@ -92,6 +92,7 @@ function buildMenuItems(projectLabel: string, projectIcon: LucideIcon) {
     { icon: Zap, label: "Automations", path: "/automations" },
     { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
     { icon: Plug, label: "Integrations", path: "/integrations" },
+    { icon: Compass, label: "Case Compass", path: "/case-compass" },
     { icon: Compass, label: "Client Portal", path: "/portal-management" },
     { icon: LayoutGrid, label: "Workspace", path: "/workspace" },
     { icon: Settings, label: "Settings", path: "/settings" },
