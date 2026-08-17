@@ -25,7 +25,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import QuickSetupModal from './QuickSetupModal';
+import { IssueReporterModal } from "./IssueReporterModal";
 import ScopedErrorBoundary from "./ScopedErrorBoundary";
 
 import { trpc } from "@/lib/trpc";
@@ -442,6 +443,22 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   // Developer Rules state & queries
   const [isDevRulesOpen, setIsDevRulesOpen] = useState(false);
   const [devRuleText, setDevRuleText] = useState("");
+  const [issueReporterOpen, setIssueReporterOpen] = useState(false);
+
+  // Global shortcut (⌥+F or Alt+F) to trigger Linear issue reporter
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.altKey && (e.key === "f" || e.key === "F")) ||
+        (e.metaKey && e.shiftKey && (e.key === "f" || e.key === "F"))
+      ) {
+        e.preventDefault();
+        setIssueReporterOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const pageKey = "crm:path:" + (location === "/" ? "dashboard" : location.replace(/^\//, "").replaceAll("/", ":"));
 
@@ -697,9 +714,17 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               </DropdownMenu>
 
               <button
+                onClick={() => setIssueReporterOpen(true)}
+                title="Report Issue / Linear Backlog (⌥+F)"
+                className="h-8 w-8 rounded-lg hover:bg-sidebar-accent transition-colors flex items-center justify-center text-sidebar-foreground/50 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer"
+              >
+                <Bug className="h-4 w-4 text-rose-500" />
+              </button>
+
+              <button
                 onClick={() => setGoToPageOpen(true)}
                 title="Go to Page"
-                className="h-8 w-8 rounded-lg hover:bg-sidebar-accent transition-colors flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400"
+                className="h-8 w-8 rounded-lg hover:bg-sidebar-accent transition-colors flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
               >
                 <Compass className="h-4.5 w-4.5 text-amber-550 navy:text-amber-400" />
               </button>
@@ -729,15 +754,22 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             {children}
           </ScopedErrorBoundary>
 
-          {/* Golden Developer Guidelines Floating Button */}
-          <div className="absolute top-4 right-4 z-20">
+          {/* Floating Action Buttons */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+            <Button
+              onClick={() => setIssueReporterOpen(true)}
+              className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer"
+              title="Report Issue / Feedback to Linear Backlog (⌥+F)"
+            >
+              <Bug className="w-3.5 h-3.5" /> Feedback & Issues
+            </Button>
             <Button
               onClick={() => {
                 const rule = devRules.find((r: any) => r.tabKey === pageKey);
                 setDevRuleText(rule?.content || "");
                 setIsDevRulesOpen(true);
               }}
-              className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all"
+              className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all cursor-pointer"
               title="Developer Guidelines & Page Rules"
             >
               <BookOpen className="w-3.5 h-3.5" /> Dev Info
@@ -812,6 +844,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       <AIAssistant />
       <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
       <GoToPageModal open={goToPageOpen} onClose={() => setGoToPageOpen(false)} />
+      <IssueReporterModal open={issueReporterOpen} onOpenChange={setIssueReporterOpen} />
 
       {/* Developer Guidelines Editor Dialog */}
       <Dialog open={isDevRulesOpen} onOpenChange={setIsDevRulesOpen}>

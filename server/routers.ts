@@ -47,8 +47,10 @@ import { complaintEngineRouter } from "./routers/complaintEngine";
 import { portalProvisioningRouter } from "./routers/portalProvisioning";
 import { voyageLogRouter } from "./routers/voyageLog";
 import { automationsRouter } from "./routers/automations";
+import { feedbackRouter } from "./routers/feedback";
 
 export const appRouter = router({
+  feedback: feedbackRouter,
   voyageLog: voyageLogRouter,
   portalProvisioning: portalProvisioningRouter,
   portalAuth: portalAuthRouter,

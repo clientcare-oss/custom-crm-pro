@@ -7,7 +7,10 @@ import { ClerkProvider } from "@clerk/react";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { initConsoleLogger } from "./lib/consoleLogger";
 import "./index.css";
+
+initConsoleLogger();
 
 const queryClient = new QueryClient();
 
