@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { toast } from "sonner";
 import { Compass, Save, Clock, ChevronDown, ChevronUp, Loader2, Users } from "lucide-react";
+import CaseCompassCard from "@/components/CaseCompassCard";
 
 export default function CaseCompassAdmin() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
@@ -22,6 +23,13 @@ export default function CaseCompassAdmin() {
 
   // List of portal clients (users with role=client)
   const { data: portalClients } = trpc.caseCompass.portalClients.useQuery();
+
+  // Auto-select first client if none selected
+  useEffect(() => {
+    if (!selectedCaseId && portalClients && portalClients.length > 0) {
+      setSelectedCaseId(String(portalClients[0].id));
+    }
+  }, [portalClients, selectedCaseId]);
 
   const { data: compass, refetch: refetchCompass } = trpc.caseCompass.get.useQuery(
     { caseId: selectedCaseId! },
@@ -80,8 +88,8 @@ export default function CaseCompassAdmin() {
           <Compass className="h-5 w-5 text-accent" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Case Compass™ Admin</h1>
-          <p className="text-sm text-muted-foreground">Edit the Compass from the student's detail page instead</p>
+          <h1 className="text-2xl font-bold">Case Compass™</h1>
+          <p className="text-sm text-muted-foreground">Interactive case trajectory, trajectory metrics, and status management</p>
         </div>
       </div>
 
@@ -89,7 +97,7 @@ export default function CaseCompassAdmin() {
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium text-sm">Select Portal Client</span>
+          <span className="font-medium text-sm">Select Student / Client Case</span>
         </div>
         <select
           className="w-full border rounded-md px-3 py-2 text-sm bg-background"
@@ -103,10 +111,12 @@ export default function CaseCompassAdmin() {
             </option>
           ))}
         </select>
-        <p className="text-xs text-muted-foreground mt-2">
-          Tip: Edit the Compass directly from the student's detail page for the best experience.
-        </p>
       </Card>
+
+      {/* Visual Interactive Case Compass Card */}
+      <div className="w-full">
+        <CaseCompassCard caseId={selectedCaseId ?? undefined} isAdminView={true} />
+      </div>
 
       {selectedCaseId && (
         <>

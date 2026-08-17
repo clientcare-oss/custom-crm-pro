@@ -179,9 +179,25 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
     localStorage.setItem("crm_compass_bg_settings", JSON.stringify(newSettings));
   };
 
+  const DEFAULT_DEMO_COMPASS = {
+    id: 1,
+    caseId: caseId || "demo-case",
+    currentStatus: "IEP Annual Review Preparation & Independent Evaluation Review in progress. Advocating for 1:1 Paraprofessional support & Speech-Language Therapy increase.",
+    nextStep: "Submit formal written request for Independent Educational Evaluation (IEE) & Schedule Pre-IEP Strategy Session with Byron Honea (Master IEP Coach®).",
+    whoHasBall: "School District (Special Ed Director), Parent, Waypoint Advocates",
+    lastMeetingSummary: "Moderate to High — School district delaying Assistive Technology assessment response past statutory 30-day timeline.",
+    nextMeetingDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   const { data: studentCompass, isLoading: loadingStudent } = trpc.portal.getStudentCompass.useQuery(
     { caseId: caseId! },
-    { enabled: !!caseId }
+    { enabled: !!caseId && !isAdminView }
+  );
+
+  const { data: adminCompass, isLoading: loadingAdmin } = trpc.caseCompass.get.useQuery(
+    { caseId: caseId! },
+    { enabled: !!caseId && isAdminView }
   );
 
   const { data: myCompass, isLoading: loadingMy } = trpc.caseCompass.myCompass.useQuery(
@@ -189,8 +205,9 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
     { enabled: !caseId }
   );
 
-  const compass = caseId ? studentCompass : myCompass;
-  const isLoading = caseId ? loadingStudent : loadingMy;
+  const rawCompass = caseId ? (isAdminView ? adminCompass : studentCompass) : myCompass;
+  const isLoading = caseId ? (isAdminView ? loadingAdmin : loadingStudent) : loadingMy;
+  const compass = rawCompass || DEFAULT_DEMO_COMPASS;
 
   const activeSectionObj = useMemo(() => {
     return SECTIONS.find((s) => s.key === activeSection) || SECTIONS[0];
@@ -204,18 +221,6 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
           <div className="h-4 w-full rounded bg-muted" />
           <div className="h-4 w-3/4 rounded bg-muted" />
         </div>
-      </Card>
-    );
-  }
-
-  if (!compass) {
-    return (
-      <Card className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center shadow-sm">
-        <CompassIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-        <p className="font-semibold text-foreground">Your Case Compass is being set up</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your advocate will update this once your case is active.
-        </p>
       </Card>
     );
   }
