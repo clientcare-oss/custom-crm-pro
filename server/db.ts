@@ -84,25 +84,24 @@ export {
 
 // ============ LEADS ============
 
-export async function getLeadsByOwner(ownerId: number) {
+export async function getLeadsByOwner(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
 
   return await db
     .select()
     .from(leads)
-    .where(eq(leads.ownerId, ownerId))
     .orderBy(desc(leads.createdAt));
 }
 
-export async function getLeadById(id: number, ownerId: number) {
+export async function getLeadById(id: number, ownerId?: number) {
   const db = await getDb();
   if (!db) return undefined;
 
   const result = await db
     .select()
     .from(leads)
-    .where(and(eq(leads.id, id), eq(leads.ownerId, ownerId)))
+    .where(eq(leads.id, id))
     .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
@@ -125,19 +124,18 @@ export async function updateLead(id: number, ownerId: number, data: any) {
   return await db
     .update(leads)
     .set(data)
-    .where(and(eq(leads.id, id), eq(leads.ownerId, ownerId)));
+    .where(eq(leads.id, id));
 }
 
 // ============ PROJECTS ============
 
-export async function getProjectsByOwner(ownerId: number) {
+export async function getProjectsByOwner(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
 
   return await db
     .select()
     .from(projects)
-    .where(eq(projects.ownerId, ownerId))
     .orderBy(desc(projects.createdAt));
 }
 
@@ -235,11 +233,11 @@ export async function getTasksAssignedToStudent(studentContactId: number) {
   return result;
 }
 
-export async function getAllTasksForOwner(ownerId: number) {
+export async function getAllTasksForOwner(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
 
-  // 1. Get all projects owned by the owner and left join contacts to resolve clients
+  // 1. Get all projects and left join contacts to resolve clients
   const ownerProjects = await db
     .select({
       id: projects.id,
@@ -249,8 +247,7 @@ export async function getAllTasksForOwner(ownerId: number) {
       clientLastName: contacts.lastName,
     })
     .from(projects)
-    .leftJoin(contacts, eq(contacts.id, projects.clientId))
-    .where(eq(projects.ownerId, ownerId));
+    .leftJoin(contacts, eq(contacts.id, projects.clientId));
 
   if (ownerProjects.length === 0) return [];
 
@@ -383,14 +380,13 @@ export async function createProjectFile(data: any) {
 
 // ============ INVOICES ============
 
-export async function getInvoicesByOwner(ownerId: number) {
+export async function getInvoicesByOwner(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
 
   return await db
     .select()
     .from(invoices)
-    .where(eq(invoices.ownerId, ownerId))
     .orderBy(desc(invoices.createdAt));
 }
 
@@ -413,7 +409,7 @@ export async function updateInvoice(id: number, ownerId: number, data: any) {
   return await db
     .update(invoices)
     .set(data)
-    .where(and(eq(invoices.id, id), eq(invoices.ownerId, ownerId)));
+    .where(eq(invoices.id, id));
 }
 
 export async function createInvoiceLineItems(items: any[]) {
@@ -425,14 +421,13 @@ export async function createInvoiceLineItems(items: any[]) {
 
 // ============ CONTRACTS ============
 
-export async function getContractsByOwner(ownerId: number) {
+export async function getContractsByOwner(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
 
   return await db
     .select()
     .from(contracts)
-    .where(eq(contracts.ownerId, ownerId))
     .orderBy(desc(contracts.createdAt));
 }
 
@@ -444,7 +439,7 @@ export async function getContractById(id: number, userId: number, userRole: stri
 
   const query =
     userRole === "admin"
-      ? and(eq(contracts.id, id), eq(contracts.ownerId, userId))
+      ? eq(contracts.id, id)
       : and(eq(contracts.id, id), eq(contracts.clientId, userId));
 
   const result = await db.select().from(contracts).where(query).limit(1);
@@ -469,19 +464,18 @@ export async function updateContract(id: number, ownerId: number, data: any) {
   return await db
     .update(contracts)
     .set(data)
-    .where(and(eq(contracts.id, id), eq(contracts.ownerId, ownerId)));
+    .where(eq(contracts.id, id));
 }
 
 // ============ APPOINTMENTS ============
 
-export async function getAppointmentsByOwner(ownerId: number) {
+export async function getAppointmentsByOwner(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
 
   return await db
     .select()
     .from(appointments)
-    .where(eq(appointments.ownerId, ownerId))
     .orderBy(asc(appointments.startTime));
 }
 

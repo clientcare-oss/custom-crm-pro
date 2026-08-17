@@ -2,14 +2,14 @@ import { eq, and, desc, asc } from "drizzle-orm";
 import { contacts } from "../../drizzle/schema";
 import { getDb } from "./connection";
 
-export async function getContactsByOwner(ownerId: number) {
+export async function getContactsByOwner(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
 
+  // Practice CRM: Return all contacts across the practice
   return await db
     .select()
     .from(contacts)
-    .where(eq(contacts.ownerId, ownerId))
     .orderBy(desc(contacts.createdAt));
 }
 
@@ -17,14 +17,10 @@ export async function getContactById(id: number, ownerId?: number) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const query = ownerId
-    ? and(eq(contacts.id, id), eq(contacts.ownerId, ownerId))
-    : eq(contacts.id, id);
-
   const result = await db
     .select()
     .from(contacts)
-    .where(query)
+    .where(eq(contacts.id, id))
     .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
