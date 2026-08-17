@@ -216,11 +216,30 @@ export async function getTasksByStudent(studentContactId: number) {
 export async function getTasksAssignedToStudent(studentContactId: number) {
   const db = await getDb();
   if (!db) return [];
+
+  // Find parent ID for this student if any
+  const [student] = await db.select().from(contacts).where(eq(contacts.id, studentContactId)).limit(1);
+  const targetIds = [studentContactId];
+  if (student?.parentContactId) targetIds.push(student.parentContactId);
+
+  // Also include project IDs for this student
+  const studentProjects = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(or(eq(projects.clientId, studentContactId), student?.parentContactId ? eq(projects.clientId, student.parentContactId) : undefined));
+
+  const projectIds = studentProjects.map(p => p.id);
+
+  const queryCondition = projectIds.length > 0
+    ? or(inArray(projectTasks.assignedTo, targetIds), inArray(projectTasks.projectId, projectIds))
+    : inArray(projectTasks.assignedTo, targetIds);
+
   const tasks = await db
     .select()
     .from(projectTasks)
-    .where(eq(projectTasks.assignedTo, studentContactId))
+    .where(queryCondition)
     .orderBy(asc(projectTasks.dueDate));
+
   const result: any[] = [];
   for (const task of tasks) {
     const steps = await db
