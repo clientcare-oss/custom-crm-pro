@@ -21,16 +21,17 @@ import {
   Zap,
   HelpCircle,
   Loader2,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
   Send,
   CheckCircle2,
-  AlertTriangle,
   History,
   Terminal,
-  Radio,
   Sparkles,
+  Copy,
+  Check,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getRecentLogs, LogEntry } from "@/lib/consoleLogger";
@@ -54,6 +55,21 @@ const PRIORITIES = [
   { value: 4, label: "Low", color: "bg-muted text-muted-foreground border-border" },
 ];
 
+function getStatusDisplay(stateType: string, stateName: string) {
+  switch (stateType) {
+    case "completed":
+      return { label: "Resolved ✅", className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-semibold" };
+    case "started":
+      return { label: "In Progress ⚡", className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-semibold" };
+    case "unstarted":
+      return { label: "Scheduled 📅", className: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 font-semibold" };
+    case "triage":
+    case "backlog":
+    default:
+      return { label: "Under Review 📋", className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold" };
+  }
+}
+
 export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalProps) {
   const { user } = useAuth();
   const [location] = useLocation();
@@ -66,6 +82,7 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [capturedLogs, setCapturedLogs] = useState<LogEntry[]>([]);
   const [createdIssue, setCreatedIssue] = useState<{ identifier: string; url: string; title: string } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
   const { data: recentIssues = [], isLoading: isLoadingRecent } = trpc.feedback.listRecentIssues.useQuery(undefined, {
@@ -81,7 +98,7 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
   }, [open]);
 
   function formatErrorMessage(rawMessage?: string): string {
-    if (!rawMessage) return "Failed to submit issue";
+    if (!rawMessage) return "Failed to submit report";
     try {
       const parsed = JSON.parse(rawMessage);
       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.message) {
@@ -93,7 +110,7 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
 
   const submitMutation = trpc.feedback.submitIssue.useMutation({
     onSuccess: (data) => {
-      toast.success(`Issue ${data.issue.identifier} submitted to Linear backlog!`);
+      toast.success(`Report #${data.issue.identifier} submitted to development!`);
       setCreatedIssue({
         identifier: data.issue.identifier,
         url: data.issue.url,
@@ -107,6 +124,13 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
       toast.error(formatErrorMessage(err.message));
     },
   });
+
+  const handleCopy = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    toast.success(`Copied Reference #${id} to clipboard`);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +160,7 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
   };
 
   const errorCount = capturedLogs.filter((l) => l.type === "error" || l.type === "exception").length;
+  const isDevUser = user?.role === "developer" || user?.role === "admin";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,10 +173,10 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
               </div>
               <div>
                 <DialogTitle className="text-lg font-bold text-foreground">
-                  Waypoint Advocates Issue & Feedback
+                  Issue & Feedback Reporter
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                  Submits directly into the Veritas Linear Backlog with automated diagnostics.
+                  Submit feedback, bug reports, or feature requests with automated diagnostics.
                 </DialogDescription>
               </div>
             </div>
@@ -164,7 +189,7 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
               New Report
             </TabsTrigger>
             <TabsTrigger value="recent" className="text-xs font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground flex items-center gap-1.5">
-              <History className="h-3.5 w-3.5" /> Recent Backlog
+              <History className="h-3.5 w-3.5" /> Recent Reports
             </TabsTrigger>
           </TabsList>
 
@@ -173,20 +198,25 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
             {createdIssue ? (
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center space-y-3">
                 <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
-                <h3 className="text-base font-bold text-foreground">Issue Filed in Linear!</h3>
+                <h3 className="text-base font-bold text-foreground">Report Received!</h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Your ticket <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{createdIssue.identifier}</span> has been logged to the Waypoint Advocates project backlog.
+                  Your feedback has been logged under Reference <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">#{createdIssue.identifier}</span>. Our development team has been notified and is reviewing it.
                 </p>
                 <div className="flex items-center justify-center gap-3 pt-2">
-                  <a
-                    href={createdIssue.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopy(createdIssue.identifier)}
+                    className="text-xs gap-1.5 border-emerald-500/30 hover:bg-emerald-500/15 cursor-pointer"
                   >
-                    View in Linear <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                  <Button variant="outline" size="sm" onClick={() => setCreatedIssue(null)} className="text-xs">
+                    {copiedId === createdIssue.identifier ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    Copy Reference ID
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setCreatedIssue(null)}
+                    className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"
+                  >
                     Submit Another Report
                   </Button>
                 </div>
@@ -324,7 +354,7 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
                     className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5 text-xs font-semibold cursor-pointer shadow-sm"
                   >
                     {submitMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                    Submit to Linear Backlog
+                    Submit Report
                   </Button>
                 </div>
               </form>
@@ -333,19 +363,9 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
 
           {/* TAB 2: RECENT ISSUES */}
           <TabsContent value="recent" className="space-y-3 mt-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground font-medium">
-                Latest issues submitted for Waypoint Advocates:
-              </p>
-              <a
-                href="https://linear.app/veritas-technology-solutions/project/waypoint-advocates-custom-crm-pro-6f1c872aa4b2"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-accent hover:underline flex items-center gap-1 font-semibold"
-              >
-                Open in Linear <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
+            <p className="text-xs text-muted-foreground font-medium">
+              Track the status of recent reports submitted to development:
+            </p>
 
             {isLoadingRecent ? (
               <div className="flex items-center justify-center py-12">
@@ -354,47 +374,63 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
             ) : recentIssues.length === 0 ? (
               <div className="py-10 text-center border border-dashed border-border rounded-xl">
                 <CheckCircle2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">No recent issues found in project backlog.</p>
+                <p className="text-xs text-muted-foreground">No recent reports found.</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                {recentIssues.map((issue: any) => (
-                  <div
-                    key={issue.id}
-                    className="rounded-lg border border-border/80 bg-muted/20 p-3 flex items-start justify-between gap-3 hover:bg-muted/40 transition-colors"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-accent">{issue.identifier}</span>
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] px-1.5 py-0 ${
-                            issue.stateType === "completed"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold"
-                              : issue.stateType === "started"
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-bold"
-                              : "bg-muted text-muted-foreground border-border"
-                          }`}
-                        >
-                          {issue.stateName}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-foreground font-medium mt-1 leading-snug">{issue.title}</p>
-                      <span className="text-[10px] text-muted-foreground mt-1 block">
-                        {new Date(issue.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                    <a
-                      href={issue.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1 text-muted-foreground hover:text-accent flex-shrink-0 transition-colors"
-                      title="Open in Linear"
+                {recentIssues.map((issue: any) => {
+                  const status = getStatusDisplay(issue.stateType, issue.stateName);
+                  return (
+                    <div
+                      key={issue.id}
+                      className="rounded-lg border border-border/80 bg-muted/20 p-3 flex items-start justify-between gap-3 hover:bg-muted/40 transition-colors"
                     >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </div>
-                ))}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-xs font-bold text-accent">#{issue.identifier}</span>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${status.className}`}>
+                            {status.label}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-foreground font-medium mt-1 leading-snug">{issue.title}</p>
+                        <span className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(issue.createdAt).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(issue.identifier)}
+                          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-md transition-colors cursor-pointer"
+                          title="Copy Reference ID"
+                        >
+                          {copiedId === issue.identifier ? (
+                            <Check className="h-3.5 w-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        {isDevUser && issue.url && (
+                          <a
+                            href={issue.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 text-muted-foreground hover:text-accent hover:bg-muted/60 rounded-md transition-colors"
+                            title="Open in Linear (Developer View)"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
