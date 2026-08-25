@@ -45,7 +45,7 @@ export default function Home() {
                 Waypoint Advocates
               </span>
               <span className="text-[10px] text-amber-400 font-medium tracking-wider uppercase">
-                Master IEP Coach® Platform
+                Professional Advocacy Platform
               </span>
             </div>
           </div>
