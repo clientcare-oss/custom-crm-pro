@@ -137,7 +137,7 @@ export default function PortalManagement() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-5">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Client Portal Cockpit
+              Client Portal Experience
             </h1>
             <p className="text-muted-foreground mt-1">
               Manage parent accounts, provision secure logins, and preview the client experience.

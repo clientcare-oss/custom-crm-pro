@@ -13,7 +13,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
 
 ## 1. Package Manager & Script Standards
 - **Package Manager**: Always use **`npm`**. Do NOT use `pnpm` or `yarn`.
-- **Development**: Run `npm run dev` to launch local dev server.
+- **Development**: Run `npm run dev` to launch local dev server. Always output the clickable server URL (e.g., `http://localhost:3000/`) whenever asked to start the dev server.
 - **Type Checking**: Run `npm run check` (`tsc --noEmit`) to verify TypeScript compiler state.
 - **Testing**: Run `npm run test` (`vitest run`).
 - **Build**: Run `npm run build`.
