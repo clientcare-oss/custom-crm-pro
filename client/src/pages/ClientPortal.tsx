@@ -37,6 +37,15 @@ import {
 import SignaturePad from "@/components/SignaturePad";
 import InlineScheduler from "@/components/InlineScheduler";
 import { NotesSection } from "@/components/NotesSection";
+import { DiscoveryCallExperience } from "@/components/portal/onboarding/DiscoveryCallExperience";
+import { YourJourneyExperience } from "@/components/portal/onboarding/YourJourneyExperience";
+import { ChooseSupportExperience } from "@/components/portal/onboarding/ChooseSupportExperience";
+import { AgreementsExperience } from "@/components/portal/onboarding/AgreementsExperience";
+import { StudentSetupExperience } from "@/components/portal/onboarding/StudentSetupExperience";
+import { UploadRecordsExperience } from "@/components/portal/onboarding/UploadRecordsExperience";
+import { AdvocacyIntakeExperience } from "@/components/portal/onboarding/AdvocacyIntakeExperience";
+import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
+import { ClientStage, getDefaultModuleForStage } from "@/components/portal/portalModuleRegistry";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -570,7 +579,7 @@ const NAV_ITEMS = [
   { id: "details",       icon: Info,            label: "Details" },
 ] as const;
 
-type NavId = typeof NAV_ITEMS[number]["id"];
+type NavId = typeof NAV_ITEMS[number]["id"] | string;
 
 // ── Main ClientPortal Component ──────────────────────────────────────────────
 export default function ClientPortal() {
@@ -581,7 +590,39 @@ export default function ClientPortal() {
   const [schedulerSessionTypeId, setSchedulerSessionTypeId] = useState<number | null>(null);
   const [schedulerSessionTypeName, setSchedulerSessionTypeName] = useState<string>("");
   const [schedulerBooked, setSchedulerBooked] = useState(false);
-  const [activeTab, setActiveTab] = useState<NavId>("compass");
+
+  // URL Stage & Tab Resolution
+  const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const stageFromUrl = urlParams?.get("stage") as ClientStage | null;
+  const tabFromUrl = urlParams?.get("tab");
+
+  const [clientStage, setClientStage] = useState<ClientStage>(() => {
+    if (stageFromUrl) return stageFromUrl;
+    return "DISCOVERY_SCHEDULED";
+  });
+
+  const [completedOnboardingSteps, setCompletedOnboardingSteps] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("waypoint_onboarding_steps");
+      return saved ? JSON.parse(saved) : ["discovery-call"];
+    } catch {
+      return ["discovery-call"];
+    }
+  });
+
+  const addCompletedStep = (stepId: string) => {
+    setCompletedOnboardingSteps((prev) => {
+      const next = Array.from(new Set([...prev, stepId]));
+      localStorage.setItem("waypoint_onboarding_steps", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const [activeTab, setActiveTab] = useState<NavId>(() => {
+    if (tabFromUrl) return tabFromUrl;
+    if (stageFromUrl) return getDefaultModuleForStage(stageFromUrl);
+    return "discovery-call";
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -988,17 +1029,101 @@ export default function ClientPortal() {
 
   // ── Active tab content ──
   const renderContent = () => {
-    if (!effectiveStudent && activeTab !== "compass") {
+    const onboardingModuleIds = [
+      "discovery-call",
+      "your-journey",
+      "choose-support",
+      "agreements",
+      "student-setup",
+      "upload-records",
+      "advocacy-intake"
+    ];
+
+    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication") {
       return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8">
-          <Compass className="h-14 w-14 mb-4 text-muted-foreground opacity-40" />
-          <p className="text-base font-semibold text-foreground mb-2">No students linked yet</p>
-          <p className="text-sm text-muted-foreground">Your advocate will link your student's case to this portal.</p>
-        </div>
+        <LockedModulePreview
+          moduleId={activeTab}
+          moduleName={activeTab}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
+        />
       );
     }
 
     switch (activeTab) {
+      // ── Onboarding Experience Modules ──
+      case "discovery-call":
+        return (
+          <DiscoveryCallExperience
+            displayName={displayName}
+            upcomingAppointment={allMyAppointments?.[0] || studentAppointments?.[0]}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenScheduler={() => setShowMeetingScheduler(true)}
+          />
+        );
+
+      case "your-journey":
+        return (
+          <YourJourneyExperience
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        );
+
+      case "choose-support":
+        return (
+          <ChooseSupportExperience
+            onPaymentSuccess={() => {
+              setClientStage("ONBOARDING");
+              addCompletedStep("choose-support");
+              setActiveTab("agreements");
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        );
+
+      case "agreements":
+        return (
+          <AgreementsExperience
+            onComplete={() => {
+              addCompletedStep("agreements");
+              setActiveTab("student-setup");
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        );
+
+      case "student-setup":
+        return (
+          <StudentSetupExperience
+            onComplete={() => {
+              addCompletedStep("student-setup");
+              setActiveTab("upload-records");
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        );
+
+      case "upload-records":
+        return (
+          <UploadRecordsExperience
+            onComplete={() => {
+              addCompletedStep("upload-records");
+              setActiveTab("advocacy-intake");
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        );
+
+      case "advocacy-intake":
+        return (
+          <AdvocacyIntakeExperience
+            onComplete={() => {
+              addCompletedStep("advocacy-intake");
+              setClientStage("ACTIVE");
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        );
+
       case "compass":
         return (
           <div className="space-y-6">
@@ -1794,6 +1919,8 @@ export default function ClientPortal() {
           navItems={filteredNavItems}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          clientStage={effectiveStudent ? "ACTIVE" : clientStage}
+          completedOnboardingSteps={completedOnboardingSteps}
         />
       </div>
 
@@ -1814,6 +1941,8 @@ export default function ClientPortal() {
               logoUrl={logoData?.logoUrl}
               hasAttorney={!!effectiveStudent?.attorneyName}
               navItems={filteredNavItems}
+              clientStage={effectiveStudent ? "ACTIVE" : clientStage}
+              completedOnboardingSteps={completedOnboardingSteps}
             />
           </div>
         </div>

@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { JourneyStage, SampleClientPersona } from "./types";
-import { SAMPLE_CLIENT_PERSONAS } from "./journeyData";
+import { SAMPLE_CLIENT_PERSONAS, INITIAL_JOURNEY_STAGES } from "./journeyData";
 import { InteractivePageIdPill } from "./InteractivePageIdPill";
+import { ClientPortalSidebar } from "@/components/ClientPortalSidebar";
+import { DiscoveryCallExperience } from "@/components/portal/onboarding/DiscoveryCallExperience";
+import { YourJourneyExperience } from "@/components/portal/onboarding/YourJourneyExperience";
+import { ChooseSupportExperience } from "@/components/portal/onboarding/ChooseSupportExperience";
+import { AgreementsExperience } from "@/components/portal/onboarding/AgreementsExperience";
+import { StudentSetupExperience } from "@/components/portal/onboarding/StudentSetupExperience";
+import { UploadRecordsExperience } from "@/components/portal/onboarding/UploadRecordsExperience";
+import { AdvocacyIntakeExperience } from "@/components/portal/onboarding/AdvocacyIntakeExperience";
+import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
+import { ClientStage } from "@/components/portal/portalModuleRegistry";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -21,27 +31,23 @@ import {
   FileText, 
   Users, 
   FolderOpen, 
-  ExternalLink,
-  MessageSquare,
-  Scale,
-  RefreshCw,
-  Info,
-  ChevronRight,
-  GraduationCap,
-  PenTool,
-  UploadCloud,
-  ClipboardList,
-  Hash,
-  Copy,
-  Check,
-  X,
-  Maximize2,
-  Minimize2,
-  ChevronDown,
-  LogOut,
-  Bell,
-  Settings
+  MessageSquare, 
+  Scale, 
+  Info, 
+  ChevronRight, 
+  GraduationCap, 
+  PenTool, 
+  UploadCloud, 
+  ClipboardList, 
+  X, 
+  Maximize2, 
+  Minimize2, 
+  Menu,
+  CheckSquare,
+  DollarSign,
+  Briefcase
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ExperiencePreviewModalProps {
   open: boolean;
@@ -57,8 +63,58 @@ export function ExperiencePreviewModal({
   selectedStage
 }: ExperiencePreviewModalProps) {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("full");
-  const [activePersonaIndex, setActivePersonaIndex] = useState<number>(0);
   const [isBarCollapsed, setIsBarCollapsed] = useState<boolean>(false);
+  const [simulatedStageIndex, setSimulatedStageIndex] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<string>("discovery-call");
+  const [previewTheme, setPreviewTheme] = useState<"navy" | "blue">("navy");
+  const [completedSteps, setCompletedSteps] = useState<string[]>(["discovery-call"]);
+
+  // Synchronize when selectedStage changes from parent
+  useEffect(() => {
+    if (selectedStage) {
+      const idx = INITIAL_JOURNEY_STAGES.findIndex(s => s.id === selectedStage.id || s.pageId === selectedStage.pageId);
+      if (idx !== -1) {
+        setSimulatedStageIndex(idx);
+      }
+    }
+  }, [selectedStage]);
+
+  // Update active tab when simulated stage changes
+  useEffect(() => {
+    const stage = INITIAL_JOURNEY_STAGES[simulatedStageIndex] || INITIAL_JOURNEY_STAGES[0];
+    switch (stage.stepNumber) {
+      case "01":
+      case "02":
+        setActiveTab("discovery-call");
+        break;
+      case "03":
+      case "04":
+      case "05":
+      case "06":
+        setActiveTab("choose-support");
+        break;
+      case "07":
+      case "08":
+        setActiveTab("agreements");
+        break;
+      case "09":
+        setActiveTab("student-setup");
+        break;
+      case "10":
+        setActiveTab("upload-records");
+        break;
+      case "11":
+        setActiveTab("advocacy-intake");
+        break;
+      case "12":
+      case "13":
+      case "14":
+        setActiveTab("compass");
+        break;
+      default:
+        setActiveTab("discovery-call");
+    }
+  }, [simulatedStageIndex]);
 
   // Close on ESC key
   useEffect(() => {
@@ -73,35 +129,52 @@ export function ExperiencePreviewModal({
 
   if (!open) return null;
 
-  const currentPersona = SAMPLE_CLIENT_PERSONAS[activePersonaIndex] || SAMPLE_CLIENT_PERSONAS[0];
-  const currentPageId = selectedStage?.pageId || `PG-027-S0${activePersonaIndex + 1}`;
-  const currentStageName = selectedStage?.name || currentPersona.stageName;
+  const currentStage = INITIAL_JOURNEY_STAGES[simulatedStageIndex] || INITIAL_JOURNEY_STAGES[0];
+  const currentPageId = currentStage.pageId;
+  const currentStageName = currentStage.name;
+
+  // Map stepNumber to ClientStage
+  const getMappedClientStage = (): ClientStage => {
+    const step = parseInt(currentStage.stepNumber, 10);
+    if (step <= 2) return "DISCOVERY_SCHEDULED";
+    if (step <= 6) return "DISCOVERY_COMPLETED";
+    if (step <= 11) return "ONBOARDING";
+    if (step <= 13) return "ACTIVE";
+    return "CLOSING";
+  };
+
+  const clientStage = getMappedClientStage();
+  const displayName = "Sarah Jenkins";
 
   const getContainerWidth = () => {
     switch (deviceMode) {
       case "mobile":
-        return "max-w-[420px] mx-auto border-x border-border/70 shadow-2xl min-h-screen bg-background";
+        return "max-w-[440px] mx-auto border-x border-white/10 shadow-2xl h-full flex flex-col bg-[#040C16] overflow-hidden";
       case "tablet":
-        return "max-w-[840px] mx-auto border-x border-border/70 shadow-2xl min-h-screen bg-background";
+        return "max-w-[900px] mx-auto border-x border-white/10 shadow-2xl h-full flex flex-col bg-[#040C16] overflow-hidden";
       case "full":
       default:
-        return "w-full min-h-screen bg-background";
+        return "w-full h-full flex flex-col bg-[#040C16] overflow-hidden";
     }
   };
 
+  const handleStepComplete = (stepId: string) => {
+    setCompletedSteps(prev => Array.from(new Set([...prev, stepId])));
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
       
       {/* ── TOP ADMIN FLOATING OVERLAY BAR ─────────────────────────────────── */}
-      <header className={`border-b border-border/80 bg-background/95 backdrop-blur-md shadow-md transition-all duration-200 z-50 shrink-0 ${isBarCollapsed ? "py-1 px-4" : "py-2.5 px-6"}`}>
+      <header className={`border-b border-white/15 bg-[#071422]/95 backdrop-blur-md shadow-lg transition-all duration-200 z-50 shrink-0 ${isBarCollapsed ? "py-1.5 px-4" : "py-2.5 px-6"}`}>
         <div className="flex items-center justify-between gap-4">
           
           {/* Left: Brand + Stage Info + Page ID */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-extrabold uppercase tracking-wider text-primary hidden sm:inline">
-                Client Preview
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-extrabold uppercase tracking-wider text-amber-400 hidden sm:inline font-mono">
+                PG-023 Client Portal Simulator
               </span>
             </div>
 
@@ -110,43 +183,43 @@ export function ExperiencePreviewModal({
               pageId={currentPageId}
               name={currentStageName}
               showName={!isBarCollapsed}
-              className="bg-muted/60 border-primary/40 font-bold"
+              className="bg-amber-400/10 border-amber-400/40 text-amber-300 font-bold text-xs"
             />
 
             {!isBarCollapsed && (
-              <Badge variant="outline" className="hidden lg:inline-flex text-[11px] font-medium bg-muted/40">
-                {selectedStage?.associatedPortalPage || "Full Client Portal"}
+              <Badge variant="outline" className="hidden lg:inline-flex text-[10px] font-mono text-white/70 border-white/20 bg-white/5">
+                Stage {currentStage.stepNumber} of 14 · {currentStage.category}
               </Badge>
             )}
           </div>
 
-          {/* Center / Controls */}
+          {/* Center: Stage Switcher + Viewport Switcher */}
           <div className="flex items-center gap-3">
-            {/* Persona Switcher */}
-            <div className="flex items-center gap-1.5 bg-muted/50 border border-border/70 rounded-lg px-2 py-1">
-              <span className="text-[11px] font-medium text-muted-foreground hidden sm:inline">
-                Simulated Persona:
+            {/* Stage Selector */}
+            <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/15 rounded-lg px-2.5 py-1">
+              <span className="text-[11px] font-semibold text-white/50 hidden sm:inline">
+                Simulated Stage:
               </span>
               <select
-                value={activePersonaIndex}
-                onChange={(e) => setActivePersonaIndex(Number(e.target.value))}
-                className="text-xs font-bold bg-transparent border-0 focus:ring-0 text-foreground cursor-pointer pr-1"
+                value={simulatedStageIndex}
+                onChange={(e) => setSimulatedStageIndex(Number(e.target.value))}
+                className="text-xs font-bold bg-transparent border-0 focus:ring-0 text-white cursor-pointer pr-1"
               >
-                {SAMPLE_CLIENT_PERSONAS.map((p, idx) => (
-                  <option key={p.id} value={idx} className="bg-background text-foreground">
-                    {p.name.split(" (")[0]} — {p.state}
+                {INITIAL_JOURNEY_STAGES.map((s, idx) => (
+                  <option key={s.id} value={idx} className="bg-[#071422] text-white">
+                    {s.stepNumber} · {s.name} ({s.pageId})
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Viewport Width selector */}
-            <div className="hidden sm:flex items-center gap-1 bg-muted/50 border border-border/70 rounded-lg p-1">
+            {/* Viewport Width Selector */}
+            <div className="hidden sm:flex items-center gap-1 bg-white/[0.05] border border-white/15 rounded-lg p-1">
               <Button
                 size="sm"
                 variant={deviceMode === "full" ? "default" : "ghost"}
                 onClick={() => setDeviceMode("full")}
-                className={`h-7 px-2.5 text-xs font-semibold gap-1 ${deviceMode === "full" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                className={`h-7 px-2.5 text-xs font-semibold gap-1 ${deviceMode === "full" ? "bg-amber-400 text-[#071422] font-bold" : "text-white/60 hover:text-white"}`}
                 title="Full Client Screen"
               >
                 <Laptop className="h-3.5 w-3.5" />
@@ -156,7 +229,7 @@ export function ExperiencePreviewModal({
                 size="sm"
                 variant={deviceMode === "tablet" ? "default" : "ghost"}
                 onClick={() => setDeviceMode("tablet")}
-                className={`h-7 px-2 text-xs font-semibold ${deviceMode === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                className={`h-7 px-2 text-xs font-semibold ${deviceMode === "tablet" ? "bg-amber-400 text-[#071422] font-bold" : "text-white/60 hover:text-white"}`}
                 title="Tablet Viewport"
               >
                 <Tablet className="h-3.5 w-3.5" />
@@ -165,7 +238,7 @@ export function ExperiencePreviewModal({
                 size="sm"
                 variant={deviceMode === "mobile" ? "default" : "ghost"}
                 onClick={() => setDeviceMode("mobile")}
-                className={`h-7 px-2 text-xs font-semibold ${deviceMode === "mobile" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                className={`h-7 px-2 text-xs font-semibold ${deviceMode === "mobile" ? "bg-amber-400 text-[#071422] font-bold" : "text-white/60 hover:text-white"}`}
                 title="Mobile Viewport"
               >
                 <Smartphone className="h-3.5 w-3.5" />
@@ -173,13 +246,13 @@ export function ExperiencePreviewModal({
             </div>
           </div>
 
-          {/* Right: Collapse toggle & Exit Full Screen */}
+          {/* Right: Bar Minimize & Exit */}
           <div className="flex items-center gap-2">
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setIsBarCollapsed(!isBarCollapsed)}
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hidden md:flex"
+              className="h-8 w-8 p-0 text-white/50 hover:text-white hidden md:flex"
               title={isBarCollapsed ? "Expand Admin Bar" : "Minimize Admin Bar"}
             >
               {isBarCollapsed ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
@@ -189,12 +262,12 @@ export function ExperiencePreviewModal({
               size="sm"
               variant="default"
               onClick={() => onOpenChange(false)}
-              className="h-8 text-xs font-bold gap-1.5 bg-destructive/90 hover:bg-destructive text-destructive-foreground shadow-sm"
-              title="Close full-screen preview (or press ESC)"
+              className="h-8 text-xs font-bold gap-1.5 bg-red-600/90 hover:bg-red-600 text-white shadow-md"
+              title="Close preview (or press ESC)"
             >
               <X className="h-4 w-4" />
               <span>Exit Preview</span>
-              <kbd className="hidden lg:inline text-[9px] bg-destructive-foreground/20 px-1 py-0.5 rounded font-mono">
+              <kbd className="hidden lg:inline text-[9px] bg-white/20 px-1 py-0.5 rounded font-mono">
                 ESC
               </kbd>
             </Button>
@@ -202,469 +275,258 @@ export function ExperiencePreviewModal({
         </div>
       </header>
 
-      {/* ── FULL SCREEN CLIENT PORTAL VIEWPORT ─────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-muted/20 relative">
+      {/* ── SIMULATED PG-023 CLIENT PORTAL APP (SIDEBAR + WORKSPACE VIEWPORT) ── */}
+      <div className="flex-1 overflow-hidden bg-[#040C16] relative flex justify-center">
         <div className={getContainerWidth()}>
           
-          {/* Authentic Portal Navbar */}
-          <div className="border-b border-border/60 bg-card/95 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center text-white font-bold shadow-sm">
-                <Compass className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="font-extrabold text-base tracking-tight text-foreground block">
-                  WAYPOINT ADVOCATES
-                </span>
-                <span className="text-[10px] block text-muted-foreground font-semibold uppercase tracking-wider -mt-0.5">
-                  Client Portal Experience
-                </span>
-              </div>
-            </div>
-
-            {/* Portal Action Elements */}
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex flex-col items-end text-right">
-                <span className="font-semibold text-foreground text-xs">
-                  {currentPersona.name.split(" (")[0]}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {currentPersona.email}
-                </span>
-              </div>
-              
-              <div className="h-9 w-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center border border-primary/20 shadow-xs text-sm">
-                {currentPersona.name[0]}
-              </div>
-            </div>
-          </div>
-
-          {/* Authentic Client Experience Content */}
-          <div className="p-6 md:p-10 lg:p-12 space-y-10 max-w-6xl mx-auto pb-28">
+          {/* Main 2-Column Portal App Shell */}
+          <div className="flex-1 flex overflow-hidden w-full h-full">
             
-            {/* ========================================================================= */}
-            {/* DISCOVERY SCHEDULED STAGE (Experience 01)                                 */}
-            {/* ========================================================================= */}
-            {currentPersona.state === "DISCOVERY_SCHEDULED" && (
-              <div className="space-y-10 animate-in fade-in duration-300">
+            {/* Left Persistent Sidebar (PG-023) */}
+            <div className="hidden md:flex flex-col h-full shrink-0">
+              <ClientPortalSidebar
+                activeTab={activeTab}
+                onSelectTab={(tabId) => setActiveTab(tabId)}
+                displayName={displayName}
+                theme={previewTheme}
+                onToggleTheme={() => setPreviewTheme(prev => prev === "navy" ? "blue" : "navy")}
+                onLogout={() => toast.info("Logout simulated")}
+                clientStage={clientStage}
+                completedOnboardingSteps={completedSteps}
+              />
+            </div>
+
+            {/* Right Portal Workspace Viewport (PG-023) */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#040C16]">
+              
+              {/* Top Header Bar inside Portal */}
+              <div className="h-14 border-b border-white/8 bg-[#071422]/70 backdrop-blur-md px-6 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 font-bold text-xs">
+                    <Compass className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white leading-tight">
+                      Liam Jenkins · 4th Grade
+                    </p>
+                    <p className="text-[10px] text-white/40">
+                      Fulton Elementary · Special Education IEP
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Badge className="bg-amber-400/15 text-amber-300 border-amber-400/30 text-[10px] font-semibold py-0.5 px-2.5">
+                    {currentStage.name}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toast.info("Scheduling simulated")}
+                    className="h-7 text-[11px] font-semibold border-white/15 text-white/80 hover:bg-white/5 gap-1.5"
+                  >
+                    <Calendar className="h-3 w-3 text-amber-400" />
+                    Schedule Meeting
+                  </Button>
+                </div>
+              </div>
+
+              {/* Viewport Content Area */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[#040C16] relative pb-28">
                 
-                {/* Hero Header */}
-                <div className="border-b border-border/60 pb-8">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold mb-3.5 border border-amber-500/25">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Pre-Advocacy Client Workspace
-                  </div>
-                  <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-                    Welcome to Waypoint, {currentPersona.name.split(" ")[0]}
-                  </h1>
-                  <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-3xl leading-relaxed">
-                    We are looking forward to reviewing {currentPersona.students[0]?.name || "your student"}'s educational advocacy needs and charting a clear, structured path to IEP success.
-                  </p>
-                </div>
+                {/* ── STAGE 01: Discovery Inquiry Submitted ── */}
+                {currentStage.stepNumber === "01" && (
+                  <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
+                    <div className="border-b border-white/10 pb-6">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 text-amber-300 text-xs font-semibold mb-3 border border-amber-400/20">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Inquiry Received
+                      </div>
+                      <h1 className="text-2xl md:text-3xl font-extrabold text-white">
+                        Discovery Inquiry Received, {displayName.split(" ")[0]}
+                      </h1>
+                      <p className="text-sm text-white/70 mt-1">
+                        Thank you for reaching out to Waypoint Advocates. The first step is scheduling your complimentary 30-minute Discovery Call with Byron Honea.
+                      </p>
+                    </div>
 
-                {/* Scheduled Discovery Call Card */}
-                <Card className="border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-card to-background shadow-lg overflow-hidden">
-                  <CardHeader className="bg-amber-500/15 border-b border-amber-500/25 p-6 pb-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <Card className="border-amber-400/30 bg-gradient-to-br from-amber-400/10 via-[#0a1828] to-[#071422] p-6 rounded-2xl space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
-                          <Calendar className="h-6 w-6" />
+                        <div className="h-10 w-10 rounded-xl bg-amber-500 text-[#071422] flex items-center justify-center font-bold">
+                          <Calendar className="h-5 w-5" />
                         </div>
                         <div>
-                          <CardTitle className="text-xl font-extrabold text-foreground">
-                            Your Scheduled Discovery Call
-                          </CardTitle>
-                          <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                            Confirmed with Byron Honea · Master IEP Coach®
-                          </CardDescription>
+                          <h3 className="font-bold text-white text-base">Select Your Discovery Call Time</h3>
+                          <p className="text-xs text-white/60">Choose a convenient slot to discuss your child's IEP needs.</p>
                         </div>
                       </div>
-
-                      <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold text-xs py-1.5 px-3.5 self-start sm:self-auto shadow-xs">
-                        Confirmed & Scheduled
-                      </Badge>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="p-6 md:p-8 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/40 p-5 rounded-xl border border-border/50 text-xs">
-                      <div className="space-y-1">
-                        <span className="text-muted-foreground font-semibold flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
-                          <Calendar className="h-3.5 w-3.5 text-primary" />
-                          Appointment Date
-                        </span>
-                        <p className="font-extrabold text-foreground text-base">
-                          {currentPersona.appointment?.date || "Tuesday, September 15, 2026"}
-                        </p>
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="text-muted-foreground font-semibold flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
-                          <Clock className="h-3.5 w-3.5 text-primary" />
-                          Scheduled Time
-                        </span>
-                        <p className="font-extrabold text-foreground text-base">
-                          {currentPersona.appointment?.time || "2:00 PM - 2:30 PM EDT"}
-                        </p>
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="text-muted-foreground font-semibold flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
-                          <Video className="h-3.5 w-3.5 text-primary" />
-                          Meeting Location
-                        </span>
-                        <p className="font-extrabold text-foreground text-base truncate">
-                          Video via Google Meet
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action Bar */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                      <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        <Info className="h-4 w-4 text-amber-500 shrink-0" />
-                        <span>A Google Calendar invite and secure video link were sent to <strong className="text-foreground">{currentPersona.email}</strong>.</span>
-                      </div>
-
-                      <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs font-semibold h-9 border-border/80">
-                          Manage Appointment
-                        </Button>
-                        <Button size="sm" className="flex-1 sm:flex-none text-xs font-bold gap-2 h-9 px-5 bg-amber-600 hover:bg-amber-700 text-white shadow-md">
-                          <Video className="h-4 w-4" />
-                          Join Video Call
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* What Happens Next Visual Progression */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-amber-500" />
-                        What Happens Next
-                      </h2>
-                      <p className="text-xs text-muted-foreground">The Waypoint representation journey roadmap</p>
-                    </div>
-                    <Badge variant="outline" className="text-[11px] font-mono">5 Steps to Success</Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                    {[
-                      { step: "1", title: "Discovery Call", sub: "30-min strategy review", active: true, done: false },
-                      { step: "2", title: "Choose Support", sub: "Select advocacy tier", active: false, done: false },
-                      { step: "3", title: "Add Student(s)", sub: "Profile & district setup", active: false, done: false },
-                      { step: "4", title: "Complete Setup", sub: "Upload IEPs & evals", active: false, done: false },
-                      { step: "5", title: "Begin Advocacy", sub: "Case Compass launched", active: false, done: false },
-                    ].map((item, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded-xl border flex flex-col justify-between text-xs transition-all shadow-xs ${
-                          item.active
-                            ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30"
-                            : "border-border/60 bg-card/60 opacity-85"
-                        }`}
+                      <Button
+                        onClick={() => {
+                          setSimulatedStageIndex(1);
+                          toast.success("Discovery Call scheduled for Tuesday, Sep 15!");
+                        }}
+                        className="w-full h-11 bg-amber-400 hover:bg-amber-500 text-[#071422] font-bold text-xs gap-2 shadow-lg shadow-amber-400/10"
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
-                            item.active ? "bg-amber-500 text-white shadow-xs" : "bg-muted text-muted-foreground"
-                          }`}>
-                            {item.step}
-                          </span>
-                          {item.active && (
-                            <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] py-0 px-2 font-extrabold">
-                              Current Step
-                            </Badge>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-foreground text-sm">{item.title}</p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{item.sub}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Future Workspaces Teasers */}
-                <div className="space-y-4 pt-2">
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground">
-                      Explore Your Future Advocacy Workspace
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Get a preview of the tools activated once representation begins.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Teaser 1: Student Workspace */}
-                    <Card className="border-border/70 bg-card/80 shadow-sm relative overflow-hidden group hover:border-primary/40 transition-all">
-                      <div className="absolute top-4 right-4">
-                        <Badge variant="outline" className="text-[10px] gap-1 bg-background text-muted-foreground border-amber-500/30">
-                          <Lock className="h-3 w-3 text-amber-500" />
-                          Unlocks with Advocacy
-                        </Badge>
-                      </div>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-bold flex items-center gap-2.5">
-                          <GraduationCap className="h-5 w-5 text-primary" />
-                          Student Workspace
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xs text-muted-foreground space-y-3">
-                        <p className="leading-relaxed font-medium text-foreground/90">
-                          "Your student's advocacy workspace will appear here when you begin services."
-                        </p>
-                        <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-[11px] space-y-1">
-                          <div>• Complete IEP Goal Tracker & Objective Measurability Analysis</div>
-                          <div>• Classroom Accommodations & Testing Modifications Roster</div>
-                          <div>• Specialized Instruction Minutes & Related Services Ledger</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Teaser 2: Document Vault */}
-                    <Card className="border-border/70 bg-card/80 shadow-sm relative overflow-hidden group hover:border-primary/40 transition-all">
-                      <div className="absolute top-4 right-4">
-                        <Badge variant="outline" className="text-[10px] gap-1 bg-background text-muted-foreground border-amber-500/30">
-                          <Lock className="h-3 w-3 text-amber-500" />
-                          Unlocks with Advocacy
-                        </Badge>
-                      </div>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-bold flex items-center gap-2.5">
-                          <FolderOpen className="h-5 w-5 text-primary" />
-                          Document Vault & Comparator
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xs text-muted-foreground space-y-3">
-                        <p className="leading-relaxed font-medium text-foreground/90">
-                          "Your IEPs, evaluations, school records, and Waypoint documents will live here."
-                        </p>
-                        <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-[11px] space-y-1">
-                          <div>• Year-over-Year Side-by-Side Visual IEP Comparator</div>
-                          <div>• Encrypted Cloudflare R2 School Record Archive</div>
-                          <div>• OCR Searchable Psychological & Multidisciplinary Evals</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Teaser 3: Meetings & Strategy */}
-                    <Card className="border-border/70 bg-card/80 shadow-sm relative overflow-hidden group hover:border-primary/40 transition-all">
-                      <div className="absolute top-4 right-4">
-                        <Badge variant="outline" className="text-[10px] gap-1 bg-background text-muted-foreground border-amber-500/30">
-                          <Lock className="h-3 w-3 text-amber-500" />
-                          Unlocks with Advocacy
-                        </Badge>
-                      </div>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-bold flex items-center gap-2.5">
-                          <Users className="h-5 w-5 text-primary" />
-                          Meetings & Strategy Hub
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xs text-muted-foreground space-y-3">
-                        <p className="leading-relaxed font-medium text-foreground/90">
-                          "Upcoming meetings, preparation, and advocacy activity will appear here."
-                        </p>
-                        <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-[11px] space-y-1">
-                          <div>• Pre-IEP Meeting Agendas & Customized Parent Talking Points</div>
-                          <div>• Post-Meeting Debrief Worksheets & Follow-up Timelines</div>
-                          <div>• Audio Recording Uploads & AI-assisted Transcriptions</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Teaser 4: Advocacy Workspace & Case Compass */}
-                    <Card className="border-border/70 bg-card/80 shadow-sm relative overflow-hidden group hover:border-primary/40 transition-all">
-                      <div className="absolute top-4 right-4">
-                        <Badge variant="outline" className="text-[10px] gap-1 bg-background text-muted-foreground border-amber-500/30">
-                          <Lock className="h-3 w-3 text-amber-500" />
-                          Unlocks with Advocacy
-                        </Badge>
-                      </div>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-bold flex items-center gap-2.5">
-                          <Compass className="h-5 w-5 text-primary" />
-                          Advocacy Workspace & Case Compass
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xs text-muted-foreground space-y-3">
-                        <p className="leading-relaxed font-medium text-foreground/90">
-                          "This is where you and Waypoint will keep track of what is happening, what comes next, and what needs your attention."
-                        </p>
-                        <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-[11px] space-y-1">
-                          <div>• Real-time Case Compass 6-Stage Milestone Progress Indicator</div>
-                          <div>• Action Taskboard with Direct Notifications & Due Dates</div>
-                          <div>• Direct Encrypted Messaging with Byron Honea</div>
-                        </div>
-                      </CardContent>
+                        <Calendar className="h-4 w-4" />
+                        Confirm Tuesday, Sep 15 @ 2:00 PM EDT
+                      </Button>
                     </Card>
                   </div>
-                </div>
-              </div>
-            )}
+                )}
 
-            {/* ========================================================================= */}
-            {/* PROGRESSIVE ONBOARDING STAGE                                              */}
-            {/* ========================================================================= */}
-            {currentPersona.state === "ONBOARDING" && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                <div className="border-b border-border/60 pb-6">
-                  <Badge className="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 mb-3 border-cyan-500/30 text-xs">
-                    Progressive Onboarding Active
-                  </Badge>
-                  <h1 className="text-3xl font-extrabold text-foreground">
-                    Welcome to the Waypoint Family, {currentPersona.name.split(" ")[0]}
-                  </h1>
-                  <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl leading-relaxed">
-                    Complete these 5 independent steps to finalize student profile setup and schedule your Strategy Launch Call.
-                  </p>
-                </div>
+                {/* ── STAGE 02: Discovery Call Scheduled ── */}
+                {currentStage.stepNumber === "02" && (
+                  <DiscoveryCallExperience
+                    displayName={displayName}
+                    upcomingAppointment={{
+                      startTime: new Date().toISOString(),
+                      location: "https://meet.google.com/waypoint-discovery"
+                    }}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onOpenScheduler={() => toast.info("Scheduler opened")}
+                  />
+                )}
 
-                <div className="space-y-3.5">
-                  {[
-                    { name: "Account Created & Verified", status: "completed", desc: "Clerk credentials authenticated" },
-                    { name: "Advocacy Retainer Payment", status: "completed", desc: "Payment received on household ledger" },
-                    { name: "Sign Representation Agreement", status: "in_progress", desc: "Master Agreement & FERPA Authorization" },
-                    { name: "Student Setup Profiles", status: "pending", desc: "2 Students: Noah & Maya Vance" },
-                    { name: "Upload IEPs & Evals", status: "pending", desc: "Secure R2 document dropzone" },
-                    { name: "Advocacy Priorities Intake", status: "pending", desc: "Parent concerns & meeting goals" },
-                    { name: "Schedule Strategy Call", status: "locked", desc: "45-min video session with Byron" }
-                  ].map((step, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-4 rounded-xl border flex items-center justify-between text-xs transition-all ${
-                        step.status === "completed"
-                          ? "bg-emerald-500/5 border-emerald-500/30 text-foreground"
-                          : step.status === "in_progress"
-                          ? "bg-primary/10 border-primary/50 shadow-sm"
-                          : "bg-card/60 border-border/50 text-muted-foreground"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-extrabold ${
-                          step.status === "completed"
-                            ? "bg-emerald-500 text-white"
-                            : step.status === "in_progress"
-                            ? "bg-primary text-primary-foreground animate-pulse"
-                            : "bg-muted text-muted-foreground"
-                        }`}>
-                          {step.status === "completed" ? "✓" : idx + 1}
+                {/* ── STAGE 03 - 06: Discovery Completed & Support Selection ── */}
+                {["03", "04", "05", "06"].includes(currentStage.stepNumber) && (
+                  <ChooseSupportExperience
+                    onPaymentSuccess={() => {
+                      setSimulatedStageIndex(6); // Advances to stage 07 (Agreements)
+                      handleStepComplete("choose-support");
+                    }}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
+                  />
+                )}
+
+                {/* ── STAGE 07 - 08: Representation Agreements ── */}
+                {["07", "08"].includes(currentStage.stepNumber) && (
+                  <AgreementsExperience
+                    onComplete={() => {
+                      setSimulatedStageIndex(8); // Advances to stage 09 (Student Setup)
+                      handleStepComplete("agreements");
+                    }}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
+                  />
+                )}
+
+                {/* ── STAGE 09: Student Setup Profile ── */}
+                {currentStage.stepNumber === "09" && (
+                  <StudentSetupExperience
+                    onComplete={() => {
+                      setSimulatedStageIndex(9); // Advances to stage 10 (Upload Records)
+                      handleStepComplete("student-setup");
+                    }}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
+                  />
+                )}
+
+                {/* ── STAGE 10: Upload School Records ── */}
+                {currentStage.stepNumber === "10" && (
+                  <UploadRecordsExperience
+                    onComplete={() => {
+                      setSimulatedStageIndex(10); // Advances to stage 11 (Advocacy Intake)
+                      handleStepComplete("upload-records");
+                    }}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
+                  />
+                )}
+
+                {/* ── STAGE 11: Advocacy Priorities Intake ── */}
+                {currentStage.stepNumber === "11" && (
+                  <AdvocacyIntakeExperience
+                    onComplete={() => {
+                      setSimulatedStageIndex(11); // Advances to stage 12 (Active Representation)
+                      handleStepComplete("advocacy-intake");
+                    }}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
+                  />
+                )}
+
+                {/* ── STAGE 12 - 13: Active Advocacy & Case Compass ── */}
+                {["12", "13"].includes(currentStage.stepNumber) && (
+                  <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300">
+                    <div className="border-b border-white/10 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-semibold mb-3 border border-emerald-500/20">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Active Representation
                         </div>
-                        <div>
-                          <p className="font-bold text-foreground text-sm">{step.name}</p>
-                          <p className="text-[11px] text-muted-foreground">{step.desc}</p>
-                        </div>
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-white">
+                          Liam's Case Compass & Representation Command Center
+                        </h1>
+                        <p className="text-sm text-white/70 mt-1">
+                          Live tracking of IEP milestones, meeting talking points, and advocate communications.
+                        </p>
                       </div>
-
-                      {step.status === "in_progress" ? (
-                        <Button size="sm" className="h-8 text-xs font-bold gap-1.5 px-4">
-                          Continue Step
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </Button>
-                      ) : step.status === "completed" ? (
-                        <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-500/30 font-semibold">
-                          Saved & Stored
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs text-muted-foreground border-border/40">
-                          Next Up
-                        </Badge>
-                      )}
+                      <Button
+                        onClick={() => toast.info("Opening message composer...")}
+                        className="gap-2 bg-amber-400 hover:bg-amber-500 text-[#071422] font-bold text-xs px-5 shadow-md self-start sm:self-auto"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Message Byron
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* ========================================================================= */}
-            {/* ACTIVE ADVOCACY STAGE                                                     */}
-            {/* ========================================================================= */}
-            {currentPersona.state === "ACTIVE" && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-6">
-                  <div>
-                    <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 mb-2.5 border-emerald-500/30 text-xs">
-                      Active Representation
-                    </Badge>
-                    <h1 className="text-3xl font-extrabold text-foreground">
-                      {currentPersona.students[0]?.name}'s Advocacy Command Center
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {currentPersona.activeCase?.caseTitle}
-                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card className="border-white/15 bg-white/[0.02] p-5 rounded-2xl space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-bold text-white">
+                          <Compass className="h-4 w-4 text-amber-400" />
+                          Case Compass Status
+                        </div>
+                        <p className="text-xs text-white/60">Stage 3: Evidence Gathering & IEP Proposal Formulation</p>
+                        <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 leading-relaxed">
+                          Byron is auditing the 2024 Psycho-Educational Evaluation and formulating proposed amendments to Reading Fluency Goal #3.
+                        </div>
+                      </Card>
+
+                      <Card className="border-white/15 bg-white/[0.02] p-5 rounded-2xl space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-bold text-white">
+                          <Calendar className="h-4 w-4 text-amber-400" />
+                          Upcoming IEP Table Meeting
+                        </div>
+                        <p className="text-base font-extrabold text-white">Thursday, October 8, 2026 @ 10:00 AM</p>
+                        <p className="text-xs text-white/60">
+                          Pre-meeting agenda and talking points will be delivered 48 hours prior to the session.
+                        </p>
+                      </Card>
+                    </div>
                   </div>
+                )}
 
-                  <Button size="sm" className="h-9 text-xs font-bold gap-2 px-4 shadow-sm">
-                    <MessageSquare className="h-4 w-4" />
-                    Message Byron
-                  </Button>
-                </div>
+                {/* ── STAGE 14: Case Closing & Document Archive ── */}
+                {currentStage.stepNumber === "14" && (
+                  <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
+                    <div className="border-b border-white/10 pb-6">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 text-xs font-semibold mb-3 border border-teal-500/20">
+                        <Shield className="h-3.5 w-3.5" />
+                        Case Resolution & Permanent Archive
+                      </div>
+                      <h1 className="text-2xl md:text-3xl font-extrabold text-white">
+                        Advocacy Resolution Archive for Liam Jenkins
+                      </h1>
+                      <p className="text-sm text-white/70 mt-1">
+                        Your representation case has concluded with an amended and finalized IEP. Your documents remain permanently accessible in your R2 vault.
+                      </p>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <Card className="p-5 border-border/70 bg-card/80 space-y-3 shadow-xs">
-                    <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                      <Compass className="h-5 w-5 text-primary" />
-                      Case Compass Status
-                    </div>
-                    <p className="text-xs text-muted-foreground font-semibold">
-                      Stage 3: Evidence Gathering & IEP Proposal Formulation
-                    </p>
-                    <div className="text-xs bg-muted/40 p-3 rounded-lg border border-border/40 leading-relaxed">
-                      {currentPersona.activeCase?.focus}
-                    </div>
-                  </Card>
-
-                  <Card className="p-5 border-border/70 bg-card/80 space-y-3 shadow-xs">
-                    <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                      <Calendar className="h-5 w-5 text-primary" />
-                      Upcoming IEP Meeting
-                    </div>
-                    <p className="text-sm font-extrabold text-foreground">
-                      {currentPersona.activeCase?.nextMeeting}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Preparation agenda and parent talking points document will be finalized 48 hours prior.
-                    </p>
-                  </Card>
-                </div>
+                    <Card className="border-white/15 bg-white/[0.02] p-6 rounded-2xl space-y-4">
+                      <h3 className="text-base font-bold text-white">Download Complete Student Records Bundle</h3>
+                      <p className="text-xs text-white/60 leading-relaxed">
+                        Download a single encrypted ZIP bundle containing all IEP drafts, formal school requests, psych evaluation notes, and meeting recordings.
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => toast.success("Downloading Liam_Jenkins_2026_IEP_Bundle.zip")}
+                        className="gap-2 text-xs font-bold border-white/20 text-white hover:bg-white/10"
+                      >
+                        <FolderOpen className="h-4 w-4 text-amber-400" />
+                        Download 2026 IEP Records Bundle (.ZIP)
+                      </Button>
+                    </Card>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* ========================================================================= */}
-            {/* CLOSING STAGE                                                             */}
-            {/* ========================================================================= */}
-            {currentPersona.state === "CLOSING" && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                <div className="border-b border-border/60 pb-6">
-                  <Badge className="bg-teal-500/15 text-teal-600 dark:text-teal-400 mb-2.5 border-teal-500/30 text-xs">
-                    Case Resolution & Archive
-                  </Badge>
-                  <h1 className="text-3xl font-extrabold text-foreground">
-                    Advocacy Resolution Archive for {currentPersona.students[0]?.name}
-                  </h1>
-                  <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                    Your representation case has concluded with an amended and finalized IEP. Your documents remain permanently accessible.
-                  </p>
-                </div>
-
-                <Card className="p-6 border-border/70 bg-card/80 space-y-4 shadow-sm">
-                  <h3 className="text-base font-bold text-foreground">Download Complete Student Records Bundle</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Download a single encrypted ZIP file containing all IEP drafts, formal requests, psych evaluation notes, and meeting recordings.
-                  </p>
-                  <Button size="sm" variant="outline" className="text-xs font-bold gap-2 h-9 px-4">
-                    <FolderOpen className="h-4 w-4" />
-                    Download 2026 IEP Records Bundle (.ZIP)
-                  </Button>
-                </Card>
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -675,10 +537,10 @@ export function ExperiencePreviewModal({
             name={currentStageName}
             showName={true}
             size="default"
-            className="shadow-xl border-primary/50 bg-background/95 backdrop-blur-md px-3 py-1.5 font-bold"
+            className="shadow-2xl border-amber-400/60 bg-[#071422]/95 backdrop-blur-md px-3.5 py-1.5 font-bold text-amber-300 text-xs"
           />
         </div>
-      </main>
+      </div>
     </div>
   );
 }

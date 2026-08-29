@@ -3,8 +3,14 @@ import { useLocation } from "wouter";
 import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
-  ChevronLeft, ChevronRight, Home, Video
+  ChevronLeft, ChevronRight, Home, Video, Sparkles, CheckCircle2, Lock, PenTool, GraduationCap
 } from "lucide-react";
+import { 
+  PORTAL_MODULE_REGISTRY, 
+  ClientStage, 
+  resolveModuleState, 
+  PortalModuleDefinition 
+} from "./portal/portalModuleRegistry";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -24,7 +30,7 @@ export const NAV_ITEMS = [
   { id: "details",       icon: Info,            label: "Details" },
 ] as const;
 
-export type NavId = typeof NAV_ITEMS[number]["id"];
+export type NavId = typeof NAV_ITEMS[number]["id"] | string;
 
 interface ClientPortalSidebarProps {
   activeTab: string;
@@ -40,6 +46,8 @@ interface ClientPortalSidebarProps {
   navItems?: readonly { id: string; icon: any; label: string }[];
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  clientStage?: ClientStage;
+  completedOnboardingSteps?: string[];
 }
 
 export function ClientPortalSidebar({
@@ -56,12 +64,49 @@ export function ClientPortalSidebar({
   navItems,
   isCollapsed = false,
   onToggleCollapse,
+  clientStage = "ACTIVE",
+  completedOnboardingSteps = []
 }: ClientPortalSidebarProps) {
   const [location, setLocation] = useLocation();
   const isWorkspace = location.startsWith("/projects/");
-  const itemsToRender = navItems || NAV_ITEMS.filter(({ id }) => id !== "attorney" || hasAttorney);
-
   const isLight = theme === "blue";
+
+  // Build Getting Started items based on clientStage
+  const isOnboardingOrPreSale = clientStage !== "ACTIVE" && clientStage !== "CLOSING" && clientStage !== "INACTIVE";
+
+  const gettingStartedModules: Array<{ id: string; icon: any; label: string; isCompleted: boolean; isCurrent: boolean }> = [];
+
+  if (isOnboardingOrPreSale) {
+    if (clientStage === "DISCOVERY_SCHEDULED" || clientStage === "DISCOVERY_INQUIRY") {
+      gettingStartedModules.push(
+        { id: "discovery-call", icon: Calendar, label: "Discovery Call", isCompleted: false, isCurrent: activeTab === "discovery-call" },
+        { id: "your-journey", icon: Sparkles, label: "Your Journey", isCompleted: false, isCurrent: activeTab === "your-journey" }
+      );
+    } else if (clientStage === "DISCOVERY_COMPLETED" || clientStage === "PLAN_SELECTION" || clientStage === "PAYMENT_PENDING") {
+      gettingStartedModules.push(
+        { id: "discovery-call", icon: CheckCircle2, label: "Discovery Call", isCompleted: true, isCurrent: activeTab === "discovery-call" },
+        { id: "choose-support", icon: Sparkles, label: "Choose Support", isCompleted: false, isCurrent: activeTab === "choose-support" },
+        { id: "your-journey", icon: Compass, label: "Your Journey", isCompleted: false, isCurrent: activeTab === "your-journey" }
+      );
+    } else if (clientStage === "ONBOARDING") {
+      const agreementsDone = completedOnboardingSteps.includes("agreements");
+      const studentSetupDone = completedOnboardingSteps.includes("student-setup");
+      const recordsDone = completedOnboardingSteps.includes("upload-records");
+      const intakeDone = completedOnboardingSteps.includes("advocacy-intake");
+
+      gettingStartedModules.push(
+        { id: "discovery-call", icon: CheckCircle2, label: "Discovery Call", isCompleted: true, isCurrent: activeTab === "discovery-call" },
+        { id: "choose-support", icon: CheckCircle2, label: "Support Selected", isCompleted: true, isCurrent: activeTab === "choose-support" },
+        { id: "agreements", icon: agreementsDone ? CheckCircle2 : PenTool, label: "Agreements", isCompleted: agreementsDone, isCurrent: activeTab === "agreements" },
+        { id: "student-setup", icon: studentSetupDone ? CheckCircle2 : GraduationCap, label: "Student Setup", isCompleted: studentSetupDone, isCurrent: activeTab === "student-setup" },
+        { id: "upload-records", icon: recordsDone ? CheckCircle2 : FolderOpen, label: "Upload Records", isCompleted: recordsDone, isCurrent: activeTab === "upload-records" },
+        { id: "advocacy-intake", icon: intakeDone ? CheckCircle2 : CheckSquare, label: "Advocacy Intake", isCompleted: intakeDone, isCurrent: activeTab === "advocacy-intake" }
+      );
+    }
+  }
+
+  // Regular nav items filtered by attorney / custom props
+  const baseItems = navItems || NAV_ITEMS.filter(({ id }) => id !== "attorney" || hasAttorney);
 
   return (
     <div className={`flex flex-col h-full border-r transition-all duration-[3000ms] ease-in-out
@@ -151,34 +196,137 @@ export function ClientPortalSidebar({
         )}
       </div>
 
-      {/* Nav Items */}
-      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
-        {itemsToRender.map(({ id, icon: Icon, label }) => {
-          const isActive = activeTab === id;
-          return (
-            <button
-              key={id}
-              onClick={() => {
-                onSelectTab(id);
-                if (onCloseMobile) onCloseMobile();
-              }}
-              title={isCollapsed ? label : undefined}
-              className={`w-full flex items-center rounded-xl transition-all duration-[3000ms] ease-in-out text-sm font-medium
-                ${isCollapsed && !mobile ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5 text-left"}
-                ${isActive
-                  ? isLight
-                    ? "border border-amber-500/50 text-amber-700 bg-amber-500/10 shadow-sm"
-                    : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-lg shadow-amber-500/10"
-                  : isLight
-                    ? "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                    : "border border-transparent text-white/60 hover:text-white hover:bg-white/5"
-                }`}
-            >
-              <Icon className={`h-4 w-4 shrink-0 transition-colors duration-[3000ms] ease-in-out ${isActive ? "text-amber-505" : isLight ? "text-slate-450" : "text-white/40"}`} />
-              {(!isCollapsed || mobile) && label}
-            </button>
-          );
-        })}
+      {/* Nav Items Container */}
+      <nav className="flex-1 px-3 py-3 space-y-3 overflow-y-auto">
+        
+        {/* Core Compass Module */}
+        <div className="space-y-1">
+          {baseItems.filter(i => i.id === "compass").map(({ id, icon: Icon, label }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => {
+                  onSelectTab(id);
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                title={isCollapsed ? label : undefined}
+                className={`w-full flex items-center rounded-xl transition-all duration-[3000ms] ease-in-out text-sm font-medium
+                  ${isCollapsed && !mobile ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5 text-left"}
+                  ${isActive
+                    ? isLight
+                      ? "border border-amber-500/50 text-amber-700 bg-amber-500/10 shadow-sm"
+                      : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-lg shadow-amber-500/10"
+                    : isLight
+                      ? "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      : "border border-transparent text-white/60 hover:text-white hover:bg-white/5"
+                  }`}
+              >
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : isLight ? "text-slate-450" : "text-white/40"}`} />
+                {(!isCollapsed || mobile) && label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── GETTING STARTED CONDITIONAL SIDEBAR GROUP ── */}
+        {isOnboardingOrPreSale && gettingStartedModules.length > 0 && (
+          <div className="space-y-1 pt-1 border-t border-white/8">
+            {(!isCollapsed || mobile) && (
+              <div className="px-3 py-1.5 flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400/90 font-mono">
+                  Getting Started
+                </span>
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              </div>
+            )}
+
+            {gettingStartedModules.map(({ id, icon: Icon, label, isCompleted }) => {
+              const isActive = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => {
+                    onSelectTab(id);
+                    if (onCloseMobile) onCloseMobile();
+                  }}
+                  title={isCollapsed ? label : undefined}
+                  className={`w-full flex items-center rounded-xl transition-all duration-200 text-xs font-semibold
+                    ${isCollapsed && !mobile ? "justify-center p-2" : "gap-2.5 px-3 py-2 text-left"}
+                    ${isActive
+                      ? isLight
+                        ? "border border-amber-500/50 text-amber-800 bg-amber-500/15 shadow-sm"
+                        : "border border-amber-400/70 text-amber-300 bg-amber-400/10 shadow-sm"
+                      : isCompleted
+                      ? "text-emerald-400 hover:bg-white/5"
+                      : isLight
+                        ? "text-slate-700 hover:bg-slate-100"
+                        : "text-white/80 hover:text-white hover:bg-white/5"
+                    }`}
+                >
+                  <Icon className={`h-3.5 w-3.5 shrink-0 ${
+                    isCompleted 
+                      ? "text-emerald-400" 
+                      : isActive 
+                      ? "text-amber-400" 
+                      : "text-white/50"
+                  }`} />
+                  {(!isCollapsed || mobile) && (
+                    <span className="truncate flex-1 flex items-center justify-between">
+                      <span>{label}</span>
+                      {isCompleted && <span className="text-[10px] text-emerald-400 font-bold ml-1">✓</span>}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── PERMANENT / ACTIVE MODULES ── */}
+        <div className="space-y-1 pt-1 border-t border-white/8">
+          {(!isCollapsed || mobile) && isOnboardingOrPreSale && (
+            <div className="px-3 py-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-white/30 font-mono">
+                Workspaces
+              </span>
+            </div>
+          )}
+
+          {baseItems.filter(i => i.id !== "compass").map(({ id, icon: Icon, label }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => {
+                  onSelectTab(id);
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                title={isCollapsed ? label : undefined}
+                className={`w-full flex items-center rounded-xl transition-all duration-[3000ms] ease-in-out text-sm font-medium
+                  ${isCollapsed && !mobile ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5 text-left"}
+                  ${isActive
+                    ? isLight
+                      ? "border border-amber-500/50 text-amber-700 bg-amber-500/10 shadow-sm"
+                      : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-lg shadow-amber-500/10"
+                    : isLight
+                      ? "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      : "border border-transparent text-white/60 hover:text-white hover:bg-white/5"
+                  }`}
+              >
+                <Icon className={`h-4 w-4 shrink-0 transition-colors duration-[3000ms] ease-in-out ${isActive ? "text-amber-505" : isLight ? "text-slate-450" : "text-white/40"}`} />
+                {(!isCollapsed || mobile) && (
+                  <span className="truncate flex-1 flex items-center justify-between">
+                    <span>{label === "Details" ? "Student Workspace" : label}</span>
+                    {isOnboardingOrPreSale && (id === "details" || id === "smart-docs" || id === "files" || id === "tasks") && (
+                      <Lock className="h-3 w-3 text-white/30 ml-1" />
+                    )}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Footer Controls */}
