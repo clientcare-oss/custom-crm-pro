@@ -31,6 +31,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
+import { ClientExperienceDesigner } from "@/components/portal-experience/ClientExperienceDesigner";
 
 type ViewMode = "desktop" | "tablet" | "mobile";
 
@@ -358,6 +359,11 @@ export default function PortalManagement() {
             </Card>
           </div>
         </div>
+
+        {/* ========================================================================= */}
+        {/* NEW EXTENSION: Client Portal Experience Designer (14 Stages & Library)    */}
+        {/* ========================================================================= */}
+        <ClientExperienceDesigner />
 
         {/* Dialog for provisioning confirmation */}
         <Dialog open={provisionOpen} onOpenChange={setProvisionOpen}>

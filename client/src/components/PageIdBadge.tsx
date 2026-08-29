@@ -35,6 +35,20 @@ const PAGE_IDS: Record<string, { id: string; name: string }> = {
   "/case-compass":            { id: "PG-025", name: "Case Compass" },
   "/page-id-showcase":        { id: "PG-026", name: "Page ID Showcase" },
   "/portal-management":       { id: "PG-027", name: "Portal Management" },
+  "/portal/discovery":        { id: "PG-027-S01", name: "Discovery Inquiry" },
+  "/portal/discovery-call":   { id: "PG-027-S02", name: "Discovery Call" },
+  "/portal/discovery-summary":{ id: "PG-027-S03", name: "Discovery Summary" },
+  "/portal/student-selection":{ id: "PG-027-S04", name: "Student Selection" },
+  "/portal/support-selection":{ id: "PG-027-S05", name: "Support Selection" },
+  "/portal/checkout":         { id: "PG-027-S06", name: "Portal Checkout" },
+  "/portal/welcome":          { id: "PG-027-S07", name: "Welcome to Waypoint" },
+  "/portal/agreements":       { id: "PG-027-S08", name: "Advocacy Agreements" },
+  "/portal/student-setup":    { id: "PG-027-S09", name: "Student Setup" },
+  "/portal/document-upload":  { id: "PG-027-S10", name: "Document Upload" },
+  "/portal/advocacy-intake":  { id: "PG-027-S11", name: "Advocacy Intake" },
+  "/portal/onboarding-complete":{ id: "PG-027-S12", name: "Onboarding Complete" },
+  "/portal/dashboard":        { id: "PG-027-S13", name: "Client Dashboard" },
+  "/portal/closing":          { id: "PG-027-S14", name: "Closing Archive" },
   "/intake":                  { id: "PG-028", name: "Intake Form" },
   "/book":                    { id: "PG-029", name: "Booking" },
   "/workspace":               { id: "PG-031", name: "Workspace" },
@@ -44,6 +58,7 @@ const PAGE_IDS: Record<string, { id: string; name: string }> = {
 const DYNAMIC_ROUTES: Array<{ prefix: string; id: string; name: string }> = [
   { prefix: "/contacts/", id: "PG-030", name: "Contact Detail" },
   { prefix: "/project-workspace/", id: "PG-023", name: "Client Portal" },
+  { prefix: "/portal/", id: "PG-027", name: "Client Portal Experience" },
 ];
 
 function resolvePageId(path: string): { id: string; name: string } | null {
