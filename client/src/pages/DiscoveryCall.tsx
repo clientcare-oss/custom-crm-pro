@@ -19,10 +19,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ArrowLeft, Phone, Mail, User, GraduationCap, Calendar,
   ChevronDown, ChevronRight, Copy, Check, Edit2, Plus, Trash2,
   Loader2, Save, CheckCircle2, Circle, BookOpen, Send,
-  PhoneCall, Star, Lock, FileText, Globe, X, Settings2,
+  PhoneCall, Star, Lock, FileText, Globe, X, Settings, Settings2, Sliders,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
@@ -330,7 +338,59 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
           </Button>
           <span className="text-white/30">|</span>
           <PhoneCall className="w-4 h-4 text-amber-400" />
-          <span className="font-semibold text-white">Discovery Call</span>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-white tracking-tight">Discovery Call Process</span>
+            <span className="rounded border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-amber-300">
+              PG-003-DC
+            </span>
+          </div>
+
+          {/* Discovery Call Process Settings Gear */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-slate-400 hover:text-amber-300 hover:bg-white/5 rounded-full ml-1"
+                title="Discovery Call Process Settings"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span className="sr-only">Discovery Call Process Settings</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64 bg-[#0d1f33] border-slate-700 text-slate-200 shadow-xl z-50">
+              <DropdownMenuLabel className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                <Settings className="w-3.5 h-3.5" /> Discovery Process Settings
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-slate-700" />
+              <DropdownMenuItem
+                onClick={() => setQuestionEditorOpen(true)}
+                className="text-xs cursor-pointer hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+              >
+                <Edit2 className="w-3.5 h-3.5 mr-2 text-amber-400" /> Manage Question Bank
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setPipelineEditMode(!pipelineEditMode)}
+                className="text-xs cursor-pointer hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+              >
+                <Sliders className="w-3.5 h-3.5 mr-2 text-blue-400" />
+                {pipelineEditMode ? "Exit Pipeline Edit Mode" : "Configure Pipeline Steps"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setEditingVoicemailScript(true)}
+                className="text-xs cursor-pointer hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+              >
+                <FileText className="w-3.5 h-3.5 mr-2 text-emerald-400" /> Edit Voicemail / Call Scripts
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-slate-700" />
+              <DropdownMenuItem
+                onClick={() => setLocation("/tools/worksheet-builder")}
+                className="text-xs cursor-pointer hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+              >
+                <BookOpen className="w-3.5 h-3.5 mr-2 text-purple-400" /> Open Worksheet Studio (PG-010-WS)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="flex items-center gap-3">
           {saving && <span className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Saving…</span>}

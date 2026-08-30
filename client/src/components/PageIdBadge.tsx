@@ -1,82 +1,20 @@
 import { Check, Copy, Hash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-
-// ─── Page ID Registry ────────────────────────────────────────────────────────
-const PAGE_IDS: Record<string, { id: string; name: string }> = {
-  "/":                        { id: "PG-001", name: "Dashboard" },
-  "/contacts":                { id: "PG-002", name: "Contacts" },
-  "/leads":                   { id: "PG-003", name: "Leads" },
-  "/projects":                { id: "PG-004", name: "Students" },
-  "/invoices":                { id: "PG-005", name: "Invoices" },
-  "/contracts":               { id: "PG-006", name: "Contracts" },
-  "/appointments":            { id: "PG-007", name: "Appointments" },
-  "/calendar":                { id: "PG-007", name: "Calendar" },
-  "/scheduler":               { id: "PG-008", name: "Scheduler" },
-  "/tasks":                   { id: "PG-009", name: "Tasks" },
-  "/tools":                   { id: "PG-010", name: "Tools" },
-  "/tools/voyage-recorder":   { id: "PG-010-REC", name: "Voyage Meeting Recorder" },
-  "/tools/worksheet-builder": { id: "PG-010-WS", name: "Worksheet Studio" },
-  "/templates":               { id: "PG-011", name: "Templates" },
-  "/lead-forms":              { id: "PG-012", name: "Lead Forms" },
-  "/automations":             { id: "PG-013", name: "Automations" },
-  "/integrations":            { id: "PG-014", name: "Integrations" },
-  "/workflows":               { id: "PG-015", name: "Workflows" },
-  "/knowledge-base":          { id: "PG-016", name: "Knowledge Base" },
-  "/walkthroughs":            { id: "PG-017", name: "Walkthroughs" },
-  "/call-logs":               { id: "PG-018", name: "Call Logs" },
-  "/team":                    { id: "PG-019", name: "Team" },
-  "/state-complaint-builder": { id: "PG-020", name: "State Complaint Builder" },
-  "/brain-dump":              { id: "PG-021", name: "BrainDump" },
-  "/bill-guardian":           { id: "PG-022", name: "Bill Guardian" },
-  "/client-portal":           { id: "PG-023", name: "Client Portal" },
-  "/portal":                  { id: "PG-023", name: "Client Portal" },
-  "/settings":                { id: "PG-024", name: "Settings" },
-  "/case-compass":            { id: "PG-025", name: "Case Compass" },
-  "/page-id-showcase":        { id: "PG-026", name: "Page ID Showcase" },
-  "/portal-management":       { id: "PG-027", name: "Portal Management" },
-  "/portal/discovery":        { id: "PG-027-S01", name: "Discovery Inquiry" },
-  "/portal/discovery-call":   { id: "PG-027-S02", name: "Discovery Call" },
-  "/portal/discovery-summary":{ id: "PG-027-S03", name: "Discovery Summary" },
-  "/portal/student-selection":{ id: "PG-027-S04", name: "Student Selection" },
-  "/portal/support-selection":{ id: "PG-027-S05", name: "Support Selection" },
-  "/portal/checkout":         { id: "PG-027-S06", name: "Portal Checkout" },
-  "/portal/welcome":          { id: "PG-027-S07", name: "Welcome to Waypoint" },
-  "/portal/agreements":       { id: "PG-027-S08", name: "Advocacy Agreements" },
-  "/portal/student-setup":    { id: "PG-027-S09", name: "Student Setup" },
-  "/portal/document-upload":  { id: "PG-027-S10", name: "Document Upload" },
-  "/portal/advocacy-intake":  { id: "PG-027-S11", name: "Advocacy Intake" },
-  "/portal/onboarding-complete":{ id: "PG-027-S12", name: "Onboarding Complete" },
-  "/portal/dashboard":        { id: "PG-027-S13", name: "Client Dashboard" },
-  "/portal/closing":          { id: "PG-027-S14", name: "Closing Archive" },
-  "/intake":                  { id: "PG-028", name: "Intake Form" },
-  "/book":                    { id: "PG-029", name: "Booking" },
-  "/workspace":               { id: "PG-031", name: "Workspace" },
-  "/ai-connections":          { id: "PG-032", name: "AI Connections" },
-};
-
-const DYNAMIC_ROUTES: Array<{ prefix: string; id: string; name: string }> = [
-  { prefix: "/contacts/", id: "PG-030", name: "Contact Detail" },
-  { prefix: "/project-workspace/", id: "PG-023", name: "Client Portal" },
-  { prefix: "/portal/", id: "PG-027", name: "Client Portal Experience" },
-];
-
-function resolvePageId(path: string): { id: string; name: string } | null {
-  if (PAGE_IDS[path]) return PAGE_IDS[path];
-  for (const route of DYNAMIC_ROUTES) {
-    if (path.startsWith(route.prefix)) return { id: route.id, name: route.name };
-  }
-  return null;
-}
+import { resolvePageId, PAGE_IDS } from "@/lib/pageIdRegistry";
 
 // ─── Component ───────────────────────────────────────────────────────────────
-export default function PageIdBadge() {
+export default function PageIdBadge({ id: explicitId, name: explicitName }: { id?: string; name?: string } = {}) {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const autoCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const page = resolvePageId(location);
+
+  // If an explicit ID is passed as a prop, use it; otherwise resolve from location
+  const page = explicitId 
+    ? { id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" } 
+    : resolvePageId(location);
 
   // Auto-close after 6 seconds of being open
   useEffect(() => {

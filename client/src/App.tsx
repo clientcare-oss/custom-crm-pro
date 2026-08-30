@@ -63,7 +63,17 @@ function Router() {
   const { user, loading } = useAuth();
   const [location] = useLocation();
 
-  if (loading) {
+  const isPublicRoute =
+    window.location.pathname === "/" ||
+    window.location.pathname === "/portal" ||
+    window.location.pathname === "/client-portal" ||
+    window.location.pathname === "/portal/book" ||
+    window.location.pathname === "/book" ||
+    window.location.pathname === "/intake" ||
+    window.location.pathname.startsWith("/form/") ||
+    window.location.pathname.startsWith("/smart-files/response/");
+
+  if (loading && !isPublicRoute) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />

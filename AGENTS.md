@@ -68,6 +68,58 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
 - Avoid `any` types. Use Drizzle `$inferSelect` / `$inferInsert` types or explicit TypeScript interfaces.
 - Zero TypeScript compiler warnings/errors (`npm run check`).
 
+### 🏷️ Rule E: Mandatory Page ID Identification System (`PG-XXX`)
+- **Requirement**: Every single page, route, modal flow, dynamic view, and tool (new, existing, and future) **MUST** have a unique identification code (`PG-XXX`) assigned in `client/src/lib/pageIdRegistry.ts`.
+- **Badge Integration**: The global `<PageIdBadge />` in `App.tsx` automatically detects the current active route and presents a clickable/copyable ID badge on every screen.
+- **Header Badges**: Specialized workflow consoles (e.g., Discovery Call `PG-003-DC`, State Complaint Builder `PG-020`, Lead Forms `PG-012`) must feature their `PG-XXX` badge in their top headers for rapid cross-referencing during development and bug reporting.
+- **Reference Table**:
+  - `PG-001`: Dashboard (`/`)
+  - `PG-002`: Contacts (`/contacts`)
+  - `PG-003`: Leads (`/leads`)
+  - `PG-003-DC`: Discovery Call Process (`/leads/:leadId/discovery`)
+  - `PG-004`: Students (`/students`, `/projects`)
+  - `PG-005`: Invoices (`/invoices`)
+  - `PG-006`: Contracts (`/contracts`)
+  - `PG-007`: Appointments & Calendar (`/appointments`, `/calendar`)
+  - `PG-008`: Scheduler (`/scheduler`)
+  - `PG-009`: Tasks (`/tasks`)
+  - `PG-010`: Tools Hub (`/tools`)
+  - `PG-010-REC`: Voyage Meeting Recorder (`/tools/voyage-recorder`)
+  - `PG-010-WS`: Worksheet Studio (`/tools/worksheet-builder`)
+  - `PG-010-IEP`: IEP Comparator (`/tools/iep-comparator`)
+  - `PG-011`: Templates (`/templates`)
+  - `PG-012`: Lead Forms (`/lead-forms`)
+  - `PG-013`: Automations (`/automations`)
+  - `PG-014`: Integrations (`/integrations`)
+  - `PG-015`: Workflows (`/workflows`)
+  - `PG-016`: Knowledge Base (`/knowledge-base`)
+  - `PG-017`: Walkthroughs (`/walkthroughs`)
+  - `PG-018`: Unassigned Call Logs (`/call-logs`)
+  - `PG-019`: Team Management (`/team`)
+  - `PG-020`: State Complaint Builder (`/state-complaint-builder`, `/tools/state-complaint-builder`)
+  - `PG-020-WS`: State Complaint Workspace (`/tools/state-complaint-builder/:id`)
+  - `PG-021`: BrainDump (`/brain-dump`)
+  - `PG-022`: Bill Guardian (`/bill-guardian`)
+  - `PG-023`: Client Portal (`/portal`, `/client-portal`, `/project-workspace/:id`)
+  - `PG-024`: Settings (`/settings`)
+  - `PG-025`: Case Compass Console (`/case-compass`, `/tools/case-compass`)
+  - `PG-026`: Page ID Showcase (`/page-id-showcase`)
+  - `PG-027`: Portal Experience Management (`/portal-management`)
+  - `PG-027-S01` to `PG-027-S15`: Portal Journey Stages
+  - `PG-028`: Intake & Dynamic Forms (`/intake`, `/form/:slug`)
+  - `PG-029`: Booking Page (`/book`, `/portal/book`)
+  - `PG-030`: Contact & Student Detail (`/contacts/:id`, `/students/:id`)
+  - `PG-031`: Advocate Case Workspace (`/workspace`)
+  - `PG-032`: AI Connections (`/ai-connections`)
+  - `PG-033`: Smart Files Suite (`/smart-files`)
+  - `PG-033-ASN`: Smart File Assignments (`/smart-files/:id/assignments`)
+  - `PG-033-EDT`: Smart File Editor (`/smart-files/:id`)
+  - `PG-033-VWR`: Smart File Portal Viewer (`/smart-files/response/:id`)
+  - `PG-034`: Tech Tasks (`/tech-tasks`)
+  - `PG-035`: Services Catalog (`/services`)
+  - `PG-036`: Sponsors & Partners (`/sponsors`)
+  - `PG-404`: Not Found (`/404`)
+
 ---
 
 ## 6. Verification Checklist Before Committing

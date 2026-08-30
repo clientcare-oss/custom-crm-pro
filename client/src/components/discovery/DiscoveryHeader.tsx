@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Phone, Mail, User, GraduationCap, Calendar, Save, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Phone, Mail, User, GraduationCap, Calendar, Save, CheckCircle2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -18,6 +18,7 @@ interface DiscoveryHeaderProps {
   lastSaved: Date | null;
   onBack: () => void;
   onManualSave: () => void;
+  onOpenSettings?: () => void;
 }
 
 export default function DiscoveryHeader({
@@ -26,6 +27,7 @@ export default function DiscoveryHeader({
   lastSaved,
   onBack,
   onManualSave,
+  onOpenSettings,
 }: DiscoveryHeaderProps) {
   return (
     <div className="bg-[#0A1628]/95 border-b border-slate-800 p-4 sticky top-0 z-20 backdrop-blur-md">
@@ -41,15 +43,30 @@ export default function DiscoveryHeader({
           </Button>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-bold text-white tracking-tight">
-                {lead?.parentName || lead?.name || "Discovery Call Worksheet"}
-              </h1>
+              <span className="text-xs uppercase font-bold tracking-wider text-amber-400">
+                Discovery Call Process
+              </span>
+              <span className="rounded border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-amber-300">
+                PG-003-DC
+              </span>
+              {onOpenSettings && (
+                <button
+                  onClick={onOpenSettings}
+                  title="Discovery Call Process Settings"
+                  className="p-1 rounded-full text-slate-400 hover:text-amber-300 hover:bg-slate-800 transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
+              )}
               {lead?.status && (
                 <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">
                   {lead.status}
                 </Badge>
               )}
             </div>
+            <h1 className="text-lg font-bold text-white tracking-tight mt-0.5">
+              {lead?.parentName || lead?.name || "Discovery Call Worksheet"}
+            </h1>
             <div className="flex items-center gap-4 text-xs text-slate-400 mt-1 flex-wrap">
               {lead?.studentName && (
                 <span className="flex items-center gap-1.5 text-amber-400">
