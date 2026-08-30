@@ -131,7 +131,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     unlockedStages: ["DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING"],
     lockedPreviewAllowed: true,
     isDefaultForStage: ["DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING"],
-    description: "Select number of students, choose advocacy support tier, and complete checkout."
+    description: "Choose advocacy support tier and complete secure checkout."
   },
   {
     id: "agreements",

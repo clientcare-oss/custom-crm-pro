@@ -30,14 +30,30 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const STORAGE_VERSION = "v4";
+const STAGES_STORAGE_KEY = `waypoint_journey_stages_${STORAGE_VERSION}`;
+const PAGES_STORAGE_KEY = `waypoint_portal_pages_${STORAGE_VERSION}`;
+
 export function ClientExperienceDesigner() {
   const [stages, setStages] = useState<JourneyStage[]>(() => {
-    const saved = localStorage.getItem("waypoint_journey_stages");
+    // Clear legacy unversioned storage
+    try {
+      localStorage.removeItem("waypoint_journey_stages");
+      localStorage.removeItem("waypoint_journey_stages_v1");
+      localStorage.removeItem("waypoint_journey_stages_v2");
+      localStorage.removeItem("waypoint_journey_stages_v3");
+    } catch (_) {}
+
+    const saved = localStorage.getItem(STAGES_STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // If saved stages only had 14, merge with INITIAL_JOURNEY_STAGES to ensure stage-15 is present
-        if (Array.isArray(parsed) && parsed.length < INITIAL_JOURNEY_STAGES.length) {
+        // Check if legacy "Select Number of Students" exists in parsed or if length doesn't match
+        const hasLegacyStudentCount = Array.isArray(parsed) && parsed.some(
+          (s: any) => s.name?.toLowerCase().includes("number of students") || s.associatedPortalPage?.toLowerCase().includes("student selection")
+        );
+        if (hasLegacyStudentCount || !Array.isArray(parsed) || parsed.length !== INITIAL_JOURNEY_STAGES.length) {
+          localStorage.setItem(STAGES_STORAGE_KEY, JSON.stringify(INITIAL_JOURNEY_STAGES));
           return INITIAL_JOURNEY_STAGES;
         }
         return parsed;
@@ -49,11 +65,22 @@ export function ClientExperienceDesigner() {
   });
 
   const [pages, setPages] = useState<PortalExperiencePage[]>(() => {
-    const saved = localStorage.getItem("waypoint_portal_pages");
+    try {
+      localStorage.removeItem("waypoint_portal_pages");
+      localStorage.removeItem("waypoint_portal_pages_v1");
+      localStorage.removeItem("waypoint_portal_pages_v2");
+      localStorage.removeItem("waypoint_portal_pages_v3");
+    } catch (_) {}
+
+    const saved = localStorage.getItem(PAGES_STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length < INITIAL_PORTAL_PAGES.length) {
+        const hasLegacyStudentCount = Array.isArray(parsed) && parsed.some(
+          (p: any) => p.name?.toLowerCase().includes("student selection")
+        );
+        if (hasLegacyStudentCount || !Array.isArray(parsed) || parsed.length !== INITIAL_PORTAL_PAGES.length) {
+          localStorage.setItem(PAGES_STORAGE_KEY, JSON.stringify(INITIAL_PORTAL_PAGES));
           return INITIAL_PORTAL_PAGES;
         }
         return parsed;
@@ -70,12 +97,20 @@ export function ClientExperienceDesigner() {
   const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("waypoint_journey_stages", JSON.stringify(stages));
+    localStorage.setItem(STAGES_STORAGE_KEY, JSON.stringify(stages));
   }, [stages]);
 
   useEffect(() => {
-    localStorage.setItem("waypoint_portal_pages", JSON.stringify(pages));
+    localStorage.setItem(PAGES_STORAGE_KEY, JSON.stringify(pages));
   }, [pages]);
+
+  const handleResetToBlueprint = () => {
+    setStages(INITIAL_JOURNEY_STAGES);
+    setPages(INITIAL_PORTAL_PAGES);
+    localStorage.setItem(STAGES_STORAGE_KEY, JSON.stringify(INITIAL_JOURNEY_STAGES));
+    localStorage.setItem(PAGES_STORAGE_KEY, JSON.stringify(INITIAL_PORTAL_PAGES));
+    toast.success("Reset to standard 14-stage blueprint successfully!");
+  };
 
   const handleOpenDesign = (stage: JourneyStage) => {
     setSelectedStage(stage);
@@ -156,10 +191,20 @@ export function ClientExperienceDesigner() {
           </div>
 
           {/* Quick Action Button */}
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetToBlueprint}
+              className="gap-1.5 text-xs font-semibold h-10 px-3 border-border/70 text-muted-foreground hover:text-foreground"
+              title="Reset stages to standard blueprint defaults"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Reset Blueprint
+            </Button>
             <Button
               onClick={() => {
-                setSelectedStage(stages[1]); // Default to Experience 01 - Discovery
+                setSelectedStage(stages[0] || stages[1]); // Default to Experience 01 - Discovery
                 setPreviewOpen(true);
               }}
               className="gap-2 bg-gradient-to-r from-primary to-primary/85 shadow-md text-xs font-semibold px-4 h-10"
