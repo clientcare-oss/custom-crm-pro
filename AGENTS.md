@@ -105,7 +105,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-025`: Case Compass Console (`/case-compass`, `/tools/case-compass`)
   - `PG-026`: Page ID Showcase (`/page-id-showcase`)
   - `PG-027`: Portal Experience Management (`/portal-management`)
-  - `PG-027-S01` to `PG-027-S15`: Portal Journey Stages
+  - `PG-027-S01` to `PG-027-S14`: Portal Journey Stages
   - `PG-028`: Intake & Dynamic Forms (`/intake`, `/form/:slug`)
   - `PG-029`: Booking Page (`/book`, `/portal/book`)
   - `PG-030`: Contact & Student Detail (`/contacts/:id`, `/students/:id`)

@@ -98,29 +98,6 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     id: "stage-05",
     pageId: "PG-027-S05",
     stepNumber: "05",
-    name: "Select Support Level",
-    category: "Plan & Checkout",
-    description: "Parent selects the appropriate advocacy tier (Full IEP Representation, Document Review & Strategy, or Retainer).",
-    status: "published",
-    triggerCondition: "Student count selected and validated",
-    associatedPortalPage: "Support Selection",
-    associatedRoute: "/portal/support-selection",
-    requiredClientActions: [
-      "Select package / support tier",
-      "Choose billing schedule (Full Upfront or 2-Pay Installments)"
-    ],
-    availableClientActions: [
-      "Compare feature breakdown matrix",
-      "Request customized retainer review"
-    ],
-    stateEngineKey: "PLAN_SELECTION",
-    iconName: "ShieldCheck",
-    lastUpdated: "2026-08-18"
-  },
-  {
-    id: "stage-06",
-    pageId: "PG-027-S06",
-    stepNumber: "06",
     name: "Checkout / Payment",
     category: "Plan & Checkout",
     description: "Secure Stripe checkout process with household invoice receipt and payment ledger recording.",
@@ -141,9 +118,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-28"
   },
   {
-    id: "stage-07",
-    pageId: "PG-027-S07",
-    stepNumber: "07",
+    id: "stage-06",
+    pageId: "PG-027-S06",
+    stepNumber: "06",
     name: "Welcome to Waypoint",
     category: "Progressive Onboarding",
     description: "Post-payment onboarding kickoff. Confetti milestone and orientation video from Byron Honea.",
@@ -164,9 +141,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-24"
   },
   {
-    id: "stage-08",
-    pageId: "PG-027-S08",
-    stepNumber: "08",
+    id: "stage-07",
+    pageId: "PG-027-S07",
+    stepNumber: "07",
     name: "Advocacy Agreements",
     category: "Progressive Onboarding",
     description: "Master Representation Agreement and FERPA Authorization electronic signature capture.",
@@ -187,9 +164,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-27"
   },
   {
-    id: "stage-09",
-    pageId: "PG-027-S09",
-    stepNumber: "09",
+    id: "stage-08",
+    pageId: "PG-027-S08",
+    stepNumber: "08",
     name: "Student Setup",
     category: "Progressive Onboarding",
     description: "Detailed student profile builder: school district, current placement, diagnosis, accommodations, and IEP team names.",
@@ -211,9 +188,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-26"
   },
   {
-    id: "stage-10",
-    pageId: "PG-027-S10",
-    stepNumber: "10",
+    id: "stage-09",
+    pageId: "PG-027-S09",
+    stepNumber: "09",
     name: "Records & Document Upload",
     category: "Progressive Onboarding",
     description: "Secure R2 document vault upload for current IEP, BIP, 504 Plan, psychological evaluations, and medical reports.",
@@ -234,9 +211,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-27"
   },
   {
-    id: "stage-11",
-    pageId: "PG-027-S11",
-    stepNumber: "11",
+    id: "stage-10",
+    pageId: "PG-027-S10",
+    stepNumber: "10",
     name: "Advocacy Intake",
     category: "Progressive Onboarding",
     description: "In-depth parent priorities worksheet: student strengths, parent concerns, goals for upcoming IEP meeting, and district friction points.",
@@ -257,9 +234,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-25"
   },
   {
-    id: "stage-12",
-    pageId: "PG-027-S12",
-    stepNumber: "12",
+    id: "stage-11",
+    pageId: "PG-027-S11",
+    stepNumber: "11",
     name: "Onboarding Complete",
     category: "Progressive Onboarding",
     description: "All 5 progressive onboarding steps validated. Case Compass initialized and initial Strategy Session scheduled.",
@@ -280,9 +257,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-29"
   },
   {
-    id: "stage-13",
-    pageId: "PG-027-S13",
-    stepNumber: "13",
+    id: "stage-12",
+    pageId: "PG-027-S12",
+    stepNumber: "12",
     name: "Active Advocacy",
     category: "Active Service",
     description: "Full active representation workspace. Case Compass status tracking, upcoming IEP meetings, real-time messaging, task boards, and document archives.",
@@ -305,9 +282,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-29"
   },
   {
-    id: "stage-14",
-    pageId: "PG-027-S14",
-    stepNumber: "14",
+    id: "stage-13",
+    pageId: "PG-027-S13",
+    stepNumber: "13",
     name: "Closing / Inactive Client",
     category: "Account Lifecycle",
     description: "IEP resolution achieved, school year concluded, or representation closed. Read-only permanent records archive and satisfaction survey.",
@@ -329,9 +306,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     lastUpdated: "2026-08-21"
   },
   {
-    id: "stage-15",
-    pageId: "PG-027-S15",
-    stepNumber: "15",
+    id: "stage-14",
+    pageId: "PG-027-S14",
+    stepNumber: "14",
     name: "Annual Advocacy Renewal & Listing",
     category: "Retention & Renewal",
     description: "Annual IEP representation rollover, retainer block replenishment, and continuation packages for the upcoming school year.",
@@ -349,8 +326,8 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
       "Choose payment frequency (Annual Lump-Sum with 10% Loyalty Savings vs 3-Pay)",
       "Schedule Byron Honea Renewal Alignment Consultation"
     ],
-    stateEngineKey: "RENEWAL_PENDING",
-    iconName: "RefreshCw",
+    stateEngineKey: "RENEWAL",
+    iconName: "Repeat",
     lastUpdated: "2026-08-30"
   }
 ];

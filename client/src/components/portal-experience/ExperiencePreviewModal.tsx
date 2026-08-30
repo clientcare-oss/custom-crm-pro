@@ -449,63 +449,63 @@ export function ExperiencePreviewModal({
                   />
                 )}
 
-                {/* ── STAGE 03 - 06: Discovery Completed & Support Selection ── */}
-                {activeTab !== "explore-portal" && ["03", "04", "05", "06"].includes(currentStage.stepNumber) && (
+                {/* ── STAGE 03 - 05: Discovery Completed & Support Selection / Checkout ── */}
+                {activeTab !== "explore-portal" && ["03", "04", "05"].includes(currentStage.stepNumber) && (
                   <ChooseSupportExperience
                     onPaymentSuccess={() => {
-                      setSimulatedStageIndex(6); // Advances to stage 07 (Agreements)
+                      setSimulatedStageIndex(5); // Advances to stage 06 (Welcome / Agreements)
                       handleStepComplete("choose-support");
                     }}
                     onNavigateTab={handleTabSelect}
                   />
                 )}
 
-                {/* ── STAGE 07 - 08: Representation Agreements ── */}
-                {activeTab !== "explore-portal" && ["07", "08"].includes(currentStage.stepNumber) && (
+                {/* ── STAGE 06 - 07: Representation Agreements ── */}
+                {activeTab !== "explore-portal" && ["06", "07"].includes(currentStage.stepNumber) && (
                   <AgreementsExperience
                     onComplete={() => {
-                      setSimulatedStageIndex(8); // Advances to stage 09 (Student Setup)
+                      setSimulatedStageIndex(7); // Advances to stage 08 (Student Setup)
                       handleStepComplete("agreements");
                     }}
                     onNavigateTab={handleTabSelect}
                   />
                 )}
 
-                {/* ── STAGE 09: Student Setup Profile ── */}
-                {activeTab !== "explore-portal" && currentStage.stepNumber === "09" && (
+                {/* ── STAGE 08: Student Setup Profile ── */}
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "08" && (
                   <StudentSetupExperience
                     onComplete={() => {
-                      setSimulatedStageIndex(9); // Advances to stage 10 (Upload Records)
+                      setSimulatedStageIndex(8); // Advances to stage 09 (Upload Records)
                       handleStepComplete("student-setup");
                     }}
                     onNavigateTab={handleTabSelect}
                   />
                 )}
 
-                {/* ── STAGE 10: Upload School Records ── */}
-                {activeTab !== "explore-portal" && currentStage.stepNumber === "10" && (
+                {/* ── STAGE 09: Upload School Records ── */}
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "09" && (
                   <UploadRecordsExperience
                     onComplete={() => {
-                      setSimulatedStageIndex(10); // Advances to stage 11 (Advocacy Intake)
+                      setSimulatedStageIndex(9); // Advances to stage 10 (Advocacy Intake)
                       handleStepComplete("upload-records");
                     }}
                     onNavigateTab={handleTabSelect}
                   />
                 )}
 
-                {/* ── STAGE 11: Advocacy Priorities Intake ── */}
-                {activeTab !== "explore-portal" && currentStage.stepNumber === "11" && (
+                {/* ── STAGE 10: Advocacy Priorities Intake ── */}
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "10" && (
                   <AdvocacyIntakeExperience
                     onComplete={() => {
-                      setSimulatedStageIndex(11); // Advances to stage 12 (Active Representation)
+                      setSimulatedStageIndex(10); // Advances to stage 11 (Active Representation)
                       handleStepComplete("advocacy-intake");
                     }}
                     onNavigateTab={handleTabSelect}
                   />
                 )}
 
-                {/* ── STAGE 12 - 13: Active Advocacy & Case Compass ── */}
-                {activeTab !== "explore-portal" && ["12", "13"].includes(currentStage.stepNumber) && (
+                {/* ── STAGE 11 - 12: Active Advocacy & Case Compass ── */}
+                {activeTab !== "explore-portal" && ["11", "12"].includes(currentStage.stepNumber) && (
                   <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
@@ -555,8 +555,8 @@ export function ExperiencePreviewModal({
                   </div>
                 )}
 
-                {/* ── STAGE 14: Case Closing & Document Archive ── */}
-                {activeTab !== "explore-portal" && currentStage.stepNumber === "14" && (
+                {/* ── STAGE 13: Case Closing & Document Archive ── */}
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "13" && (
                   <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6">
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 text-xs font-semibold mb-3 border border-teal-500/20">
@@ -588,8 +588,8 @@ export function ExperiencePreviewModal({
                   </div>
                 )}
 
-                {/* ── STAGE 15: Annual Advocacy Renewal & Retainer Listing ── */}
-                {(activeTab === "renewal" || (activeTab !== "explore-portal" && currentStage.stepNumber === "15")) && (
+                {/* ── STAGE 14: Annual Advocacy Renewal & Retainer Listing ── */}
+                {(activeTab === "renewal" || (activeTab !== "explore-portal" && currentStage.stepNumber === "14")) && (
                   <div className="max-w-6xl mx-auto py-2">
                     <RenewalListingExperience
                       studentName="Liam Jenkins"
