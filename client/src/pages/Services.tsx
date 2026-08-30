@@ -208,8 +208,14 @@ export default function Services() {
 
   const utils = trpc.useUtils();
   const { data: folders = [] } = trpc.services.folders.list.useQuery();
-  const queryInput = activeFolder === "all" ? undefined : activeFolder === "unfiled" ? { unfiled: true } : { folderId: activeFolder };
-  const { data: servicesList = [], isLoading } = trpc.services.list.useQuery(queryInput);
+  const { data: allServices = [], isLoading } = trpc.services.list.useQuery();
+
+  // Client-side filtering by active folder
+  const servicesList = (allServices as any[]).filter((s: any) => {
+    if (activeFolder === "all") return true;
+    if (activeFolder === "unfiled") return s.folderId === null || s.folderId === undefined;
+    return s.folderId === activeFolder;
+  });
 
   const seedDefaultsMutation = trpc.services.seedDefaults.useMutation({
     onSuccess: () => {
@@ -276,9 +282,7 @@ export default function Services() {
   const folderSaving = createFolder.isPending || renameFolder.isPending;
   const serviceSaving = createService.isPending || updateService.isPending;
 
-  const totalActive = (servicesList as any[]).filter((s) => s.isActive).length;
-  const membershipsCount = (servicesList as any[]).filter((s) => s.name.toLowerCase().includes("membership") || s.name.includes("/mo")).length;
-  const legalCount = (servicesList as any[]).filter((s) => s.name.toLowerCase().includes("complaint") || s.name.toLowerCase().includes("legal")).length;
+  const totalActive = (allServices as any[]).filter((s) => s.isActive).length;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -376,7 +380,7 @@ export default function Services() {
             >
               <Briefcase className="h-4 w-4 shrink-0" />
               <span className="truncate flex-1 text-left">All Offerings</span>
-              <span className="text-[11px] opacity-75 font-mono">{(servicesList as any[]).length}</span>
+              <span className="text-[11px] opacity-75 font-mono">{(allServices as any[]).length}</span>
             </button>
 
             {/* Unfiled */}
@@ -390,6 +394,7 @@ export default function Services() {
             >
               <Inbox className="h-4 w-4 shrink-0" />
               <span className="truncate flex-1 text-left">Unfiled Services</span>
+              <span className="text-[11px] opacity-75 font-mono">{(allServices as any[]).filter((s) => !s.folderId).length}</span>
             </button>
 
             <div className="border-t border-border/40 my-1 pt-1" />
@@ -398,7 +403,7 @@ export default function Services() {
             {(folders as any[]).map((folder: any) => {
               const style = getFolderStyle(folder.color);
               const isActive = activeFolder === folder.id;
-              const countInFolder = (servicesList as any[]).filter((s) => s.folderId === folder.id).length;
+              const countInFolder = (allServices as any[]).filter((s) => s.folderId === folder.id).length;
 
               return (
                 <div

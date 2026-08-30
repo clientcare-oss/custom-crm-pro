@@ -150,20 +150,18 @@ const foldersRouter = router({
     const db = await getDb();
     if (!db) return [];
     
-    // Auto-seed defaults if empty
+    // Auto-seed defaults if database has no folders yet
     const existing = await db
       .select()
-      .from(serviceFolders)
-      .where(eq(serviceFolders.ownerId, ctx.user.id));
+      .from(serviceFolders);
       
     if (existing.length === 0) {
-      await seedDefaultServicesForOwner(db, ctx.user.id);
+      await seedDefaultServicesForOwner(db, ctx.user?.id || 1);
     }
 
     return await db
       .select()
       .from(serviceFolders)
-      .where(eq(serviceFolders.ownerId, ctx.user.id))
       .orderBy(serviceFolders.name);
   }),
 
@@ -175,12 +173,12 @@ const foldersRouter = router({
       await db.insert(serviceFolders).values({
         name: input.name,
         color: input.color ?? "blue",
-        ownerId: ctx.user.id,
+        ownerId: ctx.user?.id || 1,
       });
       const [created] = await db
         .select()
         .from(serviceFolders)
-        .where(eq(serviceFolders.ownerId, ctx.user.id))
+        .where(eq(serviceFolders.name, input.name))
         .orderBy(desc(serviceFolders.createdAt))
         .limit(1);
       return created;
@@ -188,29 +186,29 @@ const foldersRouter = router({
 
   rename: adminProcedure
     .input(z.object({ id: z.number(), name: z.string().min(1), color: z.string().optional() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db
         .update(serviceFolders)
         .set({ name: input.name, ...(input.color ? { color: input.color } : {}) })
-        .where(and(eq(serviceFolders.id, input.id), eq(serviceFolders.ownerId, ctx.user.id)));
+        .where(eq(serviceFolders.id, input.id));
       return { success: true };
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       // Move services in this folder to unfiled
       await db
         .update(services)
         .set({ folderId: null })
-        .where(and(eq(services.folderId, input.id), eq(services.ownerId, ctx.user.id)));
+        .where(eq(services.folderId, input.id));
       await db
         .delete(serviceFolders)
-        .where(and(eq(serviceFolders.id, input.id), eq(serviceFolders.ownerId, ctx.user.id)));
+        .where(eq(serviceFolders.id, input.id));
       return { success: true };
     }),
 });
@@ -225,6 +223,12 @@ export const servicesRouter = router({
     const db = await getDb();
     if (!db) return { folders: [], services: [] };
     
+    // Auto-seed if empty
+    const existing = await db.select().from(services);
+    if (existing.length === 0) {
+      await seedDefaultServicesForOwner(db, 1);
+    }
+
     // Fetch all active services
     const allServices = await db
       .select()
@@ -247,7 +251,7 @@ export const servicesRouter = router({
   seedDefaults: adminProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
-    await seedDefaultServicesForOwner(db, ctx.user.id);
+    await seedDefaultServicesForOwner(db, ctx.user?.id || 1);
     return { success: true };
   }),
 
@@ -260,20 +264,27 @@ export const servicesRouter = router({
       // Check if services exist, if 0 auto-seed standard catalog
       const existingCount = await db
         .select()
-        .from(services)
-        .where(eq(services.ownerId, ctx.user.id));
+        .from(services);
 
       if (existingCount.length === 0) {
-        await seedDefaultServicesForOwner(db, ctx.user.id);
+        await seedDefaultServicesForOwner(db, ctx.user?.id || 1);
       }
 
-      const conditions = [eq(services.ownerId, ctx.user.id)];
+      const conditions: any[] = [];
       if (input?.folderId) conditions.push(eq(services.folderId, input.folderId));
       if (input?.unfiled) conditions.push(isNull(services.folderId));
+
+      if (conditions.length > 0) {
+        return await db
+          .select()
+          .from(services)
+          .where(and(...conditions))
+          .orderBy(services.name);
+      }
+
       return await db
         .select()
         .from(services)
-        .where(and(...conditions))
         .orderBy(services.name);
     }),
 
@@ -290,7 +301,7 @@ export const servicesRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db.insert(services).values({
-        ownerId: ctx.user.id,
+        ownerId: ctx.user?.id || 1,
         name: input.name,
         description: input.description ?? null,
         price: input.price ?? null,
@@ -311,37 +322,37 @@ export const servicesRouter = router({
       folderId: z.number().nullable().optional(),
       isActive: z.boolean().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...data } = input;
       await db
         .update(services)
         .set(data)
-        .where(and(eq(services.id, id), eq(services.ownerId, ctx.user.id)));
+        .where(eq(services.id, id));
       return { success: true };
     }),
 
   move: adminProcedure
     .input(z.object({ id: z.number(), folderId: z.number().nullable() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db
         .update(services)
         .set({ folderId: input.folderId })
-        .where(and(eq(services.id, input.id), eq(services.ownerId, ctx.user.id)));
+        .where(eq(services.id, input.id));
       return { success: true };
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db
         .delete(services)
-        .where(and(eq(services.id, input.id), eq(services.ownerId, ctx.user.id)));
+        .where(eq(services.id, input.id));
       return { success: true };
     }),
 });
