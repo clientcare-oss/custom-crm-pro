@@ -10,8 +10,10 @@ import { AgreementsExperience } from "@/components/portal/onboarding/AgreementsE
 import { StudentSetupExperience } from "@/components/portal/onboarding/StudentSetupExperience";
 import { UploadRecordsExperience } from "@/components/portal/onboarding/UploadRecordsExperience";
 import { AdvocacyIntakeExperience } from "@/components/portal/onboarding/AdvocacyIntakeExperience";
+import { ExplorePortalExperience } from "@/components/portal/onboarding/ExplorePortalExperience";
+import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryCard";
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
-import { ClientStage } from "@/components/portal/portalModuleRegistry";
+import { ClientStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -68,6 +70,11 @@ export function ExperiencePreviewModal({
   const [activeTab, setActiveTab] = useState<string>("discovery-call");
   const [previewTheme, setPreviewTheme] = useState<"navy" | "blue">("navy");
   const [completedSteps, setCompletedSteps] = useState<string[]>(["discovery-call"]);
+
+  // Exploration / Tour State inside Simulator (Auto-started with 1 of 6 explored)
+  const [isExplorationActive, setIsExplorationActive] = useState<boolean>(true);
+  const [exploredTourIds, setExploredTourIds] = useState<string[]>(["explore-portal"]);
+  const [acknowledgedTourIntros, setAcknowledgedTourIntros] = useState<string[]>([]);
 
   // Synchronize when selectedStage changes from parent
   useEffect(() => {
@@ -161,6 +168,17 @@ export function ExperiencePreviewModal({
   const handleStepComplete = (stepId: string) => {
     setCompletedSteps(prev => Array.from(new Set([...prev, stepId])));
   };
+
+  const handleTabSelect = (tabId: string) => {
+    setActiveTab(tabId);
+    if (isExplorationActive && TOUR_MODULES.some(m => m.id === tabId) && !exploredTourIds.includes(tabId)) {
+      setExploredTourIds(prev => [...prev, tabId]);
+      toast.success(`Explored ${tabId}! Progress updated.`);
+    }
+  };
+
+  const currentTourModule = TOUR_MODULES.find(m => m.id === activeTab);
+  const showDiscoveryBanner = isExplorationActive && !!currentTourModule && !acknowledgedTourIntros.includes(activeTab);
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -286,13 +304,20 @@ export function ExperiencePreviewModal({
             <div className="hidden md:flex flex-col h-full shrink-0">
               <ClientPortalSidebar
                 activeTab={activeTab}
-                onSelectTab={(tabId) => setActiveTab(tabId)}
+                onSelectTab={handleTabSelect}
                 displayName={displayName}
                 theme={previewTheme}
                 onToggleTheme={() => setPreviewTheme(prev => prev === "navy" ? "blue" : "navy")}
                 onLogout={() => toast.info("Logout simulated")}
                 clientStage={clientStage}
                 completedOnboardingSteps={completedSteps}
+                isExplorationActive={isExplorationActive}
+                exploredTourIds={exploredTourIds}
+                onStartTour={() => {
+                  setIsExplorationActive(true);
+                  setActiveTab("explore-portal");
+                }}
+                onEndExploration={() => setIsExplorationActive(false)}
               />
             </div>
 
@@ -334,8 +359,39 @@ export function ExperiencePreviewModal({
               {/* Viewport Content Area */}
               <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[#040C16] relative pb-28">
                 
+                {/* Non-Blocking Tour Contextual Banner */}
+                {showDiscoveryBanner && currentTourModule && (
+                  <TourDiscoveryCard
+                    moduleId={activeTab}
+                    title={currentTourModule.tourTitle || currentTourModule.name}
+                    description={currentTourModule.tourDescription || ""}
+                    onDismiss={() => setAcknowledgedTourIntros(prev => [...prev, activeTab])}
+                    onFinishTourEarly={() => setIsExplorationActive(false)}
+                    exploredCount={exploredTourIds.length}
+                    totalCount={TOUR_MODULES.length}
+                  />
+                )}
+
+                {/* ── Explore Your Portal Module ── */}
+                {activeTab === "explore-portal" && (
+                  <ExplorePortalExperience
+                    onContinueExploring={() => {
+                      setActiveTab("compass");
+                      if (!exploredTourIds.includes("compass")) {
+                        setExploredTourIds(prev => [...prev, "compass"]);
+                      }
+                    }}
+                    onFinishTour={() => {
+                      setIsExplorationActive(false);
+                      toast.info("Exploration mode ended.");
+                    }}
+                    onNavigateTab={handleTabSelect}
+                    exploredModuleIds={exploredTourIds}
+                  />
+                )}
+
                 {/* ── STAGE 01: Discovery Inquiry Submitted ── */}
-                {currentStage.stepNumber === "01" && (
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "01" && (
                   <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6">
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 text-amber-300 text-xs font-semibold mb-3 border border-amber-400/20">
@@ -375,75 +431,75 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 02: Discovery Call Scheduled ── */}
-                {currentStage.stepNumber === "02" && (
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "02" && (
                   <DiscoveryCallExperience
                     displayName={displayName}
                     upcomingAppointment={{
                       startTime: new Date().toISOString(),
                       location: "https://meet.google.com/waypoint-discovery"
                     }}
-                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onNavigateTab={handleTabSelect}
                     onOpenScheduler={() => toast.info("Scheduler opened")}
                   />
                 )}
 
                 {/* ── STAGE 03 - 06: Discovery Completed & Support Selection ── */}
-                {["03", "04", "05", "06"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && ["03", "04", "05", "06"].includes(currentStage.stepNumber) && (
                   <ChooseSupportExperience
                     onPaymentSuccess={() => {
                       setSimulatedStageIndex(6); // Advances to stage 07 (Agreements)
                       handleStepComplete("choose-support");
                     }}
-                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onNavigateTab={handleTabSelect}
                   />
                 )}
 
                 {/* ── STAGE 07 - 08: Representation Agreements ── */}
-                {["07", "08"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && ["07", "08"].includes(currentStage.stepNumber) && (
                   <AgreementsExperience
                     onComplete={() => {
                       setSimulatedStageIndex(8); // Advances to stage 09 (Student Setup)
                       handleStepComplete("agreements");
                     }}
-                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onNavigateTab={handleTabSelect}
                   />
                 )}
 
                 {/* ── STAGE 09: Student Setup Profile ── */}
-                {currentStage.stepNumber === "09" && (
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "09" && (
                   <StudentSetupExperience
                     onComplete={() => {
                       setSimulatedStageIndex(9); // Advances to stage 10 (Upload Records)
                       handleStepComplete("student-setup");
                     }}
-                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onNavigateTab={handleTabSelect}
                   />
                 )}
 
                 {/* ── STAGE 10: Upload School Records ── */}
-                {currentStage.stepNumber === "10" && (
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "10" && (
                   <UploadRecordsExperience
                     onComplete={() => {
                       setSimulatedStageIndex(10); // Advances to stage 11 (Advocacy Intake)
                       handleStepComplete("upload-records");
                     }}
-                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onNavigateTab={handleTabSelect}
                   />
                 )}
 
                 {/* ── STAGE 11: Advocacy Priorities Intake ── */}
-                {currentStage.stepNumber === "11" && (
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "11" && (
                   <AdvocacyIntakeExperience
                     onComplete={() => {
                       setSimulatedStageIndex(11); // Advances to stage 12 (Active Representation)
                       handleStepComplete("advocacy-intake");
                     }}
-                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onNavigateTab={handleTabSelect}
                   />
                 )}
 
                 {/* ── STAGE 12 - 13: Active Advocacy & Case Compass ── */}
-                {["12", "13"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && ["12", "13"].includes(currentStage.stepNumber) && (
                   <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
@@ -494,7 +550,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 14: Case Closing & Document Archive ── */}
-                {currentStage.stepNumber === "14" && (
+                {activeTab !== "explore-portal" && currentStage.stepNumber === "14" && (
                   <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6">
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 text-xs font-semibold mb-3 border border-teal-500/20">

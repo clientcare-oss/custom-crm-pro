@@ -23,7 +23,8 @@ import {
   CheckCircle2,
   Clock,
   Lock,
-  Layers
+  Layers,
+  MapPin
 } from "lucide-react";
 
 export type ClientStage = 
@@ -55,6 +56,11 @@ export interface PortalModuleDefinition {
   isDefaultForStage?: ClientStage[];
   badgeText?: string;
   description?: string;
+  // Portal Exploration / Tour Configuration
+  includeInPortalTour?: boolean;
+  tourTitle?: string;
+  tourDescription?: string;
+  tourDisplayOrder?: number;
 }
 
 export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
@@ -69,7 +75,11 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     unlockedStages: ["DISCOVERY_INQUIRY", "DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
     isDefaultForStage: ["ACTIVE", "CLOSING", "INACTIVE"],
-    description: "Core Case Compass tracking stage, active focus, and who has the ball."
+    description: "Core Case Compass tracking stage, active focus, and who has the ball.",
+    includeInPortalTour: true,
+    tourTitle: "Your Compass",
+    tourDescription: "Your Compass gives you a quick view of where things stand, what comes next, and what may need attention.",
+    tourDisplayOrder: 1
   },
 
   // ── GETTING STARTED Conditional Group (Onboarding & Pre-Sale) ──
@@ -97,11 +107,26 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     description: "Interactive visual roadmap of the Waypoint representation experience."
   },
   {
+    id: "explore-portal",
+    name: "Explore Your Portal",
+    icon: MapPin,
+    sidebarGroup: "getting-started",
+    displayOrder: 12,
+    visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING"],
+    unlockedStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING"],
+    lockedPreviewAllowed: true,
+    description: "Guided, self-directed exploration of the Waypoint Client Portal.",
+    includeInPortalTour: true,
+    tourTitle: "Explore Your Portal",
+    tourDescription: "Your central guide for getting oriented and discovering your portal.",
+    tourDisplayOrder: 1
+  },
+  {
     id: "choose-support",
     name: "Choose Support",
     icon: ShieldCheck,
     sidebarGroup: "getting-started",
-    displayOrder: 12,
+    displayOrder: 13,
     visibleStages: ["DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING"],
     unlockedStages: ["DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING"],
     lockedPreviewAllowed: true,
@@ -113,7 +138,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     name: "Agreements",
     icon: PenTool,
     sidebarGroup: "getting-started",
-    displayOrder: 13,
+    displayOrder: 14,
     visibleStages: ["ONBOARDING"],
     unlockedStages: ["ONBOARDING", "ACTIVE"],
     lockedPreviewAllowed: true,
@@ -124,7 +149,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     name: "Student Setup",
     icon: GraduationCap,
     sidebarGroup: "getting-started",
-    displayOrder: 14,
+    displayOrder: 15,
     visibleStages: ["ONBOARDING"],
     unlockedStages: ["ONBOARDING", "ACTIVE"],
     lockedPreviewAllowed: true,
@@ -135,7 +160,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     name: "Upload Records",
     icon: UploadCloud,
     sidebarGroup: "getting-started",
-    displayOrder: 15,
+    displayOrder: 16,
     visibleStages: ["ONBOARDING"],
     unlockedStages: ["ONBOARDING", "ACTIVE"],
     lockedPreviewAllowed: true,
@@ -146,7 +171,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     name: "Advocacy Intake",
     icon: ClipboardList,
     sidebarGroup: "getting-started",
-    displayOrder: 16,
+    displayOrder: 17,
     visibleStages: ["ONBOARDING"],
     unlockedStages: ["ONBOARDING", "ACTIVE"],
     lockedPreviewAllowed: true,
@@ -163,7 +188,11 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     visibleStages: ["DISCOVERY_INQUIRY", "DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     unlockedStages: ["DISCOVERY_INQUIRY", "DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
-    description: "Direct messaging with Byron Honea and advocacy team."
+    description: "Direct messaging with Byron Honea and advocacy team.",
+    includeInPortalTour: true,
+    tourTitle: "Communication",
+    tourDescription: "Keep track of important advocacy-related communication and stay connected with Waypoint.",
+    tourDisplayOrder: 2
   },
   {
     id: "tasks",
@@ -174,7 +203,11 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING", "ACTIVE", "CLOSING"],
     unlockedStages: ["ACTIVE", "CLOSING"],
     lockedPreviewAllowed: true,
-    description: "Assigned action items, meeting prep checklists, and task tracking."
+    description: "Assigned action items, meeting prep checklists, and task tracking.",
+    includeInPortalTour: true,
+    tourTitle: "Tasks",
+    tourDescription: "See what needs attention and keep track of the next actions in your advocacy journey.",
+    tourDisplayOrder: 3
   },
   {
     id: "smart-docs",
@@ -185,7 +218,11 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     unlockedStages: ["ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
-    description: "Cloudflare R2 document vault and IEP comparison archive."
+    description: "Cloudflare R2 document vault and IEP comparison archive.",
+    includeInPortalTour: true,
+    tourTitle: "Documents",
+    tourDescription: "Keep important advocacy documents organized and accessible from your portal.",
+    tourDisplayOrder: 4
   },
   {
     id: "files",
@@ -196,7 +233,11 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     unlockedStages: ["ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
-    description: "General file uploads and shared school correspondence."
+    description: "General file uploads and shared school correspondence.",
+    includeInPortalTour: true,
+    tourTitle: "Files",
+    tourDescription: "Access the records and files connected to your student's advocacy work.",
+    tourDisplayOrder: 5
   },
   {
     id: "tools",
@@ -287,6 +328,10 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     description: "Comprehensive student IEP goals, accommodations, and service minutes."
   }
 ];
+
+export const TOUR_MODULES = PORTAL_MODULE_REGISTRY
+  .filter((m) => m.includeInPortalTour)
+  .sort((a, b) => (a.tourDisplayOrder || 99) - (b.tourDisplayOrder || 99));
 
 export function resolveModuleState(
   module: PortalModuleDefinition,

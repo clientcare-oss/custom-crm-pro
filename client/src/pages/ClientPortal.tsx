@@ -44,8 +44,10 @@ import { AgreementsExperience } from "@/components/portal/onboarding/AgreementsE
 import { StudentSetupExperience } from "@/components/portal/onboarding/StudentSetupExperience";
 import { UploadRecordsExperience } from "@/components/portal/onboarding/UploadRecordsExperience";
 import { AdvocacyIntakeExperience } from "@/components/portal/onboarding/AdvocacyIntakeExperience";
+import { ExplorePortalExperience } from "@/components/portal/onboarding/ExplorePortalExperience";
+import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryCard";
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
-import { ClientStage, getDefaultModuleForStage } from "@/components/portal/portalModuleRegistry";
+import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -623,6 +625,66 @@ export default function ClientPortal() {
     if (stageFromUrl) return getDefaultModuleForStage(stageFromUrl);
     return "discovery-call";
   });
+
+  // Portal Tour & Exploration State: Auto-start for new clients + initialize with ["explore-portal"]
+  const [isExplorationActive, setIsExplorationActive] = useState<boolean>(() => {
+    try {
+      const active = localStorage.getItem("waypoint_portal_exploration_active");
+      if (active !== null) return active === "true";
+      return true; // Auto-starts on first load!
+    } catch {
+      return true;
+    }
+  });
+
+  const [exploredTourIds, setExploredTourIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("waypoint_portal_explored_modules");
+      return saved ? JSON.parse(saved) : ["explore-portal"];
+    } catch {
+      return ["explore-portal"];
+    }
+  });
+
+  const [acknowledgedTourIntros, setAcknowledgedTourIntros] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("waypoint_portal_acknowledged_intros");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // When exploring, automatically mark current module as explored if in TOUR_MODULES
+  useEffect(() => {
+    if (isExplorationActive) {
+      const isTourModule = TOUR_MODULES.some((m) => m.id === activeTab);
+      if (isTourModule && !exploredTourIds.includes(activeTab)) {
+        const next = [...exploredTourIds, activeTab];
+        setExploredTourIds(next);
+        localStorage.setItem("waypoint_portal_explored_modules", JSON.stringify(next));
+      }
+    }
+  }, [activeTab, isExplorationActive, exploredTourIds]);
+
+  const handleDismissTourIntro = (moduleId: string) => {
+    setAcknowledgedTourIntros((prev) => {
+      const next = Array.from(new Set([...prev, moduleId]));
+      localStorage.setItem("waypoint_portal_acknowledged_intros", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleStartTour = () => {
+    setIsExplorationActive(true);
+    localStorage.setItem("waypoint_portal_exploration_active", "true");
+    setActiveTab("explore-portal");
+  };
+
+  const handleEndExploration = () => {
+    setIsExplorationActive(false);
+    localStorage.setItem("waypoint_portal_exploration_active", "false");
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -1121,6 +1183,22 @@ export default function ClientPortal() {
               setClientStage("ACTIVE");
             }}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        );
+
+      case "explore-portal":
+        return (
+          <ExplorePortalExperience
+            onContinueExploring={() => {
+              setActiveTab("compass");
+            }}
+            onFinishTour={() => {
+              setIsExplorationActive(false);
+              localStorage.setItem("waypoint_portal_exploration_active", "false");
+              toast.info("Exploration mode ended.");
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            exploredModuleIds={exploredTourIds}
           />
         );
 
@@ -1921,6 +1999,10 @@ export default function ClientPortal() {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           clientStage={effectiveStudent ? "ACTIVE" : clientStage}
           completedOnboardingSteps={completedOnboardingSteps}
+          isExplorationActive={isExplorationActive}
+          exploredTourIds={exploredTourIds}
+          onStartTour={handleStartTour}
+          onEndExploration={handleEndExploration}
         />
       </div>
 
@@ -1943,6 +2025,10 @@ export default function ClientPortal() {
               navItems={filteredNavItems}
               clientStage={effectiveStudent ? "ACTIVE" : clientStage}
               completedOnboardingSteps={completedOnboardingSteps}
+              isExplorationActive={isExplorationActive}
+              exploredTourIds={exploredTourIds}
+              onStartTour={handleStartTour}
+              onEndExploration={handleEndExploration}
             />
           </div>
         </div>
