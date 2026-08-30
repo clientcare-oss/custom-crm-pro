@@ -327,6 +327,31 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     stateEngineKey: "CLOSING",
     iconName: "Archive",
     lastUpdated: "2026-08-21"
+  },
+  {
+    id: "stage-15",
+    pageId: "PG-027-S15",
+    stepNumber: "15",
+    name: "Annual Advocacy Renewal & Listing",
+    category: "Retention & Renewal",
+    description: "Annual IEP representation rollover, retainer block replenishment, and continuation packages for the upcoming school year.",
+    status: "published",
+    triggerCondition: "Contract expiration within 60 days, annual IEP cycle rollover, or client clicks Renew Plan",
+    associatedPortalPage: "Advocacy Plan Renewal & Extension",
+    associatedRoute: "/portal/renewal",
+    requiredClientActions: [
+      "Select annual renewal tier (Comprehensive Representation, Goal Audit, or Retainer Block)",
+      "Confirm continuing student enrollment details",
+      "Sign renewed representation agreement addendum"
+    ],
+    availableClientActions: [
+      "Select optional riders (IEE oversight, BIP evaluation, Sibling plan)",
+      "Choose payment frequency (Annual Lump-Sum with 10% Loyalty Savings vs 3-Pay)",
+      "Schedule Byron Honea Renewal Alignment Consultation"
+    ],
+    stateEngineKey: "RENEWAL_PENDING",
+    iconName: "RefreshCw",
+    lastUpdated: "2026-08-30"
   }
 ];
 
@@ -407,6 +432,28 @@ export const STATE_ENGINE_RULES: StateEngineRule[] = [
     householdResolution: "Resolves all authorized students, active IEP cases, documents in R2, and tasks.",
     exitCondition: "Case resolution achieved or advocate transitions case to closing.",
     fallbackBehavior: "If multi-student household, enables seamless student switcher in header."
+  },
+  {
+    state: "RENEWAL_PENDING",
+    label: "Renewal Approaching",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/30",
+    description: "Active contract expiring within 60 days or academic year rollover approaching. Portal presents tailored renewal packages and loyalty discounts.",
+    entryTriggers: ["Contract expiration <= 60 days", "Admin issues annual renewal notice", "Parent clicks 'Renew Support'"],
+    resolvedExperience: "Advocacy Plan Renewal & Package Selector (/portal/renewal)",
+    householdResolution: "Preserves existing student profiles and IEP documents while activating new academic year tier options.",
+    exitCondition: "Renewal package selected and paid (transitions to RENEWED / ACTIVE).",
+    fallbackBehavior: "Maintains current active workspace while showcasing top-level renewal notification banner."
+  },
+  {
+    state: "RENEWED",
+    label: "Renewed Continuity",
+    color: "bg-teal-500/10 text-teal-600 border-teal-500/30",
+    description: "Renewal executed for upcoming school year. Representation dates extended and Case Compass updated.",
+    entryTriggers: ["Renewal checkout successful / agreement countersigned"],
+    resolvedExperience: "Active Client Dashboard with Extended Term Confirmation",
+    householdResolution: "Increments contract term and updates Case Compass goals for new academic cycle.",
+    exitCondition: "Standard active case lifecycle.",
+    fallbackBehavior: "Emits renewal receipt and calendar sync."
   },
   {
     state: "CLOSING",

@@ -157,24 +157,26 @@ export function JourneyStageCard({
         </div>
       </CardContent>
 
-      <CardFooter className="pt-2 pb-4 px-4 border-t border-border/40 bg-muted/10 flex items-center justify-between gap-2">
+      <CardFooter className="pt-2.5 pb-3.5 px-3.5 border-t border-border/40 bg-muted/15 flex items-center justify-between gap-2">
         <Button
           size="sm"
           variant="outline"
           onClick={() => onDesign(stage)}
-          className="flex-1 h-8 text-xs font-semibold gap-1.5 border-border/70 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-all"
+          className="flex-1 h-8 text-xs font-semibold gap-1.5 border-border/70 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-all whitespace-nowrap px-2.5"
+          title={`Design Stage ${stage.stepNumber} Experience`}
         >
-          <Sliders className="h-3.5 w-3.5" />
-          Design Experience
+          <Sliders className="h-3.5 w-3.5 shrink-0" />
+          <span>Design</span>
         </Button>
 
         <Button
           size="sm"
           onClick={() => onPreview(stage)}
-          className="flex-1 h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+          className="flex-1 h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm whitespace-nowrap px-2.5"
+          title={`Preview Stage ${stage.stepNumber} Live Client Experience`}
         >
-          <Eye className="h-3.5 w-3.5" />
-          Preview Experience
+          <Eye className="h-3.5 w-3.5 shrink-0" />
+          <span>Preview</span>
         </Button>
       </CardFooter>
     </Card>

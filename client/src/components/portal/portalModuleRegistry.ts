@@ -326,6 +326,19 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     unlockedStages: ["ACTIVE", "CLOSING"],
     lockedPreviewAllowed: true,
     description: "Comprehensive student IEP goals, accommodations, and service minutes."
+  },
+  {
+    id: "renewal",
+    name: "Plan Renewal",
+    icon: Sparkles,
+    route: "/portal/renewal",
+    sidebarGroup: "account",
+    displayOrder: 41,
+    visibleStages: ["ACTIVE", "CLOSING", "INACTIVE"],
+    unlockedStages: ["ACTIVE", "CLOSING", "INACTIVE"],
+    lockedPreviewAllowed: true,
+    badgeText: "2026–2027",
+    description: "Annual IEP representation renewal hub, retainer replenishment, and multi-student rollover options."
   }
 ];
 

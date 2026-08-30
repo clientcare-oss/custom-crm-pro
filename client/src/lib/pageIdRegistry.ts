@@ -82,7 +82,9 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/portal/onboarding-complete":      { id: "PG-027-S12", name: "Portal: Onboarding Complete", category: "Portal Stage" },
   "/portal/dashboard":                { id: "PG-027-S13", name: "Portal: Active Client Dashboard", category: "Portal Stage" },
   "/portal/closing":                  { id: "PG-027-S14", name: "Portal: Case Closing & Archive", category: "Portal Stage" },
-  "/portal/getting-started":          { id: "PG-027-S15", name: "Portal: Getting Started Guide", category: "Portal Stage" },
+  "/portal/renewal":                  { id: "PG-027-S15", name: "Portal: Annual Advocacy Renewal", category: "Portal Stage" },
+  "/portal/renewals":                 { id: "PG-027-S15", name: "Portal: Annual Advocacy Renewal", category: "Portal Stage" },
+  "/portal/getting-started":          { id: "PG-027-S15-GS", name: "Portal: Getting Started Guide", category: "Portal Stage" },
   
   // 404
   "/404":                             { id: "PG-404", name: "Page Not Found", category: "System" },

@@ -13,6 +13,7 @@ import { AdvocacyIntakeExperience } from "@/components/portal/onboarding/Advocac
 import { ExplorePortalExperience } from "@/components/portal/onboarding/ExplorePortalExperience";
 import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryCard";
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
+import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
 import { ClientStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,6 +119,9 @@ export function ExperiencePreviewModal({
       case "14":
         setActiveTab("compass");
         break;
+      case "15":
+        setActiveTab("renewal");
+        break;
       default:
         setActiveTab("discovery-call");
     }
@@ -147,6 +151,8 @@ export function ExperiencePreviewModal({
     if (step <= 6) return "DISCOVERY_COMPLETED";
     if (step <= 11) return "ONBOARDING";
     if (step <= 13) return "ACTIVE";
+    if (step === 14) return "CLOSING";
+    if (step === 15) return "ACTIVE";
     return "CLOSING";
   };
 
@@ -206,7 +212,7 @@ export function ExperiencePreviewModal({
 
             {!isBarCollapsed && (
               <Badge variant="outline" className="hidden lg:inline-flex text-[10px] font-mono text-white/70 border-white/20 bg-white/5">
-                Stage {currentStage.stepNumber} of 14 · {currentStage.category}
+                Stage {currentStage.stepNumber} of {INITIAL_JOURNEY_STAGES.length} · {currentStage.category}
               </Badge>
             )}
           </div>
@@ -579,6 +585,20 @@ export function ExperiencePreviewModal({
                         Download 2026 IEP Records Bundle (.ZIP)
                       </Button>
                     </Card>
+                  </div>
+                )}
+
+                {/* ── STAGE 15: Annual Advocacy Renewal & Retainer Listing ── */}
+                {(activeTab === "renewal" || (activeTab !== "explore-portal" && currentStage.stepNumber === "15")) && (
+                  <div className="max-w-6xl mx-auto py-2">
+                    <RenewalListingExperience
+                      studentName="Liam Jenkins"
+                      studentGrade="5th Grade → 6th Grade (Middle School Transition)"
+                      currentTierName="Full IEP Representation (2025–2026)"
+                      expirationDate="September 15, 2026"
+                      daysRemaining={16}
+                      onNavigateTab={(tab) => setActiveTab(tab)}
+                    />
                   </div>
                 )}
               </div>

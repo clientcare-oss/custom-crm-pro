@@ -308,5 +308,19 @@ export const INITIAL_PORTAL_PAGES: PortalExperiencePage[] = [
     associatedStageName: "14 · Closing / Inactive Client",
     lastEditedBy: "Byron Honea",
     isInteractivePreviewReady: true
+  },
+  {
+    id: "page-23",
+    pageId: "PG-027-P23",
+    name: "Advocacy Plan Renewal & Extension",
+    slug: "advocacy-renewal",
+    route: "/portal/renewal",
+    category: "Retention & Renewal",
+    description: "Annual IEP representation renewal hub, retainer replenishment selector, multi-student discounts, add-on riders, and instant renewal checkout.",
+    status: "published",
+    associatedStageId: "stage-15",
+    associatedStageName: "15 · Annual Advocacy Renewal & Listing",
+    lastEditedBy: "Byron Honea",
+    isInteractivePreviewReady: true
   }
 ];

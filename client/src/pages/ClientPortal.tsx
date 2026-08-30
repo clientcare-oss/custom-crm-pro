@@ -47,6 +47,7 @@ import { AdvocacyIntakeExperience } from "@/components/portal/onboarding/Advocac
 import { ExplorePortalExperience } from "@/components/portal/onboarding/ExplorePortalExperience";
 import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryCard";
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
+import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 
 const LOGO_URL = "/waypoint-logo.png";
@@ -579,6 +580,7 @@ const NAV_ITEMS = [
   { id: "notes",         icon: StickyNote,      label: "Notes" },
   { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
   { id: "details",       icon: Info,            label: "Details" },
+  { id: "renewal",       icon: Sparkles,        label: "Plan Renewal" },
 ] as const;
 
 type NavId = typeof NAV_ITEMS[number]["id"] | string;
@@ -1900,6 +1902,19 @@ export default function ClientPortal() {
                 </div>
               ))}
             </div>
+          </div>
+        );
+
+      case "renewal":
+      case "renewals":
+        return (
+          <div className="p-5">
+            <RenewalListingExperience
+              studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "Liam Jenkins"}
+              studentGrade={effectiveStudent?.grade || "5th Grade → 6th Grade"}
+              currentTierName="Full IEP Representation (2025–2026)"
+              onNavigateTab={(tab) => setActiveTab(tab)}
+            />
           </div>
         );
 

@@ -7,6 +7,7 @@ import { PortalPagesLibrary } from "./PortalPagesLibrary";
 import { StateEngineMatrix } from "./StateEngineMatrix";
 import { ExperiencePreviewModal } from "./ExperiencePreviewModal";
 import { StageDesignDrawer } from "./StageDesignDrawer";
+import { RenewalListingManager } from "./RenewalListingManager";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,12 @@ export function ClientExperienceDesigner() {
     const saved = localStorage.getItem("waypoint_journey_stages");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // If saved stages only had 14, merge with INITIAL_JOURNEY_STAGES to ensure stage-15 is present
+        if (Array.isArray(parsed) && parsed.length < INITIAL_JOURNEY_STAGES.length) {
+          return INITIAL_JOURNEY_STAGES;
+        }
+        return parsed;
       } catch (e) {
         return INITIAL_JOURNEY_STAGES;
       }
@@ -46,7 +52,11 @@ export function ClientExperienceDesigner() {
     const saved = localStorage.getItem("waypoint_portal_pages");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length < INITIAL_PORTAL_PAGES.length) {
+          return INITIAL_PORTAL_PAGES;
+        }
+        return parsed;
       } catch (e) {
         return INITIAL_PORTAL_PAGES;
       }
@@ -54,7 +64,7 @@ export function ClientExperienceDesigner() {
     return INITIAL_PORTAL_PAGES;
   });
 
-  const [activeTab, setActiveTab] = useState<"journey" | "pages" | "engine" | "onboarding">("journey");
+  const [activeTab, setActiveTab] = useState<"journey" | "pages" | "engine" | "onboarding" | "renewals">("journey");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [designOpen, setDesignOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
@@ -201,53 +211,66 @@ export function ClientExperienceDesigner() {
         <Button
           variant={activeTab === "journey" ? "default" : "ghost"}
           onClick={() => setActiveTab("journey")}
-          className={`text-xs font-semibold gap-2 h-9 px-4 rounded-lg transition-all ${
+          className={`text-xs font-semibold gap-1.5 h-9 px-3.5 rounded-lg transition-all whitespace-nowrap ${
             activeTab === "journey"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Workflow className="h-4 w-4" />
-          Client Journey Designer ({stages.length} Stages)
+          <Workflow className="h-4 w-4 shrink-0" />
+          Journey Designer ({stages.length})
         </Button>
 
         <Button
           variant={activeTab === "pages" ? "default" : "ghost"}
           onClick={() => setActiveTab("pages")}
-          className={`text-xs font-semibold gap-2 h-9 px-4 rounded-lg transition-all ${
+          className={`text-xs font-semibold gap-1.5 h-9 px-3.5 rounded-lg transition-all whitespace-nowrap ${
             activeTab === "pages"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Layers className="h-4 w-4" />
-          Portal Experience Pages ({pages.length})
+          <Layers className="h-4 w-4 shrink-0" />
+          Experience Pages ({pages.length})
         </Button>
 
         <Button
           variant={activeTab === "engine" ? "default" : "ghost"}
           onClick={() => setActiveTab("engine")}
-          className={`text-xs font-semibold gap-2 h-9 px-4 rounded-lg transition-all ${
+          className={`text-xs font-semibold gap-1.5 h-9 px-3.5 rounded-lg transition-all whitespace-nowrap ${
             activeTab === "engine"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Cpu className="h-4 w-4" />
+          <Cpu className="h-4 w-4 shrink-0" />
           State Engine Matrix
         </Button>
 
         <Button
           variant={activeTab === "onboarding" ? "default" : "ghost"}
           onClick={() => setActiveTab("onboarding")}
-          className={`text-xs font-semibold gap-2 h-9 px-4 rounded-lg transition-all ${
+          className={`text-xs font-semibold gap-1.5 h-9 px-3.5 rounded-lg transition-all whitespace-nowrap ${
             activeTab === "onboarding"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <CheckCircle2 className="h-4 w-4" />
-          Progressive Onboarding Flow
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          Progressive Onboarding
+        </Button>
+
+        <Button
+          variant={activeTab === "renewals" ? "default" : "ghost"}
+          onClick={() => setActiveTab("renewals")}
+          className={`text-xs font-semibold gap-1.5 h-9 px-3.5 rounded-lg transition-all whitespace-nowrap ${
+            activeTab === "renewals"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <RefreshCw className="h-4 w-4 shrink-0 text-amber-400" />
+          Renewals & Retention (Stage 15)
         </Button>
       </div>
 
@@ -257,10 +280,10 @@ export function ClientExperienceDesigner() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/20 p-4 rounded-xl border border-border/40">
             <div>
               <h3 className="text-sm font-bold text-foreground">
-                Waypoint 14-Stage Client Journey Progression
+                Waypoint 15-Stage Client Journey Progression
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                From initial discovery inquiry through progressive onboarding, active advocacy, and case resolution.
+                From initial discovery inquiry through progressive onboarding, active advocacy, case closing, and annual retention renewals.
               </p>
             </div>
             <Badge variant="outline" className="text-xs bg-background/80 self-start sm:self-auto">
@@ -398,6 +421,17 @@ export function ClientExperienceDesigner() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Tab 5: Renewals & Retention Suite */}
+      {activeTab === "renewals" && (
+        <RenewalListingManager
+          onOpenPreviewStage={(stageId) => {
+            const targetStage = stages.find((s) => s.id === stageId) || stages[stages.length - 1];
+            setSelectedStage(targetStage);
+            setPreviewOpen(true);
+          }}
+        />
       )}
 
       {/* Experience Preview Modal (Interactive Simulator) */}

@@ -5,7 +5,8 @@ export type JourneyStageCategory =
   | "Plan & Checkout"
   | "Progressive Onboarding"
   | "Active Service"
-  | "Account Lifecycle";
+  | "Account Lifecycle"
+  | "Retention & Renewal";
 
 export interface JourneyStage {
   id: string;
@@ -31,7 +32,8 @@ export type PageCategory =
   | "Onboarding & Setup"
   | "Active Workspaces"
   | "Account & Billing"
-  | "Lifecycle & Offboarding";
+  | "Lifecycle & Offboarding"
+  | "Retention & Renewal";
 
 export interface PortalExperiencePage {
   id: string;
@@ -58,6 +60,8 @@ export type StateEngineState =
   | "ACTIVE"
   | "CLOSING"
   | "INACTIVE"
+  | "RENEWAL_PENDING"
+  | "RENEWED"
   | "CANCELED";
 
 export interface StateEngineRule {
