@@ -31,6 +31,7 @@ import {
   ChevronDown, ChevronRight, Copy, Check, Edit2, Plus, Trash2,
   Loader2, Save, CheckCircle2, Circle, BookOpen, Send,
   PhoneCall, Star, Lock, FileText, Globe, X, Settings, Settings2, Sliders,
+  Sparkles, Eye, AlertCircle, Info, ShieldCheck, CheckSquare,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
@@ -81,10 +82,10 @@ export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Section open/close state
+  // Section open/close state (7 total sections)
   const [openSections, setOpenSections] = useState<Record<number | string, boolean>>({
     1: true, 2: false, 3: false, 4: false, 5: false,
-    6: false, 7: false, 8: false, 9: false, 10: false,
+    6: false, 7: false,
   });
 
   // Active tab: "call" | "resources"
@@ -112,7 +113,17 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
   const [theirStoryNotes, setTheirStoryNotes] = useState("");
   const [howItWorksNotes, setHowItWorksNotes] = useState("");
   const [pricingNotes, setPricingNotes] = useState("");
+  const [studentCount, setStudentCount] = useState<number>(1);
+  const [selectedPlan, setSelectedPlan] = useState<string>("advocacy_55");
   const [closingResponse, setClosingResponse] = useState("");
+  const [planPublishedToPortal, setPlanPublishedToPortal] = useState(false);
+  const [overridePortalDisplay, setOverridePortalDisplay] = useState(false);
+  const [showAdvocacyOnlyInPortal, setShowAdvocacyOnlyInPortal] = useState(true);
+  const [showComplaintsInPortal, setShowComplaintsInPortal] = useState(true);
+  const [spouseFollowUpChecklist, setSpouseFollowUpChecklist] = useState<string[]>([]);
+  const [lostReason, setLostReason] = useState("");
+  const [lostFeedbackNotes, setLostFeedbackNotes] = useState("");
+  const [lostNurtureOptions, setLostNurtureOptions] = useState<string[]>([]);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [privateNotes, setPrivateNotes] = useState("");
   const [preliminaryNotes, setPreliminaryNotes] = useState("");
@@ -216,7 +227,28 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
     if (callSession.callScriptNotes) setCallScriptNotes(callSession.callScriptNotes);
     if (callSession.theirStoryNotes) setTheirStoryNotes(callSession.theirStoryNotes);
     if (callSession.howItWorksNotes) setHowItWorksNotes(callSession.howItWorksNotes);
-    if (callSession.pricingNotes) setPricingNotes(callSession.pricingNotes);
+    if (callSession.pricingNotes) {
+      try {
+        const parsed = JSON.parse(callSession.pricingNotes);
+        if (parsed && typeof parsed === "object") {
+          if (parsed.studentCount) setStudentCount(Number(parsed.studentCount));
+          if (parsed.selectedPlan) setSelectedPlan(String(parsed.selectedPlan));
+          if (parsed.notes !== undefined) setPricingNotes(String(parsed.notes));
+          if (parsed.planPublishedToPortal !== undefined) setPlanPublishedToPortal(Boolean(parsed.planPublishedToPortal));
+          if (parsed.overridePortalDisplay !== undefined) setOverridePortalDisplay(Boolean(parsed.overridePortalDisplay));
+          if (parsed.showAdvocacyOnlyInPortal !== undefined) setShowAdvocacyOnlyInPortal(Boolean(parsed.showAdvocacyOnlyInPortal));
+          if (parsed.showComplaintsInPortal !== undefined) setShowComplaintsInPortal(Boolean(parsed.showComplaintsInPortal));
+          if (parsed.spouseFollowUpChecklist && Array.isArray(parsed.spouseFollowUpChecklist)) setSpouseFollowUpChecklist(parsed.spouseFollowUpChecklist);
+          if (parsed.lostReason) setLostReason(String(parsed.lostReason));
+          if (parsed.lostFeedbackNotes) setLostFeedbackNotes(String(parsed.lostFeedbackNotes));
+          if (parsed.lostNurtureOptions && Array.isArray(parsed.lostNurtureOptions)) setLostNurtureOptions(parsed.lostNurtureOptions);
+        } else {
+          setPricingNotes(callSession.pricingNotes);
+        }
+      } catch {
+        setPricingNotes(callSession.pricingNotes);
+      }
+    }
     if (callSession.closingResponse) setClosingResponse(callSession.closingResponse);
     if (callSession.additionalNotes) setAdditionalNotes(callSession.additionalNotes);
     if (callSession.privateNotes) setPrivateNotes(callSession.privateNotes);
@@ -245,6 +277,19 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       setSaving(true);
+      const encodedPricing = JSON.stringify({
+        studentCount,
+        selectedPlan,
+        notes: pricingNotes,
+        planPublishedToPortal,
+        overridePortalDisplay,
+        showAdvocacyOnlyInPortal,
+        showComplaintsInPortal,
+        spouseFollowUpChecklist,
+        lostReason,
+        lostFeedbackNotes,
+        lostNurtureOptions,
+      });
       saveMutation.mutate({
         leadId,
         openingScript,
@@ -254,7 +299,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
         questionNotes: JSON.stringify(questionNotes),
         questionMode,
         howItWorksNotes,
-        pricingNotes,
+        pricingNotes: encodedPricing,
         closingResponse,
         nextStepsCompleted: JSON.stringify(nextStepsCompleted),
         lostStepsCompleted: JSON.stringify(lostStepsCompleted),
@@ -264,7 +309,9 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
       });
     }, 1500);
   }, [leadId, openingScript, voicemailScript, callScriptNotes, theirStoryNotes, questionNotes, questionMode,
-      howItWorksNotes, pricingNotes, closingResponse, nextStepsCompleted,
+      howItWorksNotes, pricingNotes, studentCount, selectedPlan, closingResponse, planPublishedToPortal,
+      overridePortalDisplay, showAdvocacyOnlyInPortal, showComplaintsInPortal, spouseFollowUpChecklist,
+      lostReason, lostFeedbackNotes, lostNurtureOptions, nextStepsCompleted,
       lostStepsCompleted, additionalNotes, privateNotes, currentStepId]);
 
   // Sync notes to contact profile when additionalNotes or privateNotes change
@@ -931,17 +978,18 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
             )}
           </div>
 
-          {/* Section 5: Our Difference & Pricing */}
+          {/* Section 5: Our Difference, Pricing & Next Steps */}
           <div className="space-y-2">
-            <SectionHeader number={5} title="Our Difference & Pricing" isOpen={openSections[5]} onToggle={() => toggleSection(5)} />
+            <SectionHeader number={5} title="Our Difference, Pricing & Next Steps" isOpen={openSections[5]} onToggle={() => toggleSection(5)} />
             {openSections[5] && (
-              <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4 space-y-3">
+              <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-5 space-y-6">
+                {/* Value bullet points */}
                 <div className="space-y-2 text-sm text-white/80">
                   {[
                     "Most advocates charge by the hour and commonly run $4,000–$5,000+ per year.",
                     "We've been there, done that.",
-                    "We believe advocacy should be accessible for every family.",
-                    "We took that price, chopped it up, and brought in-house financing so clients only pay:",
+                    "We believe advocacy should be accessible, predictable, and transparent for every family.",
+                    "We took that price, chopped it up, and brought flat monthly membership plans:",
                   ].map((point, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -949,19 +997,476 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                     </div>
                   ))}
                 </div>
-                <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg p-3 text-center">
-                  <p className="text-amber-300 font-bold text-lg">$50 per week = only $200 per month</p>
+
+                {/* 1. Student Count Selector */}
+                <div className="bg-[#071422] border border-white/10 rounded-xl p-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-bold text-white uppercase tracking-wider">1. Number of Students to Enroll</p>
+                      <p className="text-[11px] text-white/50">Select how many students will be covered under this advocacy agreement</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 self-start sm:self-auto">
+                      {studentCount} {studentCount === 1 ? "Student" : "Students"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[1, 2, 3, 4].map((count) => (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => {
+                          setStudentCount(count);
+                          triggerSave();
+                        }}
+                        className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                          studentCount === count
+                            ? "bg-amber-500/20 border-amber-400 text-amber-300 shadow-sm shadow-amber-500/10"
+                            : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        {count === 4 ? "4+ Students" : `${count} ${count === 1 ? "Student" : "Students"}`}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-1 text-sm text-white/70">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /><span>No surprises. Ever.</span></div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /><span>Cancel anytime.</span></div>
+
+                {/* 2. Selectable Plans */}
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <p className="text-xs font-bold text-white uppercase tracking-wider">2. Select Advocacy Membership Plan</p>
+                    <p className="text-[11px] text-white/50">Click to select the plan recommended for this client</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Plan A: $55/mo Advocacy Only */}
+                    <div
+                      onClick={() => {
+                        setSelectedPlan("advocacy_55");
+                        triggerSave();
+                      }}
+                      className={`cursor-pointer rounded-xl border p-4 transition-all flex flex-col justify-between space-y-3 relative ${
+                        selectedPlan === "advocacy_55"
+                          ? "bg-amber-500/10 border-amber-400 ring-1 ring-amber-400/50 shadow-lg shadow-amber-500/10"
+                          : "bg-[#071422] border-white/10 hover:border-white/20 text-white/80"
+                      }`}
+                    >
+                      {selectedPlan === "advocacy_55" && (
+                        <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-sm">
+                          <Check className="w-3 h-3" /> Selected Plan
+                        </span>
+                      )}
+                      <div>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-2xl font-bold text-amber-300">
+                            ${55 * studentCount}
+                          </span>
+                          <span className="text-xs text-white/60">/ month</span>
+                          {studentCount > 1 && (
+                            <span className="text-[11px] text-amber-400/70 ml-1">($55/mo × {studentCount})</span>
+                          )}
+                        </div>
+                        <h4 className="text-sm font-bold text-white mt-1">Advocacy Only</h4>
+                        <p className="text-xs text-amber-300/80 font-medium">$55 per month · All fees included · Advocacy only</p>
+                        <p className="text-xs text-white/60 mt-2 leading-relaxed">
+                          Year-round special education IEP advocacy representation, IEP meeting strategy & attendance, document & evaluation review, and direct advocate communications.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-white/5 text-[11px] text-white/50 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" /> Cancel anytime · All fees included
+                      </div>
+                    </div>
+
+                    {/* Plan B: $100/mo State Complaints Included */}
+                    <div
+                      onClick={() => {
+                        setSelectedPlan("complaints_100");
+                        triggerSave();
+                      }}
+                      className={`cursor-pointer rounded-xl border p-4 transition-all flex flex-col justify-between space-y-3 relative ${
+                        selectedPlan === "complaints_100"
+                          ? "bg-amber-500/10 border-amber-400 ring-1 ring-amber-400/50 shadow-lg shadow-amber-500/10"
+                          : "bg-[#071422] border-white/10 hover:border-white/20 text-white/80"
+                      }`}
+                    >
+                      {selectedPlan === "complaints_100" && (
+                        <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-sm">
+                          <Check className="w-3 h-3" /> Selected Plan
+                        </span>
+                      )}
+                      <div>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-2xl font-bold text-amber-300">
+                            ${100 * studentCount}
+                          </span>
+                          <span className="text-xs text-white/60">/ month</span>
+                          {studentCount > 1 && (
+                            <span className="text-[11px] text-amber-400/70 ml-1">($100/mo × {studentCount})</span>
+                          )}
+                        </div>
+                        <h4 className="text-sm font-bold text-white mt-1">Advocacy + State Complaints</h4>
+                        <p className="text-xs text-amber-300/80 font-medium">$100 per month · Includes state complaints at no extra cost</p>
+                        <p className="text-xs text-white/60 mt-2 leading-relaxed">
+                          Complete advocacy representation plus full drafting, legal citation indexing, and filing of Georgia IDEA State Complaints without separate legal drafting fees.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-white/5 text-[11px] text-white/50 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" /> Includes State Complaints at no extra cost ($1,500+ value)
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* 3. The Question & Response */}
+                <div className="bg-[#071422] border border-white/10 rounded-xl p-4 space-y-3">
+                  <div>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider">3. The Question</p>
+                    <p className="text-sm text-amber-300/90 italic mt-1">"Does that sound like something you would be interested in?"</p>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    <p className="text-[11px] font-bold text-white/50 uppercase tracking-wide">Client Response</p>
+                    {[
+                      { value: "Yes", color: "emerald", label: "Yes, I'm interested" },
+                      { value: "Think about it", color: "amber", label: "I need to think about it or discuss with spouse" },
+                      { value: "Not right now", color: "red", label: "Not right now" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => { setClosingResponse(opt.value); triggerSave(); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border transition-all text-sm font-medium
+                          ${closingResponse === opt.value
+                            ? opt.color === "emerald" ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"
+                              : opt.color === "amber" ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                              : "bg-red-500/20 border-red-500/50 text-red-300"
+                            : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"}`}
+                      >
+                        {closingResponse === opt.value ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 4. Next Steps & Dynamic Action Workflow */}
+                {closingResponse === "Yes" && (
+                  <div className="bg-[#071422] border border-emerald-500/40 rounded-xl p-5 space-y-4 shadow-lg shadow-emerald-950/30">
+                    <div className="border-b border-white/10 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                        <p className="text-xs font-bold text-white uppercase tracking-wider">
+                          4. Next Steps & Publish Plan to Client Portal
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-emerald-300/80 mt-0.5">
+                        Client is ready! Publish the selected plan to {parentName}'s portal for purchase processing & agreement execution.
+                      </p>
+                    </div>
+
+                    {/* Publish Plan to Portal Card */}
+                    <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-white">
+                            {selectedPlan === "advocacy_55" ? "Advocacy Only Plan" : "Advocacy + State Complaints Plan"}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-amber-300">
+                            ${(selectedPlan === "advocacy_55" ? 55 : 100) * studentCount}/mo
+                          </span>
+                          <span className="text-[10px] text-white/50">
+                            ({studentCount} {studentCount === 1 ? "Student" : "Students"})
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300">
+                          Target Portal: <span className="text-white font-medium">{parentName}</span>
+                          {studentName && ` (Student: ${studentName})`}
+                        </p>
+                      </div>
+
+                      {planPublishedToPortal ? (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Published to Portal
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setPlanPublishedToPortal(false);
+                              triggerSave();
+                            }}
+                            className="text-[10px] text-slate-400 hover:text-white h-7 px-2"
+                          >
+                            Update
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => {
+                            setPlanPublishedToPortal(true);
+                            triggerSave();
+                            toast.success(`Published ${selectedPlan === "advocacy_55" ? "$55/mo Advocacy Only" : "$100/mo Advocacy + State Complaints"} plan to ${parentName}'s client portal!`);
+                          }}
+                          className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs gap-1.5 shadow-md shadow-amber-500/20"
+                        >
+                          <Send className="w-3.5 h-3.5" /> Publish Plan to {parentName}'s Portal
+                        </Button>
+                      )}
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        saveMutation.mutate({ leadId, status: "Completed" });
+                        toast.success("Lead moved to Won / Active Client!");
+                      }}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 shadow-lg"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-1.5" /> Move to Won / Active Client
+                    </Button>
+                  </div>
+                )}
+
+                {/* Case 2: Think about it / Spouse review */}
+                {closingResponse === "Think about it" && (
+                  <div className="bg-[#071422] border border-amber-500/40 rounded-xl p-5 space-y-4 shadow-lg shadow-amber-950/30">
+                    <div className="border-b border-white/10 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-amber-400" />
+                        <p className="text-xs font-bold text-white uppercase tracking-wider">
+                          4. Portal Plan Visibility & Spouse Review Rules
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-amber-300/80 mt-0.5">
+                        Client is reviewing with spouse. Configure portal display rules and plan visibility for {parentName}.
+                      </p>
+                    </div>
+
+                    {/* Notice & Defined Rules */}
+                    <div className="rounded-lg bg-blue-500/10 border border-blue-500/30 p-3.5 space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+                        <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                        Notice & Defined Rules for Portal Display
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        By default, when <strong className="text-white">{parentName}</strong> logs into the client portal to review options with their spouse, the portal displays both membership options calculated for <strong className="text-amber-300">{studentCount} {studentCount === 1 ? "student" : "students"}</strong> (${55 * studentCount}/mo and ${100 * studentCount}/mo) alongside a comparison breakdown.
+                      </p>
+                    </div>
+
+                    {/* Override Checkbox & Plan Options */}
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-3.5 space-y-3">
+                      <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-white">
+                        <input
+                          type="checkbox"
+                          checked={overridePortalDisplay}
+                          onChange={(e) => {
+                            setOverridePortalDisplay(e.target.checked);
+                            triggerSave();
+                          }}
+                          className="rounded border-slate-600 text-amber-500 focus:ring-amber-400 h-4 w-4 bg-slate-900 cursor-pointer"
+                        />
+                        <span>Override Portal Display Rules for this Client</span>
+                      </label>
+
+                      {overridePortalDisplay ? (
+                        <div className="pt-2 pl-6 border-t border-white/5 space-y-2">
+                          <p className="text-[11px] text-amber-300/80 font-medium">
+                            Select which plan(s) to make visible on {parentName}'s portal:
+                          </p>
+                          <label className="flex items-center gap-2 cursor-pointer text-xs text-white/80 hover:text-white">
+                            <input
+                              type="checkbox"
+                              checked={showAdvocacyOnlyInPortal}
+                              onChange={(e) => {
+                                setShowAdvocacyOnlyInPortal(e.target.checked);
+                                triggerSave();
+                              }}
+                              className="rounded border-slate-600 text-amber-500 h-4 w-4 bg-slate-900 cursor-pointer"
+                            />
+                            <span>Show $55/mo Advocacy Only Plan (${55 * studentCount}/mo)</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer text-xs text-white/80 hover:text-white">
+                            <input
+                              type="checkbox"
+                              checked={showComplaintsInPortal}
+                              onChange={(e) => {
+                                setShowComplaintsInPortal(e.target.checked);
+                                triggerSave();
+                              }}
+                              className="rounded border-slate-600 text-amber-500 h-4 w-4 bg-slate-900 cursor-pointer"
+                            />
+                            <span>Show $100/mo Advocacy + State Complaints Plan (${100 * studentCount}/mo)</span>
+                          </label>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-white/40 pl-6">
+                          Standard rules active: Both plans visible in portal with spouse comparison matrix.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Follow-up Checklist for Spouse Review */}
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-bold text-white/60 uppercase tracking-wide">Spouse Review Follow-Up Actions</p>
+                      {[
+                        { key: "email_summary", label: `Email plan comparison summary to ${parentName} & spouse` },
+                        { key: "portal_link", label: "Send direct parent portal access link" },
+                        { key: "schedule_checkin", label: "Schedule 48-hour follow-up call" },
+                        { key: "pipeline_reminder", label: "Set task reminder on advocate calendar" },
+                      ].map((item) => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => {
+                            setSpouseFollowUpChecklist((prev) =>
+                              prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
+                            );
+                            triggerSave();
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm
+                            ${spouseFollowUpChecklist.includes(item.key)
+                              ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                              : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"}`}
+                        >
+                          {spouseFollowUpChecklist.includes(item.key) ? <CheckCircle2 className="w-4 h-4 text-amber-400" /> : <Circle className="w-4 h-4" />}
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        triggerSave();
+                        toast.success("Saved portal display rules & queued follow-up!");
+                      }}
+                      className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2.5 mt-2"
+                    >
+                      <Save className="w-3.5 h-3.5 mr-1.5" /> Save Portal Rules & Queue Follow-Up
+                    </Button>
+                  </div>
+                )}
+
+                {/* Case 3: Not right now / Lost */}
+                {closingResponse === "Not right now" && (
+                  <div className="bg-[#071422] border border-red-500/40 rounded-xl p-5 space-y-4 shadow-lg shadow-red-950/30">
+                    <div className="border-b border-white/10 pb-3">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-400" />
+                        <p className="text-xs font-bold text-white uppercase tracking-wider">
+                          4. Collect Feedback & Move Client to Lost Position
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-red-300/80 mt-0.5">
+                        Capture feedback on why the client is declining and update lead status.
+                      </p>
+                    </div>
+
+                    {/* Reason for Declining */}
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-bold text-white/60 uppercase tracking-wide">Primary Reason for Declining</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {[
+                          "Budget / Price",
+                          "Timing / Later Date",
+                          "Handling Independently",
+                          "Hired Other Advocate",
+                          "School Resolved Issue",
+                          "Other",
+                        ].map((reason) => (
+                          <button
+                            key={reason}
+                            type="button"
+                            onClick={() => {
+                              setLostReason(reason);
+                              triggerSave();
+                            }}
+                            className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all text-left ${
+                              lostReason === reason
+                                ? "bg-red-500/20 border-red-400 text-red-300 shadow-sm"
+                                : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                            }`}
+                          >
+                            {lostReason === reason ? "✓ " : ""}{reason}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Feedback Notes */}
+                    <div className="space-y-1">
+                      <label className="text-xs text-white/60 font-medium">Feedback Details & Client Objections</label>
+                      <Textarea
+                        value={lostFeedbackNotes}
+                        onChange={(e) => {
+                          setLostFeedbackNotes(e.target.value);
+                          triggerSave();
+                        }}
+                        placeholder="Collect specific feedback on why the family is declining advocacy at this time..."
+                        className="bg-[#0A1628] border-white/10 text-white placeholder:text-white/30 text-xs resize-none"
+                        rows={3}
+                      />
+                    </div>
+
+                    {/* Nurture & Closing Options */}
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-bold text-white/60 uppercase tracking-wide">Follow-Up & Archive Actions</p>
+                      {[
+                        { key: "send_free_guide", label: `Send Free IEP Checklist & Rights Guide to ${parentName}` },
+                        { key: "nurture_list", label: "Keep on Monthly Advocacy Newsletter / Nurture List" },
+                        { key: "six_month_check", label: "Schedule 6-Month Fall/Spring IEP Check-In" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => {
+                            setLostNurtureOptions((prev) =>
+                              prev.includes(opt.key) ? prev.filter((k) => k !== opt.key) : [...prev, opt.key]
+                            );
+                            triggerSave();
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm
+                            ${lostNurtureOptions.includes(opt.key)
+                              ? "bg-red-500/20 border-red-500/40 text-red-300"
+                              : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"}`}
+                        >
+                          {lostNurtureOptions.includes(opt.key) ? <CheckCircle2 className="w-4 h-4 text-red-400" /> : <Circle className="w-4 h-4" />}
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        saveMutation.mutate({ leadId, status: "Lost" });
+                        toast.info("Feedback recorded and lead moved to Lost position.");
+                      }}
+                      className="w-full bg-red-700 hover:bg-red-800 text-white font-semibold text-xs py-2.5 mt-2"
+                    >
+                      <X className="w-4 h-4 mr-1.5" /> Record Feedback & Move to Lost Position
+                    </Button>
+                  </div>
+                )}
+
+                {/* Case 4: No selection yet */}
+                {!closingResponse && (
+                  <div className="bg-[#071422] border border-dashed border-white/15 rounded-xl p-6 text-center space-y-1">
+                    <p className="text-xs font-bold text-white/70">4. Next Steps & Onboarding Workflow</p>
+                    <p className="text-[11px] text-white/40">
+                      Select the client's response in <strong>3. The Question</strong> above to load the appropriate next steps (Publish Plan to Portal, Spouse Review Rules, or Feedback & Lost).
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-1 text-xs text-white/70 pt-1">
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /><span>No surprises. Ever.</span></div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /><span>Cancel anytime with 30 days notice.</span></div>
+                </div>
+
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block">Notes</label>
+                  <label className="text-xs text-white/50 mb-1 block">Pricing & Closing Discussion Notes</label>
                   <Textarea
                     value={pricingNotes}
                     onChange={(e) => { setPricingNotes(e.target.value); triggerSave(); }}
-                    placeholder="Take notes here..."
+                    placeholder="Take notes on client budget preferences, student needs, payment schedule..."
                     className="bg-[#071422] border-white/10 text-white placeholder:text-white/30 text-sm resize-none"
                     rows={3}
                   />
@@ -970,108 +1475,10 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
             )}
           </div>
 
-          {/* Section 6: The Question */}
+          {/* Section 6: Additional Notes */}
           <div className="space-y-2">
-            <SectionHeader number={6} title="The Question" isOpen={openSections[6]} onToggle={() => toggleSection(6)} />
+            <SectionHeader number={6} title="Additional Notes" isOpen={openSections[6]} onToggle={() => toggleSection(6)} />
             {openSections[6] && (
-              <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4 space-y-4">
-                <p className="text-sm text-white/80 italic">"Does that sound like something you would be interested in?"</p>
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-white/50 uppercase tracking-wide">Their Response</p>
-                  {[
-                    { value: "Yes", color: "emerald", label: "Yes, I'm interested" },
-                    { value: "Think about it", color: "amber", label: "I need to think about it" },
-                    { value: "Not right now", color: "red", label: "Not right now" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => { setClosingResponse(opt.value); triggerSave(); }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium
-                        ${closingResponse === opt.value
-                          ? opt.color === "emerald" ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"
-                            : opt.color === "amber" ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
-                            : "bg-red-500/20 border-red-500/50 text-red-300"
-                          : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"}`}
-                    >
-                      {closingResponse === opt.value ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Section 7: Next Steps (If Interested) */}
-          <div className="space-y-2">
-            <SectionHeader number={7} title="Next Steps (If Interested)" isOpen={openSections[7]} onToggle={() => toggleSection(7)} />
-            {openSections[7] && (
-              <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4 space-y-3">
-                <div className="space-y-2">
-                  {NEXT_STEPS_KEYS.map((step) => (
-                    <button
-                      key={step.key}
-                      onClick={() => toggleNextStep(step.key)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm
-                        ${nextStepsCompleted.includes(step.key)
-                          ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                          : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"}`}
-                    >
-                      {nextStepsCompleted.includes(step.key) ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
-                      {step.label}
-                    </button>
-                  ))}
-                </div>
-                <Button
-                  onClick={() => {
-                    saveMutation.mutate({ leadId, status: "Completed" });
-                    toast.success("Lead moved to Won!");
-                  }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-                >
-                  Move to Won / Client
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Section 8: Not Interested / Lost */}
-          <div className="space-y-2">
-            <SectionHeader number={8} title="Not Interested / Lost" isOpen={openSections[8]} onToggle={() => toggleSection(8)} />
-            {openSections[8] && (
-              <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4 space-y-3">
-                <div className="space-y-2">
-                  {LOST_STEPS_KEYS.map((step) => (
-                    <button
-                      key={step.key}
-                      onClick={() => toggleLostStep(step.key)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm
-                        ${lostStepsCompleted.includes(step.key)
-                          ? "bg-red-500/20 border-red-500/40 text-red-300"
-                          : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"}`}
-                    >
-                      {lostStepsCompleted.includes(step.key) ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
-                      {step.label}
-                    </button>
-                  ))}
-                </div>
-                <Button
-                  onClick={() => {
-                    saveMutation.mutate({ leadId, status: "Lost" });
-                    toast.info("Lead marked as Lost.");
-                  }}
-                  className="w-full bg-red-700 hover:bg-red-800 text-white font-semibold"
-                >
-                  Mark as Lost
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Section 9: Additional Notes */}
-          <div className="space-y-2">
-            <SectionHeader number={9} title="Additional Notes" isOpen={openSections[9]} onToggle={() => toggleSection(9)} />
-            {openSections[9] && (
               <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4 space-y-3">
                 <p className="text-xs text-white/40">These notes auto-save to the client profile (advocate-only).</p>
                 <Textarea
@@ -1085,10 +1492,10 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
             )}
           </div>
 
-          {/* Section 10: Private Advocate Notes */}
+          {/* Section 7: Private Advocate Notes */}
           <div className="space-y-2">
-            <SectionHeader number={10} title="Private Advocate Notes" isOpen={openSections[10]} onToggle={() => toggleSection(10)} badge="Advocate Only" />
-            {openSections[10] && (
+            <SectionHeader number={7} title="Private Advocate Notes" isOpen={openSections[7]} onToggle={() => toggleSection(7)} badge="Advocate Only" />
+            {openSections[7] && (
               <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4 space-y-3">
                 <div className="flex items-center gap-2 text-xs text-amber-300/70">
                   <Lock className="w-3.5 h-3.5" />
