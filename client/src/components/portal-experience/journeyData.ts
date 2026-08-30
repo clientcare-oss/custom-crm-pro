@@ -75,24 +75,24 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     id: "stage-04",
     pageId: "PG-027-S04",
     stepNumber: "04",
-    name: "Select Number of Students",
+    name: "Select Support Tier & Package",
     category: "Plan & Checkout",
-    description: "Parent indicates how many students in the household will receive advocacy representation.",
+    description: "Parent selects their desired advocacy representation tier, membership, or standalone state complaint package.",
     status: "published",
     triggerCondition: "Parent clicks 'Choose Advocacy Support' from completed discovery",
-    associatedPortalPage: "Student Selection",
-    associatedRoute: "/portal/student-selection",
+    associatedPortalPage: "Support Tier Selection",
+    associatedRoute: "/portal/support-selection",
     requiredClientActions: [
-      "Select count of students (1 Student, 2 Students, or 3+ Sibling Plan)",
-      "Provide student first name(s) and current grade level(s)"
+      "Select advocacy tier or membership plan",
+      "Choose payment schedule (Pay in Full or 2 Installments)"
     ],
     availableClientActions: [
-      "Read multi-student sibling discount terms",
-      "Save progress and resume later"
+      "Review package features & catalog deliverables",
+      "Save progress and resume checkout later"
     ],
     stateEngineKey: "PLAN_SELECTION",
-    iconName: "Users",
-    lastUpdated: "2026-08-15"
+    iconName: "ShieldCheck",
+    lastUpdated: "2026-08-30"
   },
   {
     id: "stage-05",
