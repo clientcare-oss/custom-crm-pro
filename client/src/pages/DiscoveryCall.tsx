@@ -1000,11 +1000,46 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                   ))}
                 </div>
 
-                {/* 1. Selectable Plans */}
+                {/* 1. Student Count Selection */}
+                <div className="bg-[#071422] border border-white/10 rounded-xl p-4 space-y-3">
+                  <div>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider">1. Number of Students to Enroll</p>
+                    <p className="text-xs text-white/60 mt-0.5">Select how many students in this household will receive advocacy representation.</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {[
+                      { count: 1, label: "1 Student", note: "Standard single plan" },
+                      { count: 2, label: "2 Students", note: "Dual sibling coverage" },
+                      { count: 3, label: "3+ Students", note: "Multi-student family plan" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.count}
+                        type="button"
+                        onClick={() => {
+                          setStudentCount(opt.count);
+                          triggerSave();
+                        }}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          studentCount === opt.count
+                            ? "bg-amber-500/20 border-amber-400 text-white ring-1 ring-amber-400/50"
+                            : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-sm text-white">{opt.label}</span>
+                          {studentCount === opt.count && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                        </div>
+                        <p className="text-[11px] text-white/50 mt-0.5">{opt.note}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Selectable Plans */}
                 <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-white uppercase tracking-wider">1. Select Recommended Advocacy Plan</p>
+                      <p className="text-xs font-bold text-white uppercase tracking-wider">2. Select Recommended Advocacy Plan</p>
                       <a
                         href="/services"
                         target="_blank"
@@ -1042,16 +1077,26 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                           <span className="text-2xl font-bold text-amber-300">
                             ${(() => {
                               const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
-                              return s?.price ? s.price / 100 : 55;
+                              const p = s?.price ? s.price / 100 : 55;
+                              return p * studentCount;
                             })()}
                           </span>
                           <span className="text-xs text-white/60">/ month</span>
+                          {studentCount > 1 && (
+                            <span className="text-[11px] text-amber-400/70 ml-1">
+                              (${(() => {
+                                const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
+                                return s?.price ? s.price / 100 : 55;
+                              })()}/mo × {studentCount})
+                            </span>
+                          )}
                         </div>
                         <h4 className="text-sm font-bold text-white mt-1">Advocacy Only</h4>
                         <p className="text-xs text-amber-300/80 font-medium">
                           ${(() => {
                             const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
-                            return s?.price ? s.price / 100 : 55;
+                            const p = s?.price ? s.price / 100 : 55;
+                            return p * studentCount;
                           })()} per month · Year-round representation
                         </p>
                         <p className="text-xs text-white/60 mt-2 leading-relaxed">
@@ -1085,16 +1130,26 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                           <span className="text-2xl font-bold text-amber-300">
                             ${(() => {
                               const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
-                              return s?.price ? s.price / 100 : 105;
+                              const p = s?.price ? s.price / 100 : 105;
+                              return p * studentCount;
                             })()}
                           </span>
                           <span className="text-xs text-white/60">/ month</span>
+                          {studentCount > 1 && (
+                            <span className="text-[11px] text-amber-400/70 ml-1">
+                              (${(() => {
+                                const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
+                                return s?.price ? s.price / 100 : 105;
+                              })()}/mo × {studentCount})
+                            </span>
+                          )}
                         </div>
                         <h4 className="text-sm font-bold text-white mt-1">Advocacy + State Complaints</h4>
                         <p className="text-xs text-amber-300/80 font-medium">
                           ${(() => {
                             const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
-                            return s?.price ? s.price / 100 : 105;
+                            const p = s?.price ? s.price / 100 : 105;
+                            return p * studentCount;
                           })()} per month · Full drafting included
                         </p>
                         <p className="text-xs text-white/60 mt-2 leading-relaxed">
@@ -1147,10 +1202,10 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                   </div>
                 </div>
 
-                {/* 2. The Question & Response */}
+                {/* 3. The Question & Response */}
                 <div className="bg-[#071422] border border-white/10 rounded-xl p-4 space-y-3">
                   <div>
-                    <p className="text-xs font-bold text-white uppercase tracking-wider">2. The Question</p>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider">3. The Question</p>
                     <p className="text-sm text-amber-300/90 italic mt-1">"Does that sound like something you would be interested in?"</p>
                   </div>
                   <div className="space-y-2 pt-1">
@@ -1178,14 +1233,14 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                   </div>
                 </div>
 
-                {/* 3. Next Steps & Dynamic Action Workflow */}
+                {/* 4. Next Steps & Dynamic Action Workflow */}
                 {closingResponse === "Yes" && (
                   <div className="bg-[#071422] border border-emerald-500/40 rounded-xl p-5 space-y-4 shadow-lg shadow-emerald-950/30">
                     <div className="border-b border-white/10 pb-3">
                       <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-emerald-400" />
                         <p className="text-xs font-bold text-white uppercase tracking-wider">
-                          3. Next Steps & Publish Plan to Client Portal
+                          4. Next Steps & Publish Plan to Client Portal
                         </p>
                       </div>
                       <p className="text-[11px] text-emerald-300/80 mt-0.5">
@@ -1216,10 +1271,15 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                                 const is55 = selectedPlan === "advocacy_55";
                                 const s = (servicesCatalog as any[]).find((x: any) => is55 ? (x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only")) : (x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership"))));
                                 const p = s?.price ? s.price / 100 : (is55 ? 55 : 105);
-                                return p;
+                                return p * studentCount;
                               })()}/mo`
                             )}
                           </span>
+                          {selectedPlan !== "single_complaint" && (
+                            <span className="text-[10px] text-white/50">
+                              ({studentCount} {studentCount === 1 ? "Student" : "Students"})
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-slate-300">
                           Target Portal: <span className="text-white font-medium">{parentName}</span>
@@ -1282,7 +1342,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                       <div className="flex items-center gap-2">
                         <Eye className="w-4 h-4 text-amber-400" />
                         <p className="text-xs font-bold text-white uppercase tracking-wider">
-                          3. Portal Plan Visibility & Spouse Review Rules
+                          4. Portal Plan Visibility & Spouse Review Rules
                         </p>
                       </div>
                       <p className="text-[11px] text-amber-300/80 mt-0.5">
@@ -1297,7 +1357,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                         Notice & Defined Rules for Portal Display
                       </div>
                       <p className="text-xs text-slate-300 leading-relaxed">
-                        By default, when <strong className="text-white">{parentName}</strong> logs into the client portal to review options with their spouse, the portal displays both membership options ($55/mo and $105/mo) alongside a comparison breakdown.
+                        By default, when <strong className="text-white">{parentName}</strong> logs into the client portal to review options with their spouse, the portal displays both membership options calculated for <strong className="text-amber-300">{studentCount} {studentCount === 1 ? "student" : "students"}</strong> (${55 * studentCount}/mo and ${105 * studentCount}/mo) alongside a comparison breakdown.
                       </p>
                     </div>
 
