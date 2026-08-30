@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { trpc } from "@/lib/trpc";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  Loader2
+  Loader2,
+  Scale
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,13 +38,27 @@ export function ChooseSupportExperience({
   const [paymentPlan, setPaymentPlan] = useState<"full" | "installments">("full");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Fetch live prices and definitions from Advocacy Services Catalog (PG-035)
+  const { data: catalogData } = trpc.services.publicCatalog.useQuery();
+  const catalogServices = catalogData?.services || [];
+
+  const getCatalogPrice = (pattern: string, fallback: number) => {
+    const found = catalogServices.find((s: any) => s.name.toLowerCase().includes(pattern.toLowerCase()));
+    return found?.price ? found.price / 100 : fallback;
+  };
+
+  const fullRepPrice = getCatalogPrice("full iep representation", 1850);
+  const reviewPrice = getCatalogPrice("document review", 750);
+  const retainerPrice = getCatalogPrice("annual advocacy retainer", 3200);
+  const complaintPrice = getCatalogPrice("state complaint", 1250);
+
   const tiers = [
     {
       id: "full",
       name: "Full IEP Representation",
       badge: "Most Popular",
-      priceSingle: 1850,
-      priceMulti: 2650,
+      priceSingle: fullRepPrice,
+      priceMulti: Math.round(fullRepPrice * 1.43),
       description: "End-to-end IEP coaching, record analysis, strategy agendas, and live advocate attendance at all school meetings.",
       features: [
         "Complete historical IEP & eval audit",
@@ -56,8 +72,8 @@ export function ChooseSupportExperience({
       id: "review",
       name: "Document Review & Strategy Session",
       badge: "Targeted Help",
-      priceSingle: 750,
-      priceMulti: 1150,
+      priceSingle: reviewPrice,
+      priceMulti: Math.round(reviewPrice * 1.53),
       description: "In-depth review of your child's draft IEP with written amendment recommendations and a 60-min prep call.",
       features: [
         "Comprehensive IEP document audit",
@@ -70,14 +86,28 @@ export function ChooseSupportExperience({
       id: "retainer",
       name: "Annual Advocacy Retainer",
       badge: "Ongoing Partnership",
-      priceSingle: 3200,
-      priceMulti: 4500,
+      priceSingle: retainerPrice,
+      priceMulti: Math.round(retainerPrice * 1.4),
       description: "Year-round advocacy coverage for multiple meetings, manifestation determinations, and quarterly checkups.",
       features: [
         "Unlimited annual IEP & 504 representation",
         "Quarterly progress monitoring audits",
         "Priority emergency meeting scheduling",
         "Permanent Cloudflare R2 vault access"
+      ]
+    },
+    {
+      id: "complaint",
+      name: "Single-Use State Complaint Builder",
+      badge: "Legal Enforcement",
+      priceSingle: complaintPrice,
+      priceMulti: complaintPrice,
+      description: "Formal Georgia IDEA State Complaint drafting, legal citation indexing, evidence exhibits, and agency filing support.",
+      features: [
+        "Complete IDEA / Section 504 citation index",
+        "Systemic violation facts narrative",
+        "Evidence exhibit bundle creation",
+        "Full GaDOE filing submission support"
       ]
     }
   ];

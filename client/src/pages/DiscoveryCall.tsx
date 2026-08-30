@@ -32,6 +32,7 @@ import {
   Loader2, Save, CheckCircle2, Circle, BookOpen, Send,
   PhoneCall, Star, Lock, FileText, Globe, X, Settings, Settings2, Sliders,
   Sparkles, Eye, AlertCircle, Info, ShieldCheck, CheckSquare,
+  Zap, Scale,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
@@ -166,6 +167,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
   const { data: questions, refetch: refetchQuestions } = trpc.discovery.getQuestions.useQuery(undefined, { enabled: !!user });
   const { data: resources, refetch: refetchResources } = trpc.resources.list.useQuery(undefined, { enabled: !!user });
   const { data: contacts } = trpc.contacts.list.useQuery(undefined, { enabled: !!user });
+  const { data: servicesCatalog = [] } = trpc.services.list.useQuery(undefined, { enabled: !!user });
   const { data: preliminaryNote } = trpc.discovery.getPreliminaryNote.useQuery(
     { projectId: leadId },
     { enabled: !!leadId }
@@ -1034,11 +1036,23 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                 {/* 2. Selectable Plans */}
                 <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <p className="text-xs font-bold text-white uppercase tracking-wider">2. Select Advocacy Membership Plan</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-white uppercase tracking-wider">2. Select Recommended Advocacy Plan</p>
+                      <a
+                        href="/services"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-amber-400/80 hover:text-amber-300 underline font-mono flex items-center gap-1"
+                        title="Manage and customize pricing in Advocacy Services Catalog (PG-035)"
+                      >
+                        <Zap className="w-2.5 h-2.5 text-amber-400" />
+                        Synced to Catalog (PG-035)
+                      </a>
+                    </div>
                     <p className="text-[11px] text-white/50">Click to select the plan recommended for this client</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                     {/* Plan A: $55/mo Advocacy Only */}
                     <div
                       onClick={() => {
@@ -1053,23 +1067,37 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                     >
                       {selectedPlan === "advocacy_55" && (
                         <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-sm">
-                          <Check className="w-3 h-3" /> Selected Plan
+                          <Check className="w-3 h-3" /> Selected
                         </span>
                       )}
                       <div>
                         <div className="flex items-baseline gap-1.5">
                           <span className="text-2xl font-bold text-amber-300">
-                            ${55 * studentCount}
+                            ${(() => {
+                              const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
+                              const p = s?.price ? s.price / 100 : 55;
+                              return p * studentCount;
+                            })()}
                           </span>
                           <span className="text-xs text-white/60">/ month</span>
                           {studentCount > 1 && (
-                            <span className="text-[11px] text-amber-400/70 ml-1">($55/mo × {studentCount})</span>
+                            <span className="text-[11px] text-amber-400/70 ml-1">
+                              (${(() => {
+                                const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
+                                return s?.price ? s.price / 100 : 55;
+                              })()}/mo × {studentCount})
+                            </span>
                           )}
                         </div>
                         <h4 className="text-sm font-bold text-white mt-1">Advocacy Only</h4>
-                        <p className="text-xs text-amber-300/80 font-medium">$55 per month · All fees included · Advocacy only</p>
+                        <p className="text-xs text-amber-300/80 font-medium">
+                          ${(() => {
+                            const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
+                            return s?.price ? s.price / 100 : 55;
+                          })()} per month · Year-round representation
+                        </p>
                         <p className="text-xs text-white/60 mt-2 leading-relaxed">
-                          Year-round special education IEP advocacy representation, IEP meeting strategy & attendance, document & evaluation review, and direct advocate communications.
+                          Year-round special education IEP advocacy representation, meeting strategy & attendance, document & eval review.
                         </p>
                       </div>
                       <div className="pt-2 border-t border-white/5 text-[11px] text-white/50 flex items-center gap-1.5">
@@ -1077,7 +1105,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                       </div>
                     </div>
 
-                    {/* Plan B: $100/mo State Complaints Included */}
+                    {/* Plan B: $105/mo State Complaints Included */}
                     <div
                       onClick={() => {
                         setSelectedPlan("complaints_100");
@@ -1091,27 +1119,80 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                     >
                       {selectedPlan === "complaints_100" && (
                         <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-sm">
-                          <Check className="w-3 h-3" /> Selected Plan
+                          <Check className="w-3 h-3" /> Selected
                         </span>
                       )}
                       <div>
                         <div className="flex items-baseline gap-1.5">
                           <span className="text-2xl font-bold text-amber-300">
-                            ${100 * studentCount}
+                            ${(() => {
+                              const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
+                              const p = s?.price ? s.price / 100 : 105;
+                              return p * studentCount;
+                            })()}
                           </span>
                           <span className="text-xs text-white/60">/ month</span>
                           {studentCount > 1 && (
-                            <span className="text-[11px] text-amber-400/70 ml-1">($100/mo × {studentCount})</span>
+                            <span className="text-[11px] text-amber-400/70 ml-1">
+                              (${(() => {
+                                const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
+                                return s?.price ? s.price / 100 : 105;
+                              })()}/mo × {studentCount})
+                            </span>
                           )}
                         </div>
                         <h4 className="text-sm font-bold text-white mt-1">Advocacy + State Complaints</h4>
-                        <p className="text-xs text-amber-300/80 font-medium">$100 per month · Includes state complaints at no extra cost</p>
+                        <p className="text-xs text-amber-300/80 font-medium">
+                          ${(() => {
+                            const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
+                            return s?.price ? s.price / 100 : 105;
+                          })()} per month · Full drafting included
+                        </p>
                         <p className="text-xs text-white/60 mt-2 leading-relaxed">
-                          Complete advocacy representation plus full drafting, legal citation indexing, and filing of Georgia IDEA State Complaints without separate legal drafting fees.
+                          Complete representation plus full drafting, legal citation indexing, and filing of Georgia IDEA State Complaints without separate legal drafting fees.
                         </p>
                       </div>
                       <div className="pt-2 border-t border-white/5 text-[11px] text-white/50 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" /> Includes State Complaints at no extra cost ($1,500+ value)
+                      </div>
+                    </div>
+
+                    {/* Plan C: Single-Use State Complaint */}
+                    <div
+                      onClick={() => {
+                        setSelectedPlan("single_complaint");
+                        triggerSave();
+                      }}
+                      className={`cursor-pointer rounded-xl border p-4 transition-all flex flex-col justify-between space-y-3 relative ${
+                        selectedPlan === "single_complaint"
+                          ? "bg-purple-500/15 border-purple-400 ring-1 ring-purple-400/50 shadow-lg shadow-purple-500/10"
+                          : "bg-[#071422] border-white/10 hover:border-white/20 text-white/80"
+                      }`}
+                    >
+                      {selectedPlan === "single_complaint" && (
+                        <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-400 text-slate-950 shadow-sm">
+                          <Check className="w-3 h-3" /> Selected
+                        </span>
+                      )}
+                      <div>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-2xl font-bold text-purple-300">
+                            ${(() => {
+                              const s = (servicesCatalog as any[]).find((x: any) => x.name.toLowerCase().includes("single") || (x.name.toLowerCase().includes("complaint") && !x.name.toLowerCase().includes("membership")));
+                              const p = s?.price ? s.price / 100 : 1250;
+                              return p.toLocaleString();
+                            })()}
+                          </span>
+                          <span className="text-xs text-white/60">flat rate</span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white mt-1">Single-Use State Complaint</h4>
+                        <p className="text-xs text-purple-300/80 font-medium">One-time standalone case builder & filing</p>
+                        <p className="text-xs text-white/60 mt-2 leading-relaxed">
+                          Standalone Georgia IDEA State Complaint filing, systemic violation narrative, statutory legal citations, evidence exhibits, and formal agency submission.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-white/5 text-[11px] text-white/50 flex items-center gap-1.5">
+                        <Scale className="w-3 h-3 text-purple-400 flex-shrink-0" /> Full GaDOE filing support included
                       </div>
                     </div>
                   </div>
@@ -1168,14 +1249,33 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-bold text-white">
-                            {selectedPlan === "advocacy_55" ? "Advocacy Only Plan" : "Advocacy + State Complaints Plan"}
+                            {selectedPlan === "advocacy_55"
+                              ? "Advocacy Only Plan"
+                              : selectedPlan === "complaints_100"
+                              ? "Advocacy + State Complaints Plan"
+                              : "Single-Use State Complaint"}
                           </span>
                           <span className="text-xs font-mono font-bold text-amber-300">
-                            ${(selectedPlan === "advocacy_55" ? 55 : 100) * studentCount}/mo
+                            {selectedPlan === "single_complaint" ? (
+                              `$${(() => {
+                                const s = (servicesCatalog as any[]).find((x: any) => x.name.toLowerCase().includes("single") || (x.name.toLowerCase().includes("complaint") && !x.name.toLowerCase().includes("membership")));
+                                const p = s?.price ? s.price / 100 : 1250;
+                                return p.toLocaleString();
+                              })()} flat`
+                            ) : (
+                              `$${(() => {
+                                const is55 = selectedPlan === "advocacy_55";
+                                const s = (servicesCatalog as any[]).find((x: any) => is55 ? (x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only")) : (x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership"))));
+                                const p = s?.price ? s.price / 100 : (is55 ? 55 : 105);
+                                return p * studentCount;
+                              })()}/mo`
+                            )}
                           </span>
-                          <span className="text-[10px] text-white/50">
-                            ({studentCount} {studentCount === 1 ? "Student" : "Students"})
-                          </span>
+                          {selectedPlan !== "single_complaint" && (
+                            <span className="text-[10px] text-white/50">
+                              ({studentCount} {studentCount === 1 ? "Student" : "Students"})
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-slate-300">
                           Target Portal: <span className="text-white font-medium">{parentName}</span>
@@ -1205,7 +1305,12 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                           onClick={() => {
                             setPlanPublishedToPortal(true);
                             triggerSave();
-                            toast.success(`Published ${selectedPlan === "advocacy_55" ? "$55/mo Advocacy Only" : "$100/mo Advocacy + State Complaints"} plan to ${parentName}'s client portal!`);
+                            const planLabel = selectedPlan === "advocacy_55"
+                              ? "$55/mo Advocacy Only"
+                              : selectedPlan === "complaints_100"
+                              ? "$105/mo Advocacy + State Complaints"
+                              : "Single-Use State Complaint";
+                            toast.success(`Published ${planLabel} plan to ${parentName}'s client portal!`);
                           }}
                           className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs gap-1.5 shadow-md shadow-amber-500/20"
                         >
