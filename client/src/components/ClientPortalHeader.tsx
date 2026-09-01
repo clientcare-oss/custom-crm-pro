@@ -272,8 +272,8 @@ export function ClientPortalHeader({
             onClick={onToggleTheme}
             className={`relative w-8 h-8 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md ${
               isLight 
-                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400" 
-                : "border-[#18365D] bg-[#07152B] text-white hover:border-[#F5B544]/60 hover:bg-[#0C1F3D]"
+                ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500" 
+                : "border-[#F5B544]/80 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
             }`}
             title={isLight ? "Switch to dark mode" : "Switch to light mode"}
           >
