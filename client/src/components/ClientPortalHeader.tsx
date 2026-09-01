@@ -4,6 +4,7 @@ import { Link } from "wouter";
 
 interface ClientPortalHeaderProps {
   displayName: string;
+  studentName?: string;
   parentContactId?: number | null;
   theme: string;
   onToggleTheme: () => void;
@@ -14,6 +15,7 @@ interface ClientPortalHeaderProps {
 
 export function ClientPortalHeader({
   displayName,
+  studentName,
   parentContactId,
   theme,
   onToggleTheme,
@@ -34,7 +36,7 @@ export function ClientPortalHeader({
 
   return (
     <div
-      className={`relative shrink-0 overflow-hidden border-b transition-colors duration-[3000ms] ease-in-out ${
+      className={`relative shrink-0 overflow-hidden border-b transition-colors duration-[300ms] ease-in-out ${
         isLight ? "border-slate-200" : "border-white/10"
       }`}
       style={{ minHeight: "70px" }}
@@ -49,7 +51,7 @@ export function ClientPortalHeader({
       />
       {/* Light background panel */}
       <div 
-        className="absolute inset-0 transition-opacity duration-[3000ms] ease-in-out pointer-events-none"
+        className="absolute inset-0 transition-opacity duration-[300ms] ease-in-out pointer-events-none"
         style={{
           background: `linear-gradient(to right, #f8fafc 0%, #e2e8f0 40%, rgba(226,232,240,0.7) 70%, rgba(226,232,240,0.4) 100%), url('/compass-bg.jpg') center/cover no-repeat`,
           opacity: isLight ? 1 : 0,
@@ -57,15 +59,15 @@ export function ClientPortalHeader({
       />
 
       <div className="relative z-10 flex items-center justify-between px-6 py-3">
-        {/* Left: Title + Welcome */}
+        {/* Left: Student Name (Top) + Welcome Parent (Below) */}
         <div>
           <h1 
-            className={`text-lg font-bold tracking-wide transition-colors duration-[3000ms] ease-in-out ${isLight ? "text-slate-800" : "text-white"}`}
+            className={`text-lg font-bold tracking-wide transition-colors duration-[300ms] ease-in-out ${isLight ? "text-slate-800" : "text-white"}`}
             style={{ fontFamily: "'Libre Baskerville', serif" }}
           >
-            Waypoint Advocates
+            {studentName || "Student Workspace"}
           </h1>
-          <p className={`text-xs font-medium mt-0.5 transition-colors duration-[3000ms] ease-in-out ${isLight ? "text-amber-800" : "text-amber-400"}`}>
+          <p className={`text-xs font-medium mt-0.5 transition-colors duration-[300ms] ease-in-out ${isLight ? "text-amber-800" : "text-amber-400"}`}>
             Welcome,{" "}
             {parentContactId ? (
               <Link href={`/contacts/${parentContactId}`} className="font-semibold underline hover:text-amber-500 transition-colors">

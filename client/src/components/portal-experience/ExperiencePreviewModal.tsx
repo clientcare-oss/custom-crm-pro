@@ -337,11 +337,11 @@ export function ExperiencePreviewModal({
                     <Compass className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white leading-tight">
+                    <p className="text-sm font-bold text-white leading-tight font-serif">
                       Liam Jenkins · 4th Grade
                     </p>
-                    <p className="text-[10px] text-white/40">
-                      Fulton Elementary · Special Education IEP
+                    <p className="text-xs font-medium text-amber-400/90 mt-0.5">
+                      Welcome, {displayName || "Jackson T."}
                     </p>
                   </div>
                 </div>

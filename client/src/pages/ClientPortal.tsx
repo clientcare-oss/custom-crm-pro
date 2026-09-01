@@ -2065,6 +2065,7 @@ export default function ClientPortal() {
         {/* Modular Header */}
         <ClientPortalHeader
           displayName={displayName}
+          studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : undefined}
           parentContactId={parentContactId}
           theme={theme}
           onToggleTheme={toggleTheme}
