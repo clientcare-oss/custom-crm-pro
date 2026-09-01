@@ -129,8 +129,11 @@ export function DiscoveryCallExperience({
           </p>
         </div>
 
-        {/* ── Card 1: Your Next Meeting Banner (Text Across Top, Sleek Buttons Across Bottom) ── */}
-        <div className="w-full lg:max-w-[56%] rounded-2xl border border-[#173052] bg-[#07152B]/85 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-[#1E3E6B] space-y-3.5">
+        {/* ── Card 1: Your Next Meeting Banner (Matching Border & Emerald Top Accent) ── */}
+        <div className="w-full lg:max-w-[56%] rounded-2xl border border-[#18365D] bg-gradient-to-b from-[#0A1F3D]/90 via-[#07162C]/90 to-[#051122]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-[#285590] space-y-3.5 relative overflow-hidden group">
+          {/* Top Emerald Accent Line */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
+
           {/* Top Section: Calendar Badge & Full-width text running across the box */}
           <div className="flex items-start gap-3.5">
             {/* Circular Golden Calendar Badge aligned with top of text */}
@@ -188,64 +191,114 @@ export function DiscoveryCallExperience({
           </div>
         </div>
 
-        {/* ── Middle Row: Two Action Cards ──────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* ── Middle Row: Two Action Cards (Compacted & Streamlined) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {/* Card A: Schedule Time With My Advocate */}
-          <div className="rounded-2xl border border-[#173052] bg-[#07152B]/85 backdrop-blur-md shadow-xl p-5 sm:p-6 flex flex-col justify-between hover:border-[#21477A] transition-all">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full border border-blue-400/30 bg-[#0E284E] text-blue-300 flex items-center justify-center shrink-0 shadow-inner">
-                <User className="h-5 w-5 stroke-[1.8]" />
+          <div className="rounded-2xl border border-[#18365D] bg-gradient-to-b from-[#0A1F3D]/90 via-[#07162C]/90 to-[#051122]/95 backdrop-blur-md shadow-lg p-3.5 sm:p-4 flex flex-col justify-between hover:border-[#285590] transition-all relative overflow-hidden group space-y-2.5">
+            {/* Top Accent Line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent" />
+
+            <div className="space-y-2">
+              {/* Header: Icon & Category Tag */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full border border-[#F5B544]/30 bg-[#0C1F3D] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
+                    <User className="h-4 w-4 stroke-[1.8]" />
+                  </div>
+                  <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                    Schedule Time With My Advocate
+                  </h4>
+                </div>
+                <span className="text-[9px] font-extrabold tracking-wider text-[#F5B544] uppercase bg-[#F5B544]/10 border border-[#F5B544]/20 px-2 py-0.5 rounded-full shrink-0">
+                  YOU & ADVOCATE ONLY
+                </span>
               </div>
-              <div className="space-y-1">
-                <h4 className="text-base sm:text-lg font-bold text-white leading-tight">
-                  Schedule Time
-                  <br />
-                  With My Advocate
-                </h4>
-                <p className="text-xs text-blue-200/70 pt-1 leading-relaxed">
-                  Need to ask questions, prepare for a meeting, or get case support? I'm here to help.
-                </p>
+
+              {/* Description */}
+              <p className="text-[11px] sm:text-xs text-blue-200/70 leading-relaxed pl-0.5">
+                Need to ask questions or prep for a meeting? Book dedicated 1-on-1 strategy time with Byron.
+              </p>
+
+              {/* Feature Highlight Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-md">
+                  <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Strategy Calls
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-md">
+                  <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Case Prep
+                </span>
               </div>
             </div>
 
-            <div className="flex justify-end pt-4">
+            {/* Compact Footer */}
+            <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-blue-200/60 flex items-center gap-1">
+                <Clock className="h-3 w-3 text-[#F5B544]" />
+                Flexible Scheduling
+              </span>
+
               <Button
-                variant="outline"
                 size="sm"
                 onClick={onOpenScheduler}
-                className="border-[#F5B544]/40 hover:border-[#F5B544] hover:bg-[#F5B544]/10 text-[#F5B544] text-xs font-semibold px-4 py-2 h-auto rounded-lg transition-all flex items-center gap-1"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3 py-1 h-7 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
               >
                 <span>Choose a Time</span>
-                <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
+                <ChevronRight className="h-3 w-3 stroke-[2.5]" />
               </Button>
             </div>
           </div>
 
           {/* Card B: Add an IEP / 504 Meeting */}
-          <div className="rounded-2xl border border-[#173052] bg-[#07152B]/85 backdrop-blur-md shadow-xl p-5 sm:p-6 flex flex-col justify-between hover:border-[#21477A] transition-all">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full border border-blue-400/30 bg-[#0E284E] text-blue-300 flex items-center justify-center shrink-0 shadow-inner">
-                <CalendarPlus className="h-5 w-5 stroke-[1.8]" />
+          <div className="rounded-2xl border border-[#18365D] bg-gradient-to-b from-[#0A1F3D]/90 via-[#07162C]/90 to-[#051122]/95 backdrop-blur-md shadow-lg p-3.5 sm:p-4 flex flex-col justify-between hover:border-[#285590] transition-all relative overflow-hidden group space-y-2.5">
+            {/* Top Accent Line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
+
+            <div className="space-y-2">
+              {/* Header: Icon & Category Tag */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full border border-blue-400/30 bg-[#0E284E] text-blue-300 flex items-center justify-center shrink-0 shadow-inner">
+                    <CalendarPlus className="h-4 w-4 stroke-[1.8]" />
+                  </div>
+                  <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                    Add an IEP / 504 Meeting
+                  </h4>
+                </div>
+                <span className="text-[9px] font-extrabold tracking-wider text-blue-300 uppercase bg-blue-400/10 border border-blue-400/20 px-2 py-0.5 rounded-full shrink-0">
+                  SCHOOL & ADVOCATE
+                </span>
               </div>
-              <div className="space-y-1">
-                <h4 className="text-base sm:text-lg font-bold text-white leading-tight">
-                  Add an IEP / 504 Meeting
-                </h4>
-                <p className="text-xs text-blue-200/70 pt-1 leading-relaxed">
-                  Already have a meeting date from your school? Add it so your advocate can attend.
-                </p>
+
+              {/* Description */}
+              <p className="text-[11px] sm:text-xs text-blue-200/70 leading-relaxed pl-0.5">
+                Have a date from your school? Add it so your advocate can review records and attend.
+              </p>
+
+              {/* Feature Highlight Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-md">
+                  <span className="text-blue-400 font-bold text-[10px]">✓</span> Annual IEPs
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2.5 py-0.5 rounded-md">
+                  <span className="text-blue-400 font-bold text-[10px]">✓</span> 504 Conferences
+                </span>
               </div>
             </div>
 
-            <div className="flex justify-end pt-4">
+            {/* Compact Footer */}
+            <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-blue-200/60 flex items-center gap-1">
+                <Shield className="h-3 w-3 text-blue-400" />
+                Advocate Representation
+              </span>
+
               <Button
-                variant="outline"
                 size="sm"
                 onClick={() => setAddMeetingOpen(true)}
-                className="border-[#F5B544]/40 hover:border-[#F5B544] hover:bg-[#F5B544]/10 text-[#F5B544] text-xs font-semibold px-4 py-2 h-auto rounded-lg transition-all flex items-center gap-1"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3 py-1 h-7 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
               >
                 <span>Add School Meeting</span>
-                <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
+                <ChevronRight className="h-3 w-3 stroke-[2.5]" />
               </Button>
             </div>
           </div>
