@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from "sonner";
 import { 
   Calendar, 
   Clock, 
@@ -34,6 +35,7 @@ interface DiscoveryCallExperienceProps {
   upcomingAppointment?: any;
   onNavigateTab?: (tabId: string) => void;
   onOpenScheduler?: () => void;
+  onUpdatePhone?: (newPhone: string) => void;
 }
 
 // 8-Point Waypoint Compass Rose SVG Emblem
@@ -69,8 +71,12 @@ export function DiscoveryCallExperience({
   upcomingAppointment,
   onNavigateTab = () => {},
   onOpenScheduler = () => {},
+  onUpdatePhone,
 }: DiscoveryCallExperienceProps) {
-  const [meetingDetailsOpen, setMeetingDetailsOpen] = useState(false);
+  const initialPhone = phoneNumber || upcomingAppointment?.clientPhone || upcomingAppointment?.attendeePhone || upcomingAppointment?.phone || "(404) 555-0198";
+  const [currentPhone, setCurrentPhone] = useState(initialPhone);
+  const [phoneEditInput, setPhoneEditInput] = useState(initialPhone);
+  const [phoneUpdateOpen, setPhoneUpdateOpen] = useState(false);
   const [addMeetingOpen, setAddMeetingOpen] = useState(false);
 
   const apptDate = upcomingAppointment?.startTime 
@@ -81,7 +87,6 @@ export function DiscoveryCallExperience({
     ? `${new Date(upcomingAppointment.startTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} (EST)`
     : "10:00 AM (EST)";
 
-  const clientPhone = phoneNumber || upcomingAppointment?.clientPhone || upcomingAppointment?.attendeePhone || upcomingAppointment?.phone || "(404) 555-0198";
   const meetLink = upcomingAppointment?.location || "https://meet.google.com/waypoint-discovery";
 
   return (
@@ -151,7 +156,7 @@ export function DiscoveryCallExperience({
                 </span>
                 <span className="flex items-center gap-1.5 font-medium text-emerald-300">
                   <Phone className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  Waypoint will call you @ {clientPhone}
+                  Waypoint will call you @ {currentPhone}
                 </span>
               </div>
             </div>
@@ -161,10 +166,13 @@ export function DiscoveryCallExperience({
           <div className="flex items-center gap-2 pt-2 border-t border-white/5">
             <Button
               size="sm"
-              onClick={() => setMeetingDetailsOpen(true)}
+              onClick={() => {
+                setPhoneEditInput(currentPhone);
+                setPhoneUpdateOpen(true);
+              }}
               className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
             >
-              <span>View Meeting Details</span>
+              <span>Update Phone Number</span>
               <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
             </Button>
 
@@ -395,71 +403,70 @@ export function DiscoveryCallExperience({
 
       </div>
 
-      {/* ── Dialog: View Meeting Details Modal ─────────────────────────────── */}
-      <Dialog open={meetingDetailsOpen} onOpenChange={setMeetingDetailsOpen}>
-        <DialogContent className="bg-[#07152B] border-[#173052] text-white max-w-md">
+      {/* ── Dialog: Update Phone Number Modal ─────────────────────────────── */}
+      <Dialog open={phoneUpdateOpen} onOpenChange={setPhoneUpdateOpen}>
+        <DialogContent className="bg-[#07152B] border-[#173052] text-white max-w-md shadow-2xl">
           <DialogHeader className="border-b border-white/10 pb-3">
             <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
-              <CalendarDays className="h-5 w-5 text-[#F5B544]" />
-              Discovery Call Details
+              <Phone className="h-5 w-5 text-[#F5B544]" />
+              Update Your Phone Number
             </DialogTitle>
             <DialogDescription className="text-xs text-blue-200/70">
-              Confirmed 30-minute strategic consultation with Byron Honea.
+              Byron will call this number directly for your scheduled Discovery Call.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 pt-2 text-xs">
-            <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3.5 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-white/50 font-semibold">Date</span>
-                <span className="text-white font-bold">{apptDate}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/50 font-semibold">Time</span>
-                <span className="text-white font-bold">{apptTime}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/50 font-semibold">Advocate</span>
-                <span className="text-white font-bold">Byron Honea · Master IEP Coach®</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/50 font-semibold">Format</span>
-                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                  <Phone className="h-3.5 w-3.5" /> Outbound Phone Call
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/50 font-semibold">Phone Number</span>
-                <span className="text-white font-bold">{clientPhone}</span>
-              </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!phoneEditInput.trim()) {
+                toast.error("Please enter a valid phone number");
+                return;
+              }
+              const cleanPhone = phoneEditInput.trim();
+              setCurrentPhone(cleanPhone);
+              onUpdatePhone?.(cleanPhone);
+              setPhoneUpdateOpen(false);
+              toast.success(`Phone number updated to ${cleanPhone}`);
+            }}
+            className="space-y-4 pt-2 text-xs"
+          >
+            <div>
+              <label className="text-white/80 font-semibold block mb-1.5">
+                Primary Contact Phone Number
+              </label>
+              <input
+                type="tel"
+                required
+                value={phoneEditInput}
+                onChange={(e) => setPhoneEditInput(e.target.value)}
+                placeholder="(404) 555-0198"
+                className="w-full bg-[#040D1A] border border-[#173052] focus:border-[#F5B544] rounded-lg p-2.5 text-sm text-white outline-none transition-colors"
+              />
+              <p className="text-[11px] text-blue-200/60 mt-1.5 leading-relaxed">
+                Byron will call you directly at this number on <strong className="text-white">{apptDate}</strong> at <strong className="text-white">{apptTime}</strong>.
+              </p>
             </div>
 
-            <p className="text-blue-200/70 leading-relaxed">
-              Byron will call you directly at <strong className="text-white">{clientPhone}</strong> at the scheduled time. You will also receive an automated SMS reminder 2 hours prior to the call.
-            </p>
-
-            <div className="flex gap-2 justify-end pt-2 border-t border-white/10">
+            <div className="flex gap-2 justify-end pt-3 border-t border-white/10">
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setMeetingDetailsOpen(false)}
+                onClick={() => setPhoneUpdateOpen(false)}
                 className="text-xs border-white/20 text-white hover:bg-white/10"
               >
-                Close
+                Cancel
               </Button>
               <Button
+                type="submit"
                 size="sm"
-                onClick={() => {
-                  setMeetingDetailsOpen(false);
-                  onOpenScheduler();
-                }}
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs gap-1.5"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs shadow-md"
               >
-                <Calendar className="h-3.5 w-3.5" />
-                Reschedule Call
+                Save Phone Number
               </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 

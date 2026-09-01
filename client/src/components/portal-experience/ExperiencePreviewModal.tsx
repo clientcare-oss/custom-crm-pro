@@ -363,7 +363,7 @@ export function ExperiencePreviewModal({
               </div>
 
               {/* Viewport Content Area */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[#040C16] relative pb-28">
+              <div className={`flex-1 overflow-y-auto bg-[#040C16] relative pb-28 ${["01", "02"].includes(currentStage.stepNumber) && activeTab !== "explore-portal" ? "p-0" : "p-4 md:p-6 lg:p-8"}`}>
                 
                 {/* Non-Blocking Tour Contextual Banner */}
                 {showDiscoveryBanner && currentTourModule && (
