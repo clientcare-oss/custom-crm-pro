@@ -4,13 +4,166 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import VoiceInput from "@/components/VoiceInput";
 import { useTerminology, ICON_OPTIONS, type ProjectIconKey } from "@/contexts/TerminologyContext";
-import { CheckCircle, Settings2, GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers, Phone, type LucideIcon } from "lucide-react";
+import { 
+  CheckCircle, 
+  Settings2, 
+  GraduationCap, 
+  Briefcase, 
+  FolderOpen, 
+  BookOpen, 
+  Users, 
+  Star, 
+  Heart, 
+  Target, 
+  Compass, 
+  ClipboardList, 
+  FileText, 
+  Layers, 
+  Phone, 
+  Palette, 
+  Copy, 
+  Check, 
+  Sun, 
+  Moon, 
+  Sparkles,
+  type LucideIcon 
+} from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import PageIdBadge from "@/components/PageIdBadge";
 
 const ICON_COMPONENT_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers,
 };
+
+interface ColorSwatch {
+  name: string;
+  hex: string;
+  role: string;
+  category: "portal" | "admin" | "accent";
+  textColor?: string;
+  borderColor?: string;
+}
+
+const PROGRAM_COLORS: ColorSwatch[] = [
+  // Portal & Midnight Navy System
+  {
+    name: "Midnight Ocean (Portal BG)",
+    hex: "#040D1A",
+    role: "Primary page backdrop for the Client Portal & Onboarding Stages (PG-023, PG-027)",
+    category: "portal",
+    textColor: "#FFFFFF",
+    borderColor: "#18365D",
+  },
+  {
+    name: "Deep Navy (Portal Viewport)",
+    hex: "#040C16",
+    role: "Inner scrollable viewport canvas and stage simulator background",
+    category: "portal",
+    textColor: "#FFFFFF",
+    borderColor: "#18365D",
+  },
+  {
+    name: "Navy Glass Card (Surfaces)",
+    hex: "#07152B",
+    role: "Main interactive cards, meeting modules, and feature blocks",
+    category: "portal",
+    textColor: "#FFFFFF",
+    borderColor: "#18365D",
+  },
+  {
+    name: "Dark Navy Elevate",
+    hex: "#0A1F3D",
+    role: "Elevated card gradients, headers, and circular icon badge backgrounds",
+    category: "portal",
+    textColor: "#FFFFFF",
+    borderColor: "#285590",
+  },
+  {
+    name: "Slate Navy Border (Default)",
+    hex: "#18365D",
+    role: "Card borders, section dividers, and structural stroke outlines",
+    category: "portal",
+    textColor: "#FFFFFF",
+    borderColor: "#285590",
+  },
+  {
+    name: "Luminous Navy Border (Hover)",
+    hex: "#285590",
+    role: "Card hover border glow and active input focus rings",
+    category: "portal",
+    textColor: "#FFFFFF",
+    borderColor: "#38BDF8",
+  },
+
+  // Brand & Semantic Accent Colors
+  {
+    name: "Golden Beacon (Brand Gold)",
+    hex: "#F5B544",
+    role: "Primary CTA buttons, lighthouse beacon glows, compass stars, and highlights",
+    category: "accent",
+    textColor: "#07152B",
+    borderColor: "#E5A534",
+  },
+  {
+    name: "Emerald Glow (Status / Success)",
+    hex: "#10B981",
+    role: "Confirmed meetings, phone consultation badges, active tags, and success states",
+    category: "accent",
+    textColor: "#FFFFFF",
+    borderColor: "#059669",
+  },
+  {
+    name: "Cyan Sky (District / Pathway)",
+    hex: "#38BDF8",
+    role: "School district badges, pathway compass guide, and subtle wave lines",
+    category: "accent",
+    textColor: "#07152B",
+    borderColor: "#0284C7",
+  },
+  {
+    name: "Royal Purple (Document Vault)",
+    hex: "#A855F7",
+    role: "Document vault folders, IEP records, and smart file badges",
+    category: "accent",
+    textColor: "#FFFFFF",
+    borderColor: "#7E22CE",
+  },
+
+  // CRM Admin & Dashboard System Colors
+  {
+    name: "Admin Dark Sidebar",
+    hex: "#0B132B",
+    role: "Advocate CRM main navigation sidebar and dark header bar",
+    category: "admin",
+    textColor: "#FFFFFF",
+    borderColor: "#1C2541",
+  },
+  {
+    name: "Admin Light Canvas",
+    hex: "#F8FAFC",
+    role: "CRM admin pages background (Slate 50 light mode)",
+    category: "admin",
+    textColor: "#0F172A",
+    borderColor: "#E2E8F0",
+  },
+  {
+    name: "Admin Light Card",
+    hex: "#FFFFFF",
+    role: "CRM admin data cards, tables, and dialog surfaces (White)",
+    category: "admin",
+    textColor: "#0F172A",
+    borderColor: "#E2E8F0",
+  },
+  {
+    name: "Admin Slate Border",
+    hex: "#E2E8F0",
+    role: "Light mode cards, table borders, and divider rules (Slate 200)",
+    category: "admin",
+    textColor: "#0F172A",
+    borderColor: "#CBD5E1",
+  },
+];
 
 export default function Settings() {
   const { projectLabel, setProjectLabel, presetOptions, projectIconKey, setProjectIconKey } = useTerminology();
@@ -20,6 +173,15 @@ export default function Settings() {
   const [selected, setSelected] = useState(
     presetOptions.some((o) => o.value === projectLabel) ? projectLabel : "__custom__"
   );
+  const [colorFilter, setColorFilter] = useState<"all" | "portal" | "accent" | "admin">("all");
+  const [copiedHex, setCopiedHex] = useState<string | null>(null);
+
+  const copyToClipboard = (hex: string, name: string) => {
+    navigator.clipboard.writeText(hex);
+    setCopiedHex(hex);
+    toast.success(`Copied ${hex} (${name}) to clipboard`);
+    setTimeout(() => setCopiedHex(null), 2000);
+  };
 
   // Business phone state
   const [phoneValue, setPhoneValue] = useState("");
@@ -115,20 +277,175 @@ export default function Settings() {
     setPhoneMutation.mutate({ phone: trimmed });
   };
 
+  const filteredColors = colorFilter === "all" 
+    ? PROGRAM_COLORS 
+    : PROGRAM_COLORS.filter(c => c.category === colorFilter);
+
   return (
-    <div className="space-y-8 p-8 max-w-2xl">
-      {/* Header */}
+    <div className="space-y-8 p-6 md:p-8 max-w-4xl">
+      {/* Header with PG-024 Badge */}
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
-            <Settings2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
+              <Settings2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings & Practice Profile</h1>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <PageIdBadge id="PG-024" name="Settings" />
         </div>
-        <p className="text-muted-foreground">
-          Customize how the CRM works for your business.
+        <p className="text-muted-foreground text-sm">
+          Customize terminology, branding, practice contact information, and view program color palettes.
         </p>
       </div>
+
+      {/* ── NEW: Program Background & Theme Colors Section ────────────────── */}
+      <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
+                <Palette className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Program Background & Theme Colors</CardTitle>
+                <CardDescription>
+                  Visual palette and hex color codes used across the Client Portal, Advocate Workspace, and CRM.
+                </CardDescription>
+              </div>
+            </div>
+
+            {/* Category Filter Tabs */}
+            <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-lg border border-border text-xs self-start sm:self-auto">
+              <button
+                onClick={() => setColorFilter("all")}
+                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "all" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                All ({PROGRAM_COLORS.length})
+              </button>
+              <button
+                onClick={() => setColorFilter("portal")}
+                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "portal" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Portal Navy
+              </button>
+              <button
+                onClick={() => setColorFilter("accent")}
+                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "accent" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Accents
+              </button>
+              <button
+                onClick={() => setColorFilter("admin")}
+                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "admin" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                CRM Admin
+              </button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {/* Swatches Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5">
+            {filteredColors.map((swatch) => {
+              const isCopied = copiedHex === swatch.hex;
+              return (
+                <div
+                  key={swatch.hex + swatch.name}
+                  onClick={() => copyToClipboard(swatch.hex, swatch.name)}
+                  className="group rounded-xl border border-border/80 bg-card hover:border-primary/50 p-3.5 flex items-start gap-3.5 cursor-pointer transition-all hover:shadow-md relative"
+                >
+                  {/* Visual Color Block */}
+                  <div
+                    className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center shadow-inner relative overflow-hidden transition-transform group-hover:scale-105"
+                    style={{ 
+                      backgroundColor: swatch.hex,
+                      border: `1px solid ${swatch.borderColor || "rgba(255,255,255,0.15)"}` 
+                    }}
+                  >
+                    <span 
+                      className="text-[10px] font-mono font-bold tracking-tight opacity-90"
+                      style={{ color: swatch.textColor || "#FFFFFF" }}
+                    >
+                      {swatch.hex}
+                    </span>
+                  </div>
+
+                  {/* Swatch Details */}
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <h4 className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                        {swatch.name}
+                      </h4>
+                      <button
+                        title="Copy Hex Code"
+                        className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted transition-colors shrink-0"
+                      >
+                        {isCopied ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {swatch.role}
+                    </p>
+
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <span className="font-mono text-[10px] text-primary font-semibold bg-primary/10 px-1.5 py-0.5 rounded">
+                        {swatch.hex}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">Click to copy</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Live Mini Preview Box */}
+          <div className="rounded-xl border border-[#18365D] bg-[#040D1A] p-4 text-white space-y-3 relative overflow-hidden shadow-inner">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
+                <Sparkles className="h-3.5 w-3.5 text-[#F5B544]" />
+                Live Program Contrast Preview (Midnight Navy Theme)
+              </div>
+              <span className="text-[10px] font-mono text-white/50">bg: #040D1A</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {/* Sample Card Surface */}
+              <div className="rounded-xl border border-[#18365D] bg-[#07152B] p-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-[#F5B544] uppercase tracking-wider">#07152B Surface</span>
+                  <span className="h-2 w-2 rounded-full bg-[#10B981]" />
+                </div>
+                <p className="text-xs font-bold text-white">Interactive Card Header</p>
+                <p className="text-[11px] text-blue-200/70">Subtext rendered on deep navy surface with high legibility.</p>
+              </div>
+
+              {/* Sample Accent Bar */}
+              <div className="rounded-xl border border-[#285590] bg-[#0A1F3D] p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-blue-300 uppercase tracking-wider">#0A1F3D Elevate</span>
+                  <span className="text-[10px] font-bold text-[#F5B544]">#F5B544 Gold</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-6 px-2.5 rounded bg-[#F5B544] text-[#07152B] font-bold text-[11px] flex items-center justify-center">
+                    Primary CTA
+                  </div>
+                  <div className="h-6 px-2.5 rounded border border-[#18365D] bg-[#040D1A] text-white text-[11px] flex items-center justify-center">
+                    Secondary
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Business Information Section */}
       <Card className="rounded-xl border border-border shadow-sm">
