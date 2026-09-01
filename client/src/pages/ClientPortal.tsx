@@ -687,6 +687,17 @@ export default function ClientPortal() {
     setIsExplorationActive(false);
     localStorage.setItem("waypoint_portal_exploration_active", "false");
   };
+
+  const handleResetTour = () => {
+    setExploredTourIds([]);
+    setAcknowledgedTourIntros([]);
+    localStorage.removeItem("waypoint_portal_explored_modules");
+    localStorage.removeItem("waypoint_portal_acknowledged_intros");
+    setIsExplorationActive(true);
+    localStorage.setItem("waypoint_portal_exploration_active", "true");
+    setActiveTab("explore-portal");
+    toast.info("Portal tour progress reset! Start exploring again.");
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -2018,6 +2029,7 @@ export default function ClientPortal() {
           exploredTourIds={exploredTourIds}
           onStartTour={handleStartTour}
           onEndExploration={handleEndExploration}
+          onResetTour={handleResetTour}
         />
       </div>
 
@@ -2044,6 +2056,7 @@ export default function ClientPortal() {
               exploredTourIds={exploredTourIds}
               onStartTour={handleStartTour}
               onEndExploration={handleEndExploration}
+              onResetTour={handleResetTour}
             />
           </div>
         </div>

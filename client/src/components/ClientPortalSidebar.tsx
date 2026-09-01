@@ -55,6 +55,7 @@ interface ClientPortalSidebarProps {
   exploredTourIds?: string[];
   onStartTour?: () => void;
   onEndExploration?: () => void;
+  onResetTour?: () => void;
 }
 
 export function ClientPortalSidebar({
@@ -76,7 +77,8 @@ export function ClientPortalSidebar({
   isExplorationActive = false,
   exploredTourIds = [],
   onStartTour,
-  onEndExploration
+  onEndExploration,
+  onResetTour
 }: ClientPortalSidebarProps) {
   const [location, setLocation] = useLocation();
   const isWorkspace = location.startsWith("/projects/");
@@ -264,7 +266,20 @@ export function ClientPortalSidebar({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold truncate">{label}</span>
-                            {isTourAllExplored && <span className="text-[10px] text-emerald-400 font-bold ml-1">✓</span>}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {isTourAllExplored && <span className="text-[10px] text-emerald-400 font-bold ml-1">✓</span>}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onResetTour?.();
+                                }}
+                                title="Reset & Replay Tour"
+                                className="p-1 rounded-md hover:bg-white/15 text-white/50 hover:text-amber-300 transition-colors"
+                              >
+                                <RotateCcw className="h-3 w-3" />
+                              </button>
+                            </div>
                           </div>
 
                           {/* ── Progress Bar Directly Inside Item ── */}

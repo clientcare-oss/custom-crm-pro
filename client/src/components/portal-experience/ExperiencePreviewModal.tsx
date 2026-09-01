@@ -324,6 +324,13 @@ export function ExperiencePreviewModal({
                   setActiveTab("explore-portal");
                 }}
                 onEndExploration={() => setIsExplorationActive(false)}
+                onResetTour={() => {
+                  setExploredTourIds([]);
+                  setAcknowledgedTourIntros([]);
+                  setIsExplorationActive(true);
+                  setActiveTab("explore-portal");
+                  toast.info("Portal tour progress reset! Start exploring again.");
+                }}
               />
             </div>
 
