@@ -115,7 +115,7 @@ export function ClientPortalHeader({
         <img
           src="/sextant-header-bg.png"
           alt="Navigational Sextant & Chart"
-          className="w-full h-full object-cover object-right sm:object-center"
+          className="w-full h-full object-cover object-[right_bottom] sm:object-[center_bottom]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#06172F]/80 via-[#06172F]/30 to-transparent" />
       </div>

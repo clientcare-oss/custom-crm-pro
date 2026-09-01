@@ -335,7 +335,7 @@ export function ExperiencePreviewModal({
                 <img
                   src="/sextant-header-bg.png"
                   alt="Navigational Sextant & Chart"
-                  className="absolute inset-0 w-full h-full object-cover object-right sm:object-center pointer-events-none"
+                  className="absolute inset-0 w-full h-full object-cover object-[right_bottom] sm:object-[center_bottom] pointer-events-none"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#06172F]/80 via-[#06172F]/30 to-transparent pointer-events-none" />
                 <div className="flex items-center gap-3">
