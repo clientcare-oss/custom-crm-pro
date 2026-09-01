@@ -218,49 +218,9 @@ export function ClientPortalSidebar({
       {/* Nav Items Container */}
       <nav className="flex-1 px-3 py-3 space-y-3 overflow-y-auto">
         
-        {/* Core Compass Module */}
-        <div className="space-y-1">
-          {baseItems.filter(i => i.id === "compass").map(({ id, icon: Icon, label }) => {
-            const isActive = activeTab === id;
-            const isTourTarget = isExplorationActive && TOUR_MODULES.some(m => m.id === id);
-            const isUnexplored = isTourTarget && !exploredTourIds.includes(id);
-
-            return (
-              <button
-                key={id}
-                onClick={() => {
-                  onSelectTab(id);
-                  if (onCloseMobile) onCloseMobile();
-                }}
-                title={isCollapsed ? label : undefined}
-                className={`w-full flex items-center rounded-xl transition-all duration-200 text-sm font-medium
-                  ${isCollapsed && !mobile ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5 text-left"}
-                  ${isActive
-                    ? isLight
-                      ? "border border-amber-500/50 text-amber-700 bg-amber-500/10 shadow-sm"
-                      : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-lg shadow-amber-500/10"
-                    : isLight
-                      ? "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                      : "border border-transparent text-white/60 hover:text-white hover:bg-white/5"
-                  }`}
-              >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : isLight ? "text-slate-450" : "text-white/40"}`} />
-                {(!isCollapsed || mobile) && (
-                  <span className="flex-1 flex items-center justify-between">
-                    <span>{label}</span>
-                    {isUnexplored && (
-                      <span className="text-emerald-400 font-bold text-base leading-none" title="Unexplored area">•</span>
-                    )}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── GETTING STARTED CONDITIONAL SIDEBAR GROUP ── */}
+        {/* ── 1. GETTING STARTED CONDITIONAL SIDEBAR GROUP ── */}
         {isOnboardingOrPreSale && gettingStartedModules.length > 0 && (
-          <div className="space-y-1.5 pt-1 border-t border-white/8">
+          <div className="space-y-1.5 pb-2">
             {(!isCollapsed || mobile) && (
               <div className="px-3 py-1.5 flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400/90 font-mono">
@@ -384,8 +344,8 @@ export function ClientPortalSidebar({
           </div>
         )}
 
-        {/* ── PERMANENT / ACTIVE MODULES ── */}
-        <div className="space-y-1 pt-1 border-t border-white/8">
+        {/* ── 2. PERMANENT WORKSPACE MODULES (STARTS WITH COMPASS) ── */}
+        <div className={`space-y-1 ${isOnboardingOrPreSale && gettingStartedModules.length > 0 ? "pt-1 border-t border-white/8" : ""}`}>
           {(!isCollapsed || mobile) && isOnboardingOrPreSale && (
             <div className="px-3 py-1">
               <span className="text-[9px] font-bold uppercase tracking-wider text-white/30 font-mono">
@@ -394,7 +354,7 @@ export function ClientPortalSidebar({
             </div>
           )}
 
-          {baseItems.filter(i => i.id !== "compass").map(({ id, icon: Icon, label }) => {
+          {baseItems.map(({ id, icon: Icon, label }) => {
             const isActive = activeTab === id;
             const isTourTarget = isExplorationActive && TOUR_MODULES.some(m => m.id === id);
             const isUnexplored = isTourTarget && !exploredTourIds.includes(id);
