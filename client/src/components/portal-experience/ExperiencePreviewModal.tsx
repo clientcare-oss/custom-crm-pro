@@ -331,7 +331,13 @@ export function ExperiencePreviewModal({
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#040C16]">
               
               {/* Top Header Bar inside Portal */}
-              <div className="h-14 border-b border-white/10 bg-[#06172F]/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0 relative z-30">
+              <div className="h-14 border-b border-white/10 bg-[#06172F] px-6 flex items-center justify-between shrink-0 relative z-30 overflow-hidden">
+                <img
+                  src="/sextant-header-bg.png"
+                  alt="Navigational Sextant & Chart"
+                  className="absolute inset-0 w-full h-full object-cover object-right sm:object-center pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#06172F]/80 via-[#06172F]/30 to-transparent pointer-events-none" />
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-lg bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 font-bold text-xs">
                     <Compass className="h-4 w-4" />
