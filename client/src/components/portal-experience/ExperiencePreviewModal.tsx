@@ -331,18 +331,32 @@ export function ExperiencePreviewModal({
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#040C16]">
               
               {/* Top Header Bar inside Portal */}
-              <div className="h-14 border-b border-white/10 bg-[#06172F]/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0">
+              <div className="h-14 border-b border-white/10 bg-[#06172F]/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0 relative z-30">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-lg bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 font-bold text-xs">
                     <Compass className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white leading-tight font-serif">
-                      Liam Jenkins · 4th Grade
+                      Alex Honea
                     </p>
                     <p className="text-xs font-medium text-amber-400/90 mt-0.5">
                       Welcome, {displayName || "Jackson T."}
                     </p>
+                  </div>
+                </div>
+
+                {/* ── Middle: Student Switcher Pill ── */}
+                <div className="hidden lg:flex items-center rounded-2xl border border-[#F5B544]/60 bg-[#07152B] px-3 py-1 gap-2.5 shadow-md">
+                  <div className="w-7 h-7 rounded-full border border-[#F5B544] bg-[#0C1F3D] text-[#F5B544] font-bold text-[10px] flex items-center justify-center shrink-0">
+                    AH
+                  </div>
+                  <div className="space-y-0 text-left">
+                    <p className="text-xs font-bold text-white leading-tight">Alex Honea</p>
+                    <p className="text-[9px] text-blue-200/70 leading-tight">Student ID: 84257 · Current Student</p>
+                  </div>
+                  <div className="flex items-center gap-1 pl-1 border-l border-white/10">
+                    <ArrowRight className="h-3 w-3 text-[#F5B544]" />
                   </div>
                 </div>
 

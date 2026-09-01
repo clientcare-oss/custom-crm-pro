@@ -1,10 +1,34 @@
-import React from "react";
-import { Sun, Moon, Link2, Calendar, LogOut } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { 
+  Sun, 
+  Moon, 
+  Link2, 
+  Calendar, 
+  LogOut, 
+  ArrowLeftRight, 
+  ChevronDown, 
+  Check, 
+  Plus 
+} from "lucide-react";
 import { Link } from "wouter";
+import { toast } from "sonner";
+
+export interface StudentOption {
+  id: number | string;
+  firstName: string;
+  lastName: string;
+  studentIdNumber?: string;
+  grade?: string;
+}
 
 interface ClientPortalHeaderProps {
   displayName: string;
   studentName?: string;
+  studentIdNumber?: string;
+  students?: StudentOption[];
+  selectedStudentId?: number | string;
+  onSelectStudent?: (student: StudentOption) => void;
+  onAddStudent?: () => void;
   parentContactId?: number | null;
   theme: string;
   onToggleTheme: () => void;
@@ -15,7 +39,12 @@ interface ClientPortalHeaderProps {
 
 export function ClientPortalHeader({
   displayName,
-  studentName,
+  studentName = "Alex Honea",
+  studentIdNumber = "84257",
+  students,
+  selectedStudentId,
+  onSelectStudent,
+  onAddStudent,
   parentContactId,
   theme,
   onToggleTheme,
@@ -23,6 +52,41 @@ export function ClientPortalHeader({
   onOpenScheduler,
   onLogout,
 }: ClientPortalHeaderProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Default demo student profiles if none passed
+  const availableStudents: StudentOption[] = students && students.length > 0 ? students : [
+    { id: "84257", firstName: "Alex", lastName: "Honea", studentIdNumber: "84257", grade: "4th Grade" },
+    { id: "96321", firstName: "Brooklyn", lastName: "Honea", studentIdNumber: "96321", grade: "2nd Grade" },
+  ];
+
+  const [currentStudent, setCurrentStudent] = useState<StudentOption>(() => {
+    if (selectedStudentId) {
+      const match = availableStudents.find(s => String(s.id) === String(selectedStudentId));
+      if (match) return match;
+    }
+    return availableStudents[0];
+  });
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleStudentSelect = (student: StudentOption) => {
+    setCurrentStudent(student);
+    setDropdownOpen(false);
+    toast.success(`Switched active student to ${student.firstName} ${student.lastName}`);
+    onSelectStudent?.(student);
+  };
+
   const initials = displayName
     ? displayName
         .split(" ")
@@ -34,9 +98,11 @@ export function ClientPortalHeader({
 
   const isLight = theme === "blue";
 
+  const studentInitials = `${currentStudent.firstName[0] || "A"}${currentStudent.lastName[0] || "H"}`.toUpperCase();
+
   return (
     <div
-      className={`relative shrink-0 overflow-hidden border-b transition-colors duration-[300ms] ease-in-out ${
+      className={`relative shrink-0 overflow-visible border-b transition-colors duration-[300ms] ease-in-out ${
         isLight ? "border-slate-200" : "border-white/10"
       }`}
       style={{ minHeight: "70px" }}
@@ -58,14 +124,14 @@ export function ClientPortalHeader({
         }}
       />
 
-      <div className="relative z-10 flex items-center justify-between px-6 py-3">
+      <div className="relative z-10 flex items-center justify-between px-6 py-3 gap-4">
         {/* Left: Student Name (Top) + Welcome Parent (Below) */}
-        <div>
+        <div className="min-w-0 shrink-0">
           <h1 
-            className={`text-lg font-bold tracking-wide transition-colors duration-[300ms] ease-in-out ${isLight ? "text-slate-800" : "text-white"}`}
+            className={`text-base sm:text-lg font-bold tracking-wide truncate transition-colors duration-[300ms] ease-in-out ${isLight ? "text-slate-800" : "text-white"}`}
             style={{ fontFamily: "'Libre Baskerville', serif" }}
           >
-            {studentName || "Student Workspace"}
+            {`${currentStudent.firstName} ${currentStudent.lastName}`}
           </h1>
           <p className={`text-xs font-medium mt-0.5 transition-colors duration-[300ms] ease-in-out ${isLight ? "text-amber-800" : "text-amber-400"}`}>
             Welcome,{" "}
@@ -77,6 +143,122 @@ export function ClientPortalHeader({
               <span className="font-semibold">{displayName}</span>
             )}
           </p>
+        </div>
+
+        {/* ── Middle: Interactive Student Switcher Dropdown ───────────────── */}
+        <div className="relative" ref={dropdownRef}>
+          {/* Trigger Pill */}
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="rounded-2xl border border-[#F5B544]/60 bg-[#07152B] hover:border-[#F5B544] px-3 py-1.5 flex items-center gap-3 transition-all shadow-md group cursor-pointer text-left"
+          >
+            {/* Student Avatar Circle */}
+            <div className="w-9 h-9 rounded-full border border-[#F5B544] bg-[#0C1F3D] text-[#F5B544] font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
+              {studentInitials}
+            </div>
+
+            {/* Student Details Stack */}
+            <div className="space-y-0.5 min-w-[90px]">
+              <p className="text-xs sm:text-sm font-bold text-white leading-tight group-hover:text-amber-300 transition-colors">
+                {currentStudent.firstName} {currentStudent.lastName}
+              </p>
+              <p className="text-[10.5px] text-blue-200/70 leading-tight">
+                Student ID: {currentStudent.studentIdNumber || currentStudent.id}
+              </p>
+              <p className="text-[9.5px] text-blue-300/60 leading-tight font-medium">
+                Current Student
+              </p>
+            </div>
+
+            {/* Right Divider & Switch Icons */}
+            <div className="flex items-center gap-1 pl-1 border-l border-white/10 shrink-0">
+              <ArrowLeftRight className="h-3.5 w-3.5 text-[#F5B544]" />
+              <ChevronDown className={`h-3 w-3 text-[#F5B544]/80 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
+            </div>
+          </button>
+
+          {/* Dropdown Menu */}
+          {dropdownOpen && (
+            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-72 rounded-2xl border border-[#18365D] bg-[#07152B] shadow-2xl p-2 space-y-1 backdrop-blur-xl animate-in fade-in-50 zoom-in-95">
+              <p className="text-[10px] font-extrabold tracking-widest text-blue-300/60 uppercase px-3 py-1.5">
+                SELECT STUDENT
+              </p>
+
+              {/* Student Items List */}
+              <div className="space-y-1">
+                {availableStudents.map((st) => {
+                  const isCurrent = String(st.id) === String(currentStudent.id);
+                  const stInitials = `${st.firstName[0] || ""}${st.lastName[0] || ""}`.toUpperCase();
+
+                  return (
+                    <div
+                      key={st.id}
+                      onClick={() => handleStudentSelect(st)}
+                      className={`rounded-xl p-2.5 flex items-center justify-between gap-2.5 cursor-pointer transition-all ${
+                        isCurrent
+                          ? "border border-[#F5B544]/40 bg-white/[0.04]"
+                          : "border border-transparent hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                          isCurrent
+                            ? "border border-[#F5B544] bg-[#0C1F3D] text-[#F5B544]"
+                            : "border border-blue-400/30 bg-[#0C1F3D] text-blue-300"
+                        }`}>
+                          {stInitials}
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-bold truncate leading-tight ${isCurrent ? "text-[#F5B544]" : "text-white"}`}>
+                            {st.firstName} {st.lastName}
+                          </p>
+                          <p className="text-[10px] text-blue-200/60 leading-tight pt-0.5">
+                            ID: {st.studentIdNumber || st.id}
+                          </p>
+                        </div>
+                      </div>
+
+                      {isCurrent && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-[#F5B544]/15 text-[#F5B544] border border-[#F5B544]/20">
+                            Viewing
+                          </span>
+                          <Check className="h-4 w-4 text-[#F5B544] stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add Another Student Option */}
+              <div className="border-t border-white/5 pt-1 mt-1">
+                <button
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    if (onAddStudent) {
+                      onAddStudent();
+                    } else {
+                      toast.info("Add Student flow initiated. Contact advocate or submit enrollment form.");
+                    }
+                  }}
+                  className="w-full rounded-xl hover:bg-white/[0.04] p-2.5 flex items-center gap-2.5 text-left transition-colors cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full border border-blue-400/30 bg-blue-500/10 text-blue-300 flex items-center justify-center shrink-0">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-blue-300 leading-tight">
+                      Add Another Student
+                    </p>
+                    <p className="text-[10px] text-blue-200/50 leading-tight pt-0.5">
+                      Add a new student profile
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right: Actions */}
