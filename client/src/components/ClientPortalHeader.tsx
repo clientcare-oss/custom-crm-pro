@@ -102,7 +102,7 @@ export function ClientPortalHeader({
 
   return (
     <div
-      className={`relative shrink-0 overflow-visible border-b transition-colors duration-[300ms] ease-in-out ${
+      className={`relative z-40 shrink-0 overflow-visible border-b transition-colors duration-[300ms] ease-in-out ${
         isLight ? "border-slate-200" : "border-white/10"
       }`}
       style={{ minHeight: "70px" }}
@@ -124,7 +124,7 @@ export function ClientPortalHeader({
         }}
       />
 
-      <div className="relative z-10 flex items-center justify-between px-6 py-3 gap-4">
+      <div className="relative z-40 flex items-center justify-between px-6 py-3 gap-4 overflow-visible">
         {/* Left: Student Name (Top) + Welcome Parent (Below) */}
         <div className="min-w-0 shrink-0">
           <h1 
@@ -146,7 +146,7 @@ export function ClientPortalHeader({
         </div>
 
         {/* ── Middle: Interactive Student Switcher Dropdown ───────────────── */}
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative z-50 overflow-visible" ref={dropdownRef}>
           {/* Trigger Pill */}
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -179,7 +179,7 @@ export function ClientPortalHeader({
 
           {/* Dropdown Menu */}
           {dropdownOpen && (
-            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-72 rounded-2xl border border-[#18365D] bg-[#07152B] shadow-2xl p-2 space-y-1 backdrop-blur-xl animate-in fade-in-50 zoom-in-95">
+            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[999] w-72 rounded-2xl border border-[#18365D] bg-[#07152B] shadow-2xl p-2 space-y-1 backdrop-blur-xl animate-in fade-in-50 zoom-in-95">
               <p className="text-[10px] font-extrabold tracking-widest text-blue-300/60 uppercase px-3 py-1.5">
                 SELECT STUDENT
               </p>
