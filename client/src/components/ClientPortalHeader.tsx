@@ -270,21 +270,21 @@ export function ClientPortalHeader({
           {/* Theme Toggle */}
           <button
             onClick={onToggleTheme}
-            className={`relative w-8 h-8 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[3000ms] ease-in-out ${
+            className={`relative w-8 h-8 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md ${
               isLight 
-                ? "border-slate-350 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400" 
-                : "border-white/20 bg-white/5 text-white/70 hover:text-white hover:border-amber-400/50"
+                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400" 
+                : "border-[#18365D] bg-[#07152B] text-white hover:border-[#F5B544]/60 hover:bg-[#0C1F3D]"
             }`}
-            title={isLight ? "Dark mode" : "Light mode"}
+            title={isLight ? "Switch to dark mode" : "Switch to light mode"}
           >
             {/* Sun Icon (rises and rotates in light mode) */}
-            <Sun className={`absolute h-4 w-4 text-amber-500 transition-all duration-[3000ms] ease-in-out transform ${
+            <Sun className={`absolute h-4 w-4 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${
               isLight 
                 ? "translate-y-0 rotate-0 scale-100 opacity-100" 
                 : "translate-y-6 -rotate-90 scale-50 opacity-0"
             }`} />
             {/* Moon Icon (sets and rotates in dark mode) */}
-            <Moon className={`absolute h-4 w-4 text-indigo-400 transition-all duration-[3000ms] ease-in-out transform ${
+            <Moon className={`absolute h-4 w-4 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${
               !isLight 
                 ? "translate-y-0 rotate-0 scale-100 opacity-100" 
                 : "-translate-y-6 rotate-90 scale-50 opacity-0"
