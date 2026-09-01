@@ -396,52 +396,12 @@ export function ExperiencePreviewModal({
                   />
                 )}
 
-                {/* ── STAGE 01: Discovery Inquiry Submitted ── */}
-                {activeTab !== "explore-portal" && currentStage.stepNumber === "01" && (
-                  <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
-                    <div className="border-b border-white/10 pb-6">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 text-amber-300 text-xs font-semibold mb-3 border border-amber-400/20">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Inquiry Received
-                      </div>
-                      <h1 className="text-2xl md:text-3xl font-extrabold text-white">
-                        Discovery Inquiry Received, {displayName.split(" ")[0]}
-                      </h1>
-                      <p className="text-sm text-white/70 mt-1">
-                        Thank you for reaching out to Waypoint Advocates. The first step is scheduling your complimentary 30-minute Discovery Call with Byron Honea.
-                      </p>
-                    </div>
-
-                    <Card className="border-amber-400/30 bg-gradient-to-br from-amber-400/10 via-[#0a1828] to-[#071422] p-6 rounded-2xl space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-amber-500 text-[#071422] flex items-center justify-center font-bold">
-                          <Calendar className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-white text-base">Select Your Discovery Call Time</h3>
-                          <p className="text-xs text-white/60">Choose a convenient slot to discuss your child's IEP needs.</p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => {
-                          setSimulatedStageIndex(1);
-                          toast.success("Discovery Call scheduled for Tuesday, Sep 15!");
-                        }}
-                        className="w-full h-11 bg-amber-400 hover:bg-amber-500 text-[#071422] font-bold text-xs gap-2 shadow-lg shadow-amber-400/10"
-                      >
-                        <Calendar className="h-4 w-4" />
-                        Confirm Tuesday, Sep 15 @ 2:00 PM EDT
-                      </Button>
-                    </Card>
-                  </div>
-                )}
-
-                {/* ── STAGE 02: Discovery Call Scheduled ── */}
-                {activeTab !== "explore-portal" && currentStage.stepNumber === "02" && (
+                {/* ── STAGE 01 & 02: Discovery Inquiry Submitted / Discovery Call Scheduled (PG-027-S01 / PG-027-S02) ── */}
+                {activeTab !== "explore-portal" && ["01", "02"].includes(currentStage.stepNumber) && (
                   <DiscoveryCallExperience
                     displayName={displayName}
                     upcomingAppointment={{
-                      startTime: new Date().toISOString(),
+                      startTime: "2025-05-28T14:00:00.000Z",
                       location: "https://meet.google.com/waypoint-discovery"
                     }}
                     onNavigateTab={handleTabSelect}
