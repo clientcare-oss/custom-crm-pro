@@ -41,9 +41,9 @@ export function ClientPortalHeader({
     >
       {/* Dark background panel */}
       <div 
-        className="absolute inset-0 transition-opacity duration-[3000ms] ease-in-out pointer-events-none"
+        className="absolute inset-0 transition-opacity duration-[300ms] ease-in-out pointer-events-none"
         style={{
-          background: `linear-gradient(to right, #071422 0%, #0d1b2a 40%, rgba(13,27,42,0.7) 70%, rgba(13,27,42,0.4) 100%), url('/compass-bg.jpg') center/cover no-repeat`,
+          background: `linear-gradient(to right, #06172F 0%, #081D3A 40%, rgba(6,23,47,0.85) 70%, rgba(6,23,47,0.7) 100%), url('/compass-bg.jpg') center/cover no-repeat`,
           opacity: isLight ? 0 : 1,
         }}
       />

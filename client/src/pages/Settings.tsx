@@ -48,9 +48,9 @@ interface ColorSwatch {
 const PROGRAM_COLORS: ColorSwatch[] = [
   // Portal & Midnight Navy System
   {
-    name: "Portal Sidebar BG",
+    name: "Portal Sidebar & Top Header",
     hex: "#06172F",
-    role: "Client Portal persistent navigation sidebar background (PG-023, PG-027)",
+    role: "Client Portal persistent navigation sidebar and top header background (PG-023, PG-027)",
     category: "portal",
     textColor: "#FFFFFF",
     borderColor: "#18365D",

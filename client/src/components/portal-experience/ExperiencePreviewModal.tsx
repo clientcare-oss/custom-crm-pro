@@ -331,7 +331,7 @@ export function ExperiencePreviewModal({
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#040C16]">
               
               {/* Top Header Bar inside Portal */}
-              <div className="h-14 border-b border-white/8 bg-[#071422]/70 backdrop-blur-md px-6 flex items-center justify-between shrink-0">
+              <div className="h-14 border-b border-white/10 bg-[#06172F]/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-lg bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 font-bold text-xs">
                     <Compass className="h-4 w-4" />
