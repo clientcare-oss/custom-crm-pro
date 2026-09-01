@@ -346,6 +346,34 @@ export default function Settings() {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Quick Portal Simulator & Live Preview Launcher Banner */}
+          <div className="bg-gradient-to-r from-blue-950/40 via-[#0A1F3D]/50 to-blue-900/20 border border-blue-500/20 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-blue-200">Looking to Preview or Test the Portal?</span>
+                <span className="text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full">
+                  PG-027
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Launch the 14-Stage Client Portal Simulator with Desktop/Tablet/Mobile devices or view the live Client Portal.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <a href="/portal-management">
+                <Button size="sm" className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs h-8">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                  Open Portal Simulator
+                </Button>
+              </a>
+              <a href="/portal" target="_blank" rel="noreferrer">
+                <Button size="sm" variant="outline" className="text-xs h-8">
+                  Live Portal (PG-023)
+                </Button>
+              </a>
+            </div>
+          </div>
+
           {/* Swatches Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5">
             {filteredColors.map((swatch) => {
