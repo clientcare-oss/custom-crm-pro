@@ -105,16 +105,20 @@ export function ClientPortalHeader({
       className={`relative z-40 shrink-0 overflow-visible border-b transition-colors duration-[300ms] ease-in-out ${
         isLight ? "border-slate-200" : "border-white/10"
       }`}
-      style={{ minHeight: "70px" }}
+      style={{ minHeight: "64px" }}
     >
-      {/* Dark background panel */}
+      {/* Dark background panel with Navigational Sextant Artwork */}
       <div 
-        className="absolute inset-0 transition-opacity duration-[300ms] ease-in-out pointer-events-none"
-        style={{
-          background: `linear-gradient(to right, #06172F 0%, #081D3A 40%, rgba(6,23,47,0.85) 70%, rgba(6,23,47,0.7) 100%), url('/compass-bg.jpg') center/cover no-repeat`,
-          opacity: isLight ? 0 : 1,
-        }}
-      />
+        className="absolute inset-0 transition-opacity duration-[300ms] ease-in-out pointer-events-none overflow-hidden bg-[#06172F]"
+        style={{ opacity: isLight ? 0 : 1 }}
+      >
+        <img
+          src="/sextant-header-bg.png"
+          alt="Navigational Sextant & Chart"
+          className="w-full h-full object-cover object-right sm:object-[90%_center] scale-90 sm:scale-95 origin-right opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#06172F] via-[#06172F]/50 to-transparent" />
+      </div>
       {/* Light background panel */}
       <div 
         className="absolute inset-0 transition-opacity duration-[300ms] ease-in-out pointer-events-none"
@@ -124,16 +128,16 @@ export function ClientPortalHeader({
         }}
       />
 
-      <div className="relative z-40 flex items-center justify-between px-6 py-3 gap-4 overflow-visible">
+      <div className="relative z-40 flex items-center justify-between px-5 py-2.5 gap-4 overflow-visible">
         {/* Left: Student Name (Top) + Welcome Parent (Below) */}
         <div className="min-w-0 shrink-0">
           <h1 
-            className={`text-base sm:text-lg font-bold tracking-wide truncate transition-colors duration-[300ms] ease-in-out ${isLight ? "text-slate-800" : "text-white"}`}
+            className={`text-sm sm:text-base font-bold tracking-wide truncate transition-colors duration-[300ms] ease-in-out ${isLight ? "text-slate-800" : "text-white"}`}
             style={{ fontFamily: "'Libre Baskerville', serif" }}
           >
             {`${currentStudent.firstName} ${currentStudent.lastName}`}
           </h1>
-          <p className={`text-xs font-medium mt-0.5 transition-colors duration-[300ms] ease-in-out ${isLight ? "text-amber-800" : "text-amber-400"}`}>
+          <p className={`text-[11px] font-medium mt-0.5 transition-colors duration-[300ms] ease-in-out ${isLight ? "text-amber-800" : "text-amber-400"}`}>
             Welcome,{" "}
             {parentContactId ? (
               <Link href={`/contacts/${parentContactId}`} className="font-semibold underline hover:text-amber-500 transition-colors">
@@ -150,29 +154,29 @@ export function ClientPortalHeader({
           {/* Trigger Pill */}
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="rounded-2xl border border-[#F5B544]/60 bg-[#07152B] hover:border-[#F5B544] px-3 py-1.5 flex items-center gap-3 transition-all shadow-md group cursor-pointer text-left"
+            className="rounded-xl border border-[#F5B544]/60 bg-[#07152B] hover:border-[#F5B544] px-2.5 py-1 flex items-center gap-2.5 transition-all shadow-md group cursor-pointer text-left"
           >
             {/* Student Avatar Circle */}
-            <div className="w-9 h-9 rounded-full border border-[#F5B544] bg-[#0C1F3D] text-[#F5B544] font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
+            <div className="w-8 h-8 rounded-full border border-[#F5B544] bg-[#0C1F3D] text-[#F5B544] font-bold text-[11px] flex items-center justify-center shrink-0 shadow-inner">
               {studentInitials}
             </div>
 
             {/* Student Details Stack */}
-            <div className="space-y-0.5 min-w-[90px]">
-              <p className="text-xs sm:text-sm font-bold text-white leading-tight group-hover:text-amber-300 transition-colors">
+            <div className="space-y-0 min-w-[85px]">
+              <p className="text-xs font-bold text-white leading-tight group-hover:text-amber-300 transition-colors">
                 {currentStudent.firstName} {currentStudent.lastName}
               </p>
-              <p className="text-[10.5px] text-blue-200/70 leading-tight">
+              <p className="text-[10px] text-blue-200/70 leading-tight">
                 Student ID: {currentStudent.studentIdNumber || currentStudent.id}
               </p>
-              <p className="text-[9.5px] text-blue-300/60 leading-tight font-medium">
+              <p className="text-[9px] text-blue-300/60 leading-tight font-medium">
                 Current Student
               </p>
             </div>
 
             {/* Right Divider & Switch Icons */}
             <div className="flex items-center gap-1 pl-1 border-l border-white/10 shrink-0">
-              <ArrowLeftRight className="h-3.5 w-3.5 text-[#F5B544]" />
+              <ArrowLeftRight className="h-3 w-3 text-[#F5B544]" />
               <ChevronDown className={`h-3 w-3 text-[#F5B544]/80 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
             </div>
           </button>
