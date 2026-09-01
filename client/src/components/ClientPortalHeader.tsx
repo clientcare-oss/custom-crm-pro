@@ -39,7 +39,7 @@ interface ClientPortalHeaderProps {
 
 export function ClientPortalHeader({
   displayName,
-  studentName = "Alex Honea",
+  studentName = "Liam Jenkins",
   studentIdNumber = "84257",
   students,
   selectedStudentId,
@@ -57,8 +57,8 @@ export function ClientPortalHeader({
 
   // Default demo student profiles if none passed
   const availableStudents: StudentOption[] = students && students.length > 0 ? students : [
-    { id: "84257", firstName: "Alex", lastName: "Honea", studentIdNumber: "84257", grade: "4th Grade" },
-    { id: "96321", firstName: "Brooklyn", lastName: "Honea", studentIdNumber: "96321", grade: "2nd Grade" },
+    { id: "84257", firstName: "Liam", lastName: "Jenkins", studentIdNumber: "84257", grade: "4th Grade" },
+    { id: "96321", firstName: "Maya", lastName: "Jenkins", studentIdNumber: "96321", grade: "2nd Grade" },
   ];
 
   const [currentStudent, setCurrentStudent] = useState<StudentOption>(() => {

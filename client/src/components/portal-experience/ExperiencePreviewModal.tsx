@@ -344,7 +344,7 @@ export function ExperiencePreviewModal({
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white leading-tight font-serif">
-                      Alex Honea
+                      Liam Jenkins
                     </p>
                     <p className="text-xs font-medium text-amber-400/90 mt-0.5">
                       Welcome, {displayName || "Jackson T."}
@@ -355,10 +355,10 @@ export function ExperiencePreviewModal({
                 {/* ── Middle: Student Switcher Pill ── */}
                 <div className="hidden lg:flex items-center rounded-2xl border border-[#F5B544]/60 bg-[#07152B] px-3 py-1 gap-2.5 shadow-md">
                   <div className="w-7 h-7 rounded-full border border-[#F5B544] bg-[#0C1F3D] text-[#F5B544] font-bold text-[10px] flex items-center justify-center shrink-0">
-                    AH
+                    LJ
                   </div>
                   <div className="space-y-0 text-left">
-                    <p className="text-xs font-bold text-white leading-tight">Alex Honea</p>
+                    <p className="text-xs font-bold text-white leading-tight">Liam Jenkins</p>
                     <p className="text-[9px] text-blue-200/70 leading-tight">Student ID: 84257 · Current Student</p>
                   </div>
                   <div className="flex items-center gap-1 pl-1 border-l border-white/10">
