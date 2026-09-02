@@ -109,15 +109,15 @@ export function ClientPortalHeader({
     >
       {/* Dark background panel with Navigational Sextant Artwork */}
       <div 
-        className="absolute inset-0 transition-opacity duration-[300ms] ease-in-out pointer-events-none overflow-hidden bg-[#06172F]"
+        className="absolute inset-0 transition-opacity duration-[300ms] ease-in-out pointer-events-none overflow-hidden bg-[#030914]"
         style={{ opacity: isLight ? 0 : 1 }}
       >
         <img
           src="/sextant-header-bg.png"
           alt="Navigational Sextant & Chart"
-          className="w-full h-full object-cover object-[right_bottom] sm:object-[center_bottom]"
+          className="w-full h-full object-cover object-[right_bottom] sm:object-[center_bottom] opacity-40"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06172F]/80 via-[#06172F]/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#030914]/95 via-[#030914]/60 to-[#030914]/30" />
       </div>
       {/* Light background panel */}
       <div 
