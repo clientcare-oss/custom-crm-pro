@@ -1273,52 +1273,61 @@ export default function ClientPortal() {
             {/* Admin Compass Edit Form */}
             {isWorkspaceMode && isAdminView && (
               <div className="px-5 pb-6">
-                <Card className="rounded-xl border border-border p-6 bg-card space-y-4 max-w-4xl">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                      <Compass className="h-5 w-5 text-accent" />
-                      Edit Case Compass (Admin Controls)
+                <Card className="rounded-2xl border border-blue-900/40 p-6 bg-[#06172F] text-white shadow-xl space-y-4 max-w-4xl">
+                  <div className="flex items-center justify-between border-b border-blue-900/40 pb-3">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Compass className="h-5 w-5 text-amber-400" />
+                      Edit Case Compass (Advocate Controls)
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Current Status / Phase</Label>
+                      <Label className="text-xs font-semibold text-white/80">Current Status / Phase</Label>
                       <Input
                         value={compassForm.currentStatus}
                         onChange={(e) => setCompassForm({ ...compassForm, currentStatus: e.target.value })}
                         placeholder="e.g. Preparing for IEP Review"
+                        className="bg-[#030C22] border-blue-900/40 text-white rounded-xl focus:border-amber-400/60"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Who Has the Ball?</Label>
+                      <Label className="text-xs font-semibold text-white/80">Who Has the Ball?</Label>
                       <Input
                         value={compassForm.whoHasBall}
                         onChange={(e) => setCompassForm({ ...compassForm, whoHasBall: e.target.value })}
                         placeholder="e.g. Waypoint Advocates"
+                        className="bg-[#030C22] border-blue-900/40 text-white rounded-xl focus:border-amber-400/60"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Next Action / Step</Label>
+                    <Label className="text-xs font-semibold text-white/80">Next Action / Step</Label>
                     <Input
                       value={compassForm.nextStep}
                       onChange={(e) => setCompassForm({ ...compassForm, nextStep: e.target.value })}
                       placeholder="e.g. Schedule IEP meeting with school"
+                      className="bg-[#030C22] border-blue-900/40 text-white rounded-xl focus:border-amber-400/60"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Meeting Summary Notes</Label>
+                    <Label className="text-xs font-semibold text-white/80">Meeting Summary Notes</Label>
                     <Textarea
                       value={compassForm.lastMeetingSummary}
                       onChange={(e) => setCompassForm({ ...compassForm, lastMeetingSummary: e.target.value })}
                       placeholder="Enter a brief summary of the last meeting or status updates for the client portal..."
                       rows={3}
+                      className="bg-[#030C22] border-blue-900/40 text-white rounded-xl focus:border-amber-400/60"
                     />
                   </div>
 
-                  <div className="flex justify-end gap-2">
-                    <Button size="sm" onClick={handleSaveCompass} disabled={compassUpsert.isPending}>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveCompass}
+                      disabled={compassUpsert.isPending}
+                      className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl px-5 py-2 shadow-[0_0_12px_rgba(245,181,68,0.25)]"
+                    >
                       {compassUpsert.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                       Update Compass
                     </Button>

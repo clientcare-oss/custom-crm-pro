@@ -175,8 +175,8 @@ export default function ClientPortalDashboard({
               ? "bg-white border-amber-500 shadow-md shadow-amber-500/5 ring-1 ring-amber-500/10"
               : "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow-md"
             : isSelected 
-              ? "bg-[#161B22]/90 border-amber-400/90 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/20" 
-              : "bg-[#161B22]/90 border-slate-700/50 hover:border-amber-400/30"}`}
+              ? "bg-[#06172F] border-amber-400/90 shadow-xl shadow-amber-500/10 ring-1 ring-amber-400/30" 
+              : "bg-[#06172F] border-blue-900/40 hover:border-amber-400/40 hover:bg-[#081B36]"}`}
       >
         {isSelected && (
           <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl pointer-events-none ${
@@ -341,26 +341,26 @@ export default function ClientPortalDashboard({
           {/* Messages Block (repositioned below Case Compass Card) */}
           <div 
             onClick={() => onNavigateTab("communication")}
-            className={`border rounded-xl p-5 flex items-center justify-between gap-4 shadow-xl backdrop-blur-sm transition-all duration-[3000ms] ease-in-out cursor-pointer group ${
+            className={`border rounded-2xl p-5 flex items-center justify-between gap-4 shadow-xl backdrop-blur-sm transition-all duration-300 cursor-pointer group ${
               isLight 
                 ? "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow-md" 
-                : "bg-[#161B22]/90 border-slate-700/50 hover:border-amber-400/40"
+                : "bg-[#06172F] border-blue-900/40 hover:border-amber-400/40 hover:bg-[#081B36]"
             }`}
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
-                isLight ? "bg-blue-500/10 border border-blue-500/20" : "bg-blue-500/10 border border-blue-400/30"
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                isLight ? "bg-blue-500/10 border border-blue-500/20" : "bg-blue-500/15 border border-blue-400/30 shadow-[0_0_12px_rgba(59,130,246,0.15)]"
               }`}>
                 <MessageSquare className={`w-5 h-5 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
               </div>
               <div className="min-w-0">
                 <p className={`text-sm font-bold ${isLight ? "text-slate-800" : "text-white"}`}>Unread Messages</p>
-                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-300/80"}`}>
+                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/60"}`}>
                   {unreadCount > 0 ? `${unreadCount} new message(s) from your advocate` : messages.length > 0 ? "All messages read" : "No messages yet"}
                 </p>
               </div>
             </div>
-            <button className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-[3000ms] ease-in-out shrink-0 ${
+            <button className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-300 shrink-0 ${
               isLight ? "text-amber-600 hover:text-amber-700" : "text-amber-400 hover:text-amber-300"
             }`}>
               View Messages <ArrowRight className="w-3.5 h-3.5" />
@@ -369,12 +369,12 @@ export default function ClientPortalDashboard({
         </div>
 
         {/* Right (4 Cols): WHAT'S NEW */}
-        <div className={`lg:col-span-4 border rounded-xl p-6 shadow-xl backdrop-blur-sm flex flex-col justify-between space-y-4 ${
-          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
+        <div className={`lg:col-span-4 border rounded-2xl p-6 shadow-xl backdrop-blur-sm flex flex-col justify-between space-y-4 ${
+          isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-blue-900/40"
         }`}>
           
-          <div className={`border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
-            <p className={`text-[11px] font-bold tracking-[0.2em] uppercase ${isLight ? "text-amber-650" : "text-amber-400/90"}`}>WHAT'S NEW</p>
+          <div className={`border-b pb-3 ${isLight ? "border-slate-100" : "border-blue-900/40"}`}>
+            <p className={`text-[11px] font-bold tracking-[0.2em] uppercase font-mono ${isLight ? "text-amber-650" : "text-amber-400"}`}>WHAT'S NEW</p>
           </div>
 
           <div className="space-y-3 flex-1">
@@ -382,8 +382,8 @@ export default function ClientPortalDashboard({
             {/* Update 1: File */}
             <div 
               onClick={() => onNavigateTab("files")}
-              className={`flex gap-3 items-start p-2.5 rounded-lg transition-colors cursor-pointer ${
-                isLight ? "hover:bg-slate-50" : "hover:bg-slate-800/40"
+              className={`flex gap-3 items-start p-2.5 rounded-xl transition-colors cursor-pointer ${
+                isLight ? "hover:bg-slate-50" : "hover:bg-[#030C22] border border-transparent hover:border-blue-900/30"
               }`}
             >
               <div className={`p-2 rounded-lg shrink-0 mt-0.5 border ${
@@ -393,13 +393,13 @@ export default function ClientPortalDashboard({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-1">
-                  <p className={`text-xs font-semibold truncate ${isLight ? "text-slate-800" : "text-slate-200"}`}>Document uploaded by school</p>
+                  <p className={`text-xs font-semibold truncate ${isLight ? "text-slate-800" : "text-white"}`}>Document uploaded by school</p>
                   <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Unread update" />
                 </div>
-                <p className={`text-xs font-medium truncate ${isLight ? "text-amber-700" : "text-amber-300/90"}`}>
+                <p className={`text-xs font-medium truncate ${isLight ? "text-amber-700" : "text-amber-300"}`}>
                   {latestFile?.fileName || "Evaluation Report.pdf"}
                 </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
+                <p className="text-[10px] text-white/50 mt-0.5">
                   {latestFile?.createdAt ? new Date(latestFile.createdAt).toLocaleDateString() : "Yesterday"}
                 </p>
               </div>
@@ -408,8 +408,8 @@ export default function ClientPortalDashboard({
             {/* Update 2: Meeting */}
             <div 
               onClick={onOpenScheduler}
-              className={`flex gap-3 items-start p-2.5 rounded-lg transition-colors cursor-pointer ${
-                isLight ? "hover:bg-slate-50" : "hover:bg-slate-800/40"
+              className={`flex gap-3 items-start p-2.5 rounded-xl transition-colors cursor-pointer ${
+                isLight ? "hover:bg-slate-50" : "hover:bg-[#030C22] border border-transparent hover:border-blue-900/30"
               }`}
             >
               <div className={`p-2 rounded-lg shrink-0 mt-0.5 border ${
@@ -418,9 +418,9 @@ export default function ClientPortalDashboard({
                 <Calendar className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className={`text-xs font-semibold truncate ${isLight ? "text-slate-800" : "text-slate-200"}`}>Meeting scheduled</p>
-                <p className={`text-xs font-medium truncate ${isLight ? "text-slate-700" : "text-slate-350"}`}>{nextAppt.title || "Annual IEP Meeting"}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
+                <p className={`text-xs font-semibold truncate ${isLight ? "text-slate-800" : "text-white"}`}>Meeting scheduled</p>
+                <p className={`text-xs font-medium truncate ${isLight ? "text-slate-700" : "text-white/70"}`}>{nextAppt.title || "Annual IEP Meeting"}</p>
+                <p className="text-[10px] text-white/50 mt-0.5 font-mono">
                   {nextAppt.startTime
                     ? `${new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: "short", day: "numeric" })} • ${new Date(nextAppt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
                     : "May 22, 2026 • 9:00 AM"}
@@ -431,8 +431,8 @@ export default function ClientPortalDashboard({
             {/* Update 3: Message */}
             <div 
               onClick={() => onNavigateTab("communication")}
-              className={`flex gap-3 items-start p-2.5 rounded-lg transition-colors cursor-pointer ${
-                isLight ? "hover:bg-slate-50" : "hover:bg-slate-800/40"
+              className={`flex gap-3 items-start p-2.5 rounded-xl transition-colors cursor-pointer ${
+                isLight ? "hover:bg-slate-50" : "hover:bg-[#030C22] border border-transparent hover:border-blue-900/30"
               }`}
             >
               <div className={`p-2 rounded-lg shrink-0 mt-0.5 border ${
@@ -441,11 +441,11 @@ export default function ClientPortalDashboard({
                 <MessageSquare className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className={`text-xs font-semibold truncate ${isLight ? "text-slate-800" : "text-slate-200"}`}>New message from advocate</p>
-                <p className={`text-xs truncate ${isLight ? "text-slate-600" : "text-slate-300/80"}`}>
+                <p className={`text-xs font-semibold truncate ${isLight ? "text-slate-800" : "text-white"}`}>New message from advocate</p>
+                <p className={`text-xs truncate ${isLight ? "text-slate-600" : "text-white/70"}`}>
                   {recentMessage?.content || "Meeting preparation update"}
                 </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
+                <p className="text-[10px] text-white/50 mt-0.5">
                   {recentMessage?.createdAt ? new Date(recentMessage.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "2 hours ago"}
                 </p>
               </div>
@@ -455,10 +455,10 @@ export default function ClientPortalDashboard({
 
           <button 
             onClick={() => onNavigateTab("smart-docs")}
-            className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold pt-2 transition-colors border-t ${
+            className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold pt-3 transition-colors border-t ${
               isLight 
                 ? "text-amber-600 hover:text-amber-700 border-slate-100" 
-                : "text-amber-400 hover:text-amber-300 border-slate-800/80"
+                : "text-amber-400 hover:text-amber-300 border-blue-900/40"
             }`}
           >
             View All Updates <ArrowRight className="w-3.5 h-3.5" />
@@ -472,18 +472,18 @@ export default function ClientPortalDashboard({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Col 1: UPCOMING */}
-        <div className={`border rounded-xl p-5 shadow-xl backdrop-blur-sm space-y-4 ${
-          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
+        <div className={`border rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-4 ${
+          isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-blue-900/40"
         }`}>
-          <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
+          <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-blue-900/40"}`}>
             <Calendar className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
-            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase ${isLight ? "text-amber-655" : "text-amber-400"}`}>UPCOMING</p>
+            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase font-mono ${isLight ? "text-amber-655" : "text-amber-400"}`}>UPCOMING</p>
           </div>
 
           <div className="space-y-3">
             <div>
-              <p className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider">NEXT MEETING</p>
-              <p className={`text-xs font-medium mt-1 ${isLight ? "text-slate-750" : "text-slate-300"}`}>
+              <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider font-mono">NEXT MEETING</p>
+              <p className={`text-xs font-medium mt-1 font-mono ${isLight ? "text-slate-750" : "text-white/70"}`}>
                 {nextAppt.startTime
                   ? `${new Date(nextAppt.startTime).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} • ${new Date(nextAppt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
                   : "May 22, 2026 • 9:00 AM"}
@@ -499,16 +499,16 @@ export default function ClientPortalDashboard({
               </button>
             </div>
 
-            <div className={`pt-2 border-t ${isLight ? "border-slate-100" : "border-slate-800/60"}`}>
-              <p className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider">UPCOMING DEADLINES</p>
+            <div className={`pt-2.5 border-t ${isLight ? "border-slate-100" : "border-blue-900/40"}`}>
+              <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider font-mono">UPCOMING DEADLINES</p>
               <div className="mt-2 flex items-center justify-between gap-2">
-                <span className={`text-xs font-medium truncate ${isLight ? "text-slate-800" : "text-slate-200"}`}>
+                <span className={`text-xs font-medium truncate ${isLight ? "text-slate-800" : "text-white"}`}>
                   {pendingTask?.title || "Upload Educational Evaluation"}
                 </span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
                   isLight 
                     ? "bg-amber-50 text-amber-700 border-amber-200" 
-                    : "bg-amber-500/20 text-amber-300 border border-amber-400/40"
+                    : "bg-amber-400/15 text-amber-300 border border-amber-400/30"
                 }`}>
                   {pendingTask?.dueDate ? `Due ${new Date(pendingTask.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : "Due in 5 days"}
                 </span>
@@ -518,20 +518,20 @@ export default function ClientPortalDashboard({
         </div>
 
         {/* Col 2: LATEST ACTIVITY */}
-        <div className={`border rounded-xl p-5 shadow-xl backdrop-blur-sm space-y-4 flex flex-col justify-between ${
-          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
+        <div className={`border rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-4 flex flex-col justify-between ${
+          isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-blue-900/40"
         }`}>
-          <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
+          <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-blue-900/40"}`}>
             <Sparkles className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
-            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase ${isLight ? "text-amber-655" : "text-amber-400"}`}>LATEST ACTIVITY</p>
+            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase font-mono ${isLight ? "text-amber-655" : "text-amber-400"}`}>LATEST ACTIVITY</p>
           </div>
 
           <div className="space-y-3 flex-1">
             <div className="flex items-start gap-2.5 text-xs">
               <FileText className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isLight ? "text-amber-605" : "text-amber-400"}`} />
               <div className="flex-1 min-w-0">
-                <p className={`font-medium truncate ${isLight ? "text-slate-850" : "text-slate-200"}`}>Document uploaded</p>
-                <p className="text-[10px] text-slate-405 truncate">
+                <p className={`font-medium truncate ${isLight ? "text-slate-850" : "text-white"}`}>Document uploaded</p>
+                <p className="text-[10px] text-white/50 truncate">
                   {latestFile?.fileName || "Evaluation Report.pdf"} • {latestFile?.createdAt ? new Date(latestFile.createdAt).toLocaleDateString() : "Yesterday"}
                 </p>
               </div>
@@ -539,17 +539,17 @@ export default function ClientPortalDashboard({
             <div className="flex items-start gap-2.5 text-xs">
               <MessageSquare className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isLight ? "text-amber-605" : "text-amber-400"}`} />
               <div className="flex-1 min-w-0">
-                <p className={`font-medium truncate ${isLight ? "text-slate-850" : "text-slate-200"}`}>New message from advocate</p>
-                <p className="text-[10px] text-slate-405 truncate">
+                <p className={`font-medium truncate ${isLight ? "text-slate-850" : "text-white"}`}>New message from advocate</p>
+                <p className="text-[10px] text-white/50 truncate">
                   {recentMessage?.content ? recentMessage.content.slice(0, 30) + "..." : "Meeting preparation update • 2 hours ago"}
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-2.5 text-xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-505 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className={`font-medium truncate ${isLight ? "text-slate-855" : "text-slate-200"}`}>Task completed</p>
-                <p className="text-[10px] text-slate-405 truncate">
+                <p className={`font-medium truncate ${isLight ? "text-slate-855" : "text-white"}`}>Task completed</p>
+                <p className="text-[10px] text-white/50 truncate">
                   {completedTask?.title || "Review Parent Concern Form"} • May 6, 2026
                 </p>
               </div>
@@ -558,10 +558,10 @@ export default function ClientPortalDashboard({
 
           <button 
             onClick={() => onNavigateTab("tasks")}
-            className={`flex items-center gap-1 text-xs font-semibold pt-2 transition-colors border-t ${
+            className={`flex items-center gap-1 text-xs font-semibold pt-3 transition-colors border-t ${
               isLight 
                 ? "text-amber-600 hover:text-amber-705 border-slate-100" 
-                : "text-amber-400 hover:text-amber-300 border-slate-800/60"
+                : "text-amber-400 hover:text-amber-300 border-blue-900/40"
             }`}
           >
             View All Activity <ArrowRight className="w-3.5 h-3.5" />
@@ -569,97 +569,97 @@ export default function ClientPortalDashboard({
         </div>
 
         {/* Col 3: QUICK ACTIONS */}
-        <div className={`border rounded-xl p-5 shadow-xl backdrop-blur-sm space-y-3 ${
-          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
+        <div className={`border rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-3 ${
+          isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-blue-900/40"
         }`}>
-          <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
+          <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-blue-900/40"}`}>
             <Zap className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
-            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase ${isLight ? "text-amber-655" : "text-amber-400"}`}>QUICK ACTIONS</p>
+            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase font-mono ${isLight ? "text-amber-655" : "text-amber-400"}`}>QUICK ACTIONS</p>
           </div>
 
           <div className="grid grid-cols-3 gap-2 pt-1">
             
             <button 
               onClick={onUploadClick}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all group ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all group ${
                 isLight 
                   ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30" 
-                  : "border-slate-700/60 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40"
+                  : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40"
               }`}
             >
-              <Upload className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform mb-1.5" />
-              <span className={`text-[10px] font-semibold leading-tight group-hover:text-amber-700 ${
-                isLight ? "text-slate-700" : "text-slate-200 group-hover:text-amber-300"
+              <Upload className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1.5" />
+              <span className={`text-[10px] font-semibold leading-tight ${
+                isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
               }`}>Upload Document</span>
             </button>
 
             <button 
               onClick={() => onNavigateTab("communication")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all group ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all group ${
                 isLight 
                   ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30" 
-                  : "border-slate-700/60 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40"
+                  : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40"
               }`}
             >
-              <MessageSquare className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform mb-1.5" />
-              <span className={`text-[10px] font-semibold leading-tight group-hover:text-amber-700 ${
-                isLight ? "text-slate-700" : "text-slate-200 group-hover:text-amber-300"
+              <MessageSquare className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1.5" />
+              <span className={`text-[10px] font-semibold leading-tight ${
+                isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
               }`}>Send Message</span>
             </button>
 
             <button 
               onClick={onOpenScheduler}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all group ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all group ${
                 isLight 
                   ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30" 
-                  : "border-slate-700/60 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40"
+                  : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40"
               }`}
             >
-              <Calendar className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform mb-1.5" />
-              <span className={`text-[10px] font-semibold leading-tight group-hover:text-amber-700 ${
-                isLight ? "text-slate-700" : "text-slate-200 group-hover:text-amber-300"
+              <Calendar className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1.5" />
+              <span className={`text-[10px] font-semibold leading-tight ${
+                isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
               }`}>Schedule Meeting</span>
             </button>
 
             <button 
               onClick={() => onNavigateTab("compass")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all group ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all group ${
                 isLight 
                   ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30" 
-                  : "border-slate-700/60 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40"
+                  : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40"
               }`}
             >
               <Compass className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1.5" />
-              <span className={`text-[10px] font-semibold leading-tight group-hover:text-amber-700 ${
-                isLight ? "text-slate-700" : "text-slate-200 group-hover:text-amber-300"
+              <span className={`text-[10px] font-semibold leading-tight ${
+                isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
               }`}>View Recs</span>
             </button>
 
             <button 
               onClick={() => onNavigateTab("tasks")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all group ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all group ${
                 isLight 
                   ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30" 
-                  : "border-slate-700/60 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40"
+                  : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40"
               }`}
             >
               <CheckSquare className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1.5" />
-              <span className={`text-[10px] font-semibold leading-tight group-hover:text-amber-700 ${
-                isLight ? "text-slate-700" : "text-slate-200 group-hover:text-amber-300"
+              <span className={`text-[10px] font-semibold leading-tight ${
+                isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
               }`}>Add Task</span>
             </button>
 
             <button 
               onClick={() => onNavigateTab("cases")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all group ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all group ${
                 isLight 
                   ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30" 
-                  : "border-slate-700/60 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40"
+                  : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40"
               }`}
             >
               <Folder className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1.5" />
-              <span className={`text-[10px] font-semibold leading-tight group-hover:text-amber-700 ${
-                isLight ? "text-slate-700" : "text-slate-200 group-hover:text-amber-300"
+              <span className={`text-[10px] font-semibold leading-tight ${
+                isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
               }`}>Case Details</span>
             </button>
 
@@ -669,81 +669,81 @@ export default function ClientPortalDashboard({
       </div>
 
       {/* ── ROW 4: RESOURCE CENTER ────────────────────────────────────────── */}
-      <div className={`border rounded-xl p-5 shadow-xl backdrop-blur-sm space-y-3 ${
-        isLight ? "bg-white border-slate-200" : "bg-[#0A1628]/90 border-slate-700/50"
+      <div className={`border rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-3 ${
+        isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-blue-900/40"
       }`}>
         <div className="flex items-center gap-3">
           <GoldCompassRose className="w-6 h-6 shrink-0" />
           <div>
-            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase ${isLight ? "text-amber-655" : "text-amber-400"}`}>RESOURCE CENTER</p>
-            <p className={`text-xs ${isLight ? "text-slate-500" : "text-slate-300/80"}`}>Helpful tools and guides to support your advocacy journey.</p>
+            <p className={`text-[11px] font-bold tracking-[0.18em] uppercase font-mono ${isLight ? "text-amber-655" : "text-amber-400"}`}>RESOURCE CENTER</p>
+            <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/60"}`}>Helpful tools and guides to support your advocacy journey.</p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2 pt-1">
           <button 
             onClick={() => onNavigateTab("tools")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
               isLight 
                 ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30 text-slate-700 hover:text-amber-700" 
-                : "border-slate-700/70 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40 text-slate-200 hover:text-amber-300"
+                : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40 text-white hover:text-amber-300"
             }`}
           >
             <FileText className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
             IEP Tools
-            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/40" />
           </button>
 
           <button 
             onClick={() => onNavigateTab("tools")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
               isLight 
                 ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30 text-slate-700 hover:text-amber-700" 
-                : "border-slate-700/70 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40 text-slate-200 hover:text-amber-300"
+                : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40 text-white hover:text-amber-300"
             }`}
           >
             <User className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
             Parent Guides
-            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/40" />
           </button>
 
           <button 
             onClick={() => onNavigateTab("tasks")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
               isLight 
                 ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30 text-slate-700 hover:text-amber-700" 
-                : "border-slate-700/70 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40 text-slate-200 hover:text-amber-300"
+                : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40 text-white hover:text-amber-300"
             }`}
           >
             <CheckSquare className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
             Checklists
-            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/40" />
           </button>
 
           <button 
             onClick={() => onNavigateTab("smart-docs")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
               isLight 
                 ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30 text-slate-700 hover:text-amber-700" 
-                : "border-slate-700/70 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40 text-slate-200 hover:text-amber-300"
+                : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40 text-white hover:text-amber-300"
             }`}
           >
             <Layout className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
             Templates
-            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/40" />
           </button>
 
           <button 
             onClick={() => onNavigateTab("tools")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
               isLight 
                 ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30 text-slate-700 hover:text-amber-700" 
-                : "border-slate-700/70 bg-slate-900/60 hover:bg-amber-400/10 hover:border-amber-400/40 text-slate-200 hover:text-amber-300"
+                : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40 text-white hover:text-amber-300"
             }`}
           >
             <Video className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
             Video Library
-            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/40" />
           </button>
         </div>
       </div>

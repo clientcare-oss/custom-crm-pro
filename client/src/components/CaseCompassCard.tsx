@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Clock, Settings, MapPin, Target, User, Scale, Dribbble } from "lucide-react";
+import PageIdBadge from "@/components/PageIdBadge";
 
 // ─── Compass Config and Calculations ──────────────────────────────────────────
 
@@ -266,29 +267,34 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
   return (
     <div className="space-y-3">
-      <Card className="rounded-2xl border border-white/10 shadow-xl overflow-hidden bg-[#161B22] text-slate-100 flex flex-col p-0 gap-0">
+      <Card className="rounded-2xl border border-blue-900/40 shadow-2xl overflow-hidden bg-[#06172F] text-white flex flex-col p-0 gap-0">
         {/* Panel Header: Solid Dark Background with compact padding to match the spinner icon */}
-        <div className="flex items-center gap-3 border-b border-white/10 bg-[#0D1117] px-6 py-2.5">
-          <div className={`flex-shrink-0 ${isRecentlyUpdated ? "animate-[spin_8s_linear_infinite]" : ""}`}>
-            <CompassIcon className="h-9 w-9 text-amber-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-white text-sm tracking-tight leading-tight">
-              Waypoint Case Compass™
-            </h2>
-            <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 leading-none">
-              <Clock className="h-2.5 w-2.5 flex-shrink-0 text-slate-500" />
-              Updated {new Date(compass.updatedAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-              {isRecentlyUpdated && (
-                <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
-                  New
-                </span>
-              )}
-            </p>
+        <div className="flex items-center justify-between border-b border-blue-900/40 bg-[#06172F] px-6 py-3">
+          <div className="flex items-center gap-3">
+            <div className={`flex-shrink-0 ${isRecentlyUpdated ? "animate-[spin_8s_linear_infinite]" : ""}`}>
+              <CompassIcon className="h-9 w-9 text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-white text-sm tracking-tight leading-tight">
+                  Waypoint Case Compass™
+                </h2>
+                <PageIdBadge id="PG-023-CMP" name="Case Compass" />
+              </div>
+              <p className="text-[10px] text-white/50 flex items-center gap-1 mt-0.5 leading-none">
+                <Clock className="h-2.5 w-2.5 flex-shrink-0 text-amber-400" />
+                Updated {new Date(compass.updatedAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+                {isRecentlyUpdated && (
+                  <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300 border border-amber-400/30">
+                    New
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -525,19 +531,19 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
         )}
 
         <div 
-          className={`absolute inset-x-0 bottom-0 h-[60%] z-20 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
+          className={`absolute inset-x-0 bottom-0 h-[60%] z-20 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-blue-900/40 ${
             isDetailsOpen ? "pointer-events-auto" : "pointer-events-none"
           }`}
           style={{ 
-            backgroundColor: `rgba(22, 27, 34, ${(bgSettings.overlayOpacity ?? 95) / 100})`,
+            backgroundColor: `rgba(6, 23, 47, ${(bgSettings.overlayOpacity ?? 95) / 100})`,
             transform: isDetailsOpen ? 'translateY(0)' : 'translateY(100%)',
             transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           {/* Details Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-6 mb-4">
+          <div className="flex items-center justify-between border-b border-blue-900/40 pb-5 mb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/10 border border-amber-400/30">
                 <activeSectionObj.icon className="h-5 w-5 text-amber-300" />
               </div>
               <div className="text-left">
@@ -546,7 +552,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
             </div>
             <button
               onClick={() => setIsDetailsOpen(false)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-200 transition-all border border-white/5 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-950/60 hover:bg-blue-900/60 text-xs font-semibold text-white transition-all border border-blue-900/40 cursor-pointer"
             >
               Back to Dial
             </button>
@@ -555,27 +561,27 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
           {/* Details Value Text */}
           <div className="flex-1 overflow-y-auto pr-1 my-3 min-h-[180px] flex flex-col justify-center">
             {displayValue ? (
-              <div className="text-sm text-slate-100 leading-relaxed whitespace-pre-line text-left">
+              <div className="text-sm text-white/90 leading-relaxed whitespace-pre-line text-left">
                 <RichText value={displayValue} />
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-sm text-slate-300 italic font-medium">No details registered for this phase yet.</p>
-                <p className="text-xs text-slate-400 mt-1">Your Master IEP Coach® will update this section as the case progresses.</p>
+                <p className="text-sm text-white/70 italic font-medium">No details registered for this phase yet.</p>
+                <p className="text-xs text-white/40 mt-1">Your Master IEP Coach® will update this section as the case progresses.</p>
               </div>
             )}
           </div>
 
           {/* Switch View Buttons inside Details */}
-          <div className="flex items-center justify-between pt-3 border-t border-white/10 mt-auto">
+          <div className="flex items-center justify-between pt-3 border-t border-blue-900/40 mt-auto">
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold text-slate-400 mr-1">Switch view:</span>
+              <span className="text-[11px] font-semibold text-white/60 mr-1">Switch view:</span>
               {SECTIONS.map((sec) => (
                 <button
                   key={sec.key}
                   onClick={() => setActiveSection(sec.key)}
                   className={`h-2.5 rounded-full transition-all duration-300 ${
-                    activeSection === sec.key ? "w-6 bg-amber-400" : "w-2.5 bg-white/20 hover:bg-white/40"
+                    activeSection === sec.key ? "w-6 bg-amber-400" : "w-2.5 bg-blue-900/40 hover:bg-blue-800"
                   }`}
                   title={sec.label}
                 />
@@ -595,20 +601,20 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
         {/* Sliding Crop Editor Overlay: Slides up over the compass dial */}
         <div 
-          className={`absolute inset-x-0 bottom-0 h-[82%] z-30 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-white/10 ${
+          className={`absolute inset-x-0 bottom-0 h-[82%] z-30 p-5 md:p-6 flex flex-col justify-between backdrop-blur-md border-t border-blue-900/40 ${
             isEditingBg && isAdminView ? "pointer-events-auto" : "pointer-events-none"
           }`}
           style={{ 
-            backgroundColor: 'rgba(2, 6, 23, 0.3)',
+            backgroundColor: 'rgba(3, 12, 34, 0.95)',
             transform: isEditingBg && isAdminView ? 'translateY(0)' : 'translateY(100%)',
             transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-3">
+          <div className="flex items-center justify-between border-b border-blue-900/40 pb-4 mb-3">
             <span className="text-sm font-bold text-amber-300">Background Crop Settings</span>
             <button 
               onClick={() => setIsEditingBg(false)} 
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-200 transition-all border border-white/5"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-950/60 hover:bg-blue-900/60 text-xs font-semibold text-white transition-all border border-blue-900/40"
             >
               Done
             </button>
