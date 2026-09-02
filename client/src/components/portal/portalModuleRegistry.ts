@@ -24,7 +24,8 @@ import {
   Clock,
   Lock,
   Layers,
-  MapPin
+  MapPin,
+  CreditCard
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -265,14 +266,14 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   },
   {
     id: "financials",
-    name: "Billing",
-    icon: DollarSign,
+    name: "Membership",
+    icon: CreditCard,
     sidebarGroup: "account",
     displayOrder: 40,
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     unlockedStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
-    description: "Household invoices, payment history receipts, and retainer balances."
+    description: "Household membership plans, retainers, and payment receipts."
   },
   {
     id: "appointments",

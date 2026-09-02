@@ -7,7 +7,7 @@ import {
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
   ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
-  Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard
+  Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -575,9 +575,9 @@ const NAV_ITEMS = [
   { id: "smart-docs",    icon: VaultSafeIcon,    label: "Document Vault" },
   { id: "files",         icon: ActionCenterIcon, label: "Action Center" },
   { id: "tools",         icon: Wrench,           label: "Tools" },
-  { id: "cases",         icon: Briefcase,       label: "Cases" },
-  { id: "financials",    icon: DollarSign,      label: "Billing" },
-  { id: "appointments",  icon: Calendar,        label: "Appointments" },
+  { id: "cases",         icon: Briefcase,        label: "Cases" },
+  { id: "financials",    icon: CreditCard,       label: "Membership" },
+  { id: "appointments",  icon: Calendar,         label: "Appointments" },
   { id: "voyage-log",    icon: Video,          label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,      label: "Notes" },
   { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
