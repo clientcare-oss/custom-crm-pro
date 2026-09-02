@@ -53,6 +53,7 @@ import { ExplorePortalExperience } from "@/components/portal/onboarding/ExploreP
 import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryCard";
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
 import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
+import { PortalAppointmentsTab } from "@/components/portal/PortalAppointmentsTab";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { resolvePortalTabId, broadcastPageId } from "@/lib/pageIdRegistry";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -1711,47 +1712,21 @@ export default function ClientPortal() {
 
       case "appointments":
         return (
-          <div className="p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Appointments</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Upcoming and past meetings for {effectiveStudent.firstName}</p>
-            </div>
-            {studentAppointments.length > 0 ? (
-              <div className="space-y-3">
-                {studentAppointments.map((appt: any) => (
-                  <Card key={appt.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
-                          <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground text-sm">{appt.title}</p>
-                          {appt.description && <p className="text-xs text-muted-foreground mt-0.5">{appt.description}</p>}
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(appt.startTime).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                            {appt.location && ` · ${appt.location}`}
-                          </p>
-                        </div>
-                      </div>
-                      <span className={`flex-shrink-0 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        appt.status === "Confirmed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : appt.status === "Completed" ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                        : appt.status === "Cancelled" ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                      }`}>{appt.status}</span>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
-                <Calendar className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                <p className="text-sm font-semibold text-foreground mb-1">No appointments yet</p>
-                <p className="text-xs text-muted-foreground">Appointments for {effectiveStudent.firstName} will appear here</p>
-              </div>
-            )}
-          </div>
+          <PortalAppointmentsTab
+            displayName={displayName}
+            effectiveStudent={effectiveStudent}
+            studentAppointments={studentAppointments}
+            allMyAppointments={allMyAppointments}
+            phoneNumber={contactPhone || "(404) 555-0198"}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenScheduler={() => setShowMeetingScheduler(true)}
+            onUpdatePhone={(newPhone) => {
+              setContactPhone(newPhone);
+              toast.success(`Contact phone updated to ${newPhone}`);
+            }}
+            refetchAppointments={refetchAppointments}
+            isAdminView={isAdminView}
+          />
         );
 
       case "voyage-log":
