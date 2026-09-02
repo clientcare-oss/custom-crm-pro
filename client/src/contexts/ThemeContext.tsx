@@ -40,7 +40,7 @@ export function ThemeProvider({
     if (theme === "blue") {
       root.classList.add("blue");
     } else {
-      root.classList.add("navy");
+      root.classList.add("navy", "dark");
     }
     if (switchable) {
       localStorage.setItem("theme", theme);
