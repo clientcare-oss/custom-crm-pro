@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +26,19 @@ import {
   Sun, 
   Moon, 
   Sparkles,
+  ExternalLink,
+  ShieldCheck,
+  Building,
+  UserCheck,
+  Eye,
+  Info,
+  Laptop,
+  CheckCircle2,
+  Lock,
+  ArrowRight,
   type LucideIcon 
 } from "lucide-react";
+import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -36,140 +47,174 @@ const ICON_COMPONENT_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers,
 };
 
-interface ColorSwatch {
+interface ColorGuideItem {
   name: string;
   hex: string;
-  role: string;
-  category: "portal" | "admin" | "accent";
+  humanRole: string;
+  exactUsage: string;
+  scope: "portal" | "admin" | "accent";
+  mode: "dark" | "light" | "both";
   textColor?: string;
   borderColor?: string;
 }
 
-const PROGRAM_COLORS: ColorSwatch[] = [
-  // Portal & Midnight Navy System
+const COLOR_GUIDE: ColorGuideItem[] = [
+  // ── CLIENT PORTAL DARK MODE ──────────────────────────────────────────
   {
-    name: "Portal Sidebar & Top Header",
-    hex: "#06172F",
-    role: "Client Portal persistent navigation sidebar and top header background (PG-023, PG-027)",
-    category: "portal",
+    name: "Portal Background (Dark)",
+    hex: "#030914",
+    humanRole: "This color is the main background across all Client Portal pages.",
+    exactUsage: "Full viewport canvas, scrollable content area, and stage simulator background",
+    scope: "portal",
+    mode: "dark",
     textColor: "#FFFFFF",
     borderColor: "#18365D",
   },
   {
-    name: "Midnight Ocean (Portal BG)",
-    hex: "#040D1A",
-    role: "Primary page backdrop for the Client Portal & Onboarding Stages (PG-023, PG-027)",
-    category: "portal",
-    textColor: "#FFFFFF",
-    borderColor: "#18365D",
-  },
-  {
-    name: "Deep Navy (Portal Viewport)",
-    hex: "#040C16",
-    role: "Inner scrollable viewport canvas and stage simulator background",
-    category: "portal",
-    textColor: "#FFFFFF",
-    borderColor: "#18365D",
-  },
-  {
-    name: "Navy Glass Card (Surfaces)",
-    hex: "#07152B",
-    role: "Main interactive cards, meeting modules, and feature blocks",
-    category: "portal",
-    textColor: "#FFFFFF",
-    borderColor: "#18365D",
-  },
-  {
-    name: "Dark Navy Elevate",
-    hex: "#0A1F3D",
-    role: "Elevated card gradients, headers, and circular icon badge backgrounds",
-    category: "portal",
+    name: "Portal Cards & Boxes (Dark)",
+    hex: "#00102F",
+    humanRole: "This color is used for every card, workspace folder, container, and item box in the portal.",
+    exactUsage: "Document Vault summary strips, Action Center cards, task cards, chat thread boxes, and modals",
+    scope: "portal",
+    mode: "dark",
     textColor: "#FFFFFF",
     borderColor: "#285590",
   },
   {
-    name: "Slate Navy Border (Default)",
-    hex: "#18365D",
-    role: "Card borders, section dividers, and structural stroke outlines",
-    category: "portal",
+    name: "Portal Sidebar & Header (Dark)",
+    hex: "#02060D",
+    humanRole: "This color is the persistent navigation sidebar and top header background.",
+    exactUsage: "Left sidebar menu, sextant header background panel, and mobile navigation bar",
+    scope: "portal",
+    mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#285590",
+    borderColor: "#18365D",
   },
   {
-    name: "Luminous Navy Border (Hover)",
-    hex: "#285590",
-    role: "Card hover border glow and active input focus rings",
-    category: "portal",
+    name: "Elevated Active Surface (Dark)",
+    hex: "#001847",
+    humanRole: "This color is used for highlighted items, active task cards, and inner dialog sections.",
+    exactUsage: "Needs-Review action cards, active voyage recording player, and focused form panels",
+    scope: "portal",
+    mode: "dark",
     textColor: "#FFFFFF",
     borderColor: "#38BDF8",
   },
 
-  // Brand & Semantic Accent Colors
+  // ── CLIENT PORTAL LIGHT MODE ─────────────────────────────────────────
   {
-    name: "Golden Beacon (Brand Gold)",
-    hex: "#F5B544",
-    role: "Primary CTA buttons, lighthouse beacon glows, compass stars, and highlights",
-    category: "accent",
-    textColor: "#07152B",
-    borderColor: "#E5A534",
+    name: "Portal Background (Light)",
+    hex: "#F0F4F8",
+    humanRole: "This color is the main background when families switch the Client Portal to Light Mode.",
+    exactUsage: "Full portal viewport background when Light Mode is selected",
+    scope: "portal",
+    mode: "light",
+    textColor: "#0F172A",
+    borderColor: "#CBD5E1",
   },
   {
-    name: "Emerald Glow (Status / Success)",
+    name: "Portal Cards & Boxes (Light)",
+    hex: "#FFFFFF",
+    humanRole: "This pure white color is used for all cards, containers, and boxes in Light Mode.",
+    exactUsage: "White surface cards with subtle slate shadows and borders",
+    scope: "portal",
+    mode: "light",
+    textColor: "#0F172A",
+    borderColor: "#E2E8F0",
+  },
+  {
+    name: "Portal Sidebar & Header (Light)",
+    hex: "#FFFFFF",
+    humanRole: "This clean white surface is used for the sidebar and header in Light Mode.",
+    exactUsage: "Sidebar navigation panel and top sextant header in Light Mode",
+    scope: "portal",
+    mode: "light",
+    textColor: "#0F172A",
+    borderColor: "#E2E8F0",
+  },
+
+  // ── BRAND ACCENT & HIGHLIGHT COLORS ──────────────────────────────────
+  {
+    name: "Waypoint Gold (Action Accent)",
+    hex: "#F5B544",
+    humanRole: "This gold color is used for primary buttons, call-to-actions, and important highlights.",
+    exactUsage: "Start Action buttons, scheduled call countdowns, star badges, and compass needle",
+    scope: "accent",
+    mode: "both",
+    textColor: "#00102F",
+    borderColor: "#D97706",
+  },
+  {
+    name: "Emerald Status (Safe & FERPA)",
     hex: "#10B981",
-    role: "Confirmed meetings, phone consultation badges, active tags, and success states",
-    category: "accent",
+    humanRole: "This green color is used for FERPA compliant badges, completed milestones, and success tags.",
+    exactUsage: "100% Safe & Encrypted badge, completed onboarding checkmarks, and active status tags",
+    scope: "accent",
+    mode: "both",
     textColor: "#FFFFFF",
     borderColor: "#059669",
   },
   {
-    name: "Cyan Sky (District / Pathway)",
+    name: "Sky Blue (Info & Transcripts)",
     hex: "#38BDF8",
-    role: "School district badges, pathway compass guide, and subtle wave lines",
-    category: "accent",
-    textColor: "#07152B",
+    humanRole: "This blue color is used for in-progress workflows, meeting transcripts, and info tags.",
+    exactUsage: "In-progress workflow indicators, school district badges, and audio scrubbers",
+    scope: "accent",
+    mode: "both",
+    textColor: "#00102F",
     borderColor: "#0284C7",
   },
-  {
-    name: "Royal Purple (Document Vault)",
-    hex: "#A855F7",
-    role: "Document vault folders, IEP records, and smart file badges",
-    category: "accent",
-    textColor: "#FFFFFF",
-    borderColor: "#7E22CE",
-  },
 
-  // CRM Admin & Dashboard System Colors
+  // ── CRM ADMIN SIDE (BYRON'S WORKSPACE) ────────────────────────────────
   {
-    name: "Admin Dark Sidebar",
+    name: "CRM Admin Canvas (Light)",
+    hex: "#F8FAFC",
+    humanRole: "This color is the main background for Byron's CRM admin dashboard, tables, and views.",
+    exactUsage: "Background for /contacts, /leads, /invoices, /tasks, and /scheduler in Light Mode",
+    scope: "admin",
+    mode: "light",
+    textColor: "#0F172A",
+    borderColor: "#E2E8F0",
+  },
+  {
+    name: "CRM Admin Canvas (Dark)",
+    hex: "#090D16",
+    humanRole: "This color is the background for Byron's CRM admin dashboard when in Dark Mode.",
+    exactUsage: "Dark canvas background for CRM admin pages",
+    scope: "admin",
+    mode: "dark",
+    textColor: "#FFFFFF",
+    borderColor: "#1E293B",
+  },
+  {
+    name: "CRM Admin Cards (Light)",
+    hex: "#FFFFFF",
+    humanRole: "This white color is used for CRM tables, lead cards, and management widgets.",
+    exactUsage: "Contact cards, lead pipeline columns, billing tables, and task boards",
+    scope: "admin",
+    mode: "light",
+    textColor: "#0F172A",
+    borderColor: "#E2E8F0",
+  },
+  {
+    name: "CRM Admin Cards (Dark)",
+    hex: "#111827",
+    humanRole: "This dark slate color is used for CRM tables and cards when Admin Dark Mode is on.",
+    exactUsage: "Admin data tables, advocate note cards, and task management panels",
+    scope: "admin",
+    mode: "dark",
+    textColor: "#FFFFFF",
+    borderColor: "#374151",
+  },
+  {
+    name: "CRM Admin Sidebar",
     hex: "#0B132B",
-    role: "Advocate CRM main navigation sidebar and dark header bar",
-    category: "admin",
+    humanRole: "This dark navy color is the persistent left navigation sidebar for the CRM admin app.",
+    exactUsage: "Advocate CRM main left sidebar navigation",
+    scope: "admin",
+    mode: "both",
     textColor: "#FFFFFF",
     borderColor: "#1C2541",
-  },
-  {
-    name: "Admin Light Canvas",
-    hex: "#F8FAFC",
-    role: "CRM admin pages background (Slate 50 light mode)",
-    category: "admin",
-    textColor: "#0F172A",
-    borderColor: "#E2E8F0",
-  },
-  {
-    name: "Admin Light Card",
-    hex: "#FFFFFF",
-    role: "CRM admin data cards, tables, and dialog surfaces (White)",
-    category: "admin",
-    textColor: "#0F172A",
-    borderColor: "#E2E8F0",
-  },
-  {
-    name: "Admin Slate Border",
-    hex: "#E2E8F0",
-    role: "Light mode cards, table borders, and divider rules (Slate 200)",
-    category: "admin",
-    textColor: "#0F172A",
-    borderColor: "#CBD5E1",
   },
 ];
 
@@ -181,7 +226,13 @@ export default function Settings() {
   const [selected, setSelected] = useState(
     presetOptions.some((o) => o.value === projectLabel) ? projectLabel : "__custom__"
   );
-  const [colorFilter, setColorFilter] = useState<"all" | "portal" | "accent" | "admin">("all");
+
+  // Settings view section tab: "all" | "portal" | "admin" | "colors"
+  const [activeSection, setActiveSection] = useState<"portal" | "admin" | "colors">("portal");
+  
+  // Theme comparison filter: "all" | "dark" | "light"
+  const [themeModeFilter, setThemeModeFilter] = useState<"all" | "dark" | "light">("dark");
+  const [previewThemeMode, setPreviewThemeMode] = useState<"dark" | "light">("dark");
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
 
   const copyToClipboard = (hex: string, name: string) => {
@@ -198,16 +249,8 @@ export default function Settings() {
     onSuccess: () => {
       toast.success("Business phone number saved");
     },
-    onError: () => {
-      toast.error("Failed to save phone number");
-    },
+    onError: () => toast.error("Failed to save phone number"),
   });
-
-  useEffect(() => {
-    if (phoneData?.phone) {
-      setPhoneValue(phoneData.phone);
-    }
-  }, [phoneData]);
 
   // Company logo state
   const [logoUrlValue, setLogoUrlValue] = useState("");
@@ -215,38 +258,35 @@ export default function Settings() {
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
   const setLogoMutation = trpc.system.setCompanyLogo.useMutation({
     onSuccess: () => {
-      toast.success("Company logo saved");
+      toast.success("Company logo updated");
     },
-    onError: () => {
-      toast.error("Failed to save logo");
-    },
+    onError: () => toast.error("Failed to update logo"),
   });
 
-  useEffect(() => {
-    if (logoData?.logoUrl) {
-      setLogoUrlValue(logoData.logoUrl);
-    }
-  }, [logoData]);
+  // Populate initial values
+  useState(() => {
+    if (phoneData?.phone) setPhoneValue(phoneData.phone);
+    if (logoData?.logoUrl) setLogoUrlValue(logoData.logoUrl);
+  });
 
   const handleLogoSave = () => {
-    setLogoMutation.mutate({ logoUrl: logoUrlValue.trim() || null });
+    setLogoMutation.mutate({ logoUrl: logoUrlValue.trim() });
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Only image files are accepted.");
-      return;
-    }
+
     setUploadingLogo(true);
     try {
       const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/images/upload", {
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload-logo", {
         method: "POST",
         body: formData,
       });
+
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
       if (data.url) {
@@ -285,436 +325,628 @@ export default function Settings() {
     setPhoneMutation.mutate({ phone: trimmed });
   };
 
-  const filteredColors = colorFilter === "all" 
-    ? PROGRAM_COLORS 
-    : PROGRAM_COLORS.filter(c => c.category === colorFilter);
+  // Filter color guide based on current tab & mode filter
+  const filteredColors = COLOR_GUIDE.filter((c) => {
+    const matchesScope = activeSection === "colors" 
+      ? true 
+      : activeSection === "portal" 
+        ? (c.scope === "portal" || c.scope === "accent")
+        : (c.scope === "admin" || c.scope === "accent");
+
+    const matchesMode = themeModeFilter === "all" 
+      ? true 
+      : (c.mode === themeModeFilter || c.mode === "both");
+
+    return matchesScope && matchesMode;
+  });
 
   return (
-    <div className="space-y-8 p-6 md:p-8 max-w-4xl">
-      {/* Header with PG-024 Badge */}
-      <div className="space-y-2">
+    <div className="space-y-8 p-6 md:p-8 max-w-5xl mx-auto font-sans">
+      
+      {/* ── HEADER ──────────────────────────────────────────────────────── */}
+      <div className="space-y-3 border-b border-border pb-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
-              <Settings2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="rounded-xl bg-amber-400/10 border border-amber-400/25 p-2.5 text-amber-500">
+              <Settings2 className="h-6 w-6" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings & Practice Profile</h1>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                Settings & Practice Profile
+              </h1>
+              <p className="text-muted-foreground text-xs md:text-sm mt-0.5">
+                Clear configuration of what families experience in the Client Portal vs. what Byron & staff see in the CRM.
+              </p>
+            </div>
           </div>
-          <PageIdBadge id="PG-024" name="Settings" />
+          <PageIdBadge id="PG-024" name="Settings & Profile" />
         </div>
-        <p className="text-muted-foreground text-sm">
-          Customize terminology, branding, practice contact information, and view program color palettes.
-        </p>
+
+        {/* ── PRIMARY SCOPE SWITCHER (CLIENT PORTAL vs. ADMIN CRM vs. COLOR SYSTEM) ── */}
+        <div className="flex items-center gap-2 pt-3 flex-wrap">
+          <button
+            onClick={() => setActiveSection("portal")}
+            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === "portal"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+            }`}
+          >
+            <Laptop className="w-4 h-4" />
+            Client Portal (What Families See)
+          </button>
+
+          <button
+            onClick={() => setActiveSection("admin")}
+            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === "admin"
+                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+            }`}
+          >
+            <Briefcase className="w-4 h-4" />
+            Admin CRM (What Byron & Staff See)
+          </button>
+
+          <button
+            onClick={() => setActiveSection("colors")}
+            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === "colors"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+            }`}
+          >
+            <Palette className="w-4 h-4" />
+            Complete Color Palette & Tokens
+          </button>
+        </div>
       </div>
 
-      {/* ── NEW: Program Background & Theme Colors Section ────────────────── */}
-      <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
-        <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
-                <Palette className="h-4.5 w-4.5" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Program Background & Theme Colors</CardTitle>
-                <CardDescription>
-                  Visual palette and hex color codes used across the Client Portal, Advocate Workspace, and CRM.
-                </CardDescription>
-              </div>
-            </div>
-
-            {/* Category Filter Tabs */}
-            <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-lg border border-border text-xs self-start sm:self-auto">
-              <button
-                onClick={() => setColorFilter("all")}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "all" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                All ({PROGRAM_COLORS.length})
-              </button>
-              <button
-                onClick={() => setColorFilter("portal")}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "portal" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Portal Navy
-              </button>
-              <button
-                onClick={() => setColorFilter("accent")}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "accent" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Accents
-              </button>
-              <button
-                onClick={() => setColorFilter("admin")}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all ${colorFilter === "admin" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                CRM Admin
-              </button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Quick Portal Simulator & Live Preview Launcher Banner */}
-          <div className="bg-gradient-to-r from-blue-950/40 via-[#0A1F3D]/50 to-blue-900/20 border border-blue-500/20 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
-            <div className="space-y-0.5">
+      {/* ── SECTION 1: CLIENT PORTAL CONFIGURATION & COLOR GUIDE ──────────── */}
+      {activeSection === "portal" && (
+        <div className="space-y-6">
+          {/* Quick Notice Card */}
+          <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-950/40 via-[#00102F]/60 to-blue-900/20 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-blue-200">Looking to Preview or Test the Portal?</span>
-                <span className="text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full">
-                  PG-027
+                <span className="text-xs font-bold text-blue-300 uppercase tracking-wider">Client Portal Environment</span>
+                <span className="text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full">
+                  PG-023 / PG-027
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Launch the 14-Stage Client Portal Simulator with Desktop/Tablet/Mobile devices or view the live Client Portal.
+              <h3 className="text-base font-bold text-white">
+                How colors & layouts work in your families' portal
+              </h3>
+              <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                Families see a distraction-free, high-contrast interface. All cards and items use your exact midnight blue (<code className="text-amber-300 font-mono">#00102F</code>) against the deep nautical page backdrop (<code className="text-amber-300 font-mono">#030914</code>).
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
               <a href="/portal-management">
-                <Button size="sm" className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs h-8">
+                <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs h-8">
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                  Open Portal Simulator
+                  Test in Simulator (PG-027)
                 </Button>
               </a>
               <a href="/portal" target="_blank" rel="noreferrer">
-                <Button size="sm" variant="outline" className="text-xs h-8">
-                  Live Portal (PG-023)
+                <Button size="sm" variant="outline" className="text-xs h-8 text-white border-white/20 hover:bg-white/10">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                  Live Portal
                 </Button>
               </a>
             </div>
           </div>
 
-          {/* Swatches Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5">
-            {filteredColors.map((swatch) => {
-              const isCopied = copiedHex === swatch.hex;
-              return (
-                <div
-                  key={swatch.hex + swatch.name}
-                  onClick={() => copyToClipboard(swatch.hex, swatch.name)}
-                  className="group rounded-xl border border-border/80 bg-card hover:border-primary/50 p-3.5 flex items-start gap-3.5 cursor-pointer transition-all hover:shadow-md relative"
-                >
-                  {/* Visual Color Block */}
-                  <div
-                    className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center shadow-inner relative overflow-hidden transition-transform group-hover:scale-105"
-                    style={{ 
-                      backgroundColor: swatch.hex,
-                      border: `1px solid ${swatch.borderColor || "rgba(255,255,255,0.15)"}` 
-                    }}
-                  >
-                    <span 
-                      className="text-[10px] font-mono font-bold tracking-tight opacity-90"
-                      style={{ color: swatch.textColor || "#FFFFFF" }}
-                    >
-                      {swatch.hex}
-                    </span>
-                  </div>
-
-                  {/* Swatch Details */}
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1.5">
-                      <h4 className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                        {swatch.name}
-                      </h4>
-                      <button
-                        title="Copy Hex Code"
-                        className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted transition-colors shrink-0"
-                      >
-                        {isCopied ? (
-                          <Check className="h-3.5 w-3.5 text-emerald-500" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </button>
-                    </div>
-
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      {swatch.role}
-                    </p>
-
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <span className="font-mono text-[10px] text-primary font-semibold bg-primary/10 px-1.5 py-0.5 rounded">
-                        {swatch.hex}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">Click to copy</span>
-                    </div>
-                  </div>
+          {/* Dark vs Light Mode Comparison for Client Portal */}
+          <Card className="rounded-2xl border border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Palette className="w-5 h-5 text-amber-500" />
+                    Client Portal Color Dictionary
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Clear explanation of every color and background used throughout the Client Portal.
+                  </CardDescription>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Live Mini Preview Box */}
-          <div className="rounded-xl border border-[#18365D] bg-[#040D1A] p-4 text-white space-y-3 relative overflow-hidden shadow-inner">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-white">
-                <Sparkles className="h-3.5 w-3.5 text-[#F5B544]" />
-                Live Program Contrast Preview (Midnight Navy Theme)
-              </div>
-              <span className="text-[10px] font-mono text-white/50">bg: #040D1A</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              {/* Sample Card Surface */}
-              <div className="rounded-xl border border-[#18365D] bg-[#07152B] p-3 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-[#F5B544] uppercase tracking-wider">#07152B Surface</span>
-                  <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-                </div>
-                <p className="text-xs font-bold text-white">Interactive Card Header</p>
-                <p className="text-[11px] text-blue-200/70">Subtext rendered on deep navy surface with high legibility.</p>
-              </div>
-
-              {/* Sample Accent Bar */}
-              <div className="rounded-xl border border-[#285590] bg-[#0A1F3D] p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-blue-300 uppercase tracking-wider">#0A1F3D Elevate</span>
-                  <span className="text-[10px] font-bold text-[#F5B544]">#F5B544 Gold</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-6 px-2.5 rounded bg-[#F5B544] text-[#07152B] font-bold text-[11px] flex items-center justify-center">
-                    Primary CTA
-                  </div>
-                  <div className="h-6 px-2.5 rounded border border-[#18365D] bg-[#040D1A] text-white text-[11px] flex items-center justify-center">
-                    Secondary
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Business Information Section */}
-      <Card className="rounded-xl border border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Business Information</CardTitle>
-          <CardDescription>
-            Set your business contact details. Your phone number is shown on lead form confirmation pages so families can save it.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              Business Phone Number
-            </label>
-            <p className="text-xs text-muted-foreground">
-              Supports toll-free numbers (e.g., 1-800-XXX-XXXX). Displayed on the form success screen so families can save your number.
-            </p>
-            <div className="flex gap-2">
-              <VoiceInput
-                value={phoneValue}
-                onChange={(e) => setPhoneValue(e.target.value)}
-                placeholder="e.g., 1-800-555-0100 or (555) 123-4567"
-                className="flex-1"
-                type="tel"
-              />
-              <Button
-                onClick={handlePhoneSave}
-                disabled={setPhoneMutation.isPending}
-                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {setPhoneMutation.isPending ? "Saving..." : "Save"}
-              </Button>
-            </div>
-            {phoneData?.phone && (
-              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                <CheckCircle className="h-3 w-3" />
-                Currently saved: <span className="font-medium">{phoneData.phone}</span>
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Company Logo Section */}
-      <Card className="rounded-xl border border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Company Logo</CardTitle>
-          <CardDescription>
-            Customize the logo image shown in the top-left corner of the sidebar and customer portal.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold flex items-center gap-2">
-              Logo URL
-            </label>
-            <div className="flex gap-2">
-              <Input
-                value={logoUrlValue}
-                onChange={(e) => setLogoUrlValue(e.target.value)}
-                placeholder="e.g. https://example.com/logo.png or upload below"
-                className="flex-1"
-              />
-              <Button
-                onClick={handleLogoSave}
-                disabled={setLogoMutation.isPending}
-                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {setLogoMutation.isPending ? "Saving..." : "Save"}
-              </Button>
-            </div>
-            
-            <div className="flex items-center gap-4 pt-2">
-              <div className="flex flex-col gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                  className="hidden"
-                  id="logo-upload-input"
-                  disabled={uploadingLogo}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={uploadingLogo}
-                  onClick={() => document.getElementById("logo-upload-input")?.click()}
-                >
-                  {uploadingLogo ? "Uploading..." : "Upload Logo Image"}
-                </Button>
-              </div>
-
-              {logoUrlValue && (
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-muted-foreground">Preview:</span>
-                  <div className="h-12 w-12 rounded-lg border border-border bg-[#071422] p-1 flex items-center justify-center">
-                    <img
-                      src={logoUrlValue}
-                      alt="Logo Preview"
-                      className="h-full w-full object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = "none";
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Terminology Section */}
-      <Card className="rounded-xl border border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Terminology</CardTitle>
-          <CardDescription>
-            Choose the label used throughout the CRM for what you call a "Project". This
-            affects the sidebar, page titles, and all headings.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="mb-3 text-sm font-semibold text-foreground">
-              Current label:{" "}
-              <span className="text-primary font-bold">{projectLabel}</span>
-            </p>
-
-            {/* Preset options */}
-            <div className="grid gap-2 sm:grid-cols-2">
-              {presetOptions.map((option) => {
-                const isActive = selected === option.value;
-                return (
+                {/* Dark vs Light Toggle Filter */}
+                <div className="flex items-center p-1 rounded-xl bg-muted border border-border text-xs">
                   <button
-                    key={option.value}
-                    onClick={() => handleSelect(option.value)}
-                    className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-all text-left ${
-                      isActive
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-border bg-background text-foreground hover:bg-muted"
+                    onClick={() => setThemeModeFilter("dark")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                      themeModeFilter === "dark" ? "bg-slate-900 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <span>{option.label}</span>
-                    {isActive && <CheckCircle className="h-4 w-4 shrink-0" />}
+                    <Moon className="w-3.5 h-3.5 text-amber-400" />
+                    🌙 Dark Mode (Default)
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                  <button
+                    onClick={() => setThemeModeFilter("light")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                      themeModeFilter === "light" ? "bg-white text-slate-950 shadow-xs border border-slate-200" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Sun className="w-3.5 h-3.5 text-amber-500" />
+                    ☀️ Light Mode
+                  </button>
+                  <button
+                    onClick={() => setThemeModeFilter("all")}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                      themeModeFilter === "all" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All
+                  </button>
+                </div>
+              </div>
+            </CardHeader>
 
-          {/* Custom label */}
-          <div className="space-y-2 pt-2 border-t border-border">
-            <label className="text-sm font-semibold">Custom label</label>
-            <p className="text-xs text-muted-foreground">
-              Enter any word that fits your workflow (e.g., "Enrollment", "Engagement", "File").
-            </p>
-            <div className="flex gap-2">
-              <VoiceInput
-                value={customValue}
-                onChange={(e) => {
-                  setCustomValue(e.target.value);
-                  setSelected("__custom__");
-                }}
-                placeholder="e.g., Enrollment"
-                className="flex-1"
-              />
-              <Button
-                onClick={handleCustomSave}
-                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Apply
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {filteredColors.map((color) => (
+                  <div
+                    key={color.hex + color.name}
+                    onClick={() => copyToClipboard(color.hex, color.name)}
+                    className="group rounded-xl border border-border/80 bg-card hover:border-amber-400/50 p-4 flex items-start gap-3.5 cursor-pointer transition-all hover:shadow-md relative"
+                  >
+                    {/* Visual Color Swatch */}
+                    <div
+                      className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center shadow-inner relative overflow-hidden transition-transform group-hover:scale-105"
+                      style={{ 
+                        backgroundColor: color.hex,
+                        border: `1.5px solid ${color.borderColor || "rgba(255,255,255,0.2)"}` 
+                      }}
+                    >
+                      <span 
+                        className="text-[10px] font-mono font-bold tracking-tight"
+                        style={{ color: color.textColor || "#FFFFFF" }}
+                      >
+                        {color.hex}
+                      </span>
+                    </div>
+
+                    {/* Description with Human Clear Language */}
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <h4 className="text-xs font-bold text-foreground truncate group-hover:text-amber-500 transition-colors">
+                          {color.name}
+                        </h4>
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          {color.mode === "both" ? "Dark & Light" : color.mode}
+                        </span>
+                      </div>
+
+                      <p className="text-xs font-semibold text-amber-600 dark:text-amber-400/90 leading-tight">
+                        {color.humanRole}
+                      </p>
+
+                      <p className="text-[11px] text-muted-foreground leading-snug">
+                        {color.exactUsage}
+                      </p>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="font-mono text-[10px] text-primary font-bold bg-primary/10 px-1.5 py-0.5 rounded">
+                          {color.hex}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Copy className="w-2.5 h-2.5" /> Click to copy hex
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Live Interactive Portal Sample Card */}
+              <div className="mt-6 rounded-2xl border border-white/10 bg-[#030914] p-5 text-white space-y-4 shadow-xl">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-white">Live Client Portal Preview</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/30">
+                      Exact Colors Rendered
+                    </span>
+                  </div>
+                  <span className="text-xs text-white/50">Page Background: #030914</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Sample Card 1 */}
+                  <div className="rounded-xl border border-white/10 bg-[#00102F] p-4 space-y-2.5 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Document Vault Box</span>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+                        100% Safe & Encrypted
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white">2026 Psycho-Educational Evaluation.pdf</h4>
+                    <p className="text-xs text-white/60">
+                      Card Surface Color: <code className="text-amber-300 font-mono">#00102F</code>
+                    </p>
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                      <span className="text-[10px] text-white/40">Updated Today</span>
+                      <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-[#00102F] font-bold text-xs h-7 px-3 rounded-lg">
+                        View File
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Sample Card 2 */}
+                  <div className="rounded-xl border border-amber-400/40 bg-gradient-to-b from-[#001847] to-[#00102F] p-4 space-y-2.5 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Action Center Item</span>
+                      <span className="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-bold">
+                        Needs Your Review
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white">Parent Concerns & Priorities Statement</h4>
+                    <p className="text-xs text-white/70">
+                      Elevated Review Gradient: <code className="text-amber-300 font-mono">#001847 → #00102F</code>
+                    </p>
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                      <span className="text-[10px] text-white/40">Due in 3 days</span>
+                      <Button size="sm" className="bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-bold text-xs h-7 px-3 rounded-lg">
+                        Review Now →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── SECTION 2: ADMIN CRM SIDE (BYRON'S WORKSPACE) ─────────────────── */}
+      {activeSection === "admin" && (
+        <div className="space-y-6">
+          {/* Quick Admin Scope Banner */}
+          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/30 via-slate-900/60 to-amber-900/20 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Advocate CRM Environment</span>
+                <span className="text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
+                  Admin Master View
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-foreground">
+                Settings that affect Byron & staff operations
+              </h3>
+              <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
+                Configure your practice terminology (e.g., whether you manage "Students", "Clients", or "Projects"), practice phone number, and sidebar icons.
+              </p>
+            </div>
+            <a href="/contacts">
+              <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs h-8 shrink-0">
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                Go to Contacts (PG-002)
               </Button>
-            </div>
+            </a>
           </div>
 
-          {/* Preview */}
-          <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-1">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Preview
-            </p>
-            <p className="text-sm text-foreground">
-              Sidebar: <span className="font-semibold">{projectLabel}s</span>
-            </p>
-            <p className="text-sm text-foreground">
-              Page title: <span className="font-semibold">{projectLabel} Management</span>
-            </p>
-            <p className="text-sm text-foreground">
-              Dashboard card: <span className="font-semibold">Active {projectLabel}s</span>
-            </p>
-            <p className="text-sm text-foreground">
-              Button: <span className="font-semibold">New {projectLabel}</span>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          {/* Practice Phone Number Section */}
+          <Card className="rounded-2xl border border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Phone className="h-5 w-5 text-primary" />
+                Practice Business Phone Number
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Displayed to families on the Discovery Call confirmation screen and inside the client portal so they can reach your office.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Phone Number
+                </label>
+                <div className="flex gap-2">
+                  <VoiceInput
+                    value={phoneValue}
+                    onChange={(e) => setPhoneValue(e.target.value)}
+                    placeholder="e.g., (404) 555-0199 or 1-800-555-0100"
+                    className="flex-1 text-xs md:text-sm"
+                    type="tel"
+                  />
+                  <Button
+                    onClick={handlePhoneSave}
+                    disabled={setPhoneMutation.isPending}
+                    className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold px-5"
+                  >
+                    {setPhoneMutation.isPending ? "Saving..." : "Save Phone"}
+                  </Button>
+                </div>
+                {phoneData?.phone && (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium pt-1">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Currently active: <span className="font-bold">{phoneData.phone}</span>
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Icon Picker Section */}
-      <Card className="rounded-xl border border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Sidebar Icon</CardTitle>
-          <CardDescription>
-            Choose the icon shown next to the {projectLabel}s label in the sidebar.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-            {ICON_OPTIONS.map((opt) => {
-              const IconComp = ICON_COMPONENT_MAP[opt.key];
-              const isActive = projectIconKey === opt.key;
-              return (
-                <button
-                  key={opt.key}
-                  onClick={() => {
-                    setProjectIconKey(opt.key);
-                    toast.success(`Icon updated to ${opt.label}`);
-                  }}
-                  title={opt.label}
-                  className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-3 text-xs font-medium transition-all ${
-                    isActive
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border bg-background text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <IconComp className="h-5 w-5" />
-                  <span className="truncate w-full text-center">{opt.label}</span>
-                  {isActive && <CheckCircle className="h-3 w-3 text-primary" />}
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+          {/* Company Logo Section */}
+          <Card className="rounded-2xl border border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Building className="h-5 w-5 text-primary" />
+                Company Brand & Logo
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Customize the logo image displayed in the CRM header, sidebar, and client portal login screens.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Logo Image URL
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={logoUrlValue}
+                    onChange={(e) => setLogoUrlValue(e.target.value)}
+                    placeholder="e.g. https://example.com/logo.png or upload below"
+                    className="flex-1 text-xs md:text-sm"
+                  />
+                  <Button
+                    onClick={handleLogoSave}
+                    disabled={setLogoMutation.isPending}
+                    className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold px-5"
+                  >
+                    {setLogoMutation.isPending ? "Saving..." : "Save Logo"}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-4 pt-2">
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      id="logo-upload-input"
+                      disabled={uploadingLogo}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingLogo}
+                      onClick={() => document.getElementById("logo-upload-input")?.click()}
+                      className="text-xs font-semibold"
+                    >
+                      {uploadingLogo ? "Uploading..." : "Upload Logo File"}
+                    </Button>
+                  </div>
+
+                  {logoUrlValue && (
+                    <div className="flex items-center gap-3 p-2 rounded-xl bg-muted border border-border">
+                      <span className="text-xs text-muted-foreground font-semibold">Active Preview:</span>
+                      <div className="h-10 w-10 rounded-lg border border-border bg-[#00102F] p-1 flex items-center justify-center">
+                        <img
+                          src={logoUrlValue}
+                          alt="Logo Preview"
+                          className="h-full w-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Practice Terminology Section */}
+          <Card className="rounded-2xl border border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                Practice Case Terminology
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Choose the label used throughout Byron's CRM for what you call a client record (e.g. "Student", "Case", "Project").
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Active Label: <span className="text-primary font-bold text-sm normal-case">{projectLabel}</span>
+                </p>
+
+                {/* Preset options */}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {presetOptions.map((option) => {
+                    const isActive = selected === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => handleSelect(option.value)}
+                        className={`flex items-center justify-between rounded-xl border px-4 py-3 text-xs font-bold transition-all text-left cursor-pointer ${
+                          isActive
+                            ? "border-primary bg-primary/10 text-primary shadow-xs"
+                            : "border-border bg-background text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <span>{option.label}</span>
+                        {isActive && <CheckCircle className="h-4 w-4 shrink-0 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom label input */}
+              <div className="space-y-2 pt-3 border-t border-border">
+                <label className="text-xs font-bold text-foreground">Custom Terminology</label>
+                <div className="flex gap-2">
+                  <VoiceInput
+                    value={customValue}
+                    onChange={(e) => {
+                      setCustomValue(e.target.value);
+                      setSelected("__custom__");
+                    }}
+                    placeholder="e.g., Advocacy File, IEP Case"
+                    className="flex-1 text-xs"
+                  />
+                  <Button
+                    onClick={handleCustomSave}
+                    className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold"
+                  >
+                    Apply Custom
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Icon Picker Section */}
+          <Card className="rounded-2xl border border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Compass className="h-5 w-5 text-primary" />
+                Sidebar Case Icon
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Choose the icon shown next to the {projectLabel}s navigation tab in the CRM sidebar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                {ICON_OPTIONS.map((opt) => {
+                  const IconComp = ICON_COMPONENT_MAP[opt.key];
+                  const isActive = projectIconKey === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => {
+                        setProjectIconKey(opt.key);
+                        toast.success(`Icon updated to ${opt.label}`);
+                      }}
+                      title={opt.label}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-medium transition-all cursor-pointer ${
+                        isActive
+                          ? "border-primary bg-primary/10 text-primary font-bold shadow-xs"
+                          : "border-border bg-background text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <IconComp className="h-5 w-5" />
+                      <span className="truncate w-full text-center text-[11px]">{opt.label}</span>
+                      {isActive && <CheckCircle className="h-3.5 w-3.5 text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── SECTION 3: COMPLETE COLOR SYSTEM & TOKENS ─────────────────────── */}
+      {activeSection === "colors" && (
+        <div className="space-y-6">
+          <Card className="rounded-2xl border border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Palette className="w-5 h-5 text-purple-500" />
+                    Complete Master Color System & Design Tokens
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Full registry of colors used across Client Portal (Dark/Light) and CRM Admin Workspace.
+                  </CardDescription>
+                </div>
+
+                <div className="flex items-center gap-1 bg-muted p-1 rounded-xl border border-border text-xs">
+                  <button
+                    onClick={() => setThemeModeFilter("all")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                      themeModeFilter === "all" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All Modes
+                  </button>
+                  <button
+                    onClick={() => setThemeModeFilter("dark")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
+                      themeModeFilter === "dark" ? "bg-slate-900 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Moon className="w-3 h-3 text-amber-400" /> Dark
+                  </button>
+                  <button
+                    onClick={() => setThemeModeFilter("light")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
+                      themeModeFilter === "light" ? "bg-white text-slate-950 shadow-xs border border-slate-200" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Sun className="w-3 h-3 text-amber-500" /> Light
+                  </button>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {filteredColors.map((color) => (
+                  <div
+                    key={color.hex + color.name}
+                    onClick={() => copyToClipboard(color.hex, color.name)}
+                    className="group rounded-xl border border-border/80 bg-card hover:border-purple-400/50 p-4 flex items-start gap-3.5 cursor-pointer transition-all hover:shadow-md relative"
+                  >
+                    <div
+                      className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center shadow-inner relative overflow-hidden transition-transform group-hover:scale-105"
+                      style={{ 
+                        backgroundColor: color.hex,
+                        border: `1.5px solid ${color.borderColor || "rgba(255,255,255,0.2)"}` 
+                      }}
+                    >
+                      <span 
+                        className="text-[10px] font-mono font-bold tracking-tight"
+                        style={{ color: color.textColor || "#FFFFFF" }}
+                      >
+                        {color.hex}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <h4 className="text-xs font-bold text-foreground truncate group-hover:text-purple-500 transition-colors">
+                          {color.name}
+                        </h4>
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          {color.scope} • {color.mode}
+                        </span>
+                      </div>
+
+                      <p className="text-xs font-semibold text-foreground/90 leading-tight">
+                        {color.humanRole}
+                      </p>
+
+                      <p className="text-[11px] text-muted-foreground leading-snug">
+                        {color.exactUsage}
+                      </p>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="font-mono text-[10px] text-purple-600 dark:text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded">
+                          {color.hex}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">Click to copy</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
     </div>
   );
 }
