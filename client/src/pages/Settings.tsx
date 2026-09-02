@@ -362,6 +362,24 @@ export default function Settings() {
           <PageIdBadge id="PG-024" name="Settings & Profile" />
         </div>
 
+        {/* ── CURRENT PAGE BACKGROUND CALLOUT (100% EXPLICIT CLARITY) ── */}
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shrink-0">
+              <Info className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <span className="font-bold text-foreground">Current Page Background for PG-024:</span>{" "}
+              <span className="text-muted-foreground">
+                In <strong>Dark Mode</strong>, this Settings page sits on <code className="font-mono font-bold text-primary">#0D1117</code> with <code className="font-mono font-bold text-primary">#161B22</code> cards. In <strong>Light Mode</strong>, it sits on <code className="font-mono font-bold text-primary">#F8FAFC</code> with <code className="font-mono font-bold text-primary">#FFFFFF</code> cards.
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0 self-start sm:self-auto">
+            Admin CRM Scope
+          </span>
+        </div>
+
         {/* ── PRIMARY SCOPE SWITCHER (CLIENT PORTAL vs. ADMIN CRM vs. COLOR SYSTEM) ── */}
         <div className="flex items-center gap-2 pt-3 flex-wrap">
           <button
