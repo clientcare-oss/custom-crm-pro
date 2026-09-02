@@ -21,6 +21,7 @@ import PortalCommunicationTab from "@/components/portal/PortalCommunicationTab";
 import PortalTasksTab from "@/components/portal/PortalTasksTab";
 import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 import PortalActionCenterTab from "@/components/portal/PortalActionCenterTab";
+import PortalDocumentVaultTab from "@/components/portal/PortalDocumentVaultTab";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1126,7 +1127,7 @@ export default function ClientPortal() {
       "advocacy-intake"
     ];
 
-    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication" && activeTab !== "files") {
+    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication" && activeTab !== "files" && activeTab !== "smart-docs") {
       return (
         <LockedModulePreview
           moduleId={activeTab}
@@ -1338,33 +1339,12 @@ export default function ClientPortal() {
 
       case "smart-docs":
         return (
-          <div className="p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Documents</h2>
-              <p className="text-sm text-muted-foreground">Review and sign documents sent by your advocate.</p>
-            </div>
-            {smartFileAssignments.length === 0 && (
-              <div className="text-center py-10 text-muted-foreground">
-                <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No documents to review yet.</p>
-              </div>
-            )}
-            <div className="space-y-3">
-              {smartFileAssignments.map((a: any) => (
-                <div key={a.id} className="flex items-center gap-4 p-4 border rounded-xl bg-card">
-                  <FileText className="w-5 h-5 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-foreground">{a.templateName ?? "Document"}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{a.status}</p>
-                  </div>
-                  <a href={`/smart-files/response/${a.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/80 transition-colors">
-                    {a.status === "payment_completed" ? "View" : "Open"}
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
+          <PortalDocumentVaultTab
+            effectiveStudent={effectiveStudent}
+            displayName={displayName}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            isLight={theme === "blue"}
+          />
         );
 
       case "files":

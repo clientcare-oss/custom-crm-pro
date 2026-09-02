@@ -15,6 +15,7 @@ import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryC
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
 import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
 import PortalActionCenterTab from "@/components/portal/PortalActionCenterTab";
+import PortalDocumentVaultTab from "@/components/portal/PortalDocumentVaultTab";
 import { ClientStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -434,8 +435,18 @@ export function ExperiencePreviewModal({
                   />
                 )}
 
+                {/* ── Document Vault ── */}
+                {activeTab === "smart-docs" && (
+                  <PortalDocumentVaultTab
+                    effectiveStudent={{ id: 101, firstName: "Liam", lastName: "Jenkins", gradeLevel: "4th Grade" }}
+                    displayName={displayName}
+                    onNavigateTab={handleTabSelect}
+                    isLight={false}
+                  />
+                )}
+
                 {/* ── STAGE 01 & 02: Discovery Inquiry Submitted / Discovery Call Scheduled (PG-027-S01 / PG-027-S02) ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && ["01", "02"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["01", "02"].includes(currentStage.stepNumber) && (
                   <DiscoveryCallExperience
                     displayName={displayName}
                     upcomingAppointment={{
@@ -448,7 +459,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 03 - 05: Discovery Completed & Support Selection / Checkout ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && ["03", "04", "05"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["03", "04", "05"].includes(currentStage.stepNumber) && (
                   <ChooseSupportExperience
                     onPaymentSuccess={() => {
                       setSimulatedStageIndex(5); // Advances to stage 06 (Welcome / Agreements)
@@ -459,7 +470,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 06 - 07: Representation Agreements ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && ["06", "07"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["06", "07"].includes(currentStage.stepNumber) && (
                   <AgreementsExperience
                     onComplete={() => {
                       setSimulatedStageIndex(7); // Advances to stage 08 (Student Setup)
@@ -470,7 +481,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 08: Student Setup Profile ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && currentStage.stepNumber === "08" && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && currentStage.stepNumber === "08" && (
                   <StudentSetupExperience
                     onComplete={() => {
                       setSimulatedStageIndex(8); // Advances to stage 09 (Upload Records)
@@ -481,7 +492,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 09: Upload School Records ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && currentStage.stepNumber === "09" && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && currentStage.stepNumber === "09" && (
                   <UploadRecordsExperience
                     onComplete={() => {
                       setSimulatedStageIndex(9); // Advances to stage 10 (Advocacy Intake)
@@ -492,7 +503,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 10: Advocacy Priorities Intake ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && currentStage.stepNumber === "10" && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && currentStage.stepNumber === "10" && (
                   <AdvocacyIntakeExperience
                     onComplete={() => {
                       setSimulatedStageIndex(10); // Advances to stage 11 (Active Representation)
@@ -503,7 +514,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 11 - 12: Active Advocacy & Case Compass ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && ["11", "12"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["11", "12"].includes(currentStage.stepNumber) && (
                   <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
@@ -554,7 +565,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 13: Case Closing & Document Archive ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && currentStage.stepNumber === "13" && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && currentStage.stepNumber === "13" && (
                   <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6">
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 text-xs font-semibold mb-3 border border-teal-500/20">
