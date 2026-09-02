@@ -1926,7 +1926,7 @@ export default function ClientPortal() {
           navItems={filteredNavItems}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          clientStage={effectiveStudent ? "ACTIVE" : clientStage}
+          clientStage={stageFromUrl || clientStage}
           completedOnboardingSteps={completedOnboardingSteps}
           isExplorationActive={isExplorationActive}
           exploredTourIds={exploredTourIds}
@@ -1953,7 +1953,7 @@ export default function ClientPortal() {
               logoUrl={logoData?.logoUrl}
               hasAttorney={!!effectiveStudent?.attorneyName}
               navItems={filteredNavItems}
-              clientStage={effectiveStudent ? "ACTIVE" : clientStage}
+              clientStage={stageFromUrl || clientStage}
               completedOnboardingSteps={completedOnboardingSteps}
               isExplorationActive={isExplorationActive}
               exploredTourIds={exploredTourIds}
