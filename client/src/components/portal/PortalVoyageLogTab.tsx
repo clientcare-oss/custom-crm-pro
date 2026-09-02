@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import PageIdBadge from "@/components/PageIdBadge";
 
 interface Recording {
   id: string;
@@ -369,21 +370,30 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
       />
 
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-blue-900/40 pb-5">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Video className="h-6 w-6 text-amber-500" />
-            Voyage Log
-          </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Your recorded meetings. Securely stored. Easily searchable.
-          </p>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
+              <Video className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                  Voyage Log
+                </h1>
+                <PageIdBadge id="PG-023-VOY" name="Voyage Log" />
+              </div>
+              <p className="text-xs sm:text-sm text-white/60 mt-0.5">
+                Your recorded meetings. Securely stored. Easily searchable.
+              </p>
+            </div>
+          </div>
         </div>
         {isAdminView && (
           <Button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/10 flex items-center justify-center gap-2 transition-all"
+            className="w-full md:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,181,68,0.25)] flex items-center justify-center gap-2 transition-all"
           >
             {isUploading ? (
               <>
@@ -401,52 +411,52 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
       </div>
 
       {/* Metrics Panel */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border rounded-2xl p-5 gap-6 sm:gap-4 divide-y lg:divide-y-0 lg:divide-x ${
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border rounded-2xl p-5 gap-6 sm:gap-4 divide-y lg:divide-y-0 lg:divide-x shadow-xl ${
         isLight 
           ? "bg-white border-slate-200 divide-slate-200" 
-          : "bg-[#161B22]/30 border-white/10 divide-white/10"
+          : "bg-[#06172F] border-blue-900/40 divide-blue-900/30"
       }`}>
         {/* Item 1 */}
         <div className="flex items-center justify-center gap-4 py-2 sm:py-0">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.15)]">
             <Clapperboard className="h-5 w-5" />
           </div>
           <div>
-            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-[#b0bfff]"}`}>14</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Recorded Meetings</p>
+            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-white"}`}>14</p>
+            <p className="text-xs text-white/60 mt-0.5">Recorded Meetings</p>
           </div>
         </div>
 
         {/* Item 2 */}
         <div className="flex items-center justify-center gap-4 py-4 sm:py-0">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-amber-500/10 border border-amber-500/20 text-amber-300 shadow-[0_0_10px_rgba(245,181,68,0.15)]">
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-[#b0bfff]"}`}>32.4</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Total Hours Recorded</p>
+            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-white"}`}>32.4</p>
+            <p className="text-xs text-white/60 mt-0.5">Total Hours Recorded</p>
           </div>
         </div>
 
         {/* Item 3 */}
         <div className="flex items-center justify-center gap-4 py-4 sm:py-0">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-sky-500/10 text-sky-400">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-sky-500/10 border border-sky-500/20 text-sky-400 shadow-[0_0_10px_rgba(14,165,233,0.15)]">
             <FileText className="h-5 w-5" />
           </div>
           <div>
-            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-[#aae4ff]"}`}>100%</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Meetings Transcribed</p>
+            <p className={`text-lg font-bold ${isLight ? "text-slate-800" : "text-white"}`}>100%</p>
+            <p className="text-xs text-white/60 mt-0.5">Meetings Transcribed</p>
           </div>
         </div>
 
         {/* Item 4 */}
         <div className="flex items-center justify-center gap-4 py-4 sm:py-0">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-400">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.15)]">
             <Shield className="h-5 w-5" />
           </div>
           <div>
-            <p className={`text-sm font-bold leading-tight ${isLight ? "text-slate-800" : "text-[#b0bfff]"}`}>Secure & Private</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">Only you and your advocate can access</p>
+            <p className={`text-sm font-bold leading-tight ${isLight ? "text-slate-800" : "text-white"}`}>Secure & Private</p>
+            <p className="text-[10px] text-white/60 mt-0.5 leading-snug">Only you and your advocate can access</p>
           </div>
         </div>
       </div>
@@ -456,7 +466,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         {/* Left Column: Recordings List */}
         <div className="lg:col-span-1 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <span className="text-xs font-semibold text-white/60 uppercase tracking-wide">
               All Recordings
             </span>
           </div>
@@ -468,24 +478,24 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                 <div
                   key={rec.id}
                   onClick={() => setActiveRecId(rec.id)}
-                  className={`border rounded-xl p-3 flex gap-3 transition-all duration-200 cursor-pointer shadow-sm relative overflow-hidden ${
+                  className={`border rounded-2xl p-3.5 flex gap-3 transition-all duration-200 cursor-pointer shadow-xl relative overflow-hidden ${
                     isLight
                       ? isActive
                         ? "bg-white border-amber-500 shadow-md ring-1 ring-amber-500/10"
                         : "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow"
                       : isActive
-                        ? "bg-[#061A33] border-amber-400 text-slate-100 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/20"
-                        : "bg-[#161B22]/80 border-white/10 text-slate-300 hover:border-amber-400/30"
+                        ? "bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border-amber-400/60 text-white shadow-[0_4px_25px_rgba(11,37,83,0.35)] ring-1 ring-amber-400/30"
+                        : "bg-[#06172F] border-blue-900/40 text-white/80 hover:border-blue-700/60 hover:bg-[#081B36]"
                   }`}
                 >
                   {/* Thumbnail */}
-                  <div className="relative w-24 h-16 rounded-lg bg-slate-800 border border-white/5 overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="relative w-24 h-16 rounded-xl bg-[#030C22] border border-blue-900/40 overflow-hidden shrink-0 flex items-center justify-center">
                     {/* Simulated Lighthouse/Sailboat Thumbnail Graphics */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-[#021024] to-[#0A2647] opacity-90" />
                     <div className="absolute w-1.5 h-4 bg-white/40 bottom-1 left-8 rounded" />
                     <div className="absolute w-2 h-2 bg-amber-400 rounded-full blur-[2px] top-6 left-12" />
-                    <Play className="h-4 w-4 text-white relative z-10 opacity-70" />
-                    <span className="absolute bottom-1 right-1 bg-black/60 px-1 py-0.5 rounded text-[9px] font-semibold text-white leading-none">
+                    <Play className="h-4 w-4 text-white relative z-10 opacity-80" />
+                    <span className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 rounded text-[9px] font-semibold text-white font-mono leading-none">
                       {rec.duration}
                     </span>
                   </div>
@@ -493,28 +503,28 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                   {/* Details */}
                   <div className="min-w-0 flex-1 flex flex-col justify-between">
                     <div>
-                      <h4 className="font-bold text-xs truncate text-foreground flex items-center gap-1.5 font-sans">
+                      <h4 className="font-bold text-xs truncate text-white flex items-center gap-1.5">
                         {rec.title}
                         {rec.starred && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}
                       </h4>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-[10px] text-white/50 mt-0.5 font-mono">
                         {rec.date}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mt-1">
                       {rec.status === "uploading" ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold text-amber-500">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold text-amber-400 border border-amber-500/30">
                           <Loader2 className="h-2 w-2 animate-spin" />
                           Uploading...
                         </span>
                       ) : rec.status === "processing" ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 px-2 py-0.5 text-[9px] font-semibold text-indigo-400">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 px-2 py-0.5 text-[9px] font-semibold text-indigo-300 border border-indigo-500/30">
                           <Loader2 className="h-2.5 w-2.5 animate-spin" />
                           Transcribing...
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold text-emerald-500 dark:text-emerald-450">
-                          <Check className="h-2.5 w-2.5 text-emerald-500" />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold text-emerald-300 border border-emerald-500/30">
+                          <Check className="h-2.5 w-2.5 text-emerald-400" />
                           Transcript Ready
                         </span>
                       )}
@@ -527,7 +537,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
 
           <Button
             variant="outline"
-            className="w-full text-xs font-semibold border-slate-700/50 hover:bg-slate-800/40 text-muted-foreground"
+            className="w-full text-xs font-semibold border-blue-900/40 text-white/80 hover:bg-white/10 rounded-xl"
             onClick={() => toast.info("No additional recordings found.")}
           >
             Load More Recordings
@@ -536,14 +546,14 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
 
         {/* Right Column: Player & Interactive Transcript */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className={`p-5 rounded-xl border shadow-md space-y-4 ${
-            isLight ? "bg-white border-slate-200" : "bg-[#161B22]/80 border-white/10"
+          <Card className={`p-5 rounded-2xl border shadow-xl space-y-4 ${
+            isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-blue-900/40 text-white"
           }`}>
             {/* Header info */}
             <div className="flex justify-between items-start gap-4">
               <div>
-                <h3 className="text-base font-bold text-foreground">{activeRec.title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <h3 className="text-base font-bold text-white">{activeRec.title}</h3>
+                <p className="text-xs text-white/60 mt-0.5 font-mono">
                   {activeRec.date} &bull; {activeRec.duration}
                 </p>
               </div>
@@ -552,7 +562,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                   onClick={handleDownloadTranscript}
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs font-bold flex items-center gap-1.5 border-slate-700/50"
+                  className="h-8 text-xs font-bold flex items-center gap-1.5 border-blue-900/40 text-white hover:bg-white/10 rounded-xl"
                 >
                   <Download className="h-3.5 w-3.5" />
                   Download Transcript
@@ -560,7 +570,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 w-8 p-0 border-slate-700/50"
+                  className="h-8 w-8 p-0 border-blue-900/40 text-white hover:bg-white/10 rounded-xl"
                   onClick={() => toast.info("Export options coming soon.")}
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -569,29 +579,29 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
             </div>
 
             {/* Custom Video Player simulator */}
-            <div className="relative aspect-video rounded-xl bg-slate-950 border border-white/10 overflow-hidden flex flex-col justify-between group">
+            <div className="relative aspect-video rounded-2xl bg-[#030C22] border border-blue-900/40 overflow-hidden flex flex-col justify-between group shadow-2xl">
               {/* Thumbnail background image */}
-              <div className="absolute inset-0 bg-cover bg-center animate-pulse" style={{ backgroundImage: "url('/compass-bg.jpg')" }}>
+              <div className="absolute inset-0 bg-cover bg-center animate-pulse opacity-40" style={{ backgroundImage: "url('/compass-bg.jpg')" }}>
                 {/* Simulated dusk/dawn gradient mask */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#030C22] via-[#030C22]/40 to-transparent" />
               </div>
 
               {/* Big Center Play button */}
               <button
                 onClick={handlePlayToggle}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white flex items-center justify-center transition-all hover:scale-105 border border-white/20 shadow-xl cursor-pointer"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-[#06172F]/90 hover:bg-[#081B36] text-amber-400 flex items-center justify-center transition-all hover:scale-105 border border-amber-400/50 shadow-2xl cursor-pointer"
               >
-                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
+                {isPlaying ? <Pause className="h-6 w-6 text-white" /> : <Play className="h-6 w-6 ml-0.5 text-amber-400 fill-amber-400" />}
               </button>
 
               {/* Top watermark overlay */}
-              <div className="p-3 text-[10px] tracking-widest text-white/40 uppercase font-semibold relative z-10 flex items-center gap-1">
-                <Shield className="h-3.5 w-3.5 text-amber-500" />
-                Secure Encrypted Stream
+              <div className="p-3 text-[10px] tracking-widest text-white/50 uppercase font-semibold relative z-10 flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5 text-amber-400" />
+                Secure Encrypted Stream • Master IEP Coach®
               </div>
 
               {/* Video control bar at the bottom */}
-              <div className="p-3 bg-gradient-to-t from-slate-950 to-transparent space-y-2 relative z-10">
+              <div className="p-3 bg-gradient-to-t from-[#030C22] to-transparent space-y-2 relative z-10">
                 {/* Scrub Timeline Slider */}
                 <div className="flex items-center gap-3">
                   <input
@@ -600,7 +610,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                     max={activeRec.secondsLimit}
                     value={currentTime}
                     onChange={(e) => setCurrentTime(parseInt(e.target.value))}
-                    className="flex-1 h-1 rounded bg-white/20 accent-amber-505 cursor-pointer appearance-none"
+                    className="flex-1 h-1 rounded bg-white/20 accent-amber-400 cursor-pointer appearance-none"
                   />
                 </div>
 
@@ -610,7 +620,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                     <button onClick={handlePlayToggle} className="hover:text-amber-400 cursor-pointer">
                       {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </button>
-                    <span>
+                    <span className="font-mono">
                       {formatSeconds(currentTime)} / {activeRec.duration}
                     </span>
                   </div>
@@ -618,14 +628,14 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                   <div className="flex items-center gap-4 relative">
                     {/* Volume */}
                     <div className="flex items-center gap-1.5">
-                      <Volume2 className="h-4 w-4" />
+                      <Volume2 className="h-4 w-4 text-white/70" />
                       <input
                         type="range"
                         min={0}
                         max={100}
                         value={volume}
                         onChange={(e) => setVolume(parseInt(e.target.value))}
-                        className="w-16 h-1 rounded bg-white/25 accent-white cursor-pointer appearance-none"
+                        className="w-16 h-1 rounded bg-white/25 accent-amber-400 cursor-pointer appearance-none"
                       />
                     </div>
 
@@ -638,7 +648,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                         {speed}
                       </button>
                       {showSpeedMenu && (
-                        <div className="absolute bottom-6 right-0 bg-slate-900 border border-slate-700 rounded-md py-1 w-16 text-center text-xs shadow-2xl flex flex-col z-50">
+                        <div className="absolute bottom-6 right-0 bg-[#06172F] border border-blue-900/40 rounded-xl py-1 w-16 text-center text-xs shadow-2xl flex flex-col z-50">
                           {["0.5x", "1x", "1.25x", "1.5x", "2x"].map((s) => (
                             <button
                               key={s}
@@ -665,19 +675,19 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
             </div>
 
             {/* Highlights & Action Items grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border pt-4">
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 font-sans">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-blue-900/30 pt-4">
+              <div className="space-y-2 p-3.5 rounded-xl bg-blue-950/20 border border-blue-900/30">
+                <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4 text-purple-400 fill-purple-400" />
                   Meeting Highlights
                 </h4>
                 <ul className="space-y-1.5">
                   {activeRec.highlights.map((h, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                    <li key={i} className="text-xs text-white/70 flex items-start gap-2 leading-relaxed">
                       {h.includes("denied") ? (
-                        <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                       ) : (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
                       )}
                       <span>{h}</span>
                     </li>
@@ -685,14 +695,14 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                 </ul>
               </div>
 
-              <div className="space-y-2 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-4">
-                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 font-sans">
-                  <ClipboardList className="h-4 w-4 text-amber-500" />
+              <div className="space-y-2 p-3.5 rounded-xl bg-blue-950/20 border border-blue-900/30">
+                <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <ClipboardList className="h-4 w-4 text-amber-400" />
                   Action Items
                 </h4>
                 <ul className="space-y-1.5">
                   {activeRec.actionItems.map((a, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                    <li key={i} className="text-xs text-white/70 flex items-start gap-2 leading-relaxed">
                       <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-1.5" />
                       <span>{a}</span>
                     </li>
@@ -703,16 +713,16 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
           </Card>
 
           {/* Interactive Transcript / Notes tab */}
-          <Card className={`rounded-xl border shadow-sm overflow-hidden ${
-            isLight ? "bg-white border-slate-200" : "bg-[#161B22]/80 border-white/10"
+          <Card className={`rounded-2xl border shadow-xl overflow-hidden ${
+            isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-blue-900/40 text-white"
           }`}>
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-blue-900/40 bg-[#030C22]">
               <button
                 onClick={() => setRightTab("transcript")}
                 className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 text-center transition-colors cursor-pointer ${
                   rightTab === "transcript"
-                    ? "border-amber-400 text-amber-400 bg-amber-500/5"
-                    : "border-transparent text-muted-foreground hover:bg-slate-800/10"
+                    ? "border-amber-400 text-amber-400 bg-amber-500/10"
+                    : "border-transparent text-white/60 hover:text-white hover:bg-white/5"
                 }`}
               >
                 Transcript
@@ -721,8 +731,8 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                 onClick={() => setRightTab("notes")}
                 className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 text-center transition-colors cursor-pointer ${
                   rightTab === "notes"
-                    ? "border-amber-400 text-amber-400 bg-amber-500/5"
-                    : "border-transparent text-muted-foreground hover:bg-slate-800/10"
+                    ? "border-amber-400 text-amber-400 bg-amber-500/10"
+                    : "border-transparent text-white/60 hover:text-white hover:bg-white/5"
                 }`}
               >
                 Notes
@@ -734,17 +744,17 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                 <>
                   {/* Search bar */}
                   <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-white/40" />
                     <Input
                       placeholder="Search this transcript..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 bg-slate-900/60 border-slate-700/50 text-xs"
+                      className="pl-9 bg-[#030C22] border-blue-900/40 text-xs text-white placeholder:text-white/40 rounded-xl focus:border-amber-400/60 focus-visible:ring-amber-400"
                     />
                   </div>
 
                   {/* Transcript rows */}
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                     {activeRec.transcript
                       .filter((row) =>
                         row.text.toLowerCase().includes(searchQuery.toLowerCase())
@@ -752,25 +762,25 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                       .map((row, i) => (
                         <div
                           key={i}
-                          className="flex items-start justify-between gap-4 p-2 rounded-lg hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-colors group"
+                          className="flex items-start justify-between gap-4 p-2.5 rounded-xl hover:bg-blue-950/40 border border-transparent hover:border-blue-900/40 transition-colors group"
                         >
                           <div className="flex items-start gap-3">
                             <button
                               onClick={() => handleTimeJump(row.seconds)}
-                              className="text-[11px] font-bold text-amber-400 hover:underline shrink-0 pt-0.5 cursor-pointer"
+                              className="text-[11px] font-bold text-amber-400 hover:underline shrink-0 pt-0.5 font-mono cursor-pointer"
                             >
                               {row.time}
                             </button>
-                            <p className="text-xs text-slate-350 dark:text-slate-300 leading-relaxed font-medium">
+                            <p className="text-xs text-white/80 leading-relaxed font-medium">
                               {highlightMatches(row.text, searchQuery)}
                             </p>
                           </div>
                           <button
                             onClick={() => handleTimeJump(row.seconds)}
-                            className="p-1 rounded bg-slate-800 hover:bg-slate-750 text-white shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer animate-fadeIn"
+                            className="p-1 rounded-lg bg-blue-950 border border-blue-900/40 hover:bg-amber-400 hover:text-slate-950 text-white shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
                             title="Jump to this segment"
                           >
-                            <Play className="h-3 w-3 fill-white" />
+                            <Play className="h-3 w-3 fill-current" />
                           </button>
                         </div>
                       ))}
@@ -778,7 +788,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                     {activeRec.transcript.filter((row) =>
                       row.text.toLowerCase().includes(searchQuery.toLowerCase())
                     ).length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">
+                      <p className="text-xs text-white/50 text-center py-4">
                         No matches found for "{searchQuery}".
                       </p>
                     )}
@@ -786,11 +796,11 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                 </>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-foreground border-b border-border pb-2">
-                    <UserCheck className="h-4 w-4 text-amber-500" />
+                  <div className="flex items-center gap-2 text-xs font-bold text-white border-b border-blue-900/30 pb-2">
+                    <UserCheck className="h-4 w-4 text-amber-400" />
                     Advocate Review Notes
                   </div>
-                  <p className="text-xs text-slate-350 dark:text-slate-300 leading-relaxed whitespace-pre-wrap bg-slate-900/30 p-3 rounded-lg border border-slate-850">
+                  <p className="text-xs text-white/80 leading-relaxed whitespace-pre-wrap bg-[#030C22] p-4 rounded-xl border border-blue-900/40">
                     {activeRec.notes}
                   </p>
                 </div>
