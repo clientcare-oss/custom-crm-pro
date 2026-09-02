@@ -38,6 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import PageIdBadge from "@/components/PageIdBadge";
 
 interface PortalDocumentVaultTabProps {
   effectiveStudent?: any;
@@ -382,13 +383,14 @@ export default function PortalDocumentVaultTab({
       {/* ── HEADER ──────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
               Document Vault
             </h1>
             <div className="w-6 h-6 rounded-md bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.3)]">
               <Lock className="w-3.5 h-3.5" />
             </div>
+            <PageIdBadge id="PG-023-VAULT" name="Document Vault" />
           </div>
           <p className="text-sm text-white/70 mt-1">
             Your secure home for IEPs, evaluations, school records, and all Waypoint documents.
