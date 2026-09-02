@@ -870,10 +870,10 @@ export default function ClientPortal() {
     else if (paymentStatus === "cancelled") { toast.error("Payment was cancelled. You can try again anytime."); window.history.replaceState({}, "", window.location.pathname); }
   }, []);
 
-  const { data: studentAppointments = [] } = trpc.portal.getStudentAppointments.useQuery(
+  const { data: studentAppointments = [], refetch: refetchStudentAppointments } = trpc.portal.getStudentAppointments.useQuery(
     { studentContactId: effectiveStudentContactId! }, { enabled: !!effectiveStudentContactId }
   );
-  const { data: allMyAppointments = [] } = trpc.portal.getAllMyAppointments.useQuery(
+  const { data: allMyAppointments = [], refetch: refetchAllMyAppointments } = trpc.portal.getAllMyAppointments.useQuery(
     undefined, { enabled: !!portalUser || isPreviewMode }
   );
   const { data: studentFiles = [], refetch: refetchFiles } = trpc.portal.getStudentFiles.useQuery(
@@ -1717,14 +1717,21 @@ export default function ClientPortal() {
             effectiveStudent={effectiveStudent}
             studentAppointments={studentAppointments}
             allMyAppointments={allMyAppointments}
-            phoneNumber={contactPhone || "(404) 555-0198"}
+            phoneNumber={effectiveStudent?.phone || "(404) 555-0198"}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
             onOpenScheduler={() => setShowMeetingScheduler(true)}
             onUpdatePhone={(newPhone) => {
-              setContactPhone(newPhone);
-              toast.success(`Contact phone updated to ${newPhone}`);
+              if (effectiveStudentContactId) {
+                updateContactMutation.mutate({
+                  id: effectiveStudentContactId,
+                  phone: newPhone,
+                });
+              }
             }}
-            refetchAppointments={refetchAppointments}
+            refetchAppointments={() => {
+              refetchStudentAppointments();
+              refetchAllMyAppointments();
+            }}
             isAdminView={isAdminView}
           />
         );
