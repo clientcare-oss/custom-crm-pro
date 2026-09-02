@@ -36,28 +36,36 @@ export default function PortalCommunicationTab({
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
       {/* ── Header with PG-023-COM Badge ── */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-4 flex-wrap gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-amber-400" />
-              Communication & Messages
-            </h2>
-            <PageIdBadge id="PG-023-COM" name="Portal Communication" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-900/40 pb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
+            <MessageSquare className="w-5 h-5" />
           </div>
-          <p className="text-xs text-slate-400 mt-1">Direct encrypted messaging with your Waypoint advocate</p>
+          <div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                Communication & Messages
+              </h2>
+              <PageIdBadge id="PG-023-COM" name="Portal Communication" />
+            </div>
+            <p className="text-xs sm:text-sm text-white/60 mt-0.5">Direct encrypted messaging with Byron Honea (Master IEP Coach®)</p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
-          <Lock className="w-3.5 h-3.5" /> FERPA Compliant
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold self-start sm:self-auto shadow-sm">
+          <Lock className="w-3.5 h-3.5 text-emerald-400" /> FERPA Encrypted (AES-256)
         </div>
       </div>
 
       {/* Message Thread Box */}
-      <Card className="border-white/10 bg-[#161B22] text-slate-100 shadow-xl min-h-[360px] flex flex-col justify-between">
-        <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[450px]">
+      <Card className="border border-blue-900/40 bg-[#06172F] text-white shadow-xl min-h-[380px] flex flex-col justify-between rounded-2xl overflow-hidden">
+        <CardContent className="p-5 space-y-3.5 overflow-y-auto max-h-[480px]">
           {messages.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 text-xs">
-              No message history yet. Send a message below to reach your advocate.
+            <div className="text-center py-16 text-white/50 text-xs space-y-2">
+              <div className="w-12 h-12 rounded-full bg-blue-950/50 border border-blue-900/40 flex items-center justify-center mx-auto text-amber-400">
+                <MessageSquare className="w-6 h-6" />
+              </div>
+              <p className="font-semibold text-white">No message history yet</p>
+              <p className="text-white/40">Send a direct message below to connect with Byron.</p>
             </div>
           ) : (
             messages.map((msg) => {
@@ -65,15 +73,15 @@ export default function PortalCommunicationTab({
               return (
                 <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-md rounded-2xl px-4 py-3 text-xs leading-relaxed ${
+                    className={`max-w-md rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-lg ${
                       isMine
-                        ? "bg-amber-400 text-slate-950 font-semibold rounded-br-none shadow-md"
-                        : "bg-[#21262D] text-slate-100 border border-white/10 rounded-bl-none shadow-md"
+                        ? "bg-amber-400 text-slate-950 font-semibold rounded-br-none shadow-[0_0_15px_rgba(245,181,68,0.2)]"
+                        : "bg-[#030C22] text-white border border-blue-900/40 rounded-bl-none"
                     }`}
                   >
                     <p>{msg.content}</p>
                     {msg.createdAt && (
-                      <p className={`text-[10px] mt-1.5 text-right ${isMine ? "text-slate-900/70 font-medium" : "text-slate-400"}`}>
+                      <p className={`text-[10px] mt-1.5 text-right font-mono ${isMine ? "text-slate-900/70 font-semibold" : "text-white/50"}`}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>
                     )}
@@ -85,19 +93,19 @@ export default function PortalCommunicationTab({
         </CardContent>
 
         {/* Message Input Form */}
-        <div className="p-3 border-t border-white/10 bg-[#161B22] rounded-b-xl">
-          <form onSubmit={handleSubmit} className="flex gap-2">
+        <div className="p-3.5 border-t border-blue-900/40 bg-[#030C22]">
+          <form onSubmit={handleSubmit} className="flex gap-2.5">
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Type your message to Byron Honea (Master IEP Coach)..."
               rows={2}
-              className="bg-[#000821] border-white/15 text-white placeholder:text-white/40 text-xs resize-none focus-visible:ring-amber-400"
+              className="bg-[#06172F] border-blue-900/40 text-white placeholder:text-white/40 text-xs resize-none rounded-xl focus:border-amber-400/60 focus-visible:ring-amber-400"
             />
             <Button
               type="submit"
               disabled={!content.trim()}
-              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs h-auto px-4 self-end shrink-0"
+              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs h-auto px-4 py-3 rounded-xl self-end shrink-0 shadow-[0_0_12px_rgba(245,181,68,0.25)] transition-all"
             >
               <Send className="w-4 h-4" />
             </Button>
