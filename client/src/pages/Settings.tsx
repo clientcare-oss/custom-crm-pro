@@ -208,13 +208,13 @@ const COLOR_GUIDE: ColorGuideItem[] = [
   },
   {
     name: "CRM Admin Sidebar",
-    hex: "#0B132B",
-    humanRole: "This dark navy color is the persistent left navigation sidebar for the CRM admin app.",
-    exactUsage: "Advocate CRM main left sidebar navigation",
+    hex: "#06172F",
+    humanRole: "This color (#06172F) is the persistent left navigation sidebar for Byron's CRM admin workspace.",
+    exactUsage: "Advocate CRM main left navigation sidebar",
     scope: "admin",
     mode: "both",
     textColor: "#FFFFFF",
-    borderColor: "#1C2541",
+    borderColor: "#18365D",
   },
 ];
 
