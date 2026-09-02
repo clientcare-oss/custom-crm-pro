@@ -31,7 +31,7 @@ export const NAV_ITEMS = [
   { id: "voyage-log",    icon: Video,         label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,    label: "Notes" },
   { id: "attorney",      icon: Scale,         label: "Legal Counsel" },
-  { id: "details",       icon: Info,          label: "Details" },
+  { id: "details",       icon: GraduationCap, label: "Student Workspace" },
 ] as const;
 
 export type NavId = typeof NAV_ITEMS[number]["id"] | string;

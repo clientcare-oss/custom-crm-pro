@@ -27,6 +27,7 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import PageIdBadge from "@/components/PageIdBadge";
 
 interface RenewalListingExperienceProps {
   studentName?: string;
@@ -247,53 +248,53 @@ export function RenewalListingExperience({
   if (isRenewed) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 animate-in fade-in zoom-in-95 duration-300">
-        <Card className="border-2 border-emerald-500/40 bg-gradient-to-b from-emerald-500/10 via-background to-background shadow-2xl rounded-3xl overflow-hidden text-center p-8 sm:p-12 space-y-6">
-          <div className="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-inner">
+        <Card className="border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-[0_4px_30px_rgba(11,37,83,0.35)] rounded-3xl overflow-hidden text-center p-8 sm:p-12 space-y-6 text-white">
+          <div className="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-inner">
             <CheckCircle2 className="h-10 w-10 animate-bounce" />
           </div>
 
           <div className="space-y-2">
-            <Badge className="bg-emerald-500 text-white font-bold text-xs uppercase px-3 py-1">
+            <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-xs uppercase px-3 py-1">
               Representation Confirmed & Active
             </Badge>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               Advocacy Plan Renewed for {studentName}!
             </h1>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Thank you for trusting Waypoint Advocates for the 2026–2027 school year. Your coverage has been extended through <strong className="text-foreground">August 31, 2027</strong>.
+            <p className="text-sm sm:text-base text-white/70 max-w-xl mx-auto leading-relaxed">
+              Thank you for trusting Waypoint Advocates for the 2026–2027 school year. Your coverage has been extended through <strong className="text-amber-300">August 31, 2027</strong>.
             </p>
           </div>
 
-          <div className="bg-card border border-border/60 rounded-2xl p-6 max-w-lg mx-auto text-left space-y-3 text-xs sm:text-sm">
-            <div className="flex justify-between py-1.5 border-b border-border/40">
-              <span className="text-muted-foreground">Plan Selected:</span>
-              <span className="font-bold text-foreground">{selectedPkg.name}</span>
+          <div className="bg-[#030C22] border border-blue-900/40 rounded-2xl p-6 max-w-lg mx-auto text-left space-y-3 text-xs sm:text-sm shadow-xl">
+            <div className="flex justify-between py-1.5 border-b border-blue-900/30">
+              <span className="text-white/60">Plan Selected:</span>
+              <span className="font-bold text-white">{selectedPkg.name}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-border/40">
-              <span className="text-muted-foreground">Billing Schedule:</span>
-              <span className="font-semibold capitalize text-foreground">{paymentFrequency} Schedule</span>
+            <div className="flex justify-between py-1.5 border-b border-blue-900/30">
+              <span className="text-white/60">Billing Schedule:</span>
+              <span className="font-semibold capitalize text-white">{paymentFrequency} Schedule</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-border/40">
-              <span className="text-muted-foreground">Add-on Riders:</span>
-              <span className="font-semibold text-foreground">{selectedAddons.length} Applied</span>
+            <div className="flex justify-between py-1.5 border-b border-blue-900/30">
+              <span className="text-white/60">Add-on Riders:</span>
+              <span className="font-semibold text-white">{selectedAddons.length} Applied</span>
             </div>
-            <div className="flex justify-between py-1.5 text-base font-bold text-emerald-600 dark:text-emerald-400">
+            <div className="flex justify-between py-1.5 text-base font-bold text-emerald-400">
               <span>Total Confirmed:</span>
-              <span>${totals.finalTotal.toLocaleString()}</span>
+              <span className="text-amber-300 font-mono font-black">${totals.finalTotal.toLocaleString()}</span>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Button
               onClick={() => onNavigateTab ? onNavigateTab("compass") : window.location.reload()}
-              className="w-full sm:w-auto bg-primary text-primary-foreground font-semibold px-6 h-11"
+              className="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 h-11 rounded-xl shadow-[0_0_15px_rgba(245,181,68,0.25)]"
             >
               Return to Case Compass
             </Button>
             <Button
               variant="outline"
               onClick={() => toast.info("Receipt sent to parent email on file.")}
-              className="w-full sm:w-auto border-border/60 text-foreground"
+              className="w-full sm:w-auto border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white rounded-xl"
             >
               <FileText className="h-4 w-4 mr-2" />
               Download Renewal Agreement Addendum
@@ -308,34 +309,37 @@ export function RenewalListingExperience({
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
       
       {/* Top Banner: Status & Continuity Alert */}
-      <div className="bg-gradient-to-r from-primary/15 via-amber-500/10 to-primary/5 p-6 rounded-3xl border border-primary/25 shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 rounded-3xl border border-amber-400/60 shadow-[0_4px_30px_rgba(11,37,83,0.35)] relative overflow-hidden text-white">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-amber-500 text-white font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5">
+              <Badge className="bg-amber-400 text-slate-950 font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 shadow-sm">
                 Annual School Year Rollover
               </Badge>
-              <Badge variant="outline" className="text-xs font-mono border-amber-500/30 text-amber-700 dark:text-amber-300 bg-amber-500/10">
-                <Clock className="h-3 w-3 mr-1 inline" />
+              <Badge variant="outline" className="text-xs font-mono border-amber-400/50 text-amber-300 bg-amber-400/10">
+                <Clock className="h-3 w-3 mr-1 inline text-amber-400" />
                 {daysRemaining} Days Remaining on Current Plan
               </Badge>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
-              <RefreshCw className="h-7 w-7 text-primary" />
-              Advocacy Plan Renewal & Continuation Hub
-            </h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+                <RefreshCw className="h-7 w-7 text-amber-400" />
+                Advocacy Plan Renewal & Continuation Hub
+              </h1>
+              <PageIdBadge id="PG-023-RNW" name="Plan Renewal" />
+            </div>
 
-            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
-              Lock in Byron Honea's master advocacy coaching for <strong className="text-foreground">{studentName}</strong> ({studentGrade}). Current agreement expires on <strong className="text-foreground">{expirationDate}</strong>.
+            <p className="text-xs sm:text-sm text-white/70 max-w-2xl leading-relaxed">
+              Lock in Byron Honea's master advocacy coaching for <strong className="text-white font-semibold">{studentName}</strong> ({studentGrade}). Current agreement expires on <strong className="text-amber-300 font-semibold">{expirationDate}</strong>.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-            <div className="bg-card/90 backdrop-blur-sm border border-border/60 p-3.5 rounded-2xl text-center sm:text-right shadow-sm">
-              <span className="text-[11px] text-muted-foreground font-medium block">Current Representation</span>
-              <span className="text-sm font-bold text-foreground block">{currentTierName}</span>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">
+            <div className="bg-[#030C22] border border-blue-900/40 p-3.5 rounded-2xl text-center sm:text-right shadow-xl">
+              <span className="text-[11px] text-white/50 font-medium block">Current Representation</span>
+              <span className="text-sm font-bold text-white block">{currentTierName}</span>
+              <span className="text-[11px] text-emerald-400 font-semibold block mt-0.5">
                 ✓ 10% Loyalty Savings Eligible
               </span>
             </div>
@@ -343,9 +347,9 @@ export function RenewalListingExperience({
             <Button
               variant="outline"
               onClick={() => toast.info("Connecting to Byron's calendar for a 15-min Renewal Alignment Call...")}
-              className="gap-2 text-xs font-semibold h-11 border-border/60 hover:bg-muted"
+              className="gap-2 text-xs font-semibold h-11 border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white rounded-xl"
             >
-              <PhoneCall className="h-4 w-4 text-primary" />
+              <PhoneCall className="h-4 w-4 text-amber-400" />
               Request Alignment Call
             </Button>
           </div>
@@ -353,24 +357,24 @@ export function RenewalListingExperience({
       </div>
 
       {/* Payment Frequency Switcher */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20 p-4 rounded-2xl border border-border/40">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#06172F] p-4 rounded-2xl border border-blue-900/40 shadow-xl text-white">
         <div>
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-            <CreditCard className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-amber-400" />
             Select Billing Term & Payment Frequency
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-white/60 mt-0.5">
             Choose annual lump-sum for maximum loyalty savings, or flexible installment payments.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-background p-1 rounded-xl border border-border/60 shadow-sm">
+        <div className="flex items-center gap-1.5 bg-[#030C22] p-1.5 rounded-xl border border-blue-900/40 shadow-inner">
           <Button
             size="sm"
             variant={paymentFrequency === "annual" ? "default" : "ghost"}
             onClick={() => setPaymentFrequency("annual")}
             className={`h-8 text-xs font-semibold rounded-lg px-3 transition-all ${
-              paymentFrequency === "annual" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              paymentFrequency === "annual" ? "bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]" : "text-white/70 hover:text-white"
             }`}
           >
             Pay Annually
@@ -382,7 +386,7 @@ export function RenewalListingExperience({
             variant={paymentFrequency === "quarterly" ? "default" : "ghost"}
             onClick={() => setPaymentFrequency("quarterly")}
             className={`h-8 text-xs font-semibold rounded-lg px-3 transition-all ${
-              paymentFrequency === "quarterly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              paymentFrequency === "quarterly" ? "bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]" : "text-white/70 hover:text-white"
             }`}
           >
             4x Quarterly
@@ -393,7 +397,7 @@ export function RenewalListingExperience({
             variant={paymentFrequency === "monthly" ? "default" : "ghost"}
             onClick={() => setPaymentFrequency("monthly")}
             className={`h-8 text-xs font-semibold rounded-lg px-3 transition-all ${
-              paymentFrequency === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              paymentFrequency === "monthly" ? "bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]" : "text-white/70 hover:text-white"
             }`}
           >
             Monthly
@@ -407,11 +411,11 @@ export function RenewalListingExperience({
         {/* Left Column: Renewal Packages Grid (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" />
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-400" />
               1. Choose Renewal Package for 2026–2027
             </h2>
-            <span className="text-xs text-muted-foreground">4 Options Available</span>
+            <span className="text-xs text-white/50">4 Options Available</span>
           </div>
 
           <div className="space-y-4">
@@ -437,10 +441,10 @@ export function RenewalListingExperience({
                 <div
                   key={pkg.id}
                   onClick={() => setSelectedPackageId(pkg.id)}
-                  className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${
+                  className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden shadow-xl ${
                     isSelected
-                      ? "border-primary bg-primary/5 shadow-lg"
-                      : "border-border/60 bg-card hover:border-border hover:bg-muted/10"
+                      ? "border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] text-white shadow-[0_4px_25px_rgba(11,37,83,0.35)] ring-1 ring-amber-400/30"
+                      : "border-blue-900/40 bg-[#06172F] text-white/80 hover:border-blue-700/60 hover:bg-[#081B36]"
                   }`}
                 >
                   {pkg.badge && (
@@ -448,8 +452,8 @@ export function RenewalListingExperience({
                       <Badge
                         className={`text-[10px] font-bold uppercase px-2 py-0.5 ${
                           pkg.isPopular
-                            ? "bg-amber-500 text-white"
-                            : "bg-primary/20 text-primary border border-primary/30"
+                            ? "bg-amber-400 text-slate-950 shadow-md"
+                            : "bg-blue-950 text-amber-300 border border-amber-400/40"
                         }`}
                       >
                         {pkg.badge}
@@ -461,8 +465,8 @@ export function RenewalListingExperience({
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                         isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+                          ? "bg-amber-400 text-slate-950 shadow-md"
+                          : "bg-[#030C22] text-amber-300 border border-blue-900/40"
                       }`}
                     >
                       <IconComp className="h-5 w-5" />
@@ -470,42 +474,42 @@ export function RenewalListingExperience({
 
                     <div className="space-y-2 flex-1 pr-16">
                       <div>
-                        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                        <h3 className="text-base font-bold text-white flex items-center gap-2">
                           {pkg.name}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                        <p className="text-xs text-white/60 mt-0.5 leading-snug">
                           {pkg.tagline}
                         </p>
                       </div>
 
                       <div className="flex items-baseline gap-1.5 pt-1">
-                        <span className="text-2xl font-extrabold text-foreground">
+                        <span className="text-2xl font-extrabold text-white">
                           ${displayPrice.toLocaleString()}
                         </span>
-                        <span className="text-xs text-muted-foreground font-medium">{priceSuffix}</span>
+                        <span className="text-xs text-white/50 font-medium">{priceSuffix}</span>
                         {paymentFrequency === "annual" && (
-                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold ml-2">
+                          <span className="text-[11px] text-emerald-400 font-semibold ml-2">
                             (Includes 10% Loyalty Discount)
                           </span>
                         )}
                       </div>
 
-                      <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                      <p className="text-xs text-white/70 leading-relaxed pt-1">
                         {pkg.description}
                       </p>
 
                       {/* Feature Bullet Points */}
-                      <ul className="space-y-1.5 pt-2 text-xs text-foreground/90">
+                      <ul className="space-y-1.5 pt-2 text-xs text-white/90">
                         {pkg.features.map((feat, idx) => (
                           <li key={idx} className="flex items-start gap-2">
-                            <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                            <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
                             <span className="leading-tight">{feat}</span>
                           </li>
                         ))}
                       </ul>
 
-                      <div className="pt-2 text-[11px] text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40 font-medium">
-                        <strong>Best Suited For:</strong> {pkg.idealFor}
+                      <div className="pt-2 text-[11px] text-white/60 bg-[#030C22] p-3 rounded-xl border border-blue-900/40 font-medium">
+                        <strong className="text-amber-300 font-semibold">Best Suited For:</strong> {pkg.idealFor}
                       </div>
                     </div>
                   </div>
@@ -519,18 +523,18 @@ export function RenewalListingExperience({
         <div className="lg:col-span-5 space-y-6">
           
           {/* Add-ons & Riders */}
-          <Card className="border-border/60 shadow-md rounded-2xl overflow-hidden">
-            <CardHeader className="bg-muted/15 pb-3">
-              <CardTitle className="text-sm font-bold flex items-center justify-between">
+          <Card className="border-blue-900/40 bg-[#06172F] shadow-xl rounded-2xl overflow-hidden text-white">
+            <CardHeader className="bg-[#030C22] border-b border-blue-900/40 pb-3">
+              <CardTitle className="text-sm font-bold flex items-center justify-between text-white">
                 <span className="flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-primary" />
+                  <Plus className="h-4 w-4 text-amber-400" />
                   2. Optional Add-on Riders
                 </span>
-                <Badge variant="outline" className="text-[10px] font-mono">
+                <Badge variant="outline" className="text-[10px] font-mono border-blue-900/40 text-amber-300">
                   {selectedAddons.length} Selected
                 </Badge>
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs text-white/60">
                 Enhance your continuity plan with targeted specialized evaluations.
               </CardDescription>
             </CardHeader>
@@ -545,15 +549,15 @@ export function RenewalListingExperience({
                     onClick={() => toggleAddon(addon.id)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
                       isSelected
-                        ? "border-primary/60 bg-primary/5"
-                        : "border-border/50 bg-background hover:bg-muted/20"
+                        ? "border-amber-400/60 bg-blue-950/40 text-white shadow-md"
+                        : "border-blue-900/40 bg-[#030C22] hover:bg-blue-950/20 text-white/80"
                     }`}
                   >
                     <div
                       className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                         isSelected
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "border-muted-foreground/40 bg-background"
+                          ? "bg-amber-400 border-amber-400 text-slate-950"
+                          : "border-blue-900/60 bg-[#06172F]"
                       }`}
                     >
                       {isSelected && <Check className="h-3 w-3" />}
@@ -561,18 +565,18 @@ export function RenewalListingExperience({
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-xs text-foreground truncate">
+                        <span className="font-semibold text-xs text-white truncate">
                           {addon.name}
                         </span>
-                        <span className="font-bold text-xs text-foreground shrink-0">
+                        <span className="font-bold text-xs text-amber-300 shrink-0 font-mono">
                           +${addon.price}
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                      <p className="text-[11px] text-white/60 leading-relaxed mt-0.5">
                         {addon.description}
                       </p>
                       {addon.recommendedFor && (
-                        <span className="inline-block text-[10px] font-medium text-amber-600 dark:text-amber-400 mt-1">
+                        <span className="inline-block text-[10px] font-medium text-amber-400 mt-1">
                           ✦ {addon.recommendedFor}
                         </span>
                       )}
@@ -584,27 +588,27 @@ export function RenewalListingExperience({
           </Card>
 
           {/* Live Checkout Summary Card */}
-          <Card className="border-2 border-primary/40 bg-gradient-to-b from-primary/5 via-card to-card shadow-xl rounded-2xl overflow-hidden sticky top-6">
-            <CardHeader className="bg-primary/10 border-b border-primary/20 pb-4">
+          <Card className="border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-[0_4px_30px_rgba(11,37,83,0.35)] rounded-2xl overflow-hidden sticky top-6 text-white">
+            <CardHeader className="bg-[#030C22]/60 border-b border-blue-900/40 pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-extrabold text-foreground flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
+                <CardTitle className="text-base font-extrabold text-white flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-amber-400" />
                   Renewal Order Summary
                 </CardTitle>
-                <Badge className="bg-primary text-primary-foreground font-bold text-[10px]">
+                <Badge className="bg-amber-400 text-slate-950 font-bold text-[10px]">
                   2026–2027 Cycle
                 </Badge>
               </div>
-              <CardDescription className="text-xs">
-                Student: <strong className="text-foreground">{studentName}</strong> • Byron Honea, Advocate
+              <CardDescription className="text-xs text-white/70">
+                Student: <strong className="text-white font-semibold">{studentName}</strong> • Byron Honea, Advocate
               </CardDescription>
             </CardHeader>
 
             <CardContent className="p-5 space-y-4 text-xs sm:text-sm">
-              <div className="space-y-2 pb-3 border-b border-border/50">
+              <div className="space-y-2 pb-3 border-b border-blue-900/40">
                 <div className="flex justify-between items-start gap-2">
-                  <span className="text-muted-foreground">{selectedPkg.name}</span>
-                  <span className="font-semibold text-foreground text-right shrink-0">
+                  <span className="text-white/70">{selectedPkg.name}</span>
+                  <span className="font-semibold text-white text-right shrink-0 font-mono">
                     ${totals.basePrice.toLocaleString()}
                   </span>
                 </div>
@@ -614,19 +618,19 @@ export function RenewalListingExperience({
                   if (!addon) return null;
                   return (
                     <div key={addonId} className="flex justify-between items-start gap-2 text-xs">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <Plus className="h-3 w-3 text-primary shrink-0" />
+                      <span className="text-white/70 flex items-center gap-1">
+                        <Plus className="h-3 w-3 text-amber-400 shrink-0" />
                         {addon.name}
                       </span>
-                      <span className="font-semibold text-foreground shrink-0">+${addon.price}</span>
+                      <span className="font-semibold text-white shrink-0 font-mono">+${addon.price}</span>
                     </div>
                   );
                 })}
 
                 {totals.loyaltyDiscount > 0 && (
-                  <div className="flex justify-between items-start gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
+                  <div className="flex justify-between items-start gap-2 text-emerald-400 font-semibold text-xs">
                     <span>10% Loyalty Savings (Annual Term)</span>
-                    <span>-${totals.loyaltyDiscount.toLocaleString()}</span>
+                    <span className="font-mono">-${totals.loyaltyDiscount.toLocaleString()}</span>
                   </div>
                 )}
               </div>
@@ -634,17 +638,17 @@ export function RenewalListingExperience({
               {/* Total Row */}
               <div className="pt-1">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-bold text-foreground">
+                  <span className="text-sm font-bold text-white">
                     {paymentFrequency === "annual" ? "Annual Total:" : "Total Academic Investment:"}
                   </span>
-                  <span className="text-2xl font-black text-primary">
+                  <span className="text-3xl font-black text-amber-300 font-mono">
                     ${totals.finalTotal.toLocaleString()}
                   </span>
                 </div>
                 {paymentFrequency !== "annual" && (
-                  <div className="flex justify-between items-baseline mt-1 text-xs text-muted-foreground">
+                  <div className="flex justify-between items-baseline mt-1 text-xs text-white/60">
                     <span>Due Today ({paymentFrequency}):</span>
-                    <span className="font-bold text-foreground">
+                    <span className="font-bold text-white font-mono">
                       ${totals.paymentAmount.toLocaleString()}
                     </span>
                   </div>
@@ -652,8 +656,8 @@ export function RenewalListingExperience({
               </div>
 
               {/* Terms Checkbox note */}
-              <div className="p-3 rounded-xl bg-muted/30 border border-border/40 text-[11px] text-muted-foreground leading-relaxed flex gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-[11px] text-white/70 leading-relaxed flex gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
                   By confirming renewal, your Representation Agreement Addendum will be countersigned and filed to your R2 Document Vault.
                 </span>
@@ -664,7 +668,7 @@ export function RenewalListingExperience({
               <Button
                 onClick={handleConfirmRenewal}
                 disabled={isProcessing}
-                className="w-full h-12 text-sm font-bold bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all gap-2"
+                className="w-full h-12 text-sm font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-[0_0_20px_rgba(245,181,68,0.3)] transition-all gap-2 rounded-xl"
               >
                 {isProcessing ? (
                   <>
@@ -679,7 +683,7 @@ export function RenewalListingExperience({
                 )}
               </Button>
 
-              <p className="text-[10px] text-center text-muted-foreground">
+              <p className="text-[10px] text-center text-white/50">
                 🔒 256-Bit Encrypted Secure PCI-Compliant Checkout • Backed by Byron Honea
               </p>
             </CardFooter>
