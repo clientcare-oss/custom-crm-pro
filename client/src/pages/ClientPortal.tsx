@@ -7,7 +7,8 @@ import {
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
   ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
-  Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard
+  Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard,
+  GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -1896,34 +1897,162 @@ export default function ClientPortal() {
 
       case "details":
         const detailsList = [
-          { label: "Full Name", value: `${effectiveStudent.firstName} ${effectiveStudent.lastName}` },
-          { label: "Case ID", value: effectiveCaseId },
-          { label: "School / District", value: effectiveStudent.company || "—" },
-          { label: "Email", value: effectiveStudent.email || "—" },
-          { label: "Phone", value: effectiveStudent.phone || "—" },
+          { label: "Student Legal Name", value: `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim(), icon: User },
+          { label: "Case ID / Student Identifier", value: effectiveCaseId || "WP-STU-2026", icon: ShieldCheck },
+          { label: "School District & Campus", value: effectiveStudent.company || "Fulton County Schools", icon: Building },
+          { label: "Student Email", value: effectiveStudent.email || "Protected on file", icon: Mail },
+          { label: "Student Phone", value: effectiveStudent.phone || "Protected on file", icon: Phone },
         ];
 
         if (studentDetail?.parentContact) {
           const parent = studentDetail.parentContact;
           detailsList.push({
-            label: "Family / Parent",
-            value: `${parent.firstName} ${parent.lastName}${parent.email ? ` (${parent.email})` : ""}`
+            label: "Parent / Guardian",
+            value: `${parent.firstName} ${parent.lastName}${parent.email ? ` (${parent.email})` : ""}`,
+            icon: User
           });
         }
 
         return (
-          <div className="p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Details</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Student information on file</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
-              {detailsList.map(({ label, value }) => (
-                <div key={label} className="flex items-start justify-between gap-4 py-2 border-b border-border/50 last:border-0">
-                  <span className="text-sm text-muted-foreground">{label}</span>
-                  <span className="text-sm font-semibold text-foreground text-right">{value}</span>
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
+            {/* ── HEADER ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-900/40 pb-5">
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
+                    <GraduationCap className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Student Workspace
+                      </h1>
+                      <PageIdBadge id="PG-023-STU" name="Student Workspace" />
+                    </div>
+                    <p className="text-xs sm:text-sm text-white/60 mt-0.5">
+                      Student educational profile, district records, and IEP case details for {effectiveStudent.firstName}.
+                    </p>
+                  </div>
                 </div>
-              ))}
+              </div>
+            </div>
+
+            {/* ── STUDENT ADVOCACY HERO CARD ── */}
+            <div className="rounded-2xl border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 shadow-[0_4px_30px_rgba(11,37,83,0.35)] relative overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-blue-950/80 border border-amber-400/50 flex items-center justify-center text-amber-300 font-bold text-2xl shadow-xl shrink-0">
+                    {effectiveStudent.firstName?.charAt(0) || "S"}
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                        {effectiveStudent.firstName} {effectiveStudent.lastName || ""}
+                      </h2>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <CheckCircle2 className="h-3 w-3" /> Active Case Workspace
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/70">
+                      School: <span className="text-amber-300 font-semibold">{effectiveStudent.company || "Fulton County Schools"}</span> &bull; Advocate: <span className="text-white font-semibold">Byron Honea (Master IEP Coach®)</span>
+                    </p>
+                    <p className="text-[11px] text-white/50">
+                      FERPA Protected & Encrypted with AES-256 Storage
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0">
+                  <Button
+                    onClick={() => setActiveTab("smart-docs")}
+                    className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,181,68,0.25)] flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    <VaultSafeIcon className="h-4 w-4" />
+                    Open Document Vault
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab("files")}
+                    className="border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5"
+                  >
+                    <ActionCenterIcon className="h-4 w-4" />
+                    View Action Center
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* ── EDUCATIONAL & DEMOGRAPHIC DETAILS ── */}
+            <div className="rounded-2xl border border-blue-900/40 bg-[#06172F] p-6 shadow-xl space-y-4">
+              <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                <Info className="h-4 w-4 text-amber-400" />
+                Student Profile & Case Records
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                {detailsList.map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 flex items-start justify-between gap-3">
+                    <div className="space-y-0.5 min-w-0">
+                      <span className="text-[10px] uppercase font-bold text-white/40 block font-mono">{label}</span>
+                      <span className="text-xs font-semibold text-white truncate block">{value}</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-blue-950/50 text-amber-300 border border-blue-900/40 shrink-0">
+                      <Icon className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── ADVOCACY MODULE SHORTCUTS ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div 
+                onClick={() => setActiveTab("compass")}
+                className="p-4 rounded-2xl border border-blue-900/40 bg-[#06172F] hover:bg-[#081B36] hover:border-amber-400/50 transition-all cursor-pointer shadow-xl flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-400/10 text-amber-300 border border-amber-400/30">
+                    <Compass className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Case Compass</h4>
+                    <p className="text-[10px] text-white/50">IEP Goals & Journey</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              <div 
+                onClick={() => setActiveTab("voyage-log")}
+                className="p-4 rounded-2xl border border-blue-900/40 bg-[#06172F] hover:bg-[#081B36] hover:border-amber-400/50 transition-all cursor-pointer shadow-xl flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/30">
+                    <Video className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Voyage Log</h4>
+                    <p className="text-[10px] text-white/50">Meeting Recordings</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              <div 
+                onClick={() => setActiveTab("communication")}
+                className="p-4 rounded-2xl border border-blue-900/40 bg-[#06172F] hover:bg-[#081B36] hover:border-amber-400/50 transition-all cursor-pointer shadow-xl flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <MessageSquare className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Communication</h4>
+                    <p className="text-[10px] text-white/50">Direct Advocate Chat</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
             </div>
           </div>
         );
