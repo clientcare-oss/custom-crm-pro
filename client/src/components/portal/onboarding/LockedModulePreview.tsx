@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Shield
 } from "lucide-react";
+import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 
 interface LockedModulePreviewProps {
   moduleId: string;
@@ -79,6 +80,21 @@ export function LockedModulePreview({
             "Pre-meeting strategy agenda countdowns",
             "School IEP meeting dates with advocate attendance confirmation",
             "Post-meeting debrief notes and transcripts"
+          ],
+          cta: "View Scheduled Discovery Call",
+          targetTab: "discovery-call"
+        };
+      case "files":
+      case "action-center":
+        return {
+          icon: ActionCenterIcon,
+          title: "Action Center",
+          quote: "Documents, requests, and forms we're working on together.",
+          bullets: [
+            "Active collaborative requests & evaluation forms",
+            "Parent concerns statements & meeting agendas",
+            "Formal school notices & records requests",
+            "Automatic final preservation in Document Vault"
           ],
           cta: "View Scheduled Discovery Call",
           targetTab: "discovery-call"

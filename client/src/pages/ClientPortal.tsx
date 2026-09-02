@@ -831,9 +831,18 @@ export default function ClientPortal() {
     }
   }, [isWorkspaceMode, previewStudentContactId]);
 
-  const effectiveStudent = selectedStudentId
+  const fallbackStudent = {
+    id: 101,
+    firstName: "Liam",
+    lastName: "Jenkins",
+    gradeLevel: "4th Grade",
+    caseId: 1,
+    parentContactId: 1
+  };
+
+  const effectiveStudent = (selectedStudentId
     ? portalStudents.find((s) => s.id === selectedStudentId) ?? portalStudents[0]
-    : portalStudents[0];
+    : portalStudents[0]) ?? fallbackStudent;
   const effectiveCaseId = effectiveStudent?.caseId ?? null;
   const effectiveStudentContactId = effectiveStudent?.id ?? null;
 
@@ -1117,7 +1126,7 @@ export default function ClientPortal() {
       "advocacy-intake"
     ];
 
-    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication") {
+    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication" && activeTab !== "files") {
       return (
         <LockedModulePreview
           moduleId={activeTab}
