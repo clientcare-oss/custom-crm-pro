@@ -54,6 +54,7 @@ import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryC
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
 import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
 import { PortalAppointmentsTab } from "@/components/portal/PortalAppointmentsTab";
+import { PortalMembershipTab } from "@/components/portal/PortalMembershipTab";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { resolvePortalTabId, broadcastPageId } from "@/lib/pageIdRegistry";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -2046,6 +2047,16 @@ export default function ClientPortal() {
               </div>
             </div>
           </div>
+        );
+
+      case "financials":
+      case "membership":
+        return (
+          <PortalMembershipTab
+            displayName={displayName}
+            effectiveStudent={effectiveStudent}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+          />
         );
 
       case "renewal":
