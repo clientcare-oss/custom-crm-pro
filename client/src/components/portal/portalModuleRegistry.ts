@@ -25,7 +25,7 @@ import {
   Lock,
   Layers,
   MapPin,
-  Vault
+  FolderLock
 } from "lucide-react";
 
 export type ClientStage = 
@@ -213,7 +213,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   {
     id: "smart-docs",
     name: "Document Vault",
-    icon: Vault,
+    icon: FolderLock,
     sidebarGroup: "permanent",
     displayOrder: 22,
     visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
