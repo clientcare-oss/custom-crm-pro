@@ -27,6 +27,7 @@ import {
   MapPin
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
+import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 
 export type ClientStage = 
   | "DISCOVERY_INQUIRY"
@@ -228,7 +229,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   {
     id: "files",
     name: "Action Center",
-    icon: FolderOpen,
+    icon: ActionCenterIcon as any,
     sidebarGroup: "permanent",
     displayOrder: 23,
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],

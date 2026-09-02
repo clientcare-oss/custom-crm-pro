@@ -10,6 +10,7 @@ import {
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
+import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "@/components/CaseCompassCard";
@@ -571,9 +572,9 @@ const NAV_ITEMS = [
   { id: "compass",       icon: Compass,        label: "Compass" },
   { id: "communication", icon: MessageSquare,   label: "Communication" },
   { id: "tasks",         icon: CheckSquare,     label: "Tasks" },
-  { id: "smart-docs",    icon: VaultSafeIcon,   label: "Document Vault" },
-  { id: "files",         icon: FolderOpen,      label: "Action Center" },
-  { id: "tools",         icon: Wrench,          label: "Tools" },
+  { id: "smart-docs",    icon: VaultSafeIcon,    label: "Document Vault" },
+  { id: "files",         icon: ActionCenterIcon, label: "Action Center" },
+  { id: "tools",         icon: Wrench,           label: "Tools" },
   { id: "cases",         icon: Briefcase,       label: "Cases" },
   { id: "financials",    icon: DollarSign,      label: "Billing" },
   { id: "appointments",  icon: Calendar,        label: "Appointments" },
