@@ -178,13 +178,13 @@ const COLOR_GUIDE: ColorGuideItem[] = [
   },
   {
     name: "CRM Admin Canvas (Dark)",
-    hex: "#090D16",
-    humanRole: "This color is the background for Byron's CRM admin dashboard when in Dark Mode.",
-    exactUsage: "Dark canvas background for CRM admin pages",
+    hex: "#000821",
+    humanRole: "This color (#000821) is the background for Byron's CRM admin dashboard when in Dark Mode.",
+    exactUsage: "Dark canvas background for CRM admin pages (PG-001 through PG-024)",
     scope: "admin",
     mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#1E293B",
+    borderColor: "#18365D",
   },
   {
     name: "CRM Admin Cards (Light)",
@@ -198,13 +198,13 @@ const COLOR_GUIDE: ColorGuideItem[] = [
   },
   {
     name: "CRM Admin Cards (Dark)",
-    hex: "#111827",
-    humanRole: "This dark slate color is used for CRM tables and cards when Admin Dark Mode is on.",
+    hex: "#161B22",
+    humanRole: "This dark slate color (#161B22) is used for CRM tables and cards when Admin Dark Mode is on.",
     exactUsage: "Admin data tables, advocate note cards, and task management panels",
     scope: "admin",
     mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#374151",
+    borderColor: "#30363D",
   },
   {
     name: "CRM Admin Sidebar",
@@ -371,7 +371,7 @@ export default function Settings() {
             <div>
               <span className="font-bold text-foreground">Current Page Background for PG-024:</span>{" "}
               <span className="text-muted-foreground">
-                In <strong>Dark Mode</strong>, this Settings page sits on <code className="font-mono font-bold text-primary">#0D1117</code> with <code className="font-mono font-bold text-primary">#161B22</code> cards. In <strong>Light Mode</strong>, it sits on <code className="font-mono font-bold text-primary">#F8FAFC</code> with <code className="font-mono font-bold text-primary">#FFFFFF</code> cards.
+                In <strong>Dark Mode</strong>, this Settings page sits on <code className="font-mono font-bold text-primary">#000821</code> with <code className="font-mono font-bold text-primary">#161B22</code> cards. In <strong>Light Mode</strong>, it sits on <code className="font-mono font-bold text-primary">#F8FAFC</code> with <code className="font-mono font-bold text-primary">#FFFFFF</code> cards.
               </span>
             </div>
           </div>
