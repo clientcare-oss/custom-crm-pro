@@ -11,34 +11,42 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
   const autoCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // If an explicit ID is passed as a prop, use it; otherwise resolve from location
-  const page = explicitId 
-    ? { id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" } 
-    : resolvePageId(location);
-
-  // Auto-close after 6 seconds of being open
-  useEffect(() => {
-    if (open) {
-      autoCloseTimer.current = setTimeout(() => setOpen(false), 6000);
+  // Dynamic active page state (supports sub-tabs like PG-023-ACT, PG-023-VAULT, etc.)
+  const [activePage, setActivePage] = useState(() => {
+    if (explicitId) {
+      return { id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" };
     }
-    return () => {
-      if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
-    };
-  }, [open]);
+    return resolvePageId(location);
+  });
 
-  // Collapse when route changes
+  // Re-resolve when location changes or explicit props change
   useEffect(() => {
+    if (explicitId) {
+      setActivePage({ id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" });
+    } else {
+      setActivePage(resolvePageId(location));
+    }
     setOpen(false);
     setCopied(false);
-  }, [location]);
+  }, [location, explicitId, explicitName]);
 
-  // Cleanup on unmount
+  // Listen for broadcasted page/tab sub-id changes (e.g. from ClientPortal tab switching)
   useEffect(() => {
-    return () => {
-      if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
-      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    const handlePageIdChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.id) {
+        setActivePage({
+          id: customEvent.detail.id,
+          name: customEvent.detail.name || "Waypoint View",
+        });
+      }
     };
+
+    window.addEventListener("waypoint:page-id-change", handlePageIdChange);
+    return () => window.removeEventListener("waypoint:page-id-change", handlePageIdChange);
   }, []);
+
+  const page = activePage;
 
   if (!page) return null;
 

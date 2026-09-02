@@ -172,11 +172,68 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
   },
 ];
 
+// ─── Portal Tab & Workflow Sub-ID Mappings ──────────────────────────────────
+export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
+  // Main Navigation Tabs
+  "dashboard":        { id: "PG-023-DSH", name: "Portal Dashboard", category: "Portal" },
+  "appointments":     { id: "PG-023-APT", name: "Portal Appointments", category: "Portal" },
+  "compass":          { id: "PG-023-CMP", name: "Portal Case Compass", category: "Portal" },
+  "communication":    { id: "PG-023-COM", name: "Portal Communication", category: "Portal" },
+  "tasks":            { id: "PG-023-TSK", name: "Portal Tasks", category: "Portal" },
+  "smart-docs":       { id: "PG-023-VAULT", name: "Document Vault", category: "Portal" },
+  "files":            { id: "PG-023-ACT", name: "Action Center", category: "Portal" },
+  "financials":       { id: "PG-023-MBR", name: "Portal Membership", category: "Portal" },
+  "voyage-log":       { id: "PG-023-VOY", name: "Voyage Meeting Logs", category: "Portal" },
+  "notes":            { id: "PG-023-NTE", name: "Case Notes", category: "Portal" },
+  "details":          { id: "PG-023-STU", name: "Student Workspace", category: "Portal" },
+  "tools":            { id: "PG-023-TLS", name: "Advocacy Tools", category: "Portal" },
+  "cases":            { id: "PG-023-CAS", name: "Case Management", category: "Portal" },
+  "attorney":         { id: "PG-023-ATTY", name: "Legal Counsel Info", category: "Portal" },
+  "renewal":          { id: "PG-023-RNW", name: "Plan Renewal", category: "Portal" },
+  "renewals":         { id: "PG-023-RNW", name: "Plan Renewal", category: "Portal" },
+  "iep-comparator":   { id: "PG-023-IEP", name: "IEP Comparator", category: "Portal" },
+  "meeting-prep":     { id: "PG-023-PREP", name: "Meeting Prep Center", category: "Portal" },
+
+  // Onboarding Stage Modules
+  "discovery-call":   { id: "PG-027-S02", name: "Discovery Call Scheduled", category: "Portal Stage" },
+  "choose-support":   { id: "PG-027-S04", name: "Support Tier Selection", category: "Portal Stage" },
+  "agreements":       { id: "PG-027-S07", name: "Advocacy Agreements", category: "Portal Stage" },
+  "student-setup":    { id: "PG-027-S08", name: "Student Setup Profile", category: "Portal Stage" },
+  "upload-records":   { id: "PG-027-S09", name: "Document Upload", category: "Portal Stage" },
+  "advocacy-intake":  { id: "PG-027-S10", name: "Advocacy Detailed Intake", category: "Portal Stage" },
+  "explore-portal":   { id: "PG-027-S12", name: "Explore Portal Tour", category: "Portal Stage" },
+};
+
+/**
+ * Resolves a portal tab identifier (e.g. 'files', 'smart-docs', 'compass') to its specific Sub-Page ID.
+ */
+export function resolvePortalTabId(tabId: string): PageIdInfo | null {
+  return PORTAL_TAB_IDS[tabId] || null;
+}
+
+/**
+ * Broadcasts a custom page ID update so that the global corner PageIdBadge reflects sub-views immediately.
+ */
+export function broadcastPageId(idInfo: PageIdInfo) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("waypoint:page-id-change", { detail: idInfo }));
+  }
+}
+
 /**
  * Resolves any browser pathname to its corresponding Page ID and title.
  */
-export function resolvePageId(pathname: string): PageIdInfo {
+export function resolvePageId(pathname: string, search = ""): PageIdInfo {
   const cleanPath = pathname.split("?")[0].split("#")[0].replace(/\/+$/, "") || "/";
+
+  // Check URL query search for sub-tabs if on portal
+  if (cleanPath === "/portal" || cleanPath === "/client-portal") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab");
+    if (tabParam && PORTAL_TAB_IDS[tabParam]) {
+      return PORTAL_TAB_IDS[tabParam];
+    }
+  }
 
   // 1. Direct exact match
   if (PAGE_IDS[cleanPath]) {

@@ -53,6 +53,7 @@ import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryC
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
 import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
+import { resolvePortalTabId, broadcastPageId } from "@/lib/pageIdRegistry";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -672,6 +673,16 @@ export default function ClientPortal() {
       }
     }
   }, [activeTab, isExplorationActive, exploredTourIds]);
+
+  // Broadcast specific sub-page ID whenever the portal tab switches (e.g. PG-023-ACT, PG-023-VAULT)
+  useEffect(() => {
+    const tabInfo = resolvePortalTabId(activeTab);
+    if (tabInfo) {
+      broadcastPageId(tabInfo);
+    } else {
+      broadcastPageId({ id: "PG-023", name: "Client Portal" });
+    }
+  }, [activeTab]);
 
   const handleDismissTourIntro = (moduleId: string) => {
     setAcknowledgedTourIntros((prev) => {
