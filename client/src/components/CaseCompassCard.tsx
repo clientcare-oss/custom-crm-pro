@@ -160,7 +160,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
     xOffset: 50, // Default X offset
     zoom: 100,   // Default zoom
     overlayOpacity: 90, // Default opacity for overlays (90%)
-    bgOpacity: 85 // Default background image overlay opacity (85%)
+    bgOpacity: 50 // Default background image overlay opacity (50% for brighter, rich blue artwork)
   });
   const [isEditingBg, setIsEditingBg] = useState(false);
 
@@ -300,13 +300,15 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
         {/* Dial Body Area: Contains background image below header */}
         <div 
-          className="relative p-6 md:p-8 flex flex-col justify-between min-h-[380px] bg-cover bg-center"
+          className="relative p-6 md:p-8 flex flex-col justify-between min-h-[380px] bg-cover bg-center overflow-hidden"
           style={{ 
-            backgroundImage: `linear-gradient(rgba(10, 16, 26, ${(bgSettings.bgOpacity ?? 85) / 100}), rgba(10, 16, 26, ${((bgSettings.bgOpacity ?? 85) + 4) / 100})), url('/compass-bg.jpg')`,
+            backgroundImage: `linear-gradient(to bottom, rgba(11, 37, 83, ${(bgSettings.bgOpacity ?? 50) / 100 * 0.65}), rgba(3, 12, 34, ${(bgSettings.bgOpacity ?? 50) / 100})), url('/compass-bg.jpg')`,
             backgroundPosition: `${bgSettings.xOffset}% ${bgSettings.yOffset}%`,
             backgroundSize: `${bgSettings.zoom}%`
           }}
         >
+          {/* Subtle sapphire radial aura behind the compass dial for depth & contrast */}
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(14,116,218,0.18)_0%,rgba(6,23,47,0.4)_65%,transparent_100%)]" />
           {/* Background crop editor toggle button */}
           {isAdminView && (
             <button
