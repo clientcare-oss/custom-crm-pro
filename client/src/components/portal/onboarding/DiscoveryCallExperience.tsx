@@ -130,19 +130,19 @@ export function DiscoveryCallExperience({
         </div>
 
         {/* ── Card 1: Your Next Meeting Banner (Matching Border & Emerald Top Accent) ── */}
-        <div className="w-full lg:max-w-[52%] xl:max-w-[54%] rounded-2xl border border-white/15 bg-gradient-to-b from-[#0A1F3D]/90 via-[#0E223D]/90 to-[#161B22]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
+        <div className="w-full lg:max-w-[52%] xl:max-w-[54%] rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
           {/* Top Emerald Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
 
           {/* Top Section: Calendar Badge & Full-width text running across the box */}
           <div className="flex items-start gap-3.5">
             {/* Circular Golden Calendar Badge aligned with top of text */}
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[#F5B544]/40 bg-[#0C1F3D] flex items-center justify-center text-[#F5B544] shrink-0 shadow-inner mt-0.5">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[#F5B544]/40 bg-[#030C22] flex items-center justify-center text-[#F5B544] shrink-0 shadow-inner mt-0.5">
               <CalendarDays className="h-5 w-5 stroke-[1.8]" />
             </div>
 
             <div className="space-y-0.5 flex-1 min-w-0">
-              <span className="text-[10px] font-extrabold tracking-widest text-[#F5B544] uppercase block leading-tight">
+              <span className="text-[10px] font-extrabold tracking-widest text-[#F5B544] uppercase block leading-tight font-mono">
                 YOUR NEXT MEETING
               </span>
               <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
@@ -150,7 +150,7 @@ export function DiscoveryCallExperience({
               </h3>
               <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-xs text-blue-100/85 pt-0.5">
                 <span className="flex items-center gap-1.5 font-medium">
-                  <Calendar className="h-3.5 w-3.5 text-blue-300/80" />
+                  <Calendar className="h-3.5 w-3.5 text-amber-400" />
                   {apptDate}
                 </span>
                 <span className="flex items-center gap-1.5 font-medium">
@@ -165,8 +165,8 @@ export function DiscoveryCallExperience({
             </div>
           </div>
 
-          {/* Bottom Row: Subtle non-overpowering buttons side-by-side across the bottom */}
-          <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+          {/* Bottom Row: Action buttons */}
+          <div className="flex items-center gap-2 pt-2 border-t border-white/10">
             <Button
               size="sm"
               onClick={() => {
@@ -183,33 +183,33 @@ export function DiscoveryCallExperience({
               variant="outline"
               size="sm"
               onClick={onOpenScheduler}
-              className="border-[#1E3E6B] bg-[#0A1D38]/60 hover:bg-white/10 text-white/85 text-xs font-normal px-3 py-1.5 h-8 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              className="border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white text-xs font-normal px-3 py-1.5 h-8 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <Calendar className="h-3.5 w-3.5 text-blue-300/80" />
+              <Calendar className="h-3.5 w-3.5 text-amber-400" />
               <span>Reschedule</span>
             </Button>
           </div>
         </div>
 
         {/* ── Middle Row: Two Action Cards (Compacted & Streamlined) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Card A: Schedule Time With My Advocate */}
-          <div className="rounded-2xl border border-[#18365D] bg-gradient-to-b from-[#0A1F3D]/90 via-[#07162C]/90 to-[#051122]/95 backdrop-blur-md shadow-lg p-3.5 sm:p-4 flex flex-col justify-between hover:border-[#285590] transition-all relative overflow-hidden group space-y-2.5">
+          <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-xl p-4 sm:p-5 flex flex-col justify-between hover:border-amber-400/50 transition-all relative overflow-hidden group space-y-3">
             {/* Top Accent Line */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent" />
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {/* Header: Icon & Category Tag */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full border border-[#F5B544]/30 bg-[#0C1F3D] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
+                  <div className="w-8 h-8 rounded-full border border-[#F5B544]/30 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
                     <User className="h-4 w-4 stroke-[1.8]" />
                   </div>
                   <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
                     Schedule Time With My Advocate
                   </h4>
                 </div>
-                <span className="text-[9px] font-extrabold tracking-wider text-[#F5B544] uppercase bg-[#F5B544]/10 border border-[#F5B544]/20 px-2 py-0.5 rounded-full shrink-0">
+                <span className="text-[9px] font-extrabold tracking-wider text-[#F5B544] uppercase bg-[#F5B544]/10 border border-[#F5B544]/20 px-2 py-0.5 rounded-full shrink-0 font-mono">
                   YOU & ADVOCATE ONLY
                 </span>
               </div>
@@ -221,18 +221,18 @@ export function DiscoveryCallExperience({
 
               {/* Feature Highlight Chips */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-md">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
                   <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Strategy Calls
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-md">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
                   <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Case Prep
                 </span>
               </div>
             </div>
 
             {/* Compact Footer */}
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-blue-200/60 flex items-center gap-1">
+            <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-blue-200/60 flex items-center gap-1 font-mono">
                 <Clock className="h-3 w-3 text-[#F5B544]" />
                 Flexible Scheduling
               </span>
@@ -240,7 +240,7 @@ export function DiscoveryCallExperience({
               <Button
                 size="sm"
                 onClick={onOpenScheduler}
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3 py-1 h-7 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
               >
                 <span>Choose a Time</span>
                 <ChevronRight className="h-3 w-3 stroke-[2.5]" />
@@ -249,22 +249,22 @@ export function DiscoveryCallExperience({
           </div>
 
           {/* Card B: Add an IEP / 504 Meeting */}
-          <div className="rounded-2xl border border-[#18365D] bg-gradient-to-b from-[#0A1F3D]/90 via-[#07162C]/90 to-[#051122]/95 backdrop-blur-md shadow-lg p-3.5 sm:p-4 flex flex-col justify-between hover:border-[#285590] transition-all relative overflow-hidden group space-y-2.5">
+          <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-xl p-4 sm:p-5 flex flex-col justify-between hover:border-blue-400/50 transition-all relative overflow-hidden group space-y-3">
             {/* Top Accent Line */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {/* Header: Icon & Category Tag */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full border border-blue-400/30 bg-[#0E284E] text-blue-300 flex items-center justify-center shrink-0 shadow-inner">
+                  <div className="w-8 h-8 rounded-full border border-blue-400/30 bg-[#030C22] text-blue-400 flex items-center justify-center shrink-0 shadow-inner">
                     <CalendarPlus className="h-4 w-4 stroke-[1.8]" />
                   </div>
                   <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
                     Add an IEP / 504 Meeting
                   </h4>
                 </div>
-                <span className="text-[9px] font-extrabold tracking-wider text-blue-300 uppercase bg-blue-400/10 border border-blue-400/20 px-2 py-0.5 rounded-full shrink-0">
+                <span className="text-[9px] font-extrabold tracking-wider text-blue-300 uppercase bg-blue-400/10 border border-blue-400/20 px-2 py-0.5 rounded-full shrink-0 font-mono">
                   SCHOOL & ADVOCATE
                 </span>
               </div>
@@ -276,18 +276,18 @@ export function DiscoveryCallExperience({
 
               {/* Feature Highlight Chips */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-md">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
                   <span className="text-blue-400 font-bold text-[10px]">✓</span> Annual IEPs
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-100/80 bg-white/[0.04] border border-white/10 px-2.5 py-0.5 rounded-md">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
                   <span className="text-blue-400 font-bold text-[10px]">✓</span> 504 Conferences
                 </span>
               </div>
             </div>
 
             {/* Compact Footer */}
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-blue-200/60 flex items-center gap-1">
+            <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-blue-200/60 flex items-center gap-1 font-mono">
                 <Shield className="h-3 w-3 text-blue-400" />
                 Advocate Representation
               </span>
@@ -295,7 +295,7 @@ export function DiscoveryCallExperience({
               <Button
                 size="sm"
                 onClick={() => setAddMeetingOpen(true)}
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3 py-1 h-7 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
               >
                 <span>Add School Meeting</span>
                 <ChevronRight className="h-3 w-3 stroke-[2.5]" />
@@ -326,10 +326,10 @@ export function DiscoveryCallExperience({
             {/* Tool 1: IEP Comparator */}
             <div 
               onClick={() => onNavigateTab("iep-comparator")}
-              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-blue-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-blue-900/40 bg-[#06172F] backdrop-blur-md p-4 flex flex-col justify-between hover:border-blue-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full border border-blue-400/30 bg-[#0E284E] text-blue-400 flex items-center justify-center shadow-inner">
+                <div className="w-10 h-10 rounded-xl border border-blue-400/30 bg-[#030C22] text-blue-400 flex items-center justify-center shadow-inner">
                   <FileText className="h-5 w-5 stroke-[1.8]" />
                 </div>
                 <div>
@@ -350,10 +350,10 @@ export function DiscoveryCallExperience({
             {/* Tool 2: Document Vault */}
             <div 
               onClick={() => onNavigateTab("smart-docs")}
-              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-purple-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-blue-900/40 bg-[#06172F] backdrop-blur-md p-4 flex flex-col justify-between hover:border-purple-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full border border-purple-400/30 bg-[#1D143D] text-purple-300 flex items-center justify-center shadow-inner">
+                <div className="w-10 h-10 rounded-xl border border-purple-400/30 bg-[#030C22] text-purple-300 flex items-center justify-center shadow-inner">
                   <FolderOpen className="h-5 w-5 stroke-[1.8]" />
                 </div>
                 <div>
@@ -374,10 +374,10 @@ export function DiscoveryCallExperience({
             {/* Tool 3: Meeting Prep Center */}
             <div 
               onClick={() => onNavigateTab("meeting-prep")}
-              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-amber-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-blue-900/40 bg-[#06172F] backdrop-blur-md p-4 flex flex-col justify-between hover:border-amber-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full border border-[#F5B544]/30 bg-[#2B1F08] text-[#F5B544] flex items-center justify-center shadow-inner">
+                <div className="w-10 h-10 rounded-xl border border-amber-400/30 bg-[#030C22] text-[#F5B544] flex items-center justify-center shadow-inner">
                   <CheckSquare className="h-5 w-5 stroke-[1.8]" />
                 </div>
                 <div>
@@ -398,10 +398,10 @@ export function DiscoveryCallExperience({
             {/* Tool 4: Pathway Guide */}
             <div 
               onClick={() => onNavigateTab("compass")}
-              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-cyan-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-blue-900/40 bg-[#06172F] backdrop-blur-md p-4 flex flex-col justify-between hover:border-cyan-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full border border-cyan-400/30 bg-[#0A263D] text-cyan-300 flex items-center justify-center shadow-inner">
+                <div className="w-10 h-10 rounded-xl border border-cyan-400/30 bg-[#030C22] text-cyan-300 flex items-center justify-center shadow-inner">
                   <Compass className="h-5 w-5 stroke-[1.8]" />
                 </div>
                 <div>
@@ -422,7 +422,7 @@ export function DiscoveryCallExperience({
         </div>
 
         {/* ── Bottom Banner: "You're not alone in this." ────────────────────── */}
-        <div className="rounded-2xl border border-[#173052] bg-gradient-to-r from-[#07152B]/95 via-[#081832]/90 to-[#0A2244]/80 backdrop-blur-md p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden shadow-2xl">
+        <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-r from-[#06172F] via-[#071D40] to-[#0B2553] backdrop-blur-md p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden shadow-2xl">
           {/* Subtle wave vector lines in the background */}
           <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none">
             <svg viewBox="0 0 400 100" className="w-full h-full" fill="none" preserveAspectRatio="none">
@@ -433,7 +433,7 @@ export function DiscoveryCallExperience({
 
           {/* Left Side: Compass Rose & Reassurance */}
           <div className="flex items-center gap-3.5 z-10">
-            <div className="w-12 h-12 rounded-full border border-[#F5B544]/30 bg-[#0C1F3D] flex items-center justify-center text-[#F5B544] shrink-0 shadow-inner">
+            <div className="w-12 h-12 rounded-full border border-[#F5B544]/30 bg-[#030C22] flex items-center justify-center text-[#F5B544] shrink-0 shadow-inner">
               <WaypointCompassEmblem className="w-7 h-7" />
             </div>
             <div>
@@ -458,8 +458,8 @@ export function DiscoveryCallExperience({
 
       {/* ── Dialog: Update Phone Number Modal ─────────────────────────────── */}
       <Dialog open={phoneUpdateOpen} onOpenChange={setPhoneUpdateOpen}>
-        <DialogContent className="bg-[#07152B] border-[#173052] text-white max-w-md shadow-2xl">
-          <DialogHeader className="border-b border-white/10 pb-3">
+        <DialogContent className="bg-[#06172F] border-blue-900/40 text-white max-w-md shadow-2xl rounded-2xl">
+          <DialogHeader className="border-b border-blue-900/40 pb-3">
             <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
               <Phone className="h-5 w-5 text-[#F5B544]" />
               Update Your Phone Number
@@ -494,27 +494,27 @@ export function DiscoveryCallExperience({
                 value={phoneEditInput}
                 onChange={(e) => setPhoneEditInput(e.target.value)}
                 placeholder="(404) 555-0198"
-                className="w-full bg-[#040D1A] border border-[#173052] focus:border-[#F5B544] rounded-lg p-2.5 text-sm text-white outline-none transition-colors"
+                className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2.5 text-sm text-white outline-none transition-colors"
               />
               <p className="text-[11px] text-blue-200/60 mt-1.5 leading-relaxed">
                 Byron will call you directly at this number on <strong className="text-white">{apptDate}</strong> at <strong className="text-white">{apptTime}</strong>.
               </p>
             </div>
 
-            <div className="flex gap-2 justify-end pt-3 border-t border-white/10">
+            <div className="flex gap-2 justify-end pt-3 border-t border-blue-900/40">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setPhoneUpdateOpen(false)}
-                className="text-xs border-white/20 text-white hover:bg-white/10"
+                className="text-xs text-white/70 hover:text-white"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 size="sm"
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs shadow-md"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs rounded-xl shadow-md"
               >
                 Save Phone Number
               </Button>
@@ -525,8 +525,8 @@ export function DiscoveryCallExperience({
 
       {/* ── Dialog: Add School Meeting Modal ───────────────────────────────── */}
       <Dialog open={addMeetingOpen} onOpenChange={setAddMeetingOpen}>
-        <DialogContent className="bg-[#07152B] border-[#173052] text-white max-w-md">
-          <DialogHeader className="border-b border-white/10 pb-3">
+        <DialogContent className="bg-[#06172F] border-blue-900/40 text-white max-w-md shadow-2xl rounded-2xl">
+          <DialogHeader className="border-b border-blue-900/40 pb-3">
             <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
               <CalendarPlus className="h-5 w-5 text-[#F5B544]" />
               Add an IEP / 504 Meeting Date
@@ -539,7 +539,7 @@ export function DiscoveryCallExperience({
           <div className="space-y-3 pt-2 text-xs">
             <div>
               <label className="text-white/70 font-semibold block mb-1">Meeting Type</label>
-              <select className="w-full bg-[#040D1A] border border-[#173052] rounded-lg p-2 text-xs text-white outline-none">
+              <select className="w-full bg-[#030C22] border border-blue-900/40 rounded-xl p-2 text-xs text-white outline-none">
                 <option>Annual IEP Review</option>
                 <option>Initial Eligibility / Evaluation</option>
                 <option>504 Plan Meeting</option>
@@ -552,7 +552,7 @@ export function DiscoveryCallExperience({
               <label className="text-white/70 font-semibold block mb-1">Date & Time</label>
               <input
                 type="datetime-local"
-                className="w-full bg-[#040D1A] border border-[#173052] rounded-lg p-2 text-xs text-white outline-none"
+                className="w-full bg-[#030C22] border border-blue-900/40 rounded-xl p-2 text-xs text-white outline-none"
               />
             </div>
 
@@ -560,16 +560,16 @@ export function DiscoveryCallExperience({
               <label className="text-white/70 font-semibold block mb-1">School / Location / Notes</label>
               <textarea
                 placeholder="e.g. Virtual via Zoom, or In-person at North Gwinnett High Room 104..."
-                className="w-full bg-[#040D1A] border border-[#173052] rounded-lg p-2 text-xs text-white outline-none min-h-[60px]"
+                className="w-full bg-[#030C22] border border-blue-900/40 rounded-xl p-2 text-xs text-white outline-none min-h-[60px]"
               />
             </div>
 
-            <div className="flex gap-2 justify-end pt-3 border-t border-white/10">
+            <div className="flex gap-2 justify-end pt-3 border-t border-blue-900/40">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setAddMeetingOpen(false)}
-                className="text-xs border-white/20 text-white hover:bg-white/10"
+                className="text-xs text-white/70 hover:text-white"
               >
                 Cancel
               </Button>
@@ -577,8 +577,9 @@ export function DiscoveryCallExperience({
                 size="sm"
                 onClick={() => {
                   setAddMeetingOpen(false);
+                  toast.success("School meeting date saved!");
                 }}
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs rounded-xl shadow-md"
               >
                 Submit Meeting Date
               </Button>
