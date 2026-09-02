@@ -4,10 +4,9 @@ import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
   ChevronLeft, ChevronRight, Home, Video, Sparkles, CheckCircle2, Lock, PenTool, GraduationCap,
-  MapPin, RotateCcw, CreditCard
+  MapPin, RotateCcw, CreditCard, PenLine
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
-import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 import { 
   PORTAL_MODULE_REGISTRY, 
   TOUR_MODULES,
@@ -19,11 +18,11 @@ import {
 const LOGO_URL = "/waypoint-logo.png";
 
 export const NAV_ITEMS = [
-  { id: "compass",       icon: Compass,          label: "Compass" },
-  { id: "communication", icon: MessageSquare,     label: "Communication" },
-  { id: "tasks",         icon: CheckSquare,       label: "Tasks" },
-  { id: "smart-docs",    icon: VaultSafeIcon,    label: "Document Vault" },
-  { id: "files",         icon: ActionCenterIcon, label: "Action Center" },
+  { id: "compass",       icon: Compass,       label: "Compass" },
+  { id: "communication", icon: MessageSquare,  label: "Communication" },
+  { id: "tasks",         icon: CheckSquare,    label: "Tasks" },
+  { id: "smart-docs",    icon: VaultSafeIcon, label: "Document Vault" },
+  { id: "files",         icon: PenLine,       label: "Action Center" },
   { id: "tools",         icon: Wrench,           label: "Tools" },
   { id: "cases",         icon: Briefcase,        label: "Cases" },
   { id: "financials",    icon: CreditCard,       label: "Membership" },

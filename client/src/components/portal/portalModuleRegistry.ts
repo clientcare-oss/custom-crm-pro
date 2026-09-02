@@ -25,10 +25,10 @@ import {
   Lock,
   Layers,
   MapPin,
-  CreditCard
+  CreditCard,
+  PenLine
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
-import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 
 export type ClientStage = 
   | "DISCOVERY_INQUIRY"
@@ -230,7 +230,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   {
     id: "files",
     name: "Action Center",
-    icon: ActionCenterIcon as any,
+    icon: PenLine,
     sidebarGroup: "permanent",
     displayOrder: 23,
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
