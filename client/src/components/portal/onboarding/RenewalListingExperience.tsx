@@ -11,11 +11,10 @@ import {
   ArrowRight, 
   Check, 
   FileText, 
-  Plus, 
   PhoneCall, 
   Scale, 
   Loader2,
-  Users
+  Lock
 } from "lucide-react";
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -43,14 +42,6 @@ interface RenewalPackage {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-interface RenewalAddon {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  recommendedFor?: string;
-}
-
 export function RenewalListingExperience({
   studentName = "Liam Jenkins",
   studentGrade = "5th Grade → 6th Grade",
@@ -61,7 +52,6 @@ export function RenewalListingExperience({
   onNavigateTab,
 }: RenewalListingExperienceProps) {
   const [selectedPackageId, setSelectedPackageId] = useState<string>("comprehensive-105");
-  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRenewed, setIsRenewed] = useState(false);
 
@@ -106,45 +96,8 @@ export function RenewalListingExperience({
     }
   ];
 
-  const addons: RenewalAddon[] = [
-    {
-      id: "iee-rider",
-      name: "Independent Educational Evaluation (IEE) Oversight Rider",
-      price: 250,
-      description: "Independent testing review, evaluator vetting, and district IEE criteria oversight.",
-      recommendedFor: "If school testing missed dyslexia, ADHD, or autism accommodations."
-    },
-    {
-      id: "bip-rider",
-      name: "Behavior Intervention Plan (BIP / FBA) Deep Dive",
-      price: 175,
-      description: "Functional Behavior Assessment analysis, de-escalation plan audit, and sensory crosswalk.",
-      recommendedFor: `Recommended for ${studentName} based on accommodation history.`
-    },
-    {
-      id: "sibling-rider",
-      name: "Sibling Co-Advocacy Enrollment Add-on",
-      price: 45,
-      description: "Extend portal access and advisory coverage to an additional student in your household.",
-      recommendedFor: "Households with multiple IEP/504 students."
-    }
-  ];
-
   const selectedPkg = packages.find((p) => p.id === selectedPackageId) || packages[1];
-
-  const toggleAddon = (addonId: string) => {
-    setSelectedAddons((prev) =>
-      prev.includes(addonId) ? prev.filter((id) => id !== addonId) : [...prev, addonId]
-    );
-  };
-
-  const addonsTotal = selectedAddons.reduce((sum, id) => {
-    const addon = addons.find((a) => a.id === id);
-    return sum + (addon ? addon.price : 0);
-  }, 0);
-
   const monthlyTotal = selectedPkg.monthlyPrice;
-  const grandTotal = monthlyTotal + addonsTotal;
 
   const handleConfirmRenewal = () => {
     setIsProcessing(true);
@@ -159,8 +112,6 @@ export function RenewalListingExperience({
           packageId: selectedPackageId,
           packageName: selectedPkg.name,
           monthlyRate: monthlyTotal,
-          total: grandTotal,
-          addons: selectedAddons,
           studentName
         });
       }
@@ -202,12 +153,6 @@ export function RenewalListingExperience({
                 ${selectedPkg.monthlyPrice} / month per student
               </span>
             </div>
-            {selectedAddons.length > 0 && (
-              <div className="flex justify-between py-1.5 border-b border-blue-900/30">
-                <span className="text-white/60">Add-on Riders:</span>
-                <span className="font-semibold text-white">{selectedAddons.length} Applied (+${addonsTotal})</span>
-              </div>
-            )}
             <div className="flex justify-between py-1.5 text-base font-bold text-emerald-400">
               <span>Monthly Recurring:</span>
               <span className="text-amber-300 font-mono font-black">
@@ -289,13 +234,13 @@ export function RenewalListingExperience({
       </div>
 
       {/* ── Main Section: 2 Plan Cards ── */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-[#F5B544]" />
-            1. Select Advocacy Plan (Per Month Per Student)
+            Select Advocacy Plan for {studentName}
           </h2>
-          <span className="text-xs text-blue-200/60 font-mono">2 Plans Available</span>
+          <span className="text-xs text-blue-200/60 font-mono">Billed Monthly Per Student</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -307,21 +252,21 @@ export function RenewalListingExperience({
               <div
                 key={pkg.id}
                 onClick={() => setSelectedPackageId(pkg.id)}
-                className={`p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between shadow-xl ${
+                className={`p-6 sm:p-7 rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between shadow-2xl ${
                   isSelected
-                    ? "border-amber-400/80 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] text-white shadow-[0_4px_30px_rgba(11,37,83,0.4)] ring-1 ring-amber-400/40"
+                    ? "border-amber-400/80 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] text-white shadow-[0_4px_30px_rgba(11,37,83,0.45)] ring-1 ring-amber-400/40"
                     : "border-blue-900/40 bg-[#06172F] text-white/80 hover:border-blue-700/60 hover:bg-[#071D40]/70"
                 }`}
               >
                 {/* Top Accent Line */}
-                <div className={`absolute top-0 left-0 right-0 h-[2px] ${
+                <div className={`absolute top-0 left-0 right-0 h-[2.5px] ${
                   isSelected 
                     ? "bg-gradient-to-r from-transparent via-[#F5B544] to-transparent" 
                     : "bg-transparent"
                 }`} />
 
                 {pkg.badge && (
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-5 right-5">
                     <Badge
                       className={`text-[10px] font-bold uppercase px-2.5 py-0.5 ${
                         pkg.isPopular
@@ -337,17 +282,17 @@ export function RenewalListingExperience({
                 <div className="space-y-4">
                   <div className="flex items-start gap-3.5">
                     <div
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${
                         isSelected
                           ? "bg-[#F5B544] text-[#07152B] shadow-md"
                           : "bg-[#030C22] text-amber-300 border border-blue-900/40"
                       }`}
                     >
-                      <IconComp className="h-5 w-5" />
+                      <IconComp className="h-6 w-6" />
                     </div>
 
                     <div className="pr-16">
-                      <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                      <h3 className="text-lg sm:text-xl font-bold text-white leading-tight">
                         {pkg.name}
                       </h3>
                       <p className="text-xs text-blue-200/65 mt-1 leading-snug">
@@ -357,20 +302,23 @@ export function RenewalListingExperience({
                   </div>
 
                   {/* Pricing Display */}
-                  <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 flex items-baseline justify-between">
+                  <div className="p-4 rounded-2xl bg-[#030C22] border border-blue-900/40 flex items-center justify-between">
                     <div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-3xl font-extrabold text-white font-mono tracking-tight">
+                        <span className="text-4xl font-extrabold text-white font-mono tracking-tight">
                           ${pkg.monthlyPrice}
                         </span>
                         <span className="text-xs text-blue-200/70 font-medium">/month per student</span>
                       </div>
+                      <span className="text-[11px] text-emerald-400 font-medium block mt-0.5">
+                        ✓ Continuous monthly coverage • Cancel/pause anytime
+                      </span>
                     </div>
 
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${
                       isSelected ? "border-[#F5B544] bg-[#F5B544] text-[#07152B]" : "border-white/30"
                     }`}>
-                      {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                      {isSelected && <Check className="h-4 w-4 stroke-[3]" />}
                     </div>
                   </div>
 
@@ -379,11 +327,11 @@ export function RenewalListingExperience({
                   </p>
 
                   {/* Features list */}
-                  <div className="space-y-2 pt-1 border-t border-white/10">
+                  <div className="space-y-2.5 pt-2 border-t border-white/10">
                     <span className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider block font-mono">
                       What's Included:
                     </span>
-                    <ul className="space-y-2 text-xs text-white/90">
+                    <ul className="space-y-2.5 text-xs text-white/90">
                       {pkg.features.map((feat, idx) => (
                         <li key={idx} className="flex items-start gap-2">
                           <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
@@ -394,8 +342,8 @@ export function RenewalListingExperience({
                   </div>
                 </div>
 
-                {/* Footer note */}
-                <div className="pt-4 mt-4 text-[11px] text-blue-200/60 bg-[#030C22] p-2.5 rounded-xl border border-blue-900/40">
+                {/* Best suited for block */}
+                <div className="pt-4 mt-4 text-[11px] text-blue-200/60 bg-[#030C22] p-3 rounded-xl border border-blue-900/40">
                   <strong className="text-amber-300 font-semibold">Best Suited For:</strong> {pkg.idealFor}
                 </div>
               </div>
@@ -404,173 +352,74 @@ export function RenewalListingExperience({
         </div>
       </div>
 
-      {/* ── 2-Column Section: Optional Add-ons & Checkout Summary ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Left: Optional Add-ons (7 Cols) */}
-        <div className="lg:col-span-7">
-          <Card className="border-blue-900/40 bg-[#06172F] shadow-xl rounded-2xl overflow-hidden text-white">
-            <CardHeader className="bg-[#030C22] border-b border-blue-900/40 pb-3">
-              <CardTitle className="text-sm font-bold flex items-center justify-between text-white">
-                <span className="flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-[#F5B544]" />
-                  2. Optional Specialized Riders
-                </span>
-                <Badge variant="outline" className="text-[10px] font-mono border-blue-900/40 text-amber-300">
-                  {selectedAddons.length} Selected
-                </Badge>
+      {/* ── Summary & Single Confirm Action Card ── */}
+      <Card className="border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-2xl rounded-3xl overflow-hidden text-white">
+        <CardHeader className="bg-[#030C22]/60 border-b border-blue-900/40 p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-lg font-extrabold text-white flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-[#F5B544]" />
+                Renewal Summary for {studentName}
               </CardTitle>
-              <CardDescription className="text-xs text-blue-200/60">
-                Add specialized testing oversight or sibling continuity to your plan.
+              <CardDescription className="text-xs text-blue-200/70 mt-0.5">
+                Master IEP Coach® Byron Honea Representation Coverage
               </CardDescription>
-            </CardHeader>
+            </div>
+            <Badge className="bg-[#F5B544] text-[#07152B] font-bold text-xs px-3 py-1 self-start sm:self-auto">
+              ${monthlyTotal} / month per student
+            </Badge>
+          </div>
+        </CardHeader>
 
-            <CardContent className="p-4 space-y-3">
-              {addons.map((addon) => {
-                const isSelected = selectedAddons.includes(addon.id);
+        <CardContent className="p-5 sm:p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-xs">
+              <span className="text-white/50 block font-medium">Student</span>
+              <span className="font-bold text-white text-sm block mt-0.5">{studentName}</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-xs">
+              <span className="text-white/50 block font-medium">Selected Plan</span>
+              <span className="font-bold text-white text-sm block mt-0.5 truncate">{selectedPkg.name}</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-xs">
+              <span className="text-white/50 block font-medium">Billing Term</span>
+              <span className="font-bold text-amber-300 text-sm block mt-0.5 font-mono">${monthlyTotal}/month recurring</span>
+            </div>
+          </div>
 
-                return (
-                  <div
-                    key={addon.id}
-                    onClick={() => toggleAddon(addon.id)}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
-                      isSelected
-                        ? "border-amber-400/60 bg-blue-950/40 text-white shadow-md"
-                        : "border-blue-900/40 bg-[#030C22] hover:bg-blue-950/20 text-white/80"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                        isSelected
-                          ? "bg-[#F5B544] border-[#F5B544] text-[#07152B]"
-                          : "border-blue-900/60 bg-[#06172F]"
-                      }`}
-                    >
-                      {isSelected && <Check className="h-3 w-3" />}
-                    </div>
+          <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-xs text-blue-200/70 leading-relaxed flex items-start gap-2.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            <span>
+              By confirming renewal, your advocacy representation will automatically continue uninterrupted. You can adjust or pause representation anytime with 30 days notice.
+            </span>
+          </div>
+        </CardContent>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-xs text-white truncate">
-                          {addon.name}
-                        </span>
-                        <span className="font-bold text-xs text-amber-300 shrink-0 font-mono">
-                          +${addon.price}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-blue-200/60 leading-relaxed mt-0.5">
-                        {addon.description}
-                      </p>
-                      {addon.recommendedFor && (
-                        <span className="inline-block text-[10px] font-medium text-amber-400 mt-1">
-                          ✦ {addon.recommendedFor}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
+        <CardFooter className="p-5 sm:p-6 pt-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-xs text-white/50 flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5 text-amber-400" />
+            <span>256-Bit Encrypted Secure Checkout • Backed by Byron Honea</span>
+          </div>
 
-        {/* Right: Checkout Summary (5 Cols) */}
-        <div className="lg:col-span-5">
-          <Card className="border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-2xl rounded-2xl overflow-hidden sticky top-6 text-white">
-            <CardHeader className="bg-[#030C22]/60 border-b border-blue-900/40 pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-extrabold text-white flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-[#F5B544]" />
-                  Renewal Summary
-                </CardTitle>
-                <Badge className="bg-[#F5B544] text-[#07152B] font-bold text-[10px]">
-                  Per Student Rate
-                </Badge>
-              </div>
-              <CardDescription className="text-xs text-blue-200/70">
-                Student: <strong className="text-white font-semibold">{studentName}</strong> • Byron Honea, Advocate
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="p-5 space-y-4 text-xs sm:text-sm">
-              <div className="space-y-2 pb-3 border-b border-blue-900/40">
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <span className="text-white font-medium block">{selectedPkg.name}</span>
-                    <span className="text-[11px] text-blue-200/60">
-                      ${selectedPkg.monthlyPrice}/month per student
-                    </span>
-                  </div>
-                  <span className="font-semibold text-white text-right shrink-0 font-mono">
-                    ${selectedPkg.monthlyPrice}/mo
-                  </span>
-                </div>
-
-                {selectedAddons.map((addonId) => {
-                  const addon = addons.find((a) => a.id === addonId);
-                  if (!addon) return null;
-                  return (
-                    <div key={addonId} className="flex justify-between items-start gap-2 text-xs">
-                      <span className="text-white/70 flex items-center gap-1">
-                        <Plus className="h-3 w-3 text-amber-400 shrink-0" />
-                        {addon.name}
-                      </span>
-                      <span className="font-semibold text-white shrink-0 font-mono">+${addon.price}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Total Row */}
-              <div className="pt-1">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-bold text-white">
-                    Monthly Investment:
-                  </span>
-                  <span className="text-3xl font-black text-amber-300 font-mono">
-                    ${monthlyTotal}
-                    <span className="text-xs font-normal text-blue-200/70 ml-1">
-                      /month
-                    </span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Terms note */}
-              <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-[11px] text-blue-200/70 leading-relaxed flex gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>
-                  Recurring monthly charges apply per student. You can adjust or pause your representation anytime with 30 days notice.
-                </span>
-              </div>
-            </CardContent>
-
-            <CardFooter className="p-5 pt-0 flex flex-col gap-2.5">
-              <Button
-                onClick={handleConfirmRenewal}
-                disabled={isProcessing}
-                className="w-full h-12 text-sm font-bold bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] shadow-md transition-all gap-2 rounded-xl cursor-pointer"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Confirming Coverage...
-                  </>
-                ) : (
-                  <>
-                    Confirm & Renew Representation
-                    <ArrowRight className="h-4 w-4 ml-1" />
-                  </>
-                )}
-              </Button>
-
-              <p className="text-[10px] text-center text-white/50">
-                🔒 256-Bit Encrypted Secure Checkout • Backed by Master IEP Coach® Byron Honea
-              </p>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+          <Button
+            onClick={handleConfirmRenewal}
+            disabled={isProcessing}
+            className="w-full sm:w-auto h-12 px-8 text-sm font-bold bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] shadow-md transition-all gap-2 rounded-xl cursor-pointer"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Confirming Coverage...
+              </>
+            ) : (
+              <>
+                Confirm & Renew Coverage (${monthlyTotal}/mo)
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
