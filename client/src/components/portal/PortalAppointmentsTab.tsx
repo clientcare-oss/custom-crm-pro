@@ -19,7 +19,9 @@ import {
   MapPin,
   CheckCircle2,
   AlertCircle,
-  Plus
+  Plus,
+  Link as LinkIcon,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,6 +105,12 @@ export function PortalAppointmentsTab({
   const [currentPhone, setCurrentPhone] = useState(initialPhone);
   const [phoneEditInput, setPhoneEditInput] = useState(initialPhone);
   const [phoneUpdateOpen, setPhoneUpdateOpen] = useState(false);
+
+  // Virtual Meeting Link State
+  const initialLink = nextAppt?.location || "https://meet.google.com/waypoint-iep-conference";
+  const [meetingLink, setMeetingLink] = useState(initialLink);
+  const [linkEditInput, setLinkEditInput] = useState(initialLink);
+  const [linkUpdateOpen, setLinkUpdateOpen] = useState(false);
   
   // Add School Meeting Dialog State
   const [addMeetingOpen, setAddMeetingOpen] = useState(false);
@@ -214,7 +222,7 @@ export function PortalAppointmentsTab({
                 )}
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                {nextAppt?.title || "IEP Strategy & Case Review Session"}
+                {nextAppt?.title || "IEP Meeting with school and advocate"}
               </h3>
               <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-xs text-blue-100/85 pt-1">
                 <span className="flex items-center gap-1.5 font-medium">
@@ -226,8 +234,8 @@ export function PortalAppointmentsTab({
                   {apptTime}
                 </span>
                 <span className="flex items-center gap-1.5 font-medium text-emerald-300">
-                  <Phone className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  Waypoint will call @ {currentPhone}
+                  <Video className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  Virtual meeting link received!
                 </span>
               </div>
             </div>
@@ -235,39 +243,29 @@ export function PortalAppointmentsTab({
 
           {/* Bottom Row: Action buttons */}
           <div className="flex items-center gap-2 pt-2 border-t border-white/10 flex-wrap">
-            <Button
-              size="sm"
-              onClick={() => {
-                setPhoneEditInput(currentPhone);
-                setPhoneUpdateOpen(true);
-              }}
-              className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+            <a
+              href={meetingLink.startsWith("http") ? meetingLink : `https://${meetingLink}`}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Update Phone Number</span>
-              <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
-            </Button>
+              <Video className="h-3.5 w-3.5 stroke-[2.5]" />
+              <span>Join Virtual Meeting</span>
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </a>
 
             <Button
               variant="outline"
               size="sm"
-              onClick={onOpenScheduler}
+              onClick={() => {
+                setLinkEditInput(meetingLink);
+                setLinkUpdateOpen(true);
+              }}
               className="border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white text-xs font-normal px-3 py-1.5 h-8 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <Calendar className="h-3.5 w-3.5 text-amber-400" />
-              <span>Schedule / Reschedule</span>
+              <LinkIcon className="h-3.5 w-3.5 text-amber-400" />
+              <span>Change Meeting Link</span>
             </Button>
-
-            {nextAppt?.location?.includes("http") && (
-              <a
-                href={nextAppt.location}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-blue-300 hover:text-white px-3 py-1.5 rounded-lg border border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 transition-colors"
-              >
-                <Video className="h-3.5 w-3.5 text-blue-400" />
-                <span>Join Virtual Room</span>
-              </a>
-            )}
           </div>
         </div>
 
@@ -710,6 +708,70 @@ export function PortalAppointmentsTab({
                 className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-md"
               >
                 Save Phone Number
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Change Virtual Meeting Link Modal ──────────────────────── */}
+      <Dialog open={linkUpdateOpen} onOpenChange={setLinkUpdateOpen}>
+        <DialogContent className="bg-[#06172F] border-blue-900/40 text-white max-w-md shadow-2xl rounded-2xl">
+          <DialogHeader className="border-b border-blue-900/40 pb-3">
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
+              <Video className="h-5 w-5 text-emerald-400" />
+              Change Virtual Meeting Link
+            </DialogTitle>
+            <DialogDescription className="text-xs text-white/60">
+              Enter or update the Google Meet, Zoom, or Microsoft Teams URL for your upcoming IEP meeting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!linkEditInput.trim()) {
+                toast.error("Please enter a meeting link");
+                return;
+              }
+              const cleanLink = linkEditInput.trim();
+              setMeetingLink(cleanLink);
+              setLinkUpdateOpen(false);
+              toast.success("Meeting link updated successfully!");
+            }}
+            className="space-y-4 pt-2 text-xs"
+          >
+            <div>
+              <label className="text-white/80 font-semibold block mb-1.5">
+                Virtual Meeting URL
+              </label>
+              <input
+                type="url"
+                required
+                value={linkEditInput}
+                onChange={(e) => setLinkEditInput(e.target.value)}
+                placeholder="https://meet.google.com/abc-defg-hij"
+                className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2.5 text-sm text-white outline-none transition-colors"
+              />
+              <p className="text-[11px] text-white/50 mt-1.5 leading-relaxed">
+                Both you and your advocate will use this link to enter the IEP conference.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-blue-900/40">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setLinkUpdateOpen(false)}
+                className="text-white/70 hover:text-white text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-md"
+              >
+                Save Meeting Link
               </Button>
             </div>
           </form>
