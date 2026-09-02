@@ -54,6 +54,7 @@ import { LockedModulePreview } from "@/components/portal/onboarding/LockedModule
 import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { resolvePortalTabId, broadcastPageId } from "@/lib/pageIdRegistry";
+import PageIdBadge from "@/components/PageIdBadge";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -1587,7 +1588,7 @@ export default function ClientPortal() {
 
                 <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0 justify-center">
                   <Button
-                    onClick={() => handleSelectTab("plan-renewal")}
+                    onClick={() => setActiveTab("plan-renewal")}
                     className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,181,68,0.25)] flex items-center justify-center gap-1.5 transition-all"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
@@ -1595,7 +1596,7 @@ export default function ClientPortal() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => handleSelectTab("appointments")}
+                    onClick={() => setActiveTab("appointments")}
                     className="border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white text-xs px-4 py-2 rounded-xl"
                   >
                     Schedule Strategy Review
