@@ -18,30 +18,23 @@ export function ActionCenterIcon({
       style={size ? { width: size, height: size } : undefined}
       {...props}
     >
-      {/* Document Sheet */}
-      <path d="M3.5 2.5h14a1.5 1.5 0 0 1 1.5 1.5v3" />
-      <path d="M19 12.5V20a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 20V4a1.5 1.5 0 0 1 1.5-1.5" />
+      {/* Document with Top-Left Folded Dog-Ear Corner */}
+      <path d="M8 2.5h8.5a2 2 0 0 1 2 2V8" />
+      <path d="M18.5 13.5v5a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V7.5L8 2.5" />
+      <path d="M3.5 7.5H8V2.5" />
       
-      {/* Official Notary Seal in Top-Right */}
-      <circle cx="14.5" cy="6.5" r="2.2" />
-      <circle cx="14.5" cy="6.5" r="1.1" />
+      {/* Horizontal Document Text Lines */}
+      <path d="M7 10.5h5.5" />
+      <path d="M7 13.5h4.5" />
       
-      {/* Document Content Lines */}
-      <path d="M6.5 7h4.5" />
-      <path d="M6.5 10h6" />
-      <path d="M6.5 13h5" />
+      {/* Signature Squiggle Wave */}
+      <path d="M6.5 18c.7-.6 1.4.6 2.1 0s1.4.6 2.1 0" />
       
-      {/* Bottom Signature Line */}
-      <path d="M6 19.5h7.5" />
-      
-      {/* Signature Cursive Loop */}
-      <path d="M6 19c1.2-2.2 2.4.4 3.4-.6" />
-      
-      {/* Diagonal Fountain Pen with Nib and Clip */}
-      <path d="M20.5 5.5l-5.5 5.5-1.5-1.5 5.5-5.5a1 1 0 0 1 1.5 1.5z" />
-      <path d="M21 7.5l-1.5 1.5" />
-      <path d="M13.5 9.5l-2.5 4.5 4.5-2.5-2-2z" />
-      <path d="M11 14l-1 1" />
+      {/* Fountain Pen with Top Clip and Pointed Nib */}
+      <path d="M20.5 6.5l-5.5 5.5-1.5-1.5 5.5-5.5a1 1 0 0 1 1.5 1.5z" />
+      <path d="M21 8.5l-1.5 1.5" />
+      <path d="M13.5 10.5l-2.5 4.5 4.5-2.5-2-2z" />
+      <path d="M11 15l-.8.8" />
     </svg>
   );
 }
