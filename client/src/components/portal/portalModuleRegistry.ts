@@ -26,7 +26,7 @@ import {
   Layers,
   MapPin,
   CreditCard,
-  PenLine
+  FileSignature
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 
@@ -230,7 +230,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   {
     id: "files",
     name: "Action Center",
-    icon: PenLine,
+    icon: FileSignature,
     sidebarGroup: "permanent",
     displayOrder: 23,
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],

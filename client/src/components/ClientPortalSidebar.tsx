@@ -4,7 +4,7 @@ import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
   ChevronLeft, ChevronRight, Home, Video, Sparkles, CheckCircle2, Lock, PenTool, GraduationCap,
-  MapPin, RotateCcw, CreditCard, PenLine
+  MapPin, RotateCcw, CreditCard, PenLine, FileSignature
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { 
@@ -22,7 +22,7 @@ export const NAV_ITEMS = [
   { id: "communication", icon: MessageSquare,  label: "Communication" },
   { id: "tasks",         icon: CheckSquare,    label: "Tasks" },
   { id: "smart-docs",    icon: VaultSafeIcon, label: "Document Vault" },
-  { id: "files",         icon: PenLine,       label: "Action Center" },
+  { id: "files",         icon: FileSignature, label: "Action Center" },
   { id: "tools",         icon: Wrench,           label: "Tools" },
   { id: "cases",         icon: Briefcase,        label: "Cases" },
   { id: "financials",    icon: CreditCard,       label: "Membership" },
