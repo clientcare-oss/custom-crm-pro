@@ -418,15 +418,15 @@ export default function PortalDocumentVaultTab({
       </div>
 
       {/* ── STUDENT RECORD SUMMARY STRIP ────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/10 bg-[#161B22]/90 backdrop-blur-md p-5 shadow-xl">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400/90 mb-3.5">
+      <div className="rounded-2xl border border-blue-900/40 bg-[#06172F]/90 backdrop-blur-md p-5 shadow-2xl">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-3.5">
           Student Record Summary
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-blue-900/40">
           
           {/* Stat 1: Total Documents */}
           <div className="flex items-center gap-3.5 pt-2 sm:pt-0">
-            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
               <Folder className="w-5 h-5 text-amber-400" />
             </div>
             <div>
@@ -437,7 +437,7 @@ export default function PortalDocumentVaultTab({
 
           {/* Stat 2: Workspaces */}
           <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
               <FolderPlus className="w-5 h-5 text-amber-400" />
             </div>
             <div>
@@ -448,7 +448,7 @@ export default function PortalDocumentVaultTab({
 
           {/* Stat 3: Recent Uploads */}
           <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
               <UploadCloud className="w-5 h-5 text-amber-400" />
             </div>
             <div>
@@ -459,7 +459,7 @@ export default function PortalDocumentVaultTab({
 
           {/* Stat 4: Safe & Encrypted */}
           <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
@@ -470,7 +470,7 @@ export default function PortalDocumentVaultTab({
 
           {/* Stat 5: Last Activity */}
           <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0 shadow-[0_0_12px_rgba(14,165,233,0.15)]">
               <Clock className="w-5 h-5 text-sky-400" />
             </div>
             <div>
@@ -491,7 +491,7 @@ export default function PortalDocumentVaultTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search documents by name, type, or keyword..."
-            className="pl-10 h-10 bg-[#161B22]/70 border-white/15 text-white placeholder:text-white/40 text-xs rounded-xl focus-visible:ring-amber-400"
+            className="pl-10 h-10 bg-[#030C22] border-blue-900/40 text-white placeholder:text-white/40 text-xs rounded-xl focus-visible:ring-amber-400"
           />
           {searchQuery && (
             <button
@@ -505,13 +505,13 @@ export default function PortalDocumentVaultTab({
 
         {/* Filter Dropdown */}
         <Select value={selectedWorkspaceFilter} onValueChange={setSelectedWorkspaceFilter}>
-          <SelectTrigger className="w-full sm:w-[150px] h-10 bg-[#161B22]/70 border-white/15 text-white text-xs rounded-xl">
+          <SelectTrigger className="w-full sm:w-[150px] h-10 bg-[#06172F] border-blue-900/40 text-white text-xs rounded-xl">
             <div className="flex items-center gap-2">
               <Filter className="w-3.5 h-3.5 text-amber-400" />
               <SelectValue placeholder="Filter" />
             </div>
           </SelectTrigger>
-          <SelectContent className="bg-[#161B22] border-white/15 text-white">
+          <SelectContent className="bg-[#06172F] border-blue-900/40 text-white">
             <SelectItem value="all">All Workspaces</SelectItem>
             {workspaces.map((w) => (
               <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
@@ -521,13 +521,13 @@ export default function PortalDocumentVaultTab({
 
         {/* Sort Dropdown */}
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-          <SelectTrigger className="w-full sm:w-[140px] h-10 bg-[#161B22]/70 border-white/15 text-white text-xs rounded-xl">
+          <SelectTrigger className="w-full sm:w-[140px] h-10 bg-[#06172F] border-blue-900/40 text-white text-xs rounded-xl">
             <div className="flex items-center gap-2">
               <ArrowUpDown className="w-3.5 h-3.5 text-white/60" />
               <SelectValue placeholder="Sort" />
             </div>
           </SelectTrigger>
-          <SelectContent className="bg-[#161B22] border-white/15 text-white">
+          <SelectContent className="bg-[#06172F] border-blue-900/40 text-white">
             <SelectItem value="newest">Sort: Newest</SelectItem>
             <SelectItem value="oldest">Sort: Oldest</SelectItem>
             <SelectItem value="name">Sort: Name (A-Z)</SelectItem>
@@ -535,12 +535,12 @@ export default function PortalDocumentVaultTab({
         </Select>
 
         {/* View Toggle */}
-        <div className="flex items-center p-1 rounded-xl bg-[#161B22]/80 border border-white/15 self-end sm:self-auto shrink-0">
+        <div className="flex items-center p-1 rounded-xl bg-[#030C22] border border-blue-900/40 self-end sm:self-auto shrink-0">
           <button
             onClick={() => setViewMode("grid")}
             className={`p-1.5 rounded-lg transition-colors ${
               viewMode === "grid"
-                ? "bg-amber-400 text-[#161B22] shadow-sm"
+                ? "bg-amber-400 text-slate-950 shadow-sm font-bold"
                 : "text-white/50 hover:text-white"
             }`}
             title="Grid View"
@@ -551,7 +551,7 @@ export default function PortalDocumentVaultTab({
             onClick={() => setViewMode("list")}
             className={`p-1.5 rounded-lg transition-colors ${
               viewMode === "list"
-                ? "bg-amber-400 text-[#161B22] shadow-sm"
+                ? "bg-amber-400 text-slate-950 shadow-sm font-bold"
                 : "text-white/50 hover:text-white"
             }`}
             title="List View"
@@ -583,7 +583,7 @@ export default function PortalDocumentVaultTab({
               <Card
                 key={ws.id}
                 onClick={() => setActiveWorkspaceModal(ws)}
-                className="group relative p-4 rounded-2xl bg-[#161B22]/70 hover:bg-[#0b1c30] border-white/10 hover:border-amber-400/50 transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-between min-h-[125px] shadow-lg hover:shadow-amber-400/10"
+                className="group relative p-4 rounded-2xl bg-[#06172F] hover:bg-[#0A2246] border-blue-900/40 hover:border-amber-400/60 transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-between min-h-[125px] shadow-xl hover:shadow-amber-400/10"
               >
                 <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 group-hover:border-amber-400/60 flex items-center justify-center text-amber-400 mb-2 transition-all">
                   <Folder className="w-5 h-5 fill-amber-400/20 text-amber-400" />
@@ -602,12 +602,12 @@ export default function PortalDocumentVaultTab({
             {/* + New Workspace Card */}
             <Card
               onClick={() => setShowNewWorkspaceModal(true)}
-              className="group p-4 rounded-2xl bg-[#161B22]/40 hover:bg-[#0b1c30]/70 border border-dashed border-white/20 hover:border-amber-400/60 transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-center min-h-[125px]"
+              className="group p-4 rounded-2xl bg-[#06172F]/50 hover:bg-[#0A2246]/80 border border-dashed border-blue-800/40 hover:border-amber-400/60 transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-center min-h-[125px]"
             >
               <div className="w-9 h-9 rounded-full bg-white/5 group-hover:bg-amber-400/20 border border-white/10 group-hover:border-amber-400/40 flex items-center justify-center text-white/60 group-hover:text-amber-300 mb-2 transition-all">
                 <Plus className="w-4 h-4" />
               </div>
-              <p className="text-xs font-bold text-amber-400/90 group-hover:text-amber-300">
+              <p className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
                 New Workspace
               </p>
             </Card>
@@ -631,12 +631,12 @@ export default function PortalDocumentVaultTab({
             </button>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#161B22]/80 backdrop-blur-md p-3.5 space-y-2 shadow-xl">
+          <div className="rounded-2xl border border-blue-900/40 bg-[#06172F]/90 backdrop-blur-md p-3.5 space-y-2 shadow-2xl">
             {filteredDocuments.slice(0, 5).map((doc) => (
               <div
                 key={doc.id}
                 onClick={() => setSelectedDocForPreview(doc)}
-                className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-white/[0.05] border border-transparent hover:border-white/10 transition-all cursor-pointer"
+                className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-950/40 border border-transparent hover:border-blue-800/40 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0 pr-2">
                   {renderFileTypeIcon(doc.fileType)}
@@ -688,7 +688,7 @@ export default function PortalDocumentVaultTab({
       </div>
 
       {/* ── PINNED DOCUMENTS CAROUSEL / GRID ───────────────────────────── */}
-      <div className="rounded-2xl border border-white/10 bg-[#161B22]/80 backdrop-blur-md p-5 space-y-4 shadow-xl">
+      <div className="rounded-2xl border border-blue-900/40 bg-[#06172F]/90 backdrop-blur-md p-5 space-y-4 shadow-2xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
@@ -705,14 +705,14 @@ export default function PortalDocumentVaultTab({
           <div className="flex items-center gap-1.5 self-end sm:self-auto">
             <button
               onClick={() => toast.info("Showing previous pinned items")}
-              className="p-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg border border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10 transition-colors"
               title="Previous"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => toast.info("Showing next pinned items")}
-              className="p-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg border border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10 transition-colors"
               title="Next"
             >
               <ChevronRight className="w-4 h-4" />
@@ -725,11 +725,11 @@ export default function PortalDocumentVaultTab({
             <Card
               key={doc.id}
               onClick={() => setSelectedDocForPreview(doc)}
-              className="group relative p-4 rounded-2xl bg-[#0b1c30]/90 hover:bg-[#102742] border-white/10 hover:border-amber-400/50 transition-all cursor-pointer flex flex-col justify-between shadow-lg"
+              className="group relative p-4 rounded-2xl bg-[#081B36] hover:bg-[#0C2A52] border-blue-900/40 hover:border-amber-400/60 transition-all cursor-pointer flex flex-col justify-between shadow-xl"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 {renderFileTypeIcon(doc.fileType)}
-                <div className="w-5 h-5 rounded-full bg-amber-400/10 border border-amber-400/40 flex items-center justify-center text-amber-400">
+                <div className="w-5 h-5 rounded-full bg-amber-400/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.2)]">
                   <Star className="w-3 h-3 fill-amber-400" />
                 </div>
               </div>
@@ -751,12 +751,12 @@ export default function PortalDocumentVaultTab({
           {/* + Pin Document Card */}
           <Card
             onClick={() => setShowPinModal(true)}
-            className="group p-4 rounded-2xl bg-[#161B22]/40 hover:bg-[#0b1c30]/70 border border-dashed border-white/20 hover:border-amber-400/60 transition-all cursor-pointer flex flex-col items-center text-center justify-center min-h-[140px]"
+            className="group p-4 rounded-2xl bg-[#06172F]/50 hover:bg-[#0A2246]/80 border border-dashed border-blue-800/40 hover:border-amber-400/60 transition-all cursor-pointer flex flex-col items-center text-center justify-center min-h-[140px]"
           >
             <div className="w-9 h-9 rounded-full bg-white/5 group-hover:bg-amber-400/20 border border-white/10 group-hover:border-amber-400/40 flex items-center justify-center text-white/60 group-hover:text-amber-300 mb-2 transition-all">
               <Plus className="w-4 h-4" />
             </div>
-            <p className="text-xs font-bold text-amber-400/90 group-hover:text-amber-300">
+            <p className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
               Pin Document
             </p>
           </Card>
@@ -764,7 +764,7 @@ export default function PortalDocumentVaultTab({
       </div>
 
       {/* ── SECURITY / FERPA BANNER ─────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-[#161B22] to-[#091b30] p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-r from-[#06172F] to-[#0A2246] p-5 md:p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_20px_rgba(251,191,36,0.15)]">
             <Lock className="w-6 h-6 text-amber-400" />
@@ -792,7 +792,7 @@ export default function PortalDocumentVaultTab({
 
       {/* Modal 1: How It Works */}
       <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
-        <DialogContent className="max-w-md bg-[#161B22] border-white/15 text-white rounded-2xl p-6">
+        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
               <Folder className="w-5 h-5 text-amber-400" />
@@ -804,21 +804,21 @@ export default function PortalDocumentVaultTab({
           </DialogHeader>
 
           <div className="space-y-3.5 my-2">
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-900/40 space-y-1">
               <p className="text-xs font-bold text-amber-300">1. Permanent Preservation</p>
               <p className="text-[11px] text-white/70 leading-relaxed">
                 All uploaded IEPs, neuropsych evaluations, and school correspondence are stored in zero-trust encrypted Cloudflare R2 cloud storage.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-900/40 space-y-1">
               <p className="text-xs font-bold text-amber-300">2. Collaborative Workspaces</p>
               <p className="text-[11px] text-white/70 leading-relaxed">
                 Organized by educational category so you and your advocate can locate historical records in seconds during IEP meetings.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-900/40 space-y-1">
               <p className="text-xs font-bold text-amber-300">3. Action Center Integration</p>
               <p className="text-[11px] text-white/70 leading-relaxed">
                 When you sign or complete requests inside the Action Center, finalized copies are automatically filed and indexed here.
@@ -829,7 +829,7 @@ export default function PortalDocumentVaultTab({
           <DialogFooter>
             <Button
               onClick={() => setShowHowItWorks(false)}
-              className="w-full bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs rounded-xl"
+              className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
             >
               Got It
             </Button>
@@ -839,7 +839,7 @@ export default function PortalDocumentVaultTab({
 
       {/* Modal 2: Privacy & Security */}
       <Dialog open={showSecurityModal} onOpenChange={setShowSecurityModal}>
-        <DialogContent className="max-w-lg bg-[#161B22] border-white/15 text-white rounded-2xl p-6">
+        <DialogContent className="max-w-lg bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
@@ -851,21 +851,21 @@ export default function PortalDocumentVaultTab({
           </DialogHeader>
 
           <div className="space-y-3 my-2 text-xs text-white/80 leading-relaxed">
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-950/30 border border-blue-900/40">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="text-white">AES-256 Cloud Encryption:</strong> Every PDF, audio recording, and evaluation is encrypted both at rest and in transit via TLS 1.3.
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-950/30 border border-blue-900/40">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="text-white">FERPA-Adjacent Safeguards:</strong> Access is strictly limited to authorized parents/guardians and Byron Honea (Master IEP Coach®).
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-950/30 border border-blue-900/40">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="text-white">Complete Data Portability:</strong> You can download individual records or complete multi-year archive bundles anytime.
@@ -876,7 +876,7 @@ export default function PortalDocumentVaultTab({
           <DialogFooter>
             <Button
               onClick={() => setShowSecurityModal(false)}
-              className="w-full bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs rounded-xl"
+              className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
             >
               Close Privacy Overview
             </Button>
@@ -886,7 +886,7 @@ export default function PortalDocumentVaultTab({
 
       {/* Modal 3: Create Workspace */}
       <Dialog open={showNewWorkspaceModal} onOpenChange={setShowNewWorkspaceModal}>
-        <DialogContent className="max-w-md bg-[#161B22] border-white/15 text-white rounded-2xl p-6">
+        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
               <FolderPlus className="w-5 h-5 text-amber-400" />
@@ -904,7 +904,7 @@ export default function PortalDocumentVaultTab({
                 value={newWorkspaceName}
                 onChange={(e) => setNewWorkspaceName(e.target.value)}
                 placeholder="e.g., Independent OT Evaluations"
-                className="bg-[#040C16] border-white/15 text-white text-xs rounded-xl"
+                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl"
               />
             </div>
 
@@ -914,7 +914,7 @@ export default function PortalDocumentVaultTab({
                 value={newWorkspaceDesc}
                 onChange={(e) => setNewWorkspaceDesc(e.target.value)}
                 placeholder="Brief description of what goes here..."
-                className="bg-[#040C16] border-white/15 text-white text-xs rounded-xl"
+                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl"
               />
             </div>
           </div>
@@ -923,13 +923,13 @@ export default function PortalDocumentVaultTab({
             <Button
               variant="outline"
               onClick={() => setShowNewWorkspaceModal(false)}
-              className="border-white/15 text-white hover:bg-white/10 text-xs rounded-xl"
+              className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
             >
               Cancel
             </Button>
             <Button
               onClick={handleCreateWorkspace}
-              className="bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs rounded-xl"
+              className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
             >
               Create Workspace
             </Button>
@@ -939,7 +939,7 @@ export default function PortalDocumentVaultTab({
 
       {/* Modal 4: Upload File */}
       <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
-        <DialogContent className="max-w-md bg-[#161B22] border-white/15 text-white rounded-2xl p-6">
+        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
               <UploadCloud className="w-5 h-5 text-amber-400" />
@@ -957,17 +957,17 @@ export default function PortalDocumentVaultTab({
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
                 placeholder="e.g., 2026 Psycho-Ed Evaluation.pdf"
-                className="bg-[#040C16] border-white/15 text-white text-xs rounded-xl"
+                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl"
               />
             </div>
 
             <div>
               <Label className="text-xs text-white/80 mb-1.5 block">Destination Workspace</Label>
               <Select value={uploadWorkspaceId} onValueChange={setUploadWorkspaceId}>
-                <SelectTrigger className="bg-[#040C16] border-white/15 text-white text-xs rounded-xl">
+                <SelectTrigger className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#161B22] border-white/15 text-white">
+                <SelectContent className="bg-[#06172F] border-blue-900/40 text-white">
                   {workspaces.map((ws) => (
                     <SelectItem key={ws.id} value={ws.id}>{ws.name}</SelectItem>
                   ))}
@@ -975,7 +975,7 @@ export default function PortalDocumentVaultTab({
               </Select>
             </div>
 
-            <div className="p-4 rounded-xl border border-dashed border-white/20 bg-white/[0.02] text-center space-y-1.5">
+            <div className="p-4 rounded-xl border border-dashed border-blue-800/40 bg-blue-950/20 text-center space-y-1.5">
               <UploadCloud className="w-6 h-6 text-amber-400 mx-auto opacity-80" />
               <p className="text-xs font-semibold text-white">Drag & drop your file here</p>
               <p className="text-[10px] text-white/40">Supports PDF, DOCX, XLSX, EML, PNG up to 50MB</p>
@@ -986,13 +986,13 @@ export default function PortalDocumentVaultTab({
             <Button
               variant="outline"
               onClick={() => setShowUploadModal(false)}
-              className="border-white/15 text-white hover:bg-white/10 text-xs rounded-xl"
+              className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
             >
               Cancel
             </Button>
             <Button
               onClick={handleUploadDocument}
-              className="bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs rounded-xl"
+              className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
             >
               Upload & Encrypt
             </Button>
@@ -1003,7 +1003,7 @@ export default function PortalDocumentVaultTab({
       {/* Modal 5: Document Preview */}
       <Dialog open={!!selectedDocForPreview} onOpenChange={(open) => !open && setSelectedDocForPreview(null)}>
         {selectedDocForPreview && (
-          <DialogContent className="max-w-lg bg-[#161B22] border-white/15 text-white rounded-2xl p-6">
+          <DialogContent className="max-w-lg bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
             <DialogHeader>
               <div className="flex items-center gap-2 mb-1">
                 <Badge className="bg-amber-400/20 text-amber-300 border-amber-400/40 text-[10px]">
@@ -1020,19 +1020,19 @@ export default function PortalDocumentVaultTab({
             </DialogHeader>
 
             <div className="space-y-3.5 my-2">
-              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 leading-relaxed">
+              <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-900/40 text-xs text-white/80 leading-relaxed">
                 <p className="font-semibold text-amber-400 mb-1">Document Summary:</p>
                 <p>{selectedDocForPreview.summary || "Permanent student educational document archived in encrypted storage."}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40">
                   <span className="text-white/50 block text-[10px]">Encryption Status:</span>
                   <span className="font-bold text-emerald-400 flex items-center gap-1 mt-0.5">
                     <ShieldCheck className="w-3.5 h-3.5" /> AES-256 Vault Stored
                   </span>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40">
                   <span className="text-white/50 block text-[10px]">Quick Access:</span>
                   <span className="font-bold text-white mt-0.5 block">
                     {selectedDocForPreview.isPinned ? "★ Pinned to Top" : "Standard File"}
@@ -1048,7 +1048,7 @@ export default function PortalDocumentVaultTab({
                   handleTogglePin(selectedDocForPreview.id);
                   setSelectedDocForPreview(null);
                 }}
-                className="border-white/15 text-white hover:bg-white/10 text-xs rounded-xl"
+                className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
               >
                 <Star className={`w-3.5 h-3.5 mr-1.5 ${selectedDocForPreview.isPinned ? "fill-amber-400 text-amber-400" : ""}`} />
                 {selectedDocForPreview.isPinned ? "Unpin Document" : "Pin to Favorites"}
@@ -1059,7 +1059,7 @@ export default function PortalDocumentVaultTab({
                   toast.success(`Downloading ${selectedDocForPreview.title}...`);
                   setSelectedDocForPreview(null);
                 }}
-                className="bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs rounded-xl gap-1.5"
+                className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 Download Document
@@ -1072,7 +1072,7 @@ export default function PortalDocumentVaultTab({
       {/* Modal 6: Workspace Folder Viewer */}
       <Dialog open={!!activeWorkspaceModal} onOpenChange={(open) => !open && setActiveWorkspaceModal(null)}>
         {activeWorkspaceModal && (
-          <DialogContent className="max-w-2xl bg-[#161B22] border-white/15 text-white rounded-2xl p-6">
+          <DialogContent className="max-w-2xl bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
             <DialogHeader>
               <div className="flex items-center gap-2">
                 <Folder className="w-5 h-5 text-amber-400 fill-amber-400/20" />
@@ -1095,7 +1095,7 @@ export default function PortalDocumentVaultTab({
                       setActiveWorkspaceModal(null);
                       setSelectedDocForPreview(doc);
                     }}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 transition-all cursor-pointer"
+                    className="flex items-center justify-between p-3 rounded-xl bg-blue-950/30 hover:bg-blue-900/40 border border-blue-900/40 transition-all cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0 pr-2">
                       {renderFileTypeIcon(doc.fileType)}
@@ -1121,7 +1121,7 @@ export default function PortalDocumentVaultTab({
               <Button
                 variant="outline"
                 onClick={() => setActiveWorkspaceModal(null)}
-                className="border-white/15 text-white hover:bg-white/10 text-xs rounded-xl"
+                className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
               >
                 Close
               </Button>
@@ -1131,7 +1131,7 @@ export default function PortalDocumentVaultTab({
                   setActiveWorkspaceModal(null);
                   setShowUploadModal(true);
                 }}
-                className="bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs rounded-xl gap-1.5"
+                className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Upload to {activeWorkspaceModal.name}
@@ -1143,7 +1143,7 @@ export default function PortalDocumentVaultTab({
 
       {/* Modal 7: Pin Document Selector */}
       <Dialog open={showPinModal} onOpenChange={setShowPinModal}>
-        <DialogContent className="max-w-md bg-[#161B22] border-white/15 text-white rounded-2xl p-6">
+        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
               <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
@@ -1164,7 +1164,7 @@ export default function PortalDocumentVaultTab({
                     handleTogglePin(doc.id);
                     setShowPinModal(false);
                   }}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 transition-all cursor-pointer"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/30 hover:bg-blue-900/40 border border-blue-900/40 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     {renderFileTypeIcon(doc.fileType)}
@@ -1173,7 +1173,7 @@ export default function PortalDocumentVaultTab({
                       <p className="text-[10px] text-white/50">{doc.workspaceName}</p>
                     </div>
                   </div>
-                  <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-[#161B22] text-xs font-bold h-7 px-2.5 rounded-lg">
+                  <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold h-7 px-2.5 rounded-lg">
                     Pin
                   </Button>
                 </div>
@@ -1184,7 +1184,7 @@ export default function PortalDocumentVaultTab({
             <Button
               variant="outline"
               onClick={() => setShowPinModal(false)}
-              className="w-full border-white/15 text-white hover:bg-white/10 text-xs rounded-xl"
+              className="w-full border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
             >
               Cancel
             </Button>
