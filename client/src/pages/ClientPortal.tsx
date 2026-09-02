@@ -20,6 +20,7 @@ import { ClientPortalHeader } from "@/components/ClientPortalHeader";
 import PortalCommunicationTab from "@/components/portal/PortalCommunicationTab";
 import PortalTasksTab from "@/components/portal/PortalTasksTab";
 import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
+import PortalActionCenterTab from "@/components/portal/PortalActionCenterTab";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1359,101 +1360,12 @@ export default function ClientPortal() {
 
       case "files":
         return (
-          <div className="p-5 space-y-5">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Files</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Documents for {effectiveStudent.firstName}'s case.</p>
-            </div>
-            {effectiveStudentContactId && <IepDocumentBlocks contactId={effectiveStudentContactId} />}
-            <Card className="rounded-xl border border-border bg-card p-5 shadow-sm">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground">Upload Document</h3>
-                  <span className="text-xs text-muted-foreground">PDF only, max 1GB</span>
-                </div>
-                <div onClick={() => !isPreviewMode && fileInputRef.current?.click()}
-                  className={`cursor-pointer rounded-xl border-2 border-dashed border-border bg-muted/30 p-6 text-center transition-all hover:border-accent hover:bg-muted/50 ${isPreviewMode ? "opacity-60 cursor-not-allowed" : ""}`}>
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm font-semibold text-foreground mb-1">{uploading ? "Uploading..." : isPreviewMode ? "Upload (preview mode)" : "Click to upload a PDF"}</p>
-                  <p className="text-xs text-muted-foreground">Drag and drop or click to browse</p>
-                </div>
-                <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" onChange={handleFileUpload} className="hidden" />
-              </div>
-            </Card>
-            {studentFiles.length > 0 ? (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-foreground text-sm">Uploaded Files</h3>
-                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                  {studentFiles.map((file: any) => (
-                    <div key={file.id} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <File className="h-7 w-7 text-red-500 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{file.fileName}</p>
-                          <p className="text-xs text-muted-foreground">{file.fileSize ? `${(file.fileSize / 1024 / 1024).toFixed(2)} MB` : "Unknown size"} · {new Date(file.uploadedAt).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors">View</a>
-                        {!isPreviewMode && (
-                          <button onClick={() => deleteMutation.mutate({ id: file.id })} className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors">
-                            <Trash2 className="h-3 w-3" /> Delete
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-                <File className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                <p className="text-sm font-semibold text-foreground mb-1">No files yet</p>
-                <p className="text-xs text-muted-foreground">Upload PDFs to share with your advocate</p>
-              </div>
-            )}
-            <Card className="rounded-xl border border-border bg-gradient-to-br from-card to-muted/30 p-5 shadow-sm">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Shield className="h-5 w-5 text-accent" />
-                  <div>
-                    <h3 className="font-semibold text-foreground">Document Vault</h3>
-                    <p className="text-xs text-muted-foreground">Secure cloud storage — keep access even after services end</p>
-                  </div>
-                </div>
-                {vaultSubscription ? (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between"><span className="text-muted-foreground">Plan</span><span className="font-semibold text-foreground capitalize">{vaultSubscription.tier}</span></div>
-                    <div className="flex items-center justify-between"><span className="text-muted-foreground">Storage Used</span><span className="font-semibold text-foreground">{((vaultSubscription.storageUsed || 0) / 1024 / 1024 / 1024).toFixed(2)} GB / {((vaultSubscription.storageLimit || 0) / 1024 / 1024 / 1024).toFixed(0)} GB</span></div>
-                    <div className="flex items-center justify-between"><span className="text-muted-foreground">Status</span><span className="inline-block rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">{vaultSubscription.status}</span></div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">Choose a vault plan to keep your documents safe after services end:</p>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      {[{ tier: "basic", price: "$9", storage: "50 GB" }, { tier: "pro", price: "$19", storage: "500 GB", popular: true }, { tier: "enterprise", price: "$29", storage: "2 TB" }].map(({ tier, price, storage, popular }) => (
-                        <div key={tier} className={`rounded-xl border ${popular ? "border-2 border-accent" : "border-border"} bg-background p-4 text-center relative`}>
-                          {popular && <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">Popular</span>}
-                          <p className="text-lg font-bold text-foreground">{price}</p>
-                          <p className="text-xs text-muted-foreground">per month</p>
-                          <p className="text-sm font-semibold text-foreground mt-2 capitalize">{tier}</p>
-                          <p className="text-xs text-muted-foreground">{storage} Storage</p>
-                          <Button onClick={async () => {
-                            if (isPreviewMode) { toast.info("Preview: This would start a Stripe subscription checkout."); return; }
-                            try {
-                              const res = await fetch("/api/stripe/vault-subscription", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tier, customerEmail: user?.email, customerName: user?.name }) });
-                              const data = await res.json();
-                              if (data.url) window.open(data.url, "_blank"); else toast.error("Unable to start checkout.");
-                            } catch { toast.error("Payment service unavailable."); }
-                          }} className="w-full mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground">Subscribe</Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
+          <PortalActionCenterTab
+            effectiveStudent={effectiveStudent}
+            displayName={displayName}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            isLight={theme === "blue"}
+          />
         );
 
       case "tools":

@@ -236,10 +236,10 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     unlockedStages: ["ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
-    description: "General file uploads, shared school correspondence, and family action items.",
+    description: "Active collaborative workspace for documents, requests, and forms we're working on together.",
     includeInPortalTour: true,
     tourTitle: "Action Center",
-    tourDescription: "Access the records, shared files, and action items connected to your student's advocacy work.",
+    tourDescription: "Documents, requests, and forms you and Waypoint are actively working on together.",
     tourDisplayOrder: 5
   },
   {
