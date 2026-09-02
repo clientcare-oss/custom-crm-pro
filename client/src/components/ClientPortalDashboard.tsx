@@ -318,20 +318,7 @@ export default function ClientPortalDashboard({
       isLight ? "text-slate-800" : "text-slate-100"
     }`}>
       
-      {/* ── ROW 1: AT A GLANCE (STUDENT SELECTOR CARDS) ────────────────────── */}
-      <div className="space-y-3">
-        <p className={`text-[11px] font-bold tracking-[0.2em] uppercase ${isLight ? "text-amber-600" : "text-amber-400/90"}`}>STUDENTS</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {renderStudentCard(student1, !selectedStudentId || selectedStudentId === student1?.id, 0)}
-          {student2 ? (
-            renderStudentCard(student2, selectedStudentId === student2.id, 1)
-          ) : (
-            renderEmptyStudentCard()
-          )}
-        </div>
-      </div>
-
-      {/* ── ROW 2: ADVOCACY JOURNEY & WHAT'S NEW ──────────────────────────── */}
+      {/* ── ADVOCACY JOURNEY & WHAT'S NEW ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left (8 Cols): YOUR ADVOCACY JOURNEY */}
