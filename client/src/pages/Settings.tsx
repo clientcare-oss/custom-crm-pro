@@ -82,13 +82,13 @@ const COLOR_GUIDE: ColorGuideItem[] = [
   },
   {
     name: "Portal Sidebar & Header (Dark)",
-    hex: "#0D1117",
+    hex: "#06172F",
     humanRole: "This color is the persistent navigation sidebar and top header background.",
     exactUsage: "Left sidebar menu, sextant header background panel, and mobile navigation bar",
     scope: "portal",
     mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#30363D",
+    borderColor: "#18365D",
   },
   {
     name: "Elevated Active Surface (Dark)",

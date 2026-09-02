@@ -132,7 +132,7 @@ export function ClientPortalSidebar({
 
   return (
     <div className={`flex flex-col h-full border-r transition-all duration-[300ms] ease-in-out
-      ${isLight ? "bg-white border-slate-200" : "bg-[#0D1117] border-white/10"}
+      ${isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-white/10"}
       ${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64 shrink-0"}`}>
       
       {/* Header Logo */}
