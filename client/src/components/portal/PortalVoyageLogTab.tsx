@@ -404,7 +404,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border rounded-2xl p-5 gap-6 sm:gap-4 divide-y lg:divide-y-0 lg:divide-x ${
         isLight 
           ? "bg-white border-slate-200 divide-slate-200" 
-          : "bg-[#07162B]/30 border-white/10 divide-white/10"
+          : "bg-[#00102F]/30 border-white/10 divide-white/10"
       }`}>
         {/* Item 1 */}
         <div className="flex items-center justify-center gap-4 py-2 sm:py-0">
@@ -475,7 +475,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
                         : "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow"
                       : isActive
                         ? "bg-[#061A33] border-amber-400 text-slate-100 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/20"
-                        : "bg-[#07162B]/80 border-white/10 text-slate-300 hover:border-amber-400/30"
+                        : "bg-[#00102F]/80 border-white/10 text-slate-300 hover:border-amber-400/30"
                   }`}
                 >
                   {/* Thumbnail */}
@@ -537,7 +537,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         {/* Right Column: Player & Interactive Transcript */}
         <div className="lg:col-span-2 space-y-6">
           <Card className={`p-5 rounded-xl border shadow-md space-y-4 ${
-            isLight ? "bg-white border-slate-200" : "bg-[#07162B]/80 border-white/10"
+            isLight ? "bg-white border-slate-200" : "bg-[#00102F]/80 border-white/10"
           }`}>
             {/* Header info */}
             <div className="flex justify-between items-start gap-4">
@@ -704,7 +704,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
 
           {/* Interactive Transcript / Notes tab */}
           <Card className={`rounded-xl border shadow-sm overflow-hidden ${
-            isLight ? "bg-white border-slate-200" : "bg-[#07162B]/80 border-white/10"
+            isLight ? "bg-white border-slate-200" : "bg-[#00102F]/80 border-white/10"
           }`}>
             <div className="flex border-b border-border">
               <button

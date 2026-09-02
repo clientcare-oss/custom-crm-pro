@@ -111,7 +111,7 @@ export function AgreementsExperience({ onComplete, onNavigateTab }: AgreementsEx
 
       {/* Signature Pad Dialog */}
       {showSignDialog && (
-        <Card className="border-amber-400/40 bg-[#0a1828] p-6 rounded-2xl space-y-4 shadow-2xl">
+        <Card className="border-amber-400/40 bg-[#00102F] p-6 rounded-2xl space-y-4 shadow-2xl">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <PenTool className="h-4 w-4 text-amber-400" />
             Sign Representation Agreement
