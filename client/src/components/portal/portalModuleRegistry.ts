@@ -211,7 +211,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   },
   {
     id: "smart-docs",
-    name: "Documents",
+    name: "Document Vault",
     icon: FileText,
     sidebarGroup: "permanent",
     displayOrder: 22,
@@ -220,7 +220,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     lockedPreviewAllowed: true,
     description: "Cloudflare R2 document vault and IEP comparison archive.",
     includeInPortalTour: true,
-    tourTitle: "Documents",
+    tourTitle: "Document Vault",
     tourDescription: "Keep important advocacy documents organized and accessible from your portal.",
     tourDisplayOrder: 4
   },

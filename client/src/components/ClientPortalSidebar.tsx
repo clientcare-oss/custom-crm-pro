@@ -20,7 +20,7 @@ export const NAV_ITEMS = [
   { id: "compass",       icon: Compass,        label: "Compass" },
   { id: "communication", icon: MessageSquare,   label: "Communication" },
   { id: "tasks",         icon: CheckSquare,     label: "Tasks" },
-  { id: "smart-docs",    icon: FileText,        label: "Documents" },
+  { id: "smart-docs",    icon: FileText,        label: "Document Vault" },
   { id: "files",         icon: FolderOpen,      label: "Files" },
   { id: "tools",         icon: Wrench,          label: "Tools" },
   { id: "cases",         icon: Briefcase,       label: "Cases" },
