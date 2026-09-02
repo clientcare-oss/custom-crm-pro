@@ -18,22 +18,23 @@ export function ActionCenterIcon({
       style={size ? { width: size, height: size } : undefined}
       {...props}
     >
-      {/* Flowing Cursive Loop Signature */}
-      <path d="M2.5 19.5c1.8-6 3.5-9.5 5-9.5s.8 8.5 2.2 8.5c1.2 0 1.8-3.2 2.8-3.2s1.5 3.2 3.5 3.2" />
-      
-      {/* Pen Top Click Plunger */}
-      <path d="M19.5 2.5l1.5 1.5" />
-      
-      {/* Pen Clip */}
-      <path d="M20.5 5.5c1 .5 1.2 2 .4 3l-.9.9" />
-      
-      {/* Pen Barrel & Grip */}
-      <path d="M20 4l-4 4-1.5-1.5 4-4a1 1 0 0 1 1.5 1.5z" />
-      <path d="M14.5 6.5l-3 3 1.5 1.5 3-3" />
-      
-      {/* Pen Writing Cone & Tip Touching Signature */}
-      <path d="M11.5 9.5l-3 7 7-3-4-4z" />
-      <path d="M15 17.5l.5.5" />
+      {/* Wavy Signature Line */}
+      <path d="M2.5 21.5c1.4-2.5 2.8-2.5 4.2 0s2.8 2.5 4.2 0c1.8-1 2.7 1 2.7 1" />
+
+      {/* Pen Body / Cap */}
+      <path d="M17.2 4.2c.7-1.1 2-.7 2.8.8l.5 1.1c.8 1.4.2 2.5-.8 3l-5.2 10.5-2.8-1.4L17.2 4.2z" />
+
+      {/* Pen Clip on Left Side of Cap */}
+      <path d="M17.8 4.6l-1.8 3.5-.8 1.5" />
+
+      {/* Middle Dividing Band */}
+      <path d="M16.5 10.5l-2.8-1.4" />
+
+      {/* Lower Grip Band */}
+      <path d="M14.2 15l-2.8-1.4" />
+
+      {/* Tapered Writing Cone to Scribble Line */}
+      <path d="M11.4 17.6l2.2 4.9 1.9-3.5" />
     </svg>
   );
 }

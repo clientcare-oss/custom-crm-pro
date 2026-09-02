@@ -7,6 +7,7 @@ import {
   MapPin, RotateCcw, CreditCard, PenLine, FileSignature
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
+import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 import { 
   PORTAL_MODULE_REGISTRY, 
   TOUR_MODULES,
@@ -18,12 +19,12 @@ import {
 const LOGO_URL = "/waypoint-logo.png";
 
 export const NAV_ITEMS = [
-  { id: "appointments",  icon: Calendar,      label: "Appointments" },
-  { id: "compass",       icon: Compass,       label: "Compass" },
-  { id: "communication", icon: MessageSquare,  label: "Communication" },
-  { id: "tasks",         icon: CheckSquare,    label: "Tasks" },
-  { id: "smart-docs",    icon: VaultSafeIcon, label: "Document Vault" },
-  { id: "files",         icon: FileSignature, label: "Action Center" },
+  { id: "appointments",  icon: Calendar,         label: "Appointments" },
+  { id: "compass",       icon: Compass,          label: "Compass" },
+  { id: "communication", icon: MessageSquare,     label: "Communication" },
+  { id: "tasks",         icon: CheckSquare,       label: "Tasks" },
+  { id: "smart-docs",    icon: VaultSafeIcon,    label: "Document Vault" },
+  { id: "files",         icon: ActionCenterIcon, label: "Action Center" },
   { id: "tools",         icon: Wrench,        label: "Tools" },
   { id: "cases",         icon: Briefcase,     label: "Cases" },
   { id: "financials",    icon: CreditCard,    label: "Membership" },
