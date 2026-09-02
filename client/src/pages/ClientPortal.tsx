@@ -534,19 +534,19 @@ function ContractsTabContent({ contracts, isPreview }: { contracts: any[]; isPre
   return (
     <div className="space-y-3">
       {contracts.map((contract: any) => (
-        <Card key={contract.id} className="rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <Card key={contract.id} className="rounded-2xl border border-blue-900/40 bg-[#06172F] p-5 shadow-xl hover:border-blue-700/60 transition-all">
           <div className="space-y-3">
-            <h3 className="font-semibold text-foreground">{contract.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-3">{contract.content}</p>
-            <div className="flex items-center justify-between pt-3 border-t border-border">
+            <h3 className="font-bold text-white text-base">{contract.title}</h3>
+            <p className="text-xs text-white/60 line-clamp-3 leading-relaxed">{contract.content}</p>
+            <div className="flex items-center justify-between pt-3 border-t border-blue-900/30">
               <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
-                contract.status === "Signed" || contract.status === "Executed" ? "bg-emerald-100 text-emerald-700"
-                : contract.status === "Draft" ? "bg-slate-100 text-slate-700"
-                : contract.status === "Sent" ? "bg-blue-100 text-blue-700"
-                : "bg-red-100 text-red-700"
+                contract.status === "Signed" || contract.status === "Executed" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                : contract.status === "Draft" ? "bg-white/10 text-white/70 border border-white/10"
+                : contract.status === "Sent" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                : "bg-red-500/20 text-red-300 border border-red-500/30"
               }`}>{contract.status}</span>
               {contract.status === "Sent" && !isPreview && (
-                <Button size="sm" variant="default" onClick={() => setSigningContractId(contract.id)} className="gap-1.5">
+                <Button size="sm" onClick={() => setSigningContractId(contract.id)} className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl gap-1.5 shadow-[0_0_12px_rgba(245,181,68,0.25)]">
                   <PenTool className="h-3.5 w-3.5" /> Sign Contract
                 </Button>
               )}
@@ -555,14 +555,16 @@ function ContractsTabContent({ contracts, isPreview }: { contracts: any[]; isPre
         </Card>
       ))}
       <Dialog open={signingContractId !== null} onOpenChange={(open) => { if (!open) setSigningContractId(null); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Sign Contract</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-lg bg-[#06172F] border-blue-900/40 text-white rounded-2xl shadow-2xl p-6">
+          <DialogHeader><DialogTitle className="text-white font-bold text-lg">Sign Contract</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Draw your signature below to sign this contract.</p>
-            <SignaturePad
-              onSave={(dataUrl) => { if (signingContractId !== null) signMutation.mutate({ id: signingContractId, signatureData: dataUrl }); }}
-              onCancel={() => setSigningContractId(null)}
-            />
+            <p className="text-xs text-white/70">Draw your signature below to sign this contract.</p>
+            <div className="p-2 rounded-xl bg-[#030C22] border border-blue-900/40">
+              <SignaturePad
+                onSave={(dataUrl) => { if (signingContractId !== null) signMutation.mutate({ id: signingContractId, signatureData: dataUrl }); }}
+                onCancel={() => setSigningContractId(null)}
+              />
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1523,40 +1525,121 @@ export default function ClientPortal() {
 
       case "financials":
         return (
-          <div className="p-5 space-y-5">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Billing</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Billing and invoices for {effectiveStudent.firstName}'s case</p>
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
+            {/* ── HEADER ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-900/40 pb-5">
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Portal Membership & Retainer
+                      </h1>
+                      <PageIdBadge id="PG-023-MBR" name="Portal Membership" />
+                    </div>
+                    <p className="text-xs sm:text-sm text-white/60 mt-0.5">
+                      Active advocacy retainer, representation agreements, and verified invoice ledger for {effectiveStudent.firstName}.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* ── ACTIVE MEMBERSHIP / RETAINER STATUS CARD ── */}
+            <div className="rounded-2xl border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 shadow-[0_4px_30px_rgba(11,37,83,0.35)] relative overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/50 shadow-[0_0_10px_rgba(245,181,68,0.2)]">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                      Master IEP Coach® Active Retainer
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <CheckCircle2 className="h-3 w-3" /> In Good Standing
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-white tracking-tight">
+                    Comprehensive IEP & Special Ed Advocacy Coverage
+                  </h3>
+                  <p className="text-xs text-white/70 max-w-xl leading-relaxed">
+                    Dedicated representation with Byron Honea. Includes direct school district communications, ARD/IEP committee prep, IEP goal tracking, and 24/7 Document Vault encrypted storage.
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-900/40">
+                      <span className="text-[10px] uppercase font-bold text-white/40 block">Designated Student</span>
+                      <span className="text-xs font-bold text-white">{effectiveStudent.firstName} {effectiveStudent.lastName || ""}</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-900/40">
+                      <span className="text-[10px] uppercase font-bold text-white/40 block">Advocate</span>
+                      <span className="text-xs font-bold text-amber-300">Byron Honea</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-900/40 col-span-2 sm:col-span-1">
+                      <span className="text-[10px] uppercase font-bold text-white/40 block">Next Renewal Period</span>
+                      <span className="text-xs font-bold text-white">Annual Membership 2026-2027</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0 justify-center">
+                  <Button
+                    onClick={() => handleSelectTab("plan-renewal")}
+                    className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,181,68,0.25)] flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Review Plan & Renew
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSelectTab("appointments")}
+                    className="border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white text-xs px-4 py-2 rounded-xl"
+                  >
+                    Schedule Strategy Review
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* ── INVOICES & BILLING HISTORY ── */}
             <div className="space-y-3">
-              <h3 className="font-semibold text-foreground text-sm">Invoices</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-amber-400" />
+                  Invoices & Payment History
+                </h3>
+              </div>
+              
               {studentBilling?.invoices && studentBilling.invoices.length > 0 ? (
-                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="rounded-2xl border border-blue-900/40 bg-[#06172F] shadow-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-border bg-muted/50">
-                          <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Invoice</th>
-                          <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Amount</th>
-                          <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Status</th>
-                          <th className="px-5 py-3 text-left text-xs font-semibold text-foreground">Due</th>
-                          <th className="px-5 py-3 text-right text-xs font-semibold text-foreground">Action</th>
+                        <tr className="border-b border-blue-900/40 bg-[#030C22]">
+                          <th className="px-5 py-3 text-left text-xs font-semibold text-white/70">Invoice #</th>
+                          <th className="px-5 py-3 text-left text-xs font-semibold text-white/70">Amount</th>
+                          <th className="px-5 py-3 text-left text-xs font-semibold text-white/70">Status</th>
+                          <th className="px-5 py-3 text-left text-xs font-semibold text-white/70">Due Date</th>
+                          <th className="px-5 py-3 text-right text-xs font-semibold text-white/70">Action</th>
                         </tr>
                       </thead>
                       <tbody>
                         {studentBilling.invoices.map((invoice: any) => (
-                          <tr key={invoice.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                            <td className="px-5 py-3.5 text-sm font-semibold text-foreground">{invoice.invoiceNumber}</td>
-                            <td className="px-5 py-3.5 text-sm font-semibold text-foreground">${parseFloat(invoice.total || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+                          <tr key={invoice.id} className="border-b border-blue-900/20 hover:bg-blue-950/30 transition-colors">
+                            <td className="px-5 py-3.5 text-xs font-bold text-white font-mono">{invoice.invoiceNumber}</td>
+                            <td className="px-5 py-3.5 text-xs font-bold text-white">${parseFloat(invoice.total || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
                             <td className="px-5 py-3.5">
-                              <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                invoice.status === "Paid" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                : invoice.status === "Sent" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                : invoice.status === "Overdue" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                : "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400"
+                              <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                invoice.status === "Paid" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                : invoice.status === "Sent" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                                : invoice.status === "Overdue" ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                                : "bg-white/10 text-white/70 border border-white/10"
                               }`}>{invoice.status}</span>
                             </td>
-                            <td className="px-5 py-3.5 text-sm text-muted-foreground">{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "-"}</td>
+                            <td className="px-5 py-3.5 text-xs text-white/60 font-mono">{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "-"}</td>
                             <td className="px-5 py-3.5 text-right">
                               {invoice.status !== "Paid" && invoice.status !== "Cancelled" && invoice.status !== "Draft" ? (
                                 <Button size="sm" onClick={async () => {
@@ -1567,9 +1650,11 @@ export default function ClientPortal() {
                                     const data = await res.json();
                                     if (data.url) window.open(data.url, "_blank"); else toast.error("Unable to start checkout.");
                                   } catch { toast.error("Payment service unavailable."); }
-                                }} className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">Pay Now</Button>
+                                }} className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl px-3 py-1.5 shadow-[0_0_10px_rgba(245,181,68,0.25)]">Pay Now</Button>
                               ) : invoice.status === "Paid" ? (
-                                <span className="text-xs text-emerald-600 font-semibold">✓ Paid</span>
+                                <span className="text-xs text-emerald-400 font-semibold flex items-center justify-end gap-1">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Paid
+                                </span>
                               ) : null}
                             </td>
                           </tr>
@@ -1579,22 +1664,34 @@ export default function ClientPortal() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-                  <DollarSign className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                  <p className="text-sm font-semibold text-foreground mb-1">No invoices yet</p>
-                  <p className="text-xs text-muted-foreground">Invoices for {effectiveStudent.firstName} will appear here</p>
+                <div className="rounded-2xl border border-dashed border-blue-900/40 bg-[#06172F]/60 p-8 text-center shadow-xl space-y-2">
+                  <div className="p-3 rounded-full bg-blue-950/50 border border-blue-900/40 w-12 h-12 mx-auto flex items-center justify-center text-amber-400">
+                    <DollarSign className="h-6 w-6" />
+                  </div>
+                  <p className="text-sm font-bold text-white">No active invoices</p>
+                  <p className="text-xs text-white/60">Invoices and retainer payments for {effectiveStudent.firstName} will appear here.</p>
                 </div>
               )}
             </div>
+
+            {/* ── REPRESENTATION AGREEMENTS & CONTRACTS ── */}
             <div className="space-y-3">
-              <h3 className="font-semibold text-foreground text-sm">Contracts</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-amber-400" />
+                  Representation Agreements & Signed Contracts
+                </h3>
+              </div>
+
               {studentBilling?.contracts && studentBilling.contracts.length > 0 ? (
                 <ContractsTabContent contracts={studentBilling.contracts} isPreview={isPreviewMode} />
               ) : (
-                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-                  <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                  <p className="text-sm font-semibold text-foreground mb-1">No contracts yet</p>
-                  <p className="text-xs text-muted-foreground">Contracts for {effectiveStudent.firstName} will appear here</p>
+                <div className="rounded-2xl border border-dashed border-blue-900/40 bg-[#06172F]/60 p-8 text-center shadow-xl space-y-2">
+                  <div className="p-3 rounded-full bg-blue-950/50 border border-blue-900/40 w-12 h-12 mx-auto flex items-center justify-center text-amber-400">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <p className="text-sm font-bold text-white">No representation contracts filed</p>
+                  <p className="text-xs text-white/60">Executed representation agreements for {effectiveStudent.firstName} will appear here.</p>
                 </div>
               )}
             </div>
