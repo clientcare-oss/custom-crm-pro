@@ -6,25 +6,16 @@ import {
   RefreshCw, 
   ShieldCheck, 
   Sparkles, 
-  Calendar, 
   CheckCircle2, 
   Clock, 
-  Award, 
   ArrowRight, 
   Check, 
   FileText, 
   Plus, 
   PhoneCall, 
-  DollarSign, 
-  CreditCard, 
-  AlertCircle,
-  GraduationCap,
-  Scale,
-  Users,
-  Layers,
-  ChevronRight,
-  HelpCircle,
-  Loader2
+  Scale, 
+  Loader2,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -45,7 +36,6 @@ interface RenewalPackage {
   tagline: string;
   badge?: string;
   isPopular?: boolean;
-  annualPrice: number;
   monthlyPrice: number;
   description: string;
   features: string[];
@@ -63,92 +53,56 @@ interface RenewalAddon {
 
 export function RenewalListingExperience({
   studentName = "Liam Jenkins",
-  studentGrade = "5th Grade → 6th Grade (Middle School Transition)",
-  currentTierName = "Full IEP Representation (2025–2026)",
+  studentGrade = "5th Grade → 6th Grade",
+  currentTierName = "Active Advocacy Coverage (2025–2026)",
   expirationDate = "September 15, 2026",
-  daysRemaining = 16,
+  daysRemaining = 14,
   onRenewSuccess,
   onNavigateTab,
 }: RenewalListingExperienceProps) {
-  const [selectedPackageId, setSelectedPackageId] = useState<string>("full-year");
-  const [paymentFrequency, setPaymentFrequency] = useState<"annual" | "quarterly" | "monthly">("annual");
-  const [selectedAddons, setSelectedAddons] = useState<string[]>(["bip-rider"]);
+  const [selectedPackageId, setSelectedPackageId] = useState<string>("comprehensive-105");
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRenewed, setIsRenewed] = useState(false);
 
+  // Exactly the 2 requested plans ($55/mo and $105/mo per student)
   const packages: RenewalPackage[] = [
     {
-      id: "full-year",
-      name: "Full Academic Year Representation (2026–2027)",
-      tagline: "Comprehensive, 365-day IEP defense & coaching for the upcoming school year",
-      badge: "Most Popular Renewal",
-      isPopular: true,
-      annualPrice: 3450,
-      monthlyPrice: 315,
-      description: "End-to-end IEP coaching, direct coach attendance at all school meetings, ongoing progress tracking, and proactive dispute resolution.",
+      id: "essential-55",
+      name: "Essential Continuity & IEP Advisory",
+      tagline: "Ongoing special education coaching, document review checks, and strategic parent guidance",
+      badge: "Continuous Advisory",
+      isPopular: false,
+      monthlyPrice: 55,
+      description: "Continuous advocacy support designed to keep your child's IEP on track with document audits, goal progress checks, and on-demand coach guidance.",
       features: [
-        "Live advocate attendance at all IEP, 504 & Manifestation Determination (MDR) meetings",
-        "Unlimited formal IEP draft revisions, prior written notice (PWN) audits, and amendments",
-        "Quarterly IEP goal progress audit & independent measurement analysis",
+        "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
+        "Quarterly IEP goal progress audit & school compliance monitoring",
         "Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior",
-        "Direct phone, SMS, and portal messaging priority line with Byron Honea"
+        "Direct priority portal messaging & strategic advisory with Master IEP Coach® Byron Honea",
+        "Full access to Document Vault, IEP Comparator, and Case Compass™"
       ],
-      idealFor: "Families navigating active disputes, grade transitions, or heavy special education support needs.",
+      idealFor: "Families wanting continuous IEP oversight, draft reviews, and expert coaching between school meetings.",
       icon: ShieldCheck
     },
     {
-      id: "annual-goal-audit",
-      name: "Annual IEP Goal Audit & Table Defense",
-      tagline: "Precision draft analysis and live coach representation at the annual review",
-      badge: "Essential Continuity",
-      annualPrice: 1850,
-      monthlyPrice: 175,
-      description: "Targeted representation designed specifically around your student's annual ARD/IEP meeting date and testing review cycle.",
+      id: "comprehensive-105",
+      name: "Comprehensive Direct Advocacy & Meeting Representation",
+      tagline: "Full-spectrum active representation with live advocate attendance at all school IEP/504 conferences",
+      badge: "Most Popular Renewal",
+      isPopular: true,
+      monthlyPrice: 105,
+      description: "End-to-end direct advocacy coaching with live coach representation at every school conference table and active dispute defense.",
       features: [
-        "Comprehensive audit of present levels of academic & functional performance (PLAAFP)",
-        "Goal rewrite recommendations & accommodation crosswalk formulated before school table",
-        "Live coach representation & co-chairing at 1 full annual IEP/504 meeting (up to 3 hrs)",
-        "Post-meeting Prior Written Notice (PWN) accuracy audit & parent dissent filing if required",
-        "30 days of post-meeting follow-up support"
+        "Includes everything in the Essential Continuity Plan, plus:",
+        "Live advocate attendance & co-chairing at all IEP, 504 & MDR school meetings (virtual or in-person)",
+        "Priority rapid document turnarounds (Prior Written Notices, evaluation requests, dissent filings)",
+        "Dedicated 1-on-1 strategy prep & debrief session with Byron before and after every meeting",
+        "Campus & grade transition defense (elementary to middle/high school, secondary placement reviews)",
+        "Formal dispute guidance & administrative complaint drafting support if district non-compliance arises"
       ],
-      idealFor: "Students with stable placements needing strong annual IEP goal tightening and meeting presence.",
+      idealFor: "Families with active disputes, upcoming annual IEP reviews, grade transitions, or complex accommodation needs.",
       icon: Scale
-    },
-    {
-      id: "transition-prep",
-      name: "Middle / High School Placement Transition",
-      tagline: "Cross-campus IEP defense for major campus & feeder school transitions",
-      badge: "Transition Special",
-      annualPrice: 2450,
-      monthlyPrice: 230,
-      description: "Customized advocacy program focused on building-to-building transitions, new caseload teachers, and secondary IEP accommodations.",
-      features: [
-        "Campus transition accommodation translation (elementary to middle / high school)",
-        "Pre-transfer staff conference representation & transition IEP defense",
-        "Executive functioning & sensory accommodation environmental evaluation",
-        "Attendance at transition IEP meeting + first-semester 60-day check-in meeting",
-        "Direct teacher introductory dossier prepared for new faculty"
-      ],
-      idealFor: "Students moving to a new campus, entering middle school, or preparing for high school credits.",
-      icon: GraduationCap
-    },
-    {
-      id: "retainer-bucket",
-      name: "Advocacy Retainer Block (15 Flexible Hours)",
-      tagline: "Bank of dedicated hours for agile, as-needed special education counsel",
-      badge: "Flexible Usage",
-      annualPrice: 1950,
-      monthlyPrice: 185,
-      description: "Draw down on Byron Honea's master advocacy hours for unexpected school crises, emergency meetings, or formal record requests.",
-      features: [
-        "15 dedicated master advocacy hours valid for 12 months",
-        "Use for emergency IEP meetings, mediation prep, or formal FERPA record requests",
-        "Rollover of up to 3 unused hours into the following academic cycle",
-        "Detailed time tracking with itemized minute-by-minute portal ledger",
-        "Priority scheduling within 48 business hours"
-      ],
-      idealFor: "Families wanting an experienced advocate on retainer for emergency advisory and fast escalation.",
-      icon: RefreshCw
     }
   ];
 
@@ -156,34 +110,27 @@ export function RenewalListingExperience({
     {
       id: "iee-rider",
       name: "Independent Educational Evaluation (IEE) Oversight Rider",
-      price: 450,
-      description: "Full oversight of district IEE funding criteria, evaluator vetting, and independent testing review.",
-      recommendedFor: "If school evaluations failed to identify dyslexia, ADHD, or autism needs."
+      price: 250,
+      description: "Independent testing review, evaluator vetting, and district IEE criteria oversight.",
+      recommendedFor: "If school testing missed dyslexia, ADHD, or autism accommodations."
     },
     {
       id: "bip-rider",
       name: "Behavior Intervention Plan (BIP / FBA) Deep Dive",
-      price: 350,
-      description: "Functional Behavior Assessment review, sensory regulation accommodation crosswalk, and de-escalation plan audit.",
-      recommendedFor: "Recommended for Liam based on 2025–2026 accommodation notes."
+      price: 175,
+      description: "Functional Behavior Assessment analysis, de-escalation plan audit, and sensory crosswalk.",
+      recommendedFor: `Recommended for ${studentName} based on accommodation history.`
     },
     {
-      id: "sibling-discount",
-      name: "Sibling Continuity Plan Add-on (20% Off)",
-      price: 850,
-      description: "Extend advocacy representation and portal access to a second student in your household.",
+      id: "sibling-rider",
+      name: "Sibling Co-Advocacy Enrollment Add-on",
+      price: 45,
+      description: "Extend portal access and advisory coverage to an additional student in your household.",
       recommendedFor: "Households with multiple IEP/504 students."
-    },
-    {
-      id: "rush-service",
-      name: "24-Hour Expedited Document Review Guarantee",
-      price: 250,
-      description: "Guaranteed 24-business-hour turnaround on school document reviews and emergency letters.",
-      recommendedFor: "Urgent dispute timelines."
     }
   ];
 
-  const selectedPkg = packages.find((p) => p.id === selectedPackageId) || packages[0];
+  const selectedPkg = packages.find((p) => p.id === selectedPackageId) || packages[1];
 
   const toggleAddon = (addonId: string) => {
     setSelectedAddons((prev) =>
@@ -191,38 +138,13 @@ export function RenewalListingExperience({
     );
   };
 
-  // Pricing calculations
-  const calculateTotal = () => {
-    let basePrice = selectedPkg.annualPrice;
-    if (paymentFrequency === "monthly") {
-      basePrice = selectedPkg.monthlyPrice * 12;
-    } else if (paymentFrequency === "quarterly") {
-      basePrice = Math.round(selectedPkg.annualPrice * 1.05);
-    }
+  const addonsTotal = selectedAddons.reduce((sum, id) => {
+    const addon = addons.find((a) => a.id === id);
+    return sum + (addon ? addon.price : 0);
+  }, 0);
 
-    const addonsTotal = selectedAddons.reduce((sum, id) => {
-      const addon = addons.find((a) => a.id === id);
-      return sum + (addon ? addon.price : 0);
-    }, 0);
-
-    const loyaltyDiscount = paymentFrequency === "annual" ? Math.round(basePrice * 0.1) : 0;
-    const finalTotal = basePrice + addonsTotal - loyaltyDiscount;
-
-    return {
-      basePrice,
-      addonsTotal,
-      loyaltyDiscount,
-      finalTotal,
-      paymentAmount: 
-        paymentFrequency === "annual" 
-          ? finalTotal 
-          : paymentFrequency === "quarterly" 
-          ? Math.round(finalTotal / 4) 
-          : Math.round(finalTotal / 12)
-    };
-  };
-
-  const totals = calculateTotal();
+  const monthlyTotal = selectedPkg.monthlyPrice;
+  const grandTotal = monthlyTotal + addonsTotal;
 
   const handleConfirmRenewal = () => {
     setIsProcessing(true);
@@ -230,25 +152,25 @@ export function RenewalListingExperience({
       setIsProcessing(false);
       setIsRenewed(true);
       toast.success(`Advocacy Plan Successfully Renewed for ${studentName}!`, {
-        description: `Your representation is locked in through August 31, 2027.`
+        description: `$${monthlyTotal}/month per student coverage is active.`
       });
       if (onRenewSuccess) {
         onRenewSuccess({
           packageId: selectedPackageId,
           packageName: selectedPkg.name,
-          paymentFrequency,
-          total: totals.finalTotal,
+          monthlyRate: monthlyTotal,
+          total: grandTotal,
           addons: selectedAddons,
-          extendedUntil: "2027-08-31"
+          studentName
         });
       }
-    }, 1500);
+    }, 1200);
   };
 
   if (isRenewed) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 animate-in fade-in zoom-in-95 duration-300">
-        <Card className="border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-[0_4px_30px_rgba(11,37,83,0.35)] rounded-3xl overflow-hidden text-center p-8 sm:p-12 space-y-6 text-white">
+        <Card className="border border-blue-900/40 bg-[#06172F] shadow-2xl rounded-3xl overflow-hidden text-center p-8 sm:p-12 space-y-6 text-white">
           <div className="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-inner">
             <CheckCircle2 className="h-10 w-10 animate-bounce" />
           </div>
@@ -260,44 +182,54 @@ export function RenewalListingExperience({
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               Advocacy Plan Renewed for {studentName}!
             </h1>
-            <p className="text-sm sm:text-base text-white/70 max-w-xl mx-auto leading-relaxed">
-              Thank you for trusting Waypoint Advocates for the 2026–2027 school year. Your coverage has been extended through <strong className="text-amber-300">August 31, 2027</strong>.
+            <p className="text-sm sm:text-base text-blue-200/70 max-w-xl mx-auto leading-relaxed">
+              Thank you for trusting Waypoint Advocates. Byron Honea's master coaching coverage is active for <strong className="text-amber-300">{studentName}</strong> at <strong className="text-white">${monthlyTotal}/month</strong>.
             </p>
           </div>
 
           <div className="bg-[#030C22] border border-blue-900/40 rounded-2xl p-6 max-w-lg mx-auto text-left space-y-3 text-xs sm:text-sm shadow-xl">
             <div className="flex justify-between py-1.5 border-b border-blue-900/30">
-              <span className="text-white/60">Plan Selected:</span>
+              <span className="text-white/60">Student:</span>
+              <span className="font-bold text-white">{studentName}</span>
+            </div>
+            <div className="flex justify-between py-1.5 border-b border-blue-900/30">
+              <span className="text-white/60">Selected Plan:</span>
               <span className="font-bold text-white">{selectedPkg.name}</span>
             </div>
             <div className="flex justify-between py-1.5 border-b border-blue-900/30">
-              <span className="text-white/60">Billing Schedule:</span>
-              <span className="font-semibold capitalize text-white">{paymentFrequency} Schedule</span>
+              <span className="text-white/60">Monthly Investment:</span>
+              <span className="font-semibold text-white">
+                ${selectedPkg.monthlyPrice} / month per student
+              </span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-blue-900/30">
-              <span className="text-white/60">Add-on Riders:</span>
-              <span className="font-semibold text-white">{selectedAddons.length} Applied</span>
-            </div>
+            {selectedAddons.length > 0 && (
+              <div className="flex justify-between py-1.5 border-b border-blue-900/30">
+                <span className="text-white/60">Add-on Riders:</span>
+                <span className="font-semibold text-white">{selectedAddons.length} Applied (+${addonsTotal})</span>
+              </div>
+            )}
             <div className="flex justify-between py-1.5 text-base font-bold text-emerald-400">
-              <span>Total Confirmed:</span>
-              <span className="text-amber-300 font-mono font-black">${totals.finalTotal.toLocaleString()}</span>
+              <span>Monthly Recurring:</span>
+              <span className="text-amber-300 font-mono font-black">
+                ${monthlyTotal}/month
+              </span>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Button
               onClick={() => onNavigateTab ? onNavigateTab("compass") : window.location.reload()}
-              className="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 h-11 rounded-xl shadow-[0_0_15px_rgba(245,181,68,0.25)]"
+              className="w-full sm:w-auto bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold px-6 h-11 rounded-xl shadow-md cursor-pointer"
             >
-              Return to Case Compass
+              Return to Case Compass™
             </Button>
             <Button
               variant="outline"
               onClick={() => toast.info("Receipt sent to parent email on file.")}
-              className="w-full sm:w-auto border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white rounded-xl"
+              className="w-full sm:w-auto border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white rounded-xl cursor-pointer"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Download Renewal Agreement Addendum
+              <FileText className="h-4 w-4 mr-2 text-amber-400" />
+              Download Renewal Addendum
             </Button>
           </div>
         </Card>
@@ -306,15 +238,15 @@ export function RenewalListingExperience({
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
       
-      {/* Top Banner: Status & Continuity Alert */}
-      <div className="bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 rounded-3xl border border-amber-400/60 shadow-[0_4px_30px_rgba(11,37,83,0.35)] relative overflow-hidden text-white">
+      {/* ── Top Header Banner: Plan Renewal ── */}
+      <div className="bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 sm:p-7 rounded-3xl border border-blue-900/40 shadow-2xl relative overflow-hidden text-white">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-amber-400 text-slate-950 font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 shadow-sm">
-                Annual School Year Rollover
+              <Badge className="bg-[#F5B544] text-slate-950 font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 shadow-sm">
+                Advocacy Continuity
               </Badge>
               <Badge variant="outline" className="text-xs font-mono border-amber-400/50 text-amber-300 bg-amber-400/10">
                 <Clock className="h-3 w-3 mr-1 inline text-amber-400" />
@@ -323,219 +255,173 @@ export function RenewalListingExperience({
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-                <RefreshCw className="h-7 w-7 text-amber-400" />
+              <h1 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight flex items-center gap-2.5">
+                <RefreshCw className="h-7 w-7 text-[#F5B544]" />
                 Advocacy Plan Renewal & Continuation Hub
               </h1>
               <PageIdBadge id="PG-023-RNW" name="Plan Renewal" />
             </div>
 
-            <p className="text-xs sm:text-sm text-white/70 max-w-2xl leading-relaxed">
-              Lock in Byron Honea's master advocacy coaching for <strong className="text-white font-semibold">{studentName}</strong> ({studentGrade}). Current agreement expires on <strong className="text-amber-300 font-semibold">{expirationDate}</strong>.
+            <p className="text-xs sm:text-sm text-blue-200/75 max-w-2xl leading-relaxed">
+              Maintain uninterrupted representation for <strong className="text-white font-semibold">{studentName}</strong> ({studentGrade}). Current agreement active through <strong className="text-amber-300 font-semibold">{expirationDate}</strong>.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <div className="bg-[#030C22] border border-blue-900/40 p-3.5 rounded-2xl text-center sm:text-right shadow-xl">
-              <span className="text-[11px] text-white/50 font-medium block">Current Representation</span>
+              <span className="text-[11px] text-white/50 font-medium block">Active Coverage</span>
               <span className="text-sm font-bold text-white block">{currentTierName}</span>
               <span className="text-[11px] text-emerald-400 font-semibold block mt-0.5">
-                ✓ 10% Loyalty Savings Eligible
+                ✓ Continuous Student Protection
               </span>
             </div>
 
             <Button
               variant="outline"
               onClick={() => toast.info("Connecting to Byron's calendar for a 15-min Renewal Alignment Call...")}
-              className="gap-2 text-xs font-semibold h-11 border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white rounded-xl"
+              className="gap-2 text-xs font-semibold h-11 border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white rounded-xl cursor-pointer"
             >
-              <PhoneCall className="h-4 w-4 text-amber-400" />
+              <PhoneCall className="h-4 w-4 text-[#F5B544]" />
               Request Alignment Call
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Payment Frequency Switcher */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#06172F] p-4 rounded-2xl border border-blue-900/40 shadow-xl text-white">
-        <div>
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <CreditCard className="h-4 w-4 text-amber-400" />
-            Select Billing Term & Payment Frequency
-          </h3>
-          <p className="text-xs text-white/60 mt-0.5">
-            Choose annual lump-sum for maximum loyalty savings, or flexible installment payments.
-          </p>
+      {/* ── Main Section: 2 Plan Cards ── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#F5B544]" />
+            1. Select Advocacy Plan (Per Month Per Student)
+          </h2>
+          <span className="text-xs text-blue-200/60 font-mono">2 Plans Available</span>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-[#030C22] p-1.5 rounded-xl border border-blue-900/40 shadow-inner">
-          <Button
-            size="sm"
-            variant={paymentFrequency === "annual" ? "default" : "ghost"}
-            onClick={() => setPaymentFrequency("annual")}
-            className={`h-8 text-xs font-semibold rounded-lg px-3 transition-all ${
-              paymentFrequency === "annual" ? "bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]" : "text-white/70 hover:text-white"
-            }`}
-          >
-            Pay Annually
-            <Badge className="ml-1.5 bg-emerald-500 text-white text-[9px] px-1 py-0 font-extrabold">Save 10%</Badge>
-          </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {packages.map((pkg) => {
+            const isSelected = selectedPackageId === pkg.id;
+            const IconComp = pkg.icon;
 
-          <Button
-            size="sm"
-            variant={paymentFrequency === "quarterly" ? "default" : "ghost"}
-            onClick={() => setPaymentFrequency("quarterly")}
-            className={`h-8 text-xs font-semibold rounded-lg px-3 transition-all ${
-              paymentFrequency === "quarterly" ? "bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]" : "text-white/70 hover:text-white"
-            }`}
-          >
-            4x Quarterly
-          </Button>
+            return (
+              <div
+                key={pkg.id}
+                onClick={() => setSelectedPackageId(pkg.id)}
+                className={`p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between shadow-xl ${
+                  isSelected
+                    ? "border-amber-400/80 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] text-white shadow-[0_4px_30px_rgba(11,37,83,0.4)] ring-1 ring-amber-400/40"
+                    : "border-blue-900/40 bg-[#06172F] text-white/80 hover:border-blue-700/60 hover:bg-[#071D40]/70"
+                }`}
+              >
+                {/* Top Accent Line */}
+                <div className={`absolute top-0 left-0 right-0 h-[2px] ${
+                  isSelected 
+                    ? "bg-gradient-to-r from-transparent via-[#F5B544] to-transparent" 
+                    : "bg-transparent"
+                }`} />
 
-          <Button
-            size="sm"
-            variant={paymentFrequency === "monthly" ? "default" : "ghost"}
-            onClick={() => setPaymentFrequency("monthly")}
-            className={`h-8 text-xs font-semibold rounded-lg px-3 transition-all ${
-              paymentFrequency === "monthly" ? "bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]" : "text-white/70 hover:text-white"
-            }`}
-          >
-            Monthly
-          </Button>
-        </div>
-      </div>
+                {pkg.badge && (
+                  <div className="absolute top-4 right-4">
+                    <Badge
+                      className={`text-[10px] font-bold uppercase px-2.5 py-0.5 ${
+                        pkg.isPopular
+                          ? "bg-[#F5B544] text-[#07152B] shadow-md"
+                          : "bg-[#030C22] text-amber-300 border border-amber-400/40"
+                      }`}
+                    >
+                      {pkg.badge}
+                    </Badge>
+                  </div>
+                )}
 
-      {/* Main 2-Column Section: Packages on Left, Addons & Summary on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Left Column: Renewal Packages Grid (7 Cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-400" />
-              1. Choose Renewal Package for 2026–2027
-            </h2>
-            <span className="text-xs text-white/50">4 Options Available</span>
-          </div>
-
-          <div className="space-y-4">
-            {packages.map((pkg) => {
-              const isSelected = selectedPackageId === pkg.id;
-              const IconComp = pkg.icon;
-
-              const displayPrice =
-                paymentFrequency === "annual"
-                  ? pkg.annualPrice
-                  : paymentFrequency === "quarterly"
-                  ? Math.round((pkg.annualPrice * 1.05) / 4)
-                  : pkg.monthlyPrice;
-
-              const priceSuffix =
-                paymentFrequency === "annual"
-                  ? "/academic year"
-                  : paymentFrequency === "quarterly"
-                  ? "/quarter"
-                  : "/month";
-
-              return (
-                <div
-                  key={pkg.id}
-                  onClick={() => setSelectedPackageId(pkg.id)}
-                  className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden shadow-xl ${
-                    isSelected
-                      ? "border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] text-white shadow-[0_4px_25px_rgba(11,37,83,0.35)] ring-1 ring-amber-400/30"
-                      : "border-blue-900/40 bg-[#06172F] text-white/80 hover:border-blue-700/60 hover:bg-[#081B36]"
-                  }`}
-                >
-                  {pkg.badge && (
-                    <div className="absolute top-4 right-4">
-                      <Badge
-                        className={`text-[10px] font-bold uppercase px-2 py-0.5 ${
-                          pkg.isPopular
-                            ? "bg-amber-400 text-slate-950 shadow-md"
-                            : "bg-blue-950 text-amber-300 border border-amber-400/40"
-                        }`}
-                      >
-                        {pkg.badge}
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className="flex items-start gap-4">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3.5">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
                         isSelected
-                          ? "bg-amber-400 text-slate-950 shadow-md"
+                          ? "bg-[#F5B544] text-[#07152B] shadow-md"
                           : "bg-[#030C22] text-amber-300 border border-blue-900/40"
                       }`}
                     >
                       <IconComp className="h-5 w-5" />
                     </div>
 
-                    <div className="space-y-2 flex-1 pr-16">
-                      <div>
-                        <h3 className="text-base font-bold text-white flex items-center gap-2">
-                          {pkg.name}
-                        </h3>
-                        <p className="text-xs text-white/60 mt-0.5 leading-snug">
-                          {pkg.tagline}
-                        </p>
-                      </div>
-
-                      <div className="flex items-baseline gap-1.5 pt-1">
-                        <span className="text-2xl font-extrabold text-white">
-                          ${displayPrice.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-white/50 font-medium">{priceSuffix}</span>
-                        {paymentFrequency === "annual" && (
-                          <span className="text-[11px] text-emerald-400 font-semibold ml-2">
-                            (Includes 10% Loyalty Discount)
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-xs text-white/70 leading-relaxed pt-1">
-                        {pkg.description}
+                    <div className="pr-16">
+                      <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                        {pkg.name}
+                      </h3>
+                      <p className="text-xs text-blue-200/65 mt-1 leading-snug">
+                        {pkg.tagline}
                       </p>
-
-                      {/* Feature Bullet Points */}
-                      <ul className="space-y-1.5 pt-2 text-xs text-white/90">
-                        {pkg.features.map((feat, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                            <span className="leading-tight">{feat}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      <div className="pt-2 text-[11px] text-white/60 bg-[#030C22] p-3 rounded-xl border border-blue-900/40 font-medium">
-                        <strong className="text-amber-300 font-semibold">Best Suited For:</strong> {pkg.idealFor}
-                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Right Column: Add-ons & Live Checkout Card (5 Cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          
-          {/* Add-ons & Riders */}
+                  {/* Pricing Display */}
+                  <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 flex items-baseline justify-between">
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-extrabold text-white font-mono tracking-tight">
+                          ${pkg.monthlyPrice}
+                        </span>
+                        <span className="text-xs text-blue-200/70 font-medium">/month per student</span>
+                      </div>
+                    </div>
+
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                      isSelected ? "border-[#F5B544] bg-[#F5B544] text-[#07152B]" : "border-white/30"
+                    }`}>
+                      {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-white/80 leading-relaxed">
+                    {pkg.description}
+                  </p>
+
+                  {/* Features list */}
+                  <div className="space-y-2 pt-1 border-t border-white/10">
+                    <span className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider block font-mono">
+                      What's Included:
+                    </span>
+                    <ul className="space-y-2 text-xs text-white/90">
+                      {pkg.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="leading-tight">{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Footer note */}
+                <div className="pt-4 mt-4 text-[11px] text-blue-200/60 bg-[#030C22] p-2.5 rounded-xl border border-blue-900/40">
+                  <strong className="text-amber-300 font-semibold">Best Suited For:</strong> {pkg.idealFor}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 2-Column Section: Optional Add-ons & Checkout Summary ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left: Optional Add-ons (7 Cols) */}
+        <div className="lg:col-span-7">
           <Card className="border-blue-900/40 bg-[#06172F] shadow-xl rounded-2xl overflow-hidden text-white">
             <CardHeader className="bg-[#030C22] border-b border-blue-900/40 pb-3">
               <CardTitle className="text-sm font-bold flex items-center justify-between text-white">
                 <span className="flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-amber-400" />
-                  2. Optional Add-on Riders
+                  <Plus className="h-4 w-4 text-[#F5B544]" />
+                  2. Optional Specialized Riders
                 </span>
                 <Badge variant="outline" className="text-[10px] font-mono border-blue-900/40 text-amber-300">
                   {selectedAddons.length} Selected
                 </Badge>
               </CardTitle>
-              <CardDescription className="text-xs text-white/60">
-                Enhance your continuity plan with targeted specialized evaluations.
+              <CardDescription className="text-xs text-blue-200/60">
+                Add specialized testing oversight or sibling continuity to your plan.
               </CardDescription>
             </CardHeader>
 
@@ -556,7 +442,7 @@ export function RenewalListingExperience({
                     <div
                       className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                         isSelected
-                          ? "bg-amber-400 border-amber-400 text-slate-950"
+                          ? "bg-[#F5B544] border-[#F5B544] text-[#07152B]"
                           : "border-blue-900/60 bg-[#06172F]"
                       }`}
                     >
@@ -572,7 +458,7 @@ export function RenewalListingExperience({
                           +${addon.price}
                         </span>
                       </div>
-                      <p className="text-[11px] text-white/60 leading-relaxed mt-0.5">
+                      <p className="text-[11px] text-blue-200/60 leading-relaxed mt-0.5">
                         {addon.description}
                       </p>
                       {addon.recommendedFor && (
@@ -586,20 +472,22 @@ export function RenewalListingExperience({
               })}
             </CardContent>
           </Card>
+        </div>
 
-          {/* Live Checkout Summary Card */}
-          <Card className="border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-[0_4px_30px_rgba(11,37,83,0.35)] rounded-2xl overflow-hidden sticky top-6 text-white">
+        {/* Right: Checkout Summary (5 Cols) */}
+        <div className="lg:col-span-5">
+          <Card className="border border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-2xl rounded-2xl overflow-hidden sticky top-6 text-white">
             <CardHeader className="bg-[#030C22]/60 border-b border-blue-900/40 pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-extrabold text-white flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-amber-400" />
-                  Renewal Order Summary
+                  <ShieldCheck className="h-5 w-5 text-[#F5B544]" />
+                  Renewal Summary
                 </CardTitle>
-                <Badge className="bg-amber-400 text-slate-950 font-bold text-[10px]">
-                  2026–2027 Cycle
+                <Badge className="bg-[#F5B544] text-[#07152B] font-bold text-[10px]">
+                  Per Student Rate
                 </Badge>
               </div>
-              <CardDescription className="text-xs text-white/70">
+              <CardDescription className="text-xs text-blue-200/70">
                 Student: <strong className="text-white font-semibold">{studentName}</strong> • Byron Honea, Advocate
               </CardDescription>
             </CardHeader>
@@ -607,9 +495,14 @@ export function RenewalListingExperience({
             <CardContent className="p-5 space-y-4 text-xs sm:text-sm">
               <div className="space-y-2 pb-3 border-b border-blue-900/40">
                 <div className="flex justify-between items-start gap-2">
-                  <span className="text-white/70">{selectedPkg.name}</span>
+                  <div>
+                    <span className="text-white font-medium block">{selectedPkg.name}</span>
+                    <span className="text-[11px] text-blue-200/60">
+                      ${selectedPkg.monthlyPrice}/month per student
+                    </span>
+                  </div>
                   <span className="font-semibold text-white text-right shrink-0 font-mono">
-                    ${totals.basePrice.toLocaleString()}
+                    ${selectedPkg.monthlyPrice}/mo
                   </span>
                 </div>
 
@@ -626,40 +519,28 @@ export function RenewalListingExperience({
                     </div>
                   );
                 })}
-
-                {totals.loyaltyDiscount > 0 && (
-                  <div className="flex justify-between items-start gap-2 text-emerald-400 font-semibold text-xs">
-                    <span>10% Loyalty Savings (Annual Term)</span>
-                    <span className="font-mono">-${totals.loyaltyDiscount.toLocaleString()}</span>
-                  </div>
-                )}
               </div>
 
               {/* Total Row */}
               <div className="pt-1">
                 <div className="flex justify-between items-baseline">
                   <span className="text-sm font-bold text-white">
-                    {paymentFrequency === "annual" ? "Annual Total:" : "Total Academic Investment:"}
+                    Monthly Investment:
                   </span>
                   <span className="text-3xl font-black text-amber-300 font-mono">
-                    ${totals.finalTotal.toLocaleString()}
+                    ${monthlyTotal}
+                    <span className="text-xs font-normal text-blue-200/70 ml-1">
+                      /month
+                    </span>
                   </span>
                 </div>
-                {paymentFrequency !== "annual" && (
-                  <div className="flex justify-between items-baseline mt-1 text-xs text-white/60">
-                    <span>Due Today ({paymentFrequency}):</span>
-                    <span className="font-bold text-white font-mono">
-                      ${totals.paymentAmount.toLocaleString()}
-                    </span>
-                  </div>
-                )}
               </div>
 
-              {/* Terms Checkbox note */}
-              <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-[11px] text-white/70 leading-relaxed flex gap-2">
+              {/* Terms note */}
+              <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-[11px] text-blue-200/70 leading-relaxed flex gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  By confirming renewal, your Representation Agreement Addendum will be countersigned and filed to your R2 Document Vault.
+                  Recurring monthly charges apply per student. You can adjust or pause your representation anytime with 30 days notice.
                 </span>
               </div>
             </CardContent>
@@ -668,12 +549,12 @@ export function RenewalListingExperience({
               <Button
                 onClick={handleConfirmRenewal}
                 disabled={isProcessing}
-                className="w-full h-12 text-sm font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-[0_0_20px_rgba(245,181,68,0.3)] transition-all gap-2 rounded-xl"
+                className="w-full h-12 text-sm font-bold bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] shadow-md transition-all gap-2 rounded-xl cursor-pointer"
               >
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Locking In 2026–2027 Representation...
+                    Confirming Coverage...
                   </>
                 ) : (
                   <>
@@ -684,7 +565,7 @@ export function RenewalListingExperience({
               </Button>
 
               <p className="text-[10px] text-center text-white/50">
-                🔒 256-Bit Encrypted Secure PCI-Compliant Checkout • Backed by Byron Honea
+                🔒 256-Bit Encrypted Secure Checkout • Backed by Master IEP Coach® Byron Honea
               </p>
             </CardFooter>
           </Card>
@@ -693,3 +574,5 @@ export function RenewalListingExperience({
     </div>
   );
 }
+
+export default RenewalListingExperience;
