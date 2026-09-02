@@ -62,43 +62,43 @@ const COLOR_GUIDE: ColorGuideItem[] = [
   // ── CLIENT PORTAL DARK MODE ──────────────────────────────────────────
   {
     name: "Portal Background (Dark)",
-    hex: "#030914",
+    hex: "#0D1117",
     humanRole: "This color is the main background across all Client Portal pages.",
     exactUsage: "Full viewport canvas, scrollable content area, and stage simulator background",
     scope: "portal",
     mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#18365D",
+    borderColor: "#30363D",
   },
   {
     name: "Portal Cards & Boxes (Dark)",
-    hex: "#00102F",
+    hex: "#161B22",
     humanRole: "This color is used for every card, workspace folder, container, and item box in the portal.",
     exactUsage: "Document Vault summary strips, Action Center cards, task cards, chat thread boxes, and modals",
     scope: "portal",
     mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#285590",
+    borderColor: "#30363D",
   },
   {
     name: "Portal Sidebar & Header (Dark)",
-    hex: "#02060D",
+    hex: "#0D1117",
     humanRole: "This color is the persistent navigation sidebar and top header background.",
     exactUsage: "Left sidebar menu, sextant header background panel, and mobile navigation bar",
     scope: "portal",
     mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#18365D",
+    borderColor: "#30363D",
   },
   {
     name: "Elevated Active Surface (Dark)",
-    hex: "#001847",
+    hex: "#21262D",
     humanRole: "This color is used for highlighted items, active task cards, and inner dialog sections.",
     exactUsage: "Needs-Review action cards, active voyage recording player, and focused form panels",
     scope: "portal",
     mode: "dark",
     textColor: "#FFFFFF",
-    borderColor: "#38BDF8",
+    borderColor: "#F5B544",
   },
 
   // ── CLIENT PORTAL LIGHT MODE ─────────────────────────────────────────
@@ -558,7 +558,7 @@ export default function Settings() {
               </div>
 
               {/* Live Interactive Portal Sample Card */}
-              <div className="mt-6 rounded-2xl border border-white/10 bg-[#030914] p-5 text-white space-y-4 shadow-xl">
+              <div className="mt-6 rounded-2xl border border-white/10 bg-[#0D1117] p-5 text-white space-y-4 shadow-xl">
                 <div className="flex items-center justify-between border-b border-white/10 pb-3">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-400" />
@@ -567,12 +567,12 @@ export default function Settings() {
                       Exact Colors Rendered
                     </span>
                   </div>
-                  <span className="text-xs text-white/50">Page Background: #030914</span>
+                  <span className="text-xs text-white/50">Page Background: #0D1117</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Sample Card 1 */}
-                  <div className="rounded-xl border border-white/10 bg-[#00102F] p-4 space-y-2.5 shadow-lg">
+                  <div className="rounded-xl border border-white/10 bg-[#161B22] p-4 space-y-2.5 shadow-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Document Vault Box</span>
                       <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
@@ -581,18 +581,18 @@ export default function Settings() {
                     </div>
                     <h4 className="text-sm font-bold text-white">2026 Psycho-Educational Evaluation.pdf</h4>
                     <p className="text-xs text-white/60">
-                      Card Surface Color: <code className="text-amber-300 font-mono">#00102F</code>
+                      Card Surface Color: <code className="text-amber-300 font-mono">#161B22</code>
                     </p>
                     <div className="pt-2 border-t border-white/10 flex items-center justify-between">
                       <span className="text-[10px] text-white/40">Updated Today</span>
-                      <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-[#00102F] font-bold text-xs h-7 px-3 rounded-lg">
+                      <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs h-7 px-3 rounded-lg">
                         View File
                       </Button>
                     </div>
                   </div>
 
                   {/* Sample Card 2 */}
-                  <div className="rounded-xl border border-amber-400/40 bg-gradient-to-b from-[#001847] to-[#00102F] p-4 space-y-2.5 shadow-lg">
+                  <div className="rounded-xl border border-amber-400/40 bg-gradient-to-b from-[#21262D] to-[#161B22] p-4 space-y-2.5 shadow-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Action Center Item</span>
                       <span className="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-bold">
@@ -601,7 +601,7 @@ export default function Settings() {
                     </div>
                     <h4 className="text-sm font-bold text-white">Parent Concerns & Priorities Statement</h4>
                     <p className="text-xs text-white/70">
-                      Elevated Review Gradient: <code className="text-amber-300 font-mono">#001847 → #00102F</code>
+                      Elevated Review Gradient: <code className="text-amber-300 font-mono">#21262D → #161B22</code>
                     </p>
                     <div className="pt-2 border-t border-white/10 flex items-center justify-between">
                       <span className="text-[10px] text-white/40">Due in 3 days</span>

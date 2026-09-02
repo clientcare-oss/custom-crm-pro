@@ -48,7 +48,7 @@ export default function PortalCommunicationTab({
       </div>
 
       {/* Message Thread */}
-      <Card className="border-white/10 bg-[#00102F]/90 text-slate-100 shadow-xl min-h-[350px] flex flex-col justify-between">
+      <Card className="border-white/10 bg-[#161B22]/90 text-slate-100 shadow-xl min-h-[350px] flex flex-col justify-between">
         <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[450px]">
           {messages.length === 0 ? (
             <div className="text-center py-12 text-slate-400 text-xs">
@@ -63,7 +63,7 @@ export default function PortalCommunicationTab({
                     className={`max-w-md rounded-2xl px-4 py-3 text-xs leading-relaxed ${
                       isMine
                         ? "bg-amber-400 text-slate-950 font-medium rounded-br-none shadow-md"
-                        : "bg-[#001847] text-slate-100 border border-white/10 rounded-bl-none shadow-md"
+                        : "bg-[#21262D] text-slate-100 border border-white/10 rounded-bl-none shadow-md"
                     }`}
                   >
                     <p>{msg.content}</p>
@@ -80,14 +80,14 @@ export default function PortalCommunicationTab({
         </CardContent>
 
         {/* Message Input Form */}
-        <div className="p-3 border-t border-white/10 bg-[#00102F] rounded-b-xl">
+        <div className="p-3 border-t border-white/10 bg-[#161B22] rounded-b-xl">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Type your message to Byron Honea (Master IEP Coach)..."
               rows={2}
-              className="bg-[#000B21] border-white/15 text-white text-xs resize-none"
+              className="bg-[#0D1117] border-white/15 text-white text-xs resize-none"
             />
             <Button
               type="submit"

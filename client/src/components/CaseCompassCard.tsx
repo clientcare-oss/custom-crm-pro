@@ -266,9 +266,9 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
 
   return (
     <div className="space-y-3">
-      <Card className="rounded-2xl border border-white/10 shadow-xl overflow-hidden bg-[#00102F] text-slate-100 flex flex-col p-0 gap-0">
+      <Card className="rounded-2xl border border-white/10 shadow-xl overflow-hidden bg-[#161B22] text-slate-100 flex flex-col p-0 gap-0">
         {/* Panel Header: Solid Dark Background with compact padding to match the spinner icon */}
-        <div className="flex items-center gap-3 border-b border-white/10 bg-[#000B21] px-6 py-2.5">
+        <div className="flex items-center gap-3 border-b border-white/10 bg-[#0D1117] px-6 py-2.5">
           <div className={`flex-shrink-0 ${isRecentlyUpdated ? "animate-[spin_8s_linear_infinite]" : ""}`}>
             <CompassIcon className="h-9 w-9 text-amber-400" />
           </div>
@@ -529,7 +529,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
             isDetailsOpen ? "pointer-events-auto" : "pointer-events-none"
           }`}
           style={{ 
-            backgroundColor: `rgba(0, 16, 47, ${(bgSettings.overlayOpacity ?? 95) / 100})`,
+            backgroundColor: `rgba(22, 27, 34, ${(bgSettings.overlayOpacity ?? 95) / 100})`,
             transform: isDetailsOpen ? 'translateY(0)' : 'translateY(100%)',
             transition: 'transform 1500ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}

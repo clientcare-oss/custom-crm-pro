@@ -1844,7 +1844,7 @@ export default function ClientPortal() {
 
     const isLight = theme === "blue";
     return (
-      <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-[3000ms] ease-in-out ${isLight ? "bg-[#f0f4f8] text-slate-900" : "bg-[#030914] text-white"}`}>
+      <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-[3000ms] ease-in-out ${isLight ? "bg-[#f0f4f8] text-slate-900" : "bg-[#0D1117] text-white"}`}>
         {/* Workspace Admin Bar with downward yellow neon glow */}
         {isWorkspaceMode && (
           <div 
@@ -1968,7 +1968,7 @@ export default function ClientPortal() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile hamburger bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-2 bg-[#071422] shrink-0 border-b border-white/8">
+        <div className="md:hidden flex items-center gap-3 px-4 py-2 bg-[#161B22] shrink-0 border-b border-white/8">
           <button onClick={() => setSidebarOpen(true)} className="text-white/60 hover:text-white">
             <Menu className="h-5 w-5" />
           </button>
@@ -2019,7 +2019,7 @@ export default function ClientPortal() {
         )}
 
         {/* Scrollable content area */}
-        <div className={`flex-1 overflow-y-auto relative ${isLight ? "bg-[#f8fafc]" : "bg-[#030914] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,35,64,0.45),rgba(3,9,20,1))]"}`}>
+        <div className={`flex-1 overflow-y-auto relative ${isLight ? "bg-[#f8fafc]" : "bg-[#0D1117] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(30,41,59,0.35),rgba(13,17,23,1))]"}`}>
           <ScopedErrorBoundary moduleName={NAV_ITEMS.find(n => n.id === activeTab)?.label ?? "Portal Tab"}>
             {renderContent()}
           </ScopedErrorBoundary>

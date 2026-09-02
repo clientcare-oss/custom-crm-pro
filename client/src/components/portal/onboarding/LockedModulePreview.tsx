@@ -129,7 +129,7 @@ export function LockedModulePreview({
         </h1>
       </div>
 
-      <Card className="border-white/15 bg-[#00102F]/95 p-6 md:p-8 rounded-2xl space-y-6 shadow-xl">
+      <Card className="border-white/15 bg-[#161B22]/95 p-6 md:p-8 rounded-2xl space-y-6 shadow-xl">
         <div className="flex items-start gap-4">
           <div className="h-12 w-12 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 flex items-center justify-center font-bold shrink-0">
             <Icon className="h-6 w-6" />
@@ -164,7 +164,7 @@ export function LockedModulePreview({
           </div>
           <Button
             onClick={() => onNavigateTab(config.targetTab)}
-            className="gap-2 bg-amber-400 hover:bg-amber-500 text-[#00102F] font-bold text-xs px-5 shadow-md"
+            className="gap-2 bg-amber-400 hover:bg-amber-500 text-[#161B22] font-bold text-xs px-5 shadow-md"
           >
             {config.cta}
             <ArrowRight className="h-4 w-4" />

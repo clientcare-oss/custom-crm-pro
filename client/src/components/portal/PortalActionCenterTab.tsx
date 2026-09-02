@@ -499,7 +499,7 @@ export default function PortalActionCenterTab({
       <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
         isLight 
           ? "bg-slate-100/90 border-slate-200 text-slate-800" 
-          : "bg-[#00102F]/90 border-white/10 text-white/80"
+          : "bg-[#161B22]/90 border-white/10 text-white/80"
       }`}>
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
@@ -588,14 +588,14 @@ export default function PortalActionCenterTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search active actions..."
-            className="pl-8 text-xs bg-[#00102F]/90 border-white/10 text-white placeholder:text-white/30 rounded-xl h-9 focus:border-amber-400/50"
+            className="pl-8 text-xs bg-[#161B22]/90 border-white/10 text-white placeholder:text-white/30 rounded-xl h-9 focus:border-amber-400/50"
           />
         </div>
       </div>
 
       {/* ── ACTION CARDS GRID ── */}
       {filteredItems.length === 0 ? (
-        <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-white/10 bg-[#00102F]/60 space-y-3">
+        <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-white/10 bg-[#161B22]/60 space-y-3">
           <div className="p-3 rounded-full bg-white/5 w-12 h-12 mx-auto flex items-center justify-center text-white/40">
             <ActionCenterIcon className="h-6 w-6" />
           </div>
@@ -624,10 +624,10 @@ export default function PortalActionCenterTab({
                 key={item.id}
                 className={`group relative rounded-2xl border p-5 transition-all duration-200 flex flex-col justify-between ${
                   isAttention
-                    ? "bg-gradient-to-b from-[#001847] to-[#00102F] border-amber-400/40 shadow-[0_4px_20px_rgba(245,181,68,0.08)] hover:border-amber-400/70"
+                    ? "bg-gradient-to-b from-[#001847] to-[#161B22] border-amber-400/40 shadow-[0_4px_20px_rgba(245,181,68,0.08)] hover:border-amber-400/70"
                     : item.isCompleted
-                    ? "bg-[#00102F]/70 border-white/10 hover:border-white/20"
-                    : "bg-[#00102F]/90 border-white/10 hover:border-white/20"
+                    ? "bg-[#161B22]/70 border-white/10 hover:border-white/20"
+                    : "bg-[#161B22]/90 border-white/10 hover:border-white/20"
                 }`}
               >
                 <div>
@@ -712,7 +712,7 @@ export default function PortalActionCenterTab({
 
       {/* ── ACTION WORKSPACE MODAL (DOCUMENT REVIEW & COLLABORATION) ── */}
       <Dialog open={isActionModalOpen} onOpenChange={setIsActionModalOpen}>
-        <DialogContent className="max-w-2xl bg-[#00102F] border-white/15 text-white rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-[#161B22] border-white/15 text-white rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
           {selectedAction && (
             <div className="space-y-5">
               <DialogHeader>
@@ -908,7 +908,7 @@ export default function PortalActionCenterTab({
 
       {/* ── START A NEW ACTION MODAL (PERMITTED CLIENT WORKFLOWS ONLY) ── */}
       <Dialog open={isStartActionOpen} onOpenChange={setIsStartActionOpen}>
-        <DialogContent className="max-w-xl bg-[#00102F] border-white/15 text-white rounded-2xl p-6 shadow-2xl">
+        <DialogContent className="max-w-xl bg-[#161B22] border-white/15 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
               <Plus className="h-5 w-5 text-amber-400" />

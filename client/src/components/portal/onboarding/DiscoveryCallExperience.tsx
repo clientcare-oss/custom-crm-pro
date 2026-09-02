@@ -130,7 +130,7 @@ export function DiscoveryCallExperience({
         </div>
 
         {/* ── Card 1: Your Next Meeting Banner (Matching Border & Emerald Top Accent) ── */}
-        <div className="w-full lg:max-w-[56%] rounded-2xl border border-white/15 bg-[#00102F]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
+        <div className="w-full lg:max-w-[56%] rounded-2xl border border-white/15 bg-gradient-to-b from-[#0A1F3D]/90 via-[#0E223D]/90 to-[#161B22]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
           {/* Top Emerald Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
 
@@ -326,7 +326,7 @@ export function DiscoveryCallExperience({
             {/* Tool 1: IEP Comparator */}
             <div 
               onClick={() => onNavigateTab("iep-comparator")}
-              className="group rounded-2xl border border-[#173052] bg-[#00102F]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-blue-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-blue-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-full border border-blue-400/30 bg-[#0E284E] text-blue-400 flex items-center justify-center shadow-inner">
@@ -350,7 +350,7 @@ export function DiscoveryCallExperience({
             {/* Tool 2: Document Vault */}
             <div 
               onClick={() => onNavigateTab("smart-docs")}
-              className="group rounded-2xl border border-[#173052] bg-[#00102F]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-purple-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-purple-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-full border border-purple-400/30 bg-[#1D143D] text-purple-300 flex items-center justify-center shadow-inner">
@@ -374,7 +374,7 @@ export function DiscoveryCallExperience({
             {/* Tool 3: Meeting Prep Center */}
             <div 
               onClick={() => onNavigateTab("meeting-prep")}
-              className="group rounded-2xl border border-[#173052] bg-[#00102F]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-amber-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-amber-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-full border border-[#F5B544]/30 bg-[#2B1F08] text-[#F5B544] flex items-center justify-center shadow-inner">
@@ -398,7 +398,7 @@ export function DiscoveryCallExperience({
             {/* Tool 4: Pathway Guide */}
             <div 
               onClick={() => onNavigateTab("compass")}
-              className="group rounded-2xl border border-[#173052] bg-[#00102F]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-cyan-400/50 hover:shadow-lg transition-all cursor-pointer"
+              className="group rounded-2xl border border-[#173052] bg-[#161B22]/90 backdrop-blur-md p-4 flex flex-col justify-between hover:border-cyan-400/50 hover:shadow-lg transition-all cursor-pointer"
             >
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-full border border-cyan-400/30 bg-[#0A263D] text-cyan-300 flex items-center justify-center shadow-inner">

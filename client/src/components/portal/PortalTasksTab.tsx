@@ -238,7 +238,7 @@ export default function PortalTasksTab({
                 <p className="text-xs text-slate-500 italic py-4 text-center">No tasks to do</p>
               ) : (
                 todoTasks.map((t) => (
-                  <Card key={t.id} onClick={() => handleEditClick(t)} className="border-slate-800 bg-[#00102F]/80 text-slate-100 hover:border-slate-700 transition-all cursor-pointer">
+                  <Card key={t.id} onClick={() => handleEditClick(t)} className="border-slate-800 bg-[#161B22]/80 text-slate-100 hover:border-slate-700 transition-all cursor-pointer">
                     <CardContent className="p-3.5 space-y-3.5">
                       <div className="space-y-1">
                         <div className="flex items-start justify-between gap-2">
@@ -282,7 +282,7 @@ export default function PortalTasksTab({
                 <p className="text-xs text-slate-500 italic py-4 text-center">No tasks in progress</p>
               ) : (
                 inProgressTasks.map((t) => (
-                  <Card key={t.id} onClick={() => handleEditClick(t)} className="border-slate-800 bg-[#00102F]/80 text-slate-100 hover:border-slate-700 transition-all cursor-pointer">
+                  <Card key={t.id} onClick={() => handleEditClick(t)} className="border-slate-800 bg-[#161B22]/80 text-slate-100 hover:border-slate-700 transition-all cursor-pointer">
                     <CardContent className="p-3.5 space-y-3.5">
                       <div className="space-y-1">
                         <div className="flex items-start justify-between gap-2">
@@ -326,7 +326,7 @@ export default function PortalTasksTab({
                 <p className="text-xs text-slate-500 italic py-4 text-center">No completed tasks</p>
               ) : (
                 doneTasks.map((t) => (
-                  <Card key={t.id} onClick={() => handleEditClick(t)} className="border-slate-800 bg-[#00102F]/40 text-slate-400 hover:border-slate-700 transition-all cursor-pointer">
+                  <Card key={t.id} onClick={() => handleEditClick(t)} className="border-slate-800 bg-[#161B22]/40 text-slate-400 hover:border-slate-700 transition-all cursor-pointer">
                     <CardContent className="p-3.5 space-y-3.5">
                       <div className="space-y-1">
                         <div className="flex items-start justify-between gap-2">
@@ -355,7 +355,7 @@ export default function PortalTasksTab({
 
         {/* Create Task Modal */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogContent className="bg-[#00102F] border border-slate-800 text-white rounded-xl max-w-md p-6">
+          <DialogContent className="bg-[#161B22] border border-slate-800 text-white rounded-xl max-w-md p-6">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-white">Create New Task</DialogTitle>
             </DialogHeader>
@@ -398,7 +398,7 @@ export default function PortalTasksTab({
                     <SelectTrigger className="bg-[#07111E] border-slate-800 text-white rounded-lg">
                       <SelectValue placeholder="Select Priority" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#00102F] border-slate-850 text-white">
+                    <SelectContent className="bg-[#161B22] border-slate-850 text-white">
                       <SelectItem value="High">High</SelectItem>
                       <SelectItem value="Medium">Medium</SelectItem>
                       <SelectItem value="Low">Low</SelectItem>
@@ -412,7 +412,7 @@ export default function PortalTasksTab({
                   <SelectTrigger className="bg-[#07111E] border-slate-800 text-white rounded-lg">
                     <SelectValue placeholder="Select Smart File" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#00102F] border-slate-850 text-white">
+                  <SelectContent className="bg-[#161B22] border-slate-850 text-white">
                     <SelectItem value="none">None - Manual Completion</SelectItem>
                     {smartFiles.map((sf: any) => (
                       <SelectItem key={sf.id} value={String(sf.id)}>
@@ -442,7 +442,7 @@ export default function PortalTasksTab({
 
         {/* Edit Task Modal */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="bg-[#00102F] border border-slate-800 text-white rounded-xl max-w-md p-6">
+          <DialogContent className="bg-[#161B22] border border-slate-800 text-white rounded-xl max-w-md p-6">
             <DialogHeader className="flex flex-row items-center justify-between">
               <DialogTitle className="text-lg font-bold text-white">Edit Task</DialogTitle>
               <Button
@@ -491,7 +491,7 @@ export default function PortalTasksTab({
                     <SelectTrigger className="bg-[#07111E] border-slate-800 text-white rounded-lg">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#00102F] border-slate-850 text-white">
+                    <SelectContent className="bg-[#161B22] border-slate-850 text-white">
                       <SelectItem value="High">High</SelectItem>
                       <SelectItem value="Medium">Medium</SelectItem>
                       <SelectItem value="Low">Low</SelectItem>
@@ -506,7 +506,7 @@ export default function PortalTasksTab({
                     <SelectTrigger className="bg-[#07111E] border-slate-800 text-white rounded-lg">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#00102F] border-slate-850 text-white">
+                    <SelectContent className="bg-[#161B22] border-slate-850 text-white">
                       <SelectItem value="Todo">Todo</SelectItem>
                       <SelectItem value="In Progress">In Progress</SelectItem>
                       <SelectItem value="Done">Done</SelectItem>
@@ -519,7 +519,7 @@ export default function PortalTasksTab({
                     <SelectTrigger className="bg-[#07111E] border-slate-800 text-white rounded-lg">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#00102F] border-slate-850 text-white">
+                    <SelectContent className="bg-[#161B22] border-slate-850 text-white">
                       <SelectItem value="none">None - Manual</SelectItem>
                       {smartFiles.map((sf: any) => (
                         <SelectItem key={sf.id} value={String(sf.id)}>
@@ -573,7 +573,7 @@ export default function PortalTasksTab({
       <div className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">PENDING ACTION ITEMS</h3>
         {clientPendingTasks.length === 0 ? (
-          <div className="p-6 bg-[#00102F]/60 border border-slate-800 rounded-xl text-center text-slate-400 text-xs">
+          <div className="p-6 bg-[#161B22]/60 border border-slate-800 rounded-xl text-center text-slate-400 text-xs">
             🎉 All action items are complete! You are all caught up.
           </div>
         ) : (
@@ -584,7 +584,7 @@ export default function PortalTasksTab({
             const isSfCompleted = matchedSf?.status === "completed";
 
             return (
-              <Card key={task.id} className="border-slate-800 bg-[#00102F]/95 text-slate-100 shadow-md hover:border-slate-700 transition-all">
+              <Card key={task.id} className="border-slate-800 bg-[#161B22]/95 text-slate-100 shadow-md hover:border-slate-700 transition-all">
                 <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">
                     {!hasSmartFile ? (

@@ -175,8 +175,8 @@ export default function ClientPortalDashboard({
               ? "bg-white border-amber-500 shadow-md shadow-amber-500/5 ring-1 ring-amber-500/10"
               : "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow-md"
             : isSelected 
-              ? "bg-[#00102F]/90 border-amber-400/90 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/20" 
-              : "bg-[#00102F]/90 border-slate-700/50 hover:border-amber-400/30"}`}
+              ? "bg-[#161B22]/90 border-amber-400/90 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/20" 
+              : "bg-[#161B22]/90 border-slate-700/50 hover:border-amber-400/30"}`}
       >
         {isSelected && (
           <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl pointer-events-none ${
@@ -344,7 +344,7 @@ export default function ClientPortalDashboard({
             className={`border rounded-xl p-5 flex items-center justify-between gap-4 shadow-xl backdrop-blur-sm transition-all duration-[3000ms] ease-in-out cursor-pointer group ${
               isLight 
                 ? "bg-white border-slate-200 hover:border-amber-400/40 hover:shadow-md" 
-                : "bg-[#00102F]/90 border-slate-700/50 hover:border-amber-400/40"
+                : "bg-[#161B22]/90 border-slate-700/50 hover:border-amber-400/40"
             }`}
           >
             <div className="flex items-center gap-4 min-w-0">
@@ -370,7 +370,7 @@ export default function ClientPortalDashboard({
 
         {/* Right (4 Cols): WHAT'S NEW */}
         <div className={`lg:col-span-4 border rounded-xl p-6 shadow-xl backdrop-blur-sm flex flex-col justify-between space-y-4 ${
-          isLight ? "bg-white border-slate-200" : "bg-[#00102F]/90 border-slate-700/50"
+          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
         }`}>
           
           <div className={`border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
@@ -473,7 +473,7 @@ export default function ClientPortalDashboard({
         
         {/* Col 1: UPCOMING */}
         <div className={`border rounded-xl p-5 shadow-xl backdrop-blur-sm space-y-4 ${
-          isLight ? "bg-white border-slate-200" : "bg-[#00102F]/90 border-slate-700/50"
+          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
         }`}>
           <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
             <Calendar className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
@@ -519,7 +519,7 @@ export default function ClientPortalDashboard({
 
         {/* Col 2: LATEST ACTIVITY */}
         <div className={`border rounded-xl p-5 shadow-xl backdrop-blur-sm space-y-4 flex flex-col justify-between ${
-          isLight ? "bg-white border-slate-200" : "bg-[#00102F]/90 border-slate-700/50"
+          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
         }`}>
           <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
             <Sparkles className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
@@ -570,7 +570,7 @@ export default function ClientPortalDashboard({
 
         {/* Col 3: QUICK ACTIONS */}
         <div className={`border rounded-xl p-5 shadow-xl backdrop-blur-sm space-y-3 ${
-          isLight ? "bg-white border-slate-200" : "bg-[#00102F]/90 border-slate-700/50"
+          isLight ? "bg-white border-slate-200" : "bg-[#161B22]/90 border-slate-700/50"
         }`}>
           <div className={`flex items-center gap-2 border-b pb-3 ${isLight ? "border-slate-100" : "border-slate-800/80"}`}>
             <Zap className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
