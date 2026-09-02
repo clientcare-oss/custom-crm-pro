@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import PageIdBadge from "@/components/PageIdBadge";
 
 export type ActionStatus = 
   | "DRAFT_IN_PROGRESS"
@@ -466,16 +467,19 @@ export default function PortalActionCenterTab({
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
       
       {/* ── HEADER ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-900/40 pb-5">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
               <ActionCenterIcon className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                Action Center
-              </h1>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                  Action Center
+                </h1>
+                <PageIdBadge id="PG-023-ACT" name="Action Center" />
+              </div>
               <p className="text-xs sm:text-sm text-white/60 mt-0.5">
                 Documents, requests, and forms we're working on together for {effectiveStudent?.firstName || "your student"}.
               </p>
@@ -496,13 +500,13 @@ export default function PortalActionCenterTab({
       </div>
 
       {/* ── DISTINCTION / VAULT PRESERVATION BANNER ── */}
-      <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+      <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl ${
         isLight 
           ? "bg-slate-100/90 border-slate-200 text-slate-800" 
-          : "bg-[#161B22]/90 border-white/10 text-white/80"
+          : "bg-gradient-to-r from-[#081B36] via-[#06172F] to-[#041022] border-blue-900/40 text-white/80 backdrop-blur-md"
       }`}>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
             <VaultSafeIcon className="h-4 w-4" />
           </div>
           <div className="text-xs">
@@ -525,8 +529,8 @@ export default function PortalActionCenterTab({
             onClick={() => setFilter("ALL")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
               filter === "ALL"
-                ? "bg-white/15 text-white border border-white/20 shadow-sm"
-                : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
+                ? "bg-[#06172F] text-white border border-blue-800/60 shadow-md"
+                : "bg-[#030C22] text-white/60 hover:text-white hover:bg-[#06172F] border border-blue-900/30"
             }`}
           >
             All Workflows
@@ -539,8 +543,8 @@ export default function PortalActionCenterTab({
             onClick={() => setFilter("NEEDS_YOU")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
               filter === "NEEDS_YOU"
-                ? "bg-amber-400/20 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(245,181,68,0.2)]"
-                : "bg-amber-400/5 text-amber-300/70 hover:text-amber-300 hover:bg-amber-400/10 border border-transparent"
+                ? "bg-amber-400/20 text-amber-300 border border-amber-400/60 shadow-[0_0_12px_rgba(245,181,68,0.25)]"
+                : "bg-[#030C22] text-amber-300/70 hover:text-amber-300 hover:bg-[#06172F] border border-blue-900/30"
             }`}
           >
             <span className="h-2 w-2 rounded-full bg-amber-400" />
@@ -556,8 +560,8 @@ export default function PortalActionCenterTab({
             onClick={() => setFilter("IN_PROGRESS")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
               filter === "IN_PROGRESS"
-                ? "bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-sm"
-                : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
+                ? "bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-md"
+                : "bg-[#030C22] text-white/60 hover:text-white hover:bg-[#06172F] border border-blue-900/30"
             }`}
           >
             In Progress
@@ -570,8 +574,8 @@ export default function PortalActionCenterTab({
             onClick={() => setFilter("COMPLETED")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
               filter === "COMPLETED"
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm"
-                : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-md"
+                : "bg-[#030C22] text-white/60 hover:text-white hover:bg-[#06172F] border border-blue-900/30"
             }`}
           >
             Completed
@@ -588,14 +592,14 @@ export default function PortalActionCenterTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search active actions..."
-            className="pl-8 text-xs bg-[#161B22]/90 border-white/10 text-white placeholder:text-white/30 rounded-xl h-9 focus:border-amber-400/50"
+            className="pl-8 text-xs bg-[#030C22] border-blue-900/40 text-white placeholder:text-white/30 rounded-xl h-9 focus:border-amber-400/60 focus-visible:ring-amber-400"
           />
         </div>
       </div>
 
       {/* ── ACTION CARDS GRID ── */}
       {filteredItems.length === 0 ? (
-        <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-white/10 bg-[#161B22]/60 space-y-3">
+        <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-blue-900/40 bg-[#06172F]/60 space-y-3 shadow-xl">
           <div className="p-3 rounded-full bg-white/5 w-12 h-12 mx-auto flex items-center justify-center text-white/40">
             <ActionCenterIcon className="h-6 w-6" />
           </div>
@@ -609,7 +613,7 @@ export default function PortalActionCenterTab({
             variant="outline"
             size="sm"
             onClick={() => { setFilter("ALL"); setSearchQuery(""); }}
-            className="text-xs border-white/15 text-white/80 hover:bg-white/10 mt-2"
+            className="text-xs border-blue-900/40 text-white/80 hover:bg-white/10 mt-2"
           >
             Show All Actions
           </Button>
@@ -622,12 +626,12 @@ export default function PortalActionCenterTab({
             return (
               <Card
                 key={item.id}
-                className={`group relative rounded-2xl border p-5 transition-all duration-200 flex flex-col justify-between ${
+                className={`group relative rounded-2xl border p-5 transition-all duration-200 flex flex-col justify-between shadow-xl ${
                   isAttention
-                    ? "bg-gradient-to-b from-[#001847] to-[#161B22] border-amber-400/40 shadow-[0_4px_20px_rgba(245,181,68,0.08)] hover:border-amber-400/70"
+                    ? "bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border-amber-400/60 shadow-[0_4px_30px_rgba(11,37,83,0.35)] hover:border-amber-400/90 hover:from-[#0E3068] hover:to-[#061A3B]"
                     : item.isCompleted
-                    ? "bg-[#161B22]/70 border-white/10 hover:border-white/20"
-                    : "bg-[#161B22]/90 border-white/10 hover:border-white/20"
+                    ? "bg-gradient-to-br from-[#06172F] to-[#041022] border-blue-900/30 hover:border-emerald-500/40"
+                    : "bg-gradient-to-br from-[#081B36] to-[#051428] border-blue-900/40 hover:border-blue-500/50 hover:from-[#0B2447] hover:to-[#081B36]"
                 }`}
               >
                 <div>
@@ -651,7 +655,7 @@ export default function PortalActionCenterTab({
 
                   {/* Advocate Note Snippet if present */}
                   {item.notesFromAdvocate && !item.isCompleted && (
-                    <div className="mt-3 p-2.5 rounded-xl bg-amber-400/5 border border-amber-400/20 text-amber-200/90 text-xs flex items-start gap-2">
+                    <div className="mt-3 p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-200/90 text-xs flex items-start gap-2">
                       <Sparkles className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                       <p className="text-[11px] leading-relaxed italic">
                         <span className="font-semibold text-amber-300 not-italic">Advocate Note:</span> {item.notesFromAdvocate}
@@ -661,7 +665,7 @@ export default function PortalActionCenterTab({
                 </div>
 
                 {/* Card Footer: Responsibility, Updated, & CTA */}
-                <div className="mt-5 pt-3.5 border-t border-white/8 flex items-center justify-between gap-2">
+                <div className="mt-5 pt-3.5 border-t border-blue-900/30 flex items-center justify-between gap-2">
                   <div className="space-y-0.5">
                     <div>
                       {renderResponsibilityText(item.responsibility, item.status)}
@@ -680,7 +684,7 @@ export default function PortalActionCenterTab({
                           onNavigateTab("smart-docs");
                         }}
                         title="View saved record in Document Vault"
-                        className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-medium flex items-center gap-1 border border-emerald-500/20 transition-colors"
+                        className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-medium flex items-center gap-1 border border-emerald-500/30 transition-colors"
                       >
                         <VaultSafeIcon className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">Vault</span>
@@ -693,7 +697,7 @@ export default function PortalActionCenterTab({
                       onClick={() => handleOpenAction(item)}
                       className={`text-xs font-bold rounded-xl px-3.5 py-1.5 transition-all flex items-center gap-1.5 ${
                         isAttention
-                          ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-[0_0_10px_rgba(245,181,68,0.3)]"
+                          ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-[0_0_12px_rgba(245,181,68,0.35)]"
                           : item.isCompleted
                           ? "bg-white/10 hover:bg-white/15 text-white border border-white/10"
                           : "bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40"
@@ -712,7 +716,7 @@ export default function PortalActionCenterTab({
 
       {/* ── ACTION WORKSPACE MODAL (DOCUMENT REVIEW & COLLABORATION) ── */}
       <Dialog open={isActionModalOpen} onOpenChange={setIsActionModalOpen}>
-        <DialogContent className="max-w-2xl bg-[#161B22] border-white/15 text-white rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
           {selectedAction && (
             <div className="space-y-5">
               <DialogHeader>
@@ -733,7 +737,7 @@ export default function PortalActionCenterTab({
               </DialogHeader>
 
               {/* Document Lifecycle Step Tracker */}
-              <div className="p-3.5 rounded-xl bg-slate-900/70 border border-white/10">
+              <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40">
                 <div className="flex items-center justify-between text-[11px] text-white/60 mb-2">
                   <span className="font-semibold text-white">Workflow Lifecycle</span>
                   <span className="font-mono text-amber-300">
@@ -787,7 +791,7 @@ export default function PortalActionCenterTab({
                   <label className="text-xs font-semibold text-white/70">
                     Document Text & Content:
                   </label>
-                  <div className="p-4 rounded-xl bg-slate-950/80 border border-white/10 text-xs font-mono text-white/80 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
+                  <div className="p-4 rounded-xl bg-[#030C22] border border-blue-900/40 text-xs font-mono text-white/80 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
                     {selectedAction.contentDraft}
                   </div>
                 </div>
@@ -803,7 +807,7 @@ export default function PortalActionCenterTab({
                     value={clientComment}
                     onChange={(e) => setClientComment(e.target.value)}
                     placeholder="Enter any notes, corrections, or additional points for Byron to incorporate..."
-                    className="bg-slate-900/60 border-white/10 text-xs text-white placeholder:text-white/30 rounded-xl"
+                    className="bg-[#030C22] border-blue-900/40 text-xs text-white placeholder:text-white/30 rounded-xl focus-visible:ring-amber-400"
                     rows={3}
                   />
                 </div>
@@ -823,7 +827,7 @@ export default function PortalActionCenterTab({
                     value={signatureName}
                     onChange={(e) => setSignatureName(e.target.value)}
                     placeholder="Type your full legal name to sign"
-                    className="bg-slate-950 border-amber-400/50 text-white text-xs rounded-xl"
+                    className="bg-[#030C22] border-amber-400/50 text-white text-xs rounded-xl focus-visible:ring-amber-400"
                   />
                 </div>
               )}
@@ -832,7 +836,7 @@ export default function PortalActionCenterTab({
               {selectedAction.isCompleted && (
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
+                    <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
                       <VaultSafeIcon className="h-5 w-5" />
                     </div>
                     <div>
@@ -856,12 +860,12 @@ export default function PortalActionCenterTab({
               )}
 
               {/* Modal Footer Actions */}
-              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-white/10">
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-blue-900/30">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setIsActionModalOpen(false)}
-                  className="border-white/15 text-white/70 hover:bg-white/10 text-xs rounded-xl"
+                  className="border-blue-900/40 text-white/70 hover:bg-white/10 text-xs rounded-xl"
                 >
                   Close
                 </Button>
@@ -881,7 +885,7 @@ export default function PortalActionCenterTab({
                   <Button
                     size="sm"
                     onClick={handleApproveAction}
-                    className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5"
+                    className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-[0_0_12px_rgba(245,181,68,0.25)]"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Approve & Proceed
@@ -908,7 +912,7 @@ export default function PortalActionCenterTab({
 
       {/* ── START A NEW ACTION MODAL (PERMITTED CLIENT WORKFLOWS ONLY) ── */}
       <Dialog open={isStartActionOpen} onOpenChange={setIsStartActionOpen}>
-        <DialogContent className="max-w-xl bg-[#161B22] border-white/15 text-white rounded-2xl p-6 shadow-2xl">
+        <DialogContent className="max-w-xl bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
               <Plus className="h-5 w-5 text-amber-400" />
@@ -926,7 +930,7 @@ export default function PortalActionCenterTab({
                 <button
                   key={action.id}
                   onClick={() => handleStartPermittedAction(action)}
-                  className="w-full flex items-start gap-3.5 p-4 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-amber-400/10 hover:border-amber-400/40 text-left transition-all duration-200 group"
+                  className="w-full flex items-start gap-3.5 p-4 rounded-xl border border-blue-900/40 bg-blue-950/20 hover:bg-blue-900/30 hover:border-amber-400/50 text-left transition-all duration-200 group"
                 >
                   <div className="p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/20 text-amber-300 group-hover:bg-amber-400 group-hover:text-slate-950 transition-colors shrink-0 mt-0.5">
                     <Icon className="h-4 w-4" />
@@ -947,12 +951,12 @@ export default function PortalActionCenterTab({
             })}
           </div>
 
-          <DialogFooter className="pt-2 border-t border-white/10">
+          <DialogFooter className="pt-2 border-t border-blue-900/30">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsStartActionOpen(false)}
-              className="border-white/15 text-white/70 hover:bg-white/10 text-xs rounded-xl w-full sm:w-auto"
+              className="border-blue-900/40 text-white/70 hover:bg-white/10 text-xs rounded-xl w-full sm:w-auto"
             >
               Cancel
             </Button>
