@@ -568,20 +568,20 @@ function ContractsTabContent({ contracts, isPreview }: { contracts: any[]; isPre
 
 // ── Nav items config ─────────────────────────────────────────────────────────
 const NAV_ITEMS = [
+  { id: "appointments",  icon: Calendar,       label: "Appointments" },
   { id: "compass",       icon: Compass,        label: "Compass" },
-  { id: "communication", icon: MessageSquare,   label: "Communication" },
-  { id: "tasks",         icon: CheckSquare,     label: "Tasks" },
+  { id: "communication", icon: MessageSquare,  label: "Communication" },
+  { id: "tasks",         icon: CheckSquare,    label: "Tasks" },
   { id: "smart-docs",    icon: VaultSafeIcon,  label: "Document Vault" },
   { id: "files",         icon: FileSignature,  label: "Action Center" },
   { id: "tools",         icon: Wrench,         label: "Tools" },
-  { id: "cases",         icon: Briefcase,        label: "Cases" },
-  { id: "financials",    icon: CreditCard,       label: "Membership" },
-  { id: "appointments",  icon: Calendar,         label: "Appointments" },
+  { id: "cases",         icon: Briefcase,      label: "Cases" },
+  { id: "financials",    icon: CreditCard,     label: "Membership" },
   { id: "voyage-log",    icon: Video,          label: "Voyage Log" },
-  { id: "notes",         icon: StickyNote,      label: "Notes" },
+  { id: "notes",         icon: StickyNote,     label: "Notes" },
   { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
-  { id: "details",       icon: Info,            label: "Details" },
-  { id: "renewal",       icon: Sparkles,        label: "Plan Renewal" },
+  { id: "details",       icon: Info,           label: "Details" },
+  { id: "renewal",       icon: Sparkles,       label: "Plan Renewal" },
 ] as const;
 
 type NavId = typeof NAV_ITEMS[number]["id"] | string;

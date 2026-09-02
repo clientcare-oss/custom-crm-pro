@@ -280,7 +280,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     name: "Appointments",
     icon: Calendar,
     sidebarGroup: "permanent",
-    displayOrder: 24,
+    displayOrder: 19,
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING"],
     unlockedStages: ["ONBOARDING", "ACTIVE", "CLOSING"],
     lockedPreviewAllowed: true,
