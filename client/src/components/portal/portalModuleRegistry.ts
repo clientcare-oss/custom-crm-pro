@@ -24,9 +24,9 @@ import {
   Clock,
   Lock,
   Layers,
-  MapPin,
-  FolderLock
+  MapPin
 } from "lucide-react";
+import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 
 export type ClientStage = 
   | "DISCOVERY_INQUIRY"
@@ -213,7 +213,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   {
     id: "smart-docs",
     name: "Document Vault",
-    icon: FolderLock,
+    icon: VaultSafeIcon as any,
     sidebarGroup: "permanent",
     displayOrder: 22,
     visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
