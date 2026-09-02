@@ -1360,6 +1360,7 @@ export default function ClientPortal() {
             projectId={studentProjects[0]?.id || 0}
             isAdminView={isAdminView}
             refetchTasks={refetchTasks}
+            studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim() : "Liam Jenkins"}
           />
         );
 
