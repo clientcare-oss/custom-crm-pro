@@ -227,17 +227,17 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   },
   {
     id: "files",
-    name: "Files",
+    name: "Action Center",
     icon: FolderOpen,
     sidebarGroup: "permanent",
     displayOrder: 23,
     visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     unlockedStages: ["ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
-    description: "General file uploads and shared school correspondence.",
+    description: "General file uploads, shared school correspondence, and family action items.",
     includeInPortalTour: true,
-    tourTitle: "Files",
-    tourDescription: "Access the records and files connected to your student's advocacy work.",
+    tourTitle: "Action Center",
+    tourDescription: "Access the records, shared files, and action items connected to your student's advocacy work.",
     tourDisplayOrder: 5
   },
   {

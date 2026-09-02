@@ -22,7 +22,7 @@ export const NAV_ITEMS = [
   { id: "communication", icon: MessageSquare,   label: "Communication" },
   { id: "tasks",         icon: CheckSquare,     label: "Tasks" },
   { id: "smart-docs",    icon: VaultSafeIcon,  label: "Document Vault" },
-  { id: "files",         icon: FolderOpen,      label: "Files" },
+  { id: "files",         icon: FolderOpen,      label: "Action Center" },
   { id: "tools",         icon: Wrench,          label: "Tools" },
   { id: "cases",         icon: Briefcase,       label: "Cases" },
   { id: "financials",    icon: DollarSign,      label: "Billing" },
