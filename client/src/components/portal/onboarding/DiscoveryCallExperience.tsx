@@ -96,7 +96,7 @@ export function DiscoveryCallExperience({
         <img
           src="/lighthouse-night-bg.png"
           alt="Lighthouse Beacon"
-          className="w-full h-full object-cover object-right sm:object-[80%_top] lg:object-center opacity-95 filter brightness-105 contrast-105"
+          className="w-full h-full object-cover object-right sm:object-[85%_top] lg:object-[right_top] opacity-95 filter brightness-105 contrast-105"
         />
         {/* Subtle bottom fade into midnight blue right at the bottom of the Discovery Call card */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#040D1A]/20 via-transparent to-[#040D1A]" />
@@ -106,10 +106,10 @@ export function DiscoveryCallExperience({
       {/* ── Main Container ─────────────────────────────────────────────────── */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 space-y-6">
         
-        {/* ── Top Header Section ────────────────────────────────────────────── */}
-        <div className="space-y-3 max-w-2xl pt-2">
+        {/* ── Top Header Section (Left Column constrained so lighthouse on right is unobscured) ── */}
+        <div className="space-y-3 max-w-lg lg:max-w-[52%] xl:max-w-[54%] pt-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-normal text-white tracking-tight leading-[1.15]">
+            <h1 className="text-2xl sm:text-3xl lg:text-[36px] font-serif font-normal text-white tracking-tight leading-[1.2]">
               Your discovery call is scheduled!
             </h1>
             <div className="hidden sm:block">
@@ -117,12 +117,12 @@ export function DiscoveryCallExperience({
             </div>
           </div>
 
-          <h2 className="text-lg sm:text-xl text-blue-100/90 font-normal tracking-normal">
+          <h2 className="text-sm sm:text-base text-blue-100/90 font-normal tracking-normal">
             Here you can explore your client portal.
           </h2>
 
           {/* Yellow accent divider rule */}
-          <div className="w-16 h-[2.5px] bg-[#F5B544] rounded-full my-2.5" />
+          <div className="w-16 h-[2.5px] bg-[#F5B544] rounded-full my-2" />
 
           <p className="text-xs sm:text-sm text-blue-200/75 leading-relaxed">
             We're excited to partner with you and support your child's education journey every step of the way.
@@ -130,7 +130,7 @@ export function DiscoveryCallExperience({
         </div>
 
         {/* ── Card 1: Your Next Meeting Banner (Matching Border & Emerald Top Accent) ── */}
-        <div className="w-full lg:max-w-[56%] rounded-2xl border border-white/15 bg-gradient-to-b from-[#0A1F3D]/90 via-[#0E223D]/90 to-[#161B22]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
+        <div className="w-full lg:max-w-[52%] xl:max-w-[54%] rounded-2xl border border-white/15 bg-gradient-to-b from-[#0A1F3D]/90 via-[#0E223D]/90 to-[#161B22]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
           {/* Top Emerald Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
 

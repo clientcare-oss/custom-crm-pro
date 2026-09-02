@@ -155,43 +155,43 @@ export function PortalAppointmentsTab({
   return (
     <div className="relative min-h-screen bg-[#000821] text-white overflow-hidden selection:bg-[#F5B544]/30 selection:text-white">
       {/* ── Background Panoramic Lighthouse Atmosphere (Full Width Left to Right) ── */}
-      <div className="absolute top-0 left-0 right-0 w-full h-[380px] sm:h-[410px] lg:h-[430px] pointer-events-none z-0 overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 w-full h-[400px] sm:h-[430px] lg:h-[460px] pointer-events-none z-0 overflow-hidden">
         <img
           src="/lighthouse-night-bg.png"
           alt="Lighthouse Beacon"
-          className="w-full h-full object-cover object-right sm:object-[80%_top] lg:object-center opacity-95 filter brightness-105 contrast-105"
+          className="w-full h-full object-cover object-right sm:object-[85%_top] lg:object-[right_top] opacity-95 filter brightness-105 contrast-105"
         />
         {/* Subtle bottom fade into midnight blue */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#000821]/20 via-transparent to-[#000821]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#000821]/25 via-transparent to-[#000821]" />
         <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#000821]/50 to-transparent" />
       </div>
 
       {/* ── Main Container ─────────────────────────────────────────────────── */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 space-y-6">
         
-        {/* ── Top Header Section ────────────────────────────────────────────── */}
-        <div className="space-y-3 max-w-3xl pt-2">
+        {/* ── Top Header Section (Left Column constrained so lighthouse on right is unobscured) ── */}
+        <div className="space-y-3 max-w-lg lg:max-w-[52%] xl:max-w-[54%] pt-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-serif font-normal text-white tracking-tight leading-[1.15]">
+            <h1 className="text-2xl sm:text-3xl lg:text-[36px] font-serif font-normal text-white tracking-tight leading-[1.2]">
               Welcome to your Advocacy Portal, {displayName}!
             </h1>
             <PageIdBadge id="PG-023-APT" name="Portal Appointments" />
           </div>
 
-          <h2 className="text-base sm:text-lg text-blue-100/90 font-normal tracking-normal">
+          <h2 className="text-sm sm:text-base text-blue-100/90 font-normal tracking-normal">
             Review your scheduled strategy sessions, appointments, and school IEP meetings in one place.
           </h2>
 
           {/* Yellow accent divider rule */}
-          <div className="w-16 h-[2.5px] bg-[#F5B544] rounded-full my-2.5" />
+          <div className="w-16 h-[2.5px] bg-[#F5B544] rounded-full my-2" />
 
           <p className="text-xs sm:text-sm text-blue-200/75 leading-relaxed">
             We're excited to partner with you and champion {studentName}'s educational rights every step of the way.
           </p>
         </div>
 
-        {/* ── Card 1: Your Next Meeting Banner (Matching Border & Emerald Top Accent) ── */}
-        <div className="w-full lg:max-w-[62%] rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
+        {/* ── Card 1: Your Next Meeting Banner (Constrained to left side so lighthouse breathes) ── */}
+        <div className="w-full lg:max-w-[52%] xl:max-w-[54%] rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-2xl p-4 sm:p-5 transition-all hover:border-amber-400/40 space-y-3.5 relative overflow-hidden group">
           {/* Top Emerald Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
 
