@@ -222,8 +222,11 @@ export function PortalAppointmentsTab({
                 )}
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                {nextAppt?.title || "IEP Meeting with school and advocate"}
+                {nextAppt?.title || "Annual IEP Meeting with School & Advocate."}
               </h3>
+              <p className="text-xs text-white/75 leading-relaxed pt-0.5">
+                Official IEP review conference with Byron Honea attending for {studentName}'s advocacy.
+              </p>
               <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-xs text-blue-100/85 pt-1">
                 <span className="flex items-center gap-1.5 font-medium">
                   <Calendar className="h-3.5 w-3.5 text-amber-400" />
