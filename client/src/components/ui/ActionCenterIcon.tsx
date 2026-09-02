@@ -18,23 +18,30 @@ export function ActionCenterIcon({
       style={size ? { width: size, height: size } : undefined}
       {...props}
     >
-      {/* Background Layered Sheet */}
-      <path d="M3.5 18V4.5A1.5 1.5 0 0 1 5 3h8" />
+      {/* Document Sheet */}
+      <path d="M3.5 2.5h14a1.5 1.5 0 0 1 1.5 1.5v3" />
+      <path d="M19 12.5V20a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 20V4a1.5 1.5 0 0 1 1.5-1.5" />
       
-      {/* Main Foreground Document with Folded Corner */}
-      <path d="M6.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7.5L13.5 3.5H8A1.5 1.5 0 0 0 6.5 5v16z" />
-      <path d="M13.5 3.5v4h3.5" />
+      {/* Official Notary Seal in Top-Right */}
+      <circle cx="14.5" cy="6.5" r="2.2" />
+      <circle cx="14.5" cy="6.5" r="1.1" />
       
-      {/* Document Text Lines */}
-      <path d="M9 7.5h3.5" />
-      <path d="M9 10.5h5" />
-      <path d="M9 13.5h4" />
+      {/* Document Content Lines */}
+      <path d="M6.5 7h4.5" />
+      <path d="M6.5 10h6" />
+      <path d="M6.5 13h5" />
       
-      {/* Signature Squiggle */}
-      <path d="M9 17c.7-.4 1.4.4 2.1 0" />
+      {/* Bottom Signature Line */}
+      <path d="M6 19.5h7.5" />
       
-      {/* Signature Action Pen */}
-      <path d="M15 19.5l4-4a1 1 0 0 1 1.4 1.4l-4 4-1.8.4.4-1.8z" />
+      {/* Signature Cursive Loop */}
+      <path d="M6 19c1.2-2.2 2.4.4 3.4-.6" />
+      
+      {/* Diagonal Fountain Pen with Nib and Clip */}
+      <path d="M20.5 5.5l-5.5 5.5-1.5-1.5 5.5-5.5a1 1 0 0 1 1.5 1.5z" />
+      <path d="M21 7.5l-1.5 1.5" />
+      <path d="M13.5 9.5l-2.5 4.5 4.5-2.5-2-2z" />
+      <path d="M11 14l-1 1" />
     </svg>
   );
 }
