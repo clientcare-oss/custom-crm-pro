@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 import { 
-  CheckSquare, 
   CheckCircle2, 
+  Circle,
   Clock, 
   Calendar, 
   Plus, 
   Trash2, 
-  Edit2, 
   AlertCircle, 
   Link2, 
-  Loader2, 
   Sparkles, 
   Upload, 
   Video, 
@@ -18,44 +16,38 @@ import {
   Copy, 
   ExternalLink, 
   ChevronRight, 
+  ChevronDown,
   ShieldCheck, 
-  ArrowRight,
-  Filter,
   Check,
   Send,
-  UserCheck,
-  Paperclip
+  Paperclip,
+  ArrowRight,
+  ListTodo
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
 import confetti from "canvas-confetti";
 import PageIdBadge from "@/components/PageIdBadge";
 
-export type TaskActionType = "file_upload" | "meeting_link" | "email_action" | "general_checklist" | "smart_file";
+export type TaskType = "upload" | "meeting_link" | "email" | "general";
 
-export interface ExtendedTaskItem {
-  id: number | string;
+export interface ClientTaskItem {
+  id: string;
   title: string;
-  description?: string;
-  status: "Todo" | "In Progress" | "Done";
-  dueDate?: string | Date;
-  priority?: "High" | "Medium" | "Low";
-  actionType?: TaskActionType;
-  actionPayload?: {
+  subtitle?: string;
+  category: "Intake & Review" | "Meeting Prep" | "School Coordination" | "Post-Meeting";
+  type: TaskType;
+  dueDate: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  payload?: {
     uploadedFileName?: string;
     meetingUrl?: string;
     emailSubject?: string;
     emailBody?: string;
   };
-  smartFileAssignmentId?: number | null;
 }
 
 interface PortalTasksTabProps {
@@ -67,290 +59,211 @@ interface PortalTasksTabProps {
   studentName?: string;
 }
 
-// Preset Quick-Assign Templates for Advocate
-const ADVOCATE_TASK_TEMPLATES: Array<{
-  title: string;
-  description: string;
-  priority: "High" | "Medium" | "Low";
-  actionType: TaskActionType;
-  emailSubject?: string;
-  emailBody?: string;
-}> = [
-  {
-    title: "Upload Current IEP / 504 for Initial Review",
-    description: "Please upload your student's most recent IEP, 504 Plan, and any psychoeducational evaluations so Byron can conduct a full audit.",
-    priority: "High",
-    actionType: "file_upload"
-  },
-  {
-    title: "Upload Finalized IEP & Meeting Minutes Post-Conference",
-    description: "Upload the official finalized IEP document and meeting notes provided by the school district following our ARD/IEP meeting.",
-    priority: "High",
-    actionType: "file_upload"
-  },
-  {
-    title: "Submit School Virtual Meeting Link (Zoom / Teams / Meet)",
-    description: "Paste the virtual conference link received from your school case manager so your advocate can join the meeting with you.",
-    priority: "High",
-    actionType: "meeting_link"
-  },
-  {
-    title: "Send Formal Written Notice of Advocate Attendance to School",
-    description: "Copy and send the pre-drafted advocacy notice email to your school case manager at least 5 business days prior to the meeting.",
-    priority: "High",
-    actionType: "email_action",
-    emailSubject: "Notice of Advocate Attendance - Byron Honea (Master IEP Coach®)",
-    emailBody: "Dear Case Manager & IEP Team,\n\nPlease be advised that our Master IEP Coach®, Byron Honea, will be attending our upcoming IEP conference with us as our designated parental representative. Please ensure all draft documents and meeting links are provided 48 hours prior.\n\nThank you,\nParent"
-  },
-  {
-    title: "Review & Approve Pre-Meeting Strategy Talking Points",
-    description: "Review the customized parent agenda and priority speaking points prepared for our upcoming committee meeting.",
-    priority: "Medium",
-    actionType: "general_checklist"
-  }
-];
-
 export default function PortalTasksTab({
   tasks = [],
   studentContactId,
   projectId,
   isAdminView = false,
-  refetchTasks,
   studentName = "Liam Jenkins"
 }: PortalTasksTabProps) {
-  // Built-in realistic initial tasks if database array is empty
-  const [localTasks, setLocalTasks] = useState<ExtendedTaskItem[]>(() => {
-    if (tasks && tasks.length > 0) {
-      return tasks.map((t, idx) => ({
-        ...t,
-        actionType: (t.actionType as TaskActionType) || (idx === 0 ? "file_upload" : idx === 1 ? "meeting_link" : "general_checklist")
-      }));
-    }
-    return [
-      {
-        id: "task-init-1",
-        title: "Upload Current IEP / 504 for Initial Review",
-        description: `Please upload ${studentName}'s most recent IEP, 504 Plan, and psychological evaluation so Byron can complete your comprehensive compliance audit.`,
-        status: "Todo",
-        dueDate: "2026-05-15",
-        priority: "High",
-        actionType: "file_upload"
-      },
-      {
-        id: "task-init-2",
-        title: "Submit School Virtual Meeting Link (Zoom / Teams / Meet)",
-        description: "Paste the virtual video conference link received from the school case manager so Byron can join the meeting alongside you.",
-        status: "Todo",
-        dueDate: "2026-05-18",
-        priority: "High",
-        actionType: "meeting_link"
-      },
-      {
-        id: "task-init-3",
-        title: "Send Formal Written Notice of Advocate Attendance to School",
-        description: "Send formal written notice to your school district case manager confirming that Byron Honea will be attending as your advocate.",
-        status: "Todo",
-        dueDate: "2026-05-20",
-        priority: "Medium",
-        actionType: "email_action",
-        actionPayload: {
-          emailSubject: `Notice of Parent Advocate Attendance - ${studentName}`,
-          emailBody: `Dear IEP Case Manager & Team,\n\nPlease note that Byron Honea (Master IEP Coach®) will be attending ${studentName}'s upcoming IEP meeting with us as our advocate. Please forward the meeting invitation and all draft goals/evaluations to his direct portal or our family email at least 3 days prior.\n\nThank you,\nParent`
-        }
-      },
-      {
-        id: "task-init-4",
-        title: "Upload Finalized IEP & Meeting Minutes Post-Conference",
-        description: "After the annual review meeting is finished, upload the official finalized document and school minutes for vault archiving.",
-        status: "Todo",
-        dueDate: "2026-06-05",
-        priority: "Medium",
-        actionType: "file_upload"
+  // HoneyBook / Monday style streamlined tasks
+  const [taskList, setTaskList] = useState<ClientTaskItem[]>([
+    {
+      id: "t-1",
+      title: "Upload current IEP / 504 Plan & Evaluation Reports",
+      subtitle: "Attach your child's most recent school documents for Byron's initial compliance audit.",
+      category: "Intake & Review",
+      type: "upload",
+      dueDate: "May 15, 2026",
+      isCompleted: false,
+    },
+    {
+      id: "t-2",
+      title: "Provide School Virtual Meeting Link (Zoom / Teams / Meet)",
+      subtitle: "Paste the video conference invitation from your case manager so Byron can attend with you.",
+      category: "Meeting Prep",
+      type: "meeting_link",
+      dueDate: "May 18, 2026",
+      isCompleted: false,
+    },
+    {
+      id: "t-3",
+      title: "Send Formal Notice of Advocate Attendance to School",
+      subtitle: "Send our pre-drafted notice to the school case manager at least 5 business days prior.",
+      category: "School Coordination",
+      type: "email",
+      dueDate: "May 20, 2026",
+      isCompleted: false,
+      payload: {
+        emailSubject: `Notice of Parent Advocate Attendance - ${studentName}`,
+        emailBody: `Dear IEP Case Manager & Team,\n\nPlease note that Byron Honea (Master IEP Coach®) will be attending ${studentName}'s upcoming IEP meeting with us as our advocate. Please ensure the meeting link and all draft goals/evaluations are sent to our family at least 3 business days prior.\n\nThank you,\nParent`
       }
-    ];
-  });
+    },
+    {
+      id: "t-4",
+      title: "Review & approve Byron's 48-Hour Parent Talking Points",
+      subtitle: "Check the customized priority strategy roadmap prepared for your upcoming school conference.",
+      category: "Meeting Prep",
+      type: "general",
+      dueDate: "May 22, 2026",
+      isCompleted: false,
+    },
+    {
+      id: "t-5",
+      title: "Upload Finalized IEP & Meeting Minutes Post-Conference",
+      subtitle: "Upload the official document once provided by the district after the meeting is complete.",
+      category: "Post-Meeting",
+      type: "upload",
+      dueDate: "June 5, 2026",
+      isCompleted: false,
+    }
+  ]);
 
-  // Active filter tab: "all", "pending", "completed"
-  const [filterTab, setFilterTab] = useState<"all" | "pending" | "completed">("all");
+  // Expanded task row for inline actions
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>("t-1");
 
-  // In-card interactive inputs state
-  const [linkInputs, setLinkInputs] = useState<Record<string, string>>({});
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, string>>({});
-
-  // Create / Assign Modal states
-  const [isAssignOpen, setIsAssignOpen] = useState(false);
-  const [assignTitle, setAssignTitle] = useState("");
-  const [assignDesc, setAssignDesc] = useState("");
-  const [assignDueDate, setAssignDueDate] = useState("");
-  const [assignPriority, setAssignPriority] = useState<"High" | "Medium" | "Low">("High");
-  const [assignActionType, setAssignActionType] = useState<TaskActionType>("file_upload");
-  const [assignEmailSubject, setAssignEmailSubject] = useState("");
-  const [assignEmailBody, setAssignEmailBody] = useState("");
-
-  // Celebration state
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [celebratedTaskTitle, setCelebratedTaskTitle] = useState("");
+  // In-line inputs
+  const [meetingUrlInput, setMeetingUrlInput] = useState("");
+  const [customTaskTitle, setCustomTaskTitle] = useState("");
+  const [isAddingPersonalTask, setIsAddingPersonalTask] = useState(false);
 
   // Confetti trigger
   const triggerConfetti = () => {
     confetti({
-      particleCount: 90,
-      angle: 60,
-      spread: 60,
-      origin: { x: 0, y: 0.8 },
-      colors: ["#F5B544", "#fbbf24", "#3b82f6", "#10b981", "#ffffff"]
-    });
-    confetti({
-      particleCount: 90,
-      angle: 120,
-      spread: 60,
-      origin: { x: 1, y: 0.8 },
+      particleCount: 80,
+      spread: 70,
+      origin: { y: 0.7 },
       colors: ["#F5B544", "#fbbf24", "#3b82f6", "#10b981", "#ffffff"]
     });
   };
 
-  // Complete task handler
-  const handleCompleteTask = (taskId: string | number, title: string) => {
-    setLocalTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "Done" } : t))
+  // Toggle complete
+  const toggleTask = (taskId: string) => {
+    setTaskList((prev) =>
+      prev.map((t) => {
+        if (t.id === taskId) {
+          const nextState = !t.isCompleted;
+          if (nextState) {
+            triggerConfetti();
+            toast.success("Task completed!", {
+              description: `"${t.title}" is marked complete.`
+            });
+          }
+          return {
+            ...t,
+            isCompleted: nextState,
+            completedAt: nextState ? new Date().toLocaleDateString() : undefined
+          };
+        }
+        return t;
+      })
     );
-    setCelebratedTaskTitle(title);
-    setShowCelebration(true);
-    triggerConfetti();
-    toast.success("Task completed successfully!", {
-      description: `"${title}" has been marked complete and logged for your advocate.`
-    });
   };
 
-  // File Upload action handler
-  const handleFileUploadAction = (taskId: string | number, taskTitle: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  // File upload handler
+  const handleFileUpload = (taskId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadedFiles((prev) => ({ ...prev, [taskId]: file.name }));
-    toast.success(`"${file.name}" uploaded to Document Vault!`, {
-      description: "Document archived and sent to Byron Honea for review."
-    });
+    setTaskList((prev) =>
+      prev.map((t) => {
+        if (t.id === taskId) {
+          return {
+            ...t,
+            isCompleted: true,
+            completedAt: new Date().toLocaleDateString(),
+            payload: { ...t.payload, uploadedFileName: file.name }
+          };
+        }
+        return t;
+      })
+    );
 
-    // Auto-mark task complete
-    handleCompleteTask(taskId, taskTitle);
+    triggerConfetti();
+    toast.success(`"${file.name}" uploaded successfully!`, {
+      description: "Archived to your Document Vault and shared with Byron."
+    });
   };
 
-  // Submit Meeting Link handler
-  const handleSubmitMeetingLink = (taskId: string | number, taskTitle: string) => {
-    const link = linkInputs[taskId];
-    if (!link || !link.trim()) {
-      toast.error("Please paste the school meeting link first");
+  // Save Meeting Link
+  const handleSaveLink = (taskId: string) => {
+    if (!meetingUrlInput.trim()) {
+      toast.error("Please enter a meeting URL");
       return;
     }
 
-    toast.success("Meeting link saved and sent to advocate!", {
-      description: link
-    });
+    setTaskList((prev) =>
+      prev.map((t) => {
+        if (t.id === taskId) {
+          return {
+            ...t,
+            isCompleted: true,
+            completedAt: new Date().toLocaleDateString(),
+            payload: { ...t.payload, meetingUrl: meetingUrlInput }
+          };
+        }
+        return t;
+      })
+    );
 
-    handleCompleteTask(taskId, taskTitle);
+    setMeetingUrlInput("");
+    triggerConfetti();
+    toast.success("Meeting link saved!", {
+      description: "Byron has been updated with the video conference link."
+    });
   };
 
-  // Copy Email draft
-  const handleCopyEmail = (subject: string, body: string) => {
-    const fullText = `Subject: ${subject}\n\n${body}`;
-    navigator.clipboard.writeText(fullText);
+  // Copy Email Template
+  const handleCopyEmail = (taskId: string, subject?: string, body?: string) => {
+    const text = `Subject: ${subject || ""}\n\n${body || ""}`;
+    navigator.clipboard.writeText(text);
     toast.success("Email template copied to clipboard!", {
-      description: "Paste directly into your email app to send to the school."
+      description: "Paste it directly into your email client to send to the school."
     });
   };
 
-  // Assign template click
-  const handleSelectTemplate = (tpl: typeof ADVOCATE_TASK_TEMPLATES[0]) => {
-    setAssignTitle(tpl.title);
-    setAssignDesc(tpl.description);
-    setAssignPriority(tpl.priority);
-    setAssignActionType(tpl.actionType);
-    if (tpl.emailSubject) setAssignEmailSubject(tpl.emailSubject);
-    if (tpl.emailBody) setAssignEmailBody(tpl.emailBody);
-  };
-
-  // Submit new assigned task
-  const handleCreateAssignedTask = (e: React.FormEvent) => {
+  // Add personal client task
+  const handleAddPersonalTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!assignTitle.trim()) {
-      toast.error("Please enter a task title");
-      return;
-    }
+    if (!customTaskTitle.trim()) return;
 
-    const newTask: ExtendedTaskItem = {
-      id: `task-custom-${Date.now()}`,
-      title: assignTitle,
-      description: assignDesc,
-      dueDate: assignDueDate || new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
-      priority: assignPriority,
-      status: "Todo",
-      actionType: assignActionType,
-      actionPayload: {
-        emailSubject: assignEmailSubject,
-        emailBody: assignEmailBody
-      }
+    const newTask: ClientTaskItem = {
+      id: `custom-${Date.now()}`,
+      title: customTaskTitle.trim(),
+      subtitle: "Personal parent reminder",
+      category: "Meeting Prep",
+      type: "general",
+      dueDate: "Upcoming",
+      isCompleted: false
     };
 
-    setLocalTasks((prev) => [newTask, ...prev]);
-    setIsAssignOpen(false);
-    toast.success("Task assigned to parent client!", {
-      description: `"${assignTitle}" is now live on the parent's action item checklist.`
-    });
-
-    // Reset form
-    setAssignTitle("");
-    setAssignDesc("");
-    setAssignDueDate("");
-    setAssignPriority("High");
-    setAssignActionType("file_upload");
-    setAssignEmailSubject("");
-    setAssignEmailBody("");
+    setTaskList((prev) => [newTask, ...prev]);
+    setCustomTaskTitle("");
+    setIsAddingPersonalTask(false);
+    toast.success("Reminder added to your checklist!");
   };
 
-  // Filter calculations
-  const pendingTasks = localTasks.filter((t) => t.status !== "Done");
-  const completedTasks = localTasks.filter((t) => t.status === "Done");
-  const displayedTasks = filterTab === "pending" ? pendingTasks : filterTab === "completed" ? completedTasks : localTasks;
-  const completionPercentage = localTasks.length > 0 ? Math.round((completedTasks.length / localTasks.length) * 100) : 100;
+  // Progress metrics
+  const completedCount = taskList.filter((t) => t.isCompleted).length;
+  const totalCount = taskList.length;
+  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 100;
 
-  const getPriorityBadge = (p?: string) => {
-    switch (p) {
-      case "High":
-        return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30 text-[10px] font-semibold font-mono">High Priority</Badge>;
-      case "Low":
-        return <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-semibold font-mono">Low Priority</Badge>;
-      default:
-        return <Badge className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-semibold font-mono">Medium Priority</Badge>;
-    }
-  };
-
-  const getActionTypeIcon = (type?: TaskActionType) => {
-    switch (type) {
-      case "file_upload":
-        return <Upload className="h-4 w-4 text-[#F5B544]" />;
-      case "meeting_link":
-        return <Video className="h-4 w-4 text-emerald-400" />;
-      case "email_action":
-        return <Mail className="h-4 w-4 text-sky-400" />;
-      default:
-        return <CheckSquare className="h-4 w-4 text-amber-300" />;
-    }
-  };
+  const pendingTasks = taskList.filter((t) => !t.isCompleted);
+  const completedTasks = taskList.filter((t) => t.isCompleted);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 text-white animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 text-white animate-in fade-in duration-300">
       
-      {/* ── Top Header Banner with PageIdBadge & Progress ── */}
-      <div className="bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 sm:p-7 rounded-3xl border border-blue-900/40 shadow-2xl relative overflow-hidden">
-        {/* Top subtle golden accent glow */}
+      {/* ── Top Header Banner with PageIdBadge ── */}
+      <div className="bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 rounded-3xl border border-blue-900/40 shadow-2xl relative overflow-hidden">
+        {/* Top subtle golden accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge className="bg-[#F5B544] text-[#07152B] font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 shadow-sm font-mono">
-                Advocacy Action Center
+                Parent Action Checklist
               </Badge>
               <Badge variant="outline" className="text-xs font-mono border-blue-900/40 text-blue-200/90 bg-[#030C22]">
                 Student: <strong className="text-white font-semibold ml-1">{studentName}</strong>
@@ -359,487 +272,286 @@ export default function PortalTasksTab({
 
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight flex items-center gap-2.5">
-                <CheckSquare className="h-7 w-7 text-[#F5B544]" />
-                Action Items & Assigned Tasks
+                <ListTodo className="h-6 w-6 text-[#F5B544]" />
+                Your Advocacy Action Items
               </h1>
               <PageIdBadge id="PG-023-TSK" name="Portal Tasks" />
             </div>
 
-            <p className="text-xs sm:text-sm text-blue-200/75 leading-relaxed">
-              Preparation checklists, document uploads, and school coordination tasks assigned by your Master IEP Coach®. Complete these items to keep your student's advocacy timeline on track.
+            <p className="text-xs sm:text-sm text-blue-200/75">
+              Simple, step-by-step preparation checklist to keep your child's IEP advocacy on schedule.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-            {/* Progress pill */}
-            <div className="bg-[#030C22] border border-blue-900/40 p-4 rounded-2xl text-center sm:text-right shadow-xl min-w-[160px]">
-              <div className="flex items-center justify-between sm:justify-end gap-2">
-                <span className="text-[11px] text-white/50 font-medium">Progress</span>
-                <span className="text-xs font-bold text-emerald-400 font-mono">{completionPercentage}% Done</span>
-              </div>
-              <div className="w-full bg-blue-950/60 h-2 rounded-full mt-2 overflow-hidden border border-blue-900/40">
-                <div 
-                  className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${completionPercentage}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-white/50 block mt-1.5 font-mono">
-                {completedTasks.length} of {localTasks.length} tasks completed
-              </span>
+          {/* Progress widget */}
+          <div className="bg-[#030C22] border border-blue-900/40 p-3.5 rounded-2xl shrink-0 min-w-[170px] shadow-xl">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-white/60 font-medium">Checklist Progress</span>
+              <span className="font-bold text-amber-300 font-mono">{progressPercent}%</span>
             </div>
-
-            {/* Assign Task Button (Available for Byron or quick adding) */}
-            <Button
-              onClick={() => setIsAssignOpen(true)}
-              className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs h-12 px-4 rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Assign Task to Client</span>
-            </Button>
+            <div className="w-full bg-blue-950/60 h-2 rounded-full overflow-hidden border border-blue-900/40">
+              <div 
+                className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500" 
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-white/50 block mt-1 font-mono text-right">
+              {completedCount} of {totalCount} completed
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ── Filter Bar & Quick Category Selector ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={() => setFilterTab("all")}
-            className={`rounded-xl text-xs font-semibold cursor-pointer h-9 px-3.5 transition-all ${
-              filterTab === "all"
-                ? "bg-amber-400 text-slate-950 font-bold shadow-sm"
-                : "bg-[#06172F] text-white/70 hover:text-white border border-blue-900/40"
-            }`}
-          >
-            All Tasks ({localTasks.length})
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => setFilterTab("pending")}
-            className={`rounded-xl text-xs font-semibold cursor-pointer h-9 px-3.5 transition-all flex items-center gap-1.5 ${
-              filterTab === "pending"
-                ? "bg-amber-400 text-slate-950 font-bold shadow-sm"
-                : "bg-[#06172F] text-white/70 hover:text-white border border-blue-900/40"
-            }`}
-          >
-            <Clock className="h-3.5 w-3.5 text-amber-400" />
-            <span>Pending Action ({pendingTasks.length})</span>
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => setFilterTab("completed")}
-            className={`rounded-xl text-xs font-semibold cursor-pointer h-9 px-3.5 transition-all flex items-center gap-1.5 ${
-              filterTab === "completed"
-                ? "bg-emerald-400 text-slate-950 font-bold shadow-sm"
-                : "bg-[#06172F] text-white/70 hover:text-white border border-blue-900/40"
-            }`}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Completed ({completedTasks.length})</span>
-          </Button>
-        </div>
-
-        <span className="text-[11px] text-white/50 font-mono">
-          Showing {displayedTasks.length} items
-        </span>
-      </div>
-
-      {/* ── Tasks Action List ── */}
+      {/* ── HoneyBook / Monday Streamlined Task Checklist Container ── */}
       <div className="space-y-4">
-        {displayedTasks.length === 0 ? (
-          <div className="p-10 rounded-3xl bg-[#06172F] border border-blue-900/40 text-center shadow-xl space-y-2">
-            <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
-            <h3 className="text-base font-bold text-white">No tasks found in this view</h3>
-            <p className="text-xs text-blue-200/60 max-w-sm mx-auto">
-              {filterTab === "pending"
-                ? "All caught up! There are no outstanding parent action items right now."
-                : "No completed action items recorded yet."}
-            </p>
-          </div>
-        ) : (
-          displayedTasks.map((task) => {
-            const isDone = task.status === "Done";
-            const actionType = task.actionType || "general_checklist";
+        
+        {/* Section: Pending Action Items */}
+        <div className="bg-[#06172F] border border-blue-900/40 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
+          <div className="flex items-center justify-between border-b border-blue-900/40 pb-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5 text-amber-400" />
+              To Do ({pendingTasks.length})
+            </h2>
 
-            return (
-              <Card 
-                key={task.id}
-                className={`border transition-all rounded-3xl overflow-hidden shadow-xl text-white ${
-                  isDone 
-                    ? "bg-[#030C22]/80 border-blue-900/30 opacity-75" 
-                    : "bg-[#06172F] border-blue-900/40 hover:border-amber-400/50"
-                }`}
+            {!isAddingPersonalTask && (
+              <button
+                onClick={() => setIsAddingPersonalTask(true)}
+                className="text-xs text-blue-300 hover:text-amber-300 flex items-center gap-1 font-semibold transition-colors cursor-pointer"
               >
-                <CardHeader className="bg-[#030C22] border-b border-blue-900/40 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2.5 rounded-xl bg-blue-950/50 border border-blue-900/40 shrink-0">
-                      {getActionTypeIcon(actionType)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <CardTitle className={`text-sm sm:text-base font-bold tracking-tight ${
-                          isDone ? "line-through text-white/60" : "text-white"
-                        }`}>
-                          {task.title}
-                        </CardTitle>
-                        {getPriorityBadge(task.priority)}
-                      </div>
-                      <span className="text-[11px] text-white/50 block font-mono mt-0.5">
-                        {task.dueDate ? `Target Due Date: ${new Date(task.dueDate).toLocaleDateString()}` : "Priority Action Item"}
-                      </span>
-                    </div>
-                  </div>
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Note or Reminder</span>
+              </button>
+            )}
+          </div>
 
-                  <div className="shrink-0 flex items-center gap-2 self-end sm:self-center">
-                    {isDone ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Completed & Logged
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono">
-                        <Clock className="h-3.5 w-3.5 text-amber-400" /> Action Required
-                      </span>
-                    )}
-                  </div>
-                </CardHeader>
+          {/* Inline Add Personal Task Form */}
+          {isAddingPersonalTask && (
+            <form onSubmit={handleAddPersonalTask} className="p-3 bg-[#030C22] border border-blue-900/40 rounded-2xl flex items-center gap-2">
+              <input
+                type="text"
+                autoFocus
+                value={customTaskTitle}
+                onChange={(e) => setCustomTaskTitle(e.target.value)}
+                placeholder="Type a reminder (e.g. Call pediatrician for speech therapy notes)..."
+                className="flex-1 bg-transparent text-xs text-white placeholder:text-white/40 outline-none"
+              />
+              <Button type="submit" size="sm" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs h-7 px-3 rounded-lg">
+                Add
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddingPersonalTask(false)} className="text-white/60 hover:text-white text-xs h-7 px-2">
+                Cancel
+              </Button>
+            </form>
+          )}
 
-                <CardContent className="p-5 sm:p-6 space-y-4">
-                  {task.description && (
-                    <p className="text-xs sm:text-sm text-blue-200/80 leading-relaxed">
-                      {task.description}
-                    </p>
-                  )}
+          {/* Pending Tasks List */}
+          {pendingTasks.length === 0 ? (
+            <div className="py-8 text-center text-xs text-blue-200/60 space-y-1">
+              <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto opacity-80" />
+              <p className="font-bold text-white text-sm">You are all caught up!</p>
+              <p>All advocacy action items for {studentName} have been completed.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-blue-900/30">
+              {pendingTasks.map((task) => {
+                const isExpanded = expandedTaskId === task.id;
 
-                  {/* ── Interactive In-Card Action Areas ── */}
-                  {!isDone && (
-                    <div className="p-4 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-3">
-                      
-                      {/* TYPE A: Document Upload Action (IEP / 504 / Evaluations) */}
-                      {actionType === "file_upload" && (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-white flex items-center gap-1.5">
-                              <Upload className="h-4 w-4 text-[#F5B544]" />
-                              Attach IEP / Evaluation PDF:
+                return (
+                  <div 
+                    key={task.id}
+                    className="py-3 sm:py-3.5 space-y-2 group transition-colors"
+                  >
+                    {/* Main Row */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        {/* Interactive Checkbox Circle */}
+                        <button
+                          onClick={() => toggleTask(task.id)}
+                          className="w-5 h-5 rounded-full border border-blue-600/70 hover:border-amber-400 bg-[#030C22] hover:bg-amber-400/10 flex items-center justify-center shrink-0 mt-0.5 transition-all cursor-pointer group-hover:scale-105"
+                          title="Mark complete"
+                        >
+                          <Check className="h-3 w-3 text-transparent group-hover:text-amber-400/50 transition-colors" />
+                        </button>
+
+                        <div 
+                          onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                          className="space-y-0.5 cursor-pointer min-w-0"
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-amber-200 transition-colors">
+                              {task.title}
                             </span>
-                            <span className="text-[11px] text-white/50 font-mono">Direct Vault Sync</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/60 border border-blue-900/40 text-blue-300 font-mono">
+                              {task.category}
+                            </span>
                           </div>
+                          {task.subtitle && (
+                            <p className="text-[11px] text-blue-200/70 line-clamp-1">
+                              {task.subtitle}
+                            </p>
+                          )}
+                        </div>
+                      </div>
 
-                          <div className="flex flex-col sm:flex-row items-center gap-3">
-                            <label className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs cursor-pointer shadow-md transition-all">
+                      {/* Right Action / Due Date */}
+                      <div className="flex items-center gap-2 shrink-0 self-center">
+                        <span className="text-[11px] text-white/50 font-mono hidden sm:inline-block">
+                          {task.dueDate}
+                        </span>
+
+                        <button
+                          onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                          className="p-1 rounded-lg hover:bg-blue-900/40 text-white/60 hover:text-white transition-colors cursor-pointer"
+                        >
+                          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expandable Action Helper (Clean & Compact) */}
+                    {isExpanded && (
+                      <div className="ml-8 p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 text-xs space-y-3 animate-in fade-in-50 duration-200">
+                        {task.subtitle && (
+                          <p className="text-blue-200/80 leading-relaxed">
+                            {task.subtitle}
+                          </p>
+                        )}
+
+                        {/* Action: Upload File */}
+                        {task.type === "upload" && (
+                          <div className="flex flex-wrap items-center gap-3 pt-1">
+                            <label className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs cursor-pointer shadow-sm transition-all">
                               <Upload className="h-3.5 w-3.5" />
                               <span>Select Document to Upload</span>
                               <input 
                                 type="file" 
                                 accept=".pdf,.doc,.docx,.png,.jpg" 
                                 className="hidden" 
-                                onChange={(e) => handleFileUploadAction(task.id, task.title, e)} 
+                                onChange={(e) => handleFileUpload(task.id, e)} 
                               />
                             </label>
-
-                            <span className="text-[11px] text-white/50">
-                              Accepts PDF, DOCX, or scanned IEP reports up to 50MB
-                            </span>
+                            <span className="text-[11px] text-white/50 font-mono">PDF, DOCX, or scanned pages</span>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* TYPE B: Virtual School Meeting Link Submission */}
-                      {actionType === "meeting_link" && (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-white flex items-center gap-1.5">
-                              <Video className="h-4 w-4 text-emerald-400" />
-                              Paste School Video Meeting Link:
-                            </span>
-                            <span className="text-[11px] text-white/50 font-mono">Zoom / Google Meet / Teams</span>
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <input
-                              type="url"
-                              value={linkInputs[task.id] || ""}
-                              onChange={(e) => setLinkInputs({ ...linkInputs, [task.id]: e.target.value })}
-                              placeholder="https://meet.google.com/xyz-abc or https://zoom.us/j/..."
-                              className="flex-1 bg-[#06172F] border border-blue-900/40 focus:border-[#F5B544] rounded-xl px-3 py-2 text-xs text-white outline-none font-mono"
-                            />
-                            <Button
-                              onClick={() => handleSubmitMeetingLink(task.id, task.title)}
-                              className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs rounded-xl px-4 py-2 shrink-0 cursor-pointer shadow-sm"
-                            >
-                              <Send className="h-3.5 w-3.5 mr-1" />
-                              Submit Link to Byron
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* TYPE C: Email Template to School District */}
-                      {actionType === "email_action" && (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-white flex items-center gap-1.5">
-                              <Mail className="h-4 w-4 text-sky-400" />
-                              Advocate Attendance Email Template:
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleCopyEmail(
-                                task.actionPayload?.emailSubject || `Notice of Advocate Attendance - ${studentName}`,
-                                task.actionPayload?.emailBody || "Please note that Byron Honea will attend..."
-                              )}
-                              className="text-amber-300 hover:text-white text-xs h-7 gap-1 font-semibold"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                              Copy Text
-                            </Button>
-                          </div>
-
-                          <div className="p-3 rounded-xl bg-[#06172F] border border-blue-900/40 text-[11px] space-y-1.5 font-mono">
-                            <div className="text-amber-300 font-bold">
-                              Subject: {task.actionPayload?.emailSubject || `Notice of Parent Advocate Attendance - ${studentName}`}
-                            </div>
-                            <div className="text-white/80 whitespace-pre-wrap leading-relaxed">
-                              {task.actionPayload?.emailBody || `Dear Case Manager & IEP Team,\n\nPlease note that Byron Honea (Master IEP Coach®) will be attending ${studentName}'s upcoming meeting with us.`}
+                        {/* Action: Video Link */}
+                        {task.type === "meeting_link" && (
+                          <div className="space-y-2 pt-1">
+                            <div className="flex gap-2">
+                              <input
+                                type="url"
+                                value={meetingUrlInput}
+                                onChange={(e) => setMeetingUrlInput(e.target.value)}
+                                placeholder="Paste Google Meet or Zoom URL here..."
+                                className="flex-1 bg-[#06172F] border border-blue-900/40 focus:border-amber-400 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveLink(task.id)}
+                                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl px-3"
+                              >
+                                Save Link
+                              </Button>
                             </div>
                           </div>
+                        )}
 
+                        {/* Action: Email School */}
+                        {task.type === "email" && (
+                          <div className="space-y-2.5 pt-1">
+                            <div className="p-2.5 rounded-xl bg-[#06172F] border border-blue-900/40 text-[11px] font-mono space-y-1 text-white/80">
+                              <div className="text-amber-300 font-bold">Subject: {task.payload?.emailSubject}</div>
+                              <div className="whitespace-pre-wrap text-white/70">{task.payload?.emailBody}</div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCopyEmail(task.id, task.payload?.emailSubject, task.payload?.emailBody)}
+                                className="border-blue-900/40 bg-[#06172F] hover:bg-blue-900/40 text-white text-xs h-8 rounded-xl gap-1.5"
+                              >
+                                <Copy className="h-3 w-3 text-amber-400" />
+                                <span>Copy Email Template</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => toggleTask(task.id)}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs h-8 rounded-xl gap-1"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                <span>Mark as Sent</span>
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Action: General Checklist */}
+                        {task.type === "general" && (
                           <div className="flex justify-end pt-1">
                             <Button
-                              onClick={() => handleCompleteTask(task.id, task.title)}
-                              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl px-4 py-2 cursor-pointer shadow-sm"
+                              size="sm"
+                              onClick={() => toggleTask(task.id)}
+                              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl px-3"
                             >
-                              <Check className="h-3.5 w-3.5 mr-1" />
-                              Mark Email as Sent
+                              <Check className="h-3 w-3 mr-1" />
+                              Mark Completed
                             </Button>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-                      {/* TYPE D: General Action Checklist */}
-                      {actionType === "general_checklist" && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-blue-200/70">
-                            Once you have completed this preparation step, confirm below:
-                          </span>
-                          <Button
-                            onClick={() => handleCompleteTask(task.id, task.title)}
-                            className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs rounded-xl px-4 py-2 cursor-pointer shadow-sm"
-                          >
-                            <Check className="h-3.5 w-3.5 mr-1" />
-                            Mark Action Completed
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+        {/* Section: Completed Items */}
+        {completedTasks.length > 0 && (
+          <div className="bg-[#06172F]/60 border border-blue-900/30 rounded-3xl p-4 sm:p-5 shadow-lg space-y-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white/50 font-mono flex items-center gap-2 border-b border-blue-900/30 pb-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+              Completed ({completedTasks.length})
+            </h2>
 
-                  {/* Completed summary note */}
-                  {isDone && (
-                    <div className="p-3 rounded-xl bg-[#030C22] border border-blue-900/40 flex items-center justify-between text-xs text-white/60">
-                      <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                        <CheckCircle2 className="h-4 w-4" /> Completed & synced with advocate
-                      </span>
-                      {uploadedFiles[task.id] && (
-                        <span className="font-mono text-amber-300 flex items-center gap-1">
-                          <Paperclip className="h-3.5 w-3.5" /> {uploadedFiles[task.id]}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
-
-      {/* ── Advocate "Assign Task to Parent" Modal ── */}
-      <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
-        <DialogContent className="bg-[#06172F] border-blue-900/40 text-white max-w-lg shadow-2xl rounded-2xl">
-          <DialogHeader className="border-b border-blue-900/40 pb-3">
-            <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
-              <CheckSquare className="h-5 w-5 text-[#F5B544]" />
-              Assign Task to Client ({studentName})
-            </DialogTitle>
-            <DialogDescription className="text-xs text-blue-200/70">
-              Create a custom action item or choose from Byron's standard advocacy task templates.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Quick-Assign Preset Chips */}
-          <div className="space-y-2 pt-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 font-mono block">
-              1-Click Standard Templates:
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {ADVOCATE_TASK_TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl.title}
-                  type="button"
-                  onClick={() => handleSelectTemplate(tpl)}
-                  className="text-[10px] px-2.5 py-1 rounded-lg bg-[#030C22] hover:bg-blue-900/40 border border-blue-900/40 text-white font-medium text-left transition-all cursor-pointer truncate max-w-xs"
-                  title={tpl.title}
+            <div className="divide-y divide-blue-900/20">
+              {completedTasks.map((task) => (
+                <div 
+                  key={task.id}
+                  className="py-2.5 flex items-center justify-between gap-3 text-xs"
                 >
-                  + {tpl.title}
-                </button>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      onClick={() => toggleTask(task.id)}
+                      className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0 cursor-pointer"
+                      title="Click to unmark"
+                    >
+                      <Check className="h-3 w-3" />
+                    </button>
+                    <span className="line-through text-white/50 truncate font-medium">
+                      {task.title}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {task.payload?.uploadedFileName && (
+                      <span className="text-[10px] font-mono text-amber-300 flex items-center gap-1">
+                        <Paperclip className="h-3 w-3" /> {task.payload.uploadedFileName}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-emerald-400/80 font-mono">
+                      ✓ Done
+                    </span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
+        )}
 
-          <form onSubmit={handleCreateAssignedTask} className="space-y-4 pt-2 text-xs">
-            <div className="space-y-1">
-              <label className="text-white/80 font-semibold block">Task Title</label>
-              <input
-                type="text"
-                required
-                value={assignTitle}
-                onChange={(e) => setAssignTitle(e.target.value)}
-                placeholder="e.g. Upload New IEP Draft for 504 Accommodation Audit"
-                className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2.5 text-xs text-white outline-none transition-colors"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-white/80 font-semibold block">Parent Instructions / Description</label>
-              <textarea
-                rows={2}
-                value={assignDesc}
-                onChange={(e) => setAssignDesc(e.target.value)}
-                placeholder="Explain what the parent needs to upload, send, or prepare..."
-                className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2.5 text-xs text-white outline-none transition-colors"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <label className="text-white/80 font-semibold block">Action Type</label>
-                <select
-                  value={assignActionType}
-                  onChange={(e) => setAssignActionType(e.target.value as TaskActionType)}
-                  className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2 text-xs text-white outline-none"
-                >
-                  <option value="file_upload">IEP Document Upload</option>
-                  <option value="meeting_link">Submit School Link</option>
-                  <option value="email_action">Send School Email</option>
-                  <option value="general_checklist">Checklist Action</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-white/80 font-semibold block">Due Date</label>
-                <input
-                  type="date"
-                  value={assignDueDate}
-                  onChange={(e) => setAssignDueDate(e.target.value)}
-                  className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2 text-xs text-white font-mono outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-white/80 font-semibold block">Priority</label>
-                <select
-                  value={assignPriority}
-                  onChange={(e) => setAssignPriority(e.target.value as any)}
-                  className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2 text-xs text-white outline-none"
-                >
-                  <option value="High">High Priority</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-              </div>
-            </div>
-
-            {/* If Email action selected, show subject/body editor */}
-            {assignActionType === "email_action" && (
-              <div className="space-y-2 p-3 rounded-xl bg-[#030C22] border border-blue-900/40">
-                <div className="space-y-1">
-                  <label className="text-[11px] text-white/70 font-semibold block">Pre-Filled Email Subject</label>
-                  <input
-                    type="text"
-                    value={assignEmailSubject}
-                    onChange={(e) => setAssignEmailSubject(e.target.value)}
-                    placeholder="Notice of Advocate Attendance - Liam Jenkins"
-                    className="w-full bg-[#06172F] border border-blue-900/40 rounded-lg p-2 text-xs text-white outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] text-white/70 font-semibold block">Pre-Filled Email Body</label>
-                  <textarea
-                    rows={3}
-                    value={assignEmailBody}
-                    onChange={(e) => setAssignEmailBody(e.target.value)}
-                    placeholder="Dear Case Manager, please be advised..."
-                    className="w-full bg-[#06172F] border border-blue-900/40 rounded-lg p-2 text-xs text-white outline-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            <DialogFooter className="border-t border-blue-900/40 pt-3 gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsAssignOpen(false)}
-                className="text-white/70 hover:text-white text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs rounded-xl shadow-md cursor-pointer"
-              >
-                Assign Task to Parent
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Flashing Celebration Modal Overlay ── */}
-      {showCelebration && (
-        <div className="fixed inset-0 z-50 bg-[#000821]/80 backdrop-blur-md flex items-center justify-center p-4 transition-all animate-in fade-in">
-          <div className="relative bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/60 rounded-3xl max-w-sm w-full p-8 text-center shadow-[0_4px_30px_rgba(11,37,83,0.35)] ring-1 ring-amber-400/30 animate-in zoom-in-95 duration-200 text-white">
-            <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-4 relative">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400 animate-pulse" />
-              <div className="absolute inset-0 rounded-full border border-emerald-400/30 animate-ping" />
-            </div>
-
-            <h3 className="text-xl font-bold text-white tracking-tight">Milestone Completed!</h3>
-            <p className="text-amber-300 text-xs font-semibold mt-1 tracking-wider uppercase flex items-center justify-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" /> Great Job! <Sparkles className="w-3.5 h-3.5" />
-            </p>
-
-            <div className="my-4 p-3.5 bg-[#030C22] rounded-xl border border-blue-900/40">
-              <p className="text-xs font-bold text-white">"{celebratedTaskTitle}"</p>
-              <p className="text-[10px] text-white/50 mt-1">Your progress was automatically synced with your advocate.</p>
-            </div>
-
-            <div className="flex gap-3 justify-center pt-2">
-              <Button
-                onClick={() => triggerConfetti()}
-                variant="outline"
-                className="border-blue-900/40 bg-blue-950/30 hover:bg-blue-900/40 text-white text-xs font-bold rounded-xl px-4 py-2"
-              >
-                More Confetti! 🎉
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowCelebration(false);
-                  setCelebratedTaskTitle("");
-                }}
-                className="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold rounded-xl px-6 py-2 shadow-[0_0_12px_rgba(245,181,68,0.25)]"
-              >
-                Confirm
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
