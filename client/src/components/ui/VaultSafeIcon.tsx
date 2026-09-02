@@ -18,29 +18,33 @@ export function VaultSafeIcon({
       style={size ? { width: size, height: size } : undefined}
       {...props}
     >
-      {/* Outer Safe Strongbox Body */}
+      {/* Outer Safe Housing */}
       <rect x="2.5" y="2.5" width="19" height="17" rx="2" />
       
-      {/* Bottom Feet */}
+      {/* Left & Right Tapered Bottom Feet */}
       <path d="M5 19.5v2" />
       <path d="M19 19.5v2" />
       
-      {/* Right Side Door Hinges */}
-      <path d="M21.5 6.5v2" />
-      <path d="M21.5 13.5v2" />
+      {/* Inner Door Panel */}
+      <rect x="5.5" y="5" width="13" height="12" rx="1" />
+      
+      {/* Left Dual Hinges on Door */}
+      <rect x="4.5" y="6.5" width="1.8" height="2.8" rx="0.6" />
+      <rect x="4.5" y="12.5" width="1.8" height="2.8" rx="0.6" />
       
       {/* Center Safe Dial Wheel */}
-      <circle cx="11.5" cy="10" r="3.75" />
-      <circle cx="11.5" cy="10" r="1.25" />
+      <circle cx="12" cy="11" r="3.75" />
+      <circle cx="12" cy="11" r="1.75" />
       
-      {/* Safe Dial Radial Notches */}
-      <path d="M11.5 6.25v1.2" />
-      <path d="M11.5 12.55v1.2" />
-      <path d="M7.75 10h1.2" />
-      <path d="M14.05 10h1.2" />
-      
-      {/* Keypad / Handle Slot */}
-      <rect x="7" y="15.5" width="9" height="1.5" rx="0.5" />
+      {/* Radial Combination Notches */}
+      <path d="M12 7.25v0.9" />
+      <path d="M12 13.85v0.9" />
+      <path d="M8.25 11h0.9" />
+      <path d="M14.85 11h0.9" />
+      <path d="M9.35 8.35l0.65.65" />
+      <path d="M14 13l0.65.65" />
+      <path d="M14.65 8.35l-0.65.65" />
+      <path d="M10 13l-0.65.65" />
     </svg>
   );
 }
