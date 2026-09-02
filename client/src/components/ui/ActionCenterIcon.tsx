@@ -18,23 +18,22 @@ export function ActionCenterIcon({
       style={size ? { width: size, height: size } : undefined}
       {...props}
     >
-      {/* Document with Top-Left Folded Dog-Ear Corner */}
-      <path d="M8 2.5h8.5a2 2 0 0 1 2 2V8" />
-      <path d="M18.5 13.5v5a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V7.5L8 2.5" />
-      <path d="M3.5 7.5H8V2.5" />
+      {/* Flowing Cursive Loop Signature */}
+      <path d="M2.5 19.5c1.8-6 3.5-9.5 5-9.5s.8 8.5 2.2 8.5c1.2 0 1.8-3.2 2.8-3.2s1.5 3.2 3.5 3.2" />
       
-      {/* Horizontal Document Text Lines */}
-      <path d="M7 10.5h5.5" />
-      <path d="M7 13.5h4.5" />
+      {/* Pen Top Click Plunger */}
+      <path d="M19.5 2.5l1.5 1.5" />
       
-      {/* Signature Squiggle Wave */}
-      <path d="M6.5 18c.7-.6 1.4.6 2.1 0s1.4.6 2.1 0" />
+      {/* Pen Clip */}
+      <path d="M20.5 5.5c1 .5 1.2 2 .4 3l-.9.9" />
       
-      {/* Fountain Pen with Top Clip and Pointed Nib */}
-      <path d="M20.5 6.5l-5.5 5.5-1.5-1.5 5.5-5.5a1 1 0 0 1 1.5 1.5z" />
-      <path d="M21 8.5l-1.5 1.5" />
-      <path d="M13.5 10.5l-2.5 4.5 4.5-2.5-2-2z" />
-      <path d="M11 15l-.8.8" />
+      {/* Pen Barrel & Grip */}
+      <path d="M20 4l-4 4-1.5-1.5 4-4a1 1 0 0 1 1.5 1.5z" />
+      <path d="M14.5 6.5l-3 3 1.5 1.5 3-3" />
+      
+      {/* Pen Writing Cone & Tip Touching Signature */}
+      <path d="M11.5 9.5l-3 7 7-3-4-4z" />
+      <path d="M15 17.5l.5.5" />
     </svg>
   );
 }
