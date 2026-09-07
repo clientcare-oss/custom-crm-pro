@@ -25,7 +25,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
@@ -101,6 +101,7 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
     {
       groupLabel: "Call Center & Leads",
       items: [
+        { icon: Headphones, label: "First Mate", path: "/first-mate" },
         { icon: TrendingUp, label: "Leads", path: "/leads" },
         { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
         { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
@@ -938,6 +939,7 @@ const PAGE_LIST = [
   { id: "PG-029", name: "Booking", path: "/book" },
   { id: "PG-031", name: "Workspace", path: "/workspace" },
   { id: "PG-032", name: "AI Connections", path: "/ai-connections" },
+  { id: "PG-037", name: "First Mate", path: "/first-mate" },
 ];
 
 function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }) {

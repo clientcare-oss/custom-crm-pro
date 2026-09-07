@@ -55,8 +55,10 @@ import DiscoveryCallPage from "./pages/DiscoveryCallPage";
 import Workspace from "./pages/Workspace";
 import IepComparator from "./pages/IepComparator";
 import DiscoveryWorksheetBuilder from "./pages/DiscoveryWorksheetBuilder";
+import FirstMate from "./pages/FirstMate";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
+import { FirstMateProvider } from "./contexts/FirstMateContext";
 import PageIdBadge from "./components/PageIdBadge";
 
 function Router() {
@@ -124,6 +126,7 @@ function Router() {
           <Route path="/contacts" component={Contacts} />
           <Route path="/students" component={Students} />
           <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
+          <Route path="/first-mate" component={FirstMate} />
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />
@@ -196,11 +199,13 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="navy" switchable={true}>
         <TerminologyProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-            <PageIdBadge />
-          </TooltipProvider>
+          <FirstMateProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+              <PageIdBadge />
+            </TooltipProvider>
+          </FirstMateProvider>
         </TerminologyProvider>
       </ThemeProvider>
     </ErrorBoundary>

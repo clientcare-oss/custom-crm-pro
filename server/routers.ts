@@ -48,8 +48,10 @@ import { portalProvisioningRouter } from "./routers/portalProvisioning";
 import { voyageLogRouter } from "./routers/voyageLog";
 import { automationsRouter } from "./routers/automations";
 import { feedbackRouter } from "./routers/feedback";
+import { firstMateRouter } from "./routers/firstMate";
 
 export const appRouter = router({
+  firstMate: firstMateRouter,
   feedback: feedbackRouter,
   voyageLog: voyageLogRouter,
   portalProvisioning: portalProvisioningRouter,

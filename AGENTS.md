@@ -118,6 +118,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-034`: Tech Tasks (`/tech-tasks`)
   - `PG-035`: Services Catalog (`/services`)
   - `PG-036`: Sponsors & Partners (`/sponsors`)
+  - `PG-037`: First Mate (`/first-mate`)
   - `PG-404`: Not Found (`/404`)
 
 ---
