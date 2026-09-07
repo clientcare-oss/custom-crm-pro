@@ -1,9 +1,19 @@
 import { z } from "zod";
 import { router, publicProcedure } from "../_core/trpc";
-import { analyzeTranscriptTurn, askFirstMate, generateSessionSummary } from "../firstMateAi";
+import {
+  runFastAssist,
+  runDeepAssist,
+  rephraseSayThis,
+  askFirstMate,
+  generateSessionSummary,
+} from "../firstMateAi";
 import { getDb } from "../db";
 import { contacts, leads } from "../../drizzle/schema";
-import type { FirstMateSession, NormalizedTranscriptEvent } from "../../shared/firstMate";
+import type {
+  FirstMateSession,
+  NormalizedTranscriptEvent,
+  SayThisStyle,
+} from "../../shared/firstMate";
 
 const SpeakerRoleSchema = z.enum([
   "Parent",
@@ -36,8 +46,16 @@ const TranscriptEventSchema = z.object({
   source: z.enum(["simulator", "live_audio", "manual"]),
 });
 
+const SayThisStyleSchema = z.enum([
+  "softer",
+  "firmer",
+  "shorter",
+  "another_version",
+  "followup_question",
+]);
+
 export const firstMateRouter = router({
-  analyzeTurn: publicProcedure
+  fastAssist: publicProcedure
     .input(
       z.object({
         session: z.any(),
@@ -46,10 +64,44 @@ export const firstMateRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const result = await analyzeTranscriptTurn(
+      const result = await runFastAssist(
         input.session as FirstMateSession,
         input.transcript as NormalizedTranscriptEvent[],
         input.newTurn as NormalizedTranscriptEvent
+      );
+      return result;
+    }),
+
+  deepAssist: publicProcedure
+    .input(
+      z.object({
+        session: z.any(),
+        transcript: z.array(TranscriptEventSchema),
+        newTurn: TranscriptEventSchema,
+      })
+    )
+    .mutation(async ({ input }) => {
+      const result = await runDeepAssist(
+        input.session as FirstMateSession,
+        input.transcript as NormalizedTranscriptEvent[],
+        input.newTurn as NormalizedTranscriptEvent
+      );
+      return result;
+    }),
+
+  rephraseSayThis: publicProcedure
+    .input(
+      z.object({
+        currentSayThis: z.string(),
+        style: SayThisStyleSchema,
+        sessionType: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const result = await rephraseSayThis(
+        input.currentSayThis,
+        input.style as SayThisStyle,
+        input.sessionType as any
       );
       return result;
     }),
@@ -89,7 +141,7 @@ export const firstMateRouter = router({
         db.select().from(leads).limit(50).catch(() => []),
       ]);
 
-      const studentContacts = (contactsList || []).map(c => ({
+      const studentContacts = (contactsList || []).map((c) => ({
         id: c.id,
         type: "client" as const,
         name: `${c.firstName || ""} ${c.lastName || ""}`.trim() || c.email || "Unnamed Client",
@@ -98,7 +150,7 @@ export const firstMateRouter = router({
         phone: c.phone || undefined,
       }));
 
-      const leadItems = (leadsList || []).map(l => ({
+      const leadItems = (leadsList || []).map((l) => ({
         id: l.id,
         type: "lead" as const,
         name: `${l.firstName || ""} ${l.lastName || ""}`.trim() || l.email || "Unnamed Lead",

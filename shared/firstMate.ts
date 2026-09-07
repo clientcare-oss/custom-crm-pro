@@ -55,7 +55,8 @@ export type TrackedItemType =
   | "COMMITMENT"
   | "SERVICE_CHANGE"
   | "DATA_ISSUE"
-  | "OPEN_ISSUE";
+  | "OPEN_ISSUE"
+  | "IMPORTANT_DATE";
 
 export type TrackedItemStatus = "detected" | "confirmed" | "dismissed" | "edited";
 
@@ -79,7 +80,8 @@ export type AlertType =
   | "TEAM_COMMITMENT"
   | "DATA_BASIS_UNCLEAR"
   | "OPEN_ISSUE"
-  | "FOLLOW_UP_NEEDED";
+  | "FOLLOW_UP_NEEDED"
+  | "POSSIBLE_CONFLICT";
 
 export interface FirstMateAlert {
   id: string;
@@ -107,6 +109,78 @@ export interface LiveAssistPanelData {
   confidence: "High" | "Medium" | "Low";
   sources: RelatedSource[];
   sourceVerificationNote?: string;
+}
+
+export interface ConversationThread {
+  id: string;
+  name: string;
+  status: "active" | "open" | "resolved";
+  startedAt: number;
+  lastUpdated: number;
+  summary?: string;
+}
+
+export interface ConflictDetection {
+  id: string;
+  title: string;
+  message: string;
+  earlierStatement: string;
+  currentStatement: string;
+  timestamp: number;
+  resolved?: boolean;
+}
+
+export type SayThisStyle =
+  | "softer"
+  | "firmer"
+  | "shorter"
+  | "another_version"
+  | "followup_question";
+
+export interface FirstMateDevLogEntry {
+  id: string;
+  timestamp: number;
+  stage: "FAST" | "DEEP" | "REPHRASE" | "ASK" | "SUMMARY";
+  latencyMs: number;
+  model: string;
+  success: boolean;
+  itemCount?: number;
+  notes?: string;
+}
+
+export interface FastAssistOutput {
+  currentIssue: {
+    label: string;
+    description: string;
+    priority?: "High Priority" | "Medium Priority" | "Standard";
+    confidence: "High" | "Medium" | "Low";
+  };
+  quickAssist: {
+    sayThis: string;
+    askNext: string;
+  };
+  alert: {
+    type: AlertType;
+    severity: "info" | "attention" | "critical";
+    message: string;
+  } | null;
+  confidence: "High" | "Medium" | "Low";
+}
+
+export interface DeepAssistOutput {
+  whyItMatters: string;
+  check: string[];
+  detections: Array<{
+    type: TrackedItemType;
+    summary: string;
+    confidence: "High" | "Medium" | "Low";
+    supportingTranscriptText: string;
+  }>;
+  sessionStateUpdates: Partial<FirstMateWorkingMemory>;
+  followUp: string[];
+  activeThreadName?: string;
+  conflicts: ConflictDetection[];
+  sources?: RelatedSource[];
 }
 
 export interface FirstMateWorkingMemory {
@@ -163,6 +237,9 @@ export interface FirstMateSession {
   refusals: TrackedItem[];
   commitments: TrackedItem[];
   openIssues: TrackedItem[];
+  threads: ConversationThread[];
+  conflicts: ConflictDetection[];
+  dismissedItemIds: string[];
   savedMoments: Array<{
     id: string;
     timestamp: number;
@@ -171,4 +248,5 @@ export interface FirstMateSession {
   }>;
   alerts: FirstMateAlert[];
   liveAssist: LiveAssistPanelData;
+  devLogs: FirstMateDevLogEntry[];
 }

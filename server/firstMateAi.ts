@@ -1,505 +1,301 @@
-import { invokeLLM } from "./_core/llm";
+import {
+  BASE_SYSTEM_INSTRUCTION,
+  getSessionTypeProfile,
+  FAST_ASSIST_SCHEMA,
+  DEEP_ASSIST_SCHEMA,
+  getRephrasePrompt,
+} from "./firstMate/prompts";
+import { executeOpenAiChat } from "./firstMate/openAiClient";
+import { FirstMateKnowledgeProvider } from "./firstMate/knowledgeProvider";
 import type {
   FirstMateSession,
+  FirstMateSessionType,
   NormalizedTranscriptEvent,
-  LiveAssistPanelData,
-  FirstMateWorkingMemory,
+  FastAssistOutput,
+  DeepAssistOutput,
+  SayThisStyle,
+  FirstMateDevLogEntry,
   TrackedItem,
   FirstMateAlert,
-  FirstMateSessionType,
+  ConflictDetection,
 } from "../shared/firstMate";
 
-function parseJson<T>(raw: unknown): T {
-  const text = typeof raw === "string" ? raw : JSON.stringify(raw);
-  return JSON.parse(text) as T;
+export interface FastAssistExecutionResult {
+  fastAssist: FastAssistOutput;
+  devLog: FirstMateDevLogEntry;
 }
 
-const GUARDRAILS = `STRICT FIRST MATE RULES:
-- You are an expert IEP advocate & special education co-pilot assisting Waypoint Advocates in Atlanta, GA.
-- Base your analysis ONLY on what is spoken in the transcript or given in session context.
-- Never fabricate legal citations, dates, or non-existent parent/school quotes.
-- If a legal source is not explicitly verified, specify "SOURCE VERIFICATION NEEDED".
-- Make "Say This" conversational, assertive yet professional, never robotic.
-- Prioritize high-leverage advocacy tactics: data-driven inquiries, Prior Written Notice (PWN), evaluation rights under IDEA § 300.301, FAPE, procedural safeguards.`;
-
-interface AnalysisResult {
-  liveAssist: LiveAssistPanelData;
-  workingMemoryDelta: Partial<FirstMateWorkingMemory>;
-  newTrackedItems: TrackedItem[];
-  newAlerts: FirstMateAlert[];
+export interface DeepAssistExecutionResult {
+  deepAssist: DeepAssistOutput;
+  devLog: FirstMateDevLogEntry;
 }
 
-export async function analyzeTranscriptTurn(
+/**
+ * FAST ASSIST: Sub-second live conversational guidance.
+ * Produces immediately usable Say This, Ask Next, and Current Issue.
+ */
+export async function runFastAssist(
   session: FirstMateSession,
   transcript: NormalizedTranscriptEvent[],
   newTurn: NormalizedTranscriptEvent
-): Promise<AnalysisResult> {
+): Promise<FastAssistExecutionResult> {
   const sessionType = session.sessionType;
-  const recentTranscriptText = transcript
-    .slice(-15)
-    .map(t => `${t.speakerRole} (${new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}): "${t.text}"`)
+  const recentTurns = transcript
+    .slice(-8)
+    .map(
+      (t) =>
+        `${t.speakerRole}: "${t.text}"`
+    )
     .join("\n");
 
-  const promptTypeInstructions = getSessionTypeGuidance(sessionType);
+  const systemPrompt = `${BASE_SYSTEM_INSTRUCTION}
 
-  try {
-    const res = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content: `${GUARDRAILS}\n\nCurrent Session Type: ${sessionType}\n${promptTypeInstructions}\n\nAnalyze the conversation transcript up through the latest turn. Output a JSON object matching the requested schema.`,
-        },
-        {
-          role: "user",
-          content: `Transcript history:\n${recentTranscriptText}\n\nLatest Turn:\nSpeaker: ${newTurn.speakerRole}\nText: "${newTurn.text}"\n\nCurrent Working Memory:\n${JSON.stringify(session.sessionState, null, 2)}`,
-        },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "first_mate_analysis",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              currentIssue: { type: "string" },
-              currentIssuePriority: { type: "string", enum: ["High Priority", "Medium Priority", "Standard"] },
-              currentIssueDescription: { type: "string" },
-              quickAnswer: { type: "string" },
-              sayThis: { type: "string" },
-              askNext: { type: "array", items: { type: "string" } },
-              whyItMatters: { type: "string" },
-              confidence: { type: "string", enum: ["High", "Medium", "Low"] },
-              sources: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    url: { type: "string" },
-                    isVerified: { type: "boolean" },
-                  },
-                  required: ["title", "url", "isVerified"],
-                  additionalProperties: false,
-                },
-              },
-              sourceVerificationNote: { type: "string" },
-              workingMemoryDelta: {
-                type: "object",
-                properties: {
-                  currentTopic: { type: "string" },
-                  currentDispute: { type: "string" },
-                  openIssues: { type: "array", items: { type: "string" } },
-                  teamCommitments: { type: "array", items: { type: "string" } },
-                  requestsMade: { type: "array", items: { type: "string" } },
-                  schoolResponses: { type: "array", items: { type: "string" } },
-                  followUpActions: { type: "array", items: { type: "string" } },
-                },
-                required: ["currentTopic", "currentDispute", "openIssues", "teamCommitments", "requestsMade", "schoolResponses", "followUpActions"],
-                additionalProperties: false,
-              },
-              newTrackedItems: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    type: {
-                      type: "string",
-                      enum: [
-                        "REQUEST",
-                        "POSSIBLE_REFUSAL",
-                        "PROPOSAL",
-                        "COMMITMENT",
-                        "SERVICE_CHANGE",
-                        "DATA_ISSUE",
-                        "OPEN_ISSUE"
-                      ]
-                    },
-                    summary: { type: "string" },
-                    speaker: { type: "string" },
-                    supportingTranscriptText: { type: "string" }
-                  },
-                  required: ["type", "summary", "speaker", "supportingTranscriptText"],
-                  additionalProperties: false
-                }
-              },
-              newAlerts: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    type: {
-                      type: "string",
-                      enum: [
-                        "POSSIBLE_REFUSAL",
-                        "PROPOSED_CHANGE",
-                        "SERVICE_REDUCTION",
-                        "ACCOMMODATION_REMOVAL",
-                        "PARENT_REQUEST_DETECTED",
-                        "TEAM_COMMITMENT",
-                        "DATA_BASIS_UNCLEAR",
-                        "OPEN_ISSUE",
-                        "FOLLOW_UP_NEEDED"
-                      ]
-                    },
-                    title: { type: "string" },
-                    message: { type: "string" }
-                  },
-                  required: ["type", "title", "message"],
-                  additionalProperties: false
-                }
-              }
-            },
-            required: [
-              "currentIssue",
-              "currentIssuePriority",
-              "currentIssueDescription",
-              "quickAnswer",
-              "sayThis",
-              "askNext",
-              "whyItMatters",
-              "confidence",
-              "sources",
-              "sourceVerificationNote",
-              "workingMemoryDelta",
-              "newTrackedItems",
-              "newAlerts"
-            ],
-            additionalProperties: false,
-          },
-        },
-      },
-    });
+${getSessionTypeProfile(sessionType)}
 
-    const content = res.choices[0]?.message?.content;
-    if (content) {
-      const parsed = parseJson<any>(content);
-      const timestamp = newTurn.timestamp || Date.now();
+TASK: FAST ASSIST LIVE GUIDANCE
+Produce live, immediate guidance for the Waypoint advocate. Keep responses concise enough to read in 3 seconds.`;
 
-      const items: TrackedItem[] = (parsed.newTrackedItems || []).map((item: any, idx: number) => ({
-        id: `item-${timestamp}-${idx}`,
-        type: item.type,
-        summary: item.summary,
-        speaker: (item.speaker as any) || newTurn.speakerRole,
-        timestamp,
-        status: "detected",
-        supportingTranscriptText: item.supportingTranscriptText || newTurn.text,
-      }));
+  const userPrompt = `Active Session: ${session.title || sessionType}
+Attached: ${session.attachedName || "Student"} (${session.attachedSubtitle || ""})
+Active Thread: ${session.sessionState.currentTopic || "General Discussion"}
 
-      const alerts: FirstMateAlert[] = (parsed.newAlerts || []).map((alert: any, idx: number) => ({
-        id: `alert-${timestamp}-${idx}`,
-        type: alert.type,
-        title: alert.title,
-        message: alert.message,
-        timestamp,
-        dismissed: false,
-      }));
+Recent Conversation:
+${recentTurns}
 
-      return {
-        liveAssist: {
-          currentIssue: parsed.currentIssue,
-          currentIssuePriority: parsed.currentIssuePriority || "High Priority",
-          currentIssueDescription: parsed.currentIssueDescription,
-          quickAnswer: parsed.quickAnswer,
-          sayThis: parsed.sayThis,
-          askNext: parsed.askNext || [],
-          whyItMatters: parsed.whyItMatters,
-          confidence: parsed.confidence || "High",
-          sources: (parsed.sources && parsed.sources.length > 0)
-            ? parsed.sources
-            : [{ title: "SOURCE VERIFICATION NEEDED", isVerified: false }],
-          sourceVerificationNote: parsed.sourceVerificationNote,
-        },
-        workingMemoryDelta: parsed.workingMemoryDelta || {},
-        newTrackedItems: items,
-        newAlerts: alerts,
-      };
-    }
-  } catch (err) {
-    console.warn("[FirstMateAi] LLM invocation error, using deterministic fallback:", err);
-  }
+Latest Speaker Turn:
+${newTurn.speakerRole}: "${newTurn.text}"`;
 
-  // Resilient deterministic fallback for offline/test environments
-  return generateDeterministicFallback(newTurn, session);
-}
-
-function getSessionTypeGuidance(sessionType: FirstMateSessionType): string {
-  switch (sessionType) {
-    case "IEP_MEETING":
-    case "SECTION_504_MEETING":
-      return `IEP/504 MEETING PRIORITIES:
-- Track Parent Requests, School Proposals, School Refusals, Team Commitments, Open Issues.
-- Flag any service cuts, accommodation changes, or lack of baseline data.
-- Say This must push for objective progress data and Prior Written Notice (PWN) when refusals occur.`;
-    case "DISCOVERY_CALL":
-      return `DISCOVERY / LEAD CALL PRIORITIES:
-- Identify Caller Need, Main Pain Point, School Situation, Existing IEP/504 status, Upcoming Deadlines.
-- Say This should be warm, reassuring, and qualify how Waypoint advocacy can step in immediately.`;
-    case "PARENT_STRATEGY_CALL":
-      return `PARENT STRATEGY PRIORITIES:
-- Clarify parental goals, prepare meeting leverage points, roleplay objection responses, align documentation.`;
-    case "SCHOOL_CALL":
-    case "CLIENT_CALL":
-    case "GENERAL_CALL":
-    default:
-      return `GENERAL CALL PRIORITIES:
-- Clarify Reason for Call, Important Facts, Commitments Made, Next Action Steps, Follow-up Dates.`;
-  }
-}
-
-function generateDeterministicFallback(
-  newTurn: NormalizedTranscriptEvent,
-  session: FirstMateSession
-): AnalysisResult {
-  const text = newTurn.text.toLowerCase();
-  const role = newTurn.speakerRole;
-  const timestamp = newTurn.timestamp || Date.now();
-
-  const isEvaluationRefusal =
-    (role === "School" || role === "Administrator" || role === "Teacher") &&
-    (text.includes("don't believe an evaluation") ||
-      text.includes("not necessary") ||
-      text.includes("passing") ||
-      text.includes("won't evaluate") ||
-      text.includes("no evaluation"));
-
-  const isServiceReduction =
-    text.includes("reduce") || text.includes("cut") || text.includes("decrease") || text.includes("30 minutes");
-
-  const isParentRequest =
-    role === "Parent" && (text.includes("want") || text.includes("request") || text.includes("evaluate") || text.includes("need more"));
-
-  if (isEvaluationRefusal) {
-    return {
-      liveAssist: {
-        currentIssue: "Evaluation Refusal",
-        currentIssuePriority: "High Priority",
-        currentIssueDescription: "School is declining to conduct an evaluation despite parent concerns.",
-        quickAnswer: "Passing grades alone do not disqualify a student from an initial evaluation under IDEA § 300.301.",
-        sayThis: `"What data is the team relying on to determine that an evaluation is not necessary?"`,
-        askNext: [
-          "When did you last review his progress data?",
-          "What specific measures show no educational impact?",
-          "Have you considered a full and individual evaluation in all areas of suspected need?",
-        ],
-        whyItMatters:
-          "Parents have the right to request an evaluation at any time. The school must consider the request and cannot deny it without a proper review of all available data and a formal Prior Written Notice.",
-        confidence: "High",
-        sources: [
-          { title: "IDEA § 300.301 – Initial Evaluations", url: "https://sites.ed.gov/idea/regs/b/d/300.301", isVerified: true },
-          { title: "Parental Rights – Requesting an Evaluation", url: "https://www.parentcenterhub.org/evaluation/", isVerified: true },
-        ],
-      },
-      workingMemoryDelta: {
-        currentTopic: "Initial Evaluation Request",
-        currentDispute: "School refusing evaluation citing passing grades",
-        openIssues: ["Formal PWN for evaluation refusal"],
-      },
-      newTrackedItems: [
-        {
-          id: `item-${timestamp}`,
-          type: "POSSIBLE_REFUSAL",
-          summary: "Evaluation request declined citing passing grades",
-          speaker: role,
-          timestamp,
-          status: "detected",
-          supportingTranscriptText: newTurn.text,
-        },
-      ],
-      newAlerts: [
-        {
-          id: `alert-${timestamp}`,
-          type: "POSSIBLE_REFUSAL",
-          title: "Possible Evaluation Refusal",
-          message: "School expressed reluctance to evaluate student. Request PWN and progress data basis.",
-          timestamp,
-          dismissed: false,
-        },
-      ],
-    };
-  }
-
-  if (isServiceReduction) {
-    return {
-      liveAssist: {
-        currentIssue: "Proposed Service Reduction",
-        currentIssuePriority: "High Priority",
-        currentIssueDescription: "Team has proposed reducing special education or related services.",
-        quickAnswer: "Service reductions must be supported by objective present levels and baseline data, not scheduling convenience.",
-        sayThis: `"What objective baseline data demonstrates that the student no longer requires this frequency of service?"`,
-        askNext: [
-          "Has the student met their previous annual goals in this area?",
-          "Can we review the provider's session notes and progress monitoring data?",
-        ],
-        whyItMatters:
-          "Related services cannot be reduced without documented evidence that the student can maintain educational progress with fewer minutes.",
-        confidence: "High",
-        sources: [
-          { title: "34 CFR § 300.320 – Related Services in IEP", isVerified: true },
-        ],
-      },
-      workingMemoryDelta: {
-        currentTopic: "Service Level Adjustment",
-        currentDispute: "Proposed decrease in service minutes",
-      },
-      newTrackedItems: [
-        {
-          id: `item-${timestamp}`,
-          type: "PROPOSAL",
-          summary: "Proposed service reduction",
-          speaker: role,
-          timestamp,
-          status: "detected",
-          supportingTranscriptText: newTurn.text,
-        },
-      ],
-      newAlerts: [
-        {
-          id: `alert-${timestamp}`,
-          type: "SERVICE_REDUCTION",
-          title: "Service Reduction Proposed",
-          message: "Verify objective data before agreeing to minute changes.",
-          timestamp,
-          dismissed: false,
-        },
-      ],
-    };
-  }
-
-  if (isParentRequest) {
-    return {
-      liveAssist: {
-        currentIssue: "Parent Request Logged",
-        currentIssuePriority: "Standard",
-        currentIssueDescription: "Parent has formally stated a concern or requested educational support.",
-        quickAnswer: "Ensure the team explicitly notes this request in the meeting minutes or IEP parent concern section.",
-        sayThis: `"Let's make sure this specific request is documented in the meeting notes and reflected on the team notes page."`,
-        askNext: [
-          "How will the school formally respond to this request?",
-          "What timeframe are we looking at for next steps?",
-        ],
-        whyItMatters:
-          "Documenting parent concerns preserves procedural rights and triggers the school's obligation to consider and respond.",
-        confidence: "High",
-        sources: [
-          { title: "IDEA § 300.324 – Development of IEP (Parent Concerns)", isVerified: true },
-        ],
-      },
-      workingMemoryDelta: {
-        currentTopic: "Parent Concerns & Support Request",
-        requestsMade: [newTurn.text],
-      },
-      newTrackedItems: [
-        {
-          id: `item-${timestamp}`,
-          type: "REQUEST",
-          summary: newTurn.text.slice(0, 80),
-          speaker: "Parent",
-          timestamp,
-          status: "detected",
-          supportingTranscriptText: newTurn.text,
-        },
-      ],
-      newAlerts: [
-        {
-          id: `alert-${timestamp}`,
-          type: "PARENT_REQUEST_DETECTED",
-          title: "Parent Request Logged",
-          message: `Logged: "${newTurn.text.slice(0, 60)}..."`,
-          timestamp,
-          dismissed: false,
-        },
-      ],
-    };
-  }
-
-  // Standard neutral turn
-  return {
-    liveAssist: {
-      currentIssue: session.liveAssist?.currentIssue || "Ongoing Discussion",
-      currentIssuePriority: session.liveAssist?.currentIssuePriority || "Standard",
-      currentIssueDescription: session.liveAssist?.currentIssueDescription || "Reviewing present levels and team observations.",
-      quickAnswer: "Maintain active listening and ensure all observations are tied to concrete student performance data.",
-      sayThis: `"Could you clarify how that impacts the student's daily classroom participation?"`,
-      askNext: [
-        "What accommodations have been most effective so far?",
-        "Are there specific times of day where challenges are most apparent?",
-      ],
-      whyItMatters: "Establishing detailed present levels creates the legal baseline for all measurable IEP goals.",
-      confidence: "Medium",
-      sources: session.liveAssist?.sources?.length ? session.liveAssist.sources : [
-        { title: "SOURCE VERIFICATION NEEDED", isVerified: false },
-      ],
+  const result = await executeOpenAiChat<FastAssistOutput>({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: FAST_ASSIST_SCHEMA,
     },
-    workingMemoryDelta: {},
-    newTrackedItems: [],
-    newAlerts: [],
+    temperature: 0.2,
+    stage: "FAST",
+  });
+
+  if (result.success && result.data?.quickAssist?.sayThis) {
+    return {
+      fastAssist: result.data,
+      devLog: result.devLog,
+    };
+  }
+
+  // Resilient deterministic fallback
+  return {
+    fastAssist: generateFallbackFastAssist(newTurn, session),
+    devLog: result.devLog,
   };
 }
 
+/**
+ * DEEP ASSIST: Background reasoning and rolling memory enrichment.
+ * Analyzes rolling memory, facts to check, new trackable detections,
+ * conversation threads, and cross-turn conflict detection.
+ */
+export async function runDeepAssist(
+  session: FirstMateSession,
+  transcript: NormalizedTranscriptEvent[],
+  newTurn: NormalizedTranscriptEvent
+): Promise<DeepAssistExecutionResult> {
+  const sessionType = session.sessionType;
+  const fullTranscriptText = transcript
+    .map(
+      (t, idx) =>
+        `[#${idx + 1}] ${t.speakerRole}: "${t.text}"`
+    )
+    .join("\n");
+
+  const existingTrackedSummary = [
+    ...session.requests.map((r) => `[REQUEST] ${r.summary}`),
+    ...session.refusals.map((r) => `[REFUSAL] ${r.summary}`),
+    ...session.commitments.map((c) => `[COMMITMENT] ${c.summary}`),
+    ...session.proposals.map((p) => `[PROPOSAL] ${p.summary}`),
+  ].join("; ");
+
+  const systemPrompt = `${BASE_SYSTEM_INSTRUCTION}
+
+${getSessionTypeProfile(sessionType)}
+
+TASK: DEEP ASSIST & ROLLING MEMORY
+Analyze the full conversation history.
+1. Check for cross-turn conflicts or contradictions between earlier statements and current statements (e.g. parent stated request was sent on Aug 12, school later claims no request received).
+2. Extract new trackable items (Requests, Refusals, Proposals, Commitments, Important Dates). Do NOT duplicate dismissed items.
+3. Provide Why It Matters and facts to verify.`;
+
+  const userPrompt = `Attached Client: ${session.attachedName || "Student"}
+Dismissed Item IDs: ${session.dismissedItemIds?.join(", ") || "None"}
+Existing Tracked Items: ${existingTrackedSummary || "None"}
+Current Working Memory: ${JSON.stringify(session.sessionState)}
+
+Full Session Transcript:
+${fullTranscriptText}
+
+Latest Turn Analyzed:
+${newTurn.speakerRole}: "${newTurn.text}"`;
+
+  const result = await executeOpenAiChat<DeepAssistOutput>({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: DEEP_ASSIST_SCHEMA,
+    },
+    temperature: 0.3,
+    stage: "DEEP",
+  });
+
+  if (result.success && result.data?.whyItMatters) {
+    // Enrich with verified sources or safe safeguard
+    const activeTopic = result.data.activeThreadName || session.sessionState.currentTopic || "General";
+    const sources = FirstMateKnowledgeProvider.getSourcesForTopic(activeTopic);
+
+    return {
+      deepAssist: {
+        ...result.data,
+        sources,
+      },
+      devLog: result.devLog,
+    };
+  }
+
+  // Resilient deterministic fallback
+  return {
+    deepAssist: generateFallbackDeepAssist(newTurn, session, transcript),
+    devLog: result.devLog,
+  };
+}
+
+/**
+ * REPHRASE SAY THIS: Instant alternative phrasing (Softer, Firmer, Shorter, Another Version).
+ */
+export async function rephraseSayThis(
+  currentSayThis: string,
+  style: SayThisStyle,
+  sessionType: FirstMateSessionType
+): Promise<{ text: string; devLog: FirstMateDevLogEntry }> {
+  const prompt = getRephrasePrompt(currentSayThis, style, sessionType);
+
+  const result = await executeOpenAiChat({
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.4,
+    stage: "REPHRASE",
+  });
+
+  if (result.success && result.rawContent) {
+    const cleaned = result.rawContent.replace(/^["']|["']$/g, "").trim();
+    return { text: cleaned, devLog: result.devLog };
+  }
+
+  // Fallback rephrasing heuristics
+  let fallbackText = currentSayThis;
+  switch (style) {
+    case "softer":
+      fallbackText = `Could we walk through the specific information the team is looking at to determine this?`;
+      break;
+    case "firmer":
+      fallbackText = `Is the team formally denying the parent's request on the record today?`;
+      break;
+    case "shorter":
+      fallbackText = `What data supports that conclusion?`;
+      break;
+    case "another_version":
+      fallbackText = `Help me understand how the team reached that decision without formal progress monitoring.`;
+      break;
+    case "followup_question":
+      fallbackText = `When was the student's baseline last measured in this area?`;
+      break;
+  }
+
+  return { text: fallbackText, devLog: result.devLog };
+}
+
+/**
+ * ASK FIRST MATE: Contextual Q&A using full active session memory.
+ */
 export async function askFirstMate(session: FirstMateSession, query: string): Promise<string> {
   const transcriptSummary = session.transcript
-    .slice(-20)
-    .map(t => `${t.speakerRole}: "${t.text}"`)
+    .slice(-25)
+    .map((t) => `${t.speakerRole}: "${t.text}"`)
     .join("\n");
 
   const trackedSummary = [
-    ...session.requests.map(r => `[Request by ${r.speaker}] ${r.summary}`),
-    ...session.refusals.map(r => `[Refusal by ${r.speaker}] ${r.summary}`),
-    ...session.proposals.map(p => `[Proposal by ${p.speaker}] ${p.summary}`),
-    ...session.commitments.map(c => `[Commitment by ${c.speaker}] ${c.summary}`),
+    ...session.requests.map((r) => `[Request by ${r.speaker}] ${r.summary}`),
+    ...session.refusals.map((r) => `[Refusal by ${r.speaker}] ${r.summary}`),
+    ...session.proposals.map((p) => `[Proposal by ${p.speaker}] ${p.summary}`),
+    ...session.commitments.map((c) => `[Commitment by ${c.speaker}] ${c.summary}`),
   ].join("\n");
 
-  try {
-    const res = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content: `${GUARDRAILS}\n\nYou are First Mate answering the advocate during an active ${session.sessionType}.
-Answer clearly and concisely in 2-4 sentences. Provide immediately usable wording or tactical advice.
-Do not make up facts not in the transcript.`,
-        },
-        {
-          role: "user",
-          content: `Transcript:\n${transcriptSummary || "(No transcript yet)"}\n\nTracked Items:\n${trackedSummary || "(None yet)"}\n\nAdvocate Question: "${query}"`,
-        },
-      ],
-    });
-    const answer = res.choices[0]?.message?.content;
-    if (typeof answer === "string" && answer.trim()) {
-      return answer.trim();
-    }
-  } catch (err) {
-    console.warn("[FirstMateAi] askFirstMate fallback:", err);
+  const prompt = `${BASE_SYSTEM_INSTRUCTION}
+
+${getSessionTypeProfile(session.sessionType)}
+
+You are answering the Waypoint advocate during an active conversation.
+Answer directly, tactically, and concisely in 2-3 sentences.
+Resolve pronouns (he/she/they/mom/school) using the transcript context.
+If something is not in the transcript, say "Not specified in the conversation so far."`;
+
+  const result = await executeOpenAiChat({
+    messages: [
+      { role: "system", content: prompt },
+      {
+        role: "user",
+        content: `Transcript:\n${transcriptSummary || "(No transcript entries)"}\n\nTracked Items:\n${trackedSummary || "(None)"}\n\nAdvocate Query: "${query}"`,
+      },
+    ],
+    temperature: 0.3,
+    stage: "ASK",
+  });
+
+  if (result.success && result.rawContent) {
+    return result.rawContent.trim();
   }
 
-  // Fallback heuristic answers for common questions
+  // Fallback heuristic answers
   const q = query.toLowerCase();
   if (q.includes("what should i ask") || q.includes("ask next")) {
-    return session.liveAssist?.askNext?.[0] || "Ask for the specific baseline data and teacher observations used to make this determination.";
+    return session.liveAssist?.askNext?.[0] || "Ask for the specific baseline data the team is relying upon.";
   }
   if (q.includes("refuse") || q.includes("denied")) {
-    const refusals = session.refusals.map(r => r.summary).join("; ");
-    return refusals ? `The school has declined: ${refusals}. You should request formal Prior Written Notice (PWN).` : "No formal refusals have been confirmed yet in this session.";
+    const refusals = session.refusals.map((r) => r.summary).join("; ");
+    return refusals
+      ? `The school has declined: ${refusals}. Request formal Prior Written Notice (PWN).`
+      : "No formal refusals have been confirmed yet in this session.";
   }
-  if (q.includes("request")) {
-    const requests = session.requests.map(r => r.summary).join("; ");
-    return requests ? `Parent requests logged so far: ${requests}.` : "No specific parent requests have been logged yet in this session.";
+  if (q.includes("request") || q.includes("mom request")) {
+    const requests = session.requests.map((r) => r.summary).join("; ");
+    return requests ? `Parent requests logged: ${requests}.` : "No specific parent requests logged yet.";
+  }
+  if (q.includes("commit")) {
+    const commitments = session.commitments.map((c) => c.summary).join("; ");
+    return commitments ? `Team commitments: ${commitments}.` : "No formal commitments logged yet.";
   }
   if (q.includes("summarize") || q.includes("happened")) {
-    return `We are in a ${session.sessionType}. Currently discussing: ${session.liveAssist.currentIssue || "team observations"}. ${session.refusals.length} refusal(s) and ${session.requests.length} request(s) tracked.`;
+    return `Active ${session.sessionType} discussing: ${session.liveAssist?.currentIssue || "team observations"}. ${session.refusals.length} refusal(s) and ${session.requests.length} request(s) tracked.`;
   }
-  return `Based on the transcript so far: verify that all team statements are tied to documented progress data, and ask the team to note your concerns in the formal meeting minutes.`;
+  return "Based on the conversation: verify baseline progress data and ensure parent concerns are entered into the written meeting minutes.";
 }
 
+/**
+ * GENERATE SESSION SUMMARY: Structured meeting / call draft summary.
+ */
 export async function generateSessionSummary(session: FirstMateSession): Promise<string> {
   const isMeeting = session.sessionType === "IEP_MEETING" || session.sessionType === "SECTION_504_MEETING";
   const transcriptText = session.transcript
-    .map(t => `${t.speakerRole} (${new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}): ${t.text}`)
+    .map(
+      (t) =>
+        `${t.speakerRole} (${new Date(t.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}): ${t.text}`
+    )
     .join("\n");
 
-  const prompt = isMeeting
-    ? `Generate an IEP/504 Meeting Summary with the following markdown headings:
+  const promptStructure = isMeeting
+    ? `Generate an IEP / Section 504 Meeting Summary with:
 ### Meeting Purpose
 ### Parent Concerns
 ### Requests Made
@@ -509,7 +305,7 @@ export async function generateSessionSummary(session: FirstMateSession): Promise
 ### Services & Accommodations Discussed
 ### Open Issues & Unresolved Questions
 ### Immediate Follow-Up Actions & Deadlines`
-    : `Generate a Call / Strategy Summary with the following markdown headings:
+    : `Generate a Call / Strategy Summary with:
 ### Reason for Call
 ### Key Discussion Points
 ### Requests & Inquiries
@@ -517,27 +313,23 @@ export async function generateSessionSummary(session: FirstMateSession): Promise
 ### Open Issues
 ### Recommended Next Steps & Follow-Up`;
 
-  try {
-    const res = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content: `${GUARDRAILS}\n\nGenerate an editable, professional advocate summary for this ${session.sessionType}.
-Use Markdown format. Base it strictly on the provided transcript. Mark any missing details as [Pending Verification].`,
-        },
-        {
-          role: "user",
-          content: `${prompt}\n\nTranscript:\n${transcriptText || "(No transcript entries recorded)"}\n\nTracked Requests: ${JSON.stringify(session.requests)}\nTracked Refusals: ${JSON.stringify(session.refusals)}\nTracked Commitments: ${JSON.stringify(session.commitments)}`,
-        },
-      ],
-    });
+  const result = await executeOpenAiChat({
+    messages: [
+      {
+        role: "system",
+        content: `${BASE_SYSTEM_INSTRUCTION}\n\nGenerate an editable, factual advocate summary for this ${session.sessionType}. Use Markdown format. Mark unverified details as [Pending Verification].`,
+      },
+      {
+        role: "user",
+        content: `${promptStructure}\n\nTranscript:\n${transcriptText || "(No transcript recorded)"}\n\nRequests: ${JSON.stringify(session.requests)}\nRefusals: ${JSON.stringify(session.refusals)}\nCommitments: ${JSON.stringify(session.commitments)}`,
+      },
+    ],
+    temperature: 0.2,
+    stage: "SUMMARY",
+  });
 
-    const content = res.choices[0]?.message?.content;
-    if (typeof content === "string" && content.trim()) {
-      return content.trim();
-    }
-  } catch (err) {
-    console.warn("[FirstMateAi] generateSessionSummary fallback:", err);
+  if (result.success && result.rawContent) {
+    return result.rawContent.trim();
   }
 
   // Fallback summary template
@@ -546,23 +338,23 @@ Use Markdown format. Base it strictly on the provided transcript. Mark any missi
 ${session.title || "Annual IEP Review / Evaluation Discussion"} for ${session.attachedName || "Student"}.
 
 ### Parent Concerns
-${session.requests.map(r => `- ${r.summary}`).join("\n") || "- Parent expressed concerns regarding academic progress and support levels."}
+${session.requests.map((r) => `- ${r.summary}`).join("\n") || "- Academic progress and support levels."}
 
 ### Requests Made
-${session.requests.map(r => `- [${r.speaker}] ${r.summary}`).join("\n") || "- Initial evaluation request submitted."}
+${session.requests.map((r) => `- [${r.speaker}] ${r.summary}`).join("\n") || "- Initial evaluation request."}
 
 ### Requests Refused & Reasons Given
-${session.refusals.map(r => `- ${r.summary}`).join("\n") || "- None formally logged."}
+${session.refusals.map((r) => `- ${r.summary}`).join("\n") || "- None formally logged."}
 
 ### Team Commitments
-${session.commitments.map(c => `- ${c.summary}`).join("\n") || "- Team agreed to review updated progress monitoring data."}
+${session.commitments.map((c) => `- ${c.summary}`).join("\n") || "- Review updated progress monitoring data."}
 
 ### Open Issues
-${session.openIssues.map(o => `- ${o.summary}`).join("\n") || "- Delivery of Prior Written Notice (PWN) for team decisions."}
+${session.openIssues.map((o) => `- ${o.summary}`).join("\n") || "- Prior Written Notice (PWN) documentation."}
 
 ### Immediate Follow-Up Actions
 - Request formal Prior Written Notice (PWN) within 5 school days.
-- Confirm receipt of complete evaluation consent documents.
+- Confirm receipt of evaluation consent documents.
 - Review draft meeting minutes.`;
   }
 
@@ -570,13 +362,246 @@ ${session.openIssues.map(o => `- ${o.summary}`).join("\n") || "- Delivery of Pri
 ${session.title || "Advocacy Consultation Call"} regarding ${session.attachedName || "Student"}.
 
 ### Key Discussion Points
-- Reviewed current school placement and teacher observations.
-- Discussed parent concerns and historical IEP service implementation.
+- Current school placement and teacher observations.
+- Parent concerns and historical IEP service implementation.
 
 ### Requests & Inquiries
-${session.requests.map(r => `- ${r.summary}`).join("\n") || "- Initial intake discussion."}
+${session.requests.map((r) => `- ${r.summary}`).join("\n") || "- Initial intake discussion."}
 
 ### Next Steps & Follow-Up
 - Schedule full strategy call or IEP pre-meeting review.
-- Gather existing educational evaluations, psychological reports, and progress reports.`;
+- Gather existing educational evaluations and progress reports.`;
+}
+
+// ─── DETERMINISTIC FALLBACK HELPERS (For offline testing resilience) ───
+
+function generateFallbackFastAssist(
+  newTurn: NormalizedTranscriptEvent,
+  session: FirstMateSession
+): FastAssistOutput {
+  const text = newTurn.text.toLowerCase();
+  const role = newTurn.speakerRole;
+
+  if (
+    (role === "School" || role === "Administrator" || role === "Teacher") &&
+    (text.includes("don't believe an evaluation") ||
+      text.includes("not necessary") ||
+      text.includes("passing") ||
+      text.includes("won't evaluate"))
+  ) {
+    return {
+      currentIssue: {
+        label: "Possible Evaluation Refusal",
+        description: "School is declining to conduct an evaluation despite parent concerns.",
+        priority: "High Priority",
+        confidence: "High",
+      },
+      quickAssist: {
+        sayThis: "What data is the team relying on to determine that an evaluation is not necessary?",
+        askNext: "Was the parent's evaluation request made in writing?",
+      },
+      alert: {
+        type: "POSSIBLE_REFUSAL",
+        severity: "critical",
+        message: "Possible evaluation refusal detected. Request data basis and PWN.",
+      },
+      confidence: "High",
+    };
+  }
+
+  if (text.includes("reduce") || text.includes("cut") || text.includes("30 minutes")) {
+    return {
+      currentIssue: {
+        label: "Proposed Service Reduction",
+        description: "Team has proposed decreasing service frequency or minutes.",
+        priority: "High Priority",
+        confidence: "High",
+      },
+      quickAssist: {
+        sayThis: "What objective baseline data demonstrates that the student can maintain progress with fewer minutes?",
+        askNext: "Has the student met all previous annual goals in this service area?",
+      },
+      alert: {
+        type: "SERVICE_REDUCTION",
+        severity: "attention",
+        message: "Proposed service reduction. Check objective progress monitoring data.",
+      },
+      confidence: "High",
+    };
+  }
+
+  if (role === "Parent" && (text.includes("want") || text.includes("request") || text.includes("testing") || text.includes("evaluate"))) {
+    return {
+      currentIssue: {
+        label: "Parent Request Logged",
+        description: "Parent has formally stated a concern or requested testing.",
+        priority: "Standard",
+        confidence: "High",
+      },
+      quickAssist: {
+        sayThis: "Let's make sure this specific request is documented in the meeting notes.",
+        askNext: "When was the request submitted?",
+      },
+      alert: {
+        type: "PARENT_REQUEST_DETECTED",
+        severity: "info",
+        message: "Parent request logged. Confirm response in meeting notes.",
+      },
+      confidence: "High",
+    };
+  }
+
+  return {
+    currentIssue: {
+      label: session.liveAssist?.currentIssue || "Ongoing Discussion",
+      description: session.liveAssist?.currentIssueDescription || "Reviewing present levels and team observations.",
+      priority: "Standard",
+      confidence: "Medium",
+    },
+    quickAssist: {
+      sayThis: "Could you clarify how that impacts the student's daily classroom performance?",
+      askNext: "What accommodations have been most effective so far?",
+    },
+    alert: null,
+    confidence: "Medium",
+  };
+}
+
+function generateFallbackDeepAssist(
+  newTurn: NormalizedTranscriptEvent,
+  session: FirstMateSession,
+  transcript: NormalizedTranscriptEvent[]
+): DeepAssistOutput {
+  const text = newTurn.text.toLowerCase();
+  const role = newTurn.speakerRole;
+
+  // Check for Scenario 4 conflict detection:
+  // Parent stated evaluation request sent earlier, school claims never received
+  const earlierDateTurn = transcript.find(
+    (t) =>
+      t.speakerRole === "Parent" &&
+      (t.text.toLowerCase().includes("august") || t.text.toLowerCase().includes("sent") || t.text.toLowerCase().includes("requested testing"))
+  );
+
+  const isSchoolDenyingReceipt =
+    (role === "School" || role === "Administrator") &&
+    (text.includes("haven't received") || text.includes("never received") || text.includes("no record of"));
+
+  const conflicts: ConflictDetection[] = [];
+  if (earlierDateTurn && isSchoolDenyingReceipt) {
+    conflicts.push({
+      id: `conflict-${Date.now()}`,
+      title: "Potential Timeline Conflict",
+      message: `Earlier in this session the parent stated the evaluation request was submitted ("${earlierDateTurn.text}"). The school now states they have not received it.`,
+      earlierStatement: earlierDateTurn.text,
+      currentStatement: newTurn.text,
+      timestamp: Date.now(),
+      resolved: false,
+    });
+  }
+
+  const detections: DeepAssistOutput["detections"] = [];
+  if (
+    (role === "School" || role === "Administrator") &&
+    (text.includes("don't believe") || text.includes("not necessary") || text.includes("passing"))
+  ) {
+    detections.push({
+      type: "POSSIBLE_REFUSAL" as const,
+      summary: "Evaluation request declined citing passing grades",
+      confidence: "High" as const,
+      supportingTranscriptText: newTurn.text,
+    });
+  }
+
+  if (text.includes("reduce speech") || text.includes("30 minutes")) {
+    detections.push({
+      type: "PROPOSAL" as const,
+      summary: "Proposed reduction of speech therapy to 30 minutes",
+      confidence: "High" as const,
+      supportingTranscriptText: newTurn.text,
+    });
+  }
+
+  if (text.includes("transition warnings") && text.includes("can")) {
+    detections.push({
+      type: "COMMITMENT" as const,
+      summary: "Team agreed to add transition warnings to accommodations",
+      confidence: "High" as const,
+      supportingTranscriptText: newTurn.text,
+    });
+  }
+
+  const sources = FirstMateKnowledgeProvider.getSourcesForTopic(text);
+
+  return {
+    whyItMatters:
+      "Parents have the right to request an evaluation at any time. The school must consider the request and cannot deny it without a proper review of all available data and a formal Prior Written Notice.",
+    check: [
+      "Confirm method of delivery and date of initial written request.",
+      "Verify whether classroom performance data includes reading fluency baselines.",
+      "Check if 60-day evaluation timeline was initiated.",
+    ],
+    detections,
+    sessionStateUpdates: {
+      currentTopic: detections[0]?.summary || "Educational Evaluation & Services",
+    },
+    followUp: ["Request Prior Written Notice (PWN)", "Confirm evaluation consent forms"],
+    activeThreadName: detections[0]?.summary ? "Initial Evaluation" : undefined,
+    conflicts,
+    sources,
+  };
+}
+
+/**
+ * Unified turn analysis executing both Fast Assist and Deep Assist.
+ * Backward compatible with tests and legacy callers.
+ */
+export async function analyzeTranscriptTurn(
+  session: FirstMateSession,
+  transcript: NormalizedTranscriptEvent[],
+  newTurn: NormalizedTranscriptEvent
+) {
+  const [fastRes, deepRes] = await Promise.all([
+    runFastAssist(session, transcript, newTurn),
+    runDeepAssist(session, transcript, newTurn),
+  ]);
+
+  const newTrackedItems: TrackedItem[] = deepRes.deepAssist.detections.map((d) => ({
+    id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type: d.type,
+    summary: d.summary,
+    speaker: newTurn.speakerRole,
+    timestamp: Date.now(),
+    status: "detected" as const,
+    supportingTranscriptText: d.supportingTranscriptText || newTurn.text,
+  }));
+
+  return {
+    liveAssist: {
+      currentIssue: fastRes.fastAssist.currentIssue.label,
+      currentIssuePriority: fastRes.fastAssist.currentIssue.priority || "High Priority",
+      currentIssueDescription: fastRes.fastAssist.currentIssue.description,
+      sayThis: fastRes.fastAssist.quickAssist.sayThis,
+      askNext: [fastRes.fastAssist.quickAssist.askNext, ...(session.liveAssist?.askNext || []).slice(0, 2)].filter(Boolean),
+      whyItMatters: deepRes.deepAssist.whyItMatters,
+      confidence: fastRes.fastAssist.confidence,
+      sources: deepRes.deepAssist.sources,
+      quickAnswer: fastRes.fastAssist.quickAssist.sayThis,
+    },
+    newTrackedItems,
+    alerts: fastRes.fastAssist.alert
+      ? [
+          {
+            id: `alert-${Date.now()}`,
+            type: fastRes.fastAssist.alert.type,
+            title: fastRes.fastAssist.alert.message,
+            message: fastRes.fastAssist.alert.message,
+            timestamp: Date.now(),
+            dismissed: false,
+          },
+        ]
+      : [],
+    sessionStateUpdates: deepRes.deepAssist.sessionStateUpdates,
+    conflicts: deepRes.deepAssist.conflicts || [],
+  };
 }

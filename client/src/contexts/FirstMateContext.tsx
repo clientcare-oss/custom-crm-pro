@@ -9,7 +9,9 @@ import type {
   TrackedItem,
   FirstMateAlert,
   LiveAssistPanelData,
-  FirstMateWorkingMemory,
+  SayThisStyle,
+  ConflictDetection,
+  FirstMateDevLogEntry,
 } from "../../../shared/firstMate";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -150,6 +152,18 @@ function createDefaultSession(): FirstMateSession {
     ],
     commitments: [],
     openIssues: [],
+    threads: [
+      {
+        id: "th-1",
+        name: "Initial Evaluation",
+        status: "active",
+        startedAt: Date.now() - 180000,
+        lastUpdated: Date.now(),
+        summary: "Discussion regarding dyslexia testing and school progress observations",
+      },
+    ],
+    conflicts: [],
+    dismissedItemIds: [],
     savedMoments: [],
     alerts: [
       {
@@ -162,12 +176,16 @@ function createDefaultSession(): FirstMateSession {
       },
     ],
     liveAssist: INITIAL_LIVE_ASSIST,
+    devLogs: [],
   };
 }
 
 interface FirstMateContextValue {
   session: FirstMateSession;
   isAnalyzing: boolean;
+  isFastAnalyzing: boolean;
+  isDeepAnalyzing: boolean;
+  isRephrasing: boolean;
   startSession: () => void;
   pauseSession: () => void;
   resumeSession: () => void;
@@ -177,8 +195,10 @@ interface FirstMateContextValue {
   setMode: (mode: FirstMateSessionMode) => void;
   attachRecord: (record: { id: number; type: "lead" | "client"; name: string; subtitle: string }) => void;
   addTranscriptTurn: (speakerRole: SpeakerRole, text: string) => Promise<void>;
+  rephraseSayThis: (style: SayThisStyle) => Promise<void>;
   updateTrackedItem: (id: string, status: TrackedItem["status"], userNote?: string) => void;
   dismissAlert: (id: string) => void;
+  dismissConflict: (id: string) => void;
   addNote: (note: string) => void;
   saveMoment: (note: string) => void;
   askQuestion: (query: string) => Promise<string>;
@@ -201,7 +221,9 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     return createDefaultSession();
   });
 
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isFastAnalyzing, setIsFastAnalyzing] = useState(false);
+  const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
+  const [isRephrasing, setIsRephrasing] = useState(false);
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   // Sync state to localStorage & BroadcastChannel
@@ -250,7 +272,9 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   }, [session.status]);
 
   // tRPC Mutations
-  const analyzeTurnMutation = trpc.firstMate.analyzeTurn.useMutation();
+  const fastAssistMutation = trpc.firstMate.fastAssist.useMutation();
+  const deepAssistMutation = trpc.firstMate.deepAssist.useMutation();
+  const rephraseMutation = trpc.firstMate.rephraseSayThis.useMutation();
   const askMutation = trpc.firstMate.ask.useMutation();
   const generateSummaryMutation = trpc.firstMate.generateSummary.useMutation();
 
@@ -326,6 +350,12 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     toast.success(`Attached to ${record.name}`);
   }, []);
 
+  /**
+   * TWO-SPEED PIPELINE EXECUTION
+   * 1. Instantly append turn to transcript
+   * 2. Fast Assist: runs immediately to update Say This, Ask Next, and Current Issue
+   * 3. Deep Assist: runs in background to enrich working memory, detections, threads, and conflicts
+   */
   const addTranscriptTurn = useCallback(
     async (speakerRole: SpeakerRole, text: string) => {
       const trimmed = text.trim();
@@ -344,15 +374,62 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
 
       const updatedTranscript = [...session.transcript, newTurn];
 
-      // Immediately append turn to state for instant responsive UI
+      // Immediately append turn to state for responsive UI
       setSession((prev) => ({
         ...prev,
         transcript: updatedTranscript,
       }));
 
-      setIsAnalyzing(true);
+      // ── SPEED 1: FAST ASSIST ──
+      setIsFastAnalyzing(true);
       try {
-        const analysis = await analyzeTurnMutation.mutateAsync({
+        const fastResult = await fastAssistMutation.mutateAsync({
+          session,
+          transcript: updatedTranscript,
+          newTurn,
+        });
+
+        setSession((prev) => {
+          const newAlerts = [...prev.alerts];
+          if (fastResult.fastAssist.alert) {
+            newAlerts.unshift({
+              id: `alert-${Date.now()}`,
+              type: fastResult.fastAssist.alert.type,
+              title: fastResult.fastAssist.alert.message,
+              message: fastResult.fastAssist.alert.message,
+              timestamp: Date.now(),
+              dismissed: false,
+            });
+          }
+
+          return {
+            ...prev,
+            liveAssist: {
+              ...prev.liveAssist,
+              currentIssue: fastResult.fastAssist.currentIssue.label,
+              currentIssuePriority: fastResult.fastAssist.currentIssue.priority || "High Priority",
+              currentIssueDescription: fastResult.fastAssist.currentIssue.description,
+              sayThis: fastResult.fastAssist.quickAssist.sayThis,
+              askNext: [
+                fastResult.fastAssist.quickAssist.askNext,
+                ...(prev.liveAssist.askNext || []).slice(0, 2),
+              ].filter(Boolean),
+              confidence: fastResult.fastAssist.confidence,
+            },
+            alerts: newAlerts,
+            devLogs: [fastResult.devLog, ...prev.devLogs].slice(0, 30),
+          };
+        });
+      } catch (err) {
+        console.warn("[FirstMateContext] Fast Assist error:", err);
+      } finally {
+        setIsFastAnalyzing(false);
+      }
+
+      // ── SPEED 2: DEEP ASSIST (Background reasoning & rolling memory) ──
+      setIsDeepAnalyzing(true);
+      try {
+        const deepResult = await deepAssistMutation.mutateAsync({
           session,
           transcript: updatedTranscript,
           newTurn,
@@ -365,42 +442,139 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
           const newProposals = [...prev.proposals];
           const newOpenIssues = [...prev.openIssues];
 
-          for (const item of analysis.newTrackedItems) {
-            if (item.type === "REQUEST") newRequests.push(item);
-            else if (item.type === "POSSIBLE_REFUSAL") newRefusals.push(item);
-            else if (item.type === "COMMITMENT") newCommitments.push(item);
-            else if (item.type === "PROPOSAL") newProposals.push(item);
-            else newOpenIssues.push(item);
+          // Filter out any dismissed item summaries
+          for (const item of deepResult.deepAssist.detections) {
+            if (prev.dismissedItemIds?.includes(item.summary)) continue;
+
+            const trackedItem: TrackedItem = {
+              id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              type: item.type,
+              summary: item.summary,
+              speaker: newTurn.speakerRole,
+              timestamp: Date.now(),
+              status: "detected",
+              supportingTranscriptText: item.supportingTranscriptText || newTurn.text,
+            };
+
+            if (item.type === "REQUEST") newRequests.push(trackedItem);
+            else if (item.type === "POSSIBLE_REFUSAL") newRefusals.push(trackedItem);
+            else if (item.type === "COMMITMENT") newCommitments.push(trackedItem);
+            else if (item.type === "PROPOSAL") newProposals.push(trackedItem);
+            else newOpenIssues.push(trackedItem);
+          }
+
+          // Handle active thread updating
+          let updatedThreads = [...prev.threads];
+          if (deepResult.deepAssist.activeThreadName) {
+            const threadName = deepResult.deepAssist.activeThreadName;
+            const existing = updatedThreads.find((t) => t.name.toLowerCase() === threadName.toLowerCase());
+            if (existing) {
+              existing.status = "active";
+              existing.lastUpdated = Date.now();
+            } else {
+              // mark others open
+              updatedThreads = updatedThreads.map((t) => (t.status === "active" ? { ...t, status: "open" as const } : t));
+              updatedThreads.push({
+                id: `th-${Date.now()}`,
+                name: threadName,
+                status: "active",
+                startedAt: Date.now(),
+                lastUpdated: Date.now(),
+              });
+            }
+          }
+
+          // Handle conflict detection
+          const newConflicts = [...prev.conflicts];
+          if (deepResult.deepAssist.conflicts && deepResult.deepAssist.conflicts.length > 0) {
+            for (const c of deepResult.deepAssist.conflicts) {
+              newConflicts.unshift({
+                id: `conflict-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+                title: c.title,
+                message: c.message,
+                earlierStatement: c.earlierStatement,
+                currentStatement: c.currentStatement,
+                timestamp: Date.now(),
+                resolved: false,
+              });
+            }
           }
 
           return {
             ...prev,
-            liveAssist: analysis.liveAssist,
+            liveAssist: {
+              ...prev.liveAssist,
+              whyItMatters: deepResult.deepAssist.whyItMatters,
+              sources: deepResult.deepAssist.sources?.length ? deepResult.deepAssist.sources : prev.liveAssist.sources,
+            },
             sessionState: {
               ...prev.sessionState,
-              ...analysis.workingMemoryDelta,
+              ...deepResult.deepAssist.sessionStateUpdates,
             },
             requests: newRequests,
             refusals: newRefusals,
             commitments: newCommitments,
             proposals: newProposals,
             openIssues: newOpenIssues,
-            alerts: [...analysis.newAlerts, ...prev.alerts],
+            threads: updatedThreads,
+            conflicts: newConflicts,
+            devLogs: [deepResult.devLog, ...prev.devLogs].slice(0, 30),
           };
         });
-      } catch (err: any) {
-        console.warn("[FirstMateContext] Error analyzing turn:", err);
+      } catch (err) {
+        console.warn("[FirstMateContext] Deep Assist background error:", err);
       } finally {
-        setIsAnalyzing(false);
+        setIsDeepAnalyzing(false);
       }
     },
-    [session, analyzeTurnMutation]
+    [session, fastAssistMutation, deepAssistMutation]
+  );
+
+  /**
+   * REPHRASE SAY THIS
+   */
+  const rephraseSayThis = useCallback(
+    async (style: SayThisStyle) => {
+      const current = session.liveAssist?.sayThis;
+      if (!current) return;
+
+      setIsRephrasing(true);
+      try {
+        const res = await rephraseMutation.mutateAsync({
+          currentSayThis: current,
+          style,
+          sessionType: session.sessionType,
+        });
+
+        setSession((prev) => ({
+          ...prev,
+          liveAssist: {
+            ...prev.liveAssist,
+            sayThis: res.text,
+          },
+          devLogs: [res.devLog, ...prev.devLogs].slice(0, 30),
+        }));
+        toast.success(`Adapted phrasing (${style})`);
+      } catch (err: any) {
+        toast.error("Failed to rephrase: " + err.message);
+      } finally {
+        setIsRephrasing(false);
+      }
+    },
+    [session.liveAssist?.sayThis, session.sessionType, rephraseMutation]
   );
 
   const updateTrackedItem = useCallback((id: string, status: TrackedItem["status"], userNote?: string) => {
     setSession((prev) => {
       const updater = (list: TrackedItem[]) =>
         list.map((item) => (item.id === id ? { ...item, status, userNote: userNote ?? item.userNote } : item));
+
+      // If dismissed, record summary to avoid immediate regeneration
+      let dismissedIds = [...prev.dismissedItemIds];
+      const target = [...prev.requests, ...prev.refusals, ...prev.commitments, ...prev.proposals].find((i) => i.id === id);
+      if (status === "dismissed" && target && !dismissedIds.includes(target.summary)) {
+        dismissedIds.push(target.summary);
+      }
 
       return {
         ...prev,
@@ -409,6 +583,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         commitments: updater(prev.commitments),
         proposals: updater(prev.proposals),
         openIssues: updater(prev.openIssues),
+        dismissedItemIds: dismissedIds,
       };
     });
     toast.info(`Updated item status: ${status}`);
@@ -421,6 +596,13 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const dismissConflict = useCallback((id: string) => {
+    setSession((prev) => ({
+      ...prev,
+      conflicts: prev.conflicts.map((c) => (c.id === id ? { ...c, resolved: true } : c)),
+    }));
+  }, []);
+
   const addNote = useCallback((note: string) => {
     if (!note.trim()) return;
     setSession((prev) => ({
@@ -430,22 +612,25 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     toast.success("Note added to session");
   }, []);
 
-  const saveMoment = useCallback((note: string) => {
-    const lastTurn = session.transcript[session.transcript.length - 1];
-    setSession((prev) => ({
-      ...prev,
-      savedMoments: [
-        ...prev.savedMoments,
-        {
-          id: `moment-${Date.now()}`,
-          timestamp: Date.now(),
-          transcriptExcerpt: lastTurn ? `[${lastTurn.speakerRole}] "${lastTurn.text}"` : "Session Bookmark",
-          note: note || "Key advocacy milestone",
-        },
-      ],
-    }));
-    toast.success("Moment saved to session timeline");
-  }, [session.transcript]);
+  const saveMoment = useCallback(
+    (note: string) => {
+      const lastTurn = session.transcript[session.transcript.length - 1];
+      setSession((prev) => ({
+        ...prev,
+        savedMoments: [
+          ...prev.savedMoments,
+          {
+            id: `moment-${Date.now()}`,
+            timestamp: Date.now(),
+            transcriptExcerpt: lastTurn ? `[${lastTurn.speakerRole}] "${lastTurn.text}"` : "Session Bookmark",
+            note: note || "Key advocacy milestone",
+          },
+        ],
+      }));
+      toast.success("Moment saved to session timeline");
+    },
+    [session.transcript]
+  );
 
   const askQuestion = useCallback(
     async (query: string): Promise<string> => {
@@ -483,6 +668,8 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       commitments: [],
       proposals: [],
       alerts: [],
+      conflicts: [],
+      threads: [],
     }));
     toast.info("Transcript cleared for fresh test");
   }, []);
@@ -491,7 +678,10 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     <FirstMateContext.Provider
       value={{
         session,
-        isAnalyzing,
+        isAnalyzing: isFastAnalyzing || isDeepAnalyzing,
+        isFastAnalyzing,
+        isDeepAnalyzing,
+        isRephrasing,
         startSession,
         pauseSession,
         resumeSession,
@@ -501,8 +691,10 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         setMode,
         attachRecord,
         addTranscriptTurn,
+        rephraseSayThis,
         updateTrackedItem,
         dismissAlert,
+        dismissConflict,
         addNote,
         saveMoment,
         askQuestion,

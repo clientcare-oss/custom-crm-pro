@@ -126,6 +126,9 @@ export default function FirstMate() {
   const {
     session,
     isAnalyzing,
+    isFastAnalyzing,
+    isDeepAnalyzing,
+    isRephrasing,
     startSession,
     pauseSession,
     resumeSession,
@@ -135,8 +138,10 @@ export default function FirstMate() {
     setMode,
     attachRecord,
     addTranscriptTurn,
+    rephraseSayThis,
     updateTrackedItem,
     dismissAlert,
+    dismissConflict,
     addNote,
     saveMoment,
     askQuestion,
@@ -167,6 +172,10 @@ export default function FirstMate() {
   const [isMomentDialogOpen, setIsMomentDialogOpen] = useState(false);
   const [momentInput, setMomentInput] = useState("");
   const [showWorkingMemory, setShowWorkingMemory] = useState(false);
+  const [showDevLogs, setShowDevLogs] = useState(false);
+  const [showDetectionsModal, setShowDetectionsModal] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editItemText, setEditItemText] = useState("");
 
   // Fetch CRM attachable records
   const { data: attachableData } = trpc.firstMate.getAttachableRecords.useQuery();
@@ -308,6 +317,33 @@ export default function FirstMate() {
         >
           Settings
         </button>
+
+        {/* Right side operational actions: Detections Review & Dev Logs */}
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => setShowDetectionsModal(true)}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            Detections
+            <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold px-1.5 py-0 h-4 border-none">
+              {(session.requests?.length || 0) +
+                (session.refusals?.length || 0) +
+                (session.commitments?.length || 0) +
+                (session.proposals?.length || 0)}
+            </Badge>
+          </button>
+          <button
+            onClick={() => setShowDevLogs(true)}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            Dev Logs
+            <Badge className="bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold px-1.5 py-0 h-4 border-none">
+              {session.devLogs?.length || 0}
+            </Badge>
+          </button>
+        </div>
       </div>
 
       {/* ── SESSION CONTROL BAR ── */}
@@ -631,46 +667,50 @@ export default function FirstMate() {
 
                 {/* Quick Simulation Preset Chips for Instant 1-Click Verification */}
                 <div className="flex items-center gap-1.5 pt-1 overflow-x-auto text-[10px]">
-                  <span className="text-slate-500 font-bold shrink-0">Presets:</span>
+                  <span className="text-slate-500 font-bold shrink-0">Scenarios:</span>
                   <button
                     type="button"
                     onClick={() => {
                       setSimulatorSpeaker("School");
-                      setSimulatorText("We don't believe an evaluation is necessary because his grades are passing.");
+                      setSimulatorText("His grades are passing, so we don't believe an evaluation is necessary.");
                     }}
                     className="px-2 py-1 rounded bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/30 whitespace-nowrap cursor-pointer"
+                    title="Scenario 1: Evaluation Refusal"
                   >
-                    Evaluation Refusal
+                    1. Eval Refusal
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setSimulatorSpeaker("School");
-                      setSimulatorText("We want to reduce speech therapy to 30 minutes every other week.");
+                      setSimulatorText("We're recommending reducing speech from 60 minutes to 30 minutes.");
                     }}
                     className="px-2 py-1 rounded bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 whitespace-nowrap cursor-pointer"
+                    title="Scenario 2: Service Reduction"
                   >
-                    Speech Reduction
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSimulatorSpeaker("Parent");
-                      setSimulatorText("I want a comprehensive psychoeducational evaluation in all areas of suspected need.");
-                    }}
-                    className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/30 whitespace-nowrap cursor-pointer"
-                  >
-                    Parent Request
+                    2. Service Reduction
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setSimulatorSpeaker("School");
-                      setSimulatorText("We can agree to add transition warnings and visual schedules to his accommodations.");
+                      setSimulatorText("Yes, we can put transition warnings and visual schedules into the IEP.");
                     }}
                     className="px-2 py-1 rounded bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 whitespace-nowrap cursor-pointer"
+                    title="Scenario 3: Team Commitment"
                   >
-                    Commitment
+                    3. Commitment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSimulatorSpeaker("School");
+                      setSimulatorText("We haven't received an evaluation request.");
+                    }}
+                    className="px-2 py-1 rounded bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30 whitespace-nowrap cursor-pointer"
+                    title="Scenario 4: Timeline Conflict with Earlier Parent Statement"
+                  >
+                    4. Memory Conflict
                   </button>
                 </div>
               </form>
@@ -680,6 +720,75 @@ export default function FirstMate() {
 
         {/* ── RIGHT COLUMN: 5 THEMED LIVE ASSIST GUIDANCE CARDS (6 Cols) ── */}
         <div className="lg:col-span-6 xl:col-span-6 space-y-3 flex flex-col justify-between">
+          {/* Active Discussion Thread & Unresolved Threads Indicator */}
+          {session.threads && session.threads.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-[#071728] border border-white/10 text-xs shadow-sm">
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                <Layers className="w-3 h-3 text-cyan-400" /> Current Thread:
+              </span>
+              {session.threads
+                .filter((t) => t.status === "active")
+                .map((t) => (
+                  <Badge key={t.id} className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold">
+                    {t.name}
+                  </Badge>
+                ))}
+              {session.threads
+                .filter((t) => t.status === "open")
+                .slice(0, 2)
+                .map((t) => (
+                  <Badge key={t.id} variant="outline" className="bg-white/5 text-slate-300 border-white/10 text-[10px]">
+                    Open: {t.name}
+                  </Badge>
+                ))}
+            </div>
+          )}
+
+          {/* Conflict Alert Banner (Test Scenario 4: Cross-Turn Rolling Memory Conflict) */}
+          {session.conflicts &&
+            session.conflicts
+              .filter((c) => !c.resolved)
+              .map((conflict) => (
+                <div
+                  key={conflict.id}
+                  className="rounded-xl border border-amber-500/60 bg-gradient-to-r from-[#2a1708] to-[#1c0f05] p-3.5 shadow-lg flex items-start justify-between gap-3 animate-in fade-in"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/40">
+                          Possible Conflict Detected
+                        </span>
+                        <span className="text-xs font-semibold text-amber-200">
+                          {conflict.title || "Contradiction in Session"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium text-white mt-1 leading-relaxed">
+                        {conflict.message}
+                      </p>
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-black/40 p-2 rounded border border-white/5">
+                        <div>
+                          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Earlier Statement:</span>
+                          <span className="text-amber-200 italic">"{conflict.earlierStatement}"</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Current Statement:</span>
+                          <span className="text-amber-200 italic">"{conflict.currentStatement}"</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => dismissConflict(conflict.id)}
+                    className="text-slate-400 hover:text-white p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                    title="Dismiss Conflict Alert"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+
           {/* CARD 1: CURRENT ISSUE (RED/CORAL) */}
           <div className="rounded-xl border border-rose-500/40 bg-gradient-to-b from-[#240c14] to-[#17080e] p-4 shadow-lg">
             <div className="flex items-center justify-between mb-1.5">
@@ -706,6 +815,11 @@ export default function FirstMate() {
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Say This</span>
+                {isRephrasing && (
+                  <span className="text-[10px] text-emerald-400 animate-pulse font-mono flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Adapting tone...
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => copyToClipboard(session.liveAssist?.sayThis || "", "Suggested phrasing")}
@@ -717,6 +831,51 @@ export default function FirstMate() {
             <p className="text-sm font-semibold text-emerald-100 leading-relaxed italic">
               "{session.liveAssist?.sayThis || "What data is the team relying on to determine that an evaluation is not necessary?"}"
             </p>
+
+            {/* Quick Actions for Say This */}
+            <div className="mt-3 pt-2.5 border-t border-emerald-500/20 flex flex-wrap items-center gap-1.5 text-[10px]">
+              <span className="text-emerald-400/80 font-bold uppercase tracking-wider text-[9px] mr-1">Rephrase:</span>
+              <button
+                type="button"
+                disabled={isRephrasing}
+                onClick={() => rephraseSayThis("another_version")}
+                className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                Another Version
+              </button>
+              <button
+                type="button"
+                disabled={isRephrasing}
+                onClick={() => rephraseSayThis("softer")}
+                className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                Softer
+              </button>
+              <button
+                type="button"
+                disabled={isRephrasing}
+                onClick={() => rephraseSayThis("firmer")}
+                className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                Firmer
+              </button>
+              <button
+                type="button"
+                disabled={isRephrasing}
+                onClick={() => rephraseSayThis("shorter")}
+                className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                Shorter
+              </button>
+              <button
+                type="button"
+                disabled={isRephrasing}
+                onClick={() => rephraseSayThis("followup_question")}
+                className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                Follow-Up
+              </button>
+            </div>
           </div>
 
           {/* CARD 3: ASK NEXT (BLUE) */}
@@ -1101,6 +1260,270 @@ export default function FirstMate() {
               className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs"
             >
               Bookmark Moment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── DETECTIONS REVIEW & EDIT MODAL ── */}
+      <Dialog open={showDetectionsModal} onOpenChange={setShowDetectionsModal}>
+        <DialogContent className="max-w-3xl bg-[#091b2f] border border-white/15 text-white max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                Tracked Detections & Decisions
+              </DialogTitle>
+              <Badge className="bg-cyan-500/20 text-cyan-300 font-mono text-[10px]">
+                {((session.requests || []).length +
+                  (session.refusals || []).length +
+                  (session.commitments || []).length +
+                  (session.proposals || []).length +
+                  (session.openIssues || []).length)}{" "}
+                items
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-400">
+              Confirm, edit, or dismiss AI-identified parent requests, school refusals, commitments, and proposals.
+              Dismissed items will not be re-generated.
+            </p>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-3 space-y-2.5">
+            {[
+              ...(session.requests || []),
+              ...(session.refusals || []),
+              ...(session.commitments || []),
+              ...(session.proposals || []),
+              ...(session.openIssues || []),
+            ].length === 0 ? (
+              <div className="py-12 text-center text-slate-500 space-y-1">
+                <CheckCircle2 className="w-8 h-8 mx-auto text-slate-600" />
+                <p className="text-xs font-semibold">No detections tracked yet</p>
+                <p className="text-[11px] text-slate-600">
+                  As conversation develops in Simulator or Live mode, items will appear here automatically.
+                </p>
+              </div>
+            ) : (
+              [
+                ...(session.requests || []),
+                ...(session.refusals || []),
+                ...(session.commitments || []),
+                ...(session.proposals || []),
+                ...(session.openIssues || []),
+              ].map((item) => {
+                const isEditing = editingItemId === item.id;
+                const typeColor =
+                  item.type === "REQUEST"
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                    : item.type === "POSSIBLE_REFUSAL"
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                    : item.type === "PROPOSAL"
+                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                    : item.type === "COMMITMENT"
+                    ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                    : "bg-purple-500/20 text-purple-300 border-purple-500/40";
+
+                return (
+                  <div
+                    key={item.id}
+                    className="p-3 rounded-lg bg-[#0d2238] border border-white/10 flex flex-col gap-2 hover:border-cyan-500/30 transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={`text-[10px] font-bold uppercase ${typeColor}`}>
+                          {item.type.replace("_", " ")}
+                        </Badge>
+                        <span className="text-[11px] text-slate-400 font-semibold">
+                          Speaker: {item.speaker}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] uppercase font-mono ${
+                            item.status === "confirmed"
+                              ? "text-emerald-400 border-emerald-400/30"
+                              : item.status === "dismissed"
+                              ? "text-slate-500 border-white/10 line-through"
+                              : "text-amber-400 border-amber-400/30"
+                          }`}
+                        >
+                          {item.status}
+                        </Badge>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {item.status !== "confirmed" && (
+                          <button
+                            type="button"
+                            onClick={() => updateTrackedItem(item.id, "confirmed")}
+                            className="px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-semibold transition-all cursor-pointer"
+                          >
+                            Confirm
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isEditing) {
+                              if (editItemText.trim()) {
+                                updateTrackedItem(item.id, "edited", editItemText.trim());
+                              }
+                              setEditingItemId(null);
+                            } else {
+                              setEditingItemId(item.id);
+                              setEditItemText(item.summary);
+                            }
+                          }}
+                          className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-semibold transition-all cursor-pointer"
+                        >
+                          {isEditing ? "Save" : "Edit"}
+                        </button>
+                        {item.status !== "dismissed" && (
+                          <button
+                            type="button"
+                            onClick={() => updateTrackedItem(item.id, "dismissed")}
+                            className="px-2 py-0.5 rounded bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-[10px] font-semibold transition-all cursor-pointer"
+                          >
+                            Dismiss
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {isEditing ? (
+                      <Input
+                        value={editItemText}
+                        onChange={(e) => setEditItemText(e.target.value)}
+                        className="h-8 bg-[#091b2f] border-white/20 text-xs text-white"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="text-xs text-slate-200 font-medium">{item.summary}</p>
+                    )}
+
+                    {item.supportingTranscriptText && (
+                      <p className="text-[11px] text-slate-400 italic bg-black/20 px-2 py-1 rounded border border-white/5">
+                        "{item.supportingTranscriptText}"
+                      </p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <DialogFooter className="border-t border-white/10 pt-3">
+            <Button
+              onClick={() => setShowDetectionsModal(false)}
+              className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs"
+            >
+              Done Reviewing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── FIRST MATE DEV LOGS MODAL ── */}
+      <Dialog open={showDevLogs} onOpenChange={setShowDevLogs}>
+        <DialogContent className="max-w-3xl bg-[#091b2f] border border-white/15 text-white max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-cyan-400" />
+                First Mate Dev & AI Logs
+              </DialogTitle>
+              <Badge className="bg-cyan-500/20 text-cyan-300 font-mono text-[10px]">
+                {session.devLogs?.length || 0} calls
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-400">
+              Operational diagnostics tracking Two-Speed AI latency, stage execution, and model performance.
+            </p>
+          </DialogHeader>
+
+          {/* Session Overview Strip */}
+          <div className="p-2.5 rounded-lg bg-[#071626] border border-white/10 grid grid-cols-3 gap-2 text-[11px] font-mono">
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase">Session ID:</span>
+              <span className="text-cyan-300 truncate block">{session.sessionId}</span>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase">Session Type:</span>
+              <span className="text-white">{session.sessionType}</span>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase">Active Mode:</span>
+              <span className="text-emerald-400 font-bold">{session.mode}</span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-2 space-y-2">
+            {!session.devLogs || session.devLogs.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 space-y-1">
+                <Sparkles className="w-8 h-8 mx-auto text-slate-600" />
+                <p className="text-xs font-semibold">No AI requests executed yet</p>
+                <p className="text-[11px] text-slate-600">
+                  Send a simulator speaker turn or query First Mate to generate live logs.
+                </p>
+              </div>
+            ) : (
+              session.devLogs.map((log) => {
+                const stageColor =
+                  log.stage === "FAST"
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                    : log.stage === "DEEP"
+                    ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                    : log.stage === "REPHRASE"
+                    ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                    : log.stage === "ASK"
+                    ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                    : "bg-amber-500/20 text-amber-300 border-amber-500/40";
+
+                return (
+                  <div
+                    key={log.id}
+                    className="p-2.5 rounded-lg bg-[#0d2238] border border-white/5 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-[10px] font-mono font-bold ${stageColor}`}>
+                        {log.stage}
+                      </Badge>
+                      <span className="font-mono text-[11px] text-slate-300">
+                        {log.model}
+                      </span>
+                      {log.notes && (
+                        <span className="text-[11px] text-slate-400">
+                          • {log.notes}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 font-mono text-[11px]">
+                      <span className={log.latencyMs < 500 ? "text-emerald-400" : "text-amber-400"}>
+                        {log.latencyMs}ms
+                      </span>
+                      <span className="text-slate-500 text-[10px]">
+                        {new Date(log.timestamp).toLocaleTimeString()}
+                      </span>
+                      {log.success ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" title="Success" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-rose-500" title="Error" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <DialogFooter className="border-t border-white/10 pt-3">
+            <Button
+              onClick={() => setShowDevLogs(false)}
+              className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs"
+            >
+              Close Diagnostics
             </Button>
           </DialogFooter>
         </DialogContent>

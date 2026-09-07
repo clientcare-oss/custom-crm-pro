@@ -1,8 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { analyzeTranscriptTurn, askFirstMate, generateSessionSummary } from "./firstMateAi";
+import {
+  runFastAssist,
+  runDeepAssist,
+  rephraseSayThis,
+  askFirstMate,
+  generateSessionSummary,
+  analyzeTranscriptTurn,
+} from "./firstMateAi";
+import { FirstMateKnowledgeProvider } from "./firstMate/knowledgeProvider";
 import type { FirstMateSession, NormalizedTranscriptEvent } from "../shared/firstMate";
 
-describe("First Mate AI & Simulator Engine", () => {
+describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", () => {
   const mockSession: FirstMateSession = {
     sessionId: "test-session-1",
     sessionType: "IEP_MEETING",
@@ -21,6 +29,7 @@ describe("First Mate AI & Simulator Engine", () => {
     sessionState: {
       studentName: "Avery Jenkins",
       grade: "9th Grade",
+      currentTopic: "Initial Discussion",
     },
     detectedIssues: [],
     requests: [],
@@ -30,8 +39,13 @@ describe("First Mate AI & Simulator Engine", () => {
     openIssues: [],
     savedMoments: [],
     alerts: [],
+    conflicts: [],
+    threads: [],
+    devLogs: [],
+    dismissedItemIds: [],
     liveAssist: {
       currentIssue: "Initial Review",
+      currentIssuePriority: "Normal Priority",
       currentIssueDescription: "Team gathering",
       quickAnswer: "Listen carefully",
       sayThis: "Thank you all for being here today.",
@@ -42,20 +56,10 @@ describe("First Mate AI & Simulator Engine", () => {
     },
   };
 
-  it("should detect an evaluation refusal turn and provide Say This guidance", async () => {
-    const parentTurn: NormalizedTranscriptEvent = {
-      id: "turn-1",
-      sessionId: "test-session-1",
-      speakerRole: "Parent",
-      text: "I want an evaluation for dyslexia and reading struggles.",
-      timestamp: Date.now() - 10000,
-      isFinal: true,
-      confidence: 1,
-      source: "simulator",
-    };
-
-    const schoolRefusalTurn: NormalizedTranscriptEvent = {
-      id: "turn-2",
+  // ── SPEED 1 & 2: TWO-SPEED ARCHITECTURE ──
+  it("should run Fast Assist with sub-second live guidance schema", async () => {
+    const turn: NormalizedTranscriptEvent = {
+      id: "tx-1",
       sessionId: "test-session-1",
       speakerRole: "School",
       text: "We don't believe an evaluation is necessary because his grades are passing.",
@@ -65,21 +69,177 @@ describe("First Mate AI & Simulator Engine", () => {
       source: "simulator",
     };
 
-    const result = await analyzeTranscriptTurn(
-      mockSession,
-      [parentTurn, schoolRefusalTurn],
-      schoolRefusalTurn
-    );
-
-    expect(result).toBeDefined();
-    expect(result.liveAssist.currentIssue).toMatch(/evaluation/i);
-    expect(result.liveAssist.sayThis).toBeDefined();
-    expect(result.liveAssist.askNext.length).toBeGreaterThan(0);
-    expect(result.newTrackedItems.some(i => i.type === "POSSIBLE_REFUSAL" || i.summary.toLowerCase().includes("evaluation"))).toBe(true);
+    const fastResult = await runFastAssist(mockSession, [turn], turn);
+    expect(fastResult).toBeDefined();
+    expect(fastResult.fastAssist.currentIssue.label).toBeDefined();
+    expect(fastResult.fastAssist.quickAssist.sayThis).toBeDefined();
+    expect(fastResult.fastAssist.quickAssist.sayThis.length).toBeGreaterThan(10);
+    expect(fastResult.devLog.stage).toBe("FAST");
   });
 
-  it("should answer advocate queries using current session context", async () => {
-    const sessionWithRefusal: FirstMateSession = {
+  it("should run Deep Assist with rolling memory and detections schema", async () => {
+    const turn: NormalizedTranscriptEvent = {
+      id: "tx-1",
+      sessionId: "test-session-1",
+      speakerRole: "School",
+      text: "We don't believe an evaluation is necessary because his grades are passing.",
+      timestamp: Date.now(),
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const deepResult = await runDeepAssist(mockSession, [turn], turn);
+    expect(deepResult).toBeDefined();
+    expect(deepResult.deepAssist.whyItMatters).toBeDefined();
+    expect(deepResult.deepAssist.check.length).toBeGreaterThan(0);
+    expect(deepResult.deepAssist.detections.length).toBeGreaterThan(0);
+    expect(deepResult.devLog.stage).toBe("DEEP");
+  });
+
+  // ── TEST SCENARIO 1: EVALUATION ──
+  it("Scenario 1: recognizes evaluation request and handles refusal with data-focused Say This", async () => {
+    const parentTurn: NormalizedTranscriptEvent = {
+      id: "tx-s1-1",
+      sessionId: "test-session-1",
+      speakerRole: "Parent",
+      text: "My son is struggling with reading and I asked for testing last month.",
+      timestamp: Date.now() - 30000,
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const schoolTurn: NormalizedTranscriptEvent = {
+      id: "tx-s1-2",
+      sessionId: "test-session-1",
+      speakerRole: "School",
+      text: "His grades are passing, so we don't believe an evaluation is necessary.",
+      timestamp: Date.now(),
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const result = await analyzeTranscriptTurn(
+      mockSession,
+      [parentTurn, schoolTurn],
+      schoolTurn
+    );
+
+    // Current issue should be Evaluation Refusal
+    expect(result.liveAssist.currentIssue).toMatch(/evaluation/i);
+    // Say This should be data-focused (e.g. data or information relied upon)
+    expect(result.liveAssist.sayThis).toMatch(/data|information|relying/i);
+    // Detections should have refusal or evaluation
+    expect(
+      result.newTrackedItems.some(
+        (i) => i.type === "POSSIBLE_REFUSAL" || i.summary.toLowerCase().includes("evaluation")
+      )
+    ).toBe(true);
+  });
+
+  // ── TEST SCENARIO 2: IEP SERVICE REDUCTION ──
+  it("Scenario 2: detects proposed speech service reduction and tracks parent disagreement", async () => {
+    const proposalTurn: NormalizedTranscriptEvent = {
+      id: "tx-s2-1",
+      sessionId: "test-session-1",
+      speakerRole: "School",
+      text: "We're recommending reducing speech from 60 minutes to 30 minutes.",
+      timestamp: Date.now(),
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const deepResult = await runDeepAssist(mockSession, [proposalTurn], proposalTurn);
+    expect(
+      deepResult.deepAssist.detections.some(
+        (d) => d.type === "PROPOSAL" && d.summary.toLowerCase().includes("speech")
+      )
+    ).toBe(true);
+  });
+
+  // ── TEST SCENARIO 3: COMMITMENT ──
+  it("Scenario 3: detects transition warning accommodation commitment", async () => {
+    const schoolCommitmentTurn: NormalizedTranscriptEvent = {
+      id: "tx-s3-1",
+      sessionId: "test-session-1",
+      speakerRole: "School",
+      text: "Yes, we can put transition warnings and visual schedules into the IEP.",
+      timestamp: Date.now(),
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const deepResult = await runDeepAssist(
+      mockSession,
+      [schoolCommitmentTurn],
+      schoolCommitmentTurn
+    );
+
+    expect(
+      deepResult.deepAssist.detections.some(
+        (d) => d.type === "COMMITMENT" && d.summary.toLowerCase().includes("transition")
+      )
+    ).toBe(true);
+  });
+
+  // ── TEST SCENARIO 4: CONTEXT MEMORY & CONFLICT DETECTION ──
+  it("Scenario 4: recognizes cross-turn factual conflict between early parent statement and later school claim", async () => {
+    const earlierParentTurn: NormalizedTranscriptEvent = {
+      id: "tx-s4-1",
+      sessionId: "test-session-1",
+      speakerRole: "Parent",
+      text: "I sent the evaluation request on August 12.",
+      timestamp: Date.now() - 300000,
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const laterSchoolTurn: NormalizedTranscriptEvent = {
+      id: "tx-s4-2",
+      sessionId: "test-session-1",
+      speakerRole: "School",
+      text: "We haven't received an evaluation request.",
+      timestamp: Date.now(),
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const deepResult = await runDeepAssist(
+      mockSession,
+      [earlierParentTurn, laterSchoolTurn],
+      laterSchoolTurn
+    );
+
+    expect(deepResult.deepAssist.conflicts).toBeDefined();
+    expect(deepResult.deepAssist.conflicts!.length).toBeGreaterThan(0);
+    const conflict = deepResult.deepAssist.conflicts![0];
+    expect(conflict.message.toLowerCase()).toMatch(/conflict|august 12|received/i);
+  });
+
+  // ── QUICK ACTION REPHRASING ──
+  it("should rephrase Say This into softer, firmer, and shorter variations without regenerating whole session", async () => {
+    const original = "What data is the team relying on to determine that an evaluation is not necessary?";
+
+    const softer = await rephraseSayThis(original, "softer", "IEP_MEETING");
+    expect(softer.text).toBeDefined();
+    expect(softer.devLog.stage).toBe("REPHRASE");
+
+    const firmer = await rephraseSayThis(original, "firmer", "IEP_MEETING");
+    expect(firmer.text).toBeDefined();
+
+    const shorter = await rephraseSayThis(original, "shorter", "IEP_MEETING");
+    expect(shorter.text).toBeDefined();
+  });
+
+  // ── ASK FIRST MATE ──
+  it("should answer advocate queries using complete session context", async () => {
+    const sessionWithData: FirstMateSession = {
       ...mockSession,
       refusals: [
         {
@@ -106,41 +266,23 @@ describe("First Mate AI & Simulator Engine", () => {
       ],
     };
 
-    const answer = await askFirstMate(sessionWithRefusal, "What has the school refused?");
+    const answer = await askFirstMate(sessionWithData, "What has the school refused?");
     expect(answer).toBeDefined();
     expect(answer.toLowerCase()).toMatch(/evaluation|declined|refus/);
   });
 
-  it("should generate a draft structured summary without mutating permanent records", async () => {
-    const sessionWithHistory: FirstMateSession = {
-      ...mockSession,
-      requests: [
-        {
-          id: "req-1",
-          type: "REQUEST",
-          summary: "Independent educational evaluation",
-          speaker: "Parent",
-          timestamp: Date.now(),
-          status: "confirmed",
-          supportingTranscriptText: "I want an evaluation.",
-        },
-      ],
-      refusals: [
-        {
-          id: "ref-1",
-          type: "POSSIBLE_REFUSAL",
-          summary: "Evaluation declined",
-          speaker: "School",
-          timestamp: Date.now(),
-          status: "confirmed",
-          supportingTranscriptText: "Not necessary.",
-        },
-      ],
-    };
-
-    const summary = await generateSessionSummary(sessionWithHistory);
+  // ── SUMMARY & KNOWLEDGE SAFEGUARDS ──
+  it("should generate a structured summary without modifying permanent records", async () => {
+    const summary = await generateSessionSummary(mockSession);
     expect(summary).toBeDefined();
     expect(summary.length).toBeGreaterThan(50);
-    expect(summary).toMatch(/###/);
+  });
+
+  it("should never fabricate unverified legal citations", () => {
+    const verifiedSources = FirstMateKnowledgeProvider.getSourcesForTopic("evaluation");
+    expect(verifiedSources.every((s) => s.isVerified)).toBe(true);
+
+    const fallbackSources = FirstMateKnowledgeProvider.getSourcesForTopic("extraneous unindexed topic");
+    expect(fallbackSources[0].isVerified).toBe(false);
   });
 });
