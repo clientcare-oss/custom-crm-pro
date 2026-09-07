@@ -94,9 +94,16 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
         { icon: Users, label: "Contacts", path: "/contacts" },
-        { icon: TrendingUp, label: "Leads", path: "/leads" },
         { icon: Compass, label: "Case Compass", path: "/case-compass" },
         { icon: Shield, label: "Client Portal", path: "/portal-management" },
+      ],
+    },
+    {
+      groupLabel: "Call Center & Leads",
+      items: [
+        { icon: TrendingUp, label: "Leads", path: "/leads" },
+        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
+        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
       ],
     },
     {
@@ -125,11 +132,9 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: CheckSquare, label: "Tasks", path: "/tasks" },
         { icon: Layers, label: "Tech Tasks", path: "/tech-tasks" },
-        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
         { icon: LayoutTemplate, label: "Templates", path: "/templates" },
         { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
         { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
-        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
         { icon: UserCheck, label: "Team", path: "/team" },
         { icon: Heart, label: "Sponsors", path: "/sponsors" },
       ],
@@ -285,11 +290,19 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
     return menuGroups
       .map((group) => {
-        const matchingItems = group.items.filter(
-          (item) =>
-            item.label.toLowerCase().includes(q) ||
-            item.path.toLowerCase().includes(q)
-        );
+        const groupLabelLower = group.groupLabel.toLowerCase();
+        const groupMatches =
+          groupLabelLower.includes(q) ||
+          groupLabelLower.replace("&", "and").includes(q) ||
+          groupLabelLower.includes(q.replace(/\band\b/g, "&"));
+
+        const matchingItems = groupMatches
+          ? group.items
+          : group.items.filter(
+              (item) =>
+                item.label.toLowerCase().includes(q) ||
+                item.path.toLowerCase().includes(q)
+            );
         return {
           ...group,
           items: matchingItems,
