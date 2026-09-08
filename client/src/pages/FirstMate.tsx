@@ -147,6 +147,7 @@ export default function FirstMate() {
     askQuestion,
     generateSummary,
     clearTranscript,
+    lastAskMeta,
   } = useFirstMate();
 
   // Active top tab
@@ -161,6 +162,8 @@ export default function FirstMate() {
   const [askQuery, setAskQuery] = useState("");
   const [askAnswer, setAskAnswer] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
+  const [showAskTrace, setShowAskTrace] = useState(false);
+  const [showLiveAssistTrace, setShowLiveAssistTrace] = useState(false);
 
   // Modals
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -985,6 +988,82 @@ export default function FirstMate() {
             )}
           </div>
         </div>
+
+        {/* Development AI Provenance & Validated Structured AI Output (Dev / Test Mode Only) */}
+        {(import.meta.env.DEV || session.mode !== "LIVE") && (
+          <div className="mt-3 rounded-lg border border-white/10 bg-[#061524] p-3 text-xs font-mono space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] font-bold text-slate-300">Live Assist AI Provenance:</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                    (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: OPENAI"
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: FALLBACK"
+                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                      : (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: MOCK"
+                      ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                      : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                  }`}
+                >
+                  {session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK"}
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {session.liveAssist?.provenanceMeta?.provider || "Initial Scenario Template"} •{" "}
+                  {session.liveAssist?.provenanceMeta?.model || "scenario-1"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLiveAssistTrace(!showLiveAssistTrace)}
+                className="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+              >
+                {showLiveAssistTrace ? "Hide Structured Output" : "Raw Structured AI Output"}
+              </button>
+            </div>
+
+            {showLiveAssistTrace && (
+              <div className="mt-2 pt-2 border-t border-white/10 space-y-2 text-[11px] text-slate-300">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <span className="text-slate-500">Latency:</span> {session.liveAssist?.provenanceMeta?.latencyMs || 0} ms
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Confidence:</span> {session.liveAssist?.confidence || "High"}
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Procedure:</span> firstMate.fastAssist
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Updated:</span>{" "}
+                    {new Date(session.liveAssist?.provenanceMeta?.timestamp || Date.now()).toLocaleTimeString()}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px]">Validated Application Output:</span>
+                  <pre className="mt-1 p-2 bg-black/50 rounded text-[10px] text-slate-300 overflow-x-auto max-h-48">
+                    {JSON.stringify(
+                      {
+                        currentIssue: session.liveAssist?.currentIssue,
+                        sayThis: session.liveAssist?.sayThis,
+                        askNext: session.liveAssist?.askNext,
+                        alert: session.alerts?.[0]?.message || null,
+                        detections: [
+                          ...session.requests.map((r) => ({ type: "REQUEST", summary: r.summary })),
+                          ...session.refusals.map((r) => ({ type: "REFUSAL", summary: r.summary })),
+                        ],
+                        sessionStateUpdates: session.sessionState,
+                        confidence: session.liveAssist?.confidence,
+                      },
+                      null,
+                      2
+                    )}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── BOTTOM ACTION BAR ── */}
@@ -1075,19 +1154,90 @@ export default function FirstMate() {
 
         {/* Ask First Mate Live Response Card (if queried) */}
         {askAnswer && (
-          <div className="bg-[#0b2440] border border-cyan-500/30 rounded-lg p-3 text-xs flex items-start justify-between gap-3 animate-in fade-in">
-            <div className="space-y-1">
-              <span className="font-bold text-cyan-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> First Mate Copilot:
-              </span>
-              <p className="text-slate-200 leading-relaxed">{askAnswer}</p>
+          <div className="bg-[#0b2440] border border-cyan-500/30 rounded-lg p-3 text-xs flex flex-col gap-2 animate-in fade-in">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1 w-full">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-cyan-400 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> First Mate Copilot:
+                  </span>
+                  {/* Provenance Indicator Badge (Test / Dev Mode) */}
+                  {(import.meta.env.DEV || session.mode !== "LIVE") && (
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wide border ${
+                        (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: OPENAI"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: FALLBACK"
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: MOCK"
+                          ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: RULE"
+                          ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                          : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                      }`}
+                    >
+                      {lastAskMeta?.provenance || "AI: FALLBACK"}
+                    </span>
+                  )}
+                  {(import.meta.env.DEV || session.mode !== "LIVE") && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAskTrace(!showAskTrace)}
+                      className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer ml-auto"
+                    >
+                      {showAskTrace ? "Hide Trace" : "AI Trace & Details"}
+                    </button>
+                  )}
+                </div>
+                <p className="text-slate-200 leading-relaxed whitespace-pre-line">{askAnswer}</p>
+              </div>
+              <button
+                onClick={() => setAskAnswer(null)}
+                className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <button
-              onClick={() => setAskAnswer(null)}
-              className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+
+            {/* Collapsible Developer Trace in Dev Mode */}
+            {showAskTrace && (import.meta.env.DEV || session.mode !== "LIVE") && (
+              <div className="mt-2 pt-2 border-t border-cyan-500/20 text-[11px] font-mono space-y-1 bg-[#061524] p-2.5 rounded border border-white/5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-slate-300">
+                  <div>
+                    <span className="text-slate-500">Provider:</span>{" "}
+                    <span className="text-cyan-300 font-semibold">{lastAskMeta?.provider || "Local Fallback Heuristics"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Model:</span>{" "}
+                    <span className="text-amber-300">{lastAskMeta?.model || "offline-heuristics"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Latency:</span>{" "}
+                    <span className="text-emerald-300">{lastAskMeta?.latencyMs || 0} ms</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Procedure:</span>{" "}
+                    <span className="text-slate-200">firstMate.ask</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Timestamp:</span>{" "}
+                    <span className="text-slate-400">{new Date(lastAskMeta?.timestamp || Date.now()).toLocaleTimeString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Session ID:</span>{" "}
+                    <span className="text-slate-400 truncate">{session.sessionId}</span>
+                  </div>
+                </div>
+                {lastAskMeta?.rawStructuredOutput && (
+                  <div className="mt-2">
+                    <span className="text-slate-500 text-[10px]">Validated Structured Response:</span>
+                    <pre className="mt-1 p-2 bg-black/40 rounded text-[10px] text-slate-300 overflow-x-auto max-h-32">
+                      {JSON.stringify(lastAskMeta.rawStructuredOutput, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -1468,7 +1618,7 @@ export default function FirstMate() {
                 </p>
               </div>
             ) : (
-              session.devLogs.map((log) => {
+              (session.devLogs || []).map((log) => {
                 const stageColor =
                   log.stage === "FAST"
                     ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"

@@ -12,6 +12,7 @@ import type {
   SayThisStyle,
   ConflictDetection,
   FirstMateDevLogEntry,
+  FirstMateProvenanceMeta,
 } from "../../../shared/firstMate";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -37,6 +38,19 @@ const INITIAL_LIVE_ASSIST: LiveAssistPanelData = {
     { title: "IDEA § 300.301 – Initial Evaluations", url: "https://sites.ed.gov/idea/regs/b/d/300.301", isVerified: true },
     { title: "Parental Rights – Requesting an Evaluation", url: "https://www.parentcenterhub.org/evaluation/", isVerified: true },
   ],
+  provenanceMeta: {
+    provenance: "AI: MOCK",
+    provider: "Initial Scenario Template",
+    model: "scenario-1-evaluation",
+    latencyMs: 0,
+    timestamp: Date.now() - 754000,
+    procedureName: "template.init",
+    rawStructuredOutput: {
+      currentIssue: "Evaluation Refusal",
+      sayThis: "What data is the team relying on to determine that an evaluation is not necessary?",
+      note: "Pre-loaded initial simulator scenario",
+    },
+  },
 };
 
 const INITIAL_TRANSCRIPT: NormalizedTranscriptEvent[] = [
@@ -180,6 +194,60 @@ function createDefaultSession(): FirstMateSession {
   };
 }
 
+export function normalizeSession(raw: any): FirstMateSession {
+  const def = createDefaultSession();
+  if (!raw || typeof raw !== "object") return def;
+
+  return {
+    ...def,
+    ...raw,
+    sessionId: raw.sessionId || def.sessionId,
+    sessionType: raw.sessionType || def.sessionType,
+    status: raw.status || def.status,
+    mode: raw.mode || def.mode,
+    startedAt: typeof raw.startedAt === "number" ? raw.startedAt : def.startedAt,
+    endedAt: typeof raw.endedAt === "number" ? raw.endedAt : null,
+    durationSeconds: typeof raw.durationSeconds === "number" ? raw.durationSeconds : def.durationSeconds,
+    createdBy: raw.createdBy || def.createdBy,
+    attachedLeadId: raw.attachedLeadId ?? null,
+    attachedClientId: raw.attachedClientId ?? null,
+    attachedStudentId: raw.attachedStudentId ?? null,
+    attachedName: raw.attachedName ?? def.attachedName,
+    attachedSubtitle: raw.attachedSubtitle ?? def.attachedSubtitle,
+    title: raw.title || def.title,
+    notes: Array.isArray(raw.notes) ? raw.notes : [],
+    summary: typeof raw.summary === "string" ? raw.summary : "",
+    transcript: Array.isArray(raw.transcript) ? raw.transcript : [],
+    sessionState: {
+      ...def.sessionState,
+      ...(raw.sessionState || {}),
+      openIssues: Array.isArray(raw.sessionState?.openIssues) ? raw.sessionState.openIssues : [],
+      suspectedDisabilities: Array.isArray(raw.sessionState?.suspectedDisabilities)
+        ? raw.sessionState.suspectedDisabilities
+        : [],
+    },
+    detectedIssues: Array.isArray(raw.detectedIssues) ? raw.detectedIssues : [],
+    requests: Array.isArray(raw.requests) ? raw.requests : [],
+    proposals: Array.isArray(raw.proposals) ? raw.proposals : [],
+    refusals: Array.isArray(raw.refusals) ? raw.refusals : [],
+    commitments: Array.isArray(raw.commitments) ? raw.commitments : [],
+    openIssues: Array.isArray(raw.openIssues) ? raw.openIssues : [],
+    threads: Array.isArray(raw.threads) ? raw.threads : [],
+    conflicts: Array.isArray(raw.conflicts) ? raw.conflicts : [],
+    dismissedItemIds: Array.isArray(raw.dismissedItemIds) ? raw.dismissedItemIds : [],
+    savedMoments: Array.isArray(raw.savedMoments) ? raw.savedMoments : [],
+    alerts: Array.isArray(raw.alerts) ? raw.alerts : [],
+    liveAssist: {
+      ...def.liveAssist,
+      ...(raw.liveAssist || {}),
+      askNext: Array.isArray(raw.liveAssist?.askNext) ? raw.liveAssist.askNext : [],
+      detections: Array.isArray(raw.liveAssist?.detections) ? raw.liveAssist.detections : [],
+      sources: Array.isArray(raw.liveAssist?.sources) ? raw.liveAssist.sources : [],
+    },
+    devLogs: Array.isArray(raw.devLogs) ? raw.devLogs : [],
+  };
+}
+
 interface FirstMateContextValue {
   session: FirstMateSession;
   isAnalyzing: boolean;
@@ -204,6 +272,7 @@ interface FirstMateContextValue {
   askQuestion: (query: string) => Promise<string>;
   generateSummary: () => Promise<string>;
   clearTranscript: () => void;
+  lastAskMeta: FirstMateProvenanceMeta | null;
 }
 
 const FirstMateContext = createContext<FirstMateContextValue | null>(null);
@@ -213,7 +282,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        return normalizeSession(JSON.parse(saved));
       }
     } catch (e) {
       console.warn("Failed to load First Mate session from localStorage:", e);
@@ -224,6 +293,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   const [isFastAnalyzing, setIsFastAnalyzing] = useState(false);
   const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
   const [isRephrasing, setIsRephrasing] = useState(false);
+  const [lastAskMeta, setLastAskMeta] = useState<FirstMateProvenanceMeta | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   // Sync state to localStorage & BroadcastChannel
@@ -244,7 +314,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
 
       channel.onmessage = (event) => {
         if (event.data?.type === "SYNC_SESSION" && event.data?.session) {
-          setSession(event.data.session);
+          setSession(normalizeSession(event.data.session));
         }
       };
 
@@ -372,7 +442,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         source: "simulator",
       };
 
-      const updatedTranscript = [...session.transcript, newTurn];
+      const updatedTranscript = [...(session.transcript || []), newTurn];
 
       // Immediately append turn to state for responsive UI
       setSession((prev) => ({
@@ -390,7 +460,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         });
 
         setSession((prev) => {
-          const newAlerts = [...prev.alerts];
+          const newAlerts = [...(prev.alerts || [])];
           if (fastResult.fastAssist.alert) {
             newAlerts.unshift({
               id: `alert-${Date.now()}`,
@@ -412,12 +482,22 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
               sayThis: fastResult.fastAssist.quickAssist.sayThis,
               askNext: [
                 fastResult.fastAssist.quickAssist.askNext,
-                ...(prev.liveAssist.askNext || []).slice(0, 2),
+                ...(prev.liveAssist?.askNext || []).slice(0, 2),
               ].filter(Boolean),
               confidence: fastResult.fastAssist.confidence,
+              provenanceMeta: {
+                provenance: fastResult.devLog.provenance || "AI: FALLBACK",
+                provider: fastResult.devLog.provider || "Local Fallback Heuristics",
+                model: fastResult.devLog.model || "offline-heuristics",
+                latencyMs: fastResult.devLog.latencyMs,
+                timestamp: fastResult.devLog.timestamp,
+                procedureName: "firstMate.fastAssist",
+                sessionId: prev.sessionId,
+                rawStructuredOutput: fastResult.fastAssist,
+              },
             },
             alerts: newAlerts,
-            devLogs: [fastResult.devLog, ...prev.devLogs].slice(0, 30),
+            devLogs: [fastResult.devLog, ...(prev.devLogs || [])].slice(0, 30),
           };
         });
       } catch (err) {
@@ -436,15 +516,15 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         });
 
         setSession((prev) => {
-          const newRequests = [...prev.requests];
-          const newRefusals = [...prev.refusals];
-          const newCommitments = [...prev.commitments];
-          const newProposals = [...prev.proposals];
-          const newOpenIssues = [...prev.openIssues];
+          const newRequests = [...(prev.requests || [])];
+          const newRefusals = [...(prev.refusals || [])];
+          const newCommitments = [...(prev.commitments || [])];
+          const newProposals = [...(prev.proposals || [])];
+          const newOpenIssues = [...(prev.openIssues || [])];
 
           // Filter out any dismissed item summaries
-          for (const item of deepResult.deepAssist.detections) {
-            if (prev.dismissedItemIds?.includes(item.summary)) continue;
+          for (const item of (deepResult.deepAssist.detections || [])) {
+            if ((prev.dismissedItemIds || []).includes(item.summary)) continue;
 
             const trackedItem: TrackedItem = {
               id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -464,7 +544,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
           }
 
           // Handle active thread updating
-          let updatedThreads = [...prev.threads];
+          let updatedThreads = [...(prev.threads || [])];
           if (deepResult.deepAssist.activeThreadName) {
             const threadName = deepResult.deepAssist.activeThreadName;
             const existing = updatedThreads.find((t) => t.name.toLowerCase() === threadName.toLowerCase());
@@ -485,7 +565,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
           }
 
           // Handle conflict detection
-          const newConflicts = [...prev.conflicts];
+          const newConflicts = [...(prev.conflicts || [])];
           if (deepResult.deepAssist.conflicts && deepResult.deepAssist.conflicts.length > 0) {
             for (const c of deepResult.deepAssist.conflicts) {
               newConflicts.unshift({
@@ -505,7 +585,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
             liveAssist: {
               ...prev.liveAssist,
               whyItMatters: deepResult.deepAssist.whyItMatters,
-              sources: deepResult.deepAssist.sources?.length ? deepResult.deepAssist.sources : prev.liveAssist.sources,
+              sources: deepResult.deepAssist.sources?.length ? deepResult.deepAssist.sources : prev.liveAssist?.sources,
             },
             sessionState: {
               ...prev.sessionState,
@@ -518,7 +598,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
             openIssues: newOpenIssues,
             threads: updatedThreads,
             conflicts: newConflicts,
-            devLogs: [deepResult.devLog, ...prev.devLogs].slice(0, 30),
+            devLogs: [deepResult.devLog, ...(prev.devLogs || [])].slice(0, 30),
           };
         });
       } catch (err) {
@@ -552,7 +632,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
             ...prev.liveAssist,
             sayThis: res.text,
           },
-          devLogs: [res.devLog, ...prev.devLogs].slice(0, 30),
+          devLogs: [res.devLog, ...(prev.devLogs || [])].slice(0, 30),
         }));
         toast.success(`Adapted phrasing (${style})`);
       } catch (err: any) {
@@ -566,23 +646,28 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
 
   const updateTrackedItem = useCallback((id: string, status: TrackedItem["status"], userNote?: string) => {
     setSession((prev) => {
-      const updater = (list: TrackedItem[]) =>
+      const updater = (list: TrackedItem[] = []) =>
         list.map((item) => (item.id === id ? { ...item, status, userNote: userNote ?? item.userNote } : item));
 
       // If dismissed, record summary to avoid immediate regeneration
-      let dismissedIds = [...prev.dismissedItemIds];
-      const target = [...prev.requests, ...prev.refusals, ...prev.commitments, ...prev.proposals].find((i) => i.id === id);
+      let dismissedIds = [...(prev.dismissedItemIds || [])];
+      const target = [
+        ...(prev.requests || []),
+        ...(prev.refusals || []),
+        ...(prev.commitments || []),
+        ...(prev.proposals || []),
+      ].find((i) => i.id === id);
       if (status === "dismissed" && target && !dismissedIds.includes(target.summary)) {
         dismissedIds.push(target.summary);
       }
 
       return {
         ...prev,
-        requests: updater(prev.requests),
-        refusals: updater(prev.refusals),
-        commitments: updater(prev.commitments),
-        proposals: updater(prev.proposals),
-        openIssues: updater(prev.openIssues),
+        requests: updater(prev.requests || []),
+        refusals: updater(prev.refusals || []),
+        commitments: updater(prev.commitments || []),
+        proposals: updater(prev.proposals || []),
+        openIssues: updater(prev.openIssues || []),
         dismissedItemIds: dismissedIds,
       };
     });
@@ -592,14 +677,14 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   const dismissAlert = useCallback((id: string) => {
     setSession((prev) => ({
       ...prev,
-      alerts: prev.alerts.map((a) => (a.id === id ? { ...a, dismissed: true } : a)),
+      alerts: (prev.alerts || []).map((a) => (a.id === id ? { ...a, dismissed: true } : a)),
     }));
   }, []);
 
   const dismissConflict = useCallback((id: string) => {
     setSession((prev) => ({
       ...prev,
-      conflicts: prev.conflicts.map((c) => (c.id === id ? { ...c, resolved: true } : c)),
+      conflicts: (prev.conflicts || []).map((c) => (c.id === id ? { ...c, resolved: true } : c)),
     }));
   }, []);
 
@@ -607,18 +692,19 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     if (!note.trim()) return;
     setSession((prev) => ({
       ...prev,
-      notes: [...prev.notes, note.trim()],
+      notes: [...(prev.notes || []), note.trim()],
     }));
     toast.success("Note added to session");
   }, []);
 
   const saveMoment = useCallback(
     (note: string) => {
-      const lastTurn = session.transcript[session.transcript.length - 1];
+      const transcript = session.transcript || [];
+      const lastTurn = transcript[transcript.length - 1];
       setSession((prev) => ({
         ...prev,
         savedMoments: [
-          ...prev.savedMoments,
+          ...(prev.savedMoments || []),
           {
             id: `moment-${Date.now()}`,
             timestamp: Date.now(),
@@ -637,13 +723,48 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       if (!query.trim()) return "";
       try {
         const res = await askMutation.mutateAsync({
+          sessionId: session.sessionId,
+          question: query.trim(),
+          sessionType: session.sessionType,
+          currentIssue: session.liveAssist?.currentIssue,
+          recentTranscript: (session.transcript || []).slice(-10),
+          sessionState: session.sessionState,
           session,
-          query: query.trim(),
         });
+
+        const meta: FirstMateProvenanceMeta = {
+          provenance: (res.provenance as any) || "AI: FALLBACK",
+          provider: res.provider || "Local Fallback Heuristics",
+          model: res.model || "offline-heuristics",
+          latencyMs: res.latencyMs || 0,
+          timestamp: res.timestamp || Date.now(),
+          sessionId: session.sessionId,
+          procedureName: "firstMate.ask",
+          rawStructuredOutput: res.rawAiOutput || {
+            answer: res.answer,
+            confidence: res.confidence,
+            relatedIssue: res.relatedIssue,
+            suggestedFollowUp: res.suggestedFollowUp,
+          },
+        };
+        setLastAskMeta(meta);
+
         return res.answer;
       } catch (err: any) {
-        toast.error("Failed to query First Mate: " + err.message);
-        return "First Mate was unable to answer at this moment. Check active connection.";
+        console.error("[FirstMateContext] askQuestion backend error:", err);
+        const errMeta: FirstMateProvenanceMeta = {
+          provenance: "AI: ERROR",
+          provider: "OpenAI / First Mate",
+          model: "offline-heuristics",
+          latencyMs: 0,
+          timestamp: Date.now(),
+          sessionId: session.sessionId,
+          procedureName: "firstMate.ask",
+          rawStructuredOutput: { error: err.message },
+        };
+        setLastAskMeta(errMeta);
+        toast.error("First Mate is temporarily unavailable.");
+        return "First Mate is temporarily unavailable.";
       }
     },
     [session, askMutation]
@@ -670,6 +791,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       alerts: [],
       conflicts: [],
       threads: [],
+      devLogs: Array.isArray(prev.devLogs) ? prev.devLogs : [],
     }));
     toast.info("Transcript cleared for fresh test");
   }, []);
@@ -700,6 +822,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         askQuestion,
         generateSummary,
         clearTranscript,
+        lastAskMeta,
       }}
     >
       {children}

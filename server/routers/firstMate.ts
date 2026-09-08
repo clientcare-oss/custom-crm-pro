@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { router, publicProcedure } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import {
   runFastAssist,
   runDeepAssist,
   rephraseSayThis,
-  askFirstMate,
+  askFirstMateDetailed,
   generateSessionSummary,
 } from "../firstMateAi";
+import { firstMateSessionStore } from "../firstMate/sessionStore";
 import { getDb } from "../db";
 import { contacts, leads } from "../../drizzle/schema";
 import type {
@@ -54,6 +56,18 @@ const SayThisStyleSchema = z.enum([
   "followup_question",
 ]);
 
+const AskInputSchema = z.object({
+  sessionId: z.string().optional(),
+  question: z.string().optional(),
+  query: z.string().optional(),
+  sessionType: z.string().optional(),
+  recentTranscript: z.array(TranscriptEventSchema).optional(),
+  sessionState: z.any().optional(),
+  currentIssue: z.string().optional(),
+  detectedItems: z.array(z.any()).optional(),
+  session: z.any().optional(),
+});
+
 export const firstMateRouter = router({
   fastAssist: publicProcedure
     .input(
@@ -64,8 +78,10 @@ export const firstMateRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      const sessionId = input.session?.sessionId || `fm-${Date.now()}`;
+      const session = firstMateSessionStore.getOrCreate(sessionId, input.session);
       const result = await runFastAssist(
-        input.session as FirstMateSession,
+        session,
         input.transcript as NormalizedTranscriptEvent[],
         input.newTurn as NormalizedTranscriptEvent
       );
@@ -81,8 +97,10 @@ export const firstMateRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      const sessionId = input.session?.sessionId || `fm-${Date.now()}`;
+      const session = firstMateSessionStore.getOrCreate(sessionId, input.session);
       const result = await runDeepAssist(
-        input.session as FirstMateSession,
+        session,
         input.transcript as NormalizedTranscriptEvent[],
         input.newTurn as NormalizedTranscriptEvent
       );
@@ -107,25 +125,91 @@ export const firstMateRouter = router({
     }),
 
   ask: publicProcedure
-    .input(
-      z.object({
-        session: z.any(),
-        query: z.string(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const answer = await askFirstMate(input.session as FirstMateSession, input.query);
-      return { answer };
+    .input(AskInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      // 1. Permission check: client users are forbidden from advocate copilot
+      if (ctx.user && ctx.user.role === "client") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "First Mate advocate copilot is restricted to advocacy staff.",
+        });
+      }
+
+      // 2. Validate question/query
+      const effectiveQuery = (input.question || input.query || "").trim();
+      if (!effectiveQuery) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "A question or query is required for First Mate.",
+        });
+      }
+
+      // 3. Resolve active session from backend session store or input
+      const effectiveSessionId =
+        input.sessionId || input.session?.sessionId || "default-session";
+
+      let session = firstMateSessionStore.getOrCreate(effectiveSessionId, {
+        ...(input.session || {}),
+        sessionType: (input.sessionType as any) || input.session?.sessionType || "IEP_MEETING",
+      });
+
+      // 4. Merge partial overrides if provided without full session
+      if (input.recentTranscript && input.recentTranscript.length > 0) {
+        session = firstMateSessionStore.update(effectiveSessionId, {
+          transcript: input.recentTranscript as NormalizedTranscriptEvent[],
+        });
+      }
+      if (input.sessionState) {
+        session = firstMateSessionStore.update(effectiveSessionId, {
+          sessionState: { ...session.sessionState, ...input.sessionState },
+        });
+      }
+      if (input.currentIssue) {
+        session = firstMateSessionStore.update(effectiveSessionId, {
+          liveAssist: {
+            ...session.liveAssist,
+            currentIssue: input.currentIssue,
+          },
+        });
+      }
+
+      // 5. Query OpenAI / First Mate reasoning layer
+      const result = await askFirstMateDetailed(session, effectiveQuery);
+
+      // 6. Return structured response with development provenance metadata
+      return {
+        answer: result.answer,
+        confidence: result.confidence,
+        relatedIssue: result.relatedIssue,
+        suggestedFollowUp: result.suggestedFollowUp,
+        provenance: result.provenance,
+        provider: result.provider,
+        model: result.model,
+        latencyMs: result.latencyMs,
+        timestamp: Date.now(),
+        sessionId: effectiveSessionId,
+        procedureName: "firstMate.ask",
+        rawAiOutput: result.rawAiOutput || null,
+      };
     }),
 
   generateSummary: publicProcedure
     .input(
       z.object({
-        session: z.any(),
+        sessionId: z.string().optional(),
+        session: z.any().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const summary = await generateSessionSummary(input.session as FirstMateSession);
+      let session: FirstMateSession;
+      if (input.session) {
+        session = input.session as FirstMateSession;
+      } else if (input.sessionId) {
+        session = firstMateSessionStore.getOrCreate(input.sessionId);
+      } else {
+        session = firstMateSessionStore.getOrCreate("default-session");
+      }
+      const summary = await generateSessionSummary(session);
       return { summary };
     }),
 

@@ -98,6 +98,25 @@ export interface RelatedSource {
   isVerified: boolean;
 }
 
+export type FirstMateProvenance =
+  | "AI: OPENAI"
+  | "AI: MOCK"
+  | "AI: FALLBACK"
+  | "AI: RULE"
+  | "AI: ERROR";
+
+export interface FirstMateProvenanceMeta {
+  provenance: FirstMateProvenance;
+  provider: string;
+  model: string;
+  latencyMs: number;
+  timestamp: number;
+  sessionId?: string;
+  procedureName?: string;
+  requestId?: string;
+  rawStructuredOutput?: any;
+}
+
 export interface LiveAssistPanelData {
   currentIssue: string;
   currentIssuePriority?: "High Priority" | "Medium Priority" | "Standard";
@@ -109,6 +128,7 @@ export interface LiveAssistPanelData {
   confidence: "High" | "Medium" | "Low";
   sources: RelatedSource[];
   sourceVerificationNote?: string;
+  provenanceMeta?: FirstMateProvenanceMeta;
 }
 
 export interface ConversationThread {
@@ -146,6 +166,9 @@ export interface FirstMateDevLogEntry {
   success: boolean;
   itemCount?: number;
   notes?: string;
+  provenance?: FirstMateProvenance;
+  provider?: string;
+  rawStructuredOutput?: any;
 }
 
 export interface FastAssistOutput {

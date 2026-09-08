@@ -1,5 +1,5 @@
 import { invokeLLM } from "../_core/llm";
-import type { FirstMateDevLogEntry } from "../../shared/firstMate";
+import type { FirstMateDevLogEntry, FirstMateProvenance } from "../../shared/firstMate";
 
 interface ChatCompletionOptions {
   messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
@@ -16,6 +16,8 @@ export interface ChatCompletionResult<T = any> {
   success: boolean;
   error?: string;
   devLog: FirstMateDevLogEntry;
+  provenance: FirstMateProvenance;
+  provider: string;
 }
 
 export async function executeOpenAiChat<T = any>(
@@ -66,6 +68,9 @@ export async function executeOpenAiChat<T = any>(
         latencyMs,
         model,
         success: true,
+        provenance: "AI: OPENAI",
+        provider: "OpenAI",
+        rawStructuredOutput: parsedData,
       };
 
       return {
@@ -75,6 +80,8 @@ export async function executeOpenAiChat<T = any>(
         model,
         success: true,
         devLog,
+        provenance: "AI: OPENAI",
+        provider: "OpenAI",
       };
     } catch (err: any) {
       const latencyMs = Date.now() - startTime;
@@ -88,6 +95,8 @@ export async function executeOpenAiChat<T = any>(
         model,
         success: false,
         notes: err?.message,
+        provenance: "AI: ERROR",
+        provider: "OpenAI (Failed)",
       };
 
       return {
@@ -98,11 +107,50 @@ export async function executeOpenAiChat<T = any>(
         success: false,
         error: err?.message,
         devLog,
+        provenance: "AI: ERROR",
+        provider: "OpenAI (Failed)",
       };
     }
   }
 
-  // Fallback to project standard invokeLLM if OPENAI_API_KEY is not directly configured
+  // If OPENAI_API_KEY is missing:
+  // In development / test mode, unmask the failure immediately with AI: ERROR so developers know OpenAI is offline.
+  const isDevOrTest = process.env.NODE_ENV !== "production";
+  if (isDevOrTest) {
+    const latencyMs = Date.now() - startTime;
+    const errorMsg = "OPENAI_API_KEY environment variable is not configured in server environment (.env)";
+    const devLog: FirstMateDevLogEntry = {
+      id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: Date.now(),
+      stage: options.stage,
+      latencyMs,
+      model,
+      success: false,
+      notes: errorMsg,
+      provenance: "AI: ERROR",
+      provider: "OpenAI (Key Missing)",
+      rawStructuredOutput: {
+        error: errorMsg,
+        expectedEnvVar: "OPENAI_API_KEY",
+        modelRequested: model,
+        requestSent: false,
+      },
+    };
+
+    return {
+      data: null,
+      rawContent: "",
+      latencyMs,
+      model,
+      success: false,
+      error: errorMsg,
+      devLog,
+      provenance: "AI: ERROR",
+      provider: "OpenAI (Key Missing)",
+    };
+  }
+
+  // Fallback to project standard invokeLLM if OPENAI_API_KEY is not directly configured in production
   try {
     const res = await invokeLLM({
       messages: options.messages as any,
@@ -125,6 +173,9 @@ export async function executeOpenAiChat<T = any>(
       latencyMs,
       model: res.model || "fallback-llm",
       success: true,
+      provenance: "AI: FALLBACK",
+      provider: "Cloudflare Workers AI",
+      rawStructuredOutput: parsedData,
     };
 
     return {
@@ -134,6 +185,8 @@ export async function executeOpenAiChat<T = any>(
       model: res.model || "fallback-llm",
       success: true,
       devLog,
+      provenance: "AI: FALLBACK",
+      provider: "Cloudflare Workers AI",
     };
   } catch (err: any) {
     const latencyMs = Date.now() - startTime;
@@ -144,7 +197,9 @@ export async function executeOpenAiChat<T = any>(
       latencyMs,
       model: "offline-heuristics",
       success: false,
-      notes: err?.message,
+      notes: "OPENAI_API_KEY missing or inactive: " + (err?.message || "fallback mode"),
+      provenance: "AI: FALLBACK",
+      provider: "Local Fallback Heuristics",
     };
 
     return {
@@ -155,6 +210,8 @@ export async function executeOpenAiChat<T = any>(
       success: false,
       error: err?.message,
       devLog,
+      provenance: "AI: FALLBACK",
+      provider: "Local Fallback Heuristics",
     };
   }
 }
