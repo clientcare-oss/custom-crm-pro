@@ -25,6 +25,7 @@ import {
   HelpCircle,
   Lightbulb,
   BookOpen,
+  Bug,
   Lock,
   CheckCircle2,
   X,
@@ -211,6 +212,25 @@ export default function FirstMate() {
       return next;
     });
   };
+
+  const [isControlBarCollapsed, setIsControlBarCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("fm_control_bar_collapsed");
+      return saved === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleControlBarCollapsed = () => {
+    setIsControlBarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("fm_control_bar_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [noteInput, setNoteInput] = useState("");
   const [isMomentDialogOpen, setIsMomentDialogOpen] = useState(false);
@@ -289,40 +309,45 @@ export default function FirstMate() {
   return (
     <div className="min-h-screen bg-[#06111f] text-slate-100 flex flex-col font-sans -m-4 p-5 pb-12 antialiased select-none selection:bg-cyan-500/30 selection:text-white">
       {/* ── TOP NAV HEADER ── */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/10">
-        <div className="flex items-center gap-3.5">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-white/10">
+        {/* Left: Branding, Animated Radar Reticle, Title & Badges (Locked to single line) */}
+        <div className="flex items-center gap-3 shrink-0 whitespace-nowrap">
           <FirstMateReticleLogo className="w-11 h-11 shrink-0 drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]" />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <div className="shrink-0">
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <h1 className="text-2xl font-bold tracking-tight text-white whitespace-nowrap">
                 First Mate
               </h1>
-              <Badge className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] tracking-wider font-mono font-bold px-1.5 py-0.5 uppercase">
+              <Badge className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] tracking-wider font-mono font-bold px-1.5 py-0.5 uppercase shrink-0">
                 BETA
               </Badge>
-              <Badge variant="outline" className="bg-white/5 text-slate-400 border-white/10 text-[10px] font-mono">
+              <Badge variant="outline" className="bg-white/5 text-slate-400 border-white/10 text-[10px] font-mono shrink-0">
                 PG-037
               </Badge>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">Live guidance for every conversation.</p>
+            <p className="text-xs text-slate-400 mt-0.5 whitespace-nowrap">Live guidance for every conversation.</p>
           </div>
         </div>
 
-        {/* Right side operational actions: Pop Out, Detections Review & Dev Logs */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        {/* Right side: Top Header Toolbar */}
+        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto scrollbar-none">
+          {/* 1. Pop Out First Mate */}
           <button
             type="button"
             onClick={openPopoutWindow}
-            className="px-3.5 py-2 rounded-lg text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/50 hover:border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.25)] transition-all cursor-pointer flex items-center gap-2 shrink-0"
+            className="h-8 px-3 rounded-lg text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/50 hover:border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.25)] transition-all cursor-pointer flex items-center gap-2 shrink-0 whitespace-nowrap active:scale-95"
             title="Open First Mate in a synchronized floating window"
           >
             <FirstMateReticleLogo className="w-4 h-4" />
             <span>POP OUT FIRST MATE</span>
           </button>
+
+          {/* 2. Detections Pill */}
           <button
             type="button"
             onClick={() => setShowDetectionsModal(true)}
-            className="px-3 py-2 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="h-8 px-2.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+            title="View detected speech events, proposals, requests and commitments"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             <span>Detections</span>
@@ -333,10 +358,13 @@ export default function FirstMate() {
                 (session.proposals?.length || 0)}
             </Badge>
           </button>
+
+          {/* 3. Dev Logs Pill */}
           <button
             type="button"
             onClick={() => setShowDevLogs(true)}
-            className="px-3 py-2 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="h-8 px-2.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+            title="View AI reasoning logs & latency timings"
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
             <span>Dev Logs</span>
@@ -344,17 +372,42 @@ export default function FirstMate() {
               {session.devLogs?.length || 0}
             </Badge>
           </button>
+
+          {/* Subtle Vertical Divider */}
+          <div className="h-4 w-px bg-white/15 mx-0.5 shrink-0" />
+
+          {/* 4. Feedback & Issues */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-issue-reporter"))}
+            className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap shadow-xs"
+            title="Report Issue / Feedback to Linear Backlog (⌥+F)"
+          >
+            <Bug className="w-3.5 h-3.5 text-rose-500" />
+            <span>Feedback & Issues</span>
+          </button>
+
+          {/* 5. Dev Info */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-dev-rules"))}
+            className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 hover:text-amber-300 border border-amber-400/30 rounded-lg text-xs font-bold flex items-center gap-1 shadow-lg shadow-amber-500/5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
+            title="Developer Guidelines & Page Rules"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <span>Dev Info</span>
+          </button>
         </div>
       </header>
 
-      {/* ── SUB-NAVIGATION TABS BAR ── */}
-      <div className="flex items-center justify-between gap-3 pt-3 pb-3 border-b border-white/5 text-xs">
+      {/* ── SUB-NAVIGATION TABS BAR (COMPACT) ── */}
+      <div className="flex items-center justify-between gap-2 py-1 border-b border-white/5 text-[11px]">
         {/* Left: Clean Segmented Pill Navigation Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none bg-[#071728] border border-white/10 rounded-lg p-1">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none bg-[#071728]/90 border border-white/10 rounded-md p-0.5">
           <button
             type="button"
             onClick={() => setActiveTab("assist")}
-            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`px-2.5 py-1 rounded font-medium text-[11px] transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "assist"
                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
@@ -369,13 +422,13 @@ export default function FirstMate() {
               setMode("SIMULATOR");
               setIsManualInputCollapsed(false);
             }}
-            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+            className={`px-2.5 py-1 rounded font-medium text-[11px] transition-all cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
               activeTab === "simulator"
                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
             }`}
           >
-            <Radio className="w-3 h-3 text-amber-400" />
+            <Radio className="w-2.5 h-2.5 text-amber-400" />
             Simulator
           </button>
           <button
@@ -384,7 +437,7 @@ export default function FirstMate() {
               setActiveTab("summaries");
               setIsSummaryModalOpen(true);
             }}
-            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`px-2.5 py-1 rounded font-medium text-[11px] transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "summaries"
                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
@@ -400,7 +453,7 @@ export default function FirstMate() {
               const el = document.getElementById("ai-diagnostics");
               if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
-            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`px-2.5 py-1 rounded font-medium text-[11px] transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "settings"
                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
@@ -411,9 +464,9 @@ export default function FirstMate() {
         </div>
 
         {/* Right: Live Telemetry Indicator */}
-        <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400 font-mono shrink-0">
+        <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400 font-mono shrink-0">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-slate-300 font-semibold">Active Session</span>
           </span>
           <span className="text-slate-600">•</span>
@@ -421,26 +474,116 @@ export default function FirstMate() {
         </div>
       </div>
 
-      {/* ── SESSION CONTROL BAR ── */}
-      <div className="mt-3 bg-[#08182b] border border-white/10 rounded-xl p-4 shadow-xl space-y-3.5">
-        {/* Tier 1: Session Context & Duration Indicator */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* 1. Session Type */}
-            <div className="w-full sm:w-52">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Session Type
-              </label>
+      {/* ── SUPER-MINIMIZED SESSION CONTROL BAR ── */}
+      <div className="mt-1.5 bg-[#08182b]/95 border border-white/10 rounded-lg px-2 py-1 shadow-sm overflow-x-auto scrollbar-none">
+        {isControlBarCollapsed ? (
+          /* COLLAPSED MINI-BAR */
+          <div className="flex items-center justify-between gap-2 text-[11px] min-w-max w-full">
+            <div className="flex items-center gap-2 min-w-0 shrink-0">
+              <span className="flex items-center gap-1.5 font-semibold text-white truncate text-[11px]">
+                <Users className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">{SESSION_TYPE_OPTIONS.find((o) => o.value === session.sessionType)?.label || "IEP Meeting"}</span>
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="text-cyan-300 font-medium truncate text-[11px]">
+                {session.attachedName || "Avery Jenkins"}
+              </span>
+              <span className="text-slate-600">•</span>
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#061524] border border-cyan-500/30 text-[10.5px] font-mono font-bold text-cyan-300">
+                <span className={`w-1.5 h-1.5 rounded-full ${audioInputStatus === "listening" ? "bg-emerald-400 animate-pulse" : "bg-cyan-400"}`} />
+                {formatDuration(session.durationSeconds)}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              {audioInputStatus === "listening" ? (
+                <>
+                  <Button
+                    onClick={pauseListening}
+                    variant="outline"
+                    className="h-6.5 px-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10.5px] font-bold rounded flex items-center gap-1 cursor-pointer"
+                    title="Pause"
+                  >
+                    <Pause className="w-2.5 h-2.5 fill-amber-300" />
+                    Pause
+                  </Button>
+                  <Button
+                    onClick={handleEndSessionAndProcess}
+                    disabled={isProcessingEndSession}
+                    className="h-6.5 px-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 shadow-sm border border-rose-400/80 cursor-pointer"
+                  >
+                    {isProcessingEndSession ? (
+                      <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Square className="w-2.5 h-2.5 fill-white" />
+                        End
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : audioInputStatus === "paused" ? (
+                <>
+                  <Button
+                    onClick={resumeListening}
+                    className="h-6.5 px-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 cursor-pointer"
+                  >
+                    <Play className="w-2.5 h-2.5 fill-white" />
+                    Resume
+                  </Button>
+                  <Button
+                    onClick={handleEndSessionAndProcess}
+                    disabled={isProcessingEndSession}
+                    className="h-6.5 px-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 shadow-sm border border-rose-400/80 cursor-pointer"
+                  >
+                    {isProcessingEndSession ? (
+                      <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Square className="w-2.5 h-2.5 fill-white" />
+                        End
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={async () => {
+                      await startListening();
+                    }}
+                    className="h-6.5 px-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 shadow-sm cursor-pointer"
+                  >
+                    <Play className="w-2.5 h-2.5 fill-white" />
+                    Start
+                  </Button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={toggleControlBarCollapsed}
+                className="h-6.5 px-2 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-[10.5px] flex items-center gap-1 transition-colors cursor-pointer"
+                title="Expand controls"
+              >
+                <span>Controls</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* EXPANDED STRICT SINGLE-ROW BAR */
+          <div className="flex items-center justify-between gap-2 flex-nowrap min-w-max w-full whitespace-nowrap">
+            {/* Left: Selectors and Config */}
+            <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+              {/* 1. Session Type */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-2 truncate">
-                      <Users className="w-4 h-4 text-cyan-400 shrink-0" />
-                      <span className="font-semibold truncate">
-                        {SESSION_TYPE_OPTIONS.find((o) => o.value === session.sessionType)?.label || "IEP Meeting"}
-                      </span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <button className="h-6.5 px-2 rounded bg-[#0d2138] border border-white/10 hover:border-cyan-500/40 text-[10.5px] text-white flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap">
+                    <Users className="w-3 h-3 text-cyan-400 shrink-0" />
+                    <span className="font-semibold truncate max-w-[110px]">
+                      {SESSION_TYPE_OPTIONS.find((o) => o.value === session.sessionType)?.label || "IEP Meeting"}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64 bg-[#0a1c30] border-white/15 text-white">
@@ -457,59 +600,33 @@ export default function FirstMate() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
 
-            {/* 2. Attach To CRM Record */}
-            <div className="w-full sm:w-64">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Attach To Record
-              </label>
+              {/* 2. Attach Record */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-cyan-600/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center text-[10px] font-bold shrink-0">
-                        {session.attachedName
-                          ? session.attachedName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .slice(0, 2)
-                              .toUpperCase()
-                          : "AJ"}
-                      </div>
-                      <div className="truncate text-left">
-                        <p className="font-semibold text-xs leading-none truncate">
-                          {session.attachedName || "Avery Jenkins"}
-                        </p>
-                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                          {session.attachedSubtitle || "Client • 9th Grade"}
-                        </p>
-                      </div>
+                  <button className="h-6.5 px-2 rounded bg-[#0d2138] border border-white/10 hover:border-cyan-500/40 text-[10.5px] text-white flex items-center gap-1.5 transition-colors cursor-pointer max-w-[170px]">
+                    <div className="w-3.5 h-3.5 rounded-full bg-cyan-600/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center text-[7.5px] font-bold shrink-0">
+                      {session.attachedName
+                        ? session.attachedName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+                        : "AJ"}
                     </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="font-medium truncate">
+                      {session.attachedName || "Avery Jenkins"}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-72 bg-[#0a1c30] border-white/15 text-white max-h-72 overflow-y-auto">
                   <DropdownMenuLabel className="text-slate-400 text-xs">CRM Contacts & Leads</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/10" />
                   {attachableRecords.length === 0 ? (
-                    <DropdownMenuItem disabled className="text-xs text-slate-500">
-                      No records found
-                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled className="text-xs text-slate-500">No records found</DropdownMenuItem>
                   ) : (
                     attachableRecords.map((r) => (
                       <DropdownMenuItem
                         key={`${r.type}-${r.id}`}
-                        onClick={() =>
-                          attachRecord({
-                            id: r.id,
-                            type: r.type,
-                            name: r.name,
-                            subtitle: r.subtitle,
-                          })
-                        }
-                        className="text-xs cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-300 flex flex-col items-start py-2"
+                        onClick={() => attachRecord({ id: r.id, type: r.type, name: r.name, subtitle: r.subtitle })}
+                        className="text-xs cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-300 flex flex-col items-start py-1.5"
                       >
                         <span className="font-semibold">{r.name}</span>
                         <span className="text-[10px] text-slate-400">{r.subtitle}</span>
@@ -518,84 +635,55 @@ export default function FirstMate() {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          </div>
 
-          {/* Right: Duration Counter & Status Chip */}
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Session Duration
-              </span>
-              <div className="h-10 px-3.5 bg-[#061524] border border-cyan-500/20 rounded-lg flex items-center justify-center min-w-[96px] shadow-inner">
-                <span className="text-base font-mono font-bold text-cyan-300 tracking-wider drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]">
-                  {formatDuration(session.durationSeconds)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tier 2: Interactive Deck (Mode, Mic Speaker, Device & Play/Pause/Start Controls) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          {/* Left: Mode Selection + Mic Speaker + Mic Device */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Mode Segmented Pill */}
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Advocacy Mode
-              </span>
-              <div className="h-10 bg-[#0d2138] border border-white/10 rounded-lg p-1 flex items-center gap-1 min-w-[280px]">
+              {/* 3. Mode Pill */}
+              <div className="h-6.5 bg-[#0d2138] border border-white/10 rounded p-0.5 flex items-center gap-0.5">
                 <button
                   type="button"
                   onClick={() => setMode("LIVE")}
-                  className={`flex-1 h-full px-3 rounded text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`h-full px-2 rounded text-[9.5px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                     session.mode === "LIVE"
-                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-extrabold shadow-sm"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-sm"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  <Mic className="w-3 h-3" />
-                  Live Mic
+                  <Mic className="w-2.5 h-2.5" />
+                  Live
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("TEST")}
-                  className={`flex-1 h-full px-2.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`h-full px-1.5 rounded text-[9.5px] font-bold transition-all cursor-pointer ${
                     session.mode === "TEST"
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-extrabold"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  Test Mode
+                  Test
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("SIMULATOR")}
-                  className={`flex-1 h-full px-2.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`h-full px-1.5 rounded text-[9.5px] font-bold transition-all cursor-pointer ${
                     session.mode === "SIMULATOR"
-                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-extrabold shadow-sm"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-sm"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  Simulator
+                  Sim
                 </button>
               </div>
-            </div>
 
-            {/* Mic Speaker Selector */}
-            <div className="w-36">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Mic Speaker
-              </span>
+              {/* 4. Speaker */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
-                    <span className="font-semibold truncate">{selectedSpeaker}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <button className="h-6.5 px-2 rounded bg-[#0d2138] border border-white/10 hover:border-cyan-500/40 text-[10.5px] text-white flex items-center gap-1 transition-colors cursor-pointer">
+                    <span className="text-slate-400 text-[9.5px]">Spk:</span>
+                    <span className="font-semibold text-[10.5px]">{selectedSpeaker}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-40 bg-[#0a1c30] border-white/15 text-white">
+                <DropdownMenuContent className="w-36 bg-[#0a1c30] border-white/15 text-white">
                   {(["Parent", "School", "Advocate", "Other"] as SpeakerRole[]).map((r) => (
                     <DropdownMenuItem
                       key={r}
@@ -607,27 +695,20 @@ export default function FirstMate() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
 
-            {/* Mic Device Selector */}
-            {audioDevices.length > 1 && (
-              <div className="w-40">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  Audio Input
-                </span>
+              {/* 5. Audio Input Device (if multiple) */}
+              {audioDevices.length > 1 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="w-full h-10 px-2.5 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer truncate"
+                      className="h-6.5 px-2 rounded bg-[#0d2138] border border-white/10 hover:border-cyan-500/40 text-[10.5px] text-white flex items-center gap-1 transition-colors cursor-pointer max-w-[120px] truncate"
                       title={audioDevices.find((d) => d.deviceId === selectedAudioDevice)?.label || "Select Microphone"}
                     >
-                      <div className="flex items-center gap-1.5 truncate">
-                        <Mic className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                        <span className="font-semibold truncate">
-                          {audioDevices.find((d) => d.deviceId === selectedAudioDevice)?.label.replace(/\(.*\)/, "").trim() || "Mic"}
-                        </span>
-                      </div>
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <Mic className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
+                      <span className="truncate text-[9.5px]">
+                        {audioDevices.find((d) => d.deviceId === selectedAudioDevice)?.label.replace(/\(.*\)/, "").trim() || "Mic"}
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-64 bg-[#0a1c30] border-white/15 text-white text-xs">
@@ -644,108 +725,121 @@ export default function FirstMate() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Right: Audio Action Control Buttons (Start / Pause / Resume / Stop) */}
-          <div className="flex items-center gap-2 shrink-0">
-            {audioInputStatus === "listening" ? (
-              <>
-                <Button
-                  onClick={pauseListening}
-                  variant="outline"
-                  className="h-10 px-4 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 text-xs font-bold rounded-lg flex items-center gap-2 cursor-pointer shadow-sm transition-all shrink-0 whitespace-nowrap"
-                  title="Pause Listening"
-                >
-                  <Pause className="w-4 h-4 fill-amber-300" />
-                  Pause
-                </Button>
-                <Button
-                  onClick={handleEndSessionAndProcess}
-                  disabled={isProcessingEndSession}
-                  className="h-10 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-rose-950/60 border border-rose-400/80 cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
-                  title="End session, generate summary, and attach full transcript to student's notes"
-                >
-                  {isProcessingEndSession ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Processing & Attaching...
-                    </>
-                  ) : (
-                    <>
-                      <Square className="w-3.5 h-3.5 fill-white" />
-                      End Session & Process
-                    </>
-                  )}
-                </Button>
-              </>
-            ) : audioInputStatus === "paused" ? (
-              <>
-                <Button
-                  onClick={resumeListening}
-                  className="h-10 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-cyan-900/40 cursor-pointer transition-all shrink-0 whitespace-nowrap"
-                >
-                  <Play className="w-4 h-4 fill-white" />
-                  Resume
-                </Button>
-                <Button
-                  onClick={handleEndSessionAndProcess}
-                  disabled={isProcessingEndSession}
-                  className="h-10 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-rose-950/60 border border-rose-400/80 cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
-                  title="End session, generate summary, and attach full transcript to student's notes"
-                >
-                  {isProcessingEndSession ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Processing & Attaching...
-                    </>
-                  ) : (
-                    <>
-                      <Square className="w-3.5 h-3.5 fill-white" />
-                      End Session & Process
-                    </>
-                  )}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  onClick={async () => {
-                    await startListening();
-                  }}
-                  className="h-10 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-900/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0 whitespace-nowrap"
-                >
-                  <Play className="w-4 h-4 fill-white" />
-                  Start Listening
-                </Button>
-                <Button
-                  onClick={handleEndSessionAndProcess}
-                  disabled={isProcessingEndSession}
-                  variant="outline"
-                  className="h-10 px-4 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-xs font-semibold rounded-lg flex items-center gap-2 transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
-                  title="End session and attach notes to student's file"
-                >
-                  {isProcessingEndSession ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-rose-400/30 border-t-rose-400 rounded-full animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Square className="w-3.5 h-3.5 fill-rose-400" />
-                      <span>End Session & Process</span>
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+            {/* Right: Actions, Duration & Minimize Button */}
+            <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+              {/* Duration Timer */}
+              <div className="h-6.5 px-2 bg-[#061524] border border-cyan-500/30 rounded flex items-center gap-1.5 text-[10.5px] font-mono font-bold text-cyan-300 shadow-inner">
+                <span className={`w-1.5 h-1.5 rounded-full ${audioInputStatus === "listening" ? "bg-emerald-400 animate-pulse" : "bg-cyan-400"}`} />
+                <span>{formatDuration(session.durationSeconds)}</span>
+              </div>
+
+              {/* Action Buttons */}
+              {audioInputStatus === "listening" ? (
+                <>
+                  <Button
+                    onClick={pauseListening}
+                    variant="outline"
+                    className="h-6.5 px-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10.5px] font-bold rounded flex items-center gap-1 cursor-pointer"
+                  >
+                    <Pause className="w-2.5 h-2.5 fill-amber-300" />
+                    Pause
+                  </Button>
+                  <Button
+                    onClick={handleEndSessionAndProcess}
+                    disabled={isProcessingEndSession}
+                    className="h-6.5 px-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 shadow-sm border border-rose-400/80 cursor-pointer"
+                  >
+                    {isProcessingEndSession ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Square className="w-2.5 h-2.5 fill-white" />
+                        End & Process
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : audioInputStatus === "paused" ? (
+                <>
+                  <Button
+                    onClick={resumeListening}
+                    className="h-6.5 px-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 cursor-pointer"
+                  >
+                    <Play className="w-2.5 h-2.5 fill-white" />
+                    Resume
+                  </Button>
+                  <Button
+                    onClick={handleEndSessionAndProcess}
+                    disabled={isProcessingEndSession}
+                    className="h-6.5 px-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 shadow-sm border border-rose-400/80 cursor-pointer"
+                  >
+                    {isProcessingEndSession ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Square className="w-2.5 h-2.5 fill-white" />
+                        End & Process
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={async () => {
+                      await startListening();
+                    }}
+                    className="h-6.5 px-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[10.5px] rounded flex items-center gap-1 shadow-sm cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <Play className="w-2.5 h-2.5 fill-white" />
+                    Start Listening
+                  </Button>
+                  <Button
+                    onClick={handleEndSessionAndProcess}
+                    disabled={isProcessingEndSession}
+                    variant="outline"
+                    className="h-6.5 px-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10.5px] font-semibold rounded flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    {isProcessingEndSession ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-rose-400/30 border-t-rose-400 rounded-full animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Square className="w-2.5 h-2.5 fill-rose-400" />
+                        <span>End</span>
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
+
+              {/* Minimize Collapse Toggle */}
+              <button
+                type="button"
+                onClick={toggleControlBarCollapsed}
+                className="h-6.5 w-6.5 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                title="Minimize session controls"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── 1. THEMED LIVE ASSIST GUIDANCE (5 COLORED BLOCKS) ── */}
-      <div className="mt-4 space-y-3">
+      <div className="mt-2.5 space-y-2">
         {/* Tier 1: Immediate Primary Guidance (Current Issue & Say This) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
           {/* CARD 1: CURRENT ISSUE (RED/CORAL) - 5 Cols */}

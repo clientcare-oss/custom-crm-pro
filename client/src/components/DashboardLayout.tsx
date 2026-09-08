@@ -460,7 +460,10 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const [devRuleText, setDevRuleText] = useState("");
   const [issueReporterOpen, setIssueReporterOpen] = useState(false);
 
-  // Global shortcut (⌥+F or Alt+F) to trigger Linear issue reporter
+  const pageKey = "crm:path:" + (location === "/" ? "dashboard" : location.replace(/^\//, "").replaceAll("/", ":"));
+  const { data: devRules = [], refetch: refetchDevRules } = trpc.portal.getDevRules.useQuery();
+
+  // Global shortcut (⌥+F or Alt+F) and custom events to trigger Linear issue reporter / Dev rules
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -471,13 +474,22 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         setIssueReporterOpen(true);
       }
     };
+    const handleOpenIssues = () => setIssueReporterOpen(true);
+    const handleOpenDevRules = () => {
+      const rule = devRules.find((r: any) => r.tabKey === pageKey);
+      setDevRuleText(rule?.content || "");
+      setIsDevRulesOpen(true);
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const pageKey = "crm:path:" + (location === "/" ? "dashboard" : location.replace(/^\//, "").replaceAll("/", ":"));
-
-  const { data: devRules = [], refetch: refetchDevRules } = trpc.portal.getDevRules.useQuery();
+    window.addEventListener("open-issue-reporter", handleOpenIssues);
+    window.addEventListener("open-dev-rules", handleOpenDevRules);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("open-issue-reporter", handleOpenIssues);
+      window.removeEventListener("open-dev-rules", handleOpenDevRules);
+    };
+  }, [devRules, pageKey]);
 
   const saveDevRulesMutation = trpc.portal.saveDevRules.useMutation({
     onSuccess: () => {
@@ -769,27 +781,29 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             {children}
           </ScopedErrorBoundary>
 
-          {/* Floating Action Buttons */}
-          <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-            <Button
-              onClick={() => setIssueReporterOpen(true)}
-              className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer"
-              title="Report Issue / Feedback to Linear Backlog (⌥+F)"
-            >
-              <Bug className="w-3.5 h-3.5" /> Feedback & Issues
-            </Button>
-            <Button
-              onClick={() => {
-                const rule = devRules.find((r: any) => r.tabKey === pageKey);
-                setDevRuleText(rule?.content || "");
-                setIsDevRulesOpen(true);
-              }}
-              className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all cursor-pointer"
-              title="Developer Guidelines & Page Rules"
-            >
-              <BookOpen className="w-3.5 h-3.5" /> Dev Info
-            </Button>
-          </div>
+          {/* Floating Action Buttons (embedded directly in header on First Mate) */}
+          {!location.startsWith("/first-mate") && (
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+              <Button
+                onClick={() => setIssueReporterOpen(true)}
+                className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer"
+                title="Report Issue / Feedback to Linear Backlog (⌥+F)"
+              >
+                <Bug className="w-3.5 h-3.5" /> Feedback & Issues
+              </Button>
+              <Button
+                onClick={() => {
+                  const rule = devRules.find((r: any) => r.tabKey === pageKey);
+                  setDevRuleText(rule?.content || "");
+                  setIsDevRulesOpen(true);
+                }}
+                className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all cursor-pointer"
+                title="Developer Guidelines & Page Rules"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> Dev Info
+              </Button>
+            </div>
+          )}
         </main>
       </SidebarInset>
 
