@@ -313,7 +313,7 @@ export default function FirstMate() {
   return (
     <div className="min-h-screen bg-[#06111f] text-slate-100 flex flex-col font-sans -m-4 p-5 pb-12 antialiased select-none selection:bg-cyan-500/30 selection:text-white">
       {/* ── TOP NAV HEADER ── */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/10">
         <div className="flex items-center gap-3.5">
           <FirstMateReticleLogo className="w-11 h-11 shrink-0 drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]" />
           <div>
@@ -331,81 +331,25 @@ export default function FirstMate() {
             <p className="text-xs text-slate-400 mt-0.5">Live guidance for every conversation.</p>
           </div>
         </div>
-      </header>
-
-      {/* ── SUB-NAVIGATION TABS ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 pb-3 border-b border-white/5 text-xs">
-        {/* Left: Section Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab("assist")}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === "assist"
-                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-            }`}
-          >
-            Live Assist
-          </button>
-          <button
-            onClick={() => setActiveTab("simulator")}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "simulator"
-                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-            }`}
-          >
-            <Radio className="w-3 h-3 text-amber-400 animate-pulse" />
-            Simulator
-          </button>
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === "history"
-                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-            }`}
-          >
-            Session History
-          </button>
-          <button
-            onClick={() => setActiveTab("summaries")}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === "summaries"
-                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-            }`}
-          >
-            Meeting Summaries
-          </button>
-          <button
-            onClick={() => setActiveTab("settings")}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === "settings"
-                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-            }`}
-          >
-            Settings
-          </button>
-        </div>
 
         {/* Right side operational actions: Pop Out, Detections Review & Dev Logs */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <button
+            type="button"
             onClick={openPopoutWindow}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/50 hover:border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.25)] transition-all cursor-pointer flex items-center gap-2 shrink-0"
+            className="px-3.5 py-2 rounded-lg text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/50 hover:border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.25)] transition-all cursor-pointer flex items-center gap-2 shrink-0"
             title="Open First Mate in a synchronized floating window"
           >
             <FirstMateReticleLogo className="w-4 h-4" />
             <span>POP OUT FIRST MATE</span>
           </button>
           <button
+            type="button"
             onClick={() => setShowDetectionsModal(true)}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            Detections
+            <span>Detections</span>
             <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold px-1.5 py-0 h-4 border-none">
               {(session.requests?.length || 0) +
                 (session.refusals?.length || 0) +
@@ -414,15 +358,90 @@ export default function FirstMate() {
             </Badge>
           </button>
           <button
+            type="button"
             onClick={() => setShowDevLogs(true)}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            Dev Logs
+            <span>Dev Logs</span>
             <Badge className="bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold px-1.5 py-0 h-4 border-none">
               {session.devLogs?.length || 0}
             </Badge>
           </button>
+        </div>
+      </header>
+
+      {/* ── SUB-NAVIGATION TABS BAR ── */}
+      <div className="flex items-center justify-between gap-3 pt-3 pb-3 border-b border-white/5 text-xs">
+        {/* Left: Clean Segmented Pill Navigation Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none bg-[#071728] border border-white/10 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("assist")}
+            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+              activeTab === "assist"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            Live Assist
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("simulator");
+              setMode("SIMULATOR");
+              setIsManualInputCollapsed(false);
+            }}
+            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+              activeTab === "simulator"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            <Radio className="w-3 h-3 text-amber-400" />
+            Simulator
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("summaries");
+              setIsSummaryModalOpen(true);
+            }}
+            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+              activeTab === "summaries"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            Meeting Summaries
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("settings");
+              setShowBottomDiagnostics(true);
+              const el = document.getElementById("ai-diagnostics");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+            className={`px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+              activeTab === "settings"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            Diagnostics & Settings
+          </button>
+        </div>
+
+        {/* Right: Live Telemetry Indicator */}
+        <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400 font-mono shrink-0">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-slate-300 font-semibold">Active Session</span>
+          </span>
+          <span className="text-slate-600">•</span>
+          <span>{session.transcript.length} turns recorded</span>
         </div>
       </div>
 

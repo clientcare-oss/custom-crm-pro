@@ -276,6 +276,15 @@
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Global 3-second Twilight Theme Transition */
 html,
 body,
