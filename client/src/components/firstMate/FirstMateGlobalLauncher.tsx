@@ -4,38 +4,7 @@ import { useFirstMate } from "@/contexts/FirstMateContext";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ExternalLink, Radio, Pause, AlertCircle, ArrowUpRight, Square } from "lucide-react";
 import { toast } from "sonner";
-
-// Radar reticle logo matching Waypoint specifications
-function RadarReticleIcon({ className = "w-5 h-5", pulse = false }: { className?: string; pulse?: boolean }) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="launcherGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.4" />
-          <stop offset="80%" stopColor="#0891b2" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="#0891b2" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle cx="50" cy="50" r="46" fill="url(#launcherGlow)" stroke="#06b6d4" strokeWidth="4" />
-      <circle
-        cx="50"
-        cy="50"
-        r="32"
-        stroke="#22d3ee"
-        strokeWidth="2.5"
-        strokeDasharray="4 4"
-        className={pulse ? "animate-[spin_6s_linear_infinite]" : ""}
-        style={{ transformOrigin: "50% 50%" }}
-      />
-      <circle cx="50" cy="50" r="18" stroke="#06b6d4" strokeWidth="3" />
-      <circle cx="50" cy="50" r="4.5" fill="#22d3ee" />
-      <line x1="50" y1="4" x2="50" y2="18" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
-      <line x1="50" y1="82" x2="50" y2="96" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
-      <line x1="4" y1="50" x2="18" y2="50" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
-      <line x1="82" y1="50" x2="96" y2="50" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { RadarReticleIcon } from "./RadarReticleIcon";
 
 function formatTime(sec: number) {
   const m = Math.floor(sec / 60);

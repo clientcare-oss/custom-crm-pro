@@ -55,31 +55,7 @@ import type {
   FirstMateSessionType,
   TrackedItem,
 } from "../../../shared/firstMate";
-
-// Radar / Reticle SVG Brand Logo matching the screenshot
-function FirstMateReticleLogo({ className = "w-10 h-10" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="reticleGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.35" />
-          <stop offset="70%" stopColor="#0891b2" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="#0891b2" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle cx="50" cy="50" r="46" fill="url(#reticleGlow)" stroke="#06b6d4" strokeWidth="2.5" />
-      <circle cx="50" cy="50" r="34" stroke="#0891b2" strokeWidth="1.75" strokeDasharray="3 3" opacity="0.8" />
-      <circle cx="50" cy="50" r="22" stroke="#22d3ee" strokeWidth="1.5" opacity="0.9" />
-      <circle cx="50" cy="50" r="7" stroke="#38bdf8" strokeWidth="2" fill="#06b6d4" fillOpacity="0.4" />
-      <circle cx="50" cy="50" r="2.5" fill="#ffffff" />
-      {/* Reticle Crosshairs */}
-      <line x1="50" y1="4" x2="50" y2="28" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-      <line x1="50" y1="72" x2="50" y2="96" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-      <line x1="4" y1="50" x2="28" y2="50" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-      <line x1="72" y1="50" x2="96" y2="50" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { RadarReticleIcon, FirstMateReticleLogo } from "@/components/firstMate/RadarReticleIcon";
 
 // Format seconds into HH:MM:SS or MM:SS
 function formatDuration(totalSeconds: number): string {
