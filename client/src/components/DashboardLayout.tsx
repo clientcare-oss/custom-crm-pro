@@ -82,6 +82,15 @@ export interface MenuGroup {
 function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGroup[] {
   return [
     {
+      groupLabel: "Call Center & Leads",
+      items: [
+        { icon: Headphones, label: "First Mate", path: "/first-mate" },
+        { icon: TrendingUp, label: "Leads", path: "/leads" },
+        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
+        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
+      ],
+    },
+    {
       groupLabel: "Overview",
       items: [
         { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -97,15 +106,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: Users, label: "Contacts", path: "/contacts" },
         { icon: Compass, label: "Case Compass", path: "/case-compass" },
         { icon: Shield, label: "Client Portal", path: "/portal-management" },
-      ],
-    },
-    {
-      groupLabel: "Call Center & Leads",
-      items: [
-        { icon: Headphones, label: "First Mate", path: "/first-mate" },
-        { icon: TrendingUp, label: "Leads", path: "/leads" },
-        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
-        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
       ],
     },
     {
