@@ -17,6 +17,7 @@ import {
   Bookmark,
   MoreHorizontal,
   ChevronDown,
+  ChevronUp,
   Maximize2,
   Users,
   AlertTriangle,
@@ -33,6 +34,8 @@ import {
   Edit2,
   Layers,
   ArrowRight,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -145,9 +148,30 @@ export default function FirstMate() {
     addNote,
     saveMoment,
     askQuestion,
+    clearAskHistory,
     generateSummary,
     clearTranscript,
     lastAskMeta,
+    audioInputStatus,
+    transcriptionStatus,
+    interimTranscript,
+    selectedSpeaker,
+    setSelectedSpeaker,
+    startListening,
+    stopListening,
+    pauseListening,
+    resumeListening,
+    retryMicrophonePermission,
+    microphoneDiagnostics,
+    audioDevices,
+    selectedAudioDevice,
+    setSelectedAudioDevice,
+    openPopoutWindow,
+    endSessionAndProcess,
+    isProcessingEndSession,
+    startNewSession,
+    continuePreviousSession,
+    hasPreviousSession,
   } = useFirstMate();
 
   // Active top tab
@@ -162,14 +186,55 @@ export default function FirstMate() {
   const [askQuery, setAskQuery] = useState("");
   const [askAnswer, setAskAnswer] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
+  const [copiedAskId, setCopiedAskId] = useState<string | null>(null);
   const [showAskTrace, setShowAskTrace] = useState(false);
   const [showLiveAssistTrace, setShowLiveAssistTrace] = useState(false);
+  const [showBottomDiagnostics, setShowBottomDiagnostics] = useState(false);
+  const [isCopiedAskAnswer, setIsCopiedAskAnswer] = useState(false);
+  const [isCopiedTranscript, setIsCopiedTranscript] = useState(false);
 
   // Modals
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [draftSummary, setDraftSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [isExpandTranscriptOpen, setIsExpandTranscriptOpen] = useState(false);
+  const [isTranscriptCollapsed, setIsTranscriptCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("fm_transcript_collapsed");
+      return saved !== null ? saved === "true" : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleTranscriptCollapsed = () => {
+    setIsTranscriptCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("fm_transcript_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const [isManualInputCollapsed, setIsManualInputCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("fm_manual_input_collapsed");
+      return saved !== null ? saved === "true" : true; // collapsed by default
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleManualInputCollapsed = () => {
+    setIsManualInputCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("fm_manual_input_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [noteInput, setNoteInput] = useState("");
   const [isMomentDialogOpen, setIsMomentDialogOpen] = useState(false);
@@ -229,6 +294,17 @@ export default function FirstMate() {
     }
   };
 
+  // End session and process notes to student file (Advocate Only)
+  const handleEndSessionAndProcess = async () => {
+    try {
+      handleStopListening();
+      await endSessionAndProcess();
+    } catch (err) {
+      console.warn("endSessionAndProcess error:", err);
+    }
+  };
+  const handleStop = handleEndSessionAndProcess;
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`Copied ${label} to clipboard`);
@@ -255,74 +331,75 @@ export default function FirstMate() {
             <p className="text-xs text-slate-400 mt-0.5">Live guidance for every conversation.</p>
           </div>
         </div>
-
-        {/* Brand Motto on Right */}
-        <div className="hidden lg:flex flex-col text-right">
-          <span className="text-[11px] font-semibold tracking-[0.25em] text-cyan-400/90 uppercase">
-            Listen. Understand. Guide.
-          </span>
-          <span className="text-[9px] font-bold tracking-[0.2em] text-slate-500 uppercase mt-0.5">
-            Together we create brighter futures.
-          </span>
-        </div>
       </header>
 
       {/* ── SUB-NAVIGATION TABS ── */}
-      <div className="flex items-center gap-2 pt-3 pb-3 border-b border-white/5 overflow-x-auto text-xs">
-        <button
-          onClick={() => setActiveTab("assist")}
-          className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-            activeTab === "assist"
-              ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-              : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-          }`}
-        >
-          Live Assist
-        </button>
-        <button
-          onClick={() => setActiveTab("simulator")}
-          className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-            activeTab === "simulator"
-              ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-              : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-          }`}
-        >
-          <Radio className="w-3 h-3 text-amber-400 animate-pulse" />
-          Simulator
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-            activeTab === "history"
-              ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-              : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-          }`}
-        >
-          Session History
-        </button>
-        <button
-          onClick={() => setActiveTab("summaries")}
-          className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-            activeTab === "summaries"
-              ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-              : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-          }`}
-        >
-          Meeting Summaries
-        </button>
-        <button
-          onClick={() => setActiveTab("settings")}
-          className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-            activeTab === "settings"
-              ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-              : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-          }`}
-        >
-          Settings
-        </button>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 pb-3 border-b border-white/5 text-xs">
+        {/* Left: Section Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("assist")}
+            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "assist"
+                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            Live Assist
+          </button>
+          <button
+            onClick={() => setActiveTab("simulator")}
+            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === "simulator"
+                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            <Radio className="w-3 h-3 text-amber-400 animate-pulse" />
+            Simulator
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "history"
+                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            Session History
+          </button>
+          <button
+            onClick={() => setActiveTab("summaries")}
+            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "summaries"
+                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            Meeting Summaries
+          </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "settings"
+                ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            Settings
+          </button>
+        </div>
 
-        {/* Right side operational actions: Detections Review & Dev Logs */}
-        <div className="ml-auto flex items-center gap-2">
+        {/* Right side operational actions: Pop Out, Detections Review & Dev Logs */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={openPopoutWindow}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/50 hover:border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.25)] transition-all cursor-pointer flex items-center gap-2 shrink-0"
+            title="Open First Mate in a synchronized floating window"
+          >
+            <FirstMateReticleLogo className="w-4 h-4" />
+            <span>POP OUT FIRST MATE</span>
+          </button>
           <button
             onClick={() => setShowDetectionsModal(true)}
             className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
@@ -350,490 +427,378 @@ export default function FirstMate() {
       </div>
 
       {/* ── SESSION CONTROL BAR ── */}
-      <div className="mt-3 bg-[#08182b] border border-white/10 rounded-xl p-3 shadow-xl">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-center">
-          {/* 1. Session Type */}
-          <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-              Session Type
-            </label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-2 truncate">
-                    <Users className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <span className="font-semibold truncate">
-                      {SESSION_TYPE_OPTIONS.find((o) => o.value === session.sessionType)?.label || "IEP Meeting"}
-                    </span>
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 bg-[#0a1c30] border-white/15 text-white">
-                <DropdownMenuLabel className="text-slate-400 text-xs">Select Conversation Context</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/10" />
-                {SESSION_TYPE_OPTIONS.map((opt) => (
-                  <DropdownMenuItem
-                    key={opt.value}
-                    onClick={() => setSessionType(opt.value)}
-                    className="text-xs cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-300"
-                  >
-                    {opt.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* 2. Attach To */}
-          <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-              Attach To
-            </label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-6 h-6 rounded-full bg-cyan-600/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center text-[10px] font-bold shrink-0">
-                      {session.attachedName
-                        ? session.attachedName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)
-                            .toUpperCase()
-                        : "AJ"}
+      <div className="mt-3 bg-[#08182b] border border-white/10 rounded-xl p-4 shadow-xl space-y-3.5">
+        {/* Tier 1: Session Context & Duration Indicator */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* 1. Session Type */}
+            <div className="w-full sm:w-52">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Session Type
+              </label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-2 truncate">
+                      <Users className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <span className="font-semibold truncate">
+                        {SESSION_TYPE_OPTIONS.find((o) => o.value === session.sessionType)?.label || "IEP Meeting"}
+                      </span>
                     </div>
-                    <div className="truncate text-left">
-                      <p className="font-semibold text-xs leading-none truncate">
-                        {session.attachedName || "Avery Jenkins"}
-                      </p>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                        {session.attachedSubtitle || "Client • 9th Grade"}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-72 bg-[#0a1c30] border-white/15 text-white max-h-72 overflow-y-auto">
-                <DropdownMenuLabel className="text-slate-400 text-xs">CRM Contacts & Leads</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/10" />
-                {attachableRecords.length === 0 ? (
-                  <DropdownMenuItem disabled className="text-xs text-slate-500">
-                    No records found
-                  </DropdownMenuItem>
-                ) : (
-                  attachableRecords.map((r) => (
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 bg-[#0a1c30] border-white/15 text-white">
+                  <DropdownMenuLabel className="text-slate-400 text-xs">Select Conversation Context</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  {SESSION_TYPE_OPTIONS.map((opt) => (
                     <DropdownMenuItem
-                      key={`${r.type}-${r.id}`}
-                      onClick={() =>
-                        attachRecord({
-                          id: r.id,
-                          type: r.type,
-                          name: r.name,
-                          subtitle: r.subtitle,
-                        })
-                      }
-                      className="text-xs cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-300 flex flex-col items-start py-2"
+                      key={opt.value}
+                      onClick={() => setSessionType(opt.value)}
+                      className="text-xs cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-300"
                     >
-                      <span className="font-semibold">{r.name}</span>
-                      <span className="text-[10px] text-slate-400">{r.subtitle}</span>
+                      {opt.label}
                     </DropdownMenuItem>
-                  ))
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-          {/* 3. Mode Segmented Pill */}
-          <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-              Mode
-            </label>
-            <div className="h-10 bg-[#0d2138] border border-white/10 rounded-lg p-1 flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => toast.info("Live audio microphone stream will be enabled in Build 2.")}
-                className="flex-1 h-full rounded text-[11px] font-bold transition-all text-slate-500 hover:text-slate-300 cursor-pointer"
-                title="Coming in Build 2"
-              >
-                Live Call
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("TEST")}
-                className={`flex-1 h-full rounded text-[11px] font-bold transition-all cursor-pointer ${
-                  session.mode === "TEST"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Test Mode
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("SIMULATOR")}
-                className={`flex-1 h-full rounded text-[11px] font-bold transition-all cursor-pointer ${
-                  session.mode === "SIMULATOR"
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-extrabold shadow-sm"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Simulator
-              </button>
+            {/* 2. Attach To CRM Record */}
+            <div className="w-full sm:w-64">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Attach To Record
+              </label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-6 h-6 rounded-full bg-cyan-600/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center text-[10px] font-bold shrink-0">
+                        {session.attachedName
+                          ? session.attachedName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase()
+                          : "AJ"}
+                      </div>
+                      <div className="truncate text-left">
+                        <p className="font-semibold text-xs leading-none truncate">
+                          {session.attachedName || "Avery Jenkins"}
+                        </p>
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                          {session.attachedSubtitle || "Client • 9th Grade"}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-72 bg-[#0a1c30] border-white/15 text-white max-h-72 overflow-y-auto">
+                  <DropdownMenuLabel className="text-slate-400 text-xs">CRM Contacts & Leads</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  {attachableRecords.length === 0 ? (
+                    <DropdownMenuItem disabled className="text-xs text-slate-500">
+                      No records found
+                    </DropdownMenuItem>
+                  ) : (
+                    attachableRecords.map((r) => (
+                      <DropdownMenuItem
+                        key={`${r.type}-${r.id}`}
+                        onClick={() =>
+                          attachRecord({
+                            id: r.id,
+                            type: r.type,
+                            name: r.name,
+                            subtitle: r.subtitle,
+                          })
+                        }
+                        className="text-xs cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-300 flex flex-col items-start py-2"
+                      >
+                        <span className="font-semibold">{r.name}</span>
+                        <span className="text-[10px] text-slate-400">{r.subtitle}</span>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
-          {/* 4. Action & Timer */}
-          <div className="flex items-center justify-between sm:justify-end gap-3">
-            <div className="text-right">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Duration
+          {/* Right: Duration Counter & Status Chip */}
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Session Duration
               </span>
-              <span className="text-lg font-mono font-bold text-white tracking-wider">
-                {formatDuration(session.durationSeconds)}
+              <div className="h-10 px-3.5 bg-[#061524] border border-cyan-500/20 rounded-lg flex items-center justify-center min-w-[96px] shadow-inner">
+                <span className="text-base font-mono font-bold text-cyan-300 tracking-wider drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]">
+                  {formatDuration(session.durationSeconds)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tier 2: Interactive Deck (Mode, Mic Speaker, Device & Play/Pause/Start Controls) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          {/* Left: Mode Selection + Mic Speaker + Mic Device */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Mode Segmented Pill */}
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Advocacy Mode
               </span>
+              <div className="h-10 bg-[#0d2138] border border-white/10 rounded-lg p-1 flex items-center gap-1 min-w-[280px]">
+                <button
+                  type="button"
+                  onClick={() => setMode("LIVE")}
+                  className={`flex-1 h-full px-3 rounded text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    session.mode === "LIVE"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-extrabold shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Mic className="w-3 h-3" />
+                  Live Mic
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("TEST")}
+                  className={`flex-1 h-full px-2.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                    session.mode === "TEST"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-extrabold"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Test Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("SIMULATOR")}
+                  className={`flex-1 h-full px-2.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                    session.mode === "SIMULATOR"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-extrabold shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Simulator
+                </button>
+              </div>
             </div>
 
-            {session.status === "ACTIVE" ? (
-              <Button
-                onClick={handleStopListening}
-                className="h-10 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-rose-900/30 cursor-pointer"
-              >
-                <Square className="w-4 h-4 fill-white" />
-                Stop Listening
-              </Button>
+            {/* Mic Speaker Selector */}
+            <div className="w-36">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Mic Speaker
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-full h-10 px-3 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer">
+                    <span className="font-semibold truncate">{selectedSpeaker}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40 bg-[#0a1c30] border-white/15 text-white">
+                  {(["Parent", "School", "Advocate", "Other"] as SpeakerRole[]).map((r) => (
+                    <DropdownMenuItem
+                      key={r}
+                      onClick={() => setSelectedSpeaker(r)}
+                      className="text-xs cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-300"
+                    >
+                      {r}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Mic Device Selector */}
+            {audioDevices.length > 1 && (
+              <div className="w-40">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Audio Input
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="w-full h-10 px-2.5 rounded-lg bg-[#0d2138] border border-white/10 flex items-center justify-between text-xs text-white hover:border-cyan-500/40 transition-colors cursor-pointer truncate"
+                      title={audioDevices.find((d) => d.deviceId === selectedAudioDevice)?.label || "Select Microphone"}
+                    >
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Mic className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <span className="font-semibold truncate">
+                          {audioDevices.find((d) => d.deviceId === selectedAudioDevice)?.label.replace(/\(.*\)/, "").trim() || "Mic"}
+                        </span>
+                      </div>
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 bg-[#0a1c30] border-white/15 text-white text-xs">
+                    {audioDevices.map((d) => (
+                      <DropdownMenuItem
+                        key={d.deviceId}
+                        onClick={() => setSelectedAudioDevice(d.deviceId)}
+                        className={`text-xs cursor-pointer ${
+                          selectedAudioDevice === d.deviceId ? "bg-cyan-500/20 text-cyan-300 font-bold" : "hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="truncate">{d.label}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Audio Action Control Buttons (Start / Pause / Resume / Stop) */}
+          <div className="flex items-center gap-2 shrink-0">
+            {audioInputStatus === "listening" ? (
+              <>
+                <Button
+                  onClick={pauseListening}
+                  variant="outline"
+                  className="h-10 px-4 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 text-xs font-bold rounded-lg flex items-center gap-2 cursor-pointer shadow-sm transition-all shrink-0 whitespace-nowrap"
+                  title="Pause Listening"
+                >
+                  <Pause className="w-4 h-4 fill-amber-300" />
+                  Pause
+                </Button>
+                <Button
+                  onClick={handleEndSessionAndProcess}
+                  disabled={isProcessingEndSession}
+                  className="h-10 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-rose-950/60 border border-rose-400/80 cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                  title="End session, generate summary, and attach full transcript to student's notes"
+                >
+                  {isProcessingEndSession ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Processing & Attaching...
+                    </>
+                  ) : (
+                    <>
+                      <Square className="w-3.5 h-3.5 fill-white" />
+                      End Session & Process
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : audioInputStatus === "paused" ? (
+              <>
+                <Button
+                  onClick={resumeListening}
+                  className="h-10 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-cyan-900/40 cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  Resume
+                </Button>
+                <Button
+                  onClick={handleEndSessionAndProcess}
+                  disabled={isProcessingEndSession}
+                  className="h-10 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-rose-950/60 border border-rose-400/80 cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                  title="End session, generate summary, and attach full transcript to student's notes"
+                >
+                  {isProcessingEndSession ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Processing & Attaching...
+                    </>
+                  ) : (
+                    <>
+                      <Square className="w-3.5 h-3.5 fill-white" />
+                      End Session & Process
+                    </>
+                  )}
+                </Button>
+              </>
             ) : (
-              <Button
-                onClick={startSession}
-                className="h-10 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-900/30 cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-white" />
-                Start Listening
-              </Button>
+              <>
+                <Button
+                  onClick={async () => {
+                    await startListening();
+                  }}
+                  className="h-10 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-900/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0 whitespace-nowrap"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  Start Listening
+                </Button>
+                <Button
+                  onClick={handleEndSessionAndProcess}
+                  disabled={isProcessingEndSession}
+                  variant="outline"
+                  className="h-10 px-4 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-xs font-semibold rounded-lg flex items-center gap-2 transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
+                  title="End session and attach notes to student's file"
+                >
+                  {isProcessingEndSession ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-rose-400/30 border-t-rose-400 rounded-full animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Square className="w-3.5 h-3.5 fill-rose-400" />
+                      <span>End Session & Process</span>
+                    </>
+                  )}
+                </Button>
+              </>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── MAIN DUAL-PANEL WORKSPACE ── */}
-      <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
-        {/* ── LEFT COLUMN: LIVE TRANSCRIPT & SIMULATOR STREAM (7 Cols) ── */}
-        <div className="lg:col-span-6 xl:col-span-6 flex flex-col gap-3">
-          <div className="bg-[#08182b] border border-white/10 rounded-xl p-4 flex-1 flex flex-col shadow-xl">
-            {/* Column Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-sm font-bold text-white tracking-wide">Live Transcript</h2>
-                {session.status === "ACTIVE" ? (
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Listening...
-                  </span>
-                ) : (
-                  <span className="text-xs text-slate-500 font-medium">
-                    ({session.status.toLowerCase()})
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={clearTranscript}
-                  title="Clear transcript"
-                  className="text-xs text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setIsExpandTranscriptOpen(true)}
-                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1 hover:bg-white/5 px-2 py-1 rounded transition-colors cursor-pointer"
-                >
-                  Expand <Maximize2 className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-
-            {/* Transcript Messages Feed */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-3.5 max-h-[520px] pr-1.5">
-              {session.transcript.length === 0 ? (
-                <div className="text-center py-16 text-slate-500 space-y-2">
-                  <Radio className="w-8 h-8 mx-auto text-slate-600 animate-bounce" />
-                  <p className="text-sm font-semibold">Transcript is empty</p>
-                  <p className="text-xs text-slate-600">
-                    Use the Simulator controls below to inject speaker turns into the live conversation.
-                  </p>
+      {/* ── 1. THEMED LIVE ASSIST GUIDANCE (5 COLORED BLOCKS) ── */}
+      <div className="mt-4 space-y-3">
+        {/* Tier 1: Immediate Primary Guidance (Current Issue & Say This) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          {/* CARD 1: CURRENT ISSUE (RED/CORAL) - 5 Cols */}
+          <div className="lg:col-span-5 rounded-xl border border-rose-500/40 bg-gradient-to-b from-[#240c14] to-[#17080e] p-4 shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-400" />
+                  <span className="text-xs font-bold text-rose-400 uppercase tracking-wider">Current Issue</span>
                 </div>
-              ) : (
-                session.transcript.map((t) => {
-                  const cfg = SPEAKER_CONFIG[t.speakerRole] || SPEAKER_CONFIG.Other;
-                  const timeString = new Date(t.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-
-                  return (
-                    <div key={t.id} className="flex items-start gap-3 group">
-                      <div
-                        className={`w-8 h-8 rounded-full ${cfg.bg} ${cfg.text} border ${cfg.border} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}
-                      >
-                        {cfg.initial}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className={`font-bold ${cfg.text}`}>{cfg.label}</span>
-                          <span className="text-[10px] text-slate-500 font-mono">{timeString}</span>
-                        </div>
-                        <div className="bg-[#0e2238] border border-white/5 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 leading-relaxed shadow-sm">
-                          {t.text}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-              <div ref={transcriptBottomRef} />
-            </div>
-
-            {/* Audio Wave & Status Indicator */}
-            <div className="pt-2.5 pb-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-              <div className="flex items-center gap-2">
-                <div className="flex items-end gap-0.5 h-3">
-                  <span className="w-0.5 h-2.5 bg-cyan-400 animate-pulse" />
-                  <span className="w-0.5 h-3.5 bg-cyan-400 animate-pulse delay-75" />
-                  <span className="w-0.5 h-2 bg-cyan-400 animate-pulse delay-150" />
-                  <span className="w-0.5 h-3 bg-cyan-400 animate-pulse delay-100" />
-                </div>
-                <span className="text-slate-400">
-                  {isAnalyzing ? "First Mate analyzing turn..." : "Transcribing in real time..."}
-                </span>
+                <Badge className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5">
+                  {session.liveAssist?.currentIssuePriority || "High Priority"}
+                </Badge>
               </div>
-
-              <span className="text-[10px] text-slate-500 font-mono">
-                {session.transcript.length} turns recorded
-              </span>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                {session.liveAssist?.currentIssue || "Evaluation Refusal"}
+              </h3>
+              <p className="text-xs text-rose-200/80 mt-1 leading-relaxed">
+                {session.liveAssist?.currentIssueDescription ||
+                  "School is declining to conduct an evaluation despite parent concerns."}
+              </p>
             </div>
+          </div>
 
-            {/* ── EMBEDDED SIMULATOR MANUAL INPUT CONTROLS ── */}
-            <div className="mt-2 pt-3 border-t border-cyan-500/20 bg-[#071524] rounded-lg p-2.5">
+          {/* CARD 2: SAY THIS (TEAL/EMERALD) - 7 Cols */}
+          <div className="lg:col-span-7 rounded-xl border border-emerald-500/40 bg-gradient-to-b from-[#082220] to-[#051716] p-4 shadow-lg flex flex-col justify-between">
+            <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                  <Radio className="w-3 h-3 text-cyan-400" />
-                  Manual Simulator Turn Input
-                </span>
-                <span className="text-[9px] text-slate-400">Press Enter to Add</span>
-              </div>
-
-              <form onSubmit={handleAddTurn} className="space-y-2">
-                <div className="flex gap-2">
-                  <select
-                    value={simulatorSpeaker}
-                    onChange={(e) => setSimulatorSpeaker(e.target.value as SpeakerRole)}
-                    className="w-36 h-9 rounded-lg bg-[#0d2138] border border-white/10 text-xs text-white px-2 focus:outline-none focus:border-cyan-400 font-semibold cursor-pointer"
-                  >
-                    <option value="Parent">Parent</option>
-                    <option value="School">School</option>
-                    <option value="Advocate">Advocate (You)</option>
-                    <option value="Student">Student</option>
-                    <option value="Teacher">Teacher</option>
-                    <option value="Administrator">Administrator</option>
-                    <option value="Special Education Teacher">SpEd Teacher</option>
-                    <option value="SLP">SLP (Speech)</option>
-                    <option value="OT">OT (Occupational)</option>
-                    <option value="PT">PT (Physical)</option>
-                    <option value="BCBA">BCBA</option>
-                    <option value="Other">Other</option>
-                  </select>
-
-                  <Input
-                    value={simulatorText}
-                    onChange={(e) => setSimulatorText(e.target.value)}
-                    placeholder={`Type what ${simulatorSpeaker} says...`}
-                    className="flex-1 h-9 bg-[#0d2138] border-white/10 text-xs text-white placeholder:text-slate-500 focus-visible:ring-cyan-400"
-                  />
-
-                  <Button
-                    type="submit"
-                    disabled={!simulatorText.trim() || isAnalyzing}
-                    className="h-9 px-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-xs flex items-center gap-1 cursor-pointer shrink-0"
-                  >
-                    {isAnalyzing ? (
-                      <span className="text-xs">Thinking...</span>
-                    ) : (
-                      <>
-                        Add <ArrowRight className="w-3 h-3" />
-                      </>
-                    )}
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Say This</span>
+                  {isRephrasing && (
+                    <span className="text-[10px] text-emerald-400 animate-pulse font-mono flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Adapting tone...
+                    </span>
+                  )}
                 </div>
-
-                {/* Quick Simulation Preset Chips for Instant 1-Click Verification */}
-                <div className="flex items-center gap-1.5 pt-1 overflow-x-auto text-[10px]">
-                  <span className="text-slate-500 font-bold shrink-0">Scenarios:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSimulatorSpeaker("School");
-                      setSimulatorText("His grades are passing, so we don't believe an evaluation is necessary.");
-                    }}
-                    className="px-2 py-1 rounded bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/30 whitespace-nowrap cursor-pointer"
-                    title="Scenario 1: Evaluation Refusal"
-                  >
-                    1. Eval Refusal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSimulatorSpeaker("School");
-                      setSimulatorText("We're recommending reducing speech from 60 minutes to 30 minutes.");
-                    }}
-                    className="px-2 py-1 rounded bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 whitespace-nowrap cursor-pointer"
-                    title="Scenario 2: Service Reduction"
-                  >
-                    2. Service Reduction
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSimulatorSpeaker("School");
-                      setSimulatorText("Yes, we can put transition warnings and visual schedules into the IEP.");
-                    }}
-                    className="px-2 py-1 rounded bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 whitespace-nowrap cursor-pointer"
-                    title="Scenario 3: Team Commitment"
-                  >
-                    3. Commitment
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSimulatorSpeaker("School");
-                      setSimulatorText("We haven't received an evaluation request.");
-                    }}
-                    className="px-2 py-1 rounded bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30 whitespace-nowrap cursor-pointer"
-                    title="Scenario 4: Timeline Conflict with Earlier Parent Statement"
-                  >
-                    4. Memory Conflict
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        {/* ── RIGHT COLUMN: 5 THEMED LIVE ASSIST GUIDANCE CARDS (6 Cols) ── */}
-        <div className="lg:col-span-6 xl:col-span-6 space-y-3 flex flex-col justify-between">
-          {/* Active Discussion Thread & Unresolved Threads Indicator */}
-          {session.threads && session.threads.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-[#071728] border border-white/10 text-xs shadow-sm">
-              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                <Layers className="w-3 h-3 text-cyan-400" /> Current Thread:
-              </span>
-              {session.threads
-                .filter((t) => t.status === "active")
-                .map((t) => (
-                  <Badge key={t.id} className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold">
-                    {t.name}
-                  </Badge>
-                ))}
-              {session.threads
-                .filter((t) => t.status === "open")
-                .slice(0, 2)
-                .map((t) => (
-                  <Badge key={t.id} variant="outline" className="bg-white/5 text-slate-300 border-white/10 text-[10px]">
-                    Open: {t.name}
-                  </Badge>
-                ))}
-            </div>
-          )}
-
-          {/* Conflict Alert Banner (Test Scenario 4: Cross-Turn Rolling Memory Conflict) */}
-          {session.conflicts &&
-            session.conflicts
-              .filter((c) => !c.resolved)
-              .map((conflict) => (
-                <div
-                  key={conflict.id}
-                  className="rounded-xl border border-amber-500/60 bg-gradient-to-r from-[#2a1708] to-[#1c0f05] p-3.5 shadow-lg flex items-start justify-between gap-3 animate-in fade-in"
+                <button
+                  onClick={() => copyToClipboard(session.liveAssist?.sayThis || "", "Suggested phrasing")}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 transition-all cursor-pointer"
                 >
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/40">
-                          Possible Conflict Detected
-                        </span>
-                        <span className="text-xs font-semibold text-amber-200">
-                          {conflict.title || "Contradiction in Session"}
-                        </span>
-                      </div>
-                      <p className="text-xs font-medium text-white mt-1 leading-relaxed">
-                        {conflict.message}
-                      </p>
-                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-black/40 p-2 rounded border border-white/5">
-                        <div>
-                          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Earlier Statement:</span>
-                          <span className="text-amber-200 italic">"{conflict.earlierStatement}"</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Current Statement:</span>
-                          <span className="text-amber-200 italic">"{conflict.currentStatement}"</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => dismissConflict(conflict.id)}
-                    className="text-slate-400 hover:text-white p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-                    title="Dismiss Conflict Alert"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-
-          {/* CARD 1: CURRENT ISSUE (RED/CORAL) */}
-          <div className="rounded-xl border border-rose-500/40 bg-gradient-to-b from-[#240c14] to-[#17080e] p-4 shadow-lg">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-400" />
-                <span className="text-xs font-bold text-rose-400 uppercase tracking-wider">Current Issue</span>
+                  <Copy className="w-3 h-3" /> Copy
+                </button>
               </div>
-              <Badge className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5">
-                {session.liveAssist?.currentIssuePriority || "High Priority"}
-              </Badge>
+              <p className="text-sm font-semibold text-emerald-100 leading-relaxed italic">
+                "{session.liveAssist?.sayThis || "What data is the team relying on to determine that an evaluation is not necessary?"}"
+              </p>
             </div>
-            <h3 className="text-base font-bold text-white tracking-tight">
-              {session.liveAssist?.currentIssue || "Evaluation Refusal"}
-            </h3>
-            <p className="text-xs text-rose-200/80 mt-1 leading-relaxed">
-              {session.liveAssist?.currentIssueDescription ||
-                "School is declining to conduct an evaluation despite parent concerns."}
-            </p>
-          </div>
-
-          {/* CARD 2: SAY THIS (TEAL/EMERALD) */}
-          <div className="rounded-xl border border-emerald-500/40 bg-gradient-to-b from-[#082220] to-[#051716] p-4 shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Say This</span>
-                {isRephrasing && (
-                  <span className="text-[10px] text-emerald-400 animate-pulse font-mono flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Adapting tone...
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => copyToClipboard(session.liveAssist?.sayThis || "", "Suggested phrasing")}
-                className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 transition-all cursor-pointer"
-              >
-                <Copy className="w-3 h-3" /> Copy
-              </button>
-            </div>
-            <p className="text-sm font-semibold text-emerald-100 leading-relaxed italic">
-              "{session.liveAssist?.sayThis || "What data is the team relying on to determine that an evaluation is not necessary?"}"
-            </p>
 
             {/* Quick Actions for Say This */}
             <div className="mt-3 pt-2.5 border-t border-emerald-500/20 flex flex-wrap items-center gap-1.5 text-[10px]">
@@ -880,192 +845,632 @@ export default function FirstMate() {
               </button>
             </div>
           </div>
+        </div>
 
+        {/* Tier 2: Supporting Analytical Blocks (Ask Next, Why It Matters, Related Sources) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* CARD 3: ASK NEXT (BLUE) */}
-          <div className="rounded-xl border border-sky-500/40 bg-gradient-to-b from-[#081c30] to-[#051322] p-4 shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-sky-400" />
-                <span className="text-xs font-bold text-sky-400 uppercase tracking-wider">Ask Next</span>
+          <div className="rounded-xl border border-sky-500/40 bg-gradient-to-b from-[#081c30] to-[#051322] p-4 shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-sky-400" />
+                  <span className="text-xs font-bold text-sky-400 uppercase tracking-wider">Ask Next</span>
+                </div>
+                <button
+                  onClick={() =>
+                    copyToClipboard(
+                      (session.liveAssist?.askNext || []).join("\n"),
+                      "Follow-up questions"
+                    )
+                  }
+                  className="flex items-center gap-1 text-[11px] font-semibold text-sky-400 hover:text-sky-300 hover:bg-sky-500/20 px-2 py-0.5 rounded border border-sky-500/30 transition-all cursor-pointer"
+                >
+                  <Copy className="w-3 h-3" /> Copy
+                </button>
               </div>
-              <button
-                onClick={() =>
-                  copyToClipboard(
-                    (session.liveAssist?.askNext || []).join("\n"),
-                    "Follow-up questions"
-                  )
-                }
-                className="flex items-center gap-1 text-[11px] font-semibold text-sky-400 hover:text-sky-300 hover:bg-sky-500/20 px-2 py-0.5 rounded border border-sky-500/30 transition-all cursor-pointer"
-              >
-                <Copy className="w-3 h-3" /> Copy
-              </button>
+              <ul className="space-y-1.5 text-xs text-sky-100 leading-relaxed">
+                {(session.liveAssist?.askNext && session.liveAssist.askNext.length > 0
+                  ? session.liveAssist.askNext
+                  : [
+                      "When did you last review his progress data?",
+                      "What specific measures show no educational impact?",
+                      "Have you considered a full and individual evaluation in all areas of suspected need?",
+                    ]
+                ).map((q, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-sky-400 font-bold">•</span>
+                    <span>{q}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="space-y-1.5 text-xs text-sky-100 leading-relaxed">
-              {(session.liveAssist?.askNext && session.liveAssist.askNext.length > 0
-                ? session.liveAssist.askNext
-                : [
-                    "When did you last review his progress data?",
-                    "What specific measures show no educational impact?",
-                    "Have you considered a full and individual evaluation in all areas of suspected need?",
-                  ]
-              ).map((q, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-sky-400 font-bold">•</span>
-                  <span>{q}</span>
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* CARD 4: WHY IT MATTERS (PURPLE) */}
-          <div className="rounded-xl border border-purple-500/40 bg-gradient-to-b from-[#180e2e] to-[#0f091f] p-4 shadow-lg">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Lightbulb className="w-4 h-4 text-purple-400" />
-              <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Why It Matters</span>
+          <div className="rounded-xl border border-purple-500/40 bg-gradient-to-b from-[#180e2e] to-[#0f091f] p-4 shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Lightbulb className="w-4 h-4 text-purple-400" />
+                <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Why It Matters</span>
+              </div>
+              <p className="text-xs text-purple-200/90 leading-relaxed">
+                {session.liveAssist?.whyItMatters ||
+                  "Parents have the right to request an evaluation at any time. The school must consider the request and cannot deny it without a proper review of all available data."}
+              </p>
             </div>
-            <p className="text-xs text-purple-200/90 leading-relaxed">
-              {session.liveAssist?.whyItMatters ||
-                "Parents have the right to request an evaluation at any time. The school must consider the request and cannot deny it without a proper review of all available data."}
-            </p>
           </div>
 
           {/* CARD 5: RELATED SOURCES (AMBER/GOLD) */}
-          <div className="rounded-xl border border-amber-500/40 bg-gradient-to-b from-[#241a08] to-[#171005] p-4 shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Related Sources</span>
+          <div className="rounded-xl border border-amber-500/40 bg-gradient-to-b from-[#241a08] to-[#171005] p-4 shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Related Sources</span>
+                </div>
+                <button
+                  onClick={() => setShowWorkingMemory(!showWorkingMemory)}
+                  className="text-[10px] text-amber-300 hover:text-amber-200 underline cursor-pointer"
+                >
+                  {showWorkingMemory ? "Hide Memory" : "Working Memory"}
+                </button>
               </div>
-              <button
-                onClick={() => setShowWorkingMemory(!showWorkingMemory)}
-                className="text-[10px] text-amber-300 hover:text-amber-200 underline cursor-pointer"
-              >
-                {showWorkingMemory ? "Hide Memory" : "Working Memory"}
-              </button>
-            </div>
-            <div className="space-y-1.5 text-xs">
-              {(session.liveAssist?.sources && session.liveAssist.sources.length > 0
-                ? session.liveAssist.sources
-                : [
-                    { title: "IDEA § 300.301 – Initial Evaluations", url: "https://sites.ed.gov/idea/regs/b/d/300.301", isVerified: true },
-                    { title: "Parental Rights – Requesting an Evaluation", url: "https://www.parentcenterhub.org/evaluation/", isVerified: true },
-                  ]
-              ).map((src, idx) => (
-                <div key={idx} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-2">
-                    <span className="text-amber-400 font-bold">•</span>
-                    {src.url ? (
-                      <a
-                        href={src.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-amber-300 hover:text-amber-200 underline flex items-center gap-1 font-medium"
-                      >
-                        {src.title} <ExternalLink className="w-3 h-3" />
-                      </a>
+              <div className="space-y-1.5 text-xs">
+                {(session.liveAssist?.sources && session.liveAssist.sources.length > 0
+                  ? session.liveAssist.sources
+                  : [
+                      { title: "IDEA § 300.301 – Initial Evaluations", url: "https://sites.ed.gov/idea/regs/b/d/300.301", isVerified: true },
+                      { title: "Parental Rights – Requesting an Evaluation", url: "https://www.parentcenterhub.org/evaluation/", isVerified: true },
+                    ]
+                ).map((src, idx) => (
+                  <div key={idx} className="flex items-center justify-between group">
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-400 font-bold">•</span>
+                      {src.url ? (
+                        <a
+                          href={src.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-amber-300 hover:text-amber-200 underline flex items-center gap-1 font-medium"
+                        >
+                          {src.title} <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-amber-200 font-medium">{src.title}</span>
+                      )}
+                    </div>
+                    {src.isVerified ? (
+                      <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[9px] px-1">Verified</Badge>
                     ) : (
-                      <span className="text-amber-200 font-medium">{src.title}</span>
+                      <Badge className="bg-amber-500/20 text-amber-300 border-none text-[9px] px-1">Source Needed</Badge>
                     )}
                   </div>
-                  {src.isVerified ? (
-                    <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[9px] px-1">Verified</Badge>
-                  ) : (
-                    <Badge className="bg-amber-500/20 text-amber-300 border-none text-[9px] px-1">Source Needed</Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Working Memory Inspector Drawer (Optional toggle) */}
-            {showWorkingMemory && (
-              <div className="mt-3 pt-2.5 border-t border-amber-500/20 text-[11px] text-amber-200/90 space-y-1 bg-black/30 p-2.5 rounded-lg">
-                <p className="font-bold text-amber-400 text-xs">Working Memory State:</p>
-                <p><span className="text-slate-400">Student:</span> {session.sessionState.studentName || "Avery Jenkins"}</p>
-                <p><span className="text-slate-400">Current Topic:</span> {session.sessionState.currentTopic || "Evaluation"}</p>
-                <p><span className="text-slate-400">Dispute:</span> {session.sessionState.currentDispute || "Evaluation Refusal"}</p>
-                <p><span className="text-slate-400">Suspected Needs:</span> {(session.sessionState.suspectedDisabilities || []).join(", ") || "Reading, Anxiety"}</p>
+                ))}
               </div>
+
+              {/* Working Memory Inspector Drawer (Optional toggle) */}
+              {showWorkingMemory && (
+                <div className="mt-3 pt-2.5 border-t border-amber-500/20 text-[11px] text-amber-200/90 space-y-1 bg-black/30 p-2.5 rounded-lg">
+                  <p className="font-bold text-amber-400 text-xs">Working Memory State:</p>
+                  <p><span className="text-slate-400">Student:</span> {session.sessionState.studentName || "Avery Jenkins"}</p>
+                  <p><span className="text-slate-400">Current Topic:</span> {session.sessionState.currentTopic || "Evaluation"}</p>
+                  <p><span className="text-slate-400">Dispute:</span> {session.sessionState.currentDispute || "Evaluation Refusal"}</p>
+                  <p><span className="text-slate-400">Suspected Needs:</span> {(session.sessionState.suspectedDisabilities || []).join(", ") || "Reading, Anxiety"}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2. LIVE TRANSCRIPT & SIMULATOR STREAM (BELOW COLORED BLOCKS) ── */}
+      <div className="mt-4 bg-[#08182b] border border-white/10 rounded-xl p-4 flex flex-col shadow-xl">
+        {/* Column Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-sm font-bold text-white tracking-wide">Live Transcript</h2>
+            {microphoneDiagnostics.listeningStatus === "LISTENING" ? (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold tracking-wide">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  LISTENING
+                </span>
+                <button
+                  type="button"
+                  onClick={handleStop}
+                  className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm border border-rose-400/60 transition-all cursor-pointer active:scale-95"
+                  title="Stop recording and end session"
+                >
+                  <Square className="w-2.5 h-2.5 fill-white" />
+                  Stop
+                </button>
+              </div>
+            ) : microphoneDiagnostics.listeningStatus === "CONNECTING TO TRANSCRIPTION" ? (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-xs text-cyan-400 font-bold tracking-wide">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  CONNECTING
+                </span>
+                <button
+                  type="button"
+                  onClick={handleStop}
+                  className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm border border-rose-400/60 transition-all cursor-pointer active:scale-95"
+                  title="Cancel and stop recording"
+                >
+                  <Square className="w-2.5 h-2.5 fill-white" />
+                  Stop
+                </button>
+              </div>
+            ) : audioInputStatus === "paused" ? (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-xs text-amber-400 font-bold tracking-wide">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  PAUSED
+                </span>
+                <button
+                  type="button"
+                  onClick={handleStop}
+                  className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm border border-rose-400/60 transition-all cursor-pointer active:scale-95"
+                  title="Stop recording and end session"
+                >
+                  <Square className="w-2.5 h-2.5 fill-white" />
+                  Stop
+                </button>
+              </div>
+            ) : microphoneDiagnostics.listeningStatus === "MICROPHONE READY" ? (
+              <span className="flex items-center gap-1.5 text-xs text-amber-400 font-bold tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                MICROPHONE READY
+              </span>
+            ) : microphoneDiagnostics.listeningStatus === "TRANSCRIPTION ERROR" ? (
+              <span className="flex items-center gap-1.5 text-xs text-rose-400 font-bold tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+                TRANSCRIPTION ERROR
+              </span>
+            ) : (
+              <span className="text-xs text-slate-500 font-medium">
+                ({session.status.toLowerCase()})
+              </span>
             )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Collapse/Expand Toggle Button (2-Line Mode vs Full Transcript) */}
+            <button
+              type="button"
+              onClick={toggleTranscriptCollapsed}
+              title={
+                isTranscriptCollapsed
+                  ? "Expand to full scrollable transcript"
+                  : "Collapse to 2-line preview mode"
+              }
+              className={`text-xs px-2.5 py-1 rounded border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${
+                isTranscriptCollapsed
+                  ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30"
+                  : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {isTranscriptCollapsed ? (
+                <>
+                  <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>2-Line View ({session.transcript.length})</span>
+                </>
+              ) : (
+                <>
+                  <ChevronUp className="w-3.5 h-3.5" />
+                  <span>Collapse (2 Lines)</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (session.transcript.length === 0) {
+                  toast.info("Transcript is currently empty");
+                  return;
+                }
+                const fullText = session.transcript
+                  .map((t) => {
+                    const time = new Date(t.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                    return `[${time}] ${t.speakerRole}: ${t.text}`;
+                  })
+                  .join("\n\n");
+                copyToClipboard(fullText, "full transcript");
+                setIsCopiedTranscript(true);
+                setTimeout(() => setIsCopiedTranscript(false), 2000);
+              }}
+              title="Copy full live transcript to clipboard"
+              className="text-xs text-slate-300 hover:text-white flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1 rounded transition-colors cursor-pointer"
+            >
+              {isCopiedTranscript ? (
+                <>
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span className="text-emerald-300 font-semibold text-[11px]">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3 text-slate-300" />
+                  <span className="text-[11px] font-medium">Copy</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={clearTranscript}
+              title="Clear transcript"
+              className="text-xs text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setIsExpandTranscriptOpen(true)}
+              className="text-xs text-slate-400 hover:text-white flex items-center gap-1 hover:bg-white/5 px-2 py-1 rounded transition-colors cursor-pointer"
+            >
+              Expand <Maximize2 className="w-3 h-3" />
+            </button>
           </div>
         </div>
 
-        {/* Development AI Provenance & Validated Structured AI Output (Dev / Test Mode Only) */}
-        {(import.meta.env.DEV || session.mode !== "LIVE") && (
-          <div className="mt-3 rounded-lg border border-white/10 bg-[#061524] p-3 text-xs font-mono space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold text-slate-300">Live Assist AI Provenance:</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                    (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: OPENAI"
-                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                      : (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: FALLBACK"
-                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                      : (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: MOCK"
-                      ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
-                      : "bg-rose-500/20 text-rose-300 border-rose-500/40"
-                  }`}
-                >
-                  {session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK"}
-                </span>
-                <span className="text-[11px] text-slate-400">
-                  {session.liveAssist?.provenanceMeta?.provider || "Initial Scenario Template"} •{" "}
-                  {session.liveAssist?.provenanceMeta?.model || "scenario-1"}
-                </span>
+        {/* MICROPHONE ACCESS REQUIRED BANNER */}
+        {audioInputStatus === "permission_denied" && (
+          <div className="mb-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <MicOff className="w-4 h-4 text-rose-400 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-rose-300">MICROPHONE ACCESS REQUIRED</p>
+                <p className="text-[11px] text-slate-400">
+                  Microphone permission is required for live listening. Please allow access in browser settings.
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowLiveAssistTrace(!showLiveAssistTrace)}
-                className="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
-              >
-                {showLiveAssistTrace ? "Hide Structured Output" : "Raw Structured AI Output"}
-              </button>
             </div>
-
-            {showLiveAssistTrace && (
-              <div className="mt-2 pt-2 border-t border-white/10 space-y-2 text-[11px] text-slate-300">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div>
-                    <span className="text-slate-500">Latency:</span> {session.liveAssist?.provenanceMeta?.latencyMs || 0} ms
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Confidence:</span> {session.liveAssist?.confidence || "High"}
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Procedure:</span> firstMate.fastAssist
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Updated:</span>{" "}
-                    {new Date(session.liveAssist?.provenanceMeta?.timestamp || Date.now()).toLocaleTimeString()}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-500 text-[10px]">Validated Application Output:</span>
-                  <pre className="mt-1 p-2 bg-black/50 rounded text-[10px] text-slate-300 overflow-x-auto max-h-48">
-                    {JSON.stringify(
-                      {
-                        currentIssue: session.liveAssist?.currentIssue,
-                        sayThis: session.liveAssist?.sayThis,
-                        askNext: session.liveAssist?.askNext,
-                        alert: session.alerts?.[0]?.message || null,
-                        detections: [
-                          ...session.requests.map((r) => ({ type: "REQUEST", summary: r.summary })),
-                          ...session.refusals.map((r) => ({ type: "REFUSAL", summary: r.summary })),
-                        ],
-                        sessionStateUpdates: session.sessionState,
-                        confidence: session.liveAssist?.confidence,
-                      },
-                      null,
-                      2
-                    )}
-                  </pre>
-                </div>
-              </div>
-            )}
+            <Button
+              size="sm"
+              onClick={retryMicrophonePermission}
+              className="h-8 px-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded cursor-pointer shrink-0"
+            >
+              Retry Access
+            </Button>
           </div>
         )}
+
+        {/* Transcript Messages Feed */}
+        <div
+          className={`overflow-y-auto py-2.5 space-y-2.5 transition-all duration-300 pr-1.5 ${
+            isTranscriptCollapsed ? "max-h-[175px]" : "max-h-[420px]"
+          }`}
+        >
+          {/* Banner when collapsed and earlier turns are hidden */}
+          {isTranscriptCollapsed && session.transcript.length > 2 && (
+            <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-cyan-950/40 border border-cyan-500/25 text-[11px] text-cyan-300 animate-in fade-in">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                Showing latest 2 turns ({session.transcript.length - 2} earlier {session.transcript.length - 2 === 1 ? "turn" : "turns"} hidden)
+              </span>
+              <button
+                type="button"
+                onClick={toggleTranscriptCollapsed}
+                className="text-cyan-300 hover:text-white underline font-semibold flex items-center gap-0.5 cursor-pointer text-[10px]"
+              >
+                Expand full view <ChevronDown className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          {session.transcript.length === 0 && !interimTranscript ? (
+            <div className="text-center py-10 text-slate-500 space-y-2">
+              <Radio className="w-8 h-8 mx-auto text-slate-600 animate-bounce" />
+              <p className="text-sm font-semibold">Transcript is empty</p>
+              <p className="text-xs text-slate-600">
+                Press Start Listening or use the Simulator controls below to inject speaker turns.
+              </p>
+            </div>
+          ) : (
+            (isTranscriptCollapsed ? session.transcript.slice(-2) : session.transcript).map((t) => {
+              const cfg = SPEAKER_CONFIG[t.speakerRole] || SPEAKER_CONFIG.Other;
+              const timeString = new Date(t.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+
+              return (
+                <div key={t.id} className="flex items-start gap-3 group">
+                  <div
+                    className={`w-8 h-8 rounded-full ${cfg.bg} ${cfg.text} border ${cfg.border} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}
+                  >
+                    {cfg.initial}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${cfg.text}`}>{cfg.label}</span>
+                        {t.source === "microphone" && (
+                          <Badge variant="outline" className="bg-cyan-500/10 text-cyan-300 border-cyan-500/30 text-[9px] px-1 py-0 font-mono">
+                            MIC
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-slate-500 font-mono">{timeString}</span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(t.text, `quote from ${cfg.label}`)}
+                          className="text-slate-500 hover:text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded cursor-pointer"
+                          title="Copy text to clipboard"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-200 leading-relaxed bg-[#0d2138]/60 p-2.5 rounded-lg border border-white/5">
+                      {t.text}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {/* Live Interim Transcript Fragment Display */}
+          {interimTranscript && (
+            <div className="flex items-start gap-3 animate-pulse">
+              <div
+                className={`w-8 h-8 rounded-full ${
+                  (SPEAKER_CONFIG[selectedSpeaker] || SPEAKER_CONFIG.Other).bg
+                } ${
+                  (SPEAKER_CONFIG[selectedSpeaker] || SPEAKER_CONFIG.Other).text
+                } border ${
+                  (SPEAKER_CONFIG[selectedSpeaker] || SPEAKER_CONFIG.Other).border
+                } flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}
+              >
+                {(SPEAKER_CONFIG[selectedSpeaker] || SPEAKER_CONFIG.Other).initial}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span
+                    className={`font-bold ${
+                      (SPEAKER_CONFIG[selectedSpeaker] || SPEAKER_CONFIG.Other).text
+                    }`}
+                  >
+                    {(SPEAKER_CONFIG[selectedSpeaker] || SPEAKER_CONFIG.Other).label} (Speaking...)
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 italic leading-relaxed bg-[#0d2138]/40 p-2.5 rounded-lg border border-white/5 border-dashed">
+                  {interimTranscript}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div ref={transcriptBottomRef} />
+        </div>
+
+        {/* Live Audio Telemetry Footer */}
+        <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[11px] text-slate-400">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              Active Speaker: <strong className="text-white ml-0.5">{selectedSpeaker}</strong>
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-400 font-mono text-[10px]">
+              Engine: {microphoneDiagnostics.transcriptionModel}
+            </span>
+          </div>
+
+          <span className="text-[10px] text-slate-500 font-mono">
+            {session.transcript.length} turns recorded
+          </span>
+        </div>
+
+        {/* ── EMBEDDED SIMULATOR MANUAL INPUT CONTROLS ── */}
+        <div className="mt-2 border-t border-cyan-500/20 bg-[#071524] rounded-lg p-2.5 transition-all">
+          <button
+            type="button"
+            onClick={toggleManualInputCollapsed}
+            className="w-full flex items-center justify-between group cursor-pointer focus:outline-none"
+            aria-expanded={!isManualInputCollapsed}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/90 group-hover:text-cyan-300 flex items-center gap-1.5 transition-colors">
+              <Radio className="w-3 h-3 text-cyan-400" />
+              Manual Simulator Turn Input
+              {isManualInputCollapsed && (
+                <span className="text-[9px] text-slate-500 normal-case font-normal ml-1">
+                  (collapsed)
+                </span>
+              )}
+            </span>
+            <div className="flex items-center gap-2">
+              {!isManualInputCollapsed && (
+                <span className="text-[9px] text-slate-400">Press Enter to Add</span>
+              )}
+              <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 group-hover:text-cyan-300 bg-cyan-950/40 hover:bg-cyan-900/50 px-2 py-0.5 rounded border border-cyan-500/30 transition-colors">
+                {isManualInputCollapsed ? (
+                  <>
+                    <span>Expand</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </>
+                ) : (
+                  <>
+                    <span>Collapse</span>
+                    <ChevronUp className="w-3 h-3" />
+                  </>
+                )}
+              </span>
+            </div>
+          </button>
+
+          {!isManualInputCollapsed && (
+            <form onSubmit={handleAddTurn} className="mt-2.5 space-y-2 pt-2 border-t border-white/5">
+              <div className="flex gap-2">
+                <select
+                  value={simulatorSpeaker}
+                  onChange={(e) => setSimulatorSpeaker(e.target.value as SpeakerRole)}
+                  className="w-36 h-9 rounded-lg bg-[#0d2138] border border-white/10 text-xs text-white px-2 focus:outline-none focus:border-cyan-400 font-semibold cursor-pointer"
+                >
+                  <option value="Parent">Parent</option>
+                  <option value="School">School</option>
+                  <option value="Advocate">Advocate (You)</option>
+                  <option value="Student">Student</option>
+                  <option value="Teacher">Teacher</option>
+                  <option value="Administrator">Administrator</option>
+                  <option value="Special Education Teacher">SpEd Teacher</option>
+                  <option value="SLP">SLP (Speech)</option>
+                  <option value="OT">OT (Occupational)</option>
+                  <option value="PT">PT (Physical)</option>
+                  <option value="BCBA">BCBA</option>
+                  <option value="Other">Other</option>
+                </select>
+
+                <Input
+                  value={simulatorText}
+                  onChange={(e) => setSimulatorText(e.target.value)}
+                  placeholder={`Type what ${simulatorSpeaker} says...`}
+                  className="flex-1 h-9 bg-[#0d2138] border-white/10 text-xs text-white placeholder:text-slate-500 focus-visible:ring-cyan-400"
+                />
+
+                <Button
+                  type="submit"
+                  disabled={!simulatorText.trim() || isAnalyzing}
+                  className="h-9 px-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  {isAnalyzing ? (
+                    <span className="text-xs">Thinking...</span>
+                  ) : (
+                    <>
+                      Add <ArrowRight className="w-3 h-3" />
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Quick Simulation Preset Chips for Instant 1-Click Verification */}
+              <div className="flex items-center gap-1.5 pt-1 overflow-x-auto text-[10px]">
+                <span className="text-slate-500 font-bold shrink-0">Scenarios:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimulatorSpeaker("School");
+                    setSimulatorText("His grades are passing, so we don't believe an evaluation is necessary.");
+                  }}
+                  className="px-2 py-1 rounded bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/30 whitespace-nowrap cursor-pointer"
+                  title="Scenario 1: Evaluation Refusal"
+                >
+                  1. Eval Refusal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimulatorSpeaker("School");
+                    setSimulatorText("We're recommending reducing speech from 60 minutes to 30 minutes.");
+                  }}
+                  className="px-2 py-1 rounded bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 whitespace-nowrap cursor-pointer"
+                  title="Scenario 2: Service Reduction"
+                >
+                  2. Service Reduction
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimulatorSpeaker("School");
+                    setSimulatorText("Yes, we can put transition warnings and visual schedules into the IEP.");
+                  }}
+                  className="px-2 py-1 rounded bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 whitespace-nowrap cursor-pointer"
+                  title="Scenario 3: Team Commitment"
+                >
+                  3. Commitment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimulatorSpeaker("School");
+                    setSimulatorText("We haven't received an evaluation request.");
+                  }}
+                  className="px-2 py-1 rounded bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30 whitespace-nowrap cursor-pointer"
+                  title="Scenario 4: Timeline Conflict with Earlier Parent Statement"
+                >
+                  4. Memory Conflict
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
 
+      {/* ── 3. CURRENT THREAD & CONFLICT MONITORING (BELOW TRANSCRIPT) ── */}
+      {(Boolean(session.threads && session.threads.length > 0) || Boolean(session.conflicts && session.conflicts.some((c) => !c.resolved))) && (
+        <div className="mt-4 space-y-2">
+          {/* Active Discussion Thread & Unresolved Threads Indicator */}
+          {session.threads && session.threads.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 rounded-xl bg-[#071728] border border-white/10 text-xs shadow-sm">
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-cyan-400" /> Current Thread:
+              </span>
+              {session.threads
+                .filter((t) => t.status === "active")
+                .map((t) => (
+                  <Badge key={t.id} className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold">
+                    {t.name}
+                  </Badge>
+                ))}
+              {session.threads
+                .filter((t) => t.status === "open")
+                .slice(0, 3)
+                .map((t) => (
+                  <Badge key={t.id} variant="outline" className="bg-white/5 text-slate-300 border-white/10 text-[10px]">
+                    Open: {t.name}
+                  </Badge>
+                ))}
+            </div>
+          )}
+
+          {/* Conflict Alert Banner */}
+          {session.conflicts &&
+            session.conflicts
+              .filter((c) => !c.resolved)
+              .map((conflict) => (
+                <div
+                  key={conflict.id}
+                  className="rounded-xl border border-amber-500/60 bg-gradient-to-r from-[#2a1708] to-[#170805] p-3.5 shadow-lg flex items-start justify-between gap-3"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/40">
+                          Possible Conflict Detected
+                        </span>
+                        <span className="text-xs font-semibold text-amber-200">
+                          {conflict.title || "Contradiction in Session"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium text-white mt-1 leading-relaxed">
+                        {conflict.message}
+                      </p>
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-black/40 p-2 rounded border border-white/5">
+                        <div>
+                          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Earlier Statement:</span>
+                          <span className="text-amber-200 italic">"{conflict.earlierStatement}"</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Current Statement:</span>
+                          <span className="text-amber-200 italic">"{conflict.currentStatement}"</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => dismissConflict(conflict.id)}
+                    className="text-slate-400 hover:text-white p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                    title="Dismiss Conflict Alert"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+        </div>
+      )} 
+      
       {/* ── BOTTOM ACTION BAR ── */}
       <div className="mt-4 bg-[#08182b] border border-white/10 rounded-xl p-3 shadow-xl space-y-3">
         {/* Ask First Mate Input & Fast Action Buttons */}
@@ -1152,104 +1557,186 @@ export default function FirstMate() {
           </div>
         </div>
 
-        {/* Ask First Mate Live Response Card (if queried) */}
-        {askAnswer && (
-          <div className="bg-[#0b2440] border border-cyan-500/30 rounded-lg p-3 text-xs flex flex-col gap-2 animate-in fade-in">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1 w-full">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-cyan-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> First Mate Copilot:
-                  </span>
-                  {/* Provenance Indicator Badge (Test / Dev Mode) */}
-                  {(import.meta.env.DEV || session.mode !== "LIVE") && (
-                    <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wide border ${
-                        (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: OPENAI"
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: FALLBACK"
-                          ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: MOCK"
-                          ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
-                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: RULE"
-                          ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
-                          : "bg-rose-500/20 text-rose-300 border-rose-500/40"
-                      }`}
-                    >
-                      {lastAskMeta?.provenance || "AI: FALLBACK"}
-                    </span>
-                  )}
-                  {(import.meta.env.DEV || session.mode !== "LIVE") && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAskTrace(!showAskTrace)}
-                      className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer ml-auto"
-                    >
-                      {showAskTrace ? "Hide Trace" : "AI Trace & Details"}
-                    </button>
-                  )}
-                </div>
-                <p className="text-slate-200 leading-relaxed whitespace-pre-line">{askAnswer}</p>
+        {/* Ask First Mate History & In-Session Response Feed */}
+        {((session.askHistory && session.askHistory.length > 0) || isAsking || askAnswer) && (
+          <div className="bg-[#0b2440] border border-cyan-500/30 rounded-lg p-3 text-xs flex flex-col gap-2.5 animate-in fade-in">
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-cyan-400 flex items-center gap-1.5 text-xs">
+                  <Sparkles className="w-3.5 h-3.5" /> First Mate Inquiries & Guidance
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  {session.askHistory?.length || 0} {session.askHistory?.length === 1 ? "inquiry" : "inquiries"}
+                </span>
               </div>
-              <button
-                onClick={() => setAskAnswer(null)}
-                className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer shrink-0"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Collapsible Developer Trace in Dev Mode */}
-            {showAskTrace && (import.meta.env.DEV || session.mode !== "LIVE") && (
-              <div className="mt-2 pt-2 border-t border-cyan-500/20 text-[11px] font-mono space-y-1 bg-[#061524] p-2.5 rounded border border-white/5">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-slate-300">
-                  <div>
-                    <span className="text-slate-500">Provider:</span>{" "}
-                    <span className="text-cyan-300 font-semibold">{lastAskMeta?.provider || "Local Fallback Heuristics"}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Model:</span>{" "}
-                    <span className="text-amber-300">{lastAskMeta?.model || "offline-heuristics"}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Latency:</span>{" "}
-                    <span className="text-emerald-300">{lastAskMeta?.latencyMs || 0} ms</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Procedure:</span>{" "}
-                    <span className="text-slate-200">firstMate.ask</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Timestamp:</span>{" "}
-                    <span className="text-slate-400">{new Date(lastAskMeta?.timestamp || Date.now()).toLocaleTimeString()}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Session ID:</span>{" "}
-                    <span className="text-slate-400 truncate">{session.sessionId}</span>
-                  </div>
-                </div>
-                {lastAskMeta?.rawStructuredOutput && (
-                  <div className="mt-2">
-                    <span className="text-slate-500 text-[10px]">Validated Structured Response:</span>
-                    <pre className="mt-1 p-2 bg-black/40 rounded text-[10px] text-slate-300 overflow-x-auto max-h-32">
-                      {JSON.stringify(lastAskMeta.rawStructuredOutput, null, 2)}
-                    </pre>
-                  </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBottomDiagnostics(true);
+                    const el = document.getElementById("ai-diagnostics");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer flex items-center gap-1"
+                  title="Scroll to technical AI trace and diagnostics at the bottom of the page"
+                >
+                  AI Trace & Details ↓
+                </button>
+                {session.askHistory && session.askHistory.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAskHistory}
+                    className="flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
+                    title="Clear Ask history for this session"
+                  >
+                    <Trash2 className="w-3 h-3" /> Clear History
+                  </button>
                 )}
               </div>
+            </div>
+
+            {/* In-Flight Inquiry Loader */}
+            {isAsking && (
+              <div className="p-2.5 rounded-md bg-cyan-950/60 border border-cyan-500/40 text-xs flex items-center gap-2 text-cyan-200 animate-pulse">
+                <Sparkles className="w-4 h-4 animate-spin text-cyan-400 shrink-0" />
+                <span className="font-medium">First Mate is analyzing transcript context and formulating guidance...</span>
+              </div>
             )}
+
+            {/* Q&A Feed (reverse-chronological with newest on top) */}
+            <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1 divide-y divide-white/5">
+              {(session.askHistory && session.askHistory.length > 0
+                ? [...session.askHistory].reverse()
+                : askAnswer
+                ? [
+                    {
+                      id: "current",
+                      question: askQuery || "In-Session Inquiry",
+                      answer: askAnswer,
+                      timestamp: Date.now(),
+                      provenance: lastAskMeta?.provenance || "AI: OPENAI",
+                    },
+                  ]
+                : []
+              ).map((entry, idx) => (
+                <div key={entry.id || idx} className="pt-2 first:pt-0 space-y-1.5">
+                  {/* Question Bubble */}
+                  <div className="flex items-start justify-between gap-2 text-[11px]">
+                    <div className="flex items-start gap-1.5 text-slate-300 font-semibold">
+                      <span className="text-cyan-400 font-mono text-[10px]">Q:</span>
+                      <span className="text-white">{entry.question}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 shrink-0">
+                      {new Date(entry.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+
+                  {/* Copilot Answer Card */}
+                  <div className="bg-[#07192b] border border-cyan-500/20 rounded-md p-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wide flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" /> First Mate Copilot:
+                        </span>
+                        {entry.provenance && (
+                          <span
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold tracking-wide border ${
+                              entry.provenance === "AI: OPENAI"
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                : entry.provenance === "AI: FALLBACK"
+                                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                : entry.provenance === "AI: MOCK"
+                                ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                                : "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                            }`}
+                          >
+                            {entry.provenance}
+                          </span>
+                        )}
+                        {idx === 0 && (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/30 text-cyan-200 border border-cyan-400/40">
+                            Latest
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          copyToClipboard(entry.answer, "First Mate response");
+                          setCopiedAskId(entry.id);
+                          setTimeout(() => setCopiedAskId(null), 2000);
+                        }}
+                        className="flex items-center gap-1 text-[10px] font-semibold text-cyan-300 hover:text-white bg-cyan-500/20 hover:bg-cyan-500/30 px-2 py-0.5 rounded border border-cyan-500/40 transition-all cursor-pointer shadow-sm ml-auto"
+                        title="Copy response to clipboard"
+                      >
+                        {copiedAskId === entry.id ? (
+                          <>
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                            <span className="text-emerald-300 font-bold">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-2.5 h-2.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-slate-200 leading-relaxed whitespace-pre-line text-xs">{entry.answer}</p>
+
+                    {entry.suggestedFollowUp && (
+                      <div className="mt-1 pt-1.5 border-t border-white/5 flex items-center gap-1.5 text-[11px] text-cyan-300/90">
+                        <span className="text-slate-400 text-[10px]">Suggested Follow-Up:</span>
+                        <button
+                          type="button"
+                          onClick={() => handleAskSubmit(undefined, entry.suggestedFollowUp || undefined)}
+                          className="hover:underline text-cyan-300 font-medium text-left cursor-pointer"
+                          title="Click to ask this follow-up inquiry"
+                        >
+                          "{entry.suggestedFollowUp}" →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Status Line Footer matching mockup */}
         <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              First Mate is listening
-            </span>
+            {microphoneDiagnostics.listeningStatus === "LISTENING" ? (
+              <span className="flex items-center gap-1.5 font-bold text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                LISTENING
+              </span>
+            ) : microphoneDiagnostics.listeningStatus === "CONNECTING TO TRANSCRIPTION" ? (
+              <span className="flex items-center gap-1.5 font-bold text-cyan-400">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                CONNECTING TO TRANSCRIPTION
+              </span>
+            ) : microphoneDiagnostics.listeningStatus === "MICROPHONE READY" ? (
+              <span className="flex items-center gap-1.5 font-bold text-amber-400">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                MICROPHONE READY
+              </span>
+            ) : microphoneDiagnostics.listeningStatus === "TRANSCRIPTION ERROR" ? (
+              <span className="flex items-center gap-1.5 font-bold text-rose-400">
+                <span className="w-2 h-2 rounded-full bg-rose-400" />
+                TRANSCRIPTION ERROR
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+                <span className="w-2 h-2 rounded-full bg-slate-500" />
+                STANDBY
+              </span>
+            )}
             <span className="text-slate-600">•</span>
-            <span className="text-slate-400">Speech-to-text powered by OpenAI</span>
+            <span className="text-slate-400">Speech-to-text powered by OpenAI ({microphoneDiagnostics.transcriptionModel})</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -1263,6 +1750,313 @@ export default function FirstMate() {
           </div>
         </div>
       </div>
+
+      {/* ── ADVANCED AI TRACE, PROVENANCE & DIAGNOSTICS INSPECTOR (Bottom of Page) ── */}
+      <section id="ai-diagnostics" className="mt-8 pt-6 border-t border-white/10 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#08182b] border border-white/10 rounded-xl p-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold text-white tracking-wide">
+                  AI Trace, Provenance & System Diagnostics
+                </h3>
+                <Badge className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] font-mono">
+                  {lastAskMeta?.provenance || session.liveAssist?.provenanceMeta?.provenance || "AI: STANDBY"}
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                OpenAI realtime transcription telemetry, Live Assist structured output, and rolling context memory inspection.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowBottomDiagnostics(!showBottomDiagnostics)}
+            className="text-xs font-semibold text-cyan-300 hover:text-white flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all cursor-pointer shrink-0 self-start sm:self-center"
+          >
+            <span>{showBottomDiagnostics ? "Hide Diagnostics" : "Inspect Diagnostics & Provenance"}</span>
+            {showBottomDiagnostics ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {showBottomDiagnostics && (
+          <div className="space-y-4 animate-in fade-in">
+            {/* Grid of Diagnostics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* 1. Live Assist AI Provenance Card */}
+              <div className="rounded-xl border border-white/10 bg-[#08182b] p-4 text-xs font-mono space-y-3 shadow-lg">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-slate-200">Live Assist AI Provenance:</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                        (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: OPENAI"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          : (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: FALLBACK"
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                          : (session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK") === "AI: MOCK"
+                          ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                          : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                      }`}
+                    >
+                      {session.liveAssist?.provenanceMeta?.provenance || "AI: MOCK"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowLiveAssistTrace(!showLiveAssistTrace)}
+                    className="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+                  >
+                    {showLiveAssistTrace ? "Hide JSON" : "Raw JSON Output"}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                  <div>
+                    <span className="text-slate-500">Provider:</span>{" "}
+                    <span className="text-cyan-300 font-semibold">{session.liveAssist?.provenanceMeta?.provider || "Initial Scenario Template"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Model:</span>{" "}
+                    <span className="text-amber-300 font-semibold">{session.liveAssist?.provenanceMeta?.model || "scenario-1"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Latency:</span>{" "}
+                    <span className="text-emerald-300 font-semibold">{session.liveAssist?.provenanceMeta?.latencyMs || 0} ms</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Confidence:</span>{" "}
+                    <span className="text-slate-200">{session.liveAssist?.confidence || "High"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Procedure:</span> firstMate.fastAssist
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Updated:</span>{" "}
+                    {new Date(session.liveAssist?.provenanceMeta?.timestamp || Date.now()).toLocaleTimeString()}
+                  </div>
+                </div>
+
+                {showLiveAssistTrace && (
+                  <div className="pt-2 border-t border-white/10">
+                    <span className="text-slate-500 text-[10px]">Validated Application Output:</span>
+                    <pre className="mt-1 p-2 bg-black/50 rounded text-[10px] text-slate-300 overflow-x-auto max-h-48">
+                      {JSON.stringify(
+                        {
+                          currentIssue: session.liveAssist?.currentIssue,
+                          sayThis: session.liveAssist?.sayThis,
+                          askNext: session.liveAssist?.askNext,
+                          alert: session.alerts?.[0]?.message || null,
+                          detections: [
+                            ...session.requests.map((r) => ({ type: "REQUEST", summary: r.summary })),
+                            ...session.refusals.map((r) => ({ type: "REFUSAL", summary: r.summary })),
+                          ],
+                          sessionStateUpdates: session.sessionState,
+                          confidence: session.liveAssist?.confidence,
+                        },
+                        null,
+                        2
+                      )}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Ask First Mate AI Trace Card */}
+              <div className="rounded-xl border border-white/10 bg-[#08182b] p-4 text-xs font-mono space-y-3 shadow-lg">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-slate-200">Ask First Mate Provenance:</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                        (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: OPENAI"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: FALLBACK"
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: MOCK"
+                          ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                          : (lastAskMeta?.provenance || "AI: FALLBACK") === "AI: RULE"
+                          ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                          : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                      }`}
+                    >
+                      {lastAskMeta?.provenance || "AI: STANDBY"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAskTrace(!showAskTrace)}
+                    className="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+                  >
+                    {showAskTrace ? "Hide JSON" : "Raw JSON Output"}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                  <div>
+                    <span className="text-slate-500">Provider:</span>{" "}
+                    <span className="text-cyan-300 font-semibold">{lastAskMeta?.provider || "Local Fallback Heuristics"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Model:</span>{" "}
+                    <span className="text-amber-300 font-semibold">{lastAskMeta?.model || "offline-heuristics"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Latency:</span>{" "}
+                    <span className="text-emerald-300 font-semibold">{lastAskMeta?.latencyMs || 0} ms</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Procedure:</span> firstMate.ask
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Timestamp:</span>{" "}
+                    {new Date(lastAskMeta?.timestamp || Date.now()).toLocaleTimeString()}
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Session ID:</span>{" "}
+                    <span className="text-slate-300 truncate">{session.sessionId}</span>
+                  </div>
+                </div>
+
+                {showAskTrace && lastAskMeta?.rawStructuredOutput && (
+                  <div className="pt-2 border-t border-white/10">
+                    <span className="text-slate-500 text-[10px]">Validated Response Output:</span>
+                    <pre className="mt-1 p-2 bg-black/50 rounded text-[10px] text-slate-300 overflow-x-auto max-h-48">
+                      {JSON.stringify(lastAskMeta.rawStructuredOutput, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 3. Microphone & Transcription Diagnostics + Live Session Trace */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Microphone & Realtime Audio Diagnostics */}
+              <div className="rounded-xl border border-white/10 bg-[#08182b] p-4 text-xs font-mono space-y-3 shadow-lg">
+                <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block">
+                  Microphone & Transcription Diagnostics
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="p-2 rounded bg-black/40 border border-white/5">
+                    <span className="text-slate-500 block text-[9px] uppercase">Microphone Permission</span>
+                    <span
+                      className={`font-bold ${
+                        microphoneDiagnostics.permission === "GRANTED"
+                          ? "text-emerald-400"
+                          : microphoneDiagnostics.permission === "DENIED"
+                          ? "text-rose-400"
+                          : "text-amber-400"
+                      }`}
+                    >
+                      {microphoneDiagnostics.permission}
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded bg-black/40 border border-white/5">
+                    <span className="text-slate-500 block text-[9px] uppercase">Audio Track</span>
+                    <span
+                      className={`font-bold ${
+                        microphoneDiagnostics.audioTrack === "ACTIVE" ? "text-emerald-400" : "text-slate-400"
+                      }`}
+                    >
+                      {microphoneDiagnostics.audioTrack}
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded bg-black/40 border border-white/5">
+                    <span className="text-slate-500 block text-[9px] uppercase">Transcription Model</span>
+                    <span className="font-bold text-cyan-300 truncate block">
+                      {microphoneDiagnostics.transcriptionModel}
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded bg-black/40 border border-white/5">
+                    <span className="text-slate-500 block text-[9px] uppercase">Realtime Connection</span>
+                    <span
+                      className={`font-bold ${
+                        microphoneDiagnostics.realtimeConnection === "CONNECTED"
+                          ? "text-emerald-400"
+                          : microphoneDiagnostics.realtimeConnection === "CONNECTING"
+                          ? "text-cyan-400 animate-pulse"
+                          : microphoneDiagnostics.realtimeConnection === "ERROR"
+                          ? "text-rose-400"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {microphoneDiagnostics.realtimeConnection}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-slate-400 space-y-1 pt-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Selected Mic Speaker:</span>
+                    <span className="text-slate-200 font-semibold">{selectedSpeaker}</span>
+                  </div>
+                  {microphoneDiagnostics.lastFinalTranscript && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Last Final Transcript:</span>
+                      <span className="text-cyan-200 font-mono truncate max-w-[280px]">"{microphoneDiagnostics.lastFinalTranscript}"</span>
+                    </div>
+                  )}
+                  {microphoneDiagnostics.lastTranscriptLatencyMs > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Last Transcript Latency:</span>
+                      <span className="text-emerald-300 font-mono">{microphoneDiagnostics.lastTranscriptLatencyMs} ms</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Session & Ask Context Trace */}
+              <div className="rounded-xl border border-white/10 bg-[#08182b] p-4 text-xs font-mono space-y-3 shadow-lg">
+                <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block">
+                  Live Session & Context Memory Trace
+                </span>
+                <div className="space-y-1.5 text-xs bg-black/40 p-3 rounded border border-white/5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">ACTIVE SESSION ID:</span>
+                    <span className="text-cyan-300 font-bold truncate max-w-[240px]">{session.sessionId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">FINALIZED TRANSCRIPT TURNS:</span>
+                    <span className="text-emerald-300 font-bold">{session.transcript?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">ASK CONTEXT EVENT COUNT:</span>
+                    <span className="text-purple-300 font-bold">{lastAskMeta?.askContextEventCount ?? session.transcript?.length ?? 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">DUPLICATES SUPPRESSED:</span>
+                    <span className="text-amber-300 font-bold">{microphoneDiagnostics.duplicatesSuppressed ?? 0}</span>
+                  </div>
+                  {lastAskMeta?.lastAskContextEvent && (
+                    <div className="pt-1.5 border-t border-white/5">
+                      <span className="text-slate-500 block text-[10px]">LAST ASK CONTEXT EVENT:</span>
+                      <span className="text-slate-200 text-[11px] break-words">{lastAskMeta.lastAskContextEvent}</span>
+                    </div>
+                  )}
+                  <div className="pt-1.5 border-t border-white/5">
+                    <span className="text-slate-500 block text-[10px] mb-1">LAST 5 FINALIZED TURNS:</span>
+                    {session.transcript && session.transcript.length > 0 ? (
+                      session.transcript.slice(-5).map((t, idx) => (
+                        <div key={t.id || idx} className="text-[10px] text-slate-400 truncate">
+                          [{t.speakerRole}]: "{t.text}"
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-[10px] text-slate-600 italic">(None recorded yet)</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* ── SESSION END DRAFT SUMMARY REVIEW MODAL ── */}
       <Dialog open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen}>

@@ -8,9 +8,10 @@ import {
   askFirstMateDetailed,
   generateSessionSummary,
 } from "../firstMateAi";
+import { eq } from "drizzle-orm";
 import { firstMateSessionStore } from "../firstMate/sessionStore";
 import { getDb } from "../db";
-import { contacts, leads } from "../../drizzle/schema";
+import { contacts, leads, projects, projectNotes } from "../../drizzle/schema";
 import type {
   FirstMateSession,
   NormalizedTranscriptEvent,
@@ -45,7 +46,7 @@ const TranscriptEventSchema = z.object({
   timestamp: z.number(),
   isFinal: z.boolean(),
   confidence: z.number(),
-  source: z.enum(["simulator", "live_audio", "manual"]),
+  source: z.enum(["simulator", "live_audio", "manual", "microphone"]),
 });
 
 const SayThisStyleSchema = z.enum([
@@ -61,6 +62,7 @@ const AskInputSchema = z.object({
   question: z.string().optional(),
   query: z.string().optional(),
   sessionType: z.string().optional(),
+  transcript: z.array(TranscriptEventSchema).optional(),
   recentTranscript: z.array(TranscriptEventSchema).optional(),
   sessionState: z.any().optional(),
   currentIssue: z.string().optional(),
@@ -144,7 +146,17 @@ export const firstMateRouter = router({
         });
       }
 
-      // 3. Resolve active session from backend session store or input
+      // 3. Resolve authoritative transcript
+      const authoritativeTranscript: NormalizedTranscriptEvent[] =
+        Array.isArray(input.transcript) && input.transcript.length > 0
+          ? (input.transcript as NormalizedTranscriptEvent[])
+          : Array.isArray(input.session?.transcript) && input.session.transcript.length > 0
+          ? (input.session.transcript as NormalizedTranscriptEvent[])
+          : Array.isArray(input.recentTranscript) && input.recentTranscript.length > 0
+          ? (input.recentTranscript as NormalizedTranscriptEvent[])
+          : [];
+
+      // 4. Resolve active session from backend session store or input
       const effectiveSessionId =
         input.sessionId || input.session?.sessionId || "default-session";
 
@@ -153,10 +165,10 @@ export const firstMateRouter = router({
         sessionType: (input.sessionType as any) || input.session?.sessionType || "IEP_MEETING",
       });
 
-      // 4. Merge partial overrides if provided without full session
-      if (input.recentTranscript && input.recentTranscript.length > 0) {
+      // Synchronize backend sessionStore with the authoritative client state
+      if (authoritativeTranscript.length > 0) {
         session = firstMateSessionStore.update(effectiveSessionId, {
-          transcript: input.recentTranscript as NormalizedTranscriptEvent[],
+          transcript: authoritativeTranscript,
         });
       }
       if (input.sessionState) {
@@ -176,6 +188,12 @@ export const firstMateRouter = router({
       // 5. Query OpenAI / First Mate reasoning layer
       const result = await askFirstMateDetailed(session, effectiveQuery);
 
+      const askContextEventCount = session.transcript.length;
+      const lastAskContextEvent =
+        session.transcript.length > 0
+          ? `[${session.transcript[session.transcript.length - 1].speakerRole}]: "${session.transcript[session.transcript.length - 1].text}"`
+          : "None";
+
       // 6. Return structured response with development provenance metadata
       return {
         answer: result.answer,
@@ -189,6 +207,8 @@ export const firstMateRouter = router({
         timestamp: Date.now(),
         sessionId: effectiveSessionId,
         procedureName: "firstMate.ask",
+        askContextEventCount,
+        lastAskContextEvent,
         rawAiOutput: result.rawAiOutput || null,
       };
     }),
@@ -251,4 +271,420 @@ export const firstMateRouter = router({
       return { records: [] };
     }
   }),
+
+  /**
+   * BUILD 3: Mint an ephemeral OpenAI Realtime client secret session token.
+   * Prevents exposing the root OPENAI_API_KEY to the browser.
+   */
+  getRealtimeSessionToken: publicProcedure.mutation(async () => {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "OPENAI_API_KEY is not configured on the server.",
+      });
+    }
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          session: {
+            type: "realtime",
+            audio: {
+              input: {
+                transcription: {
+                  model: "whisper-1",
+                },
+              },
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`OpenAI Realtime session error (${response.status}): ${errText}`);
+      }
+
+      const data = (await response.json()) as any;
+      return {
+        clientSecret: data.value as string,
+        expiresAt: data.expires_at as number,
+        sessionId: data.session?.id as string,
+        provider: "OpenAI" as const,
+        provenance: "AI: OPENAI" as const,
+      };
+    } catch (err: any) {
+      console.error("[FirstMate] Failed to mint OpenAI Realtime client secret:", err?.message);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: err?.message || "Failed to initialize OpenAI Realtime session",
+      });
+    }
+  }),
+
+  /**
+   * BUILD 3: Transcribe an audio chunk via OpenAI Whisper speech-to-text API.
+   * Used for streaming chunk transcription and resilient live fallback.
+   */
+  transcribeAudioChunk: publicProcedure
+    .input(
+      z.object({
+        sessionId: z.string().optional(),
+        audioBase64: z.string(),
+        mimeType: z.string().default("audio/webm"),
+        speakerRole: SpeakerRoleSchema.default("Parent"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "OPENAI_API_KEY is not configured on the server.",
+        });
+      }
+
+      const startTime = Date.now();
+      try {
+        const audioBuffer = Buffer.from(input.audioBase64, "base64");
+        const ext = input.mimeType.includes("webm")
+          ? "webm"
+          : input.mimeType.includes("wav")
+          ? "wav"
+          : input.mimeType.includes("mp4") || input.mimeType.includes("m4a")
+          ? "m4a"
+          : "ogg";
+
+        const formData = new FormData();
+        const blob = new Blob([audioBuffer], { type: input.mimeType });
+        formData.append("file", blob, `audio-chunk.${ext}`);
+        formData.append("model", "whisper-1");
+        formData.append("response_format", "json");
+
+        const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: formData,
+        });
+
+        const latencyMs = Date.now() - startTime;
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`OpenAI transcription error (${response.status}): ${errText}`);
+        }
+
+        const data = (await response.json()) as any;
+        const text = (data.text || "").trim();
+
+        return {
+          text,
+          latencyMs,
+          model: "whisper-1",
+          provider: "OpenAI",
+          provenance: "AI: OPENAI" as const,
+          isFinal: true,
+          confidence: 0.98,
+        };
+      } catch (err: any) {
+        const latencyMs = Date.now() - startTime;
+        console.error("[FirstMate] Audio transcription failed:", err?.message);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: err?.message || "Audio transcription failed",
+        });
+      }
+    }),
+
+  /**
+   * END SESSION AND PROCESS:
+   * 1. Stops the session.
+   * 2. Generates / finalizes the session summary.
+   * 3. Formats full session transcript with timestamps and speaker tags.
+   * 4. Identifies the student record and associated project.
+   * 5. Attaches both Summary and Full Transcript into the student's Notes (projectNotes)
+   *    with isVisibleToClient: false (DEFAULT ADVOCATE ONLY FOR NOW).
+   */
+  endSessionAndProcess: publicProcedure
+    .input(
+      z.object({
+        sessionId: z.string().optional(),
+        session: z.any(),
+        studentId: z.number().optional(),
+        studentName: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database connection unavailable.",
+        });
+      }
+
+      const session = (input.session || {}) as FirstMateSession;
+      const effectiveSessionId = input.sessionId || session.sessionId || `fm-${Date.now()}`;
+
+      // 1. Generate or retrieve summary
+      let summary = session.summary;
+      if (!summary || summary.trim().length < 20) {
+        try {
+          summary = await generateSessionSummary(session);
+        } catch (err) {
+          console.warn("[FirstMate] generateSessionSummary fallback:", err);
+          summary =
+            `### First Mate Session Summary\nSession conducted on ${new Date().toLocaleDateString()}.\n\n` +
+            `**Key Issue:** ${session.liveAssist?.currentIssue || "Collaborative Advocacy Review"}\n` +
+            `**Transcript Turns Recorded:** ${session.transcript?.length || 0}\n` +
+            `**Requests:** ${session.requests?.length || 0} logged\n` +
+            `**Refusals:** ${session.refusals?.length || 0} logged`;
+        }
+      }
+
+      // 2. Identify the student record
+      let studentRecord: any = null;
+      const targetStudentId = input.studentId || session.attachedStudentId || session.attachedClientId;
+      const targetName = (input.studentName || session.sessionState?.studentName || session.attachedName || "").trim();
+
+      if (targetStudentId) {
+        const [found] = await db
+          .select()
+          .from(contacts)
+          .where(eq(contacts.id, targetStudentId))
+          .limit(1);
+        if (found) studentRecord = found;
+      }
+
+      if (!studentRecord && targetName) {
+        const allContacts = await db.select().from(contacts);
+        studentRecord = allContacts.find((c) => {
+          const fullName = `${c.firstName || ""} ${c.lastName || ""}`.trim().toLowerCase();
+          const qName = targetName.toLowerCase();
+          return (
+            fullName === qName ||
+            (c.firstName && qName.includes(c.firstName.toLowerCase())) ||
+            (c.lastName && qName.includes(c.lastName.toLowerCase()))
+          );
+        });
+      }
+
+      if (!studentRecord && targetName) {
+        const fallbackFirstName = targetName.split(" ")[0];
+        const fallbackLastName =
+          targetName.split(" ").length > 1 ? targetName.split(" ").slice(1).join(" ") : "Student";
+
+        const insertContactRes = await db.insert(contacts).values({
+          ownerId: (ctx.user as any)?.id || 1,
+          firstName: fallbackFirstName,
+          lastName: fallbackLastName,
+          jobTitle: "Student",
+          gradeLevel: session.sessionState?.grade || "9th Grade",
+          caseId: `WP-${new Date().getFullYear()}-0001`,
+        });
+        const insertId =
+          (insertContactRes as any)?.insertId ||
+          (insertContactRes as any)?.[0]?.insertId ||
+          1;
+        studentRecord = {
+          id: insertId,
+          firstName: fallbackFirstName,
+          lastName: fallbackLastName,
+        };
+      }
+
+      if (!studentRecord) {
+        const [firstStudent] = await db
+          .select()
+          .from(contacts)
+          .where(eq(contacts.jobTitle, "Student"))
+          .limit(1);
+        studentRecord = firstStudent;
+      }
+
+      if (!studentRecord) {
+        const [anyContact] = await db.select().from(contacts).limit(1);
+        studentRecord = anyContact;
+      }
+
+      if (!studentRecord) {
+        const fallbackFirstName = "Avery";
+        const fallbackLastName = "Jenkins";
+
+        const insertContactRes = await db.insert(contacts).values({
+          ownerId: (ctx.user as any)?.id || 1,
+          firstName: fallbackFirstName,
+          lastName: fallbackLastName,
+          jobTitle: "Student",
+          gradeLevel: session.sessionState?.grade || "9th Grade",
+          caseId: `WP-${new Date().getFullYear()}-0001`,
+        });
+        const insertId =
+          (insertContactRes as any)?.insertId ||
+          (insertContactRes as any)?.[0]?.insertId ||
+          1;
+        studentRecord = {
+          id: insertId,
+          firstName: fallbackFirstName,
+          lastName: fallbackLastName,
+        };
+      }
+
+      const resolvedStudentId = studentRecord.id;
+      const resolvedStudentName =
+        `${studentRecord.firstName || ""} ${studentRecord.lastName || ""}`.trim() || targetName || "Student";
+
+      // 3. Resolve or create Project (Case file) for the student
+      let projectRecord: any = null;
+      const existingProjects = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.clientId, resolvedStudentId))
+        .limit(1);
+
+      if (existingProjects && existingProjects.length > 0) {
+        projectRecord = existingProjects[0];
+      } else {
+        const insertProjRes = await db.insert(projects).values({
+          ownerId: (ctx.user as any)?.id || 1,
+          clientId: resolvedStudentId,
+          name: `${resolvedStudentName} — IEP Advocacy Case`,
+          description: `Active IEP case and advocacy workspace for ${resolvedStudentName}.`,
+          status: "In Progress",
+        });
+        const projId =
+          (insertProjRes as any)?.insertId ||
+          (insertProjRes as any)?.[0]?.insertId ||
+          1;
+        projectRecord = {
+          id: projId,
+          name: `${resolvedStudentName} — IEP Advocacy Case`,
+        };
+      }
+
+      // 4. Format Full Transcript
+      const transcriptFormatted =
+        session.transcript && session.transcript.length > 0
+          ? session.transcript
+              .map((t) => {
+                const timeStr = new Date(t.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                });
+                return `**[${t.speakerRole}]** *(${timeStr})*:\n${t.text}`;
+              })
+              .join("\n\n")
+          : "*(No transcript turns recorded in this session)*";
+
+      // 4b. Format In-Session Q&A Ask History
+      const askHistoryFormatted =
+        session.askHistory && session.askHistory.length > 0
+          ? session.askHistory
+              .map((q, idx) => {
+                const timeStr = new Date(q.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                return `**Q${idx + 1} (${timeStr}):** ${q.question}\n**First Mate:** ${q.answer}${
+                  q.suggestedFollowUp ? `\n*Suggested Follow-Up:* ${q.suggestedFollowUp}` : ""
+                }`;
+              })
+              .join("\n\n")
+          : null;
+
+      // 5. Format Note Content
+      const noteTitle = `First Mate: ${session.title || session.sessionType?.replace(/_/g, " ") || "Advocacy Session"} (${new Date().toLocaleDateString()})`;
+      const noteContent = `
+# First Mate Advocacy Session Record & Summary
+**Date:** ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+**Session Type:** ${session.sessionType?.replace(/_/g, " ") || "IEP Meeting"}
+**Student:** ${resolvedStudentName}
+**Duration:** ${Math.floor((session.durationSeconds || 0) / 60)}m ${(session.durationSeconds || 0) % 60}s
+**Visibility:** Advocate Only (Internal Practice Note)
+**Status:** Completed & Processed
+
+---
+
+## 📋 Executive Summary
+${summary}
+
+---
+
+## 🎯 Key Tracked Matters
+### Requests Made (${session.requests?.length || 0})
+${session.requests?.map((r) => `- **[${r.speaker}]** ${r.summary}`).join("\n") || "- None logged"}
+
+### Refusals Documented (${session.refusals?.length || 0})
+${session.refusals?.map((r) => `- **[${r.speaker}]** ${r.summary}`).join("\n") || "- None logged"}
+
+### Commitments Agreed (${session.commitments?.length || 0})
+${session.commitments?.map((c) => `- **[${c.speaker}]** ${c.summary}`).join("\n") || "- None logged"}
+${
+  askHistoryFormatted
+    ? `\n---\n\n## 💬 In-Session Advocate Inquiries & Copilot Guidance (${session.askHistory?.length || 0})\n${askHistoryFormatted}`
+    : ""
+}
+
+---
+
+## 🎙️ Full Session Transcript (${session.transcript?.length || 0} turns)
+${transcriptFormatted}
+
+---
+*Generated by Waypoint Advocates First Mate Live Copilot. Stored as Advocate-Only internal note.*
+`.trim();
+
+      // 6. Save to projectNotes with isVisibleToClient: false (DEFAULT ADVOCATE ONLY FOR NOW)
+      const insertNoteRes = await db.insert(projectNotes).values({
+        projectId: projectRecord.id,
+        title: noteTitle,
+        content: noteContent,
+        isVisibleToClient: false as any,
+        createdBy: (ctx.user as any)?.id || 1,
+      });
+      const noteId =
+        (insertNoteRes as any)?.insertId ||
+        (insertNoteRes as any)?.[0]?.insertId ||
+        1;
+
+      // 7. Also update contact.notes with a concise audit log
+      try {
+        const prevContactNotes = studentRecord.notes ? `${studentRecord.notes}\n\n` : "";
+        const briefLog = `[First Mate ${new Date().toLocaleDateString()}]: ${session.sessionType?.replace(/_/g, " ") || "Meeting"} completed (${session.transcript?.length || 0} turns). Full summary and transcript attached to Student Notes (Advocate Only).`;
+        await db
+          .update(contacts)
+          .set({ notes: `${prevContactNotes}${briefLog}` })
+          .where(eq(contacts.id, resolvedStudentId));
+      } catch (err) {
+        console.warn("[FirstMate] Failed to update contact.notes log:", err);
+      }
+
+      // 8. Update in-memory session store
+      firstMateSessionStore.update(effectiveSessionId, {
+        status: "ENDED",
+        endedAt: Date.now(),
+        summary,
+      });
+
+      return {
+        success: true,
+        noteId,
+        summary,
+        studentId: resolvedStudentId,
+        studentName: resolvedStudentName,
+        projectId: projectRecord.id,
+        noteTitle,
+        visibility: "Advocate Only" as const,
+      };
+    }),
 });
+

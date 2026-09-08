@@ -36,6 +36,8 @@ export type SpeakerRole =
   | "Receptionist"
   | "Other";
 
+export type TranscriptSource = "simulator" | "live_audio" | "manual" | "microphone";
+
 export interface NormalizedTranscriptEvent {
   id: string;
   sessionId: string;
@@ -45,7 +47,57 @@ export interface NormalizedTranscriptEvent {
   timestamp: number;
   isFinal: boolean;
   confidence: number;
-  source: "simulator" | "live_audio" | "manual";
+  source: TranscriptSource;
+}
+
+export type AudioInputStatus =
+  | "inactive"
+  | "requesting_permission"
+  | "permission_denied"
+  | "listening"
+  | "paused"
+  | "error";
+
+export type TranscriptionProviderStatus =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "transcribing"
+  | "error";
+
+export interface MicrophoneDiagnostics {
+  permission: "GRANTED" | "DENIED" | "ERROR" | "UNKNOWN";
+  audioTrack: "ACTIVE" | "INACTIVE";
+  audioTrackState: "live" | "ended" | "none";
+  audioInputLevel: number; // 0.00 - 1.00
+  realtimeSessionCreated: "YES" | "NO";
+  transport: "WebRTC" | "WebSocket" | "Chunked Whisper" | "None";
+  realtimeConnection: "CONNECTED" | "CONNECTING" | "DISCONNECTED" | "ERROR";
+  connectionState: "CONNECTING" | "CONNECTED" | "ERROR" | "CLOSED";
+  openAiAuth: "SUCCESS" | "FAIL" | "PENDING";
+  transcriptionModel: string;
+  audioChunksCaptured: number;
+  audioChunksSent: number;
+  totalAudioBytesSent: number;
+  openAiEventsReceived: "YES" | "NO";
+  interimTranscriptCount: number;
+  finalTranscriptCount: number;
+  lastTranscriptEvent?: string;
+  lastFinalTranscript: string;
+  lastTranscriptLatencyMs: number;
+  normalizedEventCreated: "YES" | "NO";
+  sessionTranscriptUpdated: "YES" | "NO";
+  transcriptLengthBefore: number;
+  transcriptLengthAfter: number;
+  listeningStatus:
+    | "MICROPHONE READY"
+    | "CONNECTING TO TRANSCRIPTION"
+    | "LISTENING"
+    | "TRANSCRIPTION ERROR"
+    | "INACTIVE";
+  selectedSpeaker: SpeakerRole;
+  duplicatesSuppressed?: number;
+  lastError?: string;
 }
 
 export type TrackedItemType =
@@ -114,7 +166,22 @@ export interface FirstMateProvenanceMeta {
   sessionId?: string;
   procedureName?: string;
   requestId?: string;
+  askContextEventCount?: number;
+  lastAskContextEvent?: string;
   rawStructuredOutput?: any;
+}
+
+export interface FirstMateAskHistoryEntry {
+  id: string;
+  question: string;
+  answer: string;
+  timestamp: number;
+  confidence?: string;
+  relatedIssue?: string | null;
+  suggestedFollowUp?: string | null;
+  provenance?: FirstMateProvenance;
+  provider?: string;
+  model?: string;
 }
 
 export interface LiveAssistPanelData {
@@ -271,5 +338,6 @@ export interface FirstMateSession {
   }>;
   alerts: FirstMateAlert[];
   liveAssist: LiveAssistPanelData;
+  askHistory?: FirstMateAskHistoryEntry[];
   devLogs: FirstMateDevLogEntry[];
 }

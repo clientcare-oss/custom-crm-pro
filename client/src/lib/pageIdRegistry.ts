@@ -42,7 +42,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/tools/state-complaint-builder":   { id: "PG-020", name: "State Complaint Builder", category: "Advocacy" },
   "/brain-dump":                      { id: "PG-021", name: "Advocate BrainDump", category: "Productivity" },
   "/bill-guardian":                   { id: "PG-022", name: "Bill Guardian", category: "Billing" },
-  "/first-mate":                      { id: "PG-037", name: "First Mate", category: "Call Center", description: "Call center live assistant and lead response console" },
+  "/first-mate":                      { id: "PG-037", name: "First Mate Live Advocacy Copilot", category: "Advocacy", description: "Live Advocacy Copilot and real-time meeting assistant" },
   "/ai-connections":                  { id: "PG-032", name: "AI Connections", category: "AI" },
   "/services":                        { id: "PG-035", name: "Advocacy Services Catalog", category: "Catalog" },
   "/sponsors":                        { id: "PG-036", name: "Sponsors & Partners", category: "Catalog" },
@@ -55,6 +55,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/workspace":                       { id: "PG-031", name: "Advocate Case Workspace", category: "Advocacy" },
   "/case-compass":                    { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },
   "/tools/case-compass":              { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },
+  "/first-mate/popout":               { id: "PG-037-POP", name: "First Mate Floating Copilot", category: "Advocacy" },
   
   // Smart Files Suite
   "/smart-files":                     { id: "PG-033", name: "Smart Files Library", category: "Smart Files" },

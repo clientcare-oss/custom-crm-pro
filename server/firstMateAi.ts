@@ -32,6 +32,46 @@ export interface DeepAssistExecutionResult {
 }
 
 /**
+ * Merges consecutive short audio fragments from the same speaker into coherent semantic sentences/paragraphs.
+ * Preserves speaker role and temporal continuity so OpenAI comprehends fragmented speech turns as a unified thought.
+ */
+export function buildSemanticTranscriptContext(
+  transcript: NormalizedTranscriptEvent[],
+  maxTurns: number = 60
+): string {
+  if (!transcript || transcript.length === 0) {
+    return "(No transcript entries)";
+  }
+
+  const window = transcript.slice(-maxTurns);
+  const merged: Array<{ speakerRole: string; text: string }> = [];
+
+  for (const t of window) {
+    const rawText = (t.text || "").trim();
+    if (!rawText) continue;
+
+    const last = merged[merged.length - 1];
+    if (last && last.speakerRole === t.speakerRole) {
+      const endsWithPunctuation = /[.!?]$/.test(last.text);
+      const startsWithLowercaseOrConj = /^[a-z]|^(and|then|to|but|so|or|because|which|who|with)\b/i.test(rawText);
+
+      if (endsWithPunctuation && startsWithLowercaseOrConj) {
+        const base = last.text.slice(0, -1);
+        last.text = `${base} ${rawText}`;
+      } else {
+        last.text = `${last.text} ${rawText}`;
+      }
+    } else {
+      merged.push({ speakerRole: t.speakerRole, text: rawText });
+    }
+  }
+
+  return merged
+    .map((m) => `${m.speakerRole}: "${m.text}"`)
+    .join("\n");
+}
+
+/**
  * FAST ASSIST: Sub-second live conversational guidance.
  * Produces immediately usable Say This, Ask Next, and Current Issue.
  */
@@ -41,13 +81,7 @@ export async function runFastAssist(
   newTurn: NormalizedTranscriptEvent
 ): Promise<FastAssistExecutionResult> {
   const sessionType = session.sessionType;
-  const recentTurns = transcript
-    .slice(-8)
-    .map(
-      (t) =>
-        `${t.speakerRole}: "${t.text}"`
-    )
-    .join("\n");
+  const recentTurns = buildSemanticTranscriptContext(transcript, 15);
 
   const systemPrompt = `${BASE_SYSTEM_INSTRUCTION}
 
@@ -316,10 +350,7 @@ export async function askFirstMateDetailed(
   session: FirstMateSession,
   query: string
 ): Promise<AskFirstMateResult> {
-  const transcriptSummary = session.transcript
-    .slice(-25)
-    .map((t) => `${t.speakerRole}: "${t.text}"`)
-    .join("\n");
+  const transcriptSummary = buildSemanticTranscriptContext(session.transcript, 80);
 
   const trackedSummary = [
     ...(session.requests || []).map((r) => `[Request by ${r.speaker}] ${r.summary}`),

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
+import { FirstMateGlobalLauncher } from "@/components/firstMate/FirstMateGlobalLauncher";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
@@ -855,6 +856,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         </div>
       )}
 
+      <FirstMateGlobalLauncher />
       <AIAssistant />
       <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
       <GoToPageModal open={goToPageOpen} onClose={() => setGoToPageOpen(false)} />

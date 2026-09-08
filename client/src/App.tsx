@@ -56,6 +56,7 @@ import Workspace from "./pages/Workspace";
 import IepComparator from "./pages/IepComparator";
 import DiscoveryWorksheetBuilder from "./pages/DiscoveryWorksheetBuilder";
 import FirstMate from "./pages/FirstMate";
+import FirstMatePopout from "./pages/FirstMatePopout";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -73,7 +74,9 @@ function Router() {
     window.location.pathname === "/book" ||
     window.location.pathname === "/intake" ||
     window.location.pathname.startsWith("/form/") ||
-    window.location.pathname.startsWith("/smart-files/response/");
+    window.location.pathname.startsWith("/smart-files/response/") ||
+    window.location.pathname === "/first-mate/popout" ||
+    window.location.pathname.startsWith("/first-mate/popout");
 
   if (loading && !isPublicRoute) {
     return (
@@ -85,7 +88,17 @@ function Router() {
 
   // Authenticated routes
   if (user) {
-    // Public pages accessible even when logged in (no dashboard layout)
+    if (
+      window.location.pathname === '/first-mate/popout' ||
+      window.location.pathname.startsWith('/first-mate/popout')
+    ) {
+      return (
+        <Switch>
+          <Route path="/first-mate/popout" component={FirstMatePopout} />
+        </Switch>
+      );
+    }
+
     if (
       window.location.pathname === '/portal/book' ||
       window.location.pathname === '/portal' ||
@@ -188,6 +201,7 @@ function Router() {
       <Route path="/client-portal" component={ClientPortal} />
       <Route path="/project-workspace/:studentId" component={ClientPortal} />
       <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
+      <Route path="/first-mate/popout" component={FirstMatePopout} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
