@@ -1,7 +1,8 @@
-import type {
-  TranscriptionProviderStatus,
-  SpeakerRole,
-  MicrophoneDiagnostics,
+import {
+  isSilenceHallucination,
+  type TranscriptionProviderStatus,
+  type SpeakerRole,
+  type MicrophoneDiagnostics,
 } from "../../../../../shared/firstMate";
 
 export interface TranscriptionCallbacks {
@@ -16,6 +17,7 @@ export class OpenAIRealtimeTranscriptionProvider {
   private status: TranscriptionProviderStatus = "disconnected";
   private callbacks: Partial<TranscriptionCallbacks> = {};
   private activeSpeaker: SpeakerRole = "Parent";
+  private language: string = "en";
   private isProcessingChunk: boolean = false;
   private chunkQueue: Array<{ blob: Blob; mimeType: string }> = [];
   private trpcClient: any;
@@ -40,11 +42,19 @@ export class OpenAIRealtimeTranscriptionProvider {
     sessionId: string;
     callbacks?: Partial<TranscriptionCallbacks>;
     speakerRole?: SpeakerRole;
+    language?: string;
   }) {
     this.trpcClient = options.trpcClient;
     this.sessionId = options.sessionId;
     this.callbacks = options.callbacks || {};
     this.activeSpeaker = options.speakerRole || "Parent";
+    if (options.language) {
+      this.language = options.language;
+    }
+  }
+
+  public setLanguage(language: string) {
+    this.language = language;
   }
 
   public setCallbacks(callbacks: Partial<TranscriptionCallbacks>) {
@@ -189,6 +199,7 @@ export class OpenAIRealtimeTranscriptionProvider {
           audioBase64: base64,
           mimeType: item.mimeType,
           speakerRole: this.activeSpeaker,
+          language: this.language !== "auto" ? this.language : undefined,
         });
 
         const latencyMs = Date.now() - startTime;
@@ -198,7 +209,7 @@ export class OpenAIRealtimeTranscriptionProvider {
         const text = (result.text || "").trim();
         this.lastTranscriptEvent = text ? `[text: "${text}"]` : "[empty]";
 
-        if (text && !this.isHallucination(text)) {
+        if (text && !isSilenceHallucination(text, this.language) && !this.isHallucination(text)) {
           this.finalTranscriptCount++;
           this.lastFinalTranscript = text;
           this.callbacks.onFinalTranscript?.(text, latencyMs);
@@ -226,6 +237,7 @@ export class OpenAIRealtimeTranscriptionProvider {
    * Filter empty sound artifacts produced by Whisper on low-volume background noise
    */
   private isHallucination(text: string): boolean {
+    if (isSilenceHallucination(text, this.language)) return true;
     const clean = text.toLowerCase().trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
     return (
       clean === "you" ||

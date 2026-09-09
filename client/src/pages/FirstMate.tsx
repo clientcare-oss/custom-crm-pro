@@ -37,6 +37,7 @@ import {
   ArrowRight,
   Mic,
   MicOff,
+  Globe,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ import type {
   FirstMateSessionType,
   TrackedItem,
 } from "../../../shared/firstMate";
+import { SUPPORTED_LANGUAGES, isSilenceHallucination } from "../../../shared/firstMate";
 import { RadarReticleIcon, FirstMateReticleLogo } from "@/components/firstMate/RadarReticleIcon";
 
 // Format seconds into HH:MM:SS or MM:SS
@@ -116,6 +118,8 @@ export default function FirstMate() {
     resetSession,
     setSessionType,
     setMode,
+    language,
+    setLanguage,
     attachRecord,
     addTranscriptTurn,
     rephraseSayThis,
@@ -128,6 +132,8 @@ export default function FirstMate() {
     clearAskHistory,
     generateSummary,
     clearTranscript,
+    deleteTranscriptTurn,
+    purgeForeignHallucinations,
     lastAskMeta,
     audioInputStatus,
     transcriptionStatus,
@@ -150,6 +156,8 @@ export default function FirstMate() {
     continuePreviousSession,
     hasPreviousSession,
   } = useFirstMate();
+
+  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   // Active top tab
   const [activeTab, setActiveTab] = useState<"assist" | "simulator" | "history" | "summaries" | "settings">("assist");
@@ -197,9 +205,9 @@ export default function FirstMate() {
   const [isManualInputCollapsed, setIsManualInputCollapsed] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem("fm_manual_input_collapsed");
-      return saved !== null ? saved === "true" : true; // collapsed by default
+      return saved !== null ? saved === "true" : false; // open by default so user can immediately type transcript
     } catch {
-      return true;
+      return false;
     }
   });
 
@@ -211,6 +219,70 @@ export default function FirstMate() {
       } catch {}
       return next;
     });
+  };
+
+  const [isDictating, setIsDictating] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const toggleDictation = () => {
+    if (isDictating) {
+      try {
+        recognitionRef.current?.stop();
+      } catch {}
+      setIsDictating(false);
+      return;
+    }
+
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) {
+      toast.info("Browser speech recognition is not supported in this browser. You can type directly or use Start Listening.");
+      return;
+    }
+
+    try {
+      const rec = new SpeechRec();
+      recognitionRef.current = rec;
+      rec.continuous = false;
+      rec.interimResults = true;
+      const langCodeMap: Record<string, string> = {
+        en: "en-US",
+        es: "es-ES",
+        fr: "fr-FR",
+        pt: "pt-BR",
+        ht: "fr-HT",
+        vi: "vi-VN",
+        zh: "zh-CN",
+        ar: "ar-SA",
+        ko: "ko-KR",
+        de: "de-DE",
+        it: "it-IT",
+        tl: "fil-PH",
+        ru: "ru-RU",
+      };
+      rec.lang = langCodeMap[language] || "en-US";
+
+      rec.onstart = () => setIsDictating(true);
+      rec.onresult = (evt: any) => {
+        let text = "";
+        for (let i = evt.resultIndex; i < evt.results.length; ++i) {
+          text += evt.results[i][0].transcript;
+        }
+        if (text) {
+          setSimulatorText(text);
+        }
+      };
+      rec.onerror = (err: any) => {
+        console.warn("[Dictation] Error:", err?.error || err);
+        setIsDictating(false);
+      };
+      rec.onend = () => {
+        setIsDictating(false);
+      };
+      rec.start();
+    } catch (err: any) {
+      console.warn("[Dictation] Failed to start:", err);
+      setIsDictating(false);
+    }
   };
 
   const [isControlBarCollapsed, setIsControlBarCollapsed] = useState<boolean>(() => {
@@ -256,8 +328,14 @@ export default function FirstMate() {
     const text = simulatorText.trim();
     if (!text) return;
 
+    if (isSilenceHallucination(text, language)) {
+      toast.info("Filtered silence/hallucination artifact.");
+      setSimulatorText("");
+      return;
+    }
+
     setSimulatorText("");
-    await addTranscriptTurn(simulatorSpeaker, text);
+    await addTranscriptTurn(simulatorSpeaker, text, "manual");
   };
 
   // Handle Ask First Mate
@@ -726,6 +804,44 @@ export default function FirstMate() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+
+              {/* 6. Language Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="h-6.5 px-2 rounded bg-[#0d2138] border border-white/10 hover:border-cyan-500/40 text-[10.5px] text-white flex items-center gap-1 transition-colors cursor-pointer"
+                    title={`Current Language: ${SUPPORTED_LANGUAGES.find((l) => l.code === language)?.name || "English"}`}
+                  >
+                    <Globe className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
+                    <span className="text-[10px]">{SUPPORTED_LANGUAGES.find((l) => l.code === language)?.flag || "🇺🇸"}</span>
+                    <span className="font-semibold text-[10.5px] truncate max-w-[70px]">
+                      {SUPPORTED_LANGUAGES.find((l) => l.code === language)?.nativeName || "English"}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-[#0a1c30] border-white/15 text-white text-xs max-h-72 overflow-y-auto">
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-slate-400 font-mono">
+                    Spoken & AI Language
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <DropdownMenuItem
+                      key={l.code}
+                      onClick={() => setLanguage(l.code)}
+                      className={`text-xs cursor-pointer flex items-center justify-between ${
+                        language === l.code ? "bg-cyan-500/20 text-cyan-300 font-bold" : "hover:bg-white/5 text-slate-200"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{l.flag}</span>
+                        <span>{l.name}</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">{l.nativeName}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Right: Actions, Duration & Minimize Button */}
@@ -1186,6 +1302,15 @@ export default function FirstMate() {
               )}
             </button>
             <button
+              type="button"
+              onClick={purgeForeignHallucinations}
+              title="Purge foreign language / silence artifacts"
+              className="text-xs text-amber-300 hover:text-white flex items-center gap-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-1 rounded transition-colors cursor-pointer"
+            >
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span className="text-[11px] font-semibold">Clean Foreign</span>
+            </button>
+            <button
               onClick={clearTranscript}
               title="Clear transcript"
               className="text-xs text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
@@ -1289,6 +1414,14 @@ export default function FirstMate() {
                         >
                           <Copy className="w-3 h-3" />
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTranscriptTurn(t.id)}
+                          className="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded cursor-pointer"
+                          title="Delete this turn"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
                     <p className="text-xs text-slate-200 leading-relaxed bg-[#0d2138]/60 p-2.5 rounded-lg border border-white/5">
@@ -1352,28 +1485,61 @@ export default function FirstMate() {
           </span>
         </div>
 
-        {/* ── EMBEDDED SIMULATOR MANUAL INPUT CONTROLS ── */}
+        {/* ── TYPE LIVE TRANSCRIPT TURN (IN USER'S LANGUAGE) ── */}
         <div className="mt-2 border-t border-cyan-500/20 bg-[#071524] rounded-lg p-2.5 transition-all">
-          <button
-            type="button"
-            onClick={toggleManualInputCollapsed}
-            className="w-full flex items-center justify-between group cursor-pointer focus:outline-none"
-            aria-expanded={!isManualInputCollapsed}
-          >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/90 group-hover:text-cyan-300 flex items-center gap-1.5 transition-colors">
-              <Radio className="w-3 h-3 text-cyan-400" />
-              Manual Simulator Turn Input
-              {isManualInputCollapsed && (
-                <span className="text-[9px] text-slate-500 normal-case font-normal ml-1">
-                  (collapsed)
-                </span>
-              )}
-            </span>
+          <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
             <div className="flex items-center gap-2">
-              {!isManualInputCollapsed && (
-                <span className="text-[9px] text-slate-400">Press Enter to Add</span>
-              )}
-              <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 group-hover:text-cyan-300 bg-cyan-950/40 hover:bg-cyan-900/50 px-2 py-0.5 rounded border border-cyan-500/30 transition-colors">
+              <span className="text-[10.5px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                <Radio className="w-3 h-3 text-cyan-400" />
+                Type Transcript Turn
+              </span>
+              <span className="text-[10px] text-slate-400">
+                (in <strong className="text-cyan-300">{currentLangObj.flag} {currentLangObj.nativeName}</strong>)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Quick Language Switcher Dropdown right beside the type box */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-5 px-1.5 rounded bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/30 text-[9.5px] text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Change transcript language"
+                  >
+                    <Globe className="w-2.5 h-2.5" />
+                    <span>{currentLangObj.flag} {currentLangObj.nativeName}</span>
+                    <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-[#0a1c30] border-white/15 text-white text-xs max-h-64 overflow-y-auto">
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-slate-400 font-mono">
+                    Select Transcript Language
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <DropdownMenuItem
+                      key={l.code}
+                      onClick={() => setLanguage(l.code)}
+                      className={`text-xs cursor-pointer flex items-center justify-between ${
+                        language === l.code ? "bg-cyan-500/20 text-cyan-300 font-bold" : "hover:bg-white/5 text-slate-200"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{l.flag}</span>
+                        <span>{l.name}</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">{l.nativeName}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <button
+                type="button"
+                onClick={toggleManualInputCollapsed}
+                className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 hover:text-cyan-300 bg-cyan-950/40 hover:bg-cyan-900/50 px-2 py-0.5 rounded border border-cyan-500/30 transition-colors cursor-pointer"
+              >
                 {isManualInputCollapsed ? (
                   <>
                     <span>Expand</span>
@@ -1381,21 +1547,21 @@ export default function FirstMate() {
                   </>
                 ) : (
                   <>
-                    <span>Collapse</span>
+                    <span>Minimize</span>
                     <ChevronUp className="w-3 h-3" />
                   </>
                 )}
-              </span>
+              </button>
             </div>
-          </button>
+          </div>
 
           {!isManualInputCollapsed && (
-            <form onSubmit={handleAddTurn} className="mt-2.5 space-y-2 pt-2 border-t border-white/5">
+            <form onSubmit={handleAddTurn} className="mt-2 space-y-2">
               <div className="flex gap-2">
                 <select
                   value={simulatorSpeaker}
                   onChange={(e) => setSimulatorSpeaker(e.target.value as SpeakerRole)}
-                  className="w-36 h-9 rounded-lg bg-[#0d2138] border border-white/10 text-xs text-white px-2 focus:outline-none focus:border-cyan-400 font-semibold cursor-pointer"
+                  className="w-36 h-9 rounded-lg bg-[#0d2138] border border-white/10 text-xs text-white px-2 focus:outline-none focus:border-cyan-400 font-semibold cursor-pointer shrink-0"
                 >
                   <option value="Parent">Parent</option>
                   <option value="School">School</option>
@@ -1411,12 +1577,26 @@ export default function FirstMate() {
                   <option value="Other">Other</option>
                 </select>
 
-                <Input
-                  value={simulatorText}
-                  onChange={(e) => setSimulatorText(e.target.value)}
-                  placeholder={`Type what ${simulatorSpeaker} says...`}
-                  className="flex-1 h-9 bg-[#0d2138] border-white/10 text-xs text-white placeholder:text-slate-500 focus-visible:ring-cyan-400"
-                />
+                <div className="relative flex-1 flex items-center">
+                  <Input
+                    value={simulatorText}
+                    onChange={(e) => setSimulatorText(e.target.value)}
+                    placeholder={`Type what ${simulatorSpeaker} is saying in ${currentLangObj.nativeName}... (Press Enter)`}
+                    className="w-full h-9 bg-[#0d2138] border-white/10 text-xs text-white placeholder:text-slate-500 focus-visible:ring-cyan-400 pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleDictation}
+                    className={`absolute right-1.5 p-1 rounded transition-colors cursor-pointer ${
+                      isDictating
+                        ? "bg-rose-500 text-white animate-pulse"
+                        : "text-slate-400 hover:text-cyan-300 hover:bg-white/10"
+                    }`}
+                    title={isDictating ? "Stop speech dictation" : `Dictate speech in ${currentLangObj.name}`}
+                  >
+                    <Mic className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
                 <Button
                   type="submit"

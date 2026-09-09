@@ -18,6 +18,10 @@ import type {
   MicrophoneDiagnostics,
   FirstMateAskHistoryEntry,
 } from "../../../shared/firstMate";
+import {
+  isSilenceHallucination,
+  SUPPORTED_LANGUAGES,
+} from "../../../shared/firstMate";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { BrowserMicrophoneAudioProvider } from "../lib/firstMate/audio/BrowserMicrophoneAudioProvider";
@@ -129,6 +133,7 @@ function createDefaultSession(): FirstMateSession {
     sessionType: "IEP_MEETING",
     status: "READY",
     mode: "LIVE",
+    language: (typeof window !== "undefined" ? localStorage.getItem("fm_preferred_language") : null) || "en",
     startedAt: null,
     endedAt: null,
     durationSeconds: 0,
@@ -208,6 +213,7 @@ export function createCleanSession(type: FirstMateSessionType = "IEP_MEETING"): 
     sessionType: type,
     status: "READY",
     mode: "LIVE",
+    language: (typeof window !== "undefined" ? localStorage.getItem("fm_preferred_language") : null) || "en",
     startedAt: null,
     endedAt: null,
     durationSeconds: 0,
@@ -275,6 +281,7 @@ function normalizeSession(raw: any): FirstMateSession {
     sessionType: raw.sessionType || def.sessionType,
     status: raw.status || def.status,
     mode: raw.mode || def.mode,
+    language: typeof raw.language === "string" ? raw.language : def.language || "en",
     startedAt: typeof raw.startedAt === "number" ? raw.startedAt : def.startedAt,
     endedAt: typeof raw.endedAt === "number" ? raw.endedAt : null,
     durationSeconds: typeof raw.durationSeconds === "number" ? raw.durationSeconds : def.durationSeconds,
@@ -287,7 +294,9 @@ function normalizeSession(raw: any): FirstMateSession {
     title: raw.title || def.title,
     notes: Array.isArray(raw.notes) ? raw.notes : [],
     summary: typeof raw.summary === "string" ? raw.summary : "",
-    transcript: Array.isArray(raw.transcript) ? raw.transcript : [],
+    transcript: (Array.isArray(raw.transcript) ? raw.transcript : []).filter(
+      (t: any) => t && typeof t.text === "string" && !isSilenceHallucination(t.text, raw.language || def.language || "en")
+    ),
     sessionState: {
       ...def.sessionState,
       ...(raw.sessionState || {}),
@@ -332,8 +341,12 @@ interface FirstMateContextValue {
   resetSession: (newType?: FirstMateSessionType) => void;
   setSessionType: (type: FirstMateSessionType) => void;
   setMode: (mode: FirstMateSessionMode) => void;
+  language: string;
+  setLanguage: (lang: string) => void;
   attachRecord: (record: { id: number; type: "lead" | "client"; name: string; subtitle: string }) => void;
   addTranscriptTurn: (speakerRole: SpeakerRole, text: string, source?: "simulator" | "live_audio" | "manual" | "microphone") => Promise<void>;
+  deleteTranscriptTurn: (turnId: string) => void;
+  purgeForeignHallucinations: () => void;
   rephraseSayThis: (style: SayThisStyle) => Promise<void>;
   updateTrackedItem: (id: string, status: TrackedItem["status"], userNote?: string) => void;
   dismissAlert: (id: string) => void;
@@ -561,6 +574,59 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   const [audioDevices, setAudioDevices] = useState<Array<{ deviceId: string; label: string }>>([]);
   const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>("");
 
+  // ── LANGUAGE CONFIGURATION STATE ──
+  const [language, setLanguageState] = useState<string>(() => {
+    try {
+      return localStorage.getItem("fm_preferred_language") || session.language || "en";
+    } catch {
+      return session.language || "en";
+    }
+  });
+
+  const setLanguage = useCallback((lang: string) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem("fm_preferred_language", lang);
+    } catch {}
+
+    setSession((prev) => {
+      const next = { ...prev, language: lang };
+      sessionRef.current = next;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+      } catch {}
+      return next;
+    });
+
+    if (transcriptionProviderRef.current) {
+      transcriptionProviderRef.current.setLanguage(lang);
+    }
+
+    const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+    toast.success(`First Mate language set to ${langObj ? `${langObj.flag} ${langObj.name}` : lang}`);
+  }, []);
+
+  // Automatically purge foreign hallucinations from session transcript on mount or language change
+  useEffect(() => {
+    const activeLang = session.language || language || "en";
+    setSession((prev) => {
+      const current = prev.transcript || [];
+      const hasHallucination = current.some((t) => isSilenceHallucination(t.text, activeLang));
+      if (!hasHallucination) return prev;
+      const cleaned = current.filter((t) => !isSilenceHallucination(t.text, activeLang));
+      const next = {
+        ...prev,
+        transcript: cleaned,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+      } catch {}
+      return next;
+    });
+  }, [session.language, language]);
+
   const audioProviderRef = useRef<BrowserMicrophoneAudioProvider | null>(null);
   const transcriptionProviderRef = useRef<OpenAIRealtimeTranscriptionProvider | null>(null);
   const addTranscriptTurnRef = useRef<((speakerRole: SpeakerRole, text: string, source?: any) => Promise<void>) | null>(null);
@@ -602,16 +668,20 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
+    const activeLanguage = session.language || language || "en";
+
     if (!transcriptionProviderRef.current) {
       transcriptionProviderRef.current = new OpenAIRealtimeTranscriptionProvider({
         trpcClient: trpcUtils.client,
         sessionId: session.sessionId,
         speakerRole: selectedSpeaker,
+        language: activeLanguage,
       });
     } else {
       transcriptionProviderRef.current.setSpeaker(selectedSpeaker);
+      transcriptionProviderRef.current.setLanguage(activeLanguage);
     }
-  }, [session.sessionId, selectedSpeaker, trpcUtils.client, selectedAudioDevice]);
+  }, [session.sessionId, session.language, language, selectedSpeaker, trpcUtils.client, selectedAudioDevice]);
 
   // Connect audio provider chunks to transcription provider
   useEffect(() => {
@@ -1077,23 +1147,10 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         lastTurn.text.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim() === lowerClean &&
         Date.now() - lastTurn.timestamp < 12000;
 
-      // Detect Whisper silence hallucination artifacts
-      const isWhisperSilenceHallucination =
-        lowerClean === "thank you for watching" ||
-        lowerClean === "thanks for watching" ||
-        lowerClean === "thank you so much for watching" ||
-        lowerClean === "thank you for listening" ||
-        lowerClean === "thanks for listening" ||
-        lowerClean === "thank you" ||
-        lowerClean === "bye" ||
-        lowerClean === "goodbye" ||
-        lowerClean === "subscribe" ||
-        lowerClean === "the end" ||
-        lowerClean === "subtitles by" ||
-        lowerClean === "subtitles" ||
-        lowerClean.length < 2;
+      // Detect multi-lingual Whisper silence hallucination artifacts (e.g. "ご視聴ありがとうございました", "Thank you for watching", etc.)
+      const isWhisperSilence = isSilenceHallucination(trimmed, currentSession.language || language || "en");
 
-      if (isRepetition || (isWhisperSilenceHallucination && audioInputLevel < 0.08)) {
+      if (isRepetition || isWhisperSilence || (lowerClean.length < 2 && audioInputLevel < 0.08)) {
         console.log("[FirstMateContext] Suppressing duplicate/silence hallucination turn:", trimmed);
         setDuplicatesSuppressed((prev) => prev + 1);
         return;
@@ -1565,20 +1622,66 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   }, [session, generateSummaryMutation]);
 
   const clearTranscript = useCallback(() => {
-    setSession((prev) => ({
-      ...prev,
-      transcript: [],
-      requests: [],
-      refusals: [],
-      commitments: [],
-      proposals: [],
-      alerts: [],
-      conflicts: [],
-      threads: [],
-      devLogs: Array.isArray(prev.devLogs) ? prev.devLogs : [],
-    }));
-    toast.info("Transcript cleared for fresh test");
+    setSession((prev) => {
+      const next = {
+        ...prev,
+        transcript: [],
+        requests: [],
+        refusals: [],
+        commitments: [],
+        proposals: [],
+        alerts: [],
+        conflicts: [],
+        threads: [],
+        devLogs: Array.isArray(prev.devLogs) ? prev.devLogs : [],
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+      } catch {}
+      return next;
+    });
+    toast.info("Transcript cleared");
   }, []);
+
+  const deleteTranscriptTurn = useCallback((turnId: string) => {
+    setSession((prev) => {
+      const next = {
+        ...prev,
+        transcript: (prev.transcript || []).filter((t) => t.id !== turnId),
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+      } catch {}
+      return next;
+    });
+    toast.success("Turn deleted from transcript");
+  }, []);
+
+  const purgeForeignHallucinations = useCallback(() => {
+    setSession((prev) => {
+      const activeLang = prev.language || language || "en";
+      const cleaned = (prev.transcript || []).filter(
+        (t) => t && typeof t.text === "string" && !isSilenceHallucination(t.text, activeLang)
+      );
+      const removedCount = (prev.transcript || []).length - cleaned.length;
+      if (removedCount > 0) {
+        toast.success(`Removed ${removedCount} foreign/hallucinated turns`);
+      } else {
+        toast.info("No foreign language hallucinations found");
+      }
+      const next = {
+        ...prev,
+        transcript: cleaned,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+      } catch {}
+      return next;
+    });
+  }, [language]);
 
   return (
     <FirstMateContext.Provider
@@ -1595,8 +1698,12 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         resetSession,
         setSessionType,
         setMode,
+        language: session.language || language || "en",
+        setLanguage,
         attachRecord,
         addTranscriptTurn,
+        deleteTranscriptTurn,
+        purgeForeignHallucinations,
         rephraseSayThis,
         updateTrackedItem,
         dismissAlert,

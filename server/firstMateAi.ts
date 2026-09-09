@@ -20,6 +20,19 @@ import type {
   ConflictDetection,
   FirstMateProvenance,
 } from "../shared/firstMate";
+import { SUPPORTED_LANGUAGES } from "../shared/firstMate";
+
+export function getLanguageInstruction(language?: string): string {
+  if (!language || language === "en" || language === "auto") {
+    return "";
+  }
+  const lang = SUPPORTED_LANGUAGES.find((l) => l.code === language);
+  const langName = lang ? `${lang.name} (${lang.nativeName})` : language;
+  return `\n\nLANGUAGE CONFIGURATION:
+The user has configured First Mate for ${langName}.
+- The conversation and transcript contain speech in ${langName} or bilingual turns.
+- Formulate "sayThis", "askNext", and immediate phrasing in ${langName} (with English context where helpful) so the advocate and family can directly speak and use it in the meeting.`;
+}
 
 export interface FastAssistExecutionResult {
   fastAssist: FastAssistOutput;
@@ -88,7 +101,7 @@ export async function runFastAssist(
 ${getSessionTypeProfile(sessionType)}
 
 TASK: FAST ASSIST LIVE GUIDANCE
-Produce live, immediate guidance for the Waypoint advocate. Keep responses concise enough to read in 3 seconds.`;
+Produce live, immediate guidance for the Waypoint advocate. Keep responses concise enough to read in 3 seconds.${getLanguageInstruction(session.language)}`;
 
   const userPrompt = `Active Session: ${session.title || sessionType}
 Attached: ${session.attachedName || "Student"} (${session.attachedSubtitle || ""})
@@ -160,7 +173,7 @@ TASK: DEEP ASSIST & ROLLING MEMORY
 Analyze the full conversation history.
 1. Check for cross-turn conflicts or contradictions between earlier statements and current statements (e.g. parent stated request was sent on Aug 12, school later claims no request received).
 2. Extract new trackable items (Requests, Refusals, Proposals, Commitments, Important Dates). Do NOT duplicate dismissed items.
-3. Provide Why It Matters and facts to verify.`;
+3. Provide Why It Matters and facts to verify.${getLanguageInstruction(session.language)}`;
 
   const userPrompt = `Attached Client: ${session.attachedName || "Student"}
 Dismissed Item IDs: ${(session.dismissedItemIds || []).join(", ") || "None"}

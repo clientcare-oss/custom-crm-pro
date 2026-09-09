@@ -38,6 +38,146 @@ export type SpeakerRole =
 
 export type TranscriptSource = "simulator" | "live_audio" | "manual" | "microphone";
 
+export interface SupportedLanguage {
+  code: string;
+  name: string;
+  nativeName: string;
+  flag: string;
+}
+
+export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
+  { code: "en", name: "English", nativeName: "English", flag: "🇺🇸" },
+  { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸" },
+  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷" },
+  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇧🇷" },
+  { code: "ht", name: "Haitian Creole", nativeName: "Kreyòl Ayisyen", flag: "🇭🇹" },
+  { code: "vi", name: "Vietnamese", nativeName: "Tiếng Việt", flag: "🇻🇳" },
+  { code: "zh", name: "Chinese", nativeName: "中文", flag: "🇨🇳" },
+  { code: "ar", name: "Arabic", nativeName: "العربية", flag: "🇸🇦" },
+  { code: "ko", name: "Korean", nativeName: "한국어", flag: "🇰🇷" },
+  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪" },
+  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹" },
+  { code: "tl", name: "Tagalog", nativeName: "Tagalog / Filipino", flag: "🇵🇭" },
+  { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺" },
+  { code: "auto", name: "Auto-Detect", nativeName: "Auto Detect", flag: "🌐" },
+];
+
+/**
+ * Detects whether a string contains characters from a foreign writing system that does not
+ * belong in a session of the given target language.
+ * (e.g., Japanese Hiragana/Katakana, Kanji, Hangul, Cyrillic, Arabic appearing in an English meeting)
+ */
+export function containsForeignScriptMismatch(text: string, targetLanguage: string = "en"): boolean {
+  if (!text) return false;
+  const lang = (targetLanguage || "en").toLowerCase();
+
+  // If target language is NOT Japanese, any Japanese Hiragana or Katakana is a foreign hallucination
+  const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F]/.test(text);
+  if (hasJapanese && lang !== "ja") return true;
+
+  // If target language is NOT Chinese and NOT Japanese, CJK ideographs (Kanji/Hanzi) are foreign
+  const hasCJK = /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]/.test(text);
+  if (hasCJK && lang !== "zh" && lang !== "ja") return true;
+
+  // If target language is NOT Korean, any Hangul is foreign
+  const hasHangul = /[\uAC00-\uD7AF\u1100-\u11FF]/.test(text);
+  if (hasHangul && lang !== "ko") return true;
+
+  // If target language is NOT Arabic, any Arabic script is foreign
+  const hasArabic = /[\u0600-\u06FF\u0750-\u077F]/.test(text);
+  if (hasArabic && lang !== "ar") return true;
+
+  // If target language is NOT Russian, any Cyrillic script is foreign
+  const hasCyrillic = /[\u0400-\u04FF]/.test(text);
+  if (hasCyrillic && lang !== "ru") return true;
+
+  return false;
+}
+
+/**
+ * Detects known Whisper silence & background-noise hallucinations across languages
+ * (e.g. YouTube subtitle artifacts like "ご視聴ありがとうございました", "Thank you for watching", "Subtitles by", etc.)
+ */
+export function isSilenceHallucination(text: string, targetLanguage: string = "en"): boolean {
+  if (!text) return true;
+
+  // Check foreign script mismatch (e.g. Japanese text in an English/Spanish/French session)
+  if (containsForeignScriptMismatch(text, targetLanguage)) {
+    return true;
+  }
+
+  const clean = text
+    .toLowerCase()
+    .trim()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()？?！!。、・「」『』]/g, "")
+    .trim();
+
+  if (clean.length < 2) return true;
+
+  // Japanese Whisper hallucinations on silence / hiss
+  if (
+    clean.includes("ご視聴") ||
+    clean.includes("視聴ありがとう") ||
+    clean.includes("チャンネル登録") ||
+    clean.includes("ご覧いただき") ||
+    clean.includes("高評価") ||
+    clean.includes("お疲れ様") ||
+    clean.includes("ありがとうございました") ||
+    clean.includes("おやすみなさい")
+  ) {
+    return true;
+  }
+
+  // Chinese Whisper hallucinations on silence
+  if (
+    clean.includes("谢谢观看") ||
+    clean.includes("謝謝觀看") ||
+    clean.includes("感谢收看") ||
+    clean.includes("感謝收看") ||
+    clean.includes("请订阅") ||
+    clean.includes("請訂閱")
+  ) {
+    return true;
+  }
+
+  // Korean Whisper hallucinations
+  if (
+    clean.includes("시청해 주셔서") ||
+    clean.includes("구독과 좋아요") ||
+    (clean.includes("감사합니다") && clean.length < 10)
+  ) {
+    return true;
+  }
+
+  // English & common subtitle credits hallucinations
+  const englishHallucinations = [
+    "you",
+    "thank you",
+    "thanks",
+    "thank you for watching",
+    "thanks for watching",
+    "thank you so much for watching",
+    "thank you for listening",
+    "thanks for listening",
+    "bye",
+    "goodbye",
+    "subscribe",
+    "please subscribe",
+    "the end",
+    "subtitles by",
+    "subtitles",
+    "captions by",
+    "amaraorg",
+    "watching",
+  ];
+
+  if (englishHallucinations.includes(clean)) {
+    return true;
+  }
+
+  return false;
+}
+
 export interface NormalizedTranscriptEvent {
   id: string;
   sessionId: string;
@@ -308,6 +448,7 @@ export interface FirstMateSession {
   sessionType: FirstMateSessionType;
   status: FirstMateSessionStatus;
   mode: FirstMateSessionMode;
+  language?: string;
   startedAt: number | null;
   endedAt: number | null;
   durationSeconds: number;

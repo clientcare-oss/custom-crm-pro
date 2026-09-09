@@ -12,10 +12,11 @@ import { eq } from "drizzle-orm";
 import { firstMateSessionStore } from "../firstMate/sessionStore";
 import { getDb } from "../db";
 import { contacts, leads, projects, projectNotes } from "../../drizzle/schema";
-import type {
-  FirstMateSession,
-  NormalizedTranscriptEvent,
-  SayThisStyle,
+import {
+  isSilenceHallucination,
+  type FirstMateSession,
+  type NormalizedTranscriptEvent,
+  type SayThisStyle,
 } from "../../shared/firstMate";
 
 const SpeakerRoleSchema = z.enum([
@@ -336,11 +337,14 @@ export const firstMateRouter = router({
         audioBase64: z.string(),
         mimeType: z.string().default("audio/webm"),
         speakerRole: SpeakerRoleSchema.default("Parent"),
+        language: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
       const apiKey = process.env.OPENAI_API_KEY;
       const startTime = Date.now();
+      // Default to user-specified language or "en", locking Whisper into that language to prevent YouTube subtitle hallucinations on ambient noise
+      const targetLanguage = input.language && input.language !== "auto" ? input.language : "en";
 
       // 1. If OpenAI API key is present, attempt transcription via OpenAI Whisper
       if (apiKey) {
@@ -359,6 +363,7 @@ export const firstMateRouter = router({
           formData.append("file", blob, `audio-chunk.${ext}`);
           formData.append("model", "whisper-1");
           formData.append("response_format", "json");
+          formData.append("language", targetLanguage);
 
           const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
             method: "POST",
@@ -370,7 +375,11 @@ export const firstMateRouter = router({
 
           if (response.ok) {
             const data = (await response.json()) as any;
-            const text = (data.text || "").trim();
+            let text = (data.text || "").trim();
+
+            if (isSilenceHallucination(text, targetLanguage)) {
+              text = "";
+            }
 
             return {
               text,
@@ -380,6 +389,7 @@ export const firstMateRouter = router({
               provenance: "AI: OPENAI" as const,
               isFinal: true,
               confidence: 0.98,
+              language: targetLanguage,
             };
           }
         } catch (err: any) {
@@ -392,17 +402,26 @@ export const firstMateRouter = router({
       if (cfAi && typeof cfAi.run === "function") {
         try {
           const audioBuffer = Buffer.from(input.audioBase64, "base64");
-          const res = await cfAi.run("@cf/openai/whisper", {
+          const whisperPayload: any = {
             audio: Array.from(audioBuffer),
-          });
+            language: targetLanguage,
+          };
+          const res = await cfAi.run("@cf/openai/whisper", whisperPayload);
+          let text = (res.text || "").trim();
+
+          if (isSilenceHallucination(text, targetLanguage)) {
+            text = "";
+          }
+
           return {
-            text: (res.text || "").trim(),
+            text,
             latencyMs: Date.now() - startTime,
             model: "@cf/openai/whisper",
             provider: "Cloudflare Workers AI",
             provenance: "AI: WORKERS_AI" as const,
             isFinal: true,
             confidence: 0.95,
+            language: targetLanguage,
           };
         } catch (err: any) {
           console.warn("[FirstMate] Cloudflare Workers AI whisper failed, using speech chunk fallback:", err?.message);
@@ -418,6 +437,7 @@ export const firstMateRouter = router({
         provenance: "AI: WORKERS_AI" as const,
         isFinal: true,
         confidence: 0.9,
+        language: targetLanguage,
       };
     }),
 

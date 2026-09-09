@@ -22,11 +22,17 @@ import {
   Plus,
   RotateCcw,
   Trash2,
+  Globe,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { SpeakerRole, SayThisStyle } from "../../../shared/firstMate";
+import {
+  type SpeakerRole,
+  type SayThisStyle,
+  SUPPORTED_LANGUAGES,
+  isSilenceHallucination,
+} from "../../../shared/firstMate";
 import { RadarReticleIcon, FirstMateReticleLogo } from "@/components/firstMate/RadarReticleIcon";
 
 // Speaker styling config
@@ -69,7 +75,29 @@ export default function FirstMatePopout() {
     hasPreviousSession,
     endSessionAndProcess,
     isProcessingEndSession,
+    language,
+    setLanguage,
+    addTranscriptTurn,
+    clearTranscript,
+    deleteTranscriptTurn,
+    purgeForeignHallucinations,
   } = useFirstMate();
+
+  const [popoutTurnText, setPopoutTurnText] = useState("");
+  const [popoutSpeaker, setPopoutSpeaker] = useState<SpeakerRole>("Advocate");
+
+  const handleAddPopoutTurn = () => {
+    const trimmed = popoutTurnText.trim();
+    if (!trimmed) return;
+    if (isSilenceHallucination(trimmed, language)) {
+      toast.error("Silence / foreign artifact filtered out");
+      setPopoutTurnText("");
+      return;
+    }
+    addTranscriptTurn(popoutSpeaker, trimmed, "manual");
+    setPopoutTurnText("");
+    toast.success("Turn added to transcript");
+  };
 
   const canContinuePrevious = hasPreviousSession || session.status === "ENDED";
 
@@ -231,35 +259,58 @@ export default function FirstMatePopout() {
             </div>
           </div>
 
-          {/* Density Mode Selector */}
-          <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
-            <button
-              onClick={() => handleSetDensity("MINI")}
-              className={`px-1.5 py-0.5 rounded transition-colors ${
-                density === "MINI" ? "bg-cyan-600 text-white font-bold" : "text-slate-400 hover:text-white"
-              }`}
-              title="Mini View: Say This & Ask Next only"
-            >
-              MINI
-            </button>
-            <button
-              onClick={() => handleSetDensity("COMPACT")}
-              className={`px-1.5 py-0.5 rounded transition-colors ${
-                density === "COMPACT" ? "bg-cyan-600 text-white font-bold" : "text-slate-400 hover:text-white"
-              }`}
-              title="Compact View: Adds Ask First Mate"
-            >
-              COMPACT
-            </button>
-            <button
-              onClick={() => handleSetDensity("FULL")}
-              className={`px-1.5 py-0.5 rounded transition-colors ${
-                density === "FULL" ? "bg-cyan-600 text-white font-bold" : "text-slate-400 hover:text-white"
-              }`}
-              title="Full View: Includes Open Matters & Live Transcript"
-            >
-              FULL
-            </button>
+          {/* Language & Density Selectors */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
+              <Globe className="w-3 h-3 text-cyan-400" />
+              <select
+                value={language}
+                onChange={(e) => {
+                  setLanguage(e.target.value);
+                  const selected = SUPPORTED_LANGUAGES.find((l) => l.code === e.target.value);
+                  toast.success(`Language set to ${selected?.nativeName || e.target.value}`);
+                }}
+                className="bg-transparent text-slate-200 text-[10px] font-mono border-0 focus:outline-none cursor-pointer"
+                title="Select meeting & transcription language"
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code} className="bg-[#0b1b2d] text-slate-200">
+                    {lang.flag} {lang.name} ({lang.nativeName})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Density Mode Selector */}
+            <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
+              <button
+                onClick={() => handleSetDensity("MINI")}
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  density === "MINI" ? "bg-cyan-600 text-white font-bold" : "text-slate-400 hover:text-white"
+                }`}
+                title="Mini View: Say This & Ask Next only"
+              >
+                MINI
+              </button>
+              <button
+                onClick={() => handleSetDensity("COMPACT")}
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  density === "COMPACT" ? "bg-cyan-600 text-white font-bold" : "text-slate-400 hover:text-white"
+                }`}
+                title="Compact View: Adds Ask First Mate"
+              >
+                COMPACT
+              </button>
+              <button
+                onClick={() => handleSetDensity("FULL")}
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  density === "FULL" ? "bg-cyan-600 text-white font-bold" : "text-slate-400 hover:text-white"
+                }`}
+                title="Full View: Includes Open Matters & Live Transcript"
+              >
+                FULL
+              </button>
+            </div>
           </div>
         </div>
 
@@ -714,6 +765,25 @@ export default function FirstMatePopout() {
                   </>
                 )}
               </button>
+
+              <button
+                type="button"
+                onClick={purgeForeignHallucinations}
+                title="Purge foreign language / silence artifacts"
+                className="flex items-center gap-1 text-[10px] font-medium text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30 cursor-pointer"
+              >
+                <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                <span>Clean</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={clearTranscript}
+                title="Clear transcript"
+                className="text-[10px] text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-2.5 h-2.5" />
+              </button>
             </div>
 
             {isTranscriptExpanded && (
@@ -738,6 +808,13 @@ export default function FirstMatePopout() {
                             >
                               <Copy className="w-2.5 h-2.5" />
                             </button>
+                            <button
+                              onClick={() => deleteTranscriptTurn(t.id)}
+                              className="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 p-0.5 transition-opacity"
+                              title="Delete turn"
+                            >
+                              <Trash2 className="w-2.5 h-2.5" />
+                            </button>
                           </div>
                         </div>
                         <p className="text-slate-200 text-[11px] leading-snug select-text">{t.text}</p>
@@ -748,6 +825,48 @@ export default function FirstMatePopout() {
                 <div ref={transcriptBottomRef} />
               </div>
             )}
+
+            {/* Quick Type Transcript Turn */}
+            <div className="p-2 border-t border-white/10 bg-[#06111f] flex items-center gap-1.5">
+              <select
+                value={popoutSpeaker}
+                onChange={(e) => setPopoutSpeaker(e.target.value as SpeakerRole)}
+                className="bg-black/50 text-[10px] text-cyan-300 font-mono border border-white/10 rounded px-1.5 py-1 focus:outline-none shrink-0 cursor-pointer"
+              >
+                <option value="Advocate">Advocate</option>
+                <option value="School">School</option>
+                <option value="Parent">Parent</option>
+                <option value="Teacher">Teacher</option>
+                <option value="Special Education Teacher">SpEd Teacher</option>
+                <option value="Administrator">Admin</option>
+                <option value="SLP">SLP</option>
+                <option value="Student">Student</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <input
+                type="text"
+                value={popoutTurnText}
+                onChange={(e) => setPopoutTurnText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddPopoutTurn();
+                  }
+                }}
+                placeholder={`Type turn in ${SUPPORTED_LANGUAGES.find((l) => l.code === language)?.name || "English"}...`}
+                className="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-slate-500 focus:border-cyan-500/60 focus:outline-none"
+              />
+
+              <button
+                onClick={handleAddPopoutTurn}
+                disabled={!popoutTurnText.trim()}
+                className="p-1 rounded bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 text-white transition-colors shrink-0 cursor-pointer"
+                title="Send turn"
+              >
+                <Send className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         )}
       </div>
