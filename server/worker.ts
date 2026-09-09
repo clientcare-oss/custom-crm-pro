@@ -1,6 +1,7 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./routers";
 import { sdk } from "./_core/sdk";
+import { authenticateClerkOrSession } from "./_core/context";
 import * as db from "./db";
 import { users } from "../drizzle/schema";
 import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
@@ -15,6 +16,14 @@ export default {
     if (env.AI) {
       (globalThis as any).__CF_ENV_AI__ = env.AI;
     }
+    (globalThis as any).__CF_ENV__ = env;
+    if (env) {
+      for (const key of Object.keys(env)) {
+        if (typeof env[key] === "string" && !process.env[key]) {
+          process.env[key] = env[key];
+        }
+      }
+    }
 
     const url = new URL(request.url);
 
@@ -27,8 +36,9 @@ export default {
         createContext: async () => {
           let user: any = null;
           try {
-            user = await sdk.authenticateRequest(request as any);
+            user = await authenticateClerkOrSession(request);
           } catch (e) {
+            console.warn("[Worker Auth] Context authentication error:", e);
             user = null;
           }
           return { req: request as any, res: {} as any, user };

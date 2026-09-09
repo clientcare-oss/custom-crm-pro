@@ -79,6 +79,8 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
   const [priority, setPriority] = useState<number>(3);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [reporterName, setReporterName] = useState(user?.name || "");
+  const [reporterEmail, setReporterEmail] = useState(user?.email || "");
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [capturedLogs, setCapturedLogs] = useState<LogEntry[]>([]);
   const [createdIssue, setCreatedIssue] = useState<{ identifier: string; url: string; title: string } | null>(null);
@@ -94,8 +96,10 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
     if (open) {
       setCapturedLogs(getRecentLogs());
       setCreatedIssue(null);
+      if (user?.name && !reporterName) setReporterName(user.name);
+      if (user?.email && !reporterEmail) setReporterEmail(user.email);
     }
-  }, [open]);
+  }, [open, user]);
 
   function formatErrorMessage(rawMessage?: string): string {
     if (!rawMessage) return "Failed to submit report";
@@ -144,6 +148,8 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
       description: description.trim(),
       issueType,
       priority,
+      reporterName: reporterName.trim() || undefined,
+      reporterEmail: reporterEmail.trim() || undefined,
       routeContext: {
         url: typeof window !== "undefined" ? window.location.href : undefined,
         pathname: location,
@@ -267,6 +273,35 @@ export function IssueReporterModal({ open, onOpenChange }: IssueReporterModalPro
                         {p.label}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Reporter Contact Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="space-y-1">
+                    <Label htmlFor="reporter-name" className="text-xs font-semibold text-muted-foreground">
+                      Your Name
+                    </Label>
+                    <Input
+                      id="reporter-name"
+                      value={reporterName}
+                      onChange={(e) => setReporterName(e.target.value)}
+                      placeholder="e.g. Byron Honea"
+                      className="text-xs bg-muted/20 border-border/70 h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="reporter-email" className="text-xs font-semibold text-muted-foreground">
+                      Your Email
+                    </Label>
+                    <Input
+                      id="reporter-email"
+                      type="email"
+                      value={reporterEmail}
+                      onChange={(e) => setReporterEmail(e.target.value)}
+                      placeholder="e.g. byron@waypointadvocates.com"
+                      className="text-xs bg-muted/20 border-border/70 h-9"
+                    />
                   </div>
                 </div>
 

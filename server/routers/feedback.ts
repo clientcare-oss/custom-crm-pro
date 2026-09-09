@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, publicProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 
 import dotenv from "dotenv";
@@ -7,6 +7,9 @@ import dotenv from "dotenv";
 function getLinearApiKey(): string {
   if (process.env.LINEAR_API_KEY) {
     return process.env.LINEAR_API_KEY;
+  }
+  if ((globalThis as any).__CF_ENV__?.LINEAR_API_KEY) {
+    return (globalThis as any).__CF_ENV__.LINEAR_API_KEY;
   }
   try {
     const result = dotenv.config();
@@ -53,14 +56,17 @@ async function linearGraphQL(query: string, variables: any = {}) {
 export const feedbackRouter = router({
   /**
    * Submit an issue/bug/feature request directly to the Waypoint Advocates Linear Backlog
+   * Accessible to authenticated users and unauthenticated visitors alike (helpdesk pattern)
    */
-  submitIssue: protectedProcedure
+  submitIssue: publicProcedure
     .input(
       z.object({
         title: z.string().min(1, "Please provide a title"),
         description: z.string().min(1, "Please provide description details"),
         issueType: z.enum(["bug", "feature", "improvement", "question"]).default("bug"),
         priority: z.number().min(0).max(4).default(3), // 1: Urgent, 2: High, 3: Medium, 4: Low
+        reporterName: z.string().optional(),
+        reporterEmail: z.string().optional(),
         routeContext: z.object({
           url: z.string().optional(),
           pathname: z.string().optional(),
@@ -84,9 +90,9 @@ export const feedbackRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx;
-      const userName = user?.name || "Anonymous User";
-      const userEmail = user?.email || "Unknown Email";
-      const userRole = user?.role || "user";
+      const userName = user?.name || input.reporterName?.trim() || "Anonymous User";
+      const userEmail = user?.email || input.reporterEmail?.trim() || "Unknown Email";
+      const userRole = user?.role || "visitor";
 
       // Select labels
       const labelIds: string[] = [LABEL_MAP.viaWeb];
@@ -121,7 +127,7 @@ ${input.description}
 ### 👤 Reporter Info
 - **Name**: ${userName}
 - **Email**: ${userEmail}
-- **Role**: \`${userRole}\` (User ID: \`#${user?.id ?? "unknown"}\`)
+- **Role**: \`${userRole}\` (User ID: \`#${user?.id ?? "anonymous"}\`)
 
 ### 🌐 Environment Context
 - **URL**: ${input.routeContext?.url ? `[${input.routeContext.url}](${input.routeContext.url})` : "N/A"}
@@ -187,12 +193,12 @@ ${logsMarkdown}
   /**
    * List recent issues filed for this project so users can view status
    */
-  listRecentIssues: protectedProcedure.query(async () => {
+  listRecentIssues: publicProcedure.query(async () => {
     try {
       const query = `
         query GetProjectIssues($projectId: String!) {
           project(id: $projectId) {
-            issues(first: 10, orderBy: createdAt) {
+            issues(first: 15, orderBy: createdAt) {
               nodes {
                 id
                 identifier

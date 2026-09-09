@@ -49,12 +49,25 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
+      async fetch(input, init) {
         const portalToken = localStorage.getItem("portal_token");
         const headers: Record<string, string> = {};
         if (portalToken) {
           headers["x-portal-token"] = portalToken;
         }
+
+        // Attach Clerk session token if available
+        if (typeof window !== "undefined" && (window as any).Clerk?.session) {
+          try {
+            const token = await (window as any).Clerk.session.getToken();
+            if (token) {
+              headers["Authorization"] = `Bearer ${token}`;
+            }
+          } catch (e) {
+            // Silently continue if Clerk token can't be retrieved
+          }
+        }
+
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",

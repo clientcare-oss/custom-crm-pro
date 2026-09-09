@@ -55,6 +55,20 @@ export const adminProcedure = t.procedure.use(
 function getPortalToken(ctx: TrpcContext): string | undefined {
   const cookieToken = (ctx.req as any)?.cookies?.portal_session;
   if (cookieToken) return cookieToken;
+
+  const cookieHeader = typeof (ctx.req as any)?.headers?.get === "function"
+    ? (ctx.req as any).headers.get("cookie")
+    : (ctx.req as any)?.headers?.cookie;
+
+  if (cookieHeader) {
+    const match = cookieHeader.match(/portal_session=([^;]+)/);
+    if (match) return match[1];
+  }
+
+  if (typeof (ctx.req as any)?.headers?.get === "function") {
+    const header = (ctx.req as any).headers.get("x-portal-token");
+    if (header) return header;
+  }
   const headerToken = (ctx.req as any)?.headers?.['x-portal-token'];
   if (headerToken) return headerToken as string;
   return undefined;
