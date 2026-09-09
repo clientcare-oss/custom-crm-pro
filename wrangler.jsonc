@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "custom-crm-pro",
+  "account_id": "fa65a33e99b08d8202d3afa0b305a1c4",
   "main": "server/worker.ts",
   "compatibility_date": "2026-01-01",
   "compatibility_flags": ["nodejs_compat"],

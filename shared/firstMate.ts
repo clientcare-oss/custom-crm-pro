@@ -151,6 +151,7 @@ export interface RelatedSource {
 }
 
 export type FirstMateProvenance =
+  | "AI: WORKERS_AI"
   | "AI: OPENAI"
   | "AI: MOCK"
   | "AI: FALLBACK"

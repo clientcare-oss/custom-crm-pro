@@ -126,5 +126,34 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
 ## 6. Verification Checklist Before Committing
 Before finishing any task or merging changes:
 1. `npm run check` must pass with zero TypeScript errors.
-2. `npm run test` must pass cleanly.
-3. Verify interactive UI flows visually on `localhost:5173` or dev server port.
+2. `npm run test` must pass cleanly (all tests must pass without external API keys).
+3. Verify interactive UI flows visually on dev server port.
+
+---
+
+## 7. AI Architecture & Cloudflare Workers AI Standards (No OpenAI Key Required)
+
+### 🤖 Primary AI Engine: Cloudflare Workers AI
+- **No OpenAI Key Needed**: This application runs natively on **Cloudflare Workers AI**. Developers (and AI coding agents) do NOT need an `OPENAI_API_KEY`.
+- Never throw precondition errors or fail procedures when `OPENAI_API_KEY` is missing. The system automatically routes through Cloudflare Workers AI via `server/_core/llm.ts` or native `env.AI` bindings.
+
+### 💰 Cost-Effective Model Selection
+To ensure maximum cost-effectiveness and speed within Cloudflare Workers AI, always use the following tiered models:
+- **Fast Tasks & Conversational Assist**: Use `@cf/meta/llama-3.1-8b-instruct` (`CF_MODELS.FAST`) for sub-second live meeting guidance (First Mate Fast Assist), voice turn parsing, and quick text rephrasing.
+- **Deep Synthesis & Complex Reasoning**: Use `@cf/meta/llama-3.3-70b-instruct-fp8-fast` (`CF_MODELS.DEEP`) for comprehensive IEP review, dispute detection, prior written notice analysis, and session summaries.
+- **Audio Speech-to-Text**: Use `@cf/openai/whisper` (`CF_MODELS.WHISPER`) for transcribing meeting audio chunks.
+
+### ☁️ Cloudflare Deployment Architecture
+- **Worker + Static Assets**: The application is deployed as a **Cloudflare Worker with Static Assets** (`main: "server/worker.ts"`, assets in `./dist/public`), **NOT** Cloudflare Pages.
+- **Account Identification**:
+  - Account: `Clientcare@waypointadvocates.com's Account` (`fa65a33e99b08d8202d3afa0b305a1c4`)
+  - Worker Name: `custom-crm-pro`
+  - D1 Database: `custom-crm-pro-db` (`f90072b5-4842-4423-a221-ab62a01a25a6`)
+  - Live Production URL: `https://custom-crm-pro.clientcare-fa6.workers.dev`
+- **Dashboard Location**: Find the project in the Cloudflare Dashboard under **Compute (Workers) > Workers & Pages > Workers**, not the Pages tab.
+
+### 🧪 Vibe-Coding & CI/CD Testing Guardrails
+- **Self-Contained Unit Tests**: Unit tests in `server/*.test.ts` run in GitHub Actions CI where third-party API keys (`OPENAI_API_KEY`, `LINEAR_API_KEY`) may not be injected.
+- All AI callers and external integrations must provide smart local heuristic fallbacks when offline so `npm run test` executes deterministically and passes with **0 failures**.
+- A failing test will block the GitHub Actions CI/CD pipeline and halt deployment to Cloudflare!
+
