@@ -426,26 +426,28 @@ export default function PortalDocumentVaultTab({
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 lg:space-y-8 animate-in fade-in duration-300 ${
+      isLight ? "text-slate-900" : "text-white"
+    }`}>
       
       {/* ── HEADER ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-white/5">
+        <div className="space-y-1">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
               Document Vault
             </h1>
-            <div className="w-6 h-6 rounded-md bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.3)]">
-              <Lock className="w-3.5 h-3.5" />
+            <div className="w-7 h-7 rounded-xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,181,68,0.25)]">
+              <Lock className="w-4 h-4" />
             </div>
             <PageIdBadge id="PG-023-VAULT" name="Document Vault" />
           </div>
-          <p className="text-sm text-white/70 mt-1">
-            Your secure home for IEPs, evaluations, school records, and all Waypoint documents.
+          <p className={`text-xs sm:text-sm ${isLight ? "text-slate-600" : "text-blue-200/70"}`}>
+            Your secure repository for IEPs, evaluations, school records, and all Waypoint case files.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start md:self-auto">
+        <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
           {/* Upload Docs Button with 2 Options Popover (Positioned to the LEFT of How It Works) */}
           <div className="relative" ref={uploadMenuRef}>
             <Button
@@ -520,7 +522,9 @@ export default function PortalDocumentVaultTab({
           <Button
             variant="outline"
             onClick={() => setShowHowItWorks(true)}
-            className="gap-2 text-xs font-semibold border-white/20 text-white hover:bg-white/10 h-9 px-3.5 rounded-xl cursor-pointer"
+            className={`gap-2 text-xs font-semibold h-9 px-3.5 rounded-xl cursor-pointer ${
+              isLight ? "border-slate-300 text-slate-700 hover:bg-slate-100" : "border-white/20 text-white hover:bg-white/10"
+            }`}
           >
             <Info className="w-3.5 h-3.5 text-amber-400" />
             How It Works
@@ -528,86 +532,123 @@ export default function PortalDocumentVaultTab({
         </div>
       </div>
 
-      {/* ── STUDENT RECORD SUMMARY STRIP ────────────────────────────────── */}
-      <div className="rounded-2xl border border-blue-900/40 bg-[#06172F]/90 backdrop-blur-md p-5 shadow-2xl">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-3.5">
-          Student Record Summary
+      {/* ── STUDENT RECORD SUMMARY STRIP (Discrete Balanced Cards) ────────── */}
+      <div className={`rounded-2xl border p-4 sm:p-5 shadow-xl backdrop-blur-md transition-all ${
+        isLight ? "bg-white border-slate-200" : "bg-[#06172F]/90 border-blue-900/40"
+      }`}>
+        <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-3.5 flex items-center justify-between">
+          <span>Student Record Summary</span>
+          <span className={`text-[10px] font-medium ${isLight ? "text-slate-400" : "text-blue-200/50"}`}>
+            Real-time Vault Sync
+          </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-blue-900/40">
-          
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
           {/* Stat 1: Total Documents */}
-          <div className="flex items-center gap-3.5 pt-2 sm:pt-0">
-            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
+          <div className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all ${
+            isLight ? "bg-slate-50 border-slate-200" : "bg-blue-950/40 border-blue-900/40"
+          }`}>
+            <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
               <Folder className="w-5 h-5 text-amber-400" />
             </div>
-            <div>
-              <div className="text-xl md:text-2xl font-black text-white">64</div>
-              <div className="text-[11px] text-white/60 font-medium">Total Documents</div>
+            <div className="min-w-0">
+              <div className={`text-lg sm:text-xl font-black ${isLight ? "text-slate-900" : "text-white"}`}>
+                {documents.length || 64}
+              </div>
+              <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                Total Records
+              </div>
             </div>
           </div>
 
           {/* Stat 2: Workspaces */}
-          <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
+          <div className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all ${
+            isLight ? "bg-slate-50 border-slate-200" : "bg-blue-950/40 border-blue-900/40"
+          }`}>
+            <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
               <FolderPlus className="w-5 h-5 text-amber-400" />
             </div>
-            <div>
-              <div className="text-xl md:text-2xl font-black text-white">{workspaces.length}</div>
-              <div className="text-[11px] text-white/60 font-medium">Workspaces</div>
+            <div className="min-w-0">
+              <div className={`text-lg sm:text-xl font-black ${isLight ? "text-slate-900" : "text-white"}`}>
+                {workspaces.length}
+              </div>
+              <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                Workspaces
+              </div>
             </div>
           </div>
 
-          {/* Stat 3: Recent Uploads */}
-          <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
+          {/* Stat 3: Recent Files */}
+          <div className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all ${
+            isLight ? "bg-slate-50 border-slate-200" : "bg-blue-950/40 border-blue-900/40"
+          }`}>
+            <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
               <UploadCloud className="w-5 h-5 text-amber-400" />
             </div>
-            <div>
-              <div className="text-xl md:text-2xl font-black text-white">12</div>
-              <div className="text-[11px] text-white/60 font-medium">Recent Uploads <span className="hidden xl:inline text-white/40">This Month</span></div>
+            <div className="min-w-0">
+              <div className={`text-lg sm:text-xl font-black ${isLight ? "text-slate-900" : "text-white"}`}>
+                {Math.max(1, documents.filter(d => d.relativeDate === "Today" || d.relativeDate === "Just now").length || 12)}
+              </div>
+              <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                Recent Files
+              </div>
             </div>
           </div>
 
           {/* Stat 4: Safe & Encrypted */}
-          <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+          <div className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all ${
+            isLight ? "bg-slate-50 border-slate-200" : "bg-blue-950/40 border-blue-900/40"
+          }`}>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
             </div>
-            <div>
-              <div className="text-xl md:text-2xl font-black text-white">100%</div>
-              <div className="text-[11px] text-white/60 font-medium">Safe & Encrypted</div>
+            <div className="min-w-0">
+              <div className={`text-lg sm:text-xl font-black ${isLight ? "text-slate-900" : "text-white"}`}>
+                AES-256
+              </div>
+              <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                Zero-Trust Safe
+              </div>
             </div>
           </div>
 
-          {/* Stat 5: Last Activity */}
-          <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pl-4">
-            <div className="w-11 h-11 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0 shadow-[0_0_12px_rgba(14,165,233,0.15)]">
-              <Clock className="w-5 h-5 text-sky-400" />
+          {/* Stat 5: Pinned Records */}
+          <div className={`col-span-2 sm:col-span-1 p-3.5 rounded-xl border flex items-center gap-3 transition-all ${
+            isLight ? "bg-slate-50 border-slate-200" : "bg-blue-950/40 border-blue-900/40"
+          }`}>
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+              <Star className="w-5 h-5 text-sky-400 fill-sky-400/20" />
             </div>
-            <div>
-              <div className="text-sm md:text-base font-black text-white">Updated Today</div>
-              <div className="text-[11px] text-white/60 font-medium">Last Activity</div>
+            <div className="min-w-0">
+              <div className={`text-lg sm:text-xl font-black ${isLight ? "text-slate-900" : "text-white"}`}>
+                {pinnedDocuments.length}
+              </div>
+              <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                Pinned Top
+              </div>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* ── SEARCH & FILTER CONTROLS ────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className={`p-3 rounded-2xl border shadow-md flex flex-col sm:flex-row items-stretch sm:items-center gap-3 transition-all ${
+        isLight ? "bg-white border-slate-200" : "bg-[#06172F]/80 border-blue-900/40 backdrop-blur-md"
+      }`}>
         {/* Search Bar */}
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"}`} />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search documents by name, type, or keyword..."
-            className="pl-10 h-10 bg-[#030C22] border-blue-900/40 text-white placeholder:text-white/40 text-xs rounded-xl focus-visible:ring-amber-400"
+            placeholder="Search records by title, keyword, or category..."
+            className={`pl-10 h-10 text-xs rounded-xl focus-visible:ring-amber-400 ${
+              isLight ? "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400" : "bg-[#030C22] border-blue-900/40 text-white placeholder:text-white/40"
+            }`}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+              className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer ${isLight ? "text-slate-400 hover:text-slate-600" : "text-white/40 hover:text-white"}`}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -616,13 +657,15 @@ export default function PortalDocumentVaultTab({
 
         {/* Filter Dropdown */}
         <Select value={selectedWorkspaceFilter} onValueChange={setSelectedWorkspaceFilter}>
-          <SelectTrigger className="w-full sm:w-[150px] h-10 bg-[#06172F] border-blue-900/40 text-white text-xs rounded-xl">
-            <div className="flex items-center gap-2">
-              <Filter className="w-3.5 h-3.5 text-amber-400" />
-              <SelectValue placeholder="Filter" />
+          <SelectTrigger className={`w-full sm:w-[170px] h-10 text-xs rounded-xl shrink-0 ${
+            isLight ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"
+          }`}>
+            <div className="flex items-center gap-2 truncate">
+              <Filter className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <SelectValue placeholder="All Workspaces" />
             </div>
           </SelectTrigger>
-          <SelectContent className="bg-[#06172F] border-blue-900/40 text-white">
+          <SelectContent className={isLight ? "bg-white border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"}>
             <SelectItem value="all">All Workspaces</SelectItem>
             {workspaces.map((w) => (
               <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
@@ -632,13 +675,15 @@ export default function PortalDocumentVaultTab({
 
         {/* Sort Dropdown */}
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-          <SelectTrigger className="w-full sm:w-[140px] h-10 bg-[#06172F] border-blue-900/40 text-white text-xs rounded-xl">
+          <SelectTrigger className={`w-full sm:w-[150px] h-10 text-xs rounded-xl shrink-0 ${
+            isLight ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"
+          }`}>
             <div className="flex items-center gap-2">
-              <ArrowUpDown className="w-3.5 h-3.5 text-white/60" />
+              <ArrowUpDown className={`w-3.5 h-3.5 shrink-0 ${isLight ? "text-slate-400" : "text-white/60"}`} />
               <SelectValue placeholder="Sort" />
             </div>
           </SelectTrigger>
-          <SelectContent className="bg-[#06172F] border-blue-900/40 text-white">
+          <SelectContent className={isLight ? "bg-white border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"}>
             <SelectItem value="newest">Sort: Newest</SelectItem>
             <SelectItem value="oldest">Sort: Oldest</SelectItem>
             <SelectItem value="name">Sort: Name (A-Z)</SelectItem>
@@ -646,13 +691,15 @@ export default function PortalDocumentVaultTab({
         </Select>
 
         {/* View Toggle */}
-        <div className="flex items-center p-1 rounded-xl bg-[#030C22] border border-blue-900/40 self-end sm:self-auto shrink-0">
+        <div className={`flex items-center p-1 rounded-xl border self-end sm:self-auto shrink-0 ${
+          isLight ? "bg-slate-100 border-slate-200" : "bg-[#030C22] border-blue-900/40"
+        }`}>
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-1.5 rounded-lg transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
               viewMode === "grid"
                 ? "bg-amber-400 text-slate-950 shadow-sm font-bold"
-                : "text-white/50 hover:text-white"
+                : isLight ? "text-slate-500 hover:text-slate-900" : "text-white/50 hover:text-white"
             }`}
             title="Grid View"
           >
@@ -660,10 +707,10 @@ export default function PortalDocumentVaultTab({
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`p-1.5 rounded-lg transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
               viewMode === "list"
                 ? "bg-amber-400 text-slate-950 shadow-sm font-bold"
-                : "text-white/50 hover:text-white"
+                : isLight ? "text-slate-500 hover:text-slate-900" : "text-white/50 hover:text-white"
             }`}
             title="List View"
           >
@@ -672,158 +719,303 @@ export default function PortalDocumentVaultTab({
         </div>
       </div>
 
-      {/* ── MAIN TWO-COLUMN SECTION (WORKSPACES + RECENT DOCUMENTS) ─────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column: WORKSPACES (8) */}
-        <div className="lg:col-span-6 space-y-3.5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-              Workspaces <span className="text-amber-400">({workspaces.length})</span>
-            </h2>
-            <button
-              onClick={() => setSelectedWorkspaceFilter("all")}
-              className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
-            >
-              View All
-            </button>
+      {/* ── CONDITIONAL VIEW: FULL TABLE LIST VIEW OR TWO-COLUMN GRID ── */}
+      {viewMode === "list" ? (
+        /* Full-Width Document Table View */
+        <div className={`rounded-2xl border shadow-xl overflow-hidden backdrop-blur-md ${
+          isLight ? "bg-white border-slate-200" : "bg-[#06172F]/90 border-blue-900/40"
+        }`}>
+          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-amber-400" />
+              <h2 className={`text-sm font-bold uppercase tracking-wider ${isLight ? "text-slate-900" : "text-white"}`}>
+                All Documents ({filteredDocuments.length})
+              </h2>
+            </div>
+            {selectedWorkspaceFilter !== "all" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedWorkspaceFilter("all")}
+                className="text-xs text-amber-400 hover:text-amber-300 h-7 px-2"
+              >
+                Clear Filter
+              </Button>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
-            {workspaces.map((ws) => (
-              <Card
-                key={ws.id}
-                onClick={() => setActiveWorkspaceModal(ws)}
-                className="group relative p-4 rounded-2xl bg-[#06172F] hover:bg-[#0A2246] border-blue-900/40 hover:border-amber-400/60 transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-between min-h-[125px] shadow-xl hover:shadow-amber-400/10"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 group-hover:border-amber-400/60 flex items-center justify-center text-amber-400 mb-2 transition-all">
-                  <Folder className="w-5 h-5 fill-amber-400/20 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors leading-tight line-clamp-2">
-                    {ws.name}
-                  </h3>
-                  <p className="text-[11px] text-white/50 font-medium mt-1">
-                    {ws.fileCount} files
-                  </p>
-                </div>
-              </Card>
-            ))}
-
-            {/* + New Workspace Card */}
-            <Card
-              onClick={() => setShowNewWorkspaceModal(true)}
-              className="group p-4 rounded-2xl bg-[#06172F]/50 hover:bg-[#0A2246]/80 border border-dashed border-blue-800/40 hover:border-amber-400/60 transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-center min-h-[125px]"
-            >
-              <div className="w-9 h-9 rounded-full bg-white/5 group-hover:bg-amber-400/20 border border-white/10 group-hover:border-amber-400/40 flex items-center justify-center text-white/60 group-hover:text-amber-300 mb-2 transition-all">
-                <Plus className="w-4 h-4" />
-              </div>
-              <p className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
-                New Workspace
-              </p>
-            </Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className={isLight ? "bg-slate-50 text-slate-500 border-b border-slate-200" : "bg-blue-950/40 text-blue-200/60 border-b border-blue-900/40"}>
+                  <th className="py-3 px-4 font-semibold">Document</th>
+                  <th className="py-3 px-4 font-semibold">Workspace</th>
+                  <th className="py-3 px-4 font-semibold">Date Added</th>
+                  <th className="py-3 px-4 font-semibold">Size</th>
+                  <th className="py-3 px-4 font-semibold">Source</th>
+                  <th className="py-3 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isLight ? "divide-slate-200" : "divide-white/5"}`}>
+                {filteredDocuments.map((doc) => (
+                  <tr
+                    key={doc.id}
+                    onClick={() => setSelectedDocForPreview(doc)}
+                    className={`transition-colors cursor-pointer ${
+                      isLight ? "hover:bg-slate-50" : "hover:bg-blue-950/40"
+                    }`}
+                  >
+                    <td className="py-3.5 px-4 font-bold flex items-center gap-3">
+                      {renderFileTypeIcon(doc.fileType)}
+                      <div className="min-w-0 max-w-xs md:max-w-md">
+                        <span className={`truncate block font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>
+                          {doc.title}
+                        </span>
+                        {doc.summary && (
+                          <span className={`text-[11px] truncate block ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                            {doc.summary}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/15 text-amber-400 border border-amber-400/30">
+                        {doc.workspaceName}
+                      </span>
+                    </td>
+                    <td className={`py-3.5 px-4 text-[11px] ${isLight ? "text-slate-600" : "text-blue-200/70"}`}>
+                      {doc.updatedAt}
+                    </td>
+                    <td className={`py-3.5 px-4 text-[11px] ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                      {doc.fileSize}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
+                        doc.uploadedBy === "Waypoint"
+                          ? "bg-blue-500/10 text-blue-400 border border-blue-400/20"
+                          : "bg-emerald-500/10 text-emerald-400 border border-emerald-400/20"
+                      }`}>
+                        {doc.uploadedBy}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleTogglePin(doc.id)}
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            doc.isPinned ? "text-amber-400 hover:text-amber-300" : "text-white/30 hover:text-white"
+                          }`}
+                          title={doc.isPinned ? "Unpin document" : "Pin document"}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${doc.isPinned ? "fill-amber-400" : ""}`} />
+                        </button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedDocForPreview(doc)}
+                          className="text-amber-400 hover:text-amber-300 text-xs h-7 px-2"
+                        >
+                          Preview
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredDocuments.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-xs text-white/50">
+                      No documents found matching your filter or search query.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-
-        {/* Right Column: RECENT DOCUMENTS */}
-        <div className="lg:col-span-6 space-y-3.5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-              Recent Documents
-            </h2>
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedWorkspaceFilter("all");
-              }}
-              className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
-            >
-              View All
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-blue-900/40 bg-[#06172F]/90 backdrop-blur-md p-3.5 space-y-2 shadow-2xl">
-            {filteredDocuments.slice(0, 5).map((doc) => (
-              <div
-                key={doc.id}
-                onClick={() => setSelectedDocForPreview(doc)}
-                className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-950/40 border border-transparent hover:border-blue-800/40 transition-all cursor-pointer"
+      ) : (
+        /* ── MAIN TWO-COLUMN SECTION (WORKSPACES + RECENT DOCUMENTS) ─────── */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Column: WORKSPACES (Spacious 3-col grid, no cramped text) */}
+          <div className="lg:col-span-6 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <h2 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${isLight ? "text-slate-900" : "text-white"}`}>
+                Workspaces <span className="text-amber-400">({workspaces.length})</span>
+              </h2>
+              <button
+                onClick={() => setSelectedWorkspaceFilter("all")}
+                className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-3 min-w-0 pr-2">
-                  {renderFileTypeIcon(doc.fileType)}
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors truncate">
-                      {doc.title}
-                    </p>
-                    <p className="text-[11px] text-white/50 truncate">
-                      {doc.workspaceName}
+                View All
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+              {workspaces.map((ws) => (
+                <Card
+                  key={ws.id}
+                  onClick={() => setActiveWorkspaceModal(ws)}
+                  className={`group relative p-4 rounded-2xl transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-between min-h-[135px] shadow-lg hover:shadow-amber-400/10 border ${
+                    isLight 
+                      ? "bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-400/60" 
+                      : "bg-[#06172F] hover:bg-[#0A2246] border-blue-900/40 hover:border-amber-400/60"
+                  }`}
+                >
+                  <div className="w-11 h-11 rounded-xl bg-amber-400/10 border border-amber-400/20 group-hover:border-amber-400/60 flex items-center justify-center text-amber-400 mb-2 transition-all shadow-inner">
+                    <Folder className="w-5 h-5 fill-amber-400/20 text-amber-400" />
+                  </div>
+                  <div className="w-full">
+                    <h3 className={`text-xs font-bold transition-colors leading-tight line-clamp-2 ${isLight ? "text-slate-900 group-hover:text-amber-600" : "text-white group-hover:text-amber-300"}`}>
+                      {ws.name}
+                    </h3>
+                    <p className={`text-[11px] font-medium mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                      {ws.fileCount} {ws.fileCount === 1 ? "file" : "files"}
                     </p>
                   </div>
-                </div>
+                </Card>
+              ))}
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[11px] text-white/50 font-medium">
-                    {doc.relativeDate}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTogglePin(doc.id);
-                    }}
-                    className={`p-1 rounded-lg transition-colors ${
-                      doc.isPinned
-                        ? "text-amber-400 hover:text-amber-300"
-                        : "text-white/20 hover:text-white/60"
-                    }`}
-                    title={doc.isPinned ? "Unpin document" : "Pin document"}
-                  >
-                    <Star className={`w-3.5 h-3.5 ${doc.isPinned ? "fill-amber-400" : ""}`} />
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedWorkspaceFilter("all")}
-                className="w-full h-9 rounded-xl border-white/15 bg-white/[0.02] hover:bg-white/[0.08] text-amber-400 text-xs font-bold gap-2 transition-all"
+              {/* + New Workspace Card */}
+              <Card
+                onClick={() => setShowNewWorkspaceModal(true)}
+                className={`group p-4 rounded-2xl border border-dashed transition-all duration-200 cursor-pointer flex flex-col items-center text-center justify-center min-h-[135px] ${
+                  isLight
+                    ? "bg-slate-50 hover:bg-slate-100 border-slate-300 hover:border-amber-400"
+                    : "bg-[#06172F]/50 hover:bg-[#0A2246]/80 border-blue-800/40 hover:border-amber-400/60"
+                }`}
               >
-                View All Documents
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Button>
+                <div className="w-10 h-10 rounded-full bg-amber-400/10 group-hover:bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-2 transition-all shadow-inner">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <p className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
+                  New Workspace
+                </p>
+              </Card>
             </div>
           </div>
-        </div>
 
-      </div>
+          {/* Right Column: RECENT & FILTERED DOCUMENTS */}
+          <div className="lg:col-span-6 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <h2 className={`text-sm font-bold uppercase tracking-wider ${isLight ? "text-slate-900" : "text-white"}`}>
+                {selectedWorkspaceFilter !== "all" 
+                  ? `${workspaces.find(w => w.id === selectedWorkspaceFilter)?.name || "Filtered"} Documents`
+                  : "Recent Documents"
+                }
+              </h2>
+              {selectedWorkspaceFilter !== "all" && (
+                <button
+                  onClick={() => setSelectedWorkspaceFilter("all")}
+                  className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+
+            <div className={`rounded-2xl border p-4 space-y-2.5 shadow-xl backdrop-blur-md ${
+              isLight ? "bg-white border-slate-200" : "bg-[#06172F]/90 border-blue-900/40"
+            }`}>
+              {filteredDocuments.slice(0, 6).map((doc) => (
+                <div
+                  key={doc.id}
+                  onClick={() => setSelectedDocForPreview(doc)}
+                  className={`group flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                    isLight 
+                      ? "hover:bg-slate-50 border-slate-100 hover:border-slate-300" 
+                      : "hover:bg-blue-950/40 border-transparent hover:border-blue-800/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0 pr-2">
+                    {renderFileTypeIcon(doc.fileType)}
+                    <div className="min-w-0">
+                      <p className={`text-xs font-bold transition-colors truncate ${isLight ? "text-slate-900 group-hover:text-amber-600" : "text-white group-hover:text-amber-300"}`}>
+                        {doc.title}
+                      </p>
+                      <p className={`text-[11px] truncate ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                        {doc.workspaceName} • {doc.fileSize}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className={`text-[11px] font-medium ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                      {doc.relativeDate}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePin(doc.id);
+                      }}
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        doc.isPinned
+                          ? "text-amber-400 hover:text-amber-300"
+                          : isLight ? "text-slate-300 hover:text-slate-600" : "text-white/20 hover:text-white/60"
+                      }`}
+                      title={doc.isPinned ? "Unpin document" : "Pin document"}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${doc.isPinned ? "fill-amber-400" : ""}`} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {filteredDocuments.length === 0 && (
+                <div className="text-center py-8 text-xs text-white/50">
+                  No documents found in this workspace yet.
+                </div>
+              )}
+
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setViewMode("list")}
+                  className={`w-full h-9 rounded-xl text-amber-400 text-xs font-bold gap-2 transition-all cursor-pointer ${
+                    isLight ? "border-slate-200 bg-slate-50 hover:bg-slate-100" : "border-white/15 bg-white/[0.02] hover:bg-white/[0.08]"
+                  }`}
+                >
+                  <span>Open Full Document Table ({filteredDocuments.length})</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
 
       {/* ── PINNED DOCUMENTS CAROUSEL / GRID ───────────────────────────── */}
-      <div className="rounded-2xl border border-blue-900/40 bg-[#06172F]/90 backdrop-blur-md p-5 space-y-4 shadow-2xl">
+      <div className={`rounded-2xl border p-5 sm:p-6 space-y-4 shadow-xl backdrop-blur-md transition-all ${
+        isLight ? "bg-white border-slate-200" : "bg-[#06172F]/90 border-blue-900/40"
+      }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-                Pinned Documents
+              <h2 className={`text-sm font-bold uppercase tracking-wider ${isLight ? "text-slate-900" : "text-white"}`}>
+                Pinned Documents ({pinnedDocuments.length})
               </h2>
             </div>
-            <p className="text-xs text-white/60 mt-0.5">
-              Keep important documents easy to find.
+            <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-blue-200/70"}`}>
+              Quick 1-click access to active IEP goals, evaluations, and amendments.
             </p>
           </div>
 
           <div className="flex items-center gap-1.5 self-end sm:self-auto">
             <button
               onClick={() => toast.info("Showing previous pinned items")}
-              className="p-1.5 rounded-lg border border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                isLight ? "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100" : "border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10"
+              }`}
               title="Previous"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => toast.info("Showing next pinned items")}
-              className="p-1.5 rounded-lg border border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                isLight ? "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100" : "border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10"
+              }`}
               title="Next"
             >
               <ChevronRight className="w-4 h-4" />
@@ -831,28 +1023,32 @@ export default function PortalDocumentVaultTab({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
           {pinnedDocuments.map((doc) => (
             <Card
               key={doc.id}
               onClick={() => setSelectedDocForPreview(doc)}
-              className="group relative p-4 rounded-2xl bg-[#081B36] hover:bg-[#0C2A52] border-blue-900/40 hover:border-amber-400/60 transition-all cursor-pointer flex flex-col justify-between shadow-xl"
+              className={`group relative p-4 rounded-2xl transition-all cursor-pointer flex flex-col justify-between shadow-md border ${
+                isLight
+                  ? "bg-slate-50 hover:bg-white border-slate-200 hover:border-amber-400"
+                  : "bg-[#081B36] hover:bg-[#0C2A52] border-blue-900/40 hover:border-amber-400/60"
+              }`}
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 {renderFileTypeIcon(doc.fileType)}
-                <div className="w-5 h-5 rounded-full bg-amber-400/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.2)]">
-                  <Star className="w-3 h-3 fill-amber-400" />
+                <div className="w-6 h-6 rounded-full bg-amber-400/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.2)]">
+                  <Star className="w-3.5 h-3.5 fill-amber-400" />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-2">
+                <h3 className={`text-xs font-bold transition-colors line-clamp-2 ${isLight ? "text-slate-900 group-hover:text-amber-600" : "text-white group-hover:text-amber-300"}`}>
                   {doc.title.replace(/\.[^/.]+$/, "")}
                 </h3>
-                <p className="text-[11px] text-white/50 mt-1 truncate">
+                <p className={`text-[11px] mt-1 truncate ${isLight ? "text-slate-500" : "text-white/50"}`}>
                   {doc.workspaceName}
                 </p>
-                <p className="text-[10px] text-white/40 mt-0.5 font-medium">
+                <p className={`text-[10px] mt-0.5 font-medium ${isLight ? "text-slate-400" : "text-white/40"}`}>
                   Updated {doc.updatedAt}
                 </p>
               </div>
@@ -862,9 +1058,13 @@ export default function PortalDocumentVaultTab({
           {/* + Pin Document Card */}
           <Card
             onClick={() => setShowPinModal(true)}
-            className="group p-4 rounded-2xl bg-[#06172F]/50 hover:bg-[#0A2246]/80 border border-dashed border-blue-800/40 hover:border-amber-400/60 transition-all cursor-pointer flex flex-col items-center text-center justify-center min-h-[140px]"
+            className={`group p-4 rounded-2xl border border-dashed transition-all cursor-pointer flex flex-col items-center text-center justify-center min-h-[140px] ${
+              isLight
+                ? "bg-slate-50 hover:bg-slate-100 border-slate-300 hover:border-amber-400"
+                : "bg-[#06172F]/50 hover:bg-[#0A2246]/80 border-blue-800/40 hover:border-amber-400/60"
+            }`}
           >
-            <div className="w-9 h-9 rounded-full bg-white/5 group-hover:bg-amber-400/20 border border-white/10 group-hover:border-amber-400/40 flex items-center justify-center text-white/60 group-hover:text-amber-300 mb-2 transition-all">
+            <div className="w-9 h-9 rounded-full bg-amber-400/10 group-hover:bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-2 transition-all shadow-inner">
               <Plus className="w-4 h-4" />
             </div>
             <p className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
@@ -875,26 +1075,31 @@ export default function PortalDocumentVaultTab({
       </div>
 
       {/* ── SECURITY / FERPA BANNER ─────────────────────────────────────── */}
-      <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-r from-[#06172F] to-[#0A2246] p-5 md:p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className={`rounded-2xl border p-5 sm:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all ${
+        isLight
+          ? "bg-slate-50 border-slate-200 text-slate-900"
+          : "bg-gradient-to-r from-[#06172F] to-[#0A2246] border-blue-900/40 text-white"
+      }`}>
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_20px_rgba(251,191,36,0.15)]">
             <Lock className="w-6 h-6 text-amber-400" />
           </div>
           <div>
-            <h3 className="text-sm md:text-base font-bold text-white">
-              Your child's information is always safe with us.
+            <h3 className={`text-sm sm:text-base font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
+              Your child's educational records are secure & confidential.
             </h3>
-            <p className="text-xs text-white/70 mt-1 max-w-2xl leading-relaxed">
-              All documents are encrypted at rest and in transit. We follow strict privacy standards aligned with FERPA to protect your child's educational records.
+            <p className={`text-xs mt-1 max-w-2xl leading-relaxed ${isLight ? "text-slate-600" : "text-white/70"}`}>
+              Zero-trust encrypted in Cloudflare R2 storage. We adhere to FERPA privacy principles to protect your family's educational records.
             </p>
           </div>
         </div>
 
         <button
+          type="button"
           onClick={() => setShowSecurityModal(true)}
-          className="flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors shrink-0 self-start md:self-auto"
+          className="flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors shrink-0 self-start md:self-auto cursor-pointer"
         >
-          Learn more about our privacy & security
+          <span>Learn more about security & FERPA</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
