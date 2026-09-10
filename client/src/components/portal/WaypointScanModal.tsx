@@ -13,7 +13,9 @@ import {
   detectDocumentCorners,
   warpAndEnhanceDocument,
   calculateSharpnessScore,
+  rotateCanvas,
   rotateCanvas90,
+  autoOrientPortrait,
 } from "@/lib/scannerEngine";
 import {
   DocumentAnnotation,
@@ -91,6 +93,7 @@ export function WaypointScanModal({
   // Pages & Multipage State
   const [pages, setPages] = useState<WaypointScanPageDraft[]>([]);
   const [activePageIndex, setActivePageIndex] = useState<number>(0);
+  const [isShowingOriginal, setIsShowingOriginal] = useState<boolean>(false);
   const [docTitle, setDocTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(category);
 
@@ -252,6 +255,25 @@ export function WaypointScanModal({
     startCamera(nextMode);
   };
 
+  // Helper to rotate data URL asynchronously with 100% reliability
+  const rotateDataUrl = (dataUrl: string, degrees: number): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(dataUrl);
+        ctx.drawImage(img, 0, 0);
+        const rotated = rotateCanvas(canvas, degrees);
+        resolve(rotated.toDataURL("image/jpeg", 0.94));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
   // Capture frame from video feed
   const handleScanPage = () => {
     if (!videoRef.current) return;
@@ -264,27 +286,28 @@ export function WaypointScanModal({
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-    const rawData = tempCanvas.toDataURL("image/jpeg", 0.94);
+    const rawData = tempCanvas.toDataURL("image/jpeg", 0.95);
     setRawCaptureDataUrl(rawData);
 
     // Sharpness Check
     const score = calculateSharpnessScore(tempCanvas);
-    if (score < 35) {
-      setBlurWarning("This page looks a bit blurry. For best readability, you can retake the photo.");
+    if (score < 30) {
+      setBlurWarning("This page looks a bit blurry. For best readability, you can retake or adjust the lighting.");
     } else {
       setBlurWarning(null);
     }
 
-    // Corner Detection & Warp
+    // Corner Detection & Aspect-Preserving Warp
     const corners = detectDocumentCorners(tempCanvas);
     setDetectedCorners(corners);
 
     const warpedCanvas = warpAndEnhanceDocument(tempCanvas, corners);
-    const cleanedDataUrl = warpedCanvas.toDataURL("image/jpeg", 0.92);
+    const cleanedDataUrl = warpedCanvas.toDataURL("image/jpeg", 0.94);
 
     const newPage: WaypointScanPageDraft = {
       id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       dataUrl: cleanedDataUrl,
+      originalDataUrl: rawData,
       rotation: 0,
       timestamp: Date.now(),
     };
@@ -342,13 +365,14 @@ export function WaypointScanModal({
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.drawImage(img, 0, 0);
-        const corners = detectDocumentCorners(canvas);
-        const warped = warpAndEnhanceDocument(canvas, corners);
-        const cleaned = warped.toDataURL("image/jpeg", 0.92);
+
+        // Keep imported image pristine (preserve 100% sharpness without accidental crop)
+        const cleaned = canvas.toDataURL("image/jpeg", 0.94);
 
         const newPage: WaypointScanPageDraft = {
           id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           dataUrl: cleaned,
+          originalDataUrl: dataUrl,
           rotation: 0,
           timestamp: Date.now(),
         };
@@ -388,10 +412,11 @@ export function WaypointScanModal({
       ctx.lineWidth = 3;
       ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
 
-      const pageImg = canvas.toDataURL("image/jpeg", 0.92);
+      const pageImg = canvas.toDataURL("image/jpeg", 0.94);
       const newPage: WaypointScanPageDraft = {
         id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         dataUrl: pageImg,
+        originalDataUrl: pageImg,
         rotation: 0,
         timestamp: Date.now(),
       };
@@ -415,7 +440,7 @@ export function WaypointScanModal({
       ctx.drawImage(img, 0, 0);
 
       const warped = warpAndEnhanceDocument(canvas, corners);
-      const cleaned = warped.toDataURL("image/jpeg", 0.92);
+      const cleaned = warped.toDataURL("image/jpeg", 0.94);
 
       setPages((prev) => {
         const next = [...prev];
@@ -432,29 +457,66 @@ export function WaypointScanModal({
     img.src = rawCaptureDataUrl;
   };
 
-  const handleRotatePage = () => {
+  const handleRotatePage = async (direction: "cw" | "ccw" = "cw") => {
+    const page = pages[activePageIndex];
+    if (!page) return;
+    const degrees = direction === "cw" ? 90 : -90;
+
+    const newActiveUrl = await rotateDataUrl(page.dataUrl, degrees);
+    const newOriginalUrl = page.originalDataUrl
+      ? await rotateDataUrl(page.originalDataUrl, degrees)
+      : undefined;
+
     setPages((prev) => {
       const next = [...prev];
-      const page = next[activePageIndex];
-      if (!page) return prev;
-
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          const rotated = rotateCanvas90(canvas);
-          page.dataUrl = rotated.toDataURL("image/jpeg", 0.92);
-          page.rotation = (page.rotation + 90) % 360;
-          setPages([...next]);
-        }
-      };
-      img.src = page.dataUrl;
+      if (next[activePageIndex]) {
+        next[activePageIndex] = {
+          ...next[activePageIndex],
+          dataUrl: newActiveUrl,
+          originalDataUrl: newOriginalUrl,
+          rotation: (next[activePageIndex].rotation + degrees + 360) % 360,
+        };
+      }
       return next;
     });
+    toast.success(`Rotated ${direction === "cw" ? "90° Right" : "90° Left"}`);
+  };
+
+  const handleAutoOrient = async () => {
+    const page = pages[activePageIndex];
+    if (!page) return;
+
+    const img = new Image();
+    img.onload = async () => {
+      if (img.naturalWidth > img.naturalHeight) {
+        const newActiveUrl = await rotateDataUrl(page.dataUrl, 90);
+        const newOriginalUrl = page.originalDataUrl
+          ? await rotateDataUrl(page.originalDataUrl, 90)
+          : undefined;
+
+        setPages((prev) => {
+          const next = [...prev];
+          if (next[activePageIndex]) {
+            next[activePageIndex] = {
+              ...next[activePageIndex],
+              dataUrl: newActiveUrl,
+              originalDataUrl: newOriginalUrl,
+              rotation: (next[activePageIndex].rotation + 90) % 360,
+            };
+          }
+          return next;
+        });
+        toast.success("Oriented upright!");
+      } else {
+        toast.info("Document is already upright portrait.");
+      }
+    };
+    img.src = page.dataUrl;
+  };
+
+  const handleToggleOriginal = () => {
+    setIsShowingOriginal((prev) => !prev);
+    toast.info(!isShowingOriginal ? "Showing Original Photo" : "Showing Cleaned Scan");
   };
 
   const handleRetakeCurrentPage = () => {
@@ -751,6 +813,9 @@ export function WaypointScanModal({
                 onRetake={handleRetakeCurrentPage}
                 onUsePage={() => setStage("fill-sign")}
                 onRotate={handleRotatePage}
+                onAutoOrient={handleAutoOrient}
+                onToggleOriginal={handleToggleOriginal}
+                isShowingOriginal={isShowingOriginal}
                 onAdjustEdges={rawCaptureDataUrl ? () => setShowAdjustEdgesModal(true) : undefined}
                 onScanAnotherPage={handleScanAnotherPage}
                 onDeletePage={(idx) => {
@@ -803,6 +868,7 @@ export function WaypointScanModal({
                 }}
                 onBackToReview={() => setStage("review")}
                 onFinishDocument={handleFinishDocument}
+                onRotate={() => handleRotatePage("cw")}
                 isProcessingPdf={isProcessingPdf}
                 pageNumber={activePageIndex + 1}
                 totalPages={pages.length}

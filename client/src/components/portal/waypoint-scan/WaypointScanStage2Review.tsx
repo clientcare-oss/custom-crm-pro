@@ -1,11 +1,27 @@
 /**
- * Stage 2: Review (Cleaned Document, Retake, Use Page)
- * Styled with the Blue Wavy Theme across the natural workspace (no simulated phone frame).
+ * Stage 2: Review (Cleaned Document, Rotate, Retake, Use Page)
+ * Styled with the Blue Wavy Theme across the natural workspace.
+ * Features 1-click rotation, auto-orientation upright, and original/enhanced toggling.
  */
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Crop, Plus, Trash2, ArrowLeft, ArrowRight, AlertCircle, RefreshCcw, Check } from "lucide-react";
+import {
+  RotateCw,
+  RotateCcw,
+  Crop,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  RefreshCcw,
+  Check,
+  Compass,
+  SlidersHorizontal,
+  Sparkles,
+  Eye,
+} from "lucide-react";
 import { WaypointScanPageDraft } from "@/lib/waypointScanStorage";
 
 interface WaypointScanStage2ReviewProps {
@@ -14,7 +30,10 @@ interface WaypointScanStage2ReviewProps {
   onSelectPageIndex: (idx: number) => void;
   onRetake: () => void;
   onUsePage: () => void;
-  onRotate: () => void;
+  onRotate: (direction?: "cw" | "ccw") => void;
+  onAutoOrient?: () => void;
+  onToggleOriginal?: () => void;
+  isShowingOriginal?: boolean;
   onAdjustEdges?: () => void;
   onScanAnotherPage: () => void;
   onDeletePage: (idx: number) => void;
@@ -30,6 +49,9 @@ export function WaypointScanStage2Review({
   onRetake,
   onUsePage,
   onRotate,
+  onAutoOrient,
+  onToggleOriginal,
+  isShowingOriginal = false,
   onAdjustEdges,
   onScanAnotherPage,
   onDeletePage,
@@ -74,23 +96,74 @@ export function WaypointScanStage2Review({
           </button>
         </div>
 
-        {/* Action Tools: Rotate, Crop, Delete, Reorder */}
-        <div className="flex items-center gap-1.5 ml-auto">
+        {/* Action Tools: Rotate, Auto-Orient, Crop, Delete, Reorder */}
+        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+          {/* Rotate Left 90 */}
           <button
             type="button"
-            onClick={onRotate}
-            className="flex items-center gap-1 p-2 sm:px-3 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
-            title="Rotate 90° Clockwise"
+            onClick={() => onRotate("ccw")}
+            className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
+            title="Rotate Left 90°"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">Rotate Left</span>
+          </button>
+
+          {/* Rotate Right 90 */}
+          <button
+            type="button"
+            onClick={() => onRotate("cw")}
+            className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
+            title="Rotate Right 90°"
           >
             <RotateCw className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Rotate</span>
+            <span className="hidden md:inline">Rotate Right</span>
           </button>
+
+          {/* Auto-Orient Upright */}
+          {onAutoOrient && (
+            <button
+              type="button"
+              onClick={onAutoOrient}
+              className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-amber-300 hover:text-amber-200 border border-amber-400/30 text-xs font-semibold transition-colors cursor-pointer"
+              title="Auto-orient document upright"
+            >
+              <Compass className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Upright</span>
+            </button>
+          )}
+
+          {/* Toggle Original vs Enhanced (if original available) */}
+          {currentPage.originalDataUrl && onToggleOriginal && (
+            <button
+              type="button"
+              onClick={onToggleOriginal}
+              className={`flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+                isShowingOriginal
+                  ? "bg-blue-600/30 border-blue-400 text-blue-200"
+                  : "bg-[#091D3C]/80 border-blue-900/40 text-blue-300"
+              }`}
+              title="Toggle between cleaned scan and original capture"
+            >
+              {isShowingOriginal ? (
+                <>
+                  <Eye className="w-3.5 h-3.5 text-blue-300" />
+                  <span className="hidden sm:inline">Original Photo</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Enhanced</span>
+                </>
+              )}
+            </button>
+          )}
 
           {onAdjustEdges && (
             <button
               type="button"
               onClick={onAdjustEdges}
-              className="flex items-center gap-1 p-2 sm:px-3 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
               title="Adjust document corners"
             >
               <Crop className="w-3.5 h-3.5 text-amber-400" />
@@ -131,26 +204,36 @@ export function WaypointScanStage2Review({
         </div>
       </div>
 
-      {/* Document Sheet Display Area */}
-      <div className="relative flex-1 w-full flex items-center justify-center min-h-[320px] max-h-[62vh] overflow-hidden p-2">
-        <div className="relative max-h-full aspect-[3/4] bg-white rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-slate-200/80 flex items-center justify-center">
+      {/* Document Sheet Display Area (Responsive, no squishing aspect ratio) */}
+      <div className="relative flex-1 w-full flex items-center justify-center min-h-[340px] max-h-[62vh] overflow-hidden p-2">
+        <div className="relative inline-block max-h-full max-w-full bg-white rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-slate-300/90">
           <img
-            src={currentPage.dataUrl}
+            src={isShowingOriginal && currentPage.originalDataUrl ? currentPage.originalDataUrl : currentPage.dataUrl}
             alt={`Page ${activePageIndex + 1}`}
-            className="w-full h-full object-contain pointer-events-none"
+            className="max-h-[56vh] max-w-full w-auto h-auto block object-contain pointer-events-none select-none"
           />
 
           {/* Low Sharpness / Blur Warning Pill */}
           {blurWarning && (
-            <div className="absolute top-3 inset-x-3 p-2.5 rounded-xl bg-amber-500/90 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-md">
+            <div className="absolute top-3 inset-x-3 p-2.5 rounded-xl bg-amber-500/95 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-md z-20">
               <AlertCircle className="w-4 h-4 shrink-0 stroke-[2.5]" />
               <span>{blurWarning}</span>
             </div>
           )}
+
+          {/* Quick Floating Rotate Button on Document Sheet */}
+          <button
+            type="button"
+            onClick={() => onRotate("cw")}
+            className="absolute bottom-3 right-3 p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 text-amber-400 border border-amber-400/40 shadow-lg backdrop-blur-md transition-transform active:scale-95 cursor-pointer z-10"
+            title="Rotate 90° Clockwise"
+          >
+            <RotateCw className="w-4 h-4 stroke-[2.5]" />
+          </button>
         </div>
       </div>
 
-      {/* Page indicator & Primary Actions */}
+      {/* Bottom Primary Actions */}
       <div className="w-full flex items-center justify-between gap-3 pt-2 border-t border-blue-900/40 px-2 max-w-lg">
         <Button
           type="button"

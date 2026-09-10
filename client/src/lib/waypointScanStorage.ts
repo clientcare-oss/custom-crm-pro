@@ -18,6 +18,7 @@ export interface DocumentAnnotation {
 export interface WaypointScanPageDraft {
   id: string;
   dataUrl: string;
+  originalDataUrl?: string;
   rotation: number;
   timestamp: number;
 }

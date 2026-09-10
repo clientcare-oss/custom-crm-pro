@@ -5,7 +5,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Type, Calendar, Pen, X, CheckSquare, ArrowLeft, Sparkles } from "lucide-react";
+import { Check, Type, Calendar, Pen, X, CheckSquare, ArrowLeft, Sparkles, RotateCw } from "lucide-react";
 import { DocumentAnnotation, WaypointScanPageDraft } from "@/lib/waypointScanStorage";
 
 export type AnnotationTool = "none" | "check" | "text" | "date" | "initials" | "signature";
@@ -21,6 +21,7 @@ interface WaypointScanStage3FillSignProps {
   onRemoveAnnotation: (id: string) => void;
   onBackToReview: () => void;
   onFinishDocument: () => void;
+  onRotate?: () => void;
   isProcessingPdf: boolean;
   pageNumber: number;
   totalPages: number;
@@ -37,6 +38,7 @@ export function WaypointScanStage3FillSign({
   onRemoveAnnotation,
   onBackToReview,
   onFinishDocument,
+  onRotate,
   isProcessingPdf,
   pageNumber,
   totalPages,
@@ -44,7 +46,7 @@ export function WaypointScanStage3FillSign({
   return (
     <div className="flex-1 flex flex-col items-center justify-between min-h-0 py-3 px-3 sm:px-6 w-full max-w-4xl mx-auto gap-3">
       {/* Top Bar: Back & Page indicator */}
-      <div className="w-full flex items-center justify-between px-2">
+      <div className="w-full flex items-center justify-between px-2 gap-2 flex-wrap">
         <button
           type="button"
           onClick={onBackToReview}
@@ -58,6 +60,18 @@ export function WaypointScanStage3FillSign({
           <span className="text-xs text-amber-400 font-bold px-3 py-1 rounded-xl bg-amber-400/10 border border-amber-400/25">
             Page {pageNumber} of {totalPages}
           </span>
+
+          {onRotate && (
+            <button
+              type="button"
+              onClick={onRotate}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
+              title="Rotate 90°"
+            >
+              <RotateCw className="w-3 h-3 text-amber-400" />
+              <span className="hidden sm:inline">Rotate</span>
+            </button>
+          )}
         </div>
 
         {/* Finish CTA button in top header for quick desktop access */}
@@ -75,14 +89,14 @@ export function WaypointScanStage3FillSign({
       <div className="relative flex-1 w-full flex flex-col items-center justify-center min-h-[340px] max-h-[58vh] overflow-hidden p-2 select-none">
         <div
           onClick={onDocumentClick}
-          className={`relative max-h-full aspect-[3/4] bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-slate-300 transition-all ${
+          className={`relative inline-block max-h-full max-w-full bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border-2 border-slate-300 transition-all ${
             activeTool !== "none" ? "cursor-crosshair ring-2 ring-amber-400/80" : "cursor-default"
           }`}
         >
           <img
             src={currentPage.dataUrl}
             alt="Document for signing"
-            className="w-full h-full object-contain pointer-events-none"
+            className="max-h-[52vh] max-w-full w-auto h-auto block object-contain pointer-events-none"
           />
 
           {/* Render Placed Annotations */}
