@@ -157,3 +157,38 @@ To ensure maximum cost-effectiveness and speed within Cloudflare Workers AI, alw
 - All AI callers and external integrations must provide smart local heuristic fallbacks when offline so `npm run test` executes deterministically and passes with **0 failures**.
 - A failing test will block the GitHub Actions CI/CD pipeline and halt deployment to Cloudflare!
 
+---
+
+## 8. Waypoint Driving Style Engine (`PG-023-PRK`)
+The Marina Parking Lot (`client/src/components/portal/MarinaLotView.tsx`) uses the **Waypoint Driving Style Engine** defined in `client/src/components/portal/waypointDrivingStyle.ts`:
+1. **100% Orthogonal Paths**: All transit is strictly right-angle (90°) grid movements (`OrthogonalPath` in `marinaCarKinematics.ts`). Zero diagonal travel, zero curved arcs. Vehicles drive along real lane corridors: Gate -> Apron -> Central Thoroughfare -> Row Aisle -> Stall.
+2. **Zero-Fade Transitions**: Discrete instantaneous 1 or 0 sprite visibility (`WAYPOINT_DRIVING_STYLE.getSpriteOpacities`). Never apply opacity cross-fading or translucent overlapping sprites.
+   - North: `rearSprite` (100%)
+   - East: `sideRightSprite` (100%)
+   - West: `sideLeftSprite` (100%)
+3. **Vehicle Variations**: Sizing, assets, and brake light coordinates are decoupled into `VehicleVariation` definitions (`VEHICLE_VARIATIONS` in `waypointDrivingStyle.ts`).
+   - Side profile sprites use proportional `sideScale` (SUV: 1.45, Sedan: 1.42, Sports: 1.35, Truck: 1.48) to match the visual mass and lane presence of the 3D rear view.
+   - Container enforces an exact 1:1 square `(12.0% * 608) / 1024 = 7.125%` width by `12.0%` height.
+4. **Brake Lights**: Authentic LED brake light clusters illuminate during deceleration into the final parking stall (`progress >= 0.82` on `isFinalLeg`). Each body style features tailored LED optics:
+   - SUV: Triple cluster (left, right, roof spoiler).
+   - Sedan: Wide horizontal bar clusters + upper windshield center brake light.
+   - Sports Car: Aggressive full-width horizontal LED light bar.
+   - Pickup Truck: Dual vertical taillight columns + cab third brake light.
+5. **Standard Waypoint Fleet Colors (Locked Palette)**:
+   To prevent color drift and eliminate redesign across future vehicle shapes, all vehicle models strictly adhere to the 5 official Waypoint fleet colors:
+   - **Onyx Black** (`"black"`): Deep obsidian executive black with clearcoat metallic glints.
+   - **Cobalt Blue** (`"blue"`): Executive midnight/sapphire metallic (`H: 0.600, S: 0.46, L_mul: 0.78`).
+   - **Crimson Red** (`"red"`): Deep luxury burgundy/wine metallic (`H: 0.985, S: 0.52, L_mul: 0.75`).
+   - **Emerald Green** (`"green"`): British Racing Green / dark forest metallic (`H: 0.388, S: 0.42, L_mul: 0.72`).
+   - **Burnished Bronze** (`"bronze"`): Warm sunset amber / copper metallic (`H: 0.080, S: 0.50, L_mul: 0.78`).
+   - Never use flat white or light silver/gray tints (they wash out dark studio lighting and lose contrast against parking lot asphalt).
+   - Sprites follow the automotive clearcoat pipeline in `scripts/generate-car-colors.cjs` preserving smoke-tinted windows, dark tire rubber ($L < 0.13$), and red LED taillight assemblies.
+6. **Multi-Vehicle Fleet & Weighted Spawning**:
+   The fleet includes 4 distinct body styles across the 5 official colors (20 total vehicle variations):
+   - **Executive SUV** (`suv`): 35% spawn weight
+   - **Regular Sedan** (`sedan`): 30% spawn weight
+   - **Luxury Sports Car** (`sports`): 25% spawn weight
+   - **Crew-Cab Pickup Truck** (`truck`): 10% spawn weight (least spawned)
+
+
+

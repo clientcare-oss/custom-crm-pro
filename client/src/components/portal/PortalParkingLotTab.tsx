@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
 import { MarinaLotView, ParkedCarItem } from "./MarinaLotView";
 import { MARINA_SPOTS, MARINA_CATEGORIES, MarinaSpotDef, GLOW_THEMES } from "./marinaLotConstants";
+import { getRandomVehicleVariation, VEHICLE_COLOR_KEYS } from "./waypointDrivingStyle";
 import { trpc } from "@/lib/trpc";
 
 interface PortalParkingLotTabProps {
@@ -66,7 +67,7 @@ export default function PortalParkingLotTab({
     ? `waypoint_parking_lot_${studentContactId}`
     : "waypoint_parking_lot_default";
 
-  // Initial Seed Items matching the Marina Parking Lot spaces
+  // Initial Seed Items matching the Marina Parking Lot spaces (Showcasing all 4 body models)
   const defaultItems: ParkedCarItem[] = [
     {
       id: "pl-1",
@@ -76,7 +77,8 @@ export default function PortalParkingLotTab({
       priority: "High",
       status: "Parked",
       spotNumber: 1,
-      carColor: "navy",
+      carColor: "blue",
+      vehicleId: "sports-blue",
       addedBy: "Parent",
       createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
     },
@@ -88,7 +90,8 @@ export default function PortalParkingLotTab({
       priority: "Urgent",
       status: "Parked",
       spotNumber: 2,
-      carColor: "white",
+      carColor: "bronze",
+      vehicleId: "suv-bronze",
       addedBy: "Advocate",
       createdAt: new Date(Date.now() - 4 * 86400000).toISOString(),
     },
@@ -101,6 +104,7 @@ export default function PortalParkingLotTab({
       status: "Parked",
       spotNumber: 7,
       carColor: "red",
+      vehicleId: "sedan-red",
       addedBy: "Parent",
       createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
     },
@@ -113,6 +117,7 @@ export default function PortalParkingLotTab({
       status: "Parked",
       spotNumber: 10,
       carColor: "black",
+      vehicleId: "truck-black",
       addedBy: "Advocate",
       createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
     },
@@ -141,7 +146,16 @@ export default function PortalParkingLotTab({
     if (typeof window !== "undefined") {
       try {
         const cached = localStorage.getItem(storageKey);
-        if (cached) return JSON.parse(cached);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.map((item: any) => ({
+              ...item,
+              carColor: item.carColor || "blue",
+              vehicleId: item.vehicleId || item.carColor || "suv-blue",
+            }));
+          }
+        }
       } catch (e) {
         console.error("Failed to load parking lot items from localStorage", e);
       }
@@ -160,7 +174,8 @@ export default function PortalParkingLotTab({
         priority: dbRow.priority || "Normal",
         status: dbRow.status || "Parked",
         spotNumber: dbRow.spotNumber || 1,
-        carColor: dbRow.carColor || "navy",
+        carColor: dbRow.carColor || "blue",
+        vehicleId: dbRow.carColor ? `suv-${dbRow.carColor}` : "suv-blue",
         addedBy: dbRow.addedBy || "Parent",
         createdAt: dbRow.createdAt ? new Date(dbRow.createdAt).toISOString() : new Date().toISOString(),
       }));
@@ -189,6 +204,7 @@ export default function PortalParkingLotTab({
 
   // ── Animation & Inspection State ──
   const [animatingSpot, setAnimatingSpot] = useState<number | null>(null);
+  const [animatingVehicleId, setAnimatingVehicleId] = useState<string | undefined>(undefined);
   const [inspectedCar, setInspectedCar] = useState<ParkedCarItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<{ title: string; notes: string; category: string; priority: string }>({
@@ -203,27 +219,23 @@ export default function PortalParkingLotTab({
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
 
-  // Determine which spot to assign when parking an item
-  const findAvailableSpot = (requestedCategory: string): number => {
+  // Find next available spot filling strictly from top to bottom:
+  // Row 1: Spots 1–6 (Top Promenade)
+  // Row 2: Spots 7–12 (Middle Stalls)
+  // Row 3: Spots 13–18 (Bottom Stalls)
+  const findAvailableSpot = (): number | null => {
     const occupiedSpotNumbers = new Set(
       items.filter((i) => i.status !== "Resolved").map((i) => i.spotNumber)
     );
 
-    // 1. Try to find the exact spot matching the category
-    const naturalSpot = MARINA_SPOTS.find((s) => s.category.toLowerCase() === requestedCategory.toLowerCase());
-    if (naturalSpot && !occupiedSpotNumbers.has(naturalSpot.spotNumber)) {
-      return naturalSpot.spotNumber;
-    }
-
-    // 2. Otherwise find the first available spot from 1 to 18
+    // Fill top to bottom (1 to 18)
     for (let i = 1; i <= 18; i++) {
       if (!occupiedSpotNumbers.has(i)) {
         return i;
       }
     }
 
-    // 3. If all 18 are full, return 1 as overflow
-    return 1;
+    return null;
   };
 
   // ── Core "PARK IT" Submission Handler ──
@@ -234,19 +246,30 @@ export default function PortalParkingLotTab({
       return;
     }
 
-    const assignedSpot = findAvailableSpot(newCategory);
-    const carColors = ["navy", "white", "red", "green", "black"];
-    const assignedColor = carColors[assignedSpot % carColors.length];
+    const assignedSpot = findAvailableSpot();
+    if (assignedSpot === null) {
+      toast.error("All 18 parking stalls are currently occupied. Please resolve or clear existing items to free up spaces.");
+      return;
+    }
+
+    const assignedSpotDef = MARINA_SPOTS.find((s) => s.spotNumber === assignedSpot);
+    const assignedCategory = assignedSpotDef?.category || "General Concern";
+
+    // Randomly select one of the 5 executive vehicle colors (Black, Bronze, Red, Blue, Green)
+    const randomVariation = getRandomVehicleVariation();
+    const assignedVehicleId = randomVariation.id;
+    const assignedColor = randomVariation.colorName.toLowerCase();
 
     const newItem: ParkedCarItem = {
       id: `pl-${Date.now()}`,
       title: newTitle.trim(),
       notes: newNotes.trim() || undefined,
-      category: newCategory,
+      category: assignedCategory,
       priority: newPriority,
       status: "Parked",
       spotNumber: assignedSpot,
       carColor: assignedColor,
+      vehicleId: assignedVehicleId,
       addedBy: isAdminView ? "Advocate" : "Parent",
       createdAt: new Date().toISOString(),
     };
@@ -261,6 +284,7 @@ export default function PortalParkingLotTab({
 
     // 2. Trigger Car Animation into the assigned spot FIRST
     // Keep stall completely vacant while the car physically drives from the gate!
+    setAnimatingVehicleId(assignedVehicleId);
     setAnimatingSpot(assignedSpot);
     setIsSubmitting(false);
 
@@ -283,6 +307,7 @@ export default function PortalParkingLotTab({
 
       setItems((prev) => [newItem, ...prev.filter((p) => p.spotNumber !== assignedSpot || p.status === "Resolved")]);
       setAnimatingSpot(null);
+      setAnimatingVehicleId(undefined);
       setIsFormExpanded(false);
     }, 2850);
   };
@@ -294,6 +319,7 @@ export default function PortalParkingLotTab({
 
   const handleStopSequence = () => {
     stopSequencingRef.current = true;
+    setAnimatingVehicleId(undefined);
     toast.info("Stopping sequential filling...");
   };
 
@@ -341,7 +367,12 @@ export default function PortalParkingLotTab({
       const spotDef = MARINA_SPOTS.find((s) => s.spotNumber === spotNum)!;
       const title = demoTitles[(spotNum - 1) % demoTitles.length];
 
+      // Assign diverse vehicle variation across the 5 colors
+      const assignedVariation = getRandomVehicleVariation(spotNum * 17 + i * 3);
+      const assignedVehicleId = assignedVariation.id;
+
       // 1. Trigger car driving into entrance and navigating to this spot
+      setAnimatingVehicleId(assignedVehicleId);
       setAnimatingSpot(spotNum);
 
       // Wait for car to arrive and settle into stall (2850ms)
@@ -349,6 +380,7 @@ export default function PortalParkingLotTab({
 
       if (stopSequencingRef.current) {
         setAnimatingSpot(null);
+        setAnimatingVehicleId(undefined);
         break;
       }
 
@@ -361,12 +393,15 @@ export default function PortalParkingLotTab({
         priority: spotNum % 5 === 0 ? "Urgent" : spotNum % 3 === 0 ? "High" : "Normal",
         status: "Parked",
         spotNumber: spotNum,
+        carColor: assignedVariation.colorName.toLowerCase(),
+        vehicleId: assignedVehicleId,
         addedBy: "Demo Sequence",
         createdAt: new Date().toISOString(),
       };
 
       setItems((prev) => [...prev.filter((p) => p.spotNumber !== spotNum || p.status === "Resolved"), newItem]);
       setAnimatingSpot(null);
+      setAnimatingVehicleId(undefined);
 
       if (stopSequencingRef.current) break;
 
@@ -376,6 +411,7 @@ export default function PortalParkingLotTab({
     }
 
     setAnimatingSpot(null);
+    setAnimatingVehicleId(undefined);
     setIsSequencing(false);
     if (stopSequencingRef.current) {
       toast.info("Sequential filling stopped.");
@@ -489,7 +525,7 @@ export default function PortalParkingLotTab({
               <PageIdBadge id="PG-023-PRK" name="Parking Lot" />
             </div>
             <p className="text-xs sm:text-sm text-white/60">
-              Shared case parking lot for <span className="text-amber-300 font-semibold">{studentName}</span>
+              Parking lot for <span className="text-amber-300 font-semibold">{studentName}</span>
             </p>
           </div>
         </div>
@@ -497,18 +533,13 @@ export default function PortalParkingLotTab({
         {/* Sticky Note Box beside Marina View & View Switcher */}
         <div className="flex flex-col sm:flex-row sm:items-stretch gap-3">
           {/* Expanded Standard Lighter Blue Fill Info Box */}
-          <div className="px-4 py-2.5 rounded-xl bg-[#0e2a4a] border border-blue-600/40 text-blue-100 text-xs shadow-md max-w-lg flex items-center gap-3">
+          <div className="px-4 py-2.5 rounded-xl bg-[#0e2a4a] border border-blue-600/40 text-blue-100 shadow-md max-w-lg flex items-center gap-3">
             <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-300 shrink-0">
               <Info className="h-4 w-4" />
             </div>
-            <div className="space-y-0.5">
-              <span className="font-semibold text-white/95 block text-xs leading-snug">
-                Think of this as a sticky note area for your case, not a message to your advocate.
-              </span>
-              <span className="text-[11px] text-blue-200/70 block leading-tight">
-                Park concerns, questions, and topics here anytime so we address them during meetings.
-              </span>
-            </div>
+            <p className="font-semibold text-white/95 text-sm leading-snug">
+              Think of this as a sticky note area for your case, not a message to your advocate.
+            </p>
           </div>
 
           {/* View Switcher: Marina View / Agenda List */}
@@ -533,7 +564,7 @@ export default function PortalParkingLotTab({
               }`}
             >
               <Layers className="h-3.5 w-3.5" />
-              <span>Agenda List ({activeParkedCount})</span>
+              <span>List View ({activeParkedCount})</span>
             </button>
           </div>
         </div>
@@ -551,7 +582,7 @@ export default function PortalParkingLotTab({
               <Input
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Quick park: concern, question, or meeting topic..."
+                placeholder="Park a concern, question, or meeting topic..."
                 className="pl-9 pr-24 bg-[#030C22] border-blue-900/60 text-white placeholder:text-white/40 rounded-xl text-xs sm:text-sm h-10 focus:border-amber-400/80 w-full"
               />
               {/* Expand Button embedded at right edge of input */}
@@ -564,21 +595,6 @@ export default function PortalParkingLotTab({
                 <Maximize2 className="h-3 w-3" />
                 <span className="hidden md:inline">Expand</span>
               </button>
-            </div>
-
-            {/* Category Dropdown */}
-            <div className="w-full sm:w-48 shrink-0">
-              <select
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                className="w-full bg-[#030C22] border border-blue-900/60 text-white rounded-xl text-xs h-10 px-3 focus:border-amber-400/80 outline-none truncate cursor-pointer font-medium"
-              >
-                {MARINA_CATEGORIES.map((cat, idx) => (
-                  <option key={cat} value={cat} className="bg-[#06172F] text-white">
-                    Spot {idx + 1}: {cat}
-                  </option>
-                ))}
-              </select>
             </div>
 
             {/* Expand Toggle & Main Submit Button */}
@@ -619,7 +635,7 @@ export default function PortalParkingLotTab({
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <span>Park a Concern, Question, or Meeting Topic</span>
                   </h3>
-                  <p className="text-[11px] text-white/50">Assigned to next available spot in the Marina Lot</p>
+                  <p className="text-[11px] text-white/50">Fills automatically from top to bottom into the next open stall</p>
                 </div>
               </div>
               <Button
@@ -638,7 +654,7 @@ export default function PortalParkingLotTab({
             {/* Inputs Grid */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
               {/* Concern / Question Input */}
-              <div className="md:col-span-6 space-y-1.5">
+              <div className="md:col-span-8 space-y-1.5">
                 <Label className="text-xs font-semibold text-white/90">
                   What's on your mind? <span className="text-amber-400">*</span>
                 </Label>
@@ -651,24 +667,8 @@ export default function PortalParkingLotTab({
                 />
               </div>
 
-              {/* Category */}
-              <div className="md:col-span-3 space-y-1.5">
-                <Label className="text-xs font-semibold text-white/90">Category</Label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full bg-[#030C22] border border-blue-900/60 text-white rounded-xl text-xs h-11 px-3 focus:border-amber-400/80 outline-none cursor-pointer font-medium"
-                >
-                  {MARINA_CATEGORIES.map((cat, idx) => (
-                    <option key={cat} value={cat} className="bg-[#06172F] text-white">
-                      Spot {idx + 1}: {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Priority */}
-              <div className="md:col-span-3 space-y-1.5">
+              <div className="md:col-span-4 space-y-1.5">
                 <Label className="text-xs font-semibold text-white/90">Priority</Label>
                 <div className="grid grid-cols-3 gap-1.5 h-11">
                   {(["Normal", "High", "Urgent"] as const).map((p) => (
@@ -742,6 +742,7 @@ export default function PortalParkingLotTab({
           <MarinaLotView
             items={items}
             animatingSpot={animatingSpot}
+            animatingVehicleId={animatingVehicleId}
             isSequencing={isSequencing}
             onSequenceFill={handleSequenceFill}
             onStopSequence={handleStopSequence}
@@ -754,14 +755,6 @@ export default function PortalParkingLotTab({
                 category: item.category,
                 priority: item.priority,
               });
-            }}
-            onSpotClick={(spot, item) => {
-              if (item) {
-                setInspectedCar(item);
-              } else {
-                setNewCategory(spot.category);
-                toast.info(`Selected Spot #${spot.spotNumber}: ${spot.category}. Type your concern above!`);
-              }
             }}
           />
         </div>

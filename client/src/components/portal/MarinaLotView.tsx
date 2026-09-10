@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MARINA_SPOTS, MarinaSpotDef, GLOW_THEMES, CAR_COLORS } from "./marinaLotConstants";
 import { Sparkles, CheckCircle2, AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight, Square } from "lucide-react";
-import { SplinePath, generateSpotWaypoints, getCarRenderState } from "./marinaCarKinematics";
+import { OrthogonalPath, generateSpotWaypoints, getCarRenderState } from "./marinaCarKinematics";
+import {
+  WAYPOINT_DRIVING_STYLE,
+  getVehicleVariation,
+  VehicleVariation,
+  VEHICLE_VARIATIONS,
+} from "./waypointDrivingStyle";
 
 // Temporary background versions for quick side-by-side comparison
 export const LOT_BACKGROUNDS = [
@@ -21,6 +27,7 @@ export interface ParkedCarItem {
   status: "Parked" | "In Discussion" | "Resolved" | string;
   spotNumber: number;
   carColor?: string;
+  vehicleId?: string;
   addedBy?: string;
   createdAt: string;
   updatedAt?: string;
@@ -29,6 +36,7 @@ export interface ParkedCarItem {
 interface MarinaLotViewProps {
   items: ParkedCarItem[];
   animatingSpot: number | null;
+  animatingVehicleId?: string;
   onCarClick: (item: ParkedCarItem) => void;
   onSpotClick?: (spot: MarinaSpotDef, item?: ParkedCarItem) => void;
   isSequencing?: boolean;
@@ -37,39 +45,55 @@ interface MarinaLotViewProps {
   onClearDemo?: () => void;
 }
 
-// Studio-grade 3D photorealistic luxury crossover SUV (Clean, shadow-free on asphalt)
+// Studio-grade 3D photorealistic luxury crossover SUV (Clean, shadow-free on asphalt, authentic slender proportions)
 function SmartStallVehicle({
   spot,
   theme,
   isJustParked = false,
   priority,
-}: { spot: MarinaSpotDef; theme: (typeof GLOW_THEMES)["blue"]; isJustParked?: boolean; priority?: string }) {
+  vehicleId,
+}: {
+  spot: MarinaSpotDef;
+  theme: (typeof GLOW_THEMES)["blue"];
+  isJustParked?: boolean;
+  priority?: string;
+  vehicleId?: string;
+}) {
+  const vehicle = getVehicleVariation(vehicleId, `spot-${spot.spotNumber}`);
   return (
     <div
-      className={`relative w-[92%] h-[90%] flex items-center justify-center transition-all duration-300 ${
-        isJustParked ? "animate-park-shrink" : "hover:scale-105"
+      className={`relative w-full h-full flex items-center justify-center transition-all duration-300 ${
+        isJustParked ? "animate-park-settle" : "hover:scale-105"
       }`}
     >
-      {/* Studio-Grade 3D Luxury SUV Image - Fitted cleanly inside stall box */}
+      {/* Studio-Grade Vehicle Image - Slender proportions, NEVER stretched or fat */}
       <img
-        src="/cars/norm_rear_top.png"
+        src={vehicle.rearSprite}
         alt={`Vehicle parked in spot ${spot.spotNumber}`}
-        className="relative z-10 w-full h-full object-fill cursor-pointer select-none transition-transform duration-200"
+        className="relative z-10 h-[92%] w-auto max-w-full object-contain cursor-pointer select-none transition-transform duration-200 drop-shadow-md"
       />
     </div>
   );
 }
 
-// Ultra-smooth GPU-driven Driving Car Animation with soft left/right turning and zero tilt
+// Standard moving car size in percentage of 1024x608 parking lot (one uniform square container so all angles render at identical size)
+const STANDARD_CAR_HEIGHT = WAYPOINT_DRIVING_STYLE.container.heightPercent;
+const STANDARD_CAR_WIDTH = WAYPOINT_DRIVING_STYLE.container.widthPercent;
+
+// Ultra-smooth GPU-driven Driving Car Animation with Waypoint Driving Style
 function DrivingCarAnimation({
   targetSpot,
+  vehicleId,
   onFinish,
-}: { targetSpot: MarinaSpotDef; onFinish: () => void }) {
+}: {
+  targetSpot: MarinaSpotDef;
+  vehicleId?: string;
+  onFinish: () => void;
+}) {
+  const vehicle = getVehicleVariation(vehicleId, `spot-${targetSpot.spotNumber}`);
   const containerRef = useRef<HTMLDivElement>(null);
-  const rearImgRef = useRef<HTMLImageElement>(null);
-  const turnRightImgRef = useRef<HTMLImageElement>(null);
+  const rearContainerRef = useRef<HTMLDivElement>(null);
   const sideRightImgRef = useRef<HTMLImageElement>(null);
-  const turnLeftImgRef = useRef<HTMLImageElement>(null);
   const sideLeftImgRef = useRef<HTMLImageElement>(null);
   const brakeLightRef = useRef<HTMLDivElement>(null);
   const onFinishRef = useRef(onFinish);
@@ -77,8 +101,9 @@ function DrivingCarAnimation({
 
   useEffect(() => {
     const waypoints = generateSpotWaypoints(targetSpot);
-    const spline = new SplinePath(waypoints);
-    const duration = 2850; // Stately 2.85s driving pace
+    const path = new OrthogonalPath(waypoints);
+    // Steady, handsome cruising speed proportional to distance (approx 2.4s - 2.9s):
+    const duration = Math.round(1800 + (path.totalLength / 125) * 1100);
     let startTime: number | null = null;
     let animFrameId: number;
 
@@ -87,42 +112,37 @@ function DrivingCarAnimation({
       const elapsed = now - startTime;
       const linearP = Math.min(1, elapsed / duration);
 
-      // Natural physical easing curve:
+      // Natural physical easing: gentle launch from gate, steady cruise, gentle braking into stall
       let progress = 0;
-      if (linearP < 0.15) {
-        progress = (linearP / 0.15) * (linearP / 0.15) * 0.12;
-      } else if (linearP < 0.82) {
-        const u = (linearP - 0.15) / (0.82 - 0.15);
-        progress = 0.12 + u * (0.88 - 0.12);
+      if (linearP < 0.10) {
+        progress = (linearP / 0.10) * (linearP / 0.10) * 0.08;
+      } else if (linearP < 0.85) {
+        const u = (linearP - 0.10) / (0.85 - 0.10);
+        progress = 0.08 + u * (0.90 - 0.08);
       } else {
-        const u = (linearP - 0.82) / (1 - 0.82);
-        const easeOut = 1 - Math.pow(1 - u, 3);
-        progress = 0.88 + easeOut * 0.12;
+        const u = (linearP - 0.85) / (1 - 0.85);
+        const easeOut = 1 - Math.pow(1 - u, 2);
+        progress = 0.90 + easeOut * 0.10;
       }
 
-      const pt = spline.sample(progress);
-      const heading = spline.getHeading(progress);
-      const state = getCarRenderState(pt, heading, progress, targetSpot.y);
+      const sample = path.sample(progress);
+      const state = getCarRenderState(sample, progress);
 
       if (containerRef.current) {
         containerRef.current.style.left = `${state.x}%`;
         containerRef.current.style.top = `${state.y}%`;
-        // NO TILT / NO ROLL: strictly translate and scale to keep tires level on asphalt
-        containerRef.current.style.transform = `translate(-50%, -50%) scale(${state.perspScale})`;
+        // One standard size throughout transit: strictly translate with zero growing or shrinking
+        containerRef.current.style.transform = `translate(-50%, -50%)`;
       }
 
-      // Direct continuous opacity blending without CSS transitions to eliminate stutter
-      if (rearImgRef.current) rearImgRef.current.style.opacity = `${state.rearOpacity}`;
-      if (turnRightImgRef.current) turnRightImgRef.current.style.opacity = `${state.turnRightOpacity}`;
+      // Discrete 1 or 0 sprite switching — ONLY RIGHT ANGLE TURNS, NO FADE TURNS:
+      if (rearContainerRef.current) rearContainerRef.current.style.opacity = `${state.rearOpacity}`;
       if (sideRightImgRef.current) sideRightImgRef.current.style.opacity = `${state.sideRightOpacity}`;
-      if (turnLeftImgRef.current) turnLeftImgRef.current.style.opacity = `${state.turnLeftOpacity}`;
       if (sideLeftImgRef.current) sideLeftImgRef.current.style.opacity = `${state.sideLeftOpacity}`;
 
-      // Glowing LED Brake Light Effect:
-      // Active during deceleration into the stall when car is straight
+      // Glowing LED Brake Light Effect: active only when pulling into final parking stall
       if (brakeLightRef.current) {
-        const isBraking = linearP >= 0.80 && state.rearOpacity >= 0.70;
-        brakeLightRef.current.style.opacity = isBraking ? "1" : "0";
+        brakeLightRef.current.style.opacity = state.isBraking ? "1" : "0";
       }
 
       if (linearP < 1) {
@@ -143,71 +163,60 @@ function DrivingCarAnimation({
       style={{
         left: "16.5%",
         top: "96.0%",
-        width: `${targetSpot.width}%`,
-        height: `${targetSpot.height}%`,
-        transform: "translate(-50%, -50%) scale(1.32)",
+        width: `${STANDARD_CAR_WIDTH}%`,
+        height: `${STANDARD_CAR_HEIGHT}%`,
+        transform: "translate(-50%, -50%)",
       }}
     >
-      <div className="relative w-full h-full">
-        {/* All 5 normalized views anchored identically at ground contact point with zero shadow */}
-        <img
-          ref={rearImgRef}
-          src="/cars/norm_rear_top.png"
-          alt="Rear View"
-          className="absolute inset-0 w-full h-full object-fill pointer-events-none select-none transition-none"
+      <div className="relative w-full h-full flex items-center justify-center">
+        {/* Rear View with Tailored Brake Lights */}
+        <div
+          ref={rearContainerRef}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none transition-none"
           style={{ opacity: 1 }}
-        />
-        <img
-          ref={turnRightImgRef}
-          src="/cars/norm_turn_right.png"
-          alt="Turn Right"
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-none"
-          style={{ opacity: 0 }}
-        />
+        >
+          <div
+            className="relative h-full flex items-center justify-center"
+            style={{ aspectRatio: vehicle.rearAspectRatio }}
+          >
+            <img
+              src={vehicle.rearSprite}
+              alt="Rear View"
+              className="w-full h-full object-contain pointer-events-none select-none transition-none"
+            />
+
+            {/* Authentic Glowing Red LED Brake Lights on Vehicle Rear */}
+            <div
+              ref={brakeLightRef}
+              className="absolute inset-0 pointer-events-none z-30 transition-opacity duration-150"
+              style={{ opacity: 0 }}
+            >
+              {vehicle.brakeLights.map((bl) => (
+                <span
+                  key={bl.id}
+                  className={`absolute ${bl.className}`}
+                  style={{ left: bl.left, top: bl.top, transform: "translate(-50%, -50%)" }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Side Views scaled per vehicle style so visual mass matches the straight rear view */}
         <img
           ref={sideRightImgRef}
-          src="/cars/norm_side_right.png"
+          src={vehicle.sideRightSprite}
           alt="Side Right"
           className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-none"
-          style={{ opacity: 0 }}
-        />
-        <img
-          ref={turnLeftImgRef}
-          src="/cars/norm_turn_left.png"
-          alt="Turn Left"
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-none"
-          style={{ opacity: 0 }}
+          style={{ opacity: 0, transform: `scale(${vehicle.sideScale})` }}
         />
         <img
           ref={sideLeftImgRef}
-          src="/cars/norm_side_left.png"
+          src={vehicle.sideLeftSprite}
           alt="Side Left"
           className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-none"
-          style={{ opacity: 0 }}
+          style={{ opacity: 0, transform: `scale(${vehicle.sideScale})` }}
         />
-
-        {/* Authentic Glowing Red LED Brake Lights on Vehicle Rear */}
-        <div
-          ref={brakeLightRef}
-          className="absolute inset-0 pointer-events-none z-30 transition-opacity duration-150"
-          style={{ opacity: 0 }}
-        >
-          {/* Left Brake Light Cluster - Exact Mazda Taillight Center */}
-          <span
-            className="absolute w-3 h-2 rounded-full bg-red-500 blur-[0.5px] shadow-[0_0_12px_#ff2222,0_0_24px_#ef4444]"
-            style={{ left: "16.9%", top: "75.8%", transform: "translate(-50%, -50%)" }}
-          />
-          {/* Right Brake Light Cluster - Exact Mazda Taillight Center */}
-          <span
-            className="absolute w-3 h-2 rounded-full bg-red-500 blur-[0.5px] shadow-[0_0_12px_#ff2222,0_0_24px_#ef4444]"
-            style={{ left: "82.9%", top: "75.5%", transform: "translate(-50%, -50%)" }}
-          />
-          {/* Center High-Mount Stop Lamp - Roof Spoiler */}
-          <span
-            className="absolute w-2.5 h-1 rounded-full bg-red-500 blur-[0.5px] shadow-[0_0_10px_#ef4444]"
-            style={{ left: "50.0%", top: "58.0%", transform: "translate(-50%, -50%)" }}
-          />
-        </div>
       </div>
     </div>
   );
@@ -216,6 +225,7 @@ function DrivingCarAnimation({
 export function MarinaLotView({
   items,
   animatingSpot,
+  animatingVehicleId,
   onCarClick,
   onSpotClick,
   isSequencing = false,
@@ -305,8 +315,13 @@ export function MarinaLotView({
         {/* ── Driving Car Animation Layer ── */}
         {animatingSpotDef && (
           <DrivingCarAnimation
-            key={`driving-car-${animatingSpotDef.spotNumber}`}
+            key={`driving-car-${animatingSpotDef.spotNumber}-${animatingVehicleId || "default"}`}
             targetSpot={animatingSpotDef}
+            vehicleId={
+              animatingVehicleId ||
+              spotItemMap.get(animatingSpotDef.spotNumber)?.vehicleId ||
+              spotItemMap.get(animatingSpotDef.spotNumber)?.carColor
+            }
             onFinish={() => {
               // Animation handled in parent state
             }}
@@ -357,10 +372,12 @@ export function MarinaLotView({
                 </div>
               )}
 
-              {/* 2. Interactive Parking Stall & Car Slot (Zero white border overlays) */}
+              {/* 2. Interactive Parking Stall & Car Slot */}
               <div
-                className={`absolute z-10 transition-all duration-200 cursor-pointer rounded-xl flex items-center justify-center ${
-                  isHovered
+                className={`absolute z-10 transition-all duration-200 rounded-xl flex items-center justify-center ${
+                  isOccupied ? "cursor-pointer" : "pointer-events-none"
+                } ${
+                  isOccupied && isHovered
                     ? "ring-2 ring-amber-400/50 bg-amber-400/5 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
                     : ""
                 }`}
@@ -371,11 +388,10 @@ export function MarinaLotView({
                   height: `${spot.height}%`,
                   transform: "translate(-50%, -50%)",
                 }}
-                onMouseEnter={() => setHoveredSpot(spot.spotNumber)}
+                onMouseEnter={() => isOccupied && setHoveredSpot(spot.spotNumber)}
                 onMouseLeave={() => setHoveredSpot(null)}
                 onClick={() => {
                   if (item) onCarClick(item);
-                  else onSpotClick?.(spot, item);
                 }}
               >
                 {/* When Occupied & Not currently mid-flight animation: Show Parked Vehicle */}
@@ -386,17 +402,8 @@ export function MarinaLotView({
                       theme={theme}
                       isJustParked={justParkedSpot === spot.spotNumber}
                       priority={item.priority}
+                      vehicleId={item.vehicleId || item.carColor}
                     />
-                  </div>
-                )}
-
-                {/* When Vacant: Clean subtle prompt on hover */}
-                {!isOccupied && isHovered && (
-                  <div className="flex flex-col items-center justify-center text-center p-1 bg-black/50 backdrop-blur-sm rounded-lg border border-amber-400/30 shadow-lg">
-                    <span className="text-[8px] font-bold tracking-widest text-amber-300 uppercase font-mono">
-                      OPEN SPOT {spot.spotNumber}
-                    </span>
-                    <span className="text-[7px] text-white/70">Click to Park Here</span>
                   </div>
                 )}
               </div>

@@ -360,17 +360,21 @@ a,
   animation: iepCircuitPulse 2.2s ease-in-out infinite;
 }
 
-/* ── Marina Parking Lot: Settle & Shrink to Box When Done Parking ── */
-@keyframes parkShrinkToBox {
+/* ── Marina Parking Lot: Settle into Stall When Done Parking ── */
+@keyframes parkSettleToStall {
   0% {
-    transform: scale(1.22);
+    transform: translateY(-2px) scale(1.04);
+  }
+  60% {
+    transform: translateY(1px) scale(0.99);
   }
   100% {
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
+.animate-park-settle,
 .animate-park-shrink {
-  animation: parkShrinkToBox 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: parkSettleToStall 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
