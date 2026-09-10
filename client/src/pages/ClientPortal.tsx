@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard,
   GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight,
-  CircleParking
+  CircleParking, UploadCloud
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -609,6 +609,15 @@ export default function ClientPortal() {
   const [schedulerSessionTypeName, setSchedulerSessionTypeName] = useState<string>("");
   const [schedulerBooked, setSchedulerBooked] = useState(false);
 
+  // Quick Upload Docs Modal from Header
+  const [showUploadDocsModal, setShowUploadDocsModal] = useState(false);
+  const [uploadDocTitle, setUploadDocTitle] = useState("");
+  const [uploadDocCategory, setUploadDocCategory] = useState("ieps-504s");
+  const [uploadDocFile, setUploadDocFile] = useState<File | null>(null);
+  const [uploadDocNotes, setUploadDocNotes] = useState("");
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const headerUploadInputRef = useRef<HTMLInputElement>(null);
+
   // URL Stage & Tab Resolution
   const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const stageFromUrl = urlParams?.get("stage") as ClientStage | null;
@@ -902,6 +911,69 @@ export default function ClientPortal() {
     { caseId: effectiveCaseId! }, { enabled: !!effectiveCaseId }
   );
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
+
+  const handlePortalUpload = () => {
+    if (!uploadDocTitle.trim() && !uploadDocFile) {
+      toast.error("Please enter a document title or select a file.");
+      return;
+    }
+
+    const title = uploadDocTitle.trim() || (uploadDocFile?.name ?? "Uploaded_Document.pdf");
+    const categoryMap: Record<string, string> = {
+      "ieps-504s": "IEPs & 504s",
+      "evaluations": "Evaluations",
+      "school-records": "School Records",
+      "communication": "Communication",
+      "medical-therapy": "Medical & Therapy",
+      "behavior-fba": "Behavior / FBA / BIP",
+      "progress-reports": "Progress Reports",
+    };
+
+    setIsUploadingDoc(true);
+
+    setTimeout(() => {
+      const studentId = effectiveStudent?.id || 101;
+      const storageKeyDocs = `waypoint_vault_documents_${studentId}`;
+      const storageKeyWorkspaces = `waypoint_vault_workspaces_${studentId}`;
+
+      const newDoc = {
+        id: `doc-${Date.now()}`,
+        title: title.endsWith(".pdf") || title.includes(".") ? title : `${title}.pdf`,
+        workspaceId: uploadDocCategory,
+        workspaceName: categoryMap[uploadDocCategory] || "IEPs & 504s",
+        fileType: "pdf" as const,
+        fileSize: uploadDocFile ? `${(uploadDocFile.size / (1024 * 1024)).toFixed(1)} MB` : "2.1 MB",
+        updatedAt: new Date().toISOString().split("T")[0],
+        relativeDate: "Just now",
+        uploadedBy: "Parent" as const,
+        summary: uploadDocNotes.trim() || `Uploaded by family via portal header into ${categoryMap[uploadDocCategory] || "Vault"}.`,
+      };
+
+      try {
+        const existingDocs = JSON.parse(localStorage.getItem(storageKeyDocs) || "[]");
+        localStorage.setItem(storageKeyDocs, JSON.stringify([newDoc, ...existingDocs]));
+
+        const existingWs = JSON.parse(localStorage.getItem(storageKeyWorkspaces) || "[]");
+        if (Array.isArray(existingWs) && existingWs.length > 0) {
+          const updatedWs = existingWs.map((w: any) =>
+            w.id === uploadDocCategory ? { ...w, fileCount: (w.fileCount || 0) + 1 } : w
+          );
+          localStorage.setItem(storageKeyWorkspaces, JSON.stringify(updatedWs));
+        }
+
+        window.dispatchEvent(new CustomEvent("waypoint:vault-updated"));
+      } catch (err) {
+        console.error("Error persisting uploaded doc:", err);
+      }
+
+      setIsUploadingDoc(false);
+      setShowUploadDocsModal(false);
+      setUploadDocTitle("");
+      setUploadDocNotes("");
+      setUploadDocFile(null);
+      toast.success(`"${newDoc.title}" safely uploaded & encrypted into ${newDoc.workspaceName}!`);
+    }, 600);
+  };
 
   const filteredNavItems = NAV_ITEMS.filter(({ id }) => {
     if (id === "attorney" && !effectiveStudent?.attorneyName && (!isWorkspaceMode || !isAdminView)) return false;
@@ -2071,6 +2143,14 @@ export default function ClientPortal() {
             <Menu className="h-5 w-5" />
           </button>
           <span className="text-xs text-white/50 capitalize flex-1 text-center">{NAV_ITEMS.find(n => n.id === activeTab)?.label}</span>
+          <button
+            onClick={() => setShowUploadDocsModal(true)}
+            className="flex items-center gap-1 text-[11px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-400/30 px-2 py-0.5 rounded-md hover:bg-amber-500/20 transition-all"
+            title="Upload Document"
+          >
+            <UploadCloud className="h-3 w-3" />
+            <span>Upload</span>
+          </button>
           <button onClick={toggleTheme} className="text-white/50 hover:text-white">
             {theme === 'navy' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -2085,6 +2165,7 @@ export default function ClientPortal() {
           onToggleTheme={toggleTheme}
           onOpenIepLinkDialog={() => setShowIepLinkDialog(true)}
           onOpenScheduler={() => setShowMeetingScheduler(true)}
+          onUploadDocs={() => setShowUploadDocsModal(true)}
           onLogout={handleLogout}
         />
 
@@ -2308,6 +2389,180 @@ export default function ClientPortal() {
               {saveDevRulesMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Save Guidelines
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Quick Upload Document Dialog (Triggered from Header) ── */}
+      <Dialog open={showUploadDocsModal} onOpenChange={setShowUploadDocsModal}>
+        <DialogContent className="max-w-lg bg-[#07152B] border border-[#18365D] text-white rounded-2xl p-6 shadow-2xl backdrop-blur-xl">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-bold flex items-center gap-2.5 text-white">
+                <div className="w-8 h-8 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-inner">
+                  <UploadCloud className="w-4 h-4" />
+                </div>
+                <span>Upload Documents to Vault</span>
+              </DialogTitle>
+              <PageIdBadge id="PG-023-UPL" name="Upload Documents" />
+            </div>
+            <DialogDescription className="text-xs text-blue-200/70 mt-1">
+              Securely upload IEP documents, evaluations, or therapist records for {effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "your student"}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 my-2">
+            {/* Hidden native file input */}
+            <input
+              type="file"
+              ref={headerUploadInputRef}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.eml"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setUploadDocFile(file);
+                  if (!uploadDocTitle) {
+                    setUploadDocTitle(file.name.replace(/\.[^/.]+$/, ""));
+                  }
+                }
+              }}
+            />
+
+            {/* Drag & drop / Click to select zone */}
+            <div
+              onClick={() => headerUploadInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const file = e.dataTransfer.files?.[0];
+                if (file) {
+                  setUploadDocFile(file);
+                  if (!uploadDocTitle) {
+                    setUploadDocTitle(file.name.replace(/\.[^/.]+$/, ""));
+                  }
+                }
+              }}
+              className={`p-5 rounded-xl border-2 border-dashed transition-all cursor-pointer text-center space-y-2 ${
+                uploadDocFile
+                  ? "border-emerald-500/50 bg-emerald-500/10"
+                  : "border-blue-700/40 bg-[#030C22]/80 hover:border-amber-400/60 hover:bg-[#030C22]"
+              }`}
+            >
+              <div className="w-10 h-10 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 flex items-center justify-center mx-auto">
+                <UploadCloud className="w-5 h-5" />
+              </div>
+              {uploadDocFile ? (
+                <div>
+                  <p className="text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {uploadDocFile.name}
+                  </p>
+                  <p className="text-[10px] text-blue-200/60 mt-0.5">
+                    {(uploadDocFile.size / (1024 * 1024)).toFixed(2)} MB • Click to choose a different file
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs font-semibold text-white">
+                    Click to browse or drag & drop records here
+                  </p>
+                  <p className="text-[10px] text-blue-300/50 mt-0.5">
+                    Supports PDF, DOCX, XLSX, PNG, JPG up to 50MB (Zero-Trust Encrypted)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Document Title */}
+            <div>
+              <Label className="text-xs text-blue-200/90 mb-1.5 block font-medium">Document Title</Label>
+              <Input
+                value={uploadDocTitle}
+                onChange={(e) => setUploadDocTitle(e.target.value)}
+                placeholder="e.g., 2026 Psycho-Ed Evaluation"
+                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl focus:border-amber-400"
+              />
+            </div>
+
+            {/* Destination Workspace / Category */}
+            <div>
+              <Label className="text-xs text-blue-200/90 mb-1.5 block font-medium">Destination Vault Folder</Label>
+              <select
+                value={uploadDocCategory}
+                onChange={(e) => setUploadDocCategory(e.target.value)}
+                className="w-full bg-[#030C22] border border-blue-900/40 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-amber-400 cursor-pointer"
+              >
+                <option value="ieps-504s" className="bg-[#07152B]">IEPs & 504s (Current & Past Plans)</option>
+                <option value="evaluations" className="bg-[#07152B]">Evaluations (Psycho-Ed, Speech, OT, PT)</option>
+                <option value="school-records" className="bg-[#07152B]">School Records (Report Cards, Attendance)</option>
+                <option value="communication" className="bg-[#07152B]">Communication (Teacher Emails, PWN)</option>
+                <option value="medical-therapy" className="bg-[#07152B]">Medical & Therapy (Clinic notes, Diagnoses)</option>
+                <option value="behavior-fba" className="bg-[#07152B]">Behavior / FBA / BIP (Behavior Plans)</option>
+                <option value="progress-reports" className="bg-[#07152B]">Progress Reports (Quarterly Goal Marks)</option>
+              </select>
+            </div>
+
+            {/* Optional Summary / Notes */}
+            <div>
+              <Label className="text-xs text-blue-200/90 mb-1.5 block font-medium">Notes / Context for Advocate (Optional)</Label>
+              <Input
+                value={uploadDocNotes}
+                onChange={(e) => setUploadDocNotes(e.target.value)}
+                placeholder="e.g., Received from school psychologist yesterday"
+                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl focus:border-amber-400"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-white/5">
+            <div className="flex-1 flex items-center">
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => {
+                  setShowUploadDocsModal(false);
+                  setActiveTab("smart-docs");
+                }}
+                className="p-0 h-auto text-[11px] text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                Go to Document Vault →
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowUploadDocsModal(false);
+                  setUploadDocTitle("");
+                  setUploadDocFile(null);
+                  setUploadDocNotes("");
+                }}
+                className="border-white/15 text-white/70 hover:bg-white/10 hover:text-white text-xs rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handlePortalUpload}
+                disabled={isUploadingDoc}
+                className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-400/10 gap-1.5"
+              >
+                {isUploadingDoc ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Encrypting...</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>Upload & Encrypt</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

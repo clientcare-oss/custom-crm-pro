@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   Folder, 
   FolderPlus, 
@@ -246,6 +246,30 @@ export default function PortalDocumentVaultTab({
     setDocuments(next);
     localStorage.setItem(storageKeyDocs, JSON.stringify(next));
   };
+
+  // Synchronize external uploads (e.g. from ClientPortalHeader)
+  useEffect(() => {
+    const handleVaultUpdated = () => {
+      try {
+        const saved = localStorage.getItem(storageKeyDocs);
+        if (saved) setDocuments(JSON.parse(saved));
+        const savedWs = localStorage.getItem(storageKeyWorkspaces);
+        if (savedWs) setWorkspaces(JSON.parse(savedWs));
+      } catch (e) {
+        console.error("Failed to sync vault:", e);
+      }
+    };
+    const handleOpenUpload = () => {
+      setShowUploadModal(true);
+    };
+
+    window.addEventListener("waypoint:vault-updated", handleVaultUpdated);
+    window.addEventListener("waypoint:open-upload-modal", handleOpenUpload);
+    return () => {
+      window.removeEventListener("waypoint:vault-updated", handleVaultUpdated);
+      window.removeEventListener("waypoint:open-upload-modal", handleOpenUpload);
+    };
+  }, [storageKeyDocs, storageKeyWorkspaces]);
 
   // Filtered and sorted documents
   const filteredDocuments = useMemo(() => {

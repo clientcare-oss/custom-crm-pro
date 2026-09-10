@@ -8,7 +8,8 @@ import {
   ArrowLeftRight, 
   ChevronDown, 
   Check, 
-  Plus 
+  Plus,
+  UploadCloud 
 } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ interface ClientPortalHeaderProps {
   onToggleTheme: () => void;
   onOpenIepLinkDialog: () => void;
   onOpenScheduler: () => void;
+  onUploadDocs?: () => void;
   onLogout: () => void;
 }
 
@@ -50,6 +52,7 @@ export function ClientPortalHeader({
   onToggleTheme,
   onOpenIepLinkDialog,
   onOpenScheduler,
+  onUploadDocs,
   onLogout,
 }: ClientPortalHeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -289,6 +292,20 @@ export function ClientPortalHeader({
                 ? "translate-y-0 rotate-0 scale-100 opacity-100" 
                 : "-translate-y-6 rotate-90 scale-50 opacity-0"
             }`} />
+          </button>
+
+          {/* Upload Docs Button */}
+          <button
+            onClick={onUploadDocs}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer border ${
+              isLight 
+                ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300 hover:border-slate-400 shadow-sm" 
+                : "bg-[#091D3E] hover:bg-[#0D2852] text-amber-300 border-amber-400/50 hover:border-amber-400 shadow-[0_0_12px_rgba(245,181,68,0.18)]"
+            }`}
+            title="Upload Document or IEP Record to Secure Vault"
+          >
+            <UploadCloud className="h-4 w-4 text-amber-400 shrink-0" />
+            <span>Upload Docs</span>
           </button>
 
           {/* Schedule Meeting Button */}
