@@ -1673,3 +1673,22 @@ export const honeybookAutomationRuns = mysqlTable("honeybook_automation_runs", {
 export type HoneybookAutomationRun = typeof honeybookAutomationRuns.$inferSelect;
 export type InsertHoneybookAutomationRun = typeof honeybookAutomationRuns.$inferInsert;
 
+// ── Parking Lot Items (PG-023-PRK) ───────────────────────────────────────────
+export const parkingLotItems = mysqlTable("parkingLotItems", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("studentContactId"),
+  title: text("title").notNull(),
+  notes: text("notes"),
+  category: varchar("category", { length: 100 }).default("Other").notNull(),
+  priority: varchar("priority", { length: 50 }).default("Normal").notNull(),
+  status: varchar("status", { length: 50 }).default("Parked").notNull(), // "Parked" | "In Discussion" | "Resolved"
+  spotNumber: int("spotNumber").default(1).notNull(), // 1 to 18
+  carColor: varchar("carColor", { length: 50 }).default("blue").notNull(), // "blue" | "white" | "red" | "green" | "black"
+  addedBy: varchar("addedBy", { length: 50 }).default("Parent").notNull(), // "Parent" | "Advocate"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ParkingLotItemRecord = typeof parkingLotItems.$inferSelect;
+export type InsertParkingLotItemRecord = typeof parkingLotItems.$inferInsert;
+

@@ -25,7 +25,8 @@ import {
   Lock,
   Layers,
   MapPin,
-  CreditCard
+  CreditCard,
+  CircleParking
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -241,6 +242,21 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     tourTitle: "Action Center",
     tourDescription: "Documents, requests, and forms you and Waypoint are actively working on together.",
     tourDisplayOrder: 5
+  },
+  {
+    id: "parking-lot",
+    name: "Parking Lot",
+    icon: CircleParking,
+    sidebarGroup: "permanent",
+    displayOrder: 24,
+    visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
+    unlockedStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
+    lockedPreviewAllowed: true,
+    description: "Park ideas, questions, and topics to revisit in future IEP meetings or advocacy check-ins.",
+    includeInPortalTour: true,
+    tourTitle: "Parking Lot",
+    tourDescription: "Park ideas, questions, and topics to revisit in future IEP meetings or advocacy check-ins.",
+    tourDisplayOrder: 6
   },
   {
     id: "tools",

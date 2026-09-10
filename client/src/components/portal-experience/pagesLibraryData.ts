@@ -322,5 +322,19 @@ export const INITIAL_PORTAL_PAGES: PortalExperiencePage[] = [
     associatedStageName: "15 · Annual Advocacy Renewal & Listing",
     lastEditedBy: "Byron Honea",
     isInteractivePreviewReady: true
+  },
+  {
+    id: "page-24",
+    pageId: "PG-023-PRK",
+    name: "Parking Lot",
+    slug: "parking-lot",
+    route: "/portal/parking-lot",
+    category: "Active Workspaces",
+    description: "Advocacy topic parking lot to capture questions, concerns, accommodation ideas, and topics to revisit during upcoming IEP meetings or strategy calls.",
+    status: "published",
+    associatedStageId: "stage-12",
+    associatedStageName: "12 · Active Advocacy",
+    lastEditedBy: "Byron Honea",
+    isInteractivePreviewReady: true
   }
 ];

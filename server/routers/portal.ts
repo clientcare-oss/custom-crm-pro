@@ -346,4 +346,90 @@ export const portalRouter = router({
         return { success: true };
       }),
 
+    // ── Parking Lot (PG-023-PRK) Procedures ─────────────────────────────────
+    getParkingLotItems: publicProcedure
+      .input(z.object({
+        studentContactId: z.number().nullable().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        try {
+          return await db.getParkingLotItems(input?.studentContactId);
+        } catch (e) {
+          console.error("Failed to query parking lot items from DB", e);
+          return [];
+        }
+      }),
+
+    parkItem: publicProcedure
+      .input(z.object({
+        studentContactId: z.number().nullable().optional(),
+        title: z.string().min(1),
+        notes: z.string().optional(),
+        category: z.string().optional(),
+        priority: z.string().optional(),
+        spotNumber: z.number().min(1).max(18).optional(),
+        carColor: z.string().optional(),
+        addedBy: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const res = await db.createParkingLotItem({
+            studentContactId: input.studentContactId,
+            title: input.title,
+            notes: input.notes,
+            category: input.category || "Other",
+            priority: input.priority || "Normal",
+            status: "Parked",
+            spotNumber: input.spotNumber || 1,
+            carColor: input.carColor || "blue",
+            addedBy: input.addedBy || "Parent",
+          });
+          return { success: true, res };
+        } catch (e: any) {
+          console.error("Failed to save parking lot item to DB", e);
+          return { success: false, error: e?.message || "Failed to persist to DB" };
+        }
+      }),
+
+    updateParkingLotItem: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        notes: z.string().optional(),
+        category: z.string().optional(),
+        priority: z.string().optional(),
+        status: z.string().optional(),
+        spotNumber: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          await db.updateParkingLotItem(input.id, {
+            title: input.title,
+            notes: input.notes,
+            category: input.category,
+            priority: input.priority,
+            status: input.status,
+            spotNumber: input.spotNumber,
+          });
+          return { success: true };
+        } catch (e: any) {
+          console.error("Failed to update parking lot item in DB", e);
+          return { success: false, error: e?.message };
+        }
+      }),
+
+    deleteParkingLotItem: publicProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          await db.deleteParkingLotItem(input.id);
+          return { success: true };
+        } catch (e: any) {
+          console.error("Failed to delete parking lot item in DB", e);
+          return { success: false, error: e?.message };
+        }
+      }),
+
 });

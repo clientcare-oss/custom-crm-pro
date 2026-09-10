@@ -16,6 +16,7 @@ import { LockedModulePreview } from "@/components/portal/onboarding/LockedModule
 import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
 import PortalActionCenterTab from "@/components/portal/PortalActionCenterTab";
 import PortalDocumentVaultTab from "@/components/portal/PortalDocumentVaultTab";
+import PortalParkingLotTab from "@/components/portal/PortalParkingLotTab";
 import { ClientStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -445,8 +446,19 @@ export function ExperiencePreviewModal({
                   />
                 )}
 
+                {/* ── Parking Lot Workspace ── */}
+                {activeTab === "parking-lot" && (
+                  <PortalParkingLotTab
+                    studentContactId={101}
+                    studentName="Liam Jenkins"
+                    displayName={displayName}
+                    onNavigateTab={handleTabSelect}
+                    isLight={false}
+                  />
+                )}
+
                 {/* ── STAGE 01 & 02: Discovery Inquiry Submitted / Discovery Call Scheduled (PG-027-S01 / PG-027-S02) ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["01", "02"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && ["01", "02"].includes(currentStage.stepNumber) && (
                   <DiscoveryCallExperience
                     displayName={displayName}
                     upcomingAppointment={{
@@ -459,7 +471,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 03 - 05: Discovery Completed & Support Selection / Checkout ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["03", "04", "05"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && ["03", "04", "05"].includes(currentStage.stepNumber) && (
                   <ChooseSupportExperience
                     onPaymentSuccess={() => {
                       setSimulatedStageIndex(5); // Advances to stage 06 (Welcome / Agreements)
@@ -470,7 +482,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 06 - 07: Representation Agreements ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["06", "07"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && ["06", "07"].includes(currentStage.stepNumber) && (
                   <AgreementsExperience
                     onComplete={() => {
                       setSimulatedStageIndex(7); // Advances to stage 08 (Student Setup)
@@ -481,7 +493,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 08: Student Setup Profile ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && currentStage.stepNumber === "08" && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && currentStage.stepNumber === "08" && (
                   <StudentSetupExperience
                     onComplete={() => {
                       setSimulatedStageIndex(8); // Advances to stage 09 (Upload Records)
@@ -492,7 +504,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 09: Upload School Records ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && currentStage.stepNumber === "09" && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && currentStage.stepNumber === "09" && (
                   <UploadRecordsExperience
                     onComplete={() => {
                       setSimulatedStageIndex(9); // Advances to stage 10 (Advocacy Intake)
@@ -503,7 +515,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 10: Advocacy Priorities Intake ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && currentStage.stepNumber === "10" && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && currentStage.stepNumber === "10" && (
                   <AdvocacyIntakeExperience
                     onComplete={() => {
                       setSimulatedStageIndex(10); // Advances to stage 11 (Active Representation)
@@ -514,7 +526,7 @@ export function ExperiencePreviewModal({
                 )}
 
                 {/* ── STAGE 11 - 12: Active Advocacy & Case Compass ── */}
-                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && ["11", "12"].includes(currentStage.stepNumber) && (
+                {activeTab !== "explore-portal" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && ["11", "12"].includes(currentStage.stepNumber) && (
                   <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300">
                     <div className="border-b border-white/10 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>

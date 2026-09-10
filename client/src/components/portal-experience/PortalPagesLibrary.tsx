@@ -39,7 +39,7 @@ export function PortalPagesLibrary({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const categories: Array<{ id: string; label: string }> = [
-    { id: "all", label: "All Pages (22)" },
+    { id: "all", label: `All Pages (${pages.length})` },
     { id: "Discovery & Pre-Sale", label: "Discovery & Pre-Sale" },
     { id: "Onboarding & Setup", label: "Onboarding & Setup" },
     { id: "Active Workspaces", label: "Active Workspaces" },

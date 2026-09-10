@@ -33,6 +33,7 @@ import {
   brainDumpImages,
   discoveryWorksheets,
   voyageLogs,
+  parkingLotItems,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1295,4 +1296,64 @@ export async function upsertDiscoveryWorksheet(ownerId: number, fileKey: string,
   } else {
     return await db.insert(discoveryWorksheets).values({ ownerId, fileKey, fileName, fileSize });
   }
+}
+
+// ── Parking Lot (PG-023-PRK) ────────────────────────────────────────────────
+export async function getParkingLotItems(studentContactId?: number | null) {
+  const db = await getDb();
+  if (!db) return [];
+  if (studentContactId) {
+    return await db.select().from(parkingLotItems)
+      .where(eq(parkingLotItems.studentContactId, studentContactId))
+      .orderBy(desc(parkingLotItems.createdAt));
+  }
+  return await db.select().from(parkingLotItems).orderBy(desc(parkingLotItems.createdAt));
+}
+
+export async function createParkingLotItem(data: {
+  studentContactId?: number | null;
+  title: string;
+  notes?: string;
+  category?: string;
+  priority?: string;
+  status?: string;
+  spotNumber?: number;
+  carColor?: string;
+  addedBy?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  return await db.insert(parkingLotItems).values({
+    studentContactId: data.studentContactId || null,
+    title: data.title,
+    notes: data.notes || null,
+    category: data.category || "Other",
+    priority: data.priority || "Normal",
+    status: data.status || "Parked",
+    spotNumber: data.spotNumber || 1,
+    carColor: data.carColor || "blue",
+    addedBy: data.addedBy || "Parent",
+  });
+}
+
+export async function updateParkingLotItem(id: number, data: {
+  title?: string;
+  notes?: string;
+  category?: string;
+  priority?: string;
+  status?: string;
+  spotNumber?: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  return await db.update(parkingLotItems).set({
+    ...data,
+    updatedAt: new Date(),
+  }).where(eq(parkingLotItems.id, id));
+}
+
+export async function deleteParkingLotItem(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  return await db.delete(parkingLotItems).where(eq(parkingLotItems.id, id));
 }

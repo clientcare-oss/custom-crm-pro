@@ -8,7 +8,8 @@ import {
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
   ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard,
-  GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight
+  GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight,
+  CircleParking
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -23,6 +24,7 @@ import PortalTasksTab from "@/components/portal/PortalTasksTab";
 import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 import PortalActionCenterTab from "@/components/portal/PortalActionCenterTab";
 import PortalDocumentVaultTab from "@/components/portal/PortalDocumentVaultTab";
+import PortalParkingLotTab from "@/components/portal/PortalParkingLotTab";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -582,6 +584,7 @@ const NAV_ITEMS = [
   { id: "compass",       icon: Compass,        label: "Compass" },
   { id: "communication", icon: MessageSquare,  label: "Communication" },
   { id: "tasks",         icon: CheckSquare,    label: "Tasks" },
+  { id: "parking-lot",   icon: CircleParking,  label: "Parking Lot" },
   { id: "smart-docs",    icon: VaultSafeIcon,    label: "Document Vault" },
   { id: "files",         icon: ActionCenterIcon, label: "Action Center" },
   { id: "tools",         icon: Wrench,           label: "Tools" },
@@ -1144,7 +1147,7 @@ export default function ClientPortal() {
       "advocacy-intake"
     ];
 
-    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication" && activeTab !== "files" && activeTab !== "smart-docs") {
+    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot") {
       return (
         <LockedModulePreview
           moduleId={activeTab}
@@ -1382,6 +1385,19 @@ export default function ClientPortal() {
             onNavigateTab={(tab) => setActiveTab(tab as any)}
             isLight={theme === "blue"}
           />
+        );
+
+      case "parking-lot":
+        return (
+          <ScopedErrorBoundary moduleName="Parking Lot">
+            <PortalParkingLotTab
+              studentContactId={effectiveStudentContactId}
+              studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim() : "Student"}
+              isAdminView={isAdminView}
+              isLight={theme === "blue"}
+              onNavigateTab={(tab) => setActiveTab(tab as any)}
+            />
+          </ScopedErrorBoundary>
         );
 
       case "tools":
@@ -1833,7 +1849,7 @@ export default function ClientPortal() {
             </div>
 
             {/* ── ADVOCACY MODULE SHORTCUTS ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div 
                 onClick={() => setActiveTab("compass")}
                 className="p-4 rounded-2xl border border-blue-900/40 bg-[#06172F] hover:bg-[#081B36] hover:border-amber-400/50 transition-all cursor-pointer shadow-xl flex items-center justify-between group"
@@ -1877,6 +1893,22 @@ export default function ClientPortal() {
                   <div>
                     <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Communication</h4>
                     <p className="text-[10px] text-white/50">Direct Advocate Chat</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              <div 
+                onClick={() => setActiveTab("parking-lot")}
+                className="p-4 rounded-2xl border border-blue-900/40 bg-[#06172F] hover:bg-[#081B36] hover:border-amber-400/50 transition-all cursor-pointer shadow-xl flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                    <CircleParking className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Parking Lot</h4>
+                    <p className="text-[10px] text-white/50">Meeting Topics & Notes</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />

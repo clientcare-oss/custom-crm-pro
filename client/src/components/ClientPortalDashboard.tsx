@@ -2,7 +2,7 @@ import React from "react";
 import {
   Compass, MessageSquare, Calendar, FileText, Upload, CheckSquare,
   Folder, ArrowRight, Shield, Clock, Users, BarChart2, Zap, Layout,
-  Video, User, CheckCircle2, ChevronRight, MapPin, Sparkles, AlertCircle, Scale
+  Video, User, CheckCircle2, ChevronRight, MapPin, Sparkles, AlertCircle, Scale, CircleParking
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -648,6 +648,20 @@ export default function ClientPortalDashboard({
               <span className={`text-[10px] font-semibold leading-tight ${
                 isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
               }`}>Case Details</span>
+            </button>
+
+            <button 
+              onClick={() => onNavigateTab("parking-lot")}
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all group ${
+                isLight 
+                  ? "border-slate-200 bg-slate-50 hover:bg-amber-500/10 hover:border-amber-500/30" 
+                  : "border-blue-900/40 bg-[#030C22] hover:bg-amber-400/10 hover:border-amber-400/40"
+              }`}
+            >
+              <CircleParking className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1.5" />
+              <span className={`text-[10px] font-semibold leading-tight ${
+                isLight ? "text-slate-700 group-hover:text-amber-700" : "text-white/80 group-hover:text-amber-300"
+              }`}>Parking Lot</span>
             </button>
 
           </div>

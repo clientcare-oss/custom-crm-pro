@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const STORAGE_VERSION = "v4";
+const STORAGE_VERSION = "v5";
 const STAGES_STORAGE_KEY = `waypoint_journey_stages_${STORAGE_VERSION}`;
 const PAGES_STORAGE_KEY = `waypoint_portal_pages_${STORAGE_VERSION}`;
 
@@ -42,6 +42,8 @@ export function ClientExperienceDesigner() {
       localStorage.removeItem("waypoint_journey_stages_v1");
       localStorage.removeItem("waypoint_journey_stages_v2");
       localStorage.removeItem("waypoint_journey_stages_v3");
+      localStorage.removeItem("waypoint_journey_stages_v4");
+      localStorage.removeItem("waypoint_portal_pages_v4");
     } catch (_) {}
 
     const saved = localStorage.getItem(STAGES_STORAGE_KEY);

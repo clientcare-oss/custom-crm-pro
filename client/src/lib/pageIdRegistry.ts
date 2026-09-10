@@ -184,6 +184,7 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
   "tasks":            { id: "PG-023-TSK", name: "Portal Tasks", category: "Portal" },
   "smart-docs":       { id: "PG-023-VAULT", name: "Document Vault", category: "Portal" },
   "files":            { id: "PG-023-ACT", name: "Action Center", category: "Portal" },
+  "parking-lot":       { id: "PG-023-PRK", name: "Parking Lot", category: "Portal" },
   "financials":       { id: "PG-023-MBR", name: "Portal Membership", category: "Portal" },
   "voyage-log":       { id: "PG-023-VOY", name: "Voyage Meeting Logs", category: "Portal" },
   "notes":            { id: "PG-023-NTE", name: "Case Notes", category: "Portal" },
