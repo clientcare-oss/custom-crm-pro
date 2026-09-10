@@ -725,105 +725,107 @@ export function WaypointScanModal({
             </div>
           )}
 
-          {/* Stage 1: Get Document */}
-          {!existingDraft && stage === "get" && (
-            <WaypointScanStage1Get
-              videoRef={videoRef}
-              cameraActive={cameraActive}
-              cameraError={cameraError}
-              onScanPage={handleScanPage}
-              onToggleFacingMode={handleToggleFacingMode}
-              onNativeCapture={handleNativeCapture}
-              onFileOpen={handleFileOpen}
-              onStartCamera={() => startCamera(facingMode)}
-              hasExistingPages={pages.length > 0}
-              onBackToReview={() => setStage("review")}
-            />
-          )}
+          <div className="flex-1 flex flex-col overflow-y-auto min-h-0 py-1">
+            {/* Stage 1: Get Document */}
+            {!existingDraft && stage === "get" && (
+              <WaypointScanStage1Get
+                videoRef={videoRef}
+                cameraActive={cameraActive}
+                cameraError={cameraError}
+                onScanPage={handleScanPage}
+                onToggleFacingMode={handleToggleFacingMode}
+                onNativeCapture={handleNativeCapture}
+                onFileOpen={handleFileOpen}
+                onStartCamera={() => startCamera(facingMode)}
+                hasExistingPages={pages.length > 0}
+                onBackToReview={() => setStage("review")}
+              />
+            )}
 
-          {/* Stage 2: Review */}
-          {!existingDraft && stage === "review" && (
-            <WaypointScanStage2Review
-              pages={pages}
-              activePageIndex={activePageIndex}
-              onSelectPageIndex={setActivePageIndex}
-              onRetake={handleRetakeCurrentPage}
-              onUsePage={() => setStage("fill-sign")}
-              onRotate={handleRotatePage}
-              onAdjustEdges={rawCaptureDataUrl ? () => setShowAdjustEdgesModal(true) : undefined}
-              onScanAnotherPage={handleScanAnotherPage}
-              onDeletePage={(idx) => {
-                if (pages.length <= 1) return;
-                setPages((p) => p.filter((_, i) => i !== idx));
-                setActivePageIndex((i) => Math.max(0, i - 1));
-              }}
-              onMovePageLeft={(idx) => {
-                if (idx === 0) return;
-                setPages((p) => {
-                  const c = [...p];
-                  const t = c[idx - 1];
-                  c[idx - 1] = c[idx];
-                  c[idx] = t;
-                  return c;
-                });
-                setActivePageIndex(idx - 1);
-              }}
-              onMovePageRight={(idx) => {
-                if (idx === pages.length - 1) return;
-                setPages((p) => {
-                  const c = [...p];
-                  const t = c[idx + 1];
-                  c[idx + 1] = c[idx];
-                  c[idx] = t;
-                  return c;
-                });
-                setActivePageIndex(idx + 1);
-              }}
-              blurWarning={blurWarning}
-            />
-          )}
+            {/* Stage 2: Review */}
+            {!existingDraft && stage === "review" && (
+              <WaypointScanStage2Review
+                pages={pages}
+                activePageIndex={activePageIndex}
+                onSelectPageIndex={setActivePageIndex}
+                onRetake={handleRetakeCurrentPage}
+                onUsePage={() => setStage("fill-sign")}
+                onRotate={handleRotatePage}
+                onAdjustEdges={rawCaptureDataUrl ? () => setShowAdjustEdgesModal(true) : undefined}
+                onScanAnotherPage={handleScanAnotherPage}
+                onDeletePage={(idx) => {
+                  if (pages.length <= 1) return;
+                  setPages((p) => p.filter((_, i) => i !== idx));
+                  setActivePageIndex((i) => Math.max(0, i - 1));
+                }}
+                onMovePageLeft={(idx) => {
+                  if (idx === 0) return;
+                  setPages((p) => {
+                    const c = [...p];
+                    const t = c[idx - 1];
+                    c[idx - 1] = c[idx];
+                    c[idx] = t;
+                    return c;
+                  });
+                  setActivePageIndex(idx - 1);
+                }}
+                onMovePageRight={(idx) => {
+                  if (idx === pages.length - 1) return;
+                  setPages((p) => {
+                    const c = [...p];
+                    const t = c[idx + 1];
+                    c[idx + 1] = c[idx];
+                    c[idx] = t;
+                    return c;
+                  });
+                  setActivePageIndex(idx + 1);
+                }}
+                blurWarning={blurWarning}
+              />
+            )}
 
-          {/* Stage 3: Fill and Sign */}
-          {!existingDraft && stage === "fill-sign" && currentPage && (
-            <WaypointScanStage3FillSign
-              currentPage={currentPage}
-              annotations={currentAnnots}
-              activeTool={activeTool}
-              onSelectTool={setActiveTool}
-              onDocumentClick={handleDocumentClick}
-              selectedAnnotationId={selectedAnnotationId}
-              onSelectAnnotation={setSelectedAnnotationId}
-              onRemoveAnnotation={(id) => {
-                setAnnotations((p) => ({
-                  ...p,
-                  [currentPage.id]: (p[currentPage.id] || []).filter((a) => a.id !== id),
-                }));
-                setSelectedAnnotationId(null);
-              }}
-              onBackToReview={() => setStage("review")}
-              onFinishDocument={handleFinishDocument}
-              isProcessingPdf={isProcessingPdf}
-              pageNumber={activePageIndex + 1}
-              totalPages={pages.length}
-            />
-          )}
+            {/* Stage 3: Fill and Sign */}
+            {!existingDraft && stage === "fill-sign" && currentPage && (
+              <WaypointScanStage3FillSign
+                currentPage={currentPage}
+                annotations={currentAnnots}
+                activeTool={activeTool}
+                onSelectTool={setActiveTool}
+                onDocumentClick={handleDocumentClick}
+                selectedAnnotationId={selectedAnnotationId}
+                onSelectAnnotation={setSelectedAnnotationId}
+                onRemoveAnnotation={(id) => {
+                  setAnnotations((p) => ({
+                    ...p,
+                    [currentPage.id]: (p[currentPage.id] || []).filter((a) => a.id !== id),
+                  }));
+                  setSelectedAnnotationId(null);
+                }}
+                onBackToReview={() => setStage("review")}
+                onFinishDocument={handleFinishDocument}
+                isProcessingPdf={isProcessingPdf}
+                pageNumber={activePageIndex + 1}
+                totalPages={pages.length}
+              />
+            )}
 
-          {/* Stage 4: Finish PDF */}
-          {!existingDraft && stage === "finish" && pdfResult && (
-            <WaypointScanStage4Finish
-              firstPage={pages[0]}
-              pdfResult={pdfResult}
-              onSaveToDevice={() => savePdfToDevice(pdfResult.completedBytes, pdfResult.completedFileName)}
-              onShareOrEmail={async () => {
-                const res = await sharePdfFile(pdfResult.completedBytes, pdfResult.completedFileName, docTitle);
-                if (res.fallbackNeeded) {
-                  savePdfToDevice(pdfResult.completedBytes, pdfResult.completedFileName);
-                  window.location.href = `mailto:?subject=${encodeURIComponent(`Completed Document: ${docTitle}`)}`;
-                }
-              }}
-              onClose={onClose}
-            />
-          )}
+            {/* Stage 4: Finish PDF */}
+            {!existingDraft && stage === "finish" && pdfResult && (
+              <WaypointScanStage4Finish
+                firstPage={pages[0]}
+                pdfResult={pdfResult}
+                onSaveToDevice={() => savePdfToDevice(pdfResult.completedBytes, pdfResult.completedFileName)}
+                onShareOrEmail={async () => {
+                  const res = await sharePdfFile(pdfResult.completedBytes, pdfResult.completedFileName, docTitle);
+                  if (res.fallbackNeeded) {
+                    savePdfToDevice(pdfResult.completedBytes, pdfResult.completedFileName);
+                    window.location.href = `mailto:?subject=${encodeURIComponent(`Completed Document: ${docTitle}`)}`;
+                  }
+                }}
+                onClose={onClose}
+              />
+            )}
+          </div>
 
           {/* Footer Brand Taglines */}
           <WaypointScanFooter />

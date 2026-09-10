@@ -42,18 +42,24 @@ export function WaypointWavyBackdrop({
   className?: string;
 }) {
   return (
-    <div className={`relative overflow-hidden bg-[#061325] ${className}`}>
-      {/* Gradient underlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#07172F] via-[#051122] to-[#040D1A] pointer-events-none" />
+    <div className={`relative overflow-hidden bg-[#051122] ${className}`}>
+      {/* High-res Topographic Wave Image Texture Layer */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-45 mix-blend-screen scale-105"
+        style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
+      />
+
+      {/* Dark Vignette & Gradient Overlay for Perfect Legibility */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#061427]/85 via-[#040C1A]/75 to-[#030914]/90 pointer-events-none" />
       
       {/* Radial maritime glow highlights */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 -right-32 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 -right-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* SVG Nautical Wave Contours */}
       <svg
-        className="absolute inset-0 w-full h-full pointer-events-none select-none opacity-40"
+        className="absolute inset-0 w-full h-full pointer-events-none select-none opacity-50"
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"
         viewBox="0 0 1440 900"
