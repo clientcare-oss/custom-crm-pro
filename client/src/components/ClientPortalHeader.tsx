@@ -9,7 +9,9 @@ import {
   ChevronDown, 
   Check, 
   Plus,
-  UploadCloud 
+  UploadCloud,
+  Camera,
+  HardDrive
 } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -36,6 +38,8 @@ interface ClientPortalHeaderProps {
   onOpenIepLinkDialog: () => void;
   onOpenScheduler: () => void;
   onUploadDocs?: () => void;
+  onScanWithCamera?: () => void;
+  onUploadFromDevice?: () => void;
   onLogout: () => void;
 }
 
@@ -53,10 +57,14 @@ export function ClientPortalHeader({
   onOpenIepLinkDialog,
   onOpenScheduler,
   onUploadDocs,
+  onScanWithCamera,
+  onUploadFromDevice,
   onLogout,
 }: ClientPortalHeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
+  const uploadMenuRef = useRef<HTMLDivElement>(null);
 
   // Default demo student profiles if none passed
   const availableStudents: StudentOption[] = students && students.length > 0 ? students : [
@@ -77,6 +85,9 @@ export function ClientPortalHeader({
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (uploadMenuRef.current && !uploadMenuRef.current.contains(event.target as Node)) {
+        setUploadMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -294,19 +305,103 @@ export function ClientPortalHeader({
             }`} />
           </button>
 
-          {/* Upload Docs Button */}
-          <button
-            onClick={onUploadDocs}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer border ${
-              isLight 
-                ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300 hover:border-slate-400 shadow-sm" 
-                : "bg-[#091D3E] hover:bg-[#0D2852] text-amber-300 border-amber-400/50 hover:border-amber-400 shadow-[0_0_12px_rgba(245,181,68,0.18)]"
-            }`}
-            title="Upload Document or IEP Record to Secure Vault"
-          >
-            <UploadCloud className="h-4 w-4 text-amber-400 shrink-0" />
-            <span>Upload Docs</span>
-          </button>
+          {/* Upload Docs Button with 2 Choices Popover */}
+          <div className="relative" ref={uploadMenuRef}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setUploadMenuOpen((prev) => !prev);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer border ${
+                isLight 
+                  ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300 hover:border-slate-400 shadow-sm" 
+                  : "bg-[#091D3E] hover:bg-[#0D2852] text-amber-300 border-amber-400/50 hover:border-amber-400 shadow-[0_0_12px_rgba(245,181,68,0.18)]"
+              }`}
+              title="Add Documents to Secure Vault"
+            >
+              <UploadCloud className="h-4 w-4 text-amber-400 shrink-0" />
+              <span>Upload Docs</span>
+              <ChevronDown className={`h-3 w-3 text-amber-400/80 transition-transform duration-200 ${uploadMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {/* Popup Menu: 2 Simple Choices */}
+            {uploadMenuOpen && (
+              <div className={`absolute right-0 top-full mt-2 z-[999] w-72 rounded-2xl border shadow-2xl p-2 space-y-1 backdrop-blur-xl animate-in fade-in-50 zoom-in-95 ${
+                isLight ? "bg-white border-slate-200" : "bg-[#07152B] border-[#18365D]"
+              }`}>
+                <p className={`text-[10px] font-extrabold tracking-widest uppercase px-3 py-1.5 ${
+                  isLight ? "text-slate-400" : "text-blue-300/60"
+                }`}>
+                  ADD DOCUMENTS
+                </p>
+
+                {/* Choice 1: Scan with Camera */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadMenuOpen(false);
+                    onScanWithCamera?.();
+                  }}
+                  className={`w-full rounded-xl p-2.5 flex items-center gap-3 text-left transition-all border border-transparent cursor-pointer group ${
+                    isLight 
+                      ? "hover:bg-slate-100 hover:border-amber-500/30" 
+                      : "hover:bg-white/[0.06] hover:border-amber-400/40"
+                  }`}
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                    <Camera className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-bold transition-colors ${
+                      isLight ? "text-slate-800 group-hover:text-amber-600" : "text-white group-hover:text-amber-300"
+                    }`}>
+                      Scan with Camera
+                    </p>
+                    <p className={`text-[10px] leading-tight pt-0.5 ${
+                      isLight ? "text-slate-500" : "text-blue-200/60"
+                    }`}>
+                      Snap live photos of paper IEP pages
+                    </p>
+                  </div>
+                </button>
+
+                {/* Choice 2: Upload from Device */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadMenuOpen(false);
+                    if (onUploadFromDevice) {
+                      onUploadFromDevice();
+                    } else if (onUploadDocs) {
+                      onUploadDocs();
+                    }
+                  }}
+                  className={`w-full rounded-xl p-2.5 flex items-center gap-3 text-left transition-all border border-transparent cursor-pointer group ${
+                    isLight 
+                      ? "hover:bg-slate-100 hover:border-blue-500/30" 
+                      : "hover:bg-white/[0.06] hover:border-blue-400/40"
+                  }`}
+                >
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-400/30 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                    <HardDrive className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-bold transition-colors ${
+                      isLight ? "text-slate-800 group-hover:text-blue-600" : "text-white group-hover:text-blue-300"
+                    }`}>
+                      Upload from Device
+                    </p>
+                    <p className={`text-[10px] leading-tight pt-0.5 ${
+                      isLight ? "text-slate-500" : "text-blue-200/60"
+                    }`}>
+                      Choose PDF, Word, or image files
+                    </p>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Schedule Meeting Button */}
           <button

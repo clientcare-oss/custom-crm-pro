@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard,
   GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight,
-  CircleParking, UploadCloud
+  CircleParking, UploadCloud, Camera, HardDrive
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -25,6 +25,7 @@ import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 import PortalActionCenterTab from "@/components/portal/PortalActionCenterTab";
 import PortalDocumentVaultTab from "@/components/portal/PortalDocumentVaultTab";
 import PortalParkingLotTab from "@/components/portal/PortalParkingLotTab";
+import { CameraScannerModal } from "@/components/portal/CameraScannerModal";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -617,6 +618,10 @@ export default function ClientPortal() {
   const [uploadDocNotes, setUploadDocNotes] = useState("");
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const headerUploadInputRef = useRef<HTMLInputElement>(null);
+
+  // Scan with Camera & Mobile Upload Choice Modals
+  const [showCameraScannerModal, setShowCameraScannerModal] = useState(false);
+  const [showMobileUploadChoice, setShowMobileUploadChoice] = useState(false);
 
   // URL Stage & Tab Resolution
   const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
@@ -2144,8 +2149,9 @@ export default function ClientPortal() {
           </button>
           <span className="text-xs text-white/50 capitalize flex-1 text-center">{NAV_ITEMS.find(n => n.id === activeTab)?.label}</span>
           <button
-            onClick={() => setShowUploadDocsModal(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-400/30 px-2 py-0.5 rounded-md hover:bg-amber-500/20 transition-all"
+            type="button"
+            onClick={() => setShowMobileUploadChoice(true)}
+            className="flex items-center gap-1 text-[11px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-400/30 px-2 py-0.5 rounded-md hover:bg-amber-500/20 transition-all cursor-pointer"
             title="Upload Document"
           >
             <UploadCloud className="h-3 w-3" />
@@ -2165,6 +2171,8 @@ export default function ClientPortal() {
           onToggleTheme={toggleTheme}
           onOpenIepLinkDialog={() => setShowIepLinkDialog(true)}
           onOpenScheduler={() => setShowMeetingScheduler(true)}
+          onScanWithCamera={() => setShowCameraScannerModal(true)}
+          onUploadFromDevice={() => setShowUploadDocsModal(true)}
           onUploadDocs={() => setShowUploadDocsModal(true)}
           onLogout={handleLogout}
         />
@@ -2563,6 +2571,90 @@ export default function ClientPortal() {
                 )}
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Camera Scanner Modal (Live Video, Multi-Page, Vault Encrypt) ── */}
+      <CameraScannerModal
+        isOpen={showCameraScannerModal}
+        onClose={() => setShowCameraScannerModal(false)}
+        studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : undefined}
+        studentId={effectiveStudent?.id || 101}
+      />
+
+      {/* ── Mobile Upload Choice Dialog (Scan with Camera vs Upload from Device) ── */}
+      <Dialog open={showMobileUploadChoice} onOpenChange={setShowMobileUploadChoice}>
+        <DialogContent className="max-w-sm bg-[#07152B] border border-[#18365D] text-white rounded-2xl p-5 shadow-2xl backdrop-blur-xl">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+                <UploadCloud className="w-5 h-5 text-amber-400" />
+                <span>Add Documents</span>
+              </DialogTitle>
+              <PageIdBadge id="PG-023-UPL" name="Upload Choice" />
+            </div>
+            <DialogDescription className="text-xs text-blue-200/70 mt-1">
+              Choose how you'd like to add documents for {effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "your student"}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2.5 my-3">
+            {/* Choice 1: Scan with Camera */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowMobileUploadChoice(false);
+                setShowCameraScannerModal(true);
+              }}
+              className="w-full rounded-xl p-3 flex items-center gap-3 text-left transition-all border border-blue-900/50 bg-[#030C22] hover:bg-white/[0.06] hover:border-amber-400/50 cursor-pointer group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                <Camera className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                  Scan with Camera
+                </p>
+                <p className="text-[10px] text-blue-200/60 leading-tight pt-0.5">
+                  Snap live photos of paper IEP pages
+                </p>
+              </div>
+            </button>
+
+            {/* Choice 2: Upload from Device */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowMobileUploadChoice(false);
+                setShowUploadDocsModal(true);
+              }}
+              className="w-full rounded-xl p-3 flex items-center gap-3 text-left transition-all border border-blue-900/50 bg-[#030C22] hover:bg-white/[0.06] hover:border-blue-400/50 cursor-pointer group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-400/30 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                <HardDrive className="w-5 h-5 text-blue-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">
+                  Upload from Device
+                </p>
+                <p className="text-[10px] text-blue-200/60 leading-tight pt-0.5">
+                  Choose PDF, Word, or image files
+                </p>
+              </div>
+            </button>
+          </div>
+
+          <DialogFooter className="pt-2 border-t border-white/10">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMobileUploadChoice(false)}
+              className="w-full border-white/15 text-white/70 hover:bg-white/10 text-xs rounded-xl"
+            >
+              Cancel
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
