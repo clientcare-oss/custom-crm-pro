@@ -61,6 +61,7 @@ import FirstMatePopout from "./pages/FirstMatePopout";
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
 import PageIdBadge from "./components/PageIdBadge";
+import { WaypointScanGlobalModal } from "./components/portal/WaypointScanGlobalModal";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -218,6 +219,7 @@ function App() {
               <Toaster />
               <Router />
               <PageIdBadge />
+              <WaypointScanGlobalModal />
             </TooltipProvider>
           </FirstMateProvider>
         </TerminologyProvider>
