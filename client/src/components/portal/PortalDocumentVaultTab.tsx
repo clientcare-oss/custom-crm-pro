@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { 
   Folder, 
   FolderPlus, 
@@ -28,7 +28,10 @@ import {
   MoreVertical,
   X,
   UploadCloud,
-  FileCheck
+  FileCheck,
+  Camera,
+  HardDrive,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
+import { CameraScannerModal } from "@/components/portal/CameraScannerModal";
 
 interface PortalDocumentVaultTabProps {
   effectiveStudent?: any;
@@ -229,6 +233,26 @@ export default function PortalDocumentVaultTab({
   const [showPinModal, setShowPinModal] = useState(false);
   const [selectedDocForPreview, setSelectedDocForPreview] = useState<VaultDocument | null>(null);
   const [activeWorkspaceModal, setActiveWorkspaceModal] = useState<VaultWorkspace | null>(null);
+
+  // 2-Choice Upload Menu & Camera Scanner States
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
+  const uploadMenuRef = useRef<HTMLDivElement>(null);
+  const [showCameraScannerModal, setShowCameraScannerModal] = useState(false);
+
+  // Close upload menu on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (uploadMenuRef.current && !uploadMenuRef.current.contains(event.target as Node)) {
+        setUploadMenuOpen(false);
+      }
+    }
+    if (uploadMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [uploadMenuOpen]);
 
   // Form states
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
@@ -422,21 +446,84 @@ export default function PortalDocumentVaultTab({
         </div>
 
         <div className="flex items-center gap-2.5 self-start md:self-auto">
+          {/* Upload Docs Button with 2 Options Popover (Positioned to the LEFT of How It Works) */}
+          <div className="relative" ref={uploadMenuRef}>
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setUploadMenuOpen((prev) => !prev);
+              }}
+              className="gap-2 text-xs font-bold bg-amber-400 hover:bg-amber-500 text-slate-950 shadow-md shadow-amber-400/20 h-9 px-4 rounded-xl transition-all cursor-pointer"
+              title="Add Documents to Secure Vault"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Upload Docs</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${uploadMenuOpen ? "rotate-180" : ""}`} />
+            </Button>
+
+            {/* Popup Menu: 2 Simple Choices */}
+            {uploadMenuOpen && (
+              <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-2 z-[999] w-72 rounded-2xl border border-[#18365D] bg-[#07152B] shadow-2xl p-2 space-y-1 backdrop-blur-xl animate-in fade-in-50 zoom-in-95">
+                <p className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1.5 text-blue-300/60">
+                  ADD DOCUMENTS
+                </p>
+
+                {/* Choice 1: Scan with Camera */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadMenuOpen(false);
+                    setShowCameraScannerModal(true);
+                  }}
+                  className="w-full rounded-xl p-2.5 flex items-center gap-3 text-left transition-all border border-transparent hover:bg-white/[0.06] hover:border-amber-400/40 cursor-pointer group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                    <Camera className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                      Scan with Camera
+                    </p>
+                    <p className="text-[10px] text-blue-200/60 leading-tight pt-0.5">
+                      Snap live photos of paper IEP pages
+                    </p>
+                  </div>
+                </button>
+
+                {/* Choice 2: Upload from Device */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadMenuOpen(false);
+                    setShowUploadModal(true);
+                  }}
+                  className="w-full rounded-xl p-2.5 flex items-center gap-3 text-left transition-all border border-transparent hover:bg-white/[0.06] hover:border-blue-400/40 cursor-pointer group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-400/30 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                    <HardDrive className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">
+                      Upload from Device
+                    </p>
+                    <p className="text-[10px] text-blue-200/60 leading-tight pt-0.5">
+                      Choose PDF, Word, or image files
+                    </p>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* How It Works Button (Placed on the RIGHT of Upload Docs) */}
           <Button
             variant="outline"
             onClick={() => setShowHowItWorks(true)}
-            className="gap-2 text-xs font-semibold border-white/20 text-white hover:bg-white/10 h-9 px-3.5 rounded-xl"
+            className="gap-2 text-xs font-semibold border-white/20 text-white hover:bg-white/10 h-9 px-3.5 rounded-xl cursor-pointer"
           >
             <Info className="w-3.5 h-3.5 text-amber-400" />
             How It Works
-          </Button>
-
-          <Button
-            onClick={() => setShowUploadModal(true)}
-            className="gap-2 text-xs font-bold bg-amber-400 hover:bg-amber-500 text-[#161B22] shadow-md shadow-amber-400/20 h-9 px-4 rounded-xl transition-all"
-          >
-            <UploadCloud className="w-4 h-4" />
-            Upload File
           </Button>
         </div>
       </div>
@@ -1215,6 +1302,14 @@ export default function PortalDocumentVaultTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal 7: Camera Scanner Modal */}
+      <CameraScannerModal
+        isOpen={showCameraScannerModal}
+        onClose={() => setShowCameraScannerModal(false)}
+        studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : displayName}
+        studentId={effectiveStudent?.id || 101}
+      />
 
     </div>
   );
