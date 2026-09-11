@@ -360,27 +360,80 @@ export default function CrewQuarters() {
           <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
         </div>
 
-        {/* Card 5: Waypoint Motto Tile */}
-        <div className="col-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl border border-amber-400/40 bg-gradient-to-br from-[#0B254A] to-[#041122] p-4 flex flex-col justify-center items-center text-center overflow-hidden shadow-lg">
-          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(#F5B544 1px, transparent 1px)", backgroundSize: "12px 12px" }} />
-          <WaypointWaveIcon className="w-12 h-3.5 text-amber-400/90 mb-1" />
-          <div className="text-xs font-serif font-black tracking-widest text-amber-400 uppercase">
-            Advocacy Changes Lives
+        {/* Card 5: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
+        <div className="col-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#020b17] via-[#041326] to-[#010812] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
+          {/* Multi-Layered, Ultra-Fine Bathymetric Topographic Ocean Depth Contours */}
+          <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+            <svg
+              viewBox="0 0 300 120"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="absolute inset-0 w-full h-full object-cover"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="topoCyan" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#0284c7" stopOpacity="0.75" />
+                  <stop offset="35%" stopColor="#38bdf8" stopOpacity="0.85" />
+                  <stop offset="70%" stopColor="#0ea5e9" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#0369a1" stopOpacity="0.15" />
+                </linearGradient>
+                <linearGradient id="topoDeep" x1="0%" y1="100%" x2="100%" y2="30%">
+                  <stop offset="0%" stopColor="#0369a1" stopOpacity="0.5" />
+                  <stop offset="50%" stopColor="#0284c7" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#075985" stopOpacity="0.1" />
+                </linearGradient>
+                <filter id="oceanGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              {/* Ambient radial deep oceanic glow */}
+              <circle cx="35" cy="95" r="70" fill="#0284c7" fillOpacity="0.18" />
+              <circle cx="110" cy="60" r="45" fill="#38bdf8" fillOpacity="0.08" />
+
+              {/* Dense, delicate bathymetric contour ridges sweeping across the entire chart */}
+              <path d="M-10 125 C 20 120, 35 105, 55 98 C 80 90, 105 106, 140 100 C 180 94, 220 106, 310 98" stroke="url(#topoDeep)" strokeWidth="0.65" />
+              <path d="M-10 118 C 22 112, 38 98, 60 91 C 86 83, 112 99, 148 93 C 190 86, 230 100, 310 91" stroke="url(#topoDeep)" strokeWidth="0.65" />
+              <path d="M-10 110 C 24 104, 42 90, 65 83 C 92 75, 120 92, 158 85 C 200 78, 240 93, 310 84" stroke="url(#topoCyan)" strokeWidth="0.75" />
+              <path d="M-10 102 C 26 95, 46 82, 70 75 C 99 67, 128 84, 168 77 C 210 70, 250 86, 310 77" stroke="url(#topoCyan)" strokeWidth="0.85" filter="url(#oceanGlow)" />
+              <path d="M-10 94 C 28 86, 50 74, 76 66 C 106 58, 136 76, 178 69 C 220 62, 260 79, 310 70" stroke="url(#topoCyan)" strokeWidth="0.95" />
+              <path d="M-10 86 C 30 77, 54 65, 82 57 C 114 49, 145 68, 188 61 C 230 54, 270 72, 310 63" stroke="#38bdf8" strokeWidth="1.1" strokeOpacity="0.85" filter="url(#oceanGlow)" />
+              <path d="M-10 77 C 32 68, 58 56, 88 48 C 121 40, 154 60, 198 53 C 240 46, 280 65, 310 56" stroke="url(#topoCyan)" strokeWidth="0.85" />
+              <path d="M-10 68 C 34 58, 62 47, 94 39 C 128 31, 162 52, 208 45 C 250 38, 290 57, 310 49" stroke="url(#topoCyan)" strokeWidth="0.75" />
+              <path d="M-10 59 C 36 49, 66 38, 100 30 C 136 22, 171 43, 218 36 C 260 29, 295 48, 310 42" stroke="url(#topoDeep)" strokeWidth="0.65" />
+              <path d="M-10 50 C 38 40, 70 29, 106 21 C 144 13, 180 34, 228 27 C 270 20, 300 38, 310 34" stroke="url(#topoDeep)" strokeWidth="0.65" />
+              <path d="M-10 40 C 40 30, 74 19, 112 12 C 152 4, 189 25, 238 18 C 278 12, 302 28, 310 26" stroke="url(#topoDeep)" strokeWidth="0.55" />
+              <path d="M-10 30 C 42 20, 78 10, 118 4 C 160 -4, 198 16, 248 9 C 285 3, 305 18, 310 17" stroke="url(#topoDeep)" strokeWidth="0.5" />
+
+              {/* Secondary delicate intersecting elevation contours */}
+              <path d="M 120 120 C 145 100, 170 85, 205 78 C 245 70, 275 80, 310 75" stroke="#0ea5e9" strokeWidth="0.5" strokeOpacity="0.35" />
+              <path d="M 140 120 C 165 105, 190 92, 225 86 C 260 80, 285 88, 310 83" stroke="#0284c7" strokeWidth="0.45" strokeOpacity="0.25" />
+              <path d="M 80 0 C 110 25, 150 45, 195 40 C 240 35, 280 20, 310 12" stroke="#0284c7" strokeWidth="0.5" strokeOpacity="0.2" />
+            </svg>
           </div>
-          <div className="w-8 h-0.5 bg-amber-400/60 rounded-full mt-1.5" />
+
+          {/* Right-Aligned Stacked Gold Typography + Accent Bar */}
+          <div className="relative z-10 ml-auto flex flex-col items-end text-right select-none pl-4">
+            <div className="text-[13px] sm:text-[14px] font-sans font-extrabold tracking-[0.2em] text-[#F3CE85] leading-[1.35] drop-shadow-[0_2px_8px_rgba(243,206,133,0.35)]">
+              <div>ADVOCACY</div>
+              <div>CHANGES</div>
+              <div>LIVES</div>
+            </div>
+            <div className="w-9 h-[2.5px] bg-gradient-to-r from-amber-400 to-[#F3CE85] rounded-full mt-2 shadow-[0_0_10px_rgba(243,206,133,0.8)]" />
+          </div>
         </div>
       </div>
 
-      {/* ── 3-Column Core Operational Deck ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── ROW 2: Today's Schedule · My Tasks · Quick Actions ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
-        {/* ══ COLUMN 1: Today's Schedule & Time Off ══ */}
-        <div className="space-y-6">
-
-          {/* Today's Schedule */}
-          <Card className="rounded-3xl border border-blue-900/60 bg-[#061830] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
+        {/* Card 2A: Today's Schedule */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
                 <Calendar className="w-4 h-4 text-sky-400" />
                 <span>Today's Schedule</span>
               </div>
@@ -394,19 +447,19 @@ export default function CrewQuarters() {
               </Button>
             </div>
 
-            <div className="space-y-3 pt-1">
+            <div className="space-y-2.5 pt-3">
               {[
-                { time: "9:00 AM", title: "Team Morning Check-In", subtitle: "Virtual Staff Standup", color: "bg-sky-400" },
-                { time: "10:30 AM", title: "IEP Annual Review — Jackson R.", subtitle: "Riverside Middle School", color: "bg-amber-400" },
-                { time: "1:00 PM", title: "Parent Callback (M. Carter)", subtitle: "Discuss Speech Assessment Results", color: "bg-emerald-400" },
-                { time: "3:00 PM", title: "Records Review & Synthesis", subtitle: "Johnson Case Psychoeducational Eval", color: "bg-indigo-400" },
+                { time: "9:00 AM", title: "Team Check-In", subtitle: "Virtual Meeting", dot: "bg-sky-400" },
+                { time: "10:30 AM", title: "IEP Meeting — Jackson R.", subtitle: "Riverside School", dot: "bg-amber-400" },
+                { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
+                { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case", dot: "bg-indigo-400" },
               ].map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#0A2244]/60 transition-colors border border-transparent hover:border-blue-800/40">
+                <div key={idx} className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#0A2244]/60 transition-colors border border-transparent hover:border-blue-800/40">
                   <div className="w-16 text-right shrink-0 pt-0.5">
                     <span className="text-xs font-mono font-bold text-blue-200">{item.time}</span>
                   </div>
                   <div className="flex items-start gap-2.5 min-w-0">
-                    <div className={`w-2 h-2 rounded-full ${item.color} mt-1.5 shrink-0 shadow-sm`} />
+                    <div className={`w-2 h-2 rounded-full ${item.dot} mt-1.5 shrink-0 shadow-sm`} />
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-white truncate">{item.title}</div>
                       <div className="text-[11px] text-blue-300/70 truncate">{item.subtitle}</div>
@@ -415,81 +468,19 @@ export default function CrewQuarters() {
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-          {/* Time Off Center */}
-          <Card className="rounded-3xl border border-blue-900/60 bg-[#061830] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
-                <Plane className="w-4 h-4 text-amber-400" />
-                <span>Time Off</span>
-              </div>
-              <span className="text-[11px] text-blue-300/80 font-mono">2026 Balance: 14 Days</span>
-            </div>
+          <div className="pt-2 border-t border-blue-900/30 flex items-center justify-between text-[11px] text-blue-300/70">
+            <span>4 events scheduled</span>
+            <span className="text-amber-400 font-mono">Next: 10:30 AM</span>
+          </div>
+        </Card>
 
-            {/* Request Time Off Action Button */}
-            <Button
-              onClick={() => setTimeOffModalOpen(true)}
-              className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl py-2.5 shadow-[0_0_20px_rgba(245,181,68,0.25)] flex items-center justify-center gap-2 cursor-pointer transition-all"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Request Time Off</span>
-            </Button>
-
-            {/* Upcoming Time Off */}
-            <div className="space-y-2 pt-2">
-              <div className="text-[11px] uppercase tracking-wider text-blue-300 font-semibold">
-                Upcoming Approved Leave
-              </div>
-              <div className="space-y-2">
-                {timeOffRequests
-                  .filter((r) => r.status === "Approved")
-                  .map((r) => (
-                    <div key={r.id} className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
-                      <div className="space-y-0.5">
-                        <div className="font-semibold text-white">{r.startDate} — {r.endDate}</div>
-                        <div className="text-[10px] text-blue-300/80">{r.type} · {r.notes || "Approved Leave"}</div>
-                      </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
-                        Approved
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            {/* Pending Requests */}
-            <div className="space-y-2 pt-2 border-t border-blue-900/40">
-              <div className="text-[11px] uppercase tracking-wider text-blue-300 font-semibold">
-                Pending Requests
-              </div>
-              <div className="space-y-2">
-                {timeOffRequests
-                  .filter((r) => r.status === "Pending")
-                  .map((r) => (
-                    <div key={r.id} className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
-                      <div className="space-y-0.5">
-                        <div className="font-semibold text-white">{r.startDate} — {r.endDate}</div>
-                        <div className="text-[10px] text-blue-300/80">{r.type} · {r.notes || "Under Review"}</div>
-                      </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
-                        Pending
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </Card>
-
-        </div>
-
-        {/* ══ COLUMN 2: My Tasks & My Assigned Cases ══ */}
-        <div className="space-y-6">
-
-          {/* My Tasks */}
-          <Card className="rounded-3xl border border-blue-900/60 bg-[#061830] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
+        {/* Card 2B: My Tasks */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
                 <CheckSquare className="w-4 h-4 text-emerald-400" />
                 <span>My Tasks</span>
               </div>
@@ -499,19 +490,19 @@ export default function CrewQuarters() {
                 onClick={() => setLocation("/tasks")}
                 className="text-xs text-blue-300 hover:text-amber-300 hover:bg-blue-900/40 p-0 h-auto font-medium"
               >
-                View All Tasks →
+                View All →
               </Button>
             </div>
 
-            <div className="space-y-2.5 pt-1">
+            <div className="space-y-2 pt-3">
               {[
-                { title: "Complete draft of Parent Concerns statement", tag: "High", tagColor: "bg-rose-500/20 text-rose-300 border-rose-500/40" },
-                { title: "Follow up with District Speech Therapist on log", tag: "Today", tagColor: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
-                { title: "Send meeting preparation agenda to parent", tag: "Today", tagColor: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
-                { title: "Review comprehensive neuropsychological eval", tag: "Tomorrow", tagColor: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
-                { title: "Prepare for annual IEP review (Carter)", tag: "Tomorrow", tagColor: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
+                { title: "Complete draft of Parent Concerns", tag: "High", tagColor: "bg-rose-500/20 text-rose-300 border-rose-500/40" },
+                { title: "Follow up with SLP", tag: "Today", tagColor: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
+                { title: "Send meeting summary to parent", tag: "Today", tagColor: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
+                { title: "Review evaluation documents", tag: "Tomorrow", tagColor: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
+                { title: "Prepare for IEP meeting", tag: "Tomorrow", tagColor: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
               ].map((task, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs hover:border-blue-700 transition-colors">
+                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs hover:border-blue-700 transition-colors">
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     <input type="checkbox" className="rounded border-blue-700 bg-blue-950 text-amber-400 focus:ring-amber-400 h-3.5 w-3.5" />
                     <span className="text-white/90 truncate font-medium">{task.title}</span>
@@ -522,26 +513,175 @@ export default function CrewQuarters() {
                 </div>
               ))}
             </div>
+          </div>
 
-            <div className="pt-2">
+          <div className="pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTaskModalOpen(true)}
+              className="w-full border-blue-700/60 hover:bg-blue-900/40 text-blue-200 text-xs rounded-xl py-2 gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Task</span>
+            </Button>
+          </div>
+        </Card>
+
+        {/* Card 2C: Quick Actions Grid */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
+                <Sparkles className="w-4 h-4 text-sky-400" />
+                <span>Quick Actions</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-3">
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => setTaskModalOpen(true)}
-                className="w-full border-blue-700/60 hover:bg-blue-900/40 text-blue-200 text-xs rounded-xl py-2 gap-1.5 cursor-pointer"
+                onClick={() => setTimeOffModalOpen(true)}
+                className="h-[84px] flex-col py-3 px-2 border-blue-800/60 hover:border-amber-400/60 hover:bg-blue-900/40 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Task to Queue</span>
+                <Calendar className="w-5 h-5 text-sky-400" />
+                <span className="text-xs font-bold text-white leading-tight">Request<br />Time Off</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/calendar")}
+                className="h-[84px] flex-col py-3 px-2 border-blue-800/60 hover:border-sky-400/60 hover:bg-blue-900/40 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+              >
+                <CalendarClock className="w-5 h-5 text-sky-400" />
+                <span className="text-xs font-bold text-white leading-tight">View<br />My Calendar</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setTaskModalOpen(true)}
+                className="h-[84px] flex-col py-3 px-2 border-blue-800/60 hover:border-emerald-400/60 hover:bg-blue-900/40 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+              >
+                <CheckSquare className="w-5 h-5 text-emerald-400" />
+                <span className="text-xs font-bold text-white leading-tight">Add Task</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/projects")}
+                className="h-[84px] flex-col py-3 px-2 border-blue-800/60 hover:border-indigo-400/60 hover:bg-blue-900/40 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+              >
+                <Users className="w-5 h-5 text-indigo-400" />
+                <span className="text-xs font-bold text-white leading-tight">My Cases</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => toast.info("Team Messaging Console is active")}
+                className="h-[84px] flex-col py-3 px-2 border-blue-800/60 hover:border-blue-400/60 hover:bg-blue-900/40 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+              >
+                <MessageSquare className="w-5 h-5 text-blue-400" />
+                <span className="text-xs font-bold text-white leading-tight">Team<br />Messages</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/knowledge-base")}
+                className="h-[84px] flex-col py-3 px-2 border-blue-800/60 hover:border-amber-400/60 hover:bg-blue-900/40 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+              >
+                <BookOpen className="w-5 h-5 text-amber-400" />
+                <span className="text-xs font-bold text-white leading-tight">Training &amp;<br />Resources</span>
               </Button>
             </div>
-          </Card>
+          </div>
 
-          {/* My Assigned Cases Snapshot */}
-          <Card className="rounded-3xl border border-blue-900/60 bg-[#061830] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
+          <div className="pt-2 text-center text-[11px] text-blue-300/60">
+            Quick employee utilities
+          </div>
+        </Card>
+
+      </div>
+
+      {/* ── ROW 3: Time Off · My Cases · Team Messages ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+
+        {/* Card 3A: Time Off Center */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
+                <Plane className="w-4 h-4 text-sky-400" />
+                <span>Time Off</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTimeOffModalOpen(true)}
+                className="text-xs text-blue-300 hover:text-amber-300 hover:bg-blue-900/40 p-0 h-auto font-medium"
+              >
+                View All →
+              </Button>
+            </div>
+
+            {/* Request Time Off Action Button */}
+            <div className="pt-3 pb-2">
+              <Button
+                onClick={() => setTimeOffModalOpen(true)}
+                className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl py-2.5 shadow-[0_0_15px_rgba(245,181,68,0.2)] flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>Request Time Off</span>
+              </Button>
+            </div>
+
+            {/* Upcoming Time Off */}
+            <div className="space-y-2 pt-1">
+              <div className="text-[11px] font-semibold text-blue-300/80 uppercase tracking-wider">
+                Upcoming Time Off
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
+                  <span className="font-semibold text-white">Oct 10, 2025</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
+                    Approved
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
+                  <span className="font-semibold text-white">Nov 26 – Nov 28, 2025</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
+                    Approved
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Pending Requests */}
+            <div className="space-y-2 pt-3">
+              <div className="text-[11px] font-semibold text-blue-300/80 uppercase tracking-wider">
+                Pending Requests
+              </div>
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
+                <span className="font-semibold text-white">Dec 22, 2025</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
+                  Pending
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-blue-900/30 flex items-center justify-between text-[11px] text-blue-300/70">
+            <span>Annual Allowance: 15 Days</span>
+            <span className="text-emerald-400 font-mono">11 Days Remaining</span>
+          </div>
+        </Card>
+
+        {/* Card 3B: My Cases */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
                 <Users className="w-4 h-4 text-indigo-400" />
-                <span>My Assigned Cases</span>
+                <span>My Cases</span>
               </div>
               <Button
                 variant="ghost"
@@ -549,29 +689,25 @@ export default function CrewQuarters() {
                 onClick={() => setLocation("/projects")}
                 className="text-xs text-blue-300 hover:text-amber-300 hover:bg-blue-900/40 p-0 h-auto font-medium"
               >
-                View All Cases →
+                View All →
               </Button>
             </div>
 
-            <p className="text-[11px] text-blue-300/70 leading-snug">
-              Snapshot of students under your direct stewardship. Full student directory remains fully accessible.
-            </p>
-
-            <div className="space-y-2 pt-1">
+            <div className="space-y-2 pt-3">
               {[
-                { name: "Alex P.", initials: "AP", milestone: "IEP Annual Meeting 9/15", status: "Active" },
-                { name: "Bella R.", initials: "BR", milestone: "Records Review & IEP Audit", status: "Active" },
-                { name: "Chris T.", initials: "CT", milestone: "Parent Input Draft in Progress", status: "Active" },
-                { name: "Jordan M.", initials: "JM", milestone: "Post-Evaluation Follow-Up", status: "Active" },
-                { name: "Taylor S.", initials: "TS", milestone: "PWN Clarification Request", status: "Active" },
+                { name: "Alex P.", initials: "AP", milestone: "IEP Meeting 9/15", status: "Active" },
+                { name: "Bella R.", initials: "BR", milestone: "Records Review", status: "Active" },
+                { name: "Chris T.", initials: "CT", milestone: "Draft in Progress", status: "Active" },
+                { name: "Jordan M.", initials: "JM", milestone: "Parent Follow-Up", status: "Active" },
+                { name: "Taylor S.", initials: "TS", milestone: "Evaluation Review", status: "Active" },
               ].map((c, idx) => (
                 <div 
                   key={idx} 
                   onClick={() => setLocation("/projects")}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs hover:border-indigo-400/50 hover:bg-blue-900/30 transition-all cursor-pointer"
+                  className="flex items-center justify-between p-2 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs hover:border-indigo-400/50 hover:bg-blue-900/30 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-indigo-950 border border-indigo-700/60 text-indigo-300 font-bold flex items-center justify-center text-[10px] shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-blue-900/80 border border-blue-700/60 text-blue-200 font-bold flex items-center justify-center text-[10px] shrink-0">
                       {c.initials}
                     </div>
                     <div className="min-w-0">
@@ -585,114 +721,114 @@ export default function CrewQuarters() {
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-        </div>
+          <div className="pt-2 text-center text-[11px] text-blue-300/60">
+            Primary caseload snapshot · All CRM students remain accessible
+          </div>
+        </Card>
 
-        {/* ══ COLUMN 3: Quick Actions, Team Notices & Training ══ */}
-        <div className="space-y-6">
-
-          {/* Quick Actions Grid */}
-          <Card className="rounded-3xl border border-blue-900/60 bg-[#061830] p-6 shadow-xl space-y-4">
-            <div className="text-white font-bold text-base flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Quick Actions</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
+        {/* Card 3C: Team Messages */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
+                <MessageSquare className="w-4 h-4 text-sky-400" />
+                <span>Team Messages</span>
+              </div>
               <Button
-                variant="outline"
-                onClick={() => setTimeOffModalOpen(true)}
-                className="h-auto flex-col py-3 px-2 border-blue-800/60 hover:border-amber-400/60 hover:bg-blue-900/40 text-left items-start rounded-xl gap-1 cursor-pointer"
+                variant="ghost"
+                size="sm"
+                onClick={() => toast.info("Opening team messages...")}
+                className="text-xs text-blue-300 hover:text-amber-300 hover:bg-blue-900/40 p-0 h-auto font-medium"
               >
-                <Plane className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-white">Request Time Off</span>
-                <span className="text-[10px] text-blue-300/70">Submit leave</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/calendar")}
-                className="h-auto flex-col py-3 px-2 border-blue-800/60 hover:border-sky-400/60 hover:bg-blue-900/40 text-left items-start rounded-xl gap-1 cursor-pointer"
-              >
-                <CalendarClock className="w-4 h-4 text-sky-400" />
-                <span className="text-xs font-bold text-white">My Calendar</span>
-                <span className="text-[10px] text-blue-300/70">View schedule</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setTaskModalOpen(true)}
-                className="h-auto flex-col py-3 px-2 border-blue-800/60 hover:border-emerald-400/60 hover:bg-blue-900/40 text-left items-start rounded-xl gap-1 cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-bold text-white">Add Task</span>
-                <span className="text-[10px] text-blue-300/70">New assignment</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/projects")}
-                className="h-auto flex-col py-3 px-2 border-blue-800/60 hover:border-indigo-400/60 hover:bg-blue-900/40 text-left items-start rounded-xl gap-1 cursor-pointer"
-              >
-                <GraduationCap className="w-4 h-4 text-indigo-400" />
-                <span className="text-xs font-bold text-white">My Cases</span>
-                <span className="text-[10px] text-blue-300/70">Open student list</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/knowledge-base")}
-                className="h-auto flex-col py-3 px-2 border-blue-800/60 hover:border-amber-400/60 hover:bg-blue-900/40 text-left items-start rounded-xl gap-1 cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-white">Field Guide</span>
-                <span className="text-[10px] text-blue-300/70">SOP & procedures</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/first-mate")}
-                className="h-auto flex-col py-3 px-2 border-blue-800/60 hover:border-purple-400/60 hover:bg-blue-900/40 text-left items-start rounded-xl gap-1 cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span className="text-xs font-bold text-white">First Mate</span>
-                <span className="text-[10px] text-blue-300/70">Live copilot</span>
+                View All →
               </Button>
             </div>
-          </Card>
 
-          {/* Company Announcements */}
-          <Card className="rounded-3xl border border-blue-900/60 bg-[#061830] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
+            <div className="space-y-2 pt-3">
+              {[
+                { initials: "BH", name: "Byron Honea", message: "Great work on yesterday's meeting!...", time: "9:12 AM", unread: 1, avatarBg: "bg-blue-900/80 border-blue-700/60 text-blue-200" },
+                { initials: "Team", name: "Team", message: "Office will be closed Friday, Sept 20...", time: "8:45 AM", unread: 0, avatarBg: "bg-indigo-900/80 border-indigo-700/60 text-indigo-200" },
+                { initials: "WS", name: "Wyatt Smith", message: "Shared documents: Johnson Case", time: "Yesterday", unread: 0, avatarBg: "bg-sky-900/80 border-sky-700/60 text-sky-200" },
+                { initials: "📣", name: "General", message: "New training module available!", time: "Yesterday", unread: 0, avatarBg: "bg-amber-900/80 border-amber-700/60 text-amber-200" },
+              ].map((msg, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => toast.info(`Message thread with ${msg.name}`)}
+                  className="flex items-center justify-between p-2 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs hover:border-blue-700 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div className={`w-7 h-7 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0 ${msg.avatarBg}`}>
+                      {msg.initials}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-white truncate">{msg.name}</div>
+                      <div className="text-[11px] text-blue-300/70 truncate">{msg.message}</div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <span className="text-[10px] font-mono text-blue-300/60">{msg.time}</span>
+                    {msg.unread > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                        {msg.unread}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-2 text-center text-[11px] text-blue-300/60">
+            Internal staff communication channel
+          </div>
+        </Card>
+
+      </div>
+
+      {/* ── ROW 4: Company Announcements · Training & Resources · Waypoint Inspiration Card ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+
+        {/* Card 4A: Company Announcements */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
                 <Megaphone className="w-4 h-4 text-amber-400" />
                 <span>Company Announcements</span>
               </div>
-              <span className="text-[11px] text-blue-300/70">Staff Bulletin</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toast.info("Viewing all announcements")}
+                className="text-xs text-blue-300 hover:text-amber-300 hover:bg-blue-900/40 p-0 h-auto font-medium"
+              >
+                View All →
+              </Button>
             </div>
 
-            <div className="space-y-3 pt-1">
+            <div className="space-y-2.5 pt-3">
               {[
                 {
-                  title: "Office Closed — Friday, Sept 20",
-                  body: "In observance of our bi-annual staff professional advocacy training day.",
+                  title: "Office Closed – Sept 20",
+                  desc: "In observance of staff training day.",
                   date: "Sept 9",
                   icon: Calendar,
-                  iconColor: "text-amber-400 bg-amber-400/10",
-                },
-                {
-                  title: "New Training Module Released",
-                  body: "IEP Meeting Best Practices & Prior Written Notice (PWN) Strategies is now live.",
-                  date: "Sept 8",
-                  icon: BookOpen,
                   iconColor: "text-sky-400 bg-sky-400/10",
                 },
                 {
+                  title: "New Training Module",
+                  desc: "IEP Meeting Best Practices is now available.",
+                  date: "Sept 8",
+                  icon: BookOpen,
+                  iconColor: "text-purple-400 bg-purple-400/10",
+                },
+                {
                   title: "Welcome to the Team!",
-                  body: "Please join us in welcoming our newest advocate to the Waypoint family.",
+                  desc: "Please join us in welcoming our newest advocate!",
                   date: "Sept 5",
-                  icon: Award,
+                  icon: Megaphone,
                   iconColor: "text-emerald-400 bg-emerald-400/10",
                 },
               ].map((ann, idx) => (
@@ -700,22 +836,28 @@ export default function CrewQuarters() {
                   <div className={`p-2 rounded-xl shrink-0 ${ann.iconColor}`}>
                     <ann.icon className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0 space-y-0.5">
+                  <div className="min-w-0 space-y-0.5 flex-1">
                     <div className="flex items-center justify-between">
                       <div className="font-bold text-white truncate pr-2">{ann.title}</div>
                       <span className="text-[10px] font-mono text-blue-300/60 shrink-0">{ann.date}</span>
                     </div>
-                    <div className="text-[11px] text-blue-200/75 leading-relaxed">{ann.body}</div>
+                    <div className="text-[11px] text-blue-200/75 leading-relaxed">{ann.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-          {/* Training & Internal Resources */}
-          <Card className="rounded-3xl border border-blue-900/60 bg-[#061830] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
+          <div className="pt-2 text-center text-[11px] text-blue-300/60">
+            Waypoint Practice News &amp; Updates
+          </div>
+        </Card>
+
+        {/* Card 4B: Training & Resources */}
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
                 <BookOpen className="w-4 h-4 text-sky-400" />
                 <span>Training &amp; Resources</span>
               </div>
@@ -725,32 +867,75 @@ export default function CrewQuarters() {
                 onClick={() => setLocation("/knowledge-base")}
                 className="text-xs text-blue-300 hover:text-amber-300 hover:bg-blue-900/40 p-0 h-auto font-medium"
               >
-                Browse All →
+                View All →
               </Button>
             </div>
 
-            <div className="space-y-2 pt-1">
+            <div className="space-y-2 pt-3">
               {[
-                { title: "Waypoint Field Guide", desc: "Your step-by-step master coaching handbook", path: "/knowledge-base" },
-                { title: "Standard Operating Procedures (SOP)", desc: "Office processes, deadlines & intake rules", path: "/walkthroughs" },
-                { title: "Phone Scripts & Family Outreach", desc: "Ready-to-use communication templates", path: "/templates" },
-                { title: "Training Modules", desc: "Professional development & IDEA compliance", path: "/knowledge-base" },
+                { title: "Waypoint Field Guide", desc: "Your step-by-step resource", path: "/knowledge-base", icon: FileText },
+                { title: "Standard Operating Procedures", desc: "Office processes and workflows", path: "/walkthroughs", icon: FileText },
+                { title: "Phone Scripts", desc: "Ready-to-use communication templates", path: "/templates", icon: Phone },
+                { title: "Training Modules", desc: "Continue your professional development", path: "/knowledge-base", icon: Video },
               ].map((res, idx) => (
                 <div
                   key={idx}
                   onClick={() => setLocation(res.path)}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 hover:border-sky-400/50 hover:bg-blue-900/30 transition-all cursor-pointer text-xs"
                 >
-                  <div className="min-w-0 pr-2">
-                    <div className="font-bold text-white truncate">{res.title}</div>
-                    <div className="text-[10px] text-blue-300/70 truncate">{res.desc}</div>
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <res.icon className="w-4 h-4 text-sky-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-bold text-white truncate">{res.title}</div>
+                      <div className="text-[10px] text-blue-300/70 truncate">{res.desc}</div>
+                    </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-blue-400/60 shrink-0" />
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
+          <div className="pt-2 text-center text-[11px] text-blue-300/60">
+            Master IEP Coach® internal library
+          </div>
+        </Card>
+
+        {/* Card 4C: Waypoint Inspiration Poster Tile */}
+        <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-b from-[#0B254A] via-[#051428] to-[#020A14] p-6 shadow-2xl flex flex-col items-center justify-between text-center relative overflow-hidden h-full group">
+          {/* Subtle Ocean Mountain Backdrop Silhouette */}
+          <div className="absolute inset-0 opacity-25 pointer-events-none">
+            <svg viewBox="0 0 400 300" fill="none" className="w-full h-full object-cover">
+              <path d="M0 240 Q100 210 200 235 T400 230 L400 300 L0 300 Z" fill="#0369a1" />
+              <path d="M0 260 Q150 245 280 265 T400 255 L400 300 L0 300 Z" fill="#0c4a6e" />
+              <path d="M40 230 L90 140 L140 230 Z" fill="#072343" />
+              <path d="M120 230 L180 110 L240 230 Z" fill="#0a2e58" />
+              <path d="M220 230 L300 130 L380 230 Z" fill="#072343" />
+            </svg>
+          </div>
+
+          <div className="relative z-10 pt-4 flex flex-col items-center">
+            {/* Script Heading */}
+            <h3 className="font-serif italic text-2xl sm:text-3xl text-amber-300 tracking-wide leading-snug drop-shadow-[0_2px_10px_rgba(245,181,68,0.4)]">
+              The work<br />you do matters.
+            </h3>
+            <div className="w-12 h-0.5 bg-amber-400/80 rounded-full my-3 shadow-[0_0_8px_rgba(245,181,68,0.6)]" />
+          </div>
+
+          {/* Waypoint Mountain Logo & Slogan Footer */}
+          <div className="relative z-10 pb-2 flex flex-col items-center">
+            <svg viewBox="0 0 80 45" className="w-12 h-7 text-amber-400 mb-1" fill="currentColor">
+              <polygon points="40,5 55,38 25,38" fill="#F5B544" />
+              <polygon points="25,18 37,38 13,38" fill="#D99B26" />
+              <polygon points="55,18 67,38 43,38" fill="#E8A932" />
+            </svg>
+            <div className="text-sm font-serif font-black tracking-[0.25em] text-white uppercase">
+              WAYPOINT
+            </div>
+            <div className="text-[9px] font-mono tracking-[0.2em] text-amber-400/90 uppercase mt-0.5">
+              ADVOCACY · EDUCATION · RESULTS
+            </div>
+          </div>
         </div>
 
       </div>
