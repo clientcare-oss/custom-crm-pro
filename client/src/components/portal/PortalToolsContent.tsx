@@ -80,29 +80,29 @@ export function PortalToolsContent({
         <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-nowrap">
                 <span className="text-2xl sm:text-3xl font-serif text-white font-normal tracking-wide">
                   Waypoint
                 </span>
                 <span className="text-2xl sm:text-3xl font-serif text-amber-400 font-bold tracking-wide italic">
-                  Advocacy Suite
+                  Tools
                 </span>
               </div>
               <PageIdBadge id="PG-023-TLS" name="Advocacy Tools" />
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Family Client Suite Active</span>
+                <span>Advocacy Suite</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <WaypointWaveIcon className="w-10 h-3 text-amber-400/90" />
-              <p className="text-xs sm:text-sm text-blue-200/90 font-medium">
-                Dedicated client-side tools designed exclusively for <span className="text-amber-300 font-bold">{studentName}'s</span> family
-              </p>
-            </div>
+            {/* Golden Wave Ribbon Swish right under title */}
+            <WaypointWaveIcon className="w-10 h-3 text-amber-400/90 -mt-0.5 mb-1" />
+
+            <p className="text-xs sm:text-sm text-blue-200/90 font-medium max-w-2xl leading-relaxed">
+              Equipping your family with essential tools to scan records, track IEP changes, and advocate for <span className="text-amber-300 font-bold">{studentName}</span> with confidence.
+            </p>
           </div>
 
           {/* Executive Waypoint Status Pill */}
