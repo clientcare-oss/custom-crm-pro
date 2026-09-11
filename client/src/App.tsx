@@ -57,6 +57,7 @@ import IepComparator from "./pages/IepComparator";
 import DiscoveryWorksheetBuilder from "./pages/DiscoveryWorksheetBuilder";
 import FirstMate from "./pages/FirstMate";
 import FirstMatePopout from "./pages/FirstMatePopout";
+import CrewQuarters from "./pages/CrewQuarters";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -134,6 +135,7 @@ function Router() {
       <DashboardLayout>
         <Switch>
           <Route path="/" component={Dashboard} />
+          <Route path="/crew-quarters" component={CrewQuarters} />
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/students/:id" component={ContactDetail} />
           <Route path="/project-workspace/:id" component={ContactDetail} />

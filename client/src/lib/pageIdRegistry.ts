@@ -56,6 +56,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/case-compass":                    { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },
   "/tools/case-compass":              { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },
   "/first-mate/popout":               { id: "PG-037-POP", name: "First Mate Floating Copilot", category: "Advocacy" },
+  "/crew-quarters":                   { id: "PG-038", name: "Crew Quarters", category: "Employee", description: "Personal employee home base and operational station" },
   
   // Smart Files Suite
   "/smart-files":                     { id: "PG-033", name: "Smart Files Library", category: "Smart Files" },

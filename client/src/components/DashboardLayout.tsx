@@ -50,6 +50,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
+import { LighthouseCottageIcon } from "@/components/ui/LighthouseCottageIcon";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -94,6 +95,7 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Overview",
       items: [
         { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+        { icon: LighthouseCottageIcon as any, label: "Crew Quarters", path: "/crew-quarters" },
         { icon: LayoutGrid, label: "Workspace", path: "/workspace" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
         { icon: CalendarClock, label: "Scheduler", path: "/scheduler" },
@@ -956,6 +958,7 @@ const PAGE_LIST = [
   { id: "PG-031", name: "Workspace", path: "/workspace" },
   { id: "PG-032", name: "AI Connections", path: "/ai-connections" },
   { id: "PG-037", name: "First Mate", path: "/first-mate" },
+  { id: "PG-038", name: "Crew Quarters", path: "/crew-quarters" },
 ];
 
 function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }) {
