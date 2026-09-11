@@ -99,6 +99,40 @@ export function WaypointScanModal({
   const [selectedCategory, setSelectedCategory] = useState(category);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Sync with native browser Fullscreen API (Esc key, F11, or browser UI)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // True hardware & viewport fullscreen toggle
+  const handleToggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement && !isFullscreen) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      setIsFullscreen(true);
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    }
+  }, [isFullscreen]);
+
+  // Clean up native fullscreen when modal is closed
+  useEffect(() => {
+    if (!isOpen && document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+      setIsFullscreen(false);
+    }
+  }, [isOpen]);
+
   // Annotations & Tools
   const [annotations, setAnnotations] = useState<Record<string, DocumentAnnotation[]>>({});
   const [activeTool, setActiveTool] = useState<AnnotationTool>("none");
@@ -779,22 +813,28 @@ export function WaypointScanModal({
         className={cn(
           "p-0 bg-[#051122] border-none text-white shadow-2xl z-[1050] overflow-hidden transition-all duration-200",
           isFullscreen
-            ? "fixed inset-0 top-0 left-0 translate-x-0 translate-y-0 w-screen h-screen max-w-none max-h-none rounded-none"
-            : "max-w-4xl w-[96vw] max-h-[96vh] rounded-3xl"
+            ? "!fixed !inset-0 !top-0 !left-0 !right-0 !bottom-0 !translate-x-0 !translate-y-0 !w-screen !h-screen !max-w-none sm:!max-w-none !max-h-none sm:!max-h-none !rounded-none !p-0 !m-0 !gap-0"
+            : "max-w-4xl sm:max-w-4xl w-[96vw] max-h-[96vh] rounded-3xl"
         )}
         showCloseButton={false}
+        onEscapeKeyDown={(e) => {
+          if (isFullscreen) {
+            e.preventDefault();
+            handleToggleFullscreen();
+          }
+        }}
       >
         {/* Full Blue Wavy Maritime Theme Backdrop */}
         <WaypointWavyBackdrop
           className={cn(
             "shadow-2xl flex flex-col overflow-hidden transition-all duration-200",
             isFullscreen
-              ? "w-full h-full rounded-none border-none px-4 sm:px-8 pt-3 pb-3"
+              ? "!w-screen !h-screen !rounded-none !border-none p-2 sm:p-4"
               : "rounded-3xl border border-blue-900/50 px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-6 max-h-[95vh]"
           )}
         >
-          {/* Header */}
-          <WaypointScanHeader stage={stage} onClose={onClose} />
+          {/* Header - only show when not in fullscreen mode so the document preview has maximum screen real estate */}
+          {!isFullscreen && <WaypointScanHeader stage={stage} onClose={onClose} />}
 
           {/* Draft Recovery Alert */}
           {existingDraft && (
@@ -887,7 +927,7 @@ export function WaypointScanModal({
                 }}
                 blurWarning={blurWarning}
                 isFullscreen={isFullscreen}
-                onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+                onToggleFullscreen={handleToggleFullscreen}
               />
             )}
 

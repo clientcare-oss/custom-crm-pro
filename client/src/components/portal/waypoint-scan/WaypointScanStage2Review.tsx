@@ -62,7 +62,11 @@ export function WaypointScanStage2Review({
   if (!currentPage) return null;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between min-h-0 w-full max-w-5xl mx-auto gap-2">
+    <div
+      className={`flex-1 flex flex-col items-center justify-between min-h-0 w-full mx-auto gap-2 transition-all ${
+        isFullscreen ? "max-w-none h-full" : "max-w-5xl"
+      }`}
+    >
       {/* Top Controls Toolbar: Minimal, Clean, NO Horizontal Scroll */}
       <div className="w-full shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-[#081B36]/90 border border-blue-900/50 backdrop-blur-md shadow-md z-20">
         {/* Left: Page Navigator */}
@@ -148,17 +152,17 @@ export function WaypointScanStage2Review({
             <button
               type="button"
               onClick={onToggleFullscreen}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-sm ${
                 isFullscreen
-                  ? "bg-amber-400/20 border-amber-400/50 text-amber-300"
+                  ? "bg-amber-400 text-slate-950 border-amber-300 hover:bg-amber-300 ring-2 ring-amber-400/40"
                   : "bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border-white/10"
               }`}
               title={isFullscreen ? "Exit Fullscreen" : "Fullscreen View"}
             >
               {isFullscreen ? (
                 <>
-                  <Minimize2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">Exit</span>
+                  <Minimize2 className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
+                  <span>Exit Fullscreen</span>
                 </>
               ) : (
                 <>
@@ -179,7 +183,7 @@ export function WaypointScanStage2Review({
             alt={`Page ${activePageIndex + 1}`}
             className={`w-auto h-auto max-w-full object-contain pointer-events-none select-none rounded-none block ${
               isFullscreen
-                ? "max-h-[82vh]"
+                ? "max-h-[85vh] sm:max-h-[88vh]"
                 : "max-h-[66vh] sm:max-h-[72vh] md:max-h-[76vh]"
             }`}
           />
