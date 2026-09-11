@@ -19,6 +19,7 @@ import {
   Plus,
   Trash2,
   Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { DocumentAnnotation, WaypointScanPageDraft } from "@/lib/waypointScanStorage";
 
@@ -40,6 +41,8 @@ interface WaypointScanStage3FillSignProps {
   isProcessingPdf: boolean;
   pageNumber: number;
   totalPages: number;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export function WaypointScanStage3FillSign({
@@ -58,6 +61,8 @@ export function WaypointScanStage3FillSign({
   isProcessingPdf,
   pageNumber,
   totalPages,
+  isFullscreen = false,
+  onToggleFullscreen,
 }: WaypointScanStage3FillSignProps) {
   // Zoom & Viewport State
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
@@ -118,9 +123,9 @@ export function WaypointScanStage3FillSign({
 
   // --- Sizing Guardrails & Actions ---
   const isAtMinSize = (annot: DocumentAnnotation): boolean => {
-    if (annot.type === "signature") return (annot.width || 24) <= 14;
-    if (annot.type === "check") return (annot.fontSize || 20) <= 14;
-    return (annot.fontSize || 12) <= 10;
+    if (annot.type === "signature") return (annot.width || 24) <= 7;
+    if (annot.type === "check") return (annot.fontSize || 20) <= 7;
+    return (annot.fontSize || 12) <= 7;
   };
 
   const isAtMaxSize = (annot: DocumentAnnotation): boolean => {
@@ -139,13 +144,13 @@ export function WaypointScanStage3FillSign({
     (annot: DocumentAnnotation) => {
       if (!onUpdateAnnotation) return;
       if (annot.type === "signature") {
-        const next = Math.max(14, (annot.width || 24) - 2);
+        const next = Math.max(7, (annot.width || 24) - 2);
         onUpdateAnnotation(annot.id, { width: next });
       } else if (annot.type === "check") {
-        const next = Math.max(14, (annot.fontSize || 20) - 2);
+        const next = Math.max(7, (annot.fontSize || 20) - 2);
         onUpdateAnnotation(annot.id, { fontSize: next });
       } else {
-        const next = Math.max(10, (annot.fontSize || 12) - 1);
+        const next = Math.max(7, (annot.fontSize || 12) - 1);
         onUpdateAnnotation(annot.id, { fontSize: next });
       }
     },
@@ -230,15 +235,15 @@ export function WaypointScanStage3FillSign({
 
     if (currentAnnot.type === "signature") {
       const deltaPct = deltaX / 9;
-      const newWidth = Math.max(14, Math.min(55, Math.round(resizeStartRef.current.initialWidth + deltaPct)));
+      const newWidth = Math.max(7, Math.min(55, Math.round(resizeStartRef.current.initialWidth + deltaPct)));
       onUpdateAnnotation(resizingAnnotId, { width: newWidth });
     } else if (currentAnnot.type === "check") {
       const deltaSize = Math.round(deltaX / 5);
-      const newSize = Math.max(14, Math.min(40, resizeStartRef.current.initialFontSize + deltaSize));
+      const newSize = Math.max(7, Math.min(40, resizeStartRef.current.initialFontSize + deltaSize));
       onUpdateAnnotation(resizingAnnotId, { fontSize: newSize });
     } else {
       const deltaSize = Math.round(deltaX / 8);
-      const newSize = Math.max(10, Math.min(28, resizeStartRef.current.initialFontSize + deltaSize));
+      const newSize = Math.max(7, Math.min(28, resizeStartRef.current.initialFontSize + deltaSize));
       onUpdateAnnotation(resizingAnnotId, { fontSize: newSize });
     }
   };
@@ -376,6 +381,31 @@ export function WaypointScanStage3FillSign({
             >
               <RotateCw className="w-3 h-3 text-amber-400" />
               <span className="hidden sm:inline">Rotate</span>
+            </button>
+          )}
+
+          {onToggleFullscreen && (
+            <button
+              type="button"
+              onClick={onToggleFullscreen}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-semibold transition-all cursor-pointer shadow-sm ${
+                isFullscreen
+                  ? "bg-amber-400 text-slate-950 border-amber-300 hover:bg-amber-300 ring-2 ring-amber-400/40 font-bold"
+                  : "bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border-blue-900/40"
+              }`}
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen View"}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="w-3 h-3 text-slate-950 stroke-[2.5]" />
+                  <span className="hidden sm:inline">Exit</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3 h-3 text-amber-400" />
+                  <span className="hidden sm:inline">Fullscreen</span>
+                </>
+              )}
             </button>
           )}
         </div>

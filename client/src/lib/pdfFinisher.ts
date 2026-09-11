@@ -121,8 +121,8 @@ async function renderSinglePdfPage(
 
       switch (annot.type) {
         case "check": {
-          // Guard minimum size: 14pt min, 40pt max
-          const checkSize = Math.max(14, Math.min(40, annot.fontSize || 20));
+          // Guard minimum size: 7pt min, 40pt max
+          const checkSize = Math.max(7, Math.min(40, annot.fontSize || 20));
 
           // Draw vector checkmark directly onto PDF page:
           // Eliminates WinAnsi Unicode 0x2713 font encoding errors entirely
@@ -135,7 +135,7 @@ async function renderSinglePdfPage(
           const rightX = centerX + w / 2;
           const rightY = centerY + h * 0.45;
 
-          const strokeWidth = Math.max(2.2, checkSize * 0.14);
+          const strokeWidth = Math.max(1.3, checkSize * 0.14);
           const strokeColor = rgb(0.05, 0.15, 0.35); // Waypoint navy ink
 
           pdfPage.drawLine({
@@ -158,8 +158,8 @@ async function renderSinglePdfPage(
         case "text":
         case "date":
         case "initials": {
-          // Guard minimum size: 10pt min, 32pt max
-          const fontSize = Math.max(10, Math.min(32, annot.fontSize || (annot.type === "initials" ? 13 : 11)));
+          // Guard minimum size: 7pt min, 32pt max
+          const fontSize = Math.max(7, Math.min(32, annot.fontSize || (annot.type === "initials" ? 13 : 11)));
           const rawContent = annot.content || (annot.type === "date" ? new Date().toLocaleDateString("en-US") : "");
           const content = cleanWinAnsiText(rawContent);
           if (content) {
@@ -189,8 +189,8 @@ async function renderSinglePdfPage(
               const sigBytes = dataUrlToUint8Array(annot.content);
               const sigImg = await pdfDoc.embedPng(sigBytes);
 
-              // Guard minimum width: 14% min, 55% max of document width
-              const clampedWidthPct = Math.max(14, Math.min(55, annot.width || 24));
+              // Guard minimum width: 7% min, 55% max of document width
+              const clampedWidthPct = Math.max(7, Math.min(55, annot.width || 24));
               const sigW = (clampedWidthPct / 100) * renderW;
               const sigH = (sigW / sigImg.width) * sigImg.height;
 
