@@ -394,14 +394,15 @@ export function warpAndEnhanceDocument(
   outCtx.imageSmoothingEnabled = true;
   outCtx.imageSmoothingQuality = "high";
 
-  // Check if corners encompass the document (within 8% of borders)
   const sW = "naturalWidth" in sourceImage ? sourceImage.naturalWidth : sourceImage.width;
   const sH = "naturalHeight" in sourceImage ? sourceImage.naturalHeight : sourceImage.height;
+
+  // Only bypass projective warp if corners are essentially the uncropped full canvas border (within 2%)
   const isFullImage =
-    tl.x <= sW * 0.08 && tl.y <= sH * 0.08 &&
-    tr.x >= sW * 0.92 && tr.y <= sH * 0.08 &&
-    br.x >= sW * 0.92 && br.y >= sH * 0.92 &&
-    bl.x <= sW * 0.08 && bl.y >= sH * 0.92;
+    tl.x <= sW * 0.02 && tl.y <= sH * 0.02 &&
+    tr.x >= sW * 0.98 && tr.y <= sH * 0.02 &&
+    br.x >= sW * 0.98 && br.y >= sH * 0.98 &&
+    bl.x <= sW * 0.02 && bl.y >= sH * 0.98;
 
   if (isFullImage) {
     // Direct high-fidelity draw without warping artifacts

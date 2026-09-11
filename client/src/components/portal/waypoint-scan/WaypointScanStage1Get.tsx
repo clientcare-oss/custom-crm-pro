@@ -3,14 +3,35 @@
  * Styled with the Blue Wavy Theme across the natural workspace (no simulated phone frame).
  */
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, FolderOpen, RefreshCw, Zap, AlertCircle, ArrowLeft } from "lucide-react";
+import { Point, detectDocumentCorners, getNativeFallbackCorners } from "@/lib/scannerEngine";
+import {
+  Camera,
+  FolderOpen,
+  RefreshCw,
+  Zap,
+  AlertCircle,
+  ArrowLeft,
+  RectangleVertical,
+  RectangleHorizontal,
+  Check,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface WaypointScanStage1GetProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   cameraActive: boolean;
   cameraError: string | null;
+  orientation: "portrait" | "landscape";
+  onToggleOrientation: () => void;
+  onSetOrientation: (orient: "portrait" | "landscape") => void;
   onScanPage: () => void;
   onToggleFacingMode: () => void;
   onNativeCapture: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -24,6 +45,9 @@ export function WaypointScanStage1Get({
   videoRef,
   cameraActive,
   cameraError,
+  orientation,
+  onToggleOrientation,
+  onSetOrientation,
   onScanPage,
   onToggleFacingMode,
   onNativeCapture,
@@ -35,11 +59,90 @@ export function WaypointScanStage1Get({
   const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
   const fileUploadInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [liveCorners, setLiveCorners] = useState<{
+    topLeft: Point;
+    topRight: Point;
+    bottomRight: Point;
+    bottomLeft: Point;
+  } | null>(null);
+  const [isDocDetected, setIsDocDetected] = useState(false);
+
+  // Real-time live paper edge detection loop
+  useEffect(() => {
+    if (!cameraActive) {
+      setLiveCorners(null);
+      setIsDocDetected(false);
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+
+      try {
+        const thumbW = 160;
+        const thumbH = Math.max(
+          100,
+          Math.round((video.videoHeight / video.videoWidth) * thumbW)
+        );
+        const offCanvas = document.createElement("canvas");
+        offCanvas.width = thumbW;
+        offCanvas.height = thumbH;
+        const ctx = offCanvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return;
+
+        ctx.drawImage(video, 0, 0, thumbW, thumbH);
+        const corners = detectDocumentCorners(offCanvas, 0.05);
+
+        // Check if detected corners differ from fallback
+        const fb = getNativeFallbackCorners(thumbW, thumbH, 0.05);
+        const isFallback =
+          Math.abs(corners.topLeft.x - fb.topLeft.x) < 4 &&
+          Math.abs(corners.topLeft.y - fb.topLeft.y) < 4 &&
+          Math.abs(corners.bottomRight.x - fb.bottomRight.x) < 4 &&
+          Math.abs(corners.bottomRight.y - fb.bottomRight.y) < 4;
+
+        if (!isFallback) {
+          const toPct = (pt: Point) => ({
+            x: Number(((pt.x / thumbW) * 100).toFixed(1)),
+            y: Number(((pt.y / thumbH) * 100).toFixed(1)),
+          });
+          setLiveCorners({
+            topLeft: toPct(corners.topLeft),
+            topRight: toPct(corners.topRight),
+            bottomRight: toPct(corners.bottomRight),
+            bottomLeft: toPct(corners.bottomLeft),
+          });
+          setIsDocDetected(true);
+        } else {
+          setLiveCorners(null);
+          setIsDocDetected(false);
+        }
+      } catch {
+        // Ignore sampling errors
+      }
+    }, 160);
+
+    return () => clearInterval(intervalId);
+  }, [cameraActive, videoRef]);
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-0 py-4 px-3 sm:px-6 w-full max-w-2xl mx-auto">
+    <div
+      className={cn(
+        "flex-1 flex flex-col items-center justify-center min-h-0 py-4 px-3 sm:px-6 w-full mx-auto transition-all duration-300",
+        orientation === "landscape" ? "max-w-3xl" : "max-w-2xl"
+      )}
+    >
       {cameraActive && !cameraError ? (
         /* Live Camera Viewfinder */
-        <div className="relative w-full max-w-md aspect-[3/4] max-h-[62vh] rounded-3xl overflow-hidden border-2 border-blue-900/60 bg-slate-950/80 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col justify-between">
+        <div
+          className={cn(
+            "relative w-full rounded-3xl overflow-hidden border-2 border-blue-900/60 bg-slate-950/80 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col justify-between transition-all duration-300",
+            orientation === "landscape"
+              ? "max-w-xl sm:max-w-2xl aspect-[4/3] max-h-[66vh]"
+              : "max-w-md aspect-[3/4] max-h-[62vh]"
+          )}
+        >
           <video
             ref={videoRef}
             playsInline
@@ -49,47 +152,175 @@ export function WaypointScanStage1Get({
           />
 
           {/* Top Bar inside Viewfinder */}
-          <div className="relative z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/70 to-transparent">
+          <div className="relative z-20 flex items-center justify-between p-3 sm:p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent gap-2">
+            {/* Left: Back to review if pages exist, or lightning badge */}
             {hasExistingPages && onBackToReview ? (
               <button
                 type="button"
                 onClick={onBackToReview}
-                className="p-2 rounded-xl bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-colors cursor-pointer"
-                title="Back to pages"
+                className="p-2 rounded-xl bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-colors cursor-pointer shrink-0 border border-white/10"
+                title="Back to review pages"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
             ) : (
-              <div className="p-2 rounded-xl bg-black/40 text-amber-300 backdrop-blur-md">
+              <div className="p-2 rounded-xl bg-black/50 text-amber-300 backdrop-blur-md shrink-0 border border-white/10">
                 <Zap className="w-4 h-4" />
               </div>
             )}
 
-            <div className="px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-white text-xs font-semibold border border-white/15 shadow-md">
-              Point camera at document
+            {/* Center: Segmented Orientation Selector Pill */}
+            <div className="flex items-center bg-black/70 backdrop-blur-md rounded-full p-1 border border-white/15 shadow-lg">
+              <button
+                type="button"
+                onClick={() => onSetOrientation("portrait")}
+                className={cn(
+                  "px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                  orientation === "portrait"
+                    ? "bg-amber-400 text-slate-950 shadow-md font-bold"
+                    : "text-white/80 hover:text-white"
+                )}
+                title="Portrait Mode (Standard 8.5 × 11 vertical documents)"
+              >
+                <RectangleVertical className="w-3.5 h-3.5" />
+                <span>Portrait</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSetOrientation("landscape")}
+                className={cn(
+                  "px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                  orientation === "landscape"
+                    ? "bg-amber-400 text-slate-950 shadow-md font-bold"
+                    : "text-white/80 hover:text-white"
+                )}
+                title="Landscape Mode (Wide 11 × 8.5 horizontal documents & tables)"
+              >
+                <RectangleHorizontal className="w-3.5 h-3.5" />
+                <span>Landscape</span>
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={onToggleFacingMode}
-              className="p-2 rounded-xl bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-colors cursor-pointer"
-              title="Flip camera"
+            {/* Right: Dropdown / Quick Action Button prompting Orientation & Camera */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="p-2 rounded-xl bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-colors cursor-pointer shrink-0 border border-white/10 flex items-center gap-1 hover:border-amber-400/50"
+                  title={
+                    orientation === "portrait"
+                      ? "Portrait Mode active — Click to switch to Landscape or view options"
+                      : "Landscape Mode active — Click to switch to Portrait or view options"
+                  }
+                >
+                  {orientation === "portrait" ? (
+                    <RectangleVertical className="w-4 h-4 text-amber-300" />
+                  ) : (
+                    <RectangleHorizontal className="w-4 h-4 text-amber-300" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-slate-950/95 border border-blue-900/60 text-white backdrop-blur-xl rounded-2xl p-1.5 shadow-2xl z-[100]"
+              >
+                <div className="px-3 py-2 text-[11px] font-semibold text-blue-200/60 uppercase tracking-wider">
+                  Viewport Orientation
+                </div>
+                <DropdownMenuItem
+                  onClick={() => onSetOrientation("portrait")}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer focus:bg-blue-600/30",
+                    orientation === "portrait" && "text-amber-300 font-bold bg-amber-400/15"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <RectangleVertical className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <p className="leading-none">Portrait Mode</p>
+                      <p className="text-[10px] text-blue-200/60 mt-0.5">8.5" × 11" vertical</p>
+                    </div>
+                  </div>
+                  {orientation === "portrait" && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => onSetOrientation("landscape")}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer focus:bg-blue-600/30",
+                    orientation === "landscape" && "text-amber-300 font-bold bg-amber-400/15"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <RectangleHorizontal className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <p className="leading-none">Landscape Mode</p>
+                      <p className="text-[10px] text-blue-200/60 mt-0.5">11" × 8.5" horizontal</p>
+                    </div>
+                  </div>
+                  {orientation === "landscape" && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                </DropdownMenuItem>
+
+                <div className="my-1 border-t border-white/10" />
+
+                <DropdownMenuItem
+                  onClick={onToggleFacingMode}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs cursor-pointer text-white/80 hover:text-white focus:bg-blue-600/30"
+                >
+                  <RefreshCw className="w-4 h-4 text-blue-400" />
+                  <span>Flip Camera (Front / Back)</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Live Document Edge Detection Polygon or Alignment Guide */}
+          {liveCorners ? (
+            <div className="relative z-10 flex-1 m-2 pointer-events-none flex flex-col justify-between">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-150">
+                <polygon
+                  points={`${liveCorners.topLeft.x}%,${liveCorners.topLeft.y}% ${liveCorners.topRight.x}%,${liveCorners.topRight.y}% ${liveCorners.bottomRight.x}%,${liveCorners.bottomRight.y}% ${liveCorners.bottomLeft.x}%,${liveCorners.bottomLeft.y}%`}
+                  className="fill-emerald-400/15 stroke-emerald-400 stroke-2"
+                  strokeDasharray="6 3"
+                />
+                {[
+                  liveCorners.topLeft,
+                  liveCorners.topRight,
+                  liveCorners.bottomRight,
+                  liveCorners.bottomLeft,
+                ].map((c, i) => (
+                  <circle
+                    key={i}
+                    cx={`${c.x}%`}
+                    cy={`${c.y}%`}
+                    r="6"
+                    className="fill-emerald-300 stroke-slate-950 stroke-2 shadow-lg"
+                  />
+                ))}
+              </svg>
+              <div className="mt-auto mx-auto mb-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/60 backdrop-blur-md text-[11px] font-bold text-emerald-300 flex items-center gap-1.5 shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                Paper Edges Locked · Perspective Ready
+              </div>
+            </div>
+          ) : (
+            /* Glowing Golden Contour Box on Viewfinder */
+            <div
+              className={cn(
+                "relative z-10 flex-1 border-2 border-amber-400/90 rounded-2xl pointer-events-none shadow-[0_0_35px_rgba(245,181,68,0.85)] flex flex-col justify-between p-3 animate-pulse transition-all duration-300",
+                orientation === "portrait" ? "m-6 sm:m-8" : "m-4 sm:m-6"
+              )}
             >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Glowing Golden Contour Box on Viewfinder */}
-          <div className="relative z-10 m-6 sm:m-8 flex-1 border-2 border-amber-400/90 rounded-2xl pointer-events-none shadow-[0_0_35px_rgba(245,181,68,0.85)] flex flex-col justify-between p-3 animate-pulse">
-            <div className="flex justify-between">
-              <span className="w-4 h-4 border-t-2 border-l-2 border-amber-300" />
-              <span className="w-4 h-4 border-t-2 border-r-2 border-amber-300" />
+              <div className="flex justify-between">
+                <span className="w-4 h-4 border-t-2 border-l-2 border-amber-300" />
+                <span className="w-4 h-4 border-t-2 border-r-2 border-amber-300" />
+              </div>
+              <div className="flex justify-between">
+                <span className="w-4 h-4 border-b-2 border-l-2 border-amber-300" />
+                <span className="w-4 h-4 border-b-2 border-r-2 border-amber-300" />
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="w-4 h-4 border-b-2 border-l-2 border-amber-300" />
-              <span className="w-4 h-4 border-b-2 border-r-2 border-amber-300" />
-            </div>
-          </div>
+          )}
 
           {/* Bottom Shutter Controls */}
           <div className="relative z-20 pb-5 pt-3 px-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center gap-2.5">
