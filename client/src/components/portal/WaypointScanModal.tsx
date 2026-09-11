@@ -16,6 +16,7 @@ import {
   rotateCanvas,
   rotateCanvas90,
   autoOrientPortrait,
+  getNativeFallbackCorners,
 } from "@/lib/scannerEngine";
 import {
   DocumentAnnotation,
@@ -347,7 +348,7 @@ export function WaypointScanModal({
         if (file.type === "application/pdf") {
           processImportedPdf(file.name);
         } else {
-          processImportedImage(dataUrl);
+          processImportedImage(dataUrl, true /* isFileImport */);
         }
       }
     };
@@ -355,7 +356,7 @@ export function WaypointScanModal({
     e.target.value = "";
   };
 
-  const processImportedImage = (dataUrl: string) => {
+  const processImportedImage = (dataUrl: string, isFileImport = false) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
@@ -368,11 +369,21 @@ export function WaypointScanModal({
         // Retain raw upload for Adjust Edges and Original/Enhanced toggle
         setRawCaptureDataUrl(dataUrl);
 
-        // Detect document corners & perspective-warp
-        const corners = detectDocumentCorners(canvas);
+        // For files opened from PC/device: use clean full bounds so the document is 100% intact & sharp.
+        // For camera captures: run paper corner detection against background desk.
+        const corners = isFileImport
+          ? getNativeFallbackCorners(canvas.width, canvas.height, 0)
+          : detectDocumentCorners(canvas);
+
         setDetectedCorners(corners);
 
-        const warpedCanvas = warpAndEnhanceDocument(canvas, corners);
+        const warpedCanvas = warpAndEnhanceDocument(
+          canvas,
+          corners,
+          undefined,
+          undefined,
+          !isFileImport /* only enhance contrast on camera captures, preserve digital doc colors */
+        );
         const cleaned = warpedCanvas.toDataURL("image/jpeg", 0.94);
 
         // Calculate sharpness score

@@ -394,14 +394,14 @@ export function warpAndEnhanceDocument(
   outCtx.imageSmoothingEnabled = true;
   outCtx.imageSmoothingQuality = "high";
 
-  // Check if corners are virtually the entire image (within 3% of borders)
+  // Check if corners encompass the document (within 8% of borders)
   const sW = "naturalWidth" in sourceImage ? sourceImage.naturalWidth : sourceImage.width;
   const sH = "naturalHeight" in sourceImage ? sourceImage.naturalHeight : sourceImage.height;
   const isFullImage =
-    tl.x < sW * 0.04 && tl.y < sH * 0.04 &&
-    tr.x > sW * 0.96 && tr.y < sH * 0.04 &&
-    br.x > sW * 0.96 && br.y > sH * 0.96 &&
-    bl.x < sW * 0.04 && bl.y > sH * 0.96;
+    tl.x <= sW * 0.08 && tl.y <= sH * 0.08 &&
+    tr.x >= sW * 0.92 && tr.y <= sH * 0.08 &&
+    br.x >= sW * 0.92 && br.y >= sH * 0.92 &&
+    bl.x <= sW * 0.08 && bl.y >= sH * 0.92;
 
   if (isFullImage) {
     // Direct high-fidelity draw without warping artifacts
@@ -481,6 +481,10 @@ function drawTrianglePatch(
   s0: Point, s1: Point, s2: Point,
   d0: Point, d1: Point, d2: Point
 ) {
+  // Determinant of source triangle matrix S
+  const det = s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+  if (Math.abs(det) < 1e-4) return;
+
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(d0.x, d0.y);
@@ -489,20 +493,16 @@ function drawTrianglePatch(
   ctx.closePath();
   ctx.clip();
 
-  const denom = s0.x * (s2.y - s1.y) - s1.x * s2.y + s2.x * s1.y + (s1.x - s2.x) * s0.y;
-  if (Math.abs(denom) < 1e-6) {
-    ctx.restore();
-    return;
-  }
+  // Exact affine mapping M = D * S^(-1)
+  const a = (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) / det;
+  const c = (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / det;
+  const e = (d0.x * (s1.x * s2.y - s2.x * s1.y) + d1.x * (s2.x * s0.y - s0.x * s2.y) + d2.x * (s0.x * s1.y - s1.x * s0.y)) / det;
 
-  const m11 = -(s0.y * (d2.x - d1.x) - s1.y * d2.x + s2.y * d1.x + (s1.y - s2.y) * d0.x) / denom;
-  const m12 = (s0.y * d2.y + s1.y * (d0.y - d2.y) - s2.y * d0.y - (s1.y - s2.y) * d1.y) / denom;
-  const m21 = (s0.x * (d2.x - d1.x) - s1.x * d2.x + s2.x * d1.x + (s1.x - s2.x) * d0.x) / denom;
-  const m22 = -(s0.x * d2.y + s1.x * (d0.y - d2.y) - s2.x * d0.y - (s1.x - s2.x) * d1.y) / denom;
-  const dx = (s0.x * (s2.y * d1.x - s1.y * d2.x) + s0.y * (s1.x * d2.x - s2.x * d1.x) + (s1.y * s2.x - s1.x * s2.y) * d0.x) / denom;
-  const dy = (s0.x * (s2.y * d1.y - s1.y * d2.y) + s0.y * (s1.x * d2.y - s2.x * d1.y) + (s1.y * s2.x - s1.x * s2.y) * d0.y) / denom;
+  const b = (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) / det;
+  const d = (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) / det;
+  const f = (d0.y * (s1.x * s2.y - s2.x * s1.y) + d1.y * (s2.x * s0.y - s0.x * s2.y) + d2.y * (s0.x * s1.y - s1.x * s0.y)) / det;
 
-  ctx.transform(m11, m12, m21, m22, dx, dy);
+  ctx.transform(a, b, c, d, e, f);
   ctx.drawImage(image, 0, 0);
   ctx.restore();
 }
