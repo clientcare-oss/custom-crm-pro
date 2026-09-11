@@ -129,7 +129,8 @@ export function WaypointScanStage1Get({
   return (
     <div
       className={cn(
-        "flex-1 flex flex-col items-center justify-center min-h-0 py-4 px-3 sm:px-6 w-full mx-auto transition-all duration-300",
+        "flex-1 flex flex-col items-center justify-center min-h-0 py-2 sm:py-4 px-1 sm:px-6 w-full mx-auto transition-all duration-300",
+        "max-sm:h-full max-sm:w-full max-sm:p-0 max-sm:max-w-none",
         orientation === "landscape" ? "max-w-3xl" : "max-w-2xl"
       )}
     >
@@ -137,10 +138,13 @@ export function WaypointScanStage1Get({
         /* Live Camera Viewfinder */
         <div
           className={cn(
-            "relative w-full rounded-3xl overflow-hidden border-2 border-blue-900/60 bg-slate-950/80 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col justify-between transition-all duration-300",
+            "relative w-full overflow-hidden flex flex-col justify-between transition-all duration-300",
+            // Mobile: Expand to fill full height edge-to-edge
+            "max-sm:h-full max-sm:flex-1 max-sm:max-w-none max-sm:max-h-none max-sm:rounded-2xl max-sm:border max-sm:border-blue-800/40 max-sm:shadow-none",
+            // Desktop / Tablet:
             orientation === "landscape"
-              ? "max-w-xl sm:max-w-2xl aspect-[4/3] max-h-[66vh]"
-              : "max-w-md aspect-[3/4] max-h-[62vh]"
+              ? "sm:rounded-3xl sm:border-2 sm:border-blue-900/60 sm:bg-slate-950/80 sm:shadow-[0_20px_50px_rgba(0,0,0,0.8)] sm:max-w-xl sm:aspect-[4/3] sm:max-h-[66vh]"
+              : "sm:rounded-3xl sm:border-2 sm:border-blue-900/60 sm:bg-slate-950/80 sm:shadow-[0_20px_50px_rgba(0,0,0,0.8)] sm:max-w-md sm:aspect-[3/4] sm:max-h-[62vh]"
           )}
         >
           <video
@@ -355,13 +359,7 @@ export function WaypointScanStage1Get({
             {/* Choice 1: Scan Document (Camera) */}
             <button
               type="button"
-              onClick={() => {
-                if (nativeCameraInputRef.current) {
-                  nativeCameraInputRef.current.click();
-                } else {
-                  onStartCamera();
-                }
-              }}
+              onClick={onStartCamera}
               className="p-6 rounded-3xl bg-[#091D3C]/90 hover:bg-[#0E2954] border-2 border-amber-400/40 hover:border-amber-400 text-left flex flex-col justify-between gap-4 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(245,181,68,0.2)] cursor-pointer group backdrop-blur-md"
             >
               <div className="w-14 h-14 rounded-2xl bg-amber-400/15 border border-amber-400/30 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
@@ -372,11 +370,21 @@ export function WaypointScanStage1Get({
                   Scan Document
                 </p>
                 <p className="text-xs text-blue-200/70 mt-1 leading-relaxed">
-                  Use your device camera with auto-edge detection and perspective correction.
+                  Use your device camera with live auto-edge detection and perspective correction.
                 </p>
               </div>
-              <div className="flex items-center text-xs font-bold text-amber-400 pt-1">
-                <span>Start Camera →</span>
+              <div className="flex items-center justify-between text-xs font-bold text-amber-400 pt-1">
+                <span>Start Live Camera →</span>
+                <span
+                  role="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nativeCameraInputRef.current?.click();
+                  }}
+                  className="text-[11px] font-normal text-blue-200/60 hover:text-white underline cursor-pointer"
+                >
+                  or take photo
+                </span>
               </div>
             </button>
 

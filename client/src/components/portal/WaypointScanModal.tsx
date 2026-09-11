@@ -868,9 +868,12 @@ export function WaypointScanModal({
       <DialogContent
         className={cn(
           "p-0 bg-[#051122] border-none text-white shadow-2xl z-[1050] overflow-hidden transition-all duration-200",
+          // Force edge-to-edge full screen on all mobile phones
+          "max-sm:!fixed max-sm:!inset-0 max-sm:!top-0 max-sm:!left-0 max-sm:!right-0 max-sm:!bottom-0 max-sm:!translate-x-0 max-sm:!translate-y-0 max-sm:!w-screen max-sm:!h-[100dvh] max-sm:!max-w-none max-sm:!max-h-none max-sm:!rounded-none max-sm:!p-0 max-sm:!m-0 max-sm:!gap-0",
+          // Desktop / Tablet windowed vs fullscreen
           isFullscreen
-            ? "!fixed !inset-0 !top-0 !left-0 !right-0 !bottom-0 !translate-x-0 !translate-y-0 !w-screen !h-screen !max-w-none sm:!max-w-none !max-h-none sm:!max-h-none !rounded-none !p-0 !m-0 !gap-0"
-            : "max-w-4xl sm:max-w-4xl w-[96vw] max-h-[96vh] rounded-3xl"
+            ? "sm:!fixed sm:!inset-0 sm:!top-0 sm:!left-0 sm:!right-0 sm:!bottom-0 sm:!translate-x-0 sm:!translate-y-0 sm:!w-screen sm:!h-screen sm:!max-w-none sm:!max-h-none sm:!rounded-none sm:!p-0 sm:!m-0 sm:!gap-0"
+            : "sm:max-w-4xl sm:w-[96vw] sm:max-h-[96vh] sm:rounded-3xl"
         )}
         showCloseButton={false}
         onEscapeKeyDown={(e) => {
@@ -884,9 +887,12 @@ export function WaypointScanModal({
         <WaypointWavyBackdrop
           className={cn(
             "shadow-2xl flex flex-col overflow-hidden transition-all duration-200",
+            // Mobile: 100dvh edge-to-edge full bleed
+            "max-sm:!w-screen max-sm:!h-[100dvh] max-sm:!rounded-none max-sm:!border-none max-sm:p-2 max-sm:pt-safe max-sm:pb-safe",
+            // Desktop / Tablet
             isFullscreen
-              ? "!w-screen !h-screen !rounded-none !border-none p-2 sm:p-4"
-              : "rounded-3xl border border-blue-900/50 px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-6 max-h-[95vh]"
+              ? "sm:!w-screen sm:!h-screen sm:!rounded-none sm:!border-none sm:p-4"
+              : "sm:rounded-3xl sm:border sm:border-blue-900/50 sm:px-6 sm:pt-4 sm:pb-6 sm:max-h-[95vh]"
           )}
         >
           {/* Universal Header: Visible across EVERY step in both windowed and fullscreen */}
