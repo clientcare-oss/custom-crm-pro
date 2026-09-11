@@ -105,25 +105,38 @@ export function PortalToolsContent({
             </div>
           </div>
 
-          {/* Quick Stats Ribbon */}
-          <div className="flex items-center gap-3 bg-[#0A1F3B]/80 backdrop-blur-md border border-blue-700/50 rounded-2xl p-3.5 shadow-lg">
-            <div className="flex items-center gap-3 px-3 py-1 border-r border-blue-800/60">
-              <div className="p-2 rounded-xl bg-amber-400/15 text-amber-300">
-                <Shield className="w-5 h-5" />
+          {/* Executive Waypoint Status Pill */}
+          <div className="shrink-0 flex items-center bg-[#071933]/90 backdrop-blur-md border border-blue-700/40 rounded-2xl p-2 sm:p-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.3)] ring-1 ring-blue-400/10">
+            {/* Student Record Section */}
+            <div className="flex items-center gap-3 px-3 py-1">
+              <div className="p-2 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 shadow-sm">
+                <Shield className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </div>
-              <div>
-                <div className="text-[11px] text-blue-300 uppercase tracking-wider font-semibold">Student Record</div>
-                <div className="text-xs font-bold text-white truncate max-w-[120px]">{studentName}</div>
+              <div className="min-w-0">
+                <div className="text-[10px] text-blue-300/80 uppercase tracking-wider font-bold whitespace-nowrap">
+                  Student Record
+                </div>
+                <div className="text-sm font-bold text-white whitespace-nowrap truncate max-w-[160px] sm:max-w-[200px]">
+                  {studentName}
+                </div>
               </div>
             </div>
 
+            {/* Elegant Vertical Divider */}
+            <div className="h-8 w-px bg-blue-700/50 mx-1 shrink-0" />
+
+            {/* Ready Tools Section */}
             <div className="flex items-center gap-3 px-3 py-1">
-              <div className="p-2 rounded-xl bg-sky-400/15 text-sky-300">
-                <Sparkles className="w-5 h-5" />
+              <div className="p-2 rounded-xl bg-sky-400/15 text-sky-400 border border-sky-400/30 shrink-0 shadow-sm">
+                <Sparkles className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </div>
               <div>
-                <div className="text-[11px] text-blue-300 uppercase tracking-wider font-semibold">Ready Tools</div>
-                <div className="text-xs font-bold text-amber-300">4 Mini-Apps</div>
+                <div className="text-[10px] text-blue-300/80 uppercase tracking-wider font-bold whitespace-nowrap">
+                  Ready Tools
+                </div>
+                <div className="text-sm font-bold text-amber-300 whitespace-nowrap">
+                  4 Mini-Apps
+                </div>
               </div>
             </div>
           </div>
