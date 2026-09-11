@@ -14,8 +14,8 @@ interface WaypointScanHeaderProps {
 
 export function WaypointScanHeader({ stage }: WaypointScanHeaderProps) {
   return (
-    <div className="shrink-0 pb-3 pt-2 border-b border-blue-900/40 relative">
-      {/* Brand Title: Waypoint Scan */}
+    <div className="shrink-0 pb-2.5 pt-0 -mt-0.5 border-b border-blue-900/40 relative">
+      {/* Centered Brand Title Lockup: Waypoint Scan + Swish + Subtitle */}
       <div className="flex flex-col items-center justify-center text-center">
         <div className="flex items-center justify-center gap-2">
           <span className="text-2xl sm:text-3xl font-serif text-white font-normal tracking-wide">
@@ -27,16 +27,16 @@ export function WaypointScanHeader({ stage }: WaypointScanHeaderProps) {
           <PageIdBadge id="PG-023-SCAN" name="Waypoint Scan" />
         </div>
 
-        {/* Golden Wave Ribbon */}
-        <WaypointWaveIcon className="w-12 h-3.5 text-amber-400/90 -mt-0.5 mb-1" />
+        {/* Golden Wave Ribbon Swish */}
+        <WaypointWaveIcon className="w-11 h-3 text-amber-400/90 -mt-0.5 mb-1" />
 
-        {/* Subtitle */}
-        <p className="text-xs text-blue-200/80 font-medium">
+        {/* Subtitle: Scan it. Fill it out. Sign it. Send it. */}
+        <p className="text-xs sm:text-[13px] text-blue-200/90 font-medium tracking-wide">
           Scan it. Fill it out. Sign it. Send it.
         </p>
 
         {/* Step Indicator Bar with Numbered Badges */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 mt-3 flex-wrap">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 mt-2 flex-wrap">
           {/* Step 1 */}
           <div
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all ${

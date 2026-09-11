@@ -37,7 +37,6 @@ import { WaypointScanStage1Get } from "./waypoint-scan/WaypointScanStage1Get";
 import { WaypointScanStage2Review } from "./waypoint-scan/WaypointScanStage2Review";
 import { WaypointScanStage3FillSign, AnnotationTool } from "./waypoint-scan/WaypointScanStage3FillSign";
 import { WaypointScanStage4Finish } from "./waypoint-scan/WaypointScanStage4Finish";
-import { WaypointScanFooter } from "./waypoint-scan/WaypointScanFooter";
 import { WaypointSignaturePad } from "./WaypointSignaturePad";
 import { WaypointAdjustEdgesModal } from "./WaypointAdjustEdgesModal";
 import { trpc } from "@/lib/trpc";
@@ -751,7 +750,7 @@ export function WaypointScanModal({
       <DialogContent className="max-w-4xl w-[96vw] max-h-[96vh] p-0 bg-transparent border-none text-white shadow-2xl z-[1050] overflow-hidden">
         
         {/* Full Blue Wavy Maritime Theme Backdrop */}
-        <WaypointWavyBackdrop className="rounded-3xl border border-blue-900/50 p-4 sm:p-6 shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
+        <WaypointWavyBackdrop className="rounded-3xl border border-blue-900/50 px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-6 shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
           
           {/* Header */}
           <WaypointScanHeader stage={stage} onClose={onClose} />
@@ -892,9 +891,6 @@ export function WaypointScanModal({
               />
             )}
           </div>
-
-          {/* Footer Brand Taglines */}
-          <WaypointScanFooter />
 
         </WaypointWavyBackdrop>
 
