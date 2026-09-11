@@ -215,11 +215,11 @@ export default function CrewQuarters() {
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
-            {/* Team Hub Pill & Page ID */}
+            {/* Crew Quarters Pill & Page ID */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/80 border border-blue-800/60 text-blue-300 text-xs font-bold tracking-wider uppercase">
                 <LighthouseCottageIcon className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Team Hub · Crew Quarters</span>
+                <span>Crew Quarters</span>
               </div>
               <PageIdBadge id="PG-038" name="Crew Quarters" />
               <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
