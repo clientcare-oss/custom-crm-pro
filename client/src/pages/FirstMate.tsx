@@ -202,12 +202,13 @@ export default function FirstMate() {
     });
   };
 
+  // Manual Type Transcript Turn: Hidden by default unless user clicks "Type Turn"
   const [isManualInputCollapsed, setIsManualInputCollapsed] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem("fm_manual_input_collapsed");
-      return saved !== null ? saved === "true" : false; // open by default so user can immediately type transcript
+      return saved === "false" ? false : true; // default hidden
     } catch {
-      return false;
+      return true;
     }
   });
 
@@ -1480,82 +1481,90 @@ export default function FirstMate() {
             </span>
           </div>
 
-          <span className="text-[10px] text-slate-500 font-mono">
-            {session.transcript.length} turns recorded
-          </span>
-        </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10px] text-slate-500 font-mono">
+              {session.transcript.length} turns
+            </span>
 
-        {/* ── TYPE LIVE TRANSCRIPT TURN (IN USER'S LANGUAGE) ── */}
-        <div className="mt-2 border-t border-cyan-500/20 bg-[#071524] rounded-lg p-2.5 transition-all">
-          <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                <Radio className="w-3 h-3 text-cyan-400" />
-                Type Transcript Turn
-              </span>
-              <span className="text-[10px] text-slate-400">
-                (in <strong className="text-cyan-300">{currentLangObj.flag} {currentLangObj.nativeName}</strong>)
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Quick Language Switcher Dropdown right beside the type box */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="h-5 px-1.5 rounded bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/30 text-[9.5px] text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-                    title="Change transcript language"
-                  >
-                    <Globe className="w-2.5 h-2.5" />
-                    <span>{currentLangObj.flag} {currentLangObj.nativeName}</span>
-                    <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48 bg-[#0a1c30] border-white/15 text-white text-xs max-h-64 overflow-y-auto">
-                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-slate-400 font-mono">
-                    Select Transcript Language
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  {SUPPORTED_LANGUAGES.map((l) => (
-                    <DropdownMenuItem
-                      key={l.code}
-                      onClick={() => setLanguage(l.code)}
-                      className={`text-xs cursor-pointer flex items-center justify-between ${
-                        language === l.code ? "bg-cyan-500/20 text-cyan-300 font-bold" : "hover:bg-white/5 text-slate-200"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span>{l.flag}</span>
-                        <span>{l.name}</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">{l.nativeName}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
+            {/* Clickable link/button to reveal Type Turn input when hidden */}
+            {isManualInputCollapsed && (
               <button
                 type="button"
                 onClick={toggleManualInputCollapsed}
-                className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 hover:text-cyan-300 bg-cyan-950/40 hover:bg-cyan-900/50 px-2 py-0.5 rounded border border-cyan-500/30 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-cyan-400 hover:text-cyan-200 bg-cyan-950/60 hover:bg-cyan-900/80 px-2.5 py-1 rounded-md border border-cyan-500/40 shadow-xs transition-all cursor-pointer hover:border-cyan-400/80 active:scale-95"
+                title="Click to type a manual transcript turn or test scenarios"
               >
-                {isManualInputCollapsed ? (
-                  <>
-                    <span>Expand</span>
-                    <ChevronDown className="w-3 h-3" />
-                  </>
-                ) : (
-                  <>
-                    <span>Minimize</span>
-                    <ChevronUp className="w-3 h-3" />
-                  </>
-                )}
+                <Radio className="w-3 h-3 text-cyan-400" />
+                <span>Type Turn</span>
               </button>
-            </div>
+            )}
           </div>
+        </div>
 
-          {!isManualInputCollapsed && (
+        {/* ── TYPE LIVE TRANSCRIPT TURN (COMPLETELY HIDDEN UNLESS USER CLICKS TYPE TURN) ── */}
+        {!isManualInputCollapsed && (
+          <div className="mt-2 border-t border-cyan-500/30 bg-[#071524] rounded-lg p-2.5 transition-all shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                  <Radio className="w-3 h-3 text-cyan-400" />
+                  Type Transcript Turn
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  (in <strong className="text-cyan-300">{currentLangObj.flag} {currentLangObj.nativeName}</strong>)
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Quick Language Switcher Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="h-5 px-1.5 rounded bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/30 text-[9.5px] text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Change transcript language"
+                    >
+                      <Globe className="w-2.5 h-2.5" />
+                      <span>{currentLangObj.flag} {currentLangObj.nativeName}</span>
+                      <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48 bg-[#0a1c30] border-white/15 text-white text-xs max-h-64 overflow-y-auto">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-slate-400 font-mono">
+                      Select Transcript Language
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    {SUPPORTED_LANGUAGES.map((l) => (
+                      <DropdownMenuItem
+                        key={l.code}
+                        onClick={() => setLanguage(l.code)}
+                        className={`text-xs cursor-pointer flex items-center justify-between ${
+                          language === l.code ? "bg-cyan-500/20 text-cyan-300 font-bold" : "hover:bg-white/5 text-slate-200"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{l.flag}</span>
+                          <span>{l.name}</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">{l.nativeName}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Minimize Button */}
+                <button
+                  type="button"
+                  onClick={toggleManualInputCollapsed}
+                  className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-200 bg-cyan-950/50 hover:bg-cyan-900/70 px-2 py-0.5 rounded border border-cyan-500/40 transition-colors cursor-pointer font-semibold"
+                  title="Hide Type Turn"
+                >
+                  <span>Minimize</span>
+                  <ChevronUp className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+
             <form onSubmit={handleAddTurn} className="mt-2 space-y-2">
               <div className="flex gap-2">
                 <select
@@ -1662,8 +1671,8 @@ export default function FirstMate() {
                 </button>
               </div>
             </form>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* ── BOTTOM ACTION BAR (ASK FIRST MATE) ── */}
