@@ -50,9 +50,15 @@ export async function compileWaypointPdfs(
   };
 }
 
-/**
- * Helper to embed page image and render annotations onto a PDFDocument page.
- */
+function cleanWinAnsiText(str: string): string {
+  return str
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/[\u2026]/g, "...")
+    .replace(/[^\x20-\x7E\xA0-\xFF]/g, ""); // keep standard printable characters
+}
+
 async function renderSinglePdfPage(
   pdfDoc: PDFDocument,
   pageDraft: WaypointScanPageDraft,
@@ -69,15 +75,18 @@ async function renderSinglePdfPage(
     embeddedImage = await pdfDoc.embedJpg(imageBytes);
   }
 
-  // Standard Letter dimensions or image aspect ratio
   const imgWidth = embeddedImage.width;
   const imgHeight = embeddedImage.height;
 
-  // Fit standard page dimensions
-  const pageWidth = 612; // 8.5" at 72 dpi
-  const pageHeight = 792; // 11" at 72 dpi
+  // Professional PDF dimensions: Base width 612pt (standard Letter width), height proportional to scanned page.
+  // If the scanned page is within 3% of standard Letter (8.5x11), snap cleanly to 612x792.
+  const letterAspect = 612 / 792;
+  const imageAspect = imgWidth / imgHeight;
+  const isNearLetter = Math.abs(imageAspect - letterAspect) < 0.03;
 
-  // Calculate scaled dimensions to preserve aspect ratio within Letter page
+  const pageWidth = 612;
+  const pageHeight = isNearLetter ? 792 : Math.round(612 * (imgHeight / imgWidth));
+
   const scale = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
   const renderW = imgWidth * scale;
   const renderH = imgHeight * scale;
@@ -86,10 +95,8 @@ async function renderSinglePdfPage(
 
   const pdfPage = pdfDoc.addPage([pageWidth, pageHeight]);
 
-  // Handle page rotation if any
-  if (pageDraft.rotation) {
-    pdfPage.setRotation({ angle: (pageDraft.rotation % 360) as any, type: 0 as any });
-  }
+  // Note: pageDraft.dataUrl is already physically rotated via canvas rotateCanvas,
+  // so no secondary pdfPage.setRotation is needed.
 
   // Draw background document image
   pdfPage.drawImage(embeddedImage, {
@@ -99,7 +106,7 @@ async function renderSinglePdfPage(
     height: renderH,
   });
 
-  // Render annotations on top of document image
+  // Render annotations on top of document image with exact center alignment
   if (annotations.length > 0) {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -107,20 +114,43 @@ async function renderSinglePdfPage(
     for (const annot of annotations) {
       // Coordinate conversions:
       // annot.x and annot.y are percentages (0-100) relative to the document image
+      // In DOM preview, all annotations are centered at (annot.x, annot.y) with -translate-x-1/2 -translate-y-1/2
       // PDF coordinate system has (0,0) at bottom-left
-      const targetX = offsetX + (annot.x / 100) * renderW;
-      const targetY = offsetY + renderH - ((annot.y / 100) * renderH);
+      const centerX = offsetX + (annot.x / 100) * renderW;
+      const centerY = offsetY + renderH - ((annot.y / 100) * renderH);
 
       switch (annot.type) {
         case "check": {
-          // Render checkmark icon
-          const checkSize = Math.max(16, (annot.fontSize || 20));
-          pdfPage.drawText("✓", {
-            x: targetX,
-            y: targetY - checkSize + 2,
-            size: checkSize,
-            font: fontBold,
-            color: rgb(0.05, 0.15, 0.35), // Waypoint navy ink
+          // Guard minimum size: 14pt min, 40pt max
+          const checkSize = Math.max(14, Math.min(40, annot.fontSize || 20));
+
+          // Draw vector checkmark directly onto PDF page:
+          // Eliminates WinAnsi Unicode 0x2713 font encoding errors entirely
+          const w = checkSize * 0.85;
+          const h = checkSize * 0.75;
+          const leftX = centerX - w / 2;
+          const leftY = centerY + h * 0.1;
+          const midX = centerX - w * 0.12;
+          const midY = centerY - h * 0.45;
+          const rightX = centerX + w / 2;
+          const rightY = centerY + h * 0.45;
+
+          const strokeWidth = Math.max(2.2, checkSize * 0.14);
+          const strokeColor = rgb(0.05, 0.15, 0.35); // Waypoint navy ink
+
+          pdfPage.drawLine({
+            start: { x: leftX, y: leftY },
+            end: { x: midX, y: midY },
+            thickness: strokeWidth,
+            color: strokeColor,
+            lineCap: 1 as any, // round cap
+          });
+          pdfPage.drawLine({
+            start: { x: midX, y: midY },
+            end: { x: rightX, y: rightY },
+            thickness: strokeWidth,
+            color: strokeColor,
+            lineCap: 1 as any, // round cap
           });
           break;
         }
@@ -128,16 +158,27 @@ async function renderSinglePdfPage(
         case "text":
         case "date":
         case "initials": {
-          const fontSize = annot.fontSize || (annot.type === "initials" ? 14 : 12);
-          const content = annot.content || (annot.type === "date" ? new Date().toLocaleDateString("en-US") : "");
+          // Guard minimum size: 10pt min, 32pt max
+          const fontSize = Math.max(10, Math.min(32, annot.fontSize || (annot.type === "initials" ? 13 : 11)));
+          const rawContent = annot.content || (annot.type === "date" ? new Date().toLocaleDateString("en-US") : "");
+          const content = cleanWinAnsiText(rawContent);
           if (content) {
-            pdfPage.drawText(content, {
-              x: targetX,
-              y: targetY - fontSize + 2,
-              size: fontSize,
-              font: annot.type === "initials" ? fontBold : font,
-              color: rgb(0.04, 0.12, 0.28),
-            });
+            try {
+              const selectedFont = annot.type === "initials" ? fontBold : font;
+              const textWidth = selectedFont.widthOfTextAtSize(content, fontSize);
+              const textHeight = selectedFont.heightAtSize(fontSize);
+
+              // Center horizontally on centerX, baseline aligned to vertical center
+              pdfPage.drawText(content, {
+                x: centerX - (textWidth / 2),
+                y: centerY - (textHeight * 0.32),
+                size: fontSize,
+                font: selectedFont,
+                color: rgb(0.04, 0.12, 0.28),
+              });
+            } catch (textErr) {
+              console.warn("[PdfFinisher] Text draw fallback:", textErr);
+            }
           }
           break;
         }
@@ -148,12 +189,15 @@ async function renderSinglePdfPage(
               const sigBytes = dataUrlToUint8Array(annot.content);
               const sigImg = await pdfDoc.embedPng(sigBytes);
 
-              const sigW = annot.width ? (annot.width / 100) * renderW : 140;
-              const sigH = annot.height ? (annot.height / 100) * renderH : (sigW / sigImg.width) * sigImg.height;
+              // Guard minimum width: 14% min, 55% max of document width
+              const clampedWidthPct = Math.max(14, Math.min(55, annot.width || 24));
+              const sigW = (clampedWidthPct / 100) * renderW;
+              const sigH = (sigW / sigImg.width) * sigImg.height;
 
+              // Center signature horizontally and vertically on (centerX, centerY)
               pdfPage.drawImage(sigImg, {
-                x: targetX,
-                y: targetY - sigH,
+                x: centerX - (sigW / 2),
+                y: centerY - (sigH / 2),
                 width: sigW,
                 height: sigH,
               });

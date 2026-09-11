@@ -611,8 +611,8 @@ export function WaypointScanModal({
       const newAnnot: DocumentAnnotation = {
         id: `check-${Date.now()}`,
         type: "check",
-        x: Math.max(2, Math.min(95, clickX)),
-        y: Math.max(2, Math.min(95, clickY)),
+        x: Math.max(0.5, Math.min(99.5, Number(clickX.toFixed(2)))),
+        y: Math.max(0.5, Math.min(99.5, Number(clickY.toFixed(2)))),
         fontSize: 20,
       };
       setAnnotations((prev) => ({
@@ -629,8 +629,8 @@ export function WaypointScanModal({
       const newAnnot: DocumentAnnotation = {
         id: `date-${Date.now()}`,
         type: "date",
-        x: Math.max(2, Math.min(90, clickX)),
-        y: Math.max(2, Math.min(95, clickY)),
+        x: Math.max(0.5, Math.min(99.5, Number(clickX.toFixed(2)))),
+        y: Math.max(0.5, Math.min(99.5, Number(clickY.toFixed(2)))),
         content: today,
         fontSize: 12,
       };
@@ -652,8 +652,8 @@ export function WaypointScanModal({
         const newAnnot: DocumentAnnotation = {
           id: `initials-${Date.now()}`,
           type: "initials",
-          x: Math.max(2, Math.min(92, clickX)),
-          y: Math.max(2, Math.min(95, clickY)),
+          x: Math.max(0.5, Math.min(99.5, Number(clickX.toFixed(2)))),
+          y: Math.max(0.5, Math.min(99.5, Number(clickY.toFixed(2)))),
           content: parentInitials,
           fontSize: 13,
         };
@@ -671,10 +671,10 @@ export function WaypointScanModal({
         const newAnnot: DocumentAnnotation = {
           id: `sig-${Date.now()}`,
           type: "signature",
-          x: Math.max(2, Math.min(80, clickX)),
-          y: Math.max(2, Math.min(90, clickY)),
+          x: Math.max(0.5, Math.min(99.5, Number(clickX.toFixed(2)))),
+          y: Math.max(0.5, Math.min(99.5, Number(clickY.toFixed(2)))),
           content: parentSignatureUrl,
-          width: 25,
+          width: 24,
         };
         setAnnotations((prev) => ({
           ...prev,
@@ -744,10 +744,10 @@ export function WaypointScanModal({
     const newAnnot: DocumentAnnotation = {
       id: `sig-${Date.now()}`,
       type: "signature",
-      x: Math.max(2, Math.min(75, pos.x)),
-      y: Math.max(2, Math.min(85, pos.y)),
+      x: Math.max(0.5, Math.min(99.5, Number(pos.x.toFixed(2)))),
+      y: Math.max(0.5, Math.min(99.5, Number(pos.y.toFixed(2)))),
       content: sigDataUrl,
-      width: 25,
+      width: 24,
     };
     setAnnotations((prev) => ({
       ...prev,
@@ -982,6 +982,14 @@ export function WaypointScanModal({
                     [currentPage.id]: (p[currentPage.id] || []).filter((a) => a.id !== id),
                   }));
                   setSelectedAnnotationId(null);
+                }}
+                onUpdateAnnotation={(id, updates) => {
+                  setAnnotations((prev) => ({
+                    ...prev,
+                    [currentPage.id]: (prev[currentPage.id] || []).map((a) =>
+                      a.id === id ? { ...a, ...updates } : a
+                    ),
+                  }));
                 }}
                 onBackToReview={() => setStage("review")}
                 onFinishDocument={handleFinishDocument}
