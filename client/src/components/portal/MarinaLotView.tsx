@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MARINA_SPOTS, MarinaSpotDef, GLOW_THEMES, CAR_COLORS } from "./marinaLotConstants";
-import { Sparkles, CheckCircle2, AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight, Square } from "lucide-react";
+import { Sparkles, CheckCircle2, AlertCircle, Eye, EyeOff, Square } from "lucide-react";
 import { OrthogonalPath, generateSpotWaypoints, getCarRenderState } from "./marinaCarKinematics";
 import {
   WAYPOINT_DRIVING_STYLE,
@@ -9,7 +9,9 @@ import {
   VEHICLE_VARIATIONS,
 } from "./waypointDrivingStyle";
 
-// Temporary background versions for quick side-by-side comparison
+// Official parking lot background (v4 Planter Island)
+export const MARINA_LOT_BACKGROUND = "/marina-lot-v4.jpg";
+
 export const LOT_BACKGROUNDS = [
   { id: "v4", label: "v4 (Planter Island)", src: "/marina-lot-v4.jpg" },
   { id: "v3", label: "v3 (Entrance/Exit Arrows)", src: "/marina-lot-v3.jpg" },
@@ -235,11 +237,6 @@ export function MarinaLotView({
 }: MarinaLotViewProps) {
   const [hoveredSpot, setHoveredSpot] = useState<number | null>(null);
   const [showIdTags, setShowIdTags] = useState(true);
-  const [bgIndex, setBgIndex] = useState(() => {
-    const saved = localStorage.getItem("marina_lot_bg_idx");
-    const parsed = saved !== null ? parseInt(saved, 10) : 0;
-    return !isNaN(parsed) && parsed >= 0 && parsed < LOT_BACKGROUNDS.length ? parsed : 0;
-  });
 
   const [justParkedSpot, setJustParkedSpot] = useState<number | null>(null);
   const prevAnimRef = useRef<number | null>(null);
@@ -251,17 +248,6 @@ export function MarinaLotView({
     }
     prevAnimRef.current = animatingSpot;
   }, [animatingSpot]);
-
-  const handlePrevBg = () => setBgIndex((curr) => {
-    const next = (curr - 1 + LOT_BACKGROUNDS.length) % LOT_BACKGROUNDS.length;
-    localStorage.setItem("marina_lot_bg_idx", next.toString());
-    return next;
-  });
-  const handleNextBg = () => setBgIndex((curr) => {
-    const next = (curr + 1) % LOT_BACKGROUNDS.length;
-    localStorage.setItem("marina_lot_bg_idx", next.toString());
-    return next;
-  });
 
   // Map spotNumber -> item
   const spotItemMap = new Map<number, ParkedCarItem>();
@@ -281,33 +267,10 @@ export function MarinaLotView({
       <div className="relative w-full pb-[59.38%] overflow-hidden">
         {/* Background Image */}
         <img
-          src={LOT_BACKGROUNDS[bgIndex].src}
-          alt={`Waypoint Advocates Marina Parking Lot (${LOT_BACKGROUNDS[bgIndex].label})`}
+          src={MARINA_LOT_BACKGROUND}
+          alt="Waypoint Advocates Marina Parking Lot"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
-
-        {/* Floating Arrow Switcher on Lot (Temporary Dev Tool) */}
-        <div className="absolute top-2.5 right-2.5 z-30 flex items-center gap-1 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-amber-400/50 shadow-lg">
-          <button
-            type="button"
-            onClick={handlePrevBg}
-            className="text-amber-400 hover:text-white p-0.5 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
-            title="Previous background version"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-          <span className="text-[10px] font-mono font-semibold text-amber-300 select-none px-0.5">
-            {LOT_BACKGROUNDS[bgIndex].label}
-          </span>
-          <button
-            type="button"
-            onClick={handleNextBg}
-            className="text-amber-400 hover:text-white p-0.5 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
-            title="Next background version"
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
 
         {/* Ambient subtle vignette overlay to enhance contrast */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#020914]/40 via-transparent to-transparent pointer-events-none" />
@@ -476,16 +439,6 @@ export function MarinaLotView({
             )}
           </button>
 
-          {/* Temporary Background Version Switcher */}
-          <div className="flex items-center gap-0.5 bg-slate-900/90 border border-slate-700/70 rounded-lg px-1.5 py-0.5">
-            <button type="button" onClick={handlePrevBg} className="p-1 text-slate-400 hover:text-amber-300 hover:bg-white/10 rounded transition-colors cursor-pointer" title="Previous background version">
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] font-mono text-slate-300 font-medium px-1">BG: {LOT_BACKGROUNDS[bgIndex].label}</span>
-            <button type="button" onClick={handleNextBg} className="p-1 text-slate-400 hover:text-amber-300 hover:bg-white/10 rounded transition-colors cursor-pointer" title="Next background version">
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
 
           {onClearDemo && spotItemMap.size > 0 && (
             <button type="button" disabled={isSequencing} onClick={onClearDemo} className="px-2 py-1 rounded-lg text-[11px] font-medium text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer" title="Clear all parked cars">
