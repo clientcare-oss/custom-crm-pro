@@ -33,6 +33,7 @@ import {
   sharePdfFile,
   GeneratePdfResult,
 } from "@/lib/pdfFinisher";
+import { convertPdfToPageImages } from "@/lib/pdfImporter";
 import { WaypointWavyBackdrop, WaypointWaveIcon } from "./WaypointWavyBackdrop";
 import { WaypointScanHeader } from "./waypoint-scan/WaypointScanHeader";
 import { WaypointScanStage1Get } from "./waypoint-scan/WaypointScanStage1Get";
@@ -379,19 +380,21 @@ export function WaypointScanModal({
   };
 
   // Open existing PDF or image
-  const handleFileOpen = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileOpen = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+      await processImportedPdf(file);
+      e.target.value = "";
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
-        if (file.type === "application/pdf") {
-          processImportedPdf(file.name);
-        } else {
-          processImportedImage(dataUrl, true /* isFileImport */);
-        }
+        processImportedImage(dataUrl, true /* isFileImport */);
       }
     };
     reader.readAsDataURL(file);
@@ -457,41 +460,54 @@ export function WaypointScanModal({
     img.src = dataUrl;
   };
 
-  const processImportedPdf = (fileName: string) => {
-    const cleanName = fileName.replace(/\.pdf$/i, "");
-    setDocTitle(cleanName);
+  const processImportedPdf = async (file: File) => {
+    const toastId = toast.loading(`Rendering "${file.name}"...`);
+    try {
+      const buffer = await file.arrayBuffer();
+      const renderedPages = await convertPdfToPageImages(buffer, 2.0);
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 1200;
-    canvas.height = 1600;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#06172F";
-      ctx.font = "bold 38px serif";
-      ctx.fillText(fileName, 100, 160);
-      ctx.fillStyle = "#475569";
-      ctx.font = "22px sans-serif";
-      ctx.fillText("PDF Document loaded into Waypoint Scan", 100, 210);
-      ctx.fillText("You can place text, checkmarks, dates, and signatures anywhere on this page.", 100, 250);
-      ctx.strokeStyle = "#CBD5E1";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
+      if (renderedPages.length === 0) {
+        toast.error("Could not extract any pages from this PDF.", { id: toastId });
+        return;
+      }
 
-      const pageImg = canvas.toDataURL("image/jpeg", 0.94);
-      const newPage: WaypointScanPageDraft = {
-        id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        dataUrl: pageImg,
-        originalDataUrl: pageImg,
+      const cleanName = file.name.replace(/\.pdf$/i, "");
+      if (!docTitle || docTitle.startsWith("IEP Document (")) {
+        setDocTitle(cleanName);
+      }
+
+      const newDraftPages: WaypointScanPageDraft[] = renderedPages.map((rp, i) => ({
+        id: `page-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+        dataUrl: rp.dataUrl,
+        originalDataUrl: rp.dataUrl,
         rotation: 0,
         timestamp: Date.now(),
-      };
+      }));
 
-      setPages([newPage]);
-      setActivePageIndex(0);
+      setRawCaptureDataUrl(newDraftPages[0].dataUrl);
+
+      setPages((prev) => {
+        if (prev.length === 0) {
+          setActivePageIndex(0);
+          return newDraftPages;
+        } else {
+          setActivePageIndex(prev.length);
+          return [...prev, ...newDraftPages];
+        }
+      });
+
       stopCamera();
       setStage("review");
+      toast.success(
+        `Loaded ${renderedPages.length} PDF ${renderedPages.length === 1 ? "page" : "pages"}!`,
+        { id: toastId }
+      );
+    } catch (err: any) {
+      console.error("Failed to render PDF:", err);
+      toast.error(
+        "Could not render PDF. Please ensure the PDF is not encrypted or password-protected.",
+        { id: toastId }
+      );
     }
   };
 
