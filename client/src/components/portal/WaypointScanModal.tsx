@@ -43,7 +43,7 @@ import { WaypointSignaturePad } from "./WaypointSignaturePad";
 import { WaypointAdjustEdgesModal } from "./WaypointAdjustEdgesModal";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Check, Type } from "lucide-react";
+import { Sparkles, Check, Type, Minimize2, X } from "lucide-react";
 
 export interface WaypointScanModalProps {
   isOpen: boolean;
@@ -833,8 +833,43 @@ export function WaypointScanModal({
               : "rounded-3xl border border-blue-900/50 px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-6 max-h-[95vh]"
           )}
         >
-          {/* Header - only show when not in fullscreen mode so the document preview has maximum screen real estate */}
-          {!isFullscreen && <WaypointScanHeader stage={stage} onClose={onClose} />}
+          {/* Universal Fullscreen Header Strip: ALWAYS visible across EVERY step when in fullscreen */}
+          {isFullscreen ? (
+            <div className="shrink-0 w-full flex items-center justify-between px-3 py-1.5 mb-1 rounded-xl border border-blue-900/60 bg-[#06162D]/95 backdrop-blur-md z-30 shadow-md">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-serif text-white font-normal">Waypoint</span>
+                <span className="text-sm font-serif text-amber-400 font-bold italic">Scan</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-900/50 text-blue-200 border border-blue-800/40 font-bold">
+                  {stage === "get" && "Step 1 · Scan Document"}
+                  {stage === "review" && "Step 2 · Review"}
+                  {stage === "fill-sign" && "Step 3 · Fill & Sign"}
+                  {stage === "finish" && "Step 4 · Complete"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleToggleFullscreen}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95 ring-2 ring-amber-400/40"
+                  title="Exit Fullscreen"
+                >
+                  <Minimize2 className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
+                  <span>Exit Fullscreen</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                  title="Close Scanner"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <WaypointScanHeader stage={stage} onClose={onClose} />
+          )}
 
           {/* Draft Recovery Alert */}
           {existingDraft && (
