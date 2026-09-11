@@ -5,32 +5,16 @@
 import React from "react";
 import { WaypointWaveIcon } from "../WaypointWavyBackdrop";
 import PageIdBadge from "@/components/PageIdBadge";
-import { ChevronRight, X } from "lucide-react";
+
 
 interface WaypointScanHeaderProps {
   stage: "get" | "review" | "fill-sign" | "finish";
-  onClose: () => void;
+  onClose?: () => void;
 }
 
-export function WaypointScanHeader({ stage, onClose }: WaypointScanHeaderProps) {
+export function WaypointScanHeader({ stage }: WaypointScanHeaderProps) {
   return (
-    <div className="shrink-0 pb-3 pt-1 border-b border-blue-900/40 relative">
-      {/* Top micro-copy headers */}
-      <div className="hidden sm:flex items-center justify-between text-[9px] tracking-widest text-blue-300/40 uppercase font-bold select-none px-2 mb-1">
-        <span>PEOPLE • DOCUMENTS • BRIGHTER TOMORROWS</span>
-        <span>LIFE'S IMPORTANT PAPERWORK ON A CLEARER COURSE.</span>
-      </div>
-
-      {/* Close button */}
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-2 right-2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer z-20"
-        title="Close"
-      >
-        <X className="w-4 h-4" />
-      </button>
-
+    <div className="shrink-0 pb-3 pt-2 border-b border-blue-900/40 relative">
       {/* Brand Title: Waypoint Scan */}
       <div className="flex flex-col items-center justify-center text-center">
         <div className="flex items-center justify-center gap-2">
