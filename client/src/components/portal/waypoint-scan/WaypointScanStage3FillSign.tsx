@@ -89,14 +89,14 @@ export function WaypointScanStage3FillSign({
       <div className="relative flex-1 w-full flex flex-col items-center justify-center min-h-[340px] max-h-[58vh] overflow-hidden p-2 select-none">
         <div
           onClick={onDocumentClick}
-          className={`relative inline-block max-h-full max-w-full bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border-2 border-slate-300 transition-all ${
+          className={`relative inline-block max-h-full max-w-full bg-white rounded-none shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-slate-300 transition-all ${
             activeTool !== "none" ? "cursor-crosshair ring-2 ring-amber-400/80" : "cursor-default"
           }`}
         >
           <img
             src={currentPage.dataUrl}
             alt="Document for signing"
-            className="max-h-[52vh] max-w-full w-auto h-auto block object-contain pointer-events-none"
+            className="max-h-[52vh] max-w-full w-auto h-auto block object-contain pointer-events-none rounded-none"
           />
 
           {/* Render Placed Annotations */}

@@ -129,13 +129,13 @@ export function WaypointAdjustEdgesModal({
               ref={containerRef}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
-              className="relative max-w-full max-h-[56vh] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-blue-900/50 touch-none bg-slate-950/40 backdrop-blur-sm"
+              className="relative max-w-full max-h-[56vh] aspect-[3/4] rounded-none overflow-hidden shadow-2xl border border-blue-900/50 touch-none bg-slate-950/40 backdrop-blur-sm"
             >
               {/* Background captured image */}
               <img
                 src={imageSrc}
                 alt="Scan capture"
-                className="w-full h-full object-contain pointer-events-none"
+                className="w-full h-full object-contain pointer-events-none rounded-none"
               />
 
               {/* SVG Polygon overlay */}

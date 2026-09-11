@@ -206,11 +206,11 @@ export function WaypointScanStage2Review({
 
       {/* Document Sheet Display Area (Responsive, no squishing aspect ratio) */}
       <div className="relative flex-1 w-full flex items-center justify-center min-h-[340px] max-h-[62vh] overflow-hidden p-2">
-        <div className="relative inline-block max-h-full max-w-full bg-white rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-slate-300/90">
+        <div className="relative inline-block max-h-full max-w-full bg-white rounded-none overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-slate-300">
           <img
             src={isShowingOriginal && currentPage.originalDataUrl ? currentPage.originalDataUrl : currentPage.dataUrl}
             alt={`Page ${activePageIndex + 1}`}
-            className="max-h-[56vh] max-w-full w-auto h-auto block object-contain pointer-events-none select-none"
+            className="max-h-[56vh] max-w-full w-auto h-auto block object-contain pointer-events-none select-none rounded-none"
           />
 
           {/* Low Sharpness / Blur Warning Pill */}

@@ -44,12 +44,12 @@ export function WaypointScanStage4Finish({
       {/* Main Content Area: Document Sheet Preview + Direct Action Buttons */}
       <div className="w-full max-w-xl flex flex-col sm:flex-row items-center justify-center gap-6">
         {/* Document Sheet Preview with PDF badge */}
-        <div className="relative w-44 sm:w-52 aspect-[3/4] bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-slate-300 shrink-0">
+        <div className="relative w-44 sm:w-52 aspect-[3/4] bg-white rounded-none shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-slate-300 shrink-0">
           {firstPage && (
             <img
               src={firstPage.dataUrl}
               alt="Completed Document"
-              className="w-full h-full object-contain pointer-events-none"
+              className="w-full h-full object-contain pointer-events-none rounded-none"
             />
           )}
 
