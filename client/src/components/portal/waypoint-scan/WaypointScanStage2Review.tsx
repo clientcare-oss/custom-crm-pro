@@ -8,7 +8,6 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   RotateCw,
-  RotateCcw,
   Crop,
   Plus,
   Trash2,
@@ -17,10 +16,8 @@ import {
   AlertCircle,
   RefreshCcw,
   Check,
-  Compass,
-  SlidersHorizontal,
-  Sparkles,
-  Eye,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { WaypointScanPageDraft } from "@/lib/waypointScanStorage";
 
@@ -40,6 +37,8 @@ interface WaypointScanStage2ReviewProps {
   onMovePageLeft: (idx: number) => void;
   onMovePageRight: (idx: number) => void;
   blurWarning: string | null;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export function WaypointScanStage2Review({
@@ -49,122 +48,94 @@ export function WaypointScanStage2Review({
   onRetake,
   onUsePage,
   onRotate,
-  onAutoOrient,
-  onToggleOriginal,
-  isShowingOriginal = false,
   onAdjustEdges,
   onScanAnotherPage,
   onDeletePage,
   onMovePageLeft,
   onMovePageRight,
   blurWarning,
+  isFullscreen = false,
+  onToggleFullscreen,
 }: WaypointScanStage2ReviewProps) {
   const currentPage = pages[activePageIndex];
 
   if (!currentPage) return null;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between min-h-0 py-3 px-3 sm:px-6 w-full max-w-4xl mx-auto gap-3">
-      {/* Top Controls Toolbar: Clean, Unified, All Above Preview */}
-      <div className="w-full shrink-0 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-2xl bg-[#081B36]/90 border border-blue-900/50 backdrop-blur-md shadow-lg z-20 overflow-x-auto">
-        {/* Left: Multipage Selector */}
+    <div className="flex-1 flex flex-col items-center justify-between min-h-0 w-full max-w-5xl mx-auto gap-2">
+      {/* Top Controls Toolbar: Minimal, Clean, NO Horizontal Scroll */}
+      <div className="w-full shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-[#081B36]/90 border border-blue-900/50 backdrop-blur-md shadow-md z-20">
+        {/* Left: Page Navigator */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {pages.map((p, idx) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onSelectPageIndex(idx)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                idx === activePageIndex
-                  ? "bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(245,181,68,0.4)]"
-                  : "bg-white/5 text-blue-200/70 hover:bg-white/10 hover:text-white border border-white/10"
-              }`}
-            >
-              Page {idx + 1}
-            </button>
-          ))}
+          {pages.length > 1 ? (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onMovePageLeft(activePageIndex)}
+                disabled={activePageIndex === 0}
+                className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10"
+                title="Previous page"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="px-2.5 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black text-xs">
+                Page {activePageIndex + 1} of {pages.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => onMovePageRight(activePageIndex)}
+                disabled={activePageIndex === pages.length - 1}
+                className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10"
+                title="Next page"
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeletePage(activePageIndex)}
+                className="p-1 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 ml-1"
+                title="Delete page"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <span className="px-3 py-1 rounded-lg bg-amber-400 text-slate-950 font-black text-xs shadow-sm">
+              Page 1
+            </span>
+          )}
 
           {/* Add Another Page */}
           <button
             type="button"
             onClick={onScanAnotherPage}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/5 hover:bg-amber-400/20 text-blue-200 hover:text-amber-300 border border-white/10 hover:border-amber-400/40 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/5 hover:bg-amber-400/20 text-blue-200 hover:text-amber-300 border border-white/10 hover:border-amber-400/40 transition-all cursor-pointer"
             title="Scan or upload another page"
           >
             <Plus className="w-3.5 h-3.5 text-amber-400" />
-            <span>Add Page</span>
+            <span>Add</span>
           </button>
         </div>
 
-        {/* Right: Document Tools (Rotate, Upright, Enhanced, Adjust Edges) */}
-        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-          {/* Rotate Left 90 */}
-          <button
-            type="button"
-            onClick={() => onRotate("ccw")}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer shrink-0"
-            title="Rotate Left 90°"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Rotate Left</span>
-          </button>
-
-          {/* Rotate Right 90 */}
+        {/* Right: Only 3 Essential Actions (Rotate, Adjust Edges, Fullscreen) */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Rotate 90° */}
           <button
             type="button"
             onClick={() => onRotate("cw")}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer shrink-0"
-            title="Rotate Right 90°"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer"
+            title="Rotate 90° Clockwise"
           >
             <RotateCw className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Rotate Right</span>
+            <span>Rotate</span>
           </button>
-
-          {/* Auto-Orient Upright */}
-          {onAutoOrient && (
-            <button
-              type="button"
-              onClick={onAutoOrient}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-amber-300 hover:text-amber-200 border border-amber-400/30 text-xs font-semibold transition-colors cursor-pointer shrink-0"
-              title="Auto-orient document upright"
-            >
-              <Compass className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Upright</span>
-            </button>
-          )}
-
-          {/* Toggle Original vs Enhanced */}
-          {currentPage.originalDataUrl && onToggleOriginal && (
-            <button
-              type="button"
-              onClick={onToggleOriginal}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
-                isShowingOriginal
-                  ? "bg-blue-600/30 border-blue-400 text-blue-200"
-                  : "bg-white/5 border-white/10 text-blue-300 hover:bg-white/10"
-              }`}
-              title="Toggle between cleaned scan and original capture"
-            >
-              {isShowingOriginal ? (
-                <>
-                  <Eye className="w-3.5 h-3.5 text-blue-300" />
-                  <span className="hidden sm:inline">Original</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">Enhanced</span>
-                </>
-              )}
-            </button>
-          )}
 
           {/* Adjust Edges */}
           {onAdjustEdges && (
             <button
               type="button"
               onClick={onAdjustEdges}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer"
               title="Adjust document corners"
             >
               <Crop className="w-3.5 h-3.5 text-amber-400" />
@@ -172,47 +143,45 @@ export function WaypointScanStage2Review({
             </button>
           )}
 
-          {/* Page Reorder / Delete if multi-page */}
-          {pages.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={() => onMovePageLeft(activePageIndex)}
-                disabled={activePageIndex === 0}
-                className="p-1 px-2 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 transition-colors cursor-pointer shrink-0"
-                title="Move page left"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onMovePageRight(activePageIndex)}
-                disabled={activePageIndex === pages.length - 1}
-                className="p-1 px-2 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 transition-colors cursor-pointer shrink-0"
-                title="Move page right"
-              >
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onDeletePage(activePageIndex)}
-                className="p-1 px-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 transition-colors cursor-pointer shrink-0"
-                title="Delete this page"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </>
+          {/* Fullscreen Toggle */}
+          {onToggleFullscreen && (
+            <button
+              type="button"
+              onClick={onToggleFullscreen}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                isFullscreen
+                  ? "bg-amber-400/20 border-amber-400/50 text-amber-300"
+                  : "bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border-white/10"
+              }`}
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen View"}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Exit</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Fullscreen</span>
+                </>
+              )}
+            </button>
           )}
         </div>
       </div>
 
-      {/* Document Sheet Display Area (Strictly below toolbar, zero overlap) */}
-      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden p-1">
+      {/* Document Sheet Display Area (Full Page Display, never cut off) */}
+      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-1">
         <div className="relative max-h-full max-w-full bg-white rounded-none overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-slate-300 flex items-center justify-center">
           <img
-            src={isShowingOriginal && currentPage.originalDataUrl ? currentPage.originalDataUrl : currentPage.dataUrl}
+            src={currentPage.dataUrl}
             alt={`Page ${activePageIndex + 1}`}
-            className="max-h-[52vh] max-w-full w-auto h-auto block object-contain pointer-events-none select-none rounded-none"
+            className={`w-auto h-auto max-w-full object-contain pointer-events-none select-none rounded-none block ${
+              isFullscreen
+                ? "max-h-[82vh]"
+                : "max-h-[66vh] sm:max-h-[72vh] md:max-h-[76vh]"
+            }`}
           />
 
           {/* Low Sharpness / Blur Warning Pill */}

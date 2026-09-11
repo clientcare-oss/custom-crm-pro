@@ -8,6 +8,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   CornerQuad,
   detectDocumentCorners,
@@ -96,6 +97,7 @@ export function WaypointScanModal({
   const [isShowingOriginal, setIsShowingOriginal] = useState<boolean>(false);
   const [docTitle, setDocTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(category);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Annotations & Tools
   const [annotations, setAnnotations] = useState<Record<string, DocumentAnnotation[]>>({});
@@ -773,11 +775,24 @@ export function WaypointScanModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl w-[96vw] max-h-[96vh] p-0 bg-transparent border-none text-white shadow-2xl z-[1050] overflow-hidden">
-        
+      <DialogContent
+        className={cn(
+          "p-0 bg-[#051122] border-none text-white shadow-2xl z-[1050] overflow-hidden transition-all duration-200",
+          isFullscreen
+            ? "fixed inset-0 top-0 left-0 translate-x-0 translate-y-0 w-screen h-screen max-w-none max-h-none rounded-none"
+            : "max-w-4xl w-[96vw] max-h-[96vh] rounded-3xl"
+        )}
+        showCloseButton={false}
+      >
         {/* Full Blue Wavy Maritime Theme Backdrop */}
-        <WaypointWavyBackdrop className="rounded-3xl border border-blue-900/50 px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-6 shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
-          
+        <WaypointWavyBackdrop
+          className={cn(
+            "shadow-2xl flex flex-col overflow-hidden transition-all duration-200",
+            isFullscreen
+              ? "w-full h-full rounded-none border-none px-4 sm:px-8 pt-3 pb-3"
+              : "rounded-3xl border border-blue-900/50 px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-6 max-h-[95vh]"
+          )}
+        >
           {/* Header */}
           <WaypointScanHeader stage={stage} onClose={onClose} />
 
@@ -871,6 +886,8 @@ export function WaypointScanModal({
                   setActivePageIndex(idx + 1);
                 }}
                 blurWarning={blurWarning}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
               />
             )}
 
