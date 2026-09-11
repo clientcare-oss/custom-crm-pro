@@ -65,6 +65,19 @@ import PageIdBadge from "./components/PageIdBadge";
 import { WaypointScanGlobalModal } from "./components/portal/WaypointScanGlobalModal";
 
 function Router() {
+  // First Mate standalone pop-out window: mount immediately to prevent auth-loading flicker or remount loops
+  if (
+    typeof window !== "undefined" &&
+    (window.location.pathname === "/first-mate/popout" ||
+      window.location.pathname.startsWith("/first-mate/popout"))
+  ) {
+    return (
+      <Switch>
+        <Route path="/first-mate/popout" component={FirstMatePopout} />
+      </Switch>
+    );
+  }
+
   const { user, loading } = useAuth();
   const [location] = useLocation();
 
@@ -76,9 +89,7 @@ function Router() {
     window.location.pathname === "/book" ||
     window.location.pathname === "/intake" ||
     window.location.pathname.startsWith("/form/") ||
-    window.location.pathname.startsWith("/smart-files/response/") ||
-    window.location.pathname === "/first-mate/popout" ||
-    window.location.pathname.startsWith("/first-mate/popout");
+    window.location.pathname.startsWith("/smart-files/response/");
 
   if (loading && !isPublicRoute) {
     return (
@@ -90,16 +101,6 @@ function Router() {
 
   // Authenticated routes
   if (user) {
-    if (
-      window.location.pathname === '/first-mate/popout' ||
-      window.location.pathname.startsWith('/first-mate/popout')
-    ) {
-      return (
-        <Switch>
-          <Route path="/first-mate/popout" component={FirstMatePopout} />
-        </Switch>
-      );
-    }
 
     if (
       window.location.pathname === '/portal/book' ||

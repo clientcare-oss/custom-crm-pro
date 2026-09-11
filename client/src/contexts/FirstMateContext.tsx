@@ -424,6 +424,15 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   const channelRef = useRef<BroadcastChannel | null>(null);
   const sessionRef = useRef<FirstMateSession>(session);
 
+  // Anti-strobe deduplication & instance tracking
+  const instanceIdRef = useRef<string>(
+    typeof window !== "undefined"
+      ? `fm_${Math.random().toString(36).slice(2, 9)}_${Date.now()}`
+      : "fm_ssr"
+  );
+  const isRemoteSyncUpdateRef = useRef<boolean>(false);
+  const lastSerializedSessionRef = useRef<string>("");
+
   const isPopout = typeof window !== "undefined" && window.location.pathname.includes("/first-mate/popout");
 
   const openPopoutWindow = useCallback(() => {
@@ -454,12 +463,36 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Keep sessionRef always updated with latest authoritative session
+  // Keep sessionRef always updated and broadcast to other windows (WITHOUT echoing remote updates)
   useEffect(() => {
     sessionRef.current = session;
+    let serialized = "";
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-      channelRef.current?.postMessage({ type: "SYNC_SESSION", session });
+      serialized = JSON.stringify(session);
+    } catch {
+      return;
+    }
+
+    // If this update was applied from an incoming remote sync, DO NOT echo it back out!
+    if (isRemoteSyncUpdateRef.current) {
+      isRemoteSyncUpdateRef.current = false;
+      lastSerializedSessionRef.current = serialized;
+      return;
+    }
+
+    // If session state content has not actually changed, skip broadcasting
+    if (lastSerializedSessionRef.current === serialized) {
+      return;
+    }
+    lastSerializedSessionRef.current = serialized;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, serialized);
+      channelRef.current?.postMessage({
+        type: "SYNC_SESSION",
+        session,
+        senderId: instanceIdRef.current,
+      });
     } catch (e) {
       console.warn("Failed to save First Mate session:", e);
     }
@@ -472,17 +505,55 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       channelRef.current = channel;
 
       channel.onmessage = (event) => {
+        // Ignore any messages sent by this window/tab to prevent self-echo loops
+        if (event.data?.senderId === instanceIdRef.current) return;
+
         if (event.data?.type === "SYNC_SESSION" && event.data?.session) {
-          setSession(normalizeSession(event.data.session));
+          const incoming = event.data.session;
+          let serializedIncoming = "";
+          try {
+            serializedIncoming = JSON.stringify(incoming);
+          } catch {}
+
+          // Do nothing if incoming state is already identical to our current state
+          if (serializedIncoming && serializedIncoming === lastSerializedSessionRef.current) {
+            return;
+          }
+
+          isRemoteSyncUpdateRef.current = true;
+          lastSerializedSessionRef.current = serializedIncoming;
+          setSession(normalizeSession(incoming));
         } else if (event.data?.type === "START_NEW_SESSION" && event.data?.session) {
-          setSession(normalizeSession(event.data.session));
+          const incoming = event.data.session;
+          let serializedIncoming = "";
+          try {
+            serializedIncoming = JSON.stringify(incoming);
+          } catch {}
+          if (serializedIncoming && serializedIncoming === lastSerializedSessionRef.current) return;
+
+          isRemoteSyncUpdateRef.current = true;
+          lastSerializedSessionRef.current = serializedIncoming;
+          setSession(normalizeSession(incoming));
           setHasPreviousSession(true);
         } else if (event.data?.type === "CONTINUE_PREVIOUS_SESSION" && event.data?.session) {
-          setSession(normalizeSession(event.data.session));
+          const incoming = event.data.session;
+          let serializedIncoming = "";
+          try {
+            serializedIncoming = JSON.stringify(incoming);
+          } catch {}
+          if (serializedIncoming && serializedIncoming === lastSerializedSessionRef.current) return;
+
+          isRemoteSyncUpdateRef.current = true;
+          lastSerializedSessionRef.current = serializedIncoming;
+          setSession(normalizeSession(incoming));
         } else if (event.data?.type === "REQUEST_SYNC") {
           // Authoritative main window responds to pop-out request
-          if (sessionRef.current) {
-            channel.postMessage({ type: "SYNC_SESSION", session: sessionRef.current });
+          if (sessionRef.current && !isPopout) {
+            channel.postMessage({
+              type: "SYNC_SESSION",
+              session: sessionRef.current,
+              senderId: instanceIdRef.current,
+            });
           }
         } else if (event.data?.type === "CONTROL_ACTION" && !isPopout) {
           // Authoritative main window executes hardware audio actions requested by pop-out
@@ -505,7 +576,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
 
       // Pop-out asks for immediate full session state on load
       if (isPopout) {
-        channel.postMessage({ type: "REQUEST_SYNC" });
+        channel.postMessage({ type: "REQUEST_SYNC", senderId: instanceIdRef.current });
       }
 
       return () => {
@@ -514,13 +585,18 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isPopout]);
 
-  // Multi-tab storage fallback
+  // Multi-tab storage fallback (only for tabs that didn't receive BroadcastChannel)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handleStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
+        if (e.newValue === lastSerializedSessionRef.current) {
+          return;
+        }
         try {
           const parsed = JSON.parse(e.newValue);
+          isRemoteSyncUpdateRef.current = true;
+          lastSerializedSessionRef.current = e.newValue;
           setSession(normalizeSession(parsed));
         } catch (err) {}
       }
@@ -529,8 +605,9 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  // Timer: increment durationSeconds when ACTIVE
+  // Timer: increment durationSeconds when ACTIVE (authoritative main window only, to avoid timer conflict)
   useEffect(() => {
+    if (isPopout) return;
     if (session.status !== "ACTIVE") return;
 
     const timer = setInterval(() => {
@@ -544,7 +621,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [session.status]);
+  }, [session.status, isPopout]);
 
   // tRPC Mutations & Utilities
   const trpcUtils = trpc.useUtils();
@@ -607,39 +684,36 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     toast.success(`First Mate language set to ${langObj ? `${langObj.flag} ${langObj.name}` : lang}`);
   }, []);
 
-  // Automatically purge foreign hallucinations from session transcript on mount or language change
+  // Automatically purge foreign hallucinations from session transcript on mount or language change (main window only)
   useEffect(() => {
+    if (isPopout) return;
     const activeLang = session.language || language || "en";
     setSession((prev) => {
       const current = prev.transcript || [];
       const hasHallucination = current.some((t) => isSilenceHallucination(t.text, activeLang));
       if (!hasHallucination) return prev;
       const cleaned = current.filter((t) => !isSilenceHallucination(t.text, activeLang));
-      const next = {
+      return {
         ...prev,
         transcript: cleaned,
       };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
-      } catch {}
-      return next;
     });
-  }, [session.language, language]);
+  }, [session.language, language, isPopout]);
 
   const audioProviderRef = useRef<BrowserMicrophoneAudioProvider | null>(null);
   const transcriptionProviderRef = useRef<OpenAIRealtimeTranscriptionProvider | null>(null);
   const addTranscriptTurnRef = useRef<((speakerRole: SpeakerRole, text: string, source?: any) => Promise<void>) | null>(null);
 
-  // Load available audio devices
+  // Load available audio devices (authoritative main window only)
   useEffect(() => {
+    if (isPopout) return;
     BrowserMicrophoneAudioProvider.getAudioInputDevices().then((devs) => {
       if (devs.length > 0) {
         setAudioDevices(devs);
         setSelectedAudioDevice((prev) => prev || devs[0].deviceId);
       }
     });
-  }, []);
+  }, [isPopout]);
 
   const setSelectedAudioDeviceHandler = useCallback(async (deviceId: string) => {
     setSelectedAudioDevice(deviceId);
@@ -653,8 +727,9 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [audioInputStatus]);
 
-  // Initialize or update providers
+  // Initialize or update providers (authoritative main window only)
   useEffect(() => {
+    if (isPopout) return;
     if (!audioProviderRef.current) {
       const audioProv = new BrowserMicrophoneAudioProvider({ deviceId: selectedAudioDevice });
       audioProviderRef.current = audioProv;
@@ -681,7 +756,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       transcriptionProviderRef.current.setSpeaker(selectedSpeaker);
       transcriptionProviderRef.current.setLanguage(activeLanguage);
     }
-  }, [session.sessionId, session.language, language, selectedSpeaker, trpcUtils.client, selectedAudioDevice]);
+  }, [session.sessionId, session.language, language, selectedSpeaker, trpcUtils.client, selectedAudioDevice, isPopout]);
 
   // Connect audio provider chunks to transcription provider
   useEffect(() => {
