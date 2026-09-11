@@ -901,23 +901,22 @@ export default function CrewQuarters() {
           </div>
         </Card>
 
-        {/* Card 4C: Waypoint Inspiration Poster Tile — Cinematic Lighthouse Theme */}
-        <div className="rounded-2xl border border-blue-500/40 bg-[#020B18] p-6 shadow-2xl flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px]">
-          {/* Authentic Cinematic Lighthouse Night Ocean Backdrop */}
+        {/* Card 4C: Waypoint Inspiration Poster Tile — Vibrant Cinematic Lighthouse Theme */}
+        <div className="rounded-2xl border border-blue-400/50 bg-[#061830] p-6 shadow-2xl flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px]">
+          {/* Vibrant Cinematic Lighthouse Night Ocean Backdrop (Bright & Rich) */}
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-70 group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+            className="absolute inset-0 bg-cover bg-[position:72%_center] brightness-[1.2] contrast-[1.08] saturate-[1.2] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
             style={{ backgroundImage: "url('/lighthouse-night-bg.png')" }}
           />
-          {/* Subtle Twilight & Deep Ocean Gradients */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#020B18] via-[#020B18]/50 to-[#020B18]/75 pointer-events-none" />
-          <div className="absolute inset-0 bg-radial-gradient from-transparent to-[#010814]/80 pointer-events-none" />
+          {/* Gentle, Transparent Edge Scrims (Preserves Picture Brightness) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/65 pointer-events-none" />
 
           {/* Upper Section: Elegant Script Typography */}
-          <div className="relative z-10 pt-3 flex flex-col items-center">
-            <h3 className="font-serif italic text-2xl sm:text-3xl text-[#F5CE85] tracking-wide leading-snug drop-shadow-[0_2px_14px_rgba(245,206,133,0.5)]">
+          <div className="relative z-10 pt-2 flex flex-col items-center">
+            <h3 className="font-serif italic text-2xl sm:text-3xl text-[#FFDF8A] tracking-wide leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
               The work<br />you do matters.
             </h3>
-            <div className="w-12 h-[2px] bg-gradient-to-r from-transparent via-[#F5CE85] to-transparent my-3 shadow-[0_0_10px_rgba(245,206,133,0.9)]" />
+            <div className="w-12 h-[2.5px] bg-[#FFDF8A] rounded-full my-2.5 shadow-[0_0_12px_rgba(255,223,138,0.9)]" />
           </div>
 
           {/* Lower Section: Waypoint Lighthouse Emblem & Brand Wordmark */}
