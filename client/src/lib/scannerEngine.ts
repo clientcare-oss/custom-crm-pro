@@ -140,7 +140,149 @@ export function getNativeFallbackCorners(
 }
 
 /**
- * Detects paper corners via OpenCV or smart contrast boundaries.
+ * Pure JavaScript paper boundary & corner quad detector.
+ * Works natively in any browser with 0 external dependencies (no OpenCV CDN required).
+ * Analyzes contrast between bright document paper and darker backgrounds/desks.
+ */
+export function detectDocumentCornersPureJS(
+  sourceCanvas: HTMLCanvasElement,
+  fallbackMarginRatio = 0.05
+): CornerQuad {
+  const width = sourceCanvas.width;
+  const height = sourceCanvas.height;
+
+  // Downsample to ~240px wide for sub-10ms performance
+  const sampleW = 240;
+  const sampleH = Math.max(160, Math.round((height / width) * sampleW));
+  const scaleX = width / sampleW;
+  const scaleY = height / sampleH;
+
+  const sampleCanvas = document.createElement("canvas");
+  sampleCanvas.width = sampleW;
+  sampleCanvas.height = sampleH;
+  const sCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
+  if (!sCtx) {
+    return getNativeFallbackCorners(width, height, fallbackMarginRatio);
+  }
+
+  sCtx.drawImage(sourceCanvas, 0, 0, sampleW, sampleH);
+  const imgData = sCtx.getImageData(0, 0, sampleW, sampleH);
+  const data = imgData.data;
+
+  // 1. Convert to grayscale & compute histogram for Otsu thresholding
+  const gray = new Uint8Array(sampleW * sampleH);
+  const hist = new Int32Array(256);
+
+  for (let i = 0; i < gray.length; i++) {
+    const idx = i * 4;
+    // Standard perceptual luminance
+    const lum = Math.round(
+      0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]
+    );
+    gray[i] = lum;
+    hist[lum]++;
+  }
+
+  // 2. Otsu threshold calculation
+  const total = gray.length;
+  let sum = 0;
+  for (let t = 0; t < 256; t++) sum += t * hist[t];
+
+  let sumB = 0;
+  let wB = 0;
+  let maxVar = 0;
+  let threshold = 128;
+
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+
+    sumB += t * hist[t];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const betweenVar = wB * wF * (mB - mF) * (mB - mF);
+
+    if (betweenVar > maxVar) {
+      maxVar = betweenVar;
+      threshold = t;
+    }
+  }
+
+  // Clamp threshold into realistic document paper range
+  threshold = Math.max(80, Math.min(215, threshold));
+
+  // 3. Find extremal paper points (top-left, top-right, bottom-right, bottom-left)
+  let minSum = Infinity, maxSum = -Infinity;
+  let minDiff = Infinity, maxDiff = -Infinity;
+
+  let ptTL: Point | null = null; // minimizes x + y
+  let ptBR: Point | null = null; // maximizes x + y
+  let ptTR: Point | null = null; // maximizes x - y
+  let ptBL: Point | null = null; // minimizes x - y
+
+  let paperPixelCount = 0;
+
+  for (let y = 3; y < sampleH - 3; y++) {
+    for (let x = 3; x < sampleW - 3; x++) {
+      const lum = gray[y * sampleW + x];
+      if (lum >= threshold) {
+        paperPixelCount++;
+
+        const sumXY = x + y;
+        const diffXY = x - y;
+
+        if (sumXY < minSum) {
+          minSum = sumXY;
+          ptTL = { x: Math.round(x * scaleX), y: Math.round(y * scaleY) };
+        }
+        if (sumXY > maxSum) {
+          maxSum = sumXY;
+          ptBR = { x: Math.round(x * scaleX), y: Math.round(y * scaleY) };
+        }
+        if (diffXY > maxDiff) {
+          maxDiff = diffXY;
+          ptTR = { x: Math.round(x * scaleX), y: Math.round(y * scaleY) };
+        }
+        if (diffXY < minDiff) {
+          minDiff = diffXY;
+          ptBL = { x: Math.round(x * scaleX), y: Math.round(y * scaleY) };
+        }
+      }
+    }
+  }
+
+  const paperRatio = paperPixelCount / (sampleW * sampleH);
+
+  // If paper covers almost the entire image (>92%), or paper is too sparse (<15%),
+  // or corners were not identified, fall back to native full-bleed margins
+  if (
+    !ptTL || !ptTR || !ptBR || !ptBL ||
+    paperRatio < 0.15 ||
+    paperRatio > 0.92
+  ) {
+    return getNativeFallbackCorners(width, height, fallbackMarginRatio);
+  }
+
+  // Verify quad dimension plausibility
+  const quadWidth = Math.max(Math.hypot(ptTR.x - ptTL.x, ptTR.y - ptTL.y), Math.hypot(ptBR.x - ptBL.x, ptBR.y - ptBL.y));
+  const quadHeight = Math.max(Math.hypot(ptBL.x - ptTL.x, ptBL.y - ptTL.y), Math.hypot(ptBR.x - ptTR.x, ptBR.y - ptTR.y));
+
+  if (quadWidth < width * 0.25 || quadHeight < height * 0.25) {
+    return getNativeFallbackCorners(width, height, fallbackMarginRatio);
+  }
+
+  try {
+    return orderCornerPoints([ptTL, ptTR, ptBR, ptBL]);
+  } catch {
+    return getNativeFallbackCorners(width, height, fallbackMarginRatio);
+  }
+}
+
+/**
+ * Detects paper corners via OpenCV if available, or smart pure-JavaScript
+ * contrast boundaries.
  */
 export function detectDocumentCorners(
   sourceCanvas: HTMLCanvasElement,
@@ -205,11 +347,12 @@ export function detectDocumentCorners(
         return bestQuad;
       }
     } catch (e) {
-      console.warn("[ScannerEngine] OpenCV detection exception, falling back:", e);
+      console.warn("[ScannerEngine] OpenCV detection exception, falling back to pure JS:", e);
     }
   }
 
-  return getNativeFallbackCorners(width, height, fallbackMarginRatio);
+  // Pure JavaScript paper edge detector fallback
+  return detectDocumentCornersPureJS(sourceCanvas, fallbackMarginRatio);
 }
 
 /**

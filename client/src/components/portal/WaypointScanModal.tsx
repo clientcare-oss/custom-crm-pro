@@ -365,8 +365,23 @@ export function WaypointScanModal({
       if (ctx) {
         ctx.drawImage(img, 0, 0);
 
-        // Keep imported image pristine (preserve 100% sharpness without accidental crop)
-        const cleaned = canvas.toDataURL("image/jpeg", 0.94);
+        // Retain raw upload for Adjust Edges and Original/Enhanced toggle
+        setRawCaptureDataUrl(dataUrl);
+
+        // Detect document corners & perspective-warp
+        const corners = detectDocumentCorners(canvas);
+        setDetectedCorners(corners);
+
+        const warpedCanvas = warpAndEnhanceDocument(canvas, corners);
+        const cleaned = warpedCanvas.toDataURL("image/jpeg", 0.94);
+
+        // Calculate sharpness score
+        const score = calculateSharpnessScore(canvas);
+        if (score < 30) {
+          setBlurWarning("This uploaded image looks slightly blurry. You can review or adjust edges if needed.");
+        } else {
+          setBlurWarning(null);
+        }
 
         const newPage: WaypointScanPageDraft = {
           id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
