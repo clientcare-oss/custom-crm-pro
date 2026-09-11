@@ -262,12 +262,16 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     id: "tools",
     name: "Tools",
     icon: Wrench,
-    sidebarGroup: "case",
-    displayOrder: 30,
-    visibleStages: ["ACTIVE"],
-    unlockedStages: ["ACTIVE"],
-    lockedPreviewAllowed: false,
-    description: "Advocacy tools: IEP Comparator & State Complaint Builder."
+    sidebarGroup: "permanent",
+    displayOrder: 25,
+    visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
+    unlockedStages: ["ACTIVE", "CLOSING"],
+    lockedPreviewAllowed: true,
+    description: "Advocacy tools: IEP Comparator & State Complaint Builder.",
+    includeInPortalTour: true,
+    tourTitle: "Advocacy Tools",
+    tourDescription: "Special education advocacy utilities including the IEP/504 Comparator and meeting tools.",
+    tourDisplayOrder: 7
   },
   {
     id: "cases",

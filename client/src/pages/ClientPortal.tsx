@@ -487,44 +487,246 @@ function PortalLoginForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-// ── Portal Tools Tab Content ─────────────────────────────────────────────────
-function PortalToolsContent({ contactId }: { contactId: number }) {
+// ── Portal Tools Tab Content (PG-023-TLS) ────────────────────────────────────
+function PortalToolsContent({
+  contactId,
+  studentName = "Student",
+  isAdminView = false,
+  isLight = false,
+  onNavigateTab,
+}: {
+  contactId: number;
+  studentName?: string;
+  isAdminView?: boolean;
+  isLight?: boolean;
+  onNavigateTab?: (tab: string) => void;
+}) {
+  const [, setLocation] = useLocation();
   const { data: iepDoc } = trpc.iep.get.useQuery({ contactId }, { enabled: !!contactId });
   const hasBothVersions = !!(iepDoc?.currentFileKey && iepDoc?.previousFileKey);
 
   return (
-    <div className="space-y-4">
-      <Card className={`p-5 rounded-xl border flex flex-col gap-3 ${hasBothVersions ? "border-emerald-200 dark:border-emerald-800" : "border-border"}`}>
-        <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-lg ${hasBothVersions ? "bg-emerald-100 dark:bg-emerald-950/40" : "bg-muted"}`}>
-            <GitCompare className={`h-5 w-5 ${hasBothVersions ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
+    <div className={`p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto ${isLight ? "text-slate-900" : "text-white"}`}>
+      {/* ── Top Header with PG-023-TLS Page ID ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-blue-900/40 pb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-amber-400/10 text-amber-300 border border-amber-400/30 shadow-[0_0_15px_rgba(245,158,11,0.2)] shrink-0">
+            <Wrench className="h-6 w-6" />
           </div>
-          <div className="flex-1">
+          <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-foreground">IEP/504 Comparison</p>
-              {hasBothVersions
-                ? <span className="text-xs rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold">Ready</span>
-                : <span className="text-xs rounded-full px-2 py-0.5 bg-muted text-muted-foreground font-semibold flex items-center gap-1"><Lock className="h-3 w-3" /> Locked</span>}
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight">Advocacy Tools & Utilities</h1>
+              <PageIdBadge id="PG-023-TLS" name="Advocacy Tools" />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {hasBothVersions
-                ? "Compare your current and previous IEP/504 side by side to see what changed."
-                : "Upload two versions of the IEP/504 in the Files tab to unlock this tool."}
+            <p className="text-xs sm:text-sm text-white/60">
+              Interactive advocacy suite and AI-assisted IEP tools for <span className="text-amber-300 font-semibold">{studentName}</span>
             </p>
           </div>
         </div>
-        <Button size="sm" variant={hasBothVersions ? "default" : "outline"} disabled={!hasBothVersions}
-          className="self-start inline-flex items-center gap-1.5 text-xs"
-          onClick={() => hasBothVersions && (window.location.href = `/portal?tab=tools&contactId=${contactId}`)}>
-          <GitCompare className="h-3.5 w-3.5" />
-          {hasBothVersions ? "Compare IEP/504 — Coming Soon" : "Locked — Upload 2 IEP versions first"}
-        </Button>
-      </Card>
-      <Card className="p-5 rounded-xl border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-2 py-8">
-        <Wrench className="h-6 w-6 text-muted-foreground" />
-        <p className="text-sm font-semibold text-muted-foreground">More tools coming soon</p>
-        <p className="text-xs text-muted-foreground text-center max-w-xs">Additional AI-powered advocacy tools will appear here as they are developed.</p>
-      </Card>
+
+        {/* Info Ribbon */}
+        <div className="px-4 py-2.5 rounded-xl bg-[#0e2a4a] border border-blue-600/40 text-blue-100 shadow-md max-w-lg flex items-center gap-3">
+          <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-300 shrink-0">
+            <Info className="h-4 w-4" />
+          </div>
+          <p className="font-semibold text-white/95 text-xs sm:text-sm leading-snug">
+            Equipping families and advocates with automated comparison, meeting recording, and document analysis.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Tools Grid ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        {/* Tool 1: IEP / 504 Comparator */}
+        <Card className={`rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-xl ${
+          isLight
+            ? "bg-white border-slate-200 hover:border-amber-400/60"
+            : "bg-[#06172F] border-blue-900/50 hover:border-amber-400/50 shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+        }`}>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="p-3 rounded-xl bg-amber-400/10 text-amber-300 border border-amber-400/30">
+                <GitCompare className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/80 border border-blue-800/60 text-amber-300 font-bold">
+                  PG-010-IEP
+                </span>
+                {hasBothVersions ? (
+                  <span className="text-xs rounded-full px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Ready to Compare
+                  </span>
+                ) : (
+                  <span className="text-xs rounded-full px-2.5 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Requires 2 IEPs
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-white">IEP & 504 Comparator</h3>
+              <p className="text-xs text-white/60 mt-1 leading-relaxed">
+                Automated side-by-side diff engine that analyzes and compares changes between the current and previous IEP or 504 plan, highlighting modifications in goals, accommodations, and service hours.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-5 mt-4 border-t border-blue-900/40 flex items-center justify-between gap-3">
+            <span className="text-[11px] text-white/40">
+              {hasBothVersions ? "2 document versions linked on file" : "Upload current & prior IEPs to unlock"}
+            </span>
+            {hasBothVersions ? (
+              <Button
+                size="sm"
+                onClick={() => setLocation(`/tools?contactId=${contactId}`)}
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl gap-1.5 shadow-[0_0_12px_rgba(245,181,68,0.25)] cursor-pointer"
+              >
+                <GitCompare className="h-3.5 w-3.5" />
+                <span>Launch Comparator</span>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onNavigateTab ? onNavigateTab("smart-docs") : setLocation(`/portal?tab=smart-docs`)}
+                className="border-blue-700/60 hover:bg-blue-900/40 text-blue-200 text-xs rounded-xl gap-1.5 cursor-pointer"
+              >
+                <VaultSafeIcon className="h-3.5 w-3.5" />
+                <span>Open Document Vault</span>
+              </Button>
+            )}
+          </div>
+        </Card>
+
+        {/* Tool 2: Voyage Meeting Recorder */}
+        <Card className={`rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-xl ${
+          isLight
+            ? "bg-white border-slate-200 hover:border-sky-400/60"
+            : "bg-[#06172F] border-blue-900/50 hover:border-sky-400/50 shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+        }`}>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="p-3 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/30">
+                <Video className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/80 border border-blue-800/60 text-sky-300 font-bold">
+                  PG-010-REC
+                </span>
+                <span className="text-xs rounded-full px-2.5 py-0.5 bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> Available
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-white">Voyage Meeting Recorder</h3>
+              <p className="text-xs text-white/60 mt-1 leading-relaxed">
+                Live voice recording, speech-to-text transcript generation, and meeting summaries for ARD/IEP team conferences. Synchronizes recorded sessions directly into your family's Voyage Log.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-5 mt-4 border-t border-blue-900/40 flex items-center justify-between gap-3">
+            <span className="text-[11px] text-white/40">Integrated live audio transcription</span>
+            <Button
+              size="sm"
+              onClick={() => onNavigateTab ? onNavigateTab("voyage-log") : setLocation(`/portal?tab=voyage-log`)}
+              className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl gap-1.5 shadow-[0_0_12px_rgba(14,165,233,0.25)] cursor-pointer"
+            >
+              <Video className="h-3.5 w-3.5" />
+              <span>Open Voyage Log</span>
+            </Button>
+          </div>
+        </Card>
+
+        {/* Tool 3: Advocacy Worksheet Studio */}
+        <Card className={`rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-xl ${
+          isLight
+            ? "bg-white border-slate-200 hover:border-emerald-400/60"
+            : "bg-[#06172F] border-blue-900/50 hover:border-emerald-400/50 shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+        }`}>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <FileText className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/80 border border-blue-800/60 text-emerald-300 font-bold">
+                  PG-010-WS
+                </span>
+                <span className="text-xs rounded-full px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" /> Templates
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-white">Worksheet Studio</h3>
+              <p className="text-xs text-white/60 mt-1 leading-relaxed">
+                Structured parent input templates, sensory diet worksheets, accommodation checklists, and one-page student profiles tailored for school multidisciplinary evaluation teams.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-5 mt-4 border-t border-blue-900/40 flex items-center justify-between gap-3">
+            <span className="text-[11px] text-white/40">Advocate-curated worksheet builders</span>
+            <Button
+              size="sm"
+              onClick={() => setLocation("/tools/worksheet-builder")}
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-pointer"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Open Worksheets</span>
+            </Button>
+          </div>
+        </Card>
+
+        {/* Tool 4: State Complaint Builder */}
+        <Card className={`rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 shadow-xl ${
+          isLight
+            ? "bg-white border-slate-200 hover:border-purple-400/60"
+            : "bg-[#06172F] border-blue-900/50 hover:border-purple-400/50 shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+        }`}>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                <PenTool className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/80 border border-blue-800/60 text-purple-300 font-bold">
+                  PG-020
+                </span>
+                <span className="text-xs rounded-full px-2.5 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-500/40 font-semibold flex items-center gap-1">
+                  <Scale className="h-3 w-3" /> Legal Drafting
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-white">State Complaint Builder</h3>
+              <p className="text-xs text-white/60 mt-1 leading-relaxed">
+                Comprehensive IDEA & Section 504 formal complaint drafting utility with chronological issue timelines, procedural violation mapping, and Georgia DOE template compliance.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-5 mt-4 border-t border-blue-900/40 flex items-center justify-between gap-3">
+            <span className="text-[11px] text-white/40">Formal dispute resolution console</span>
+            <Button
+              size="sm"
+              onClick={() => setLocation("/tools/state-complaint-builder")}
+              className="bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-xs rounded-xl gap-1.5 shadow-[0_0_12px_rgba(168,85,247,0.25)] cursor-pointer"
+            >
+              <PenTool className="h-3.5 w-3.5" />
+              <span>Open Complaint Builder</span>
+            </Button>
+          </div>
+        </Card>
+
+      </div>
     </div>
   );
 }
@@ -982,7 +1184,7 @@ export default function ClientPortal() {
 
   const filteredNavItems = NAV_ITEMS.filter(({ id }) => {
     if (id === "attorney" && !effectiveStudent?.attorneyName && (!isWorkspaceMode || !isAdminView)) return false;
-    const isInternalTab = id === "notes" || id === "tools" || id === "cases";
+    const isInternalTab = id === "notes" || id === "cases";
     if (isInternalTab && (!isWorkspaceMode || !isAdminView)) return false;
     return true;
   });
@@ -1478,66 +1680,16 @@ export default function ClientPortal() {
         );
 
       case "tools":
-        return isAdminView ? (
-          <div className="p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Advocacy Tools</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">IEP comparison and state complaint builders.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-5 rounded-xl border border-border bg-card">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <Wrench className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">IEP/504 Comparison</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Compare two versions of the student's IEP or 504 plan to highlight all additions, deletions, and updates.
-                    </p>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => setLocation(`/tools?contactId=${effectiveStudentContactId}`)}
-                      className="mt-3 text-xs font-semibold"
-                    >
-                      Open Comparison Tool
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-5 rounded-xl border border-border bg-card">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <PenTool className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">State Complaint Builder</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Draft legal special education state complaints using historical notes, case timeline records, and templates.
-                    </p>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => setLocation("/tools/state-complaint-builder")}
-                      className="mt-3 text-xs font-semibold"
-                    >
-                      Open Complaint Builder
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-        ) : (
-          <div className="p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-foreground">Tools</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Advocacy tools for {effectiveStudent.firstName}'s case</p>
-            </div>
-            {effectiveStudentContactId && <PortalToolsContent contactId={effectiveStudentContactId} />}
-          </div>
+        return (
+          <ScopedErrorBoundary moduleName="Advocacy Tools">
+            <PortalToolsContent
+              contactId={effectiveStudentContactId || 0}
+              studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim() : "Student"}
+              isAdminView={isAdminView}
+              isLight={theme === "blue"}
+              onNavigateTab={(tab) => setActiveTab(tab as any)}
+            />
+          </ScopedErrorBoundary>
         );
 
       case "cases":

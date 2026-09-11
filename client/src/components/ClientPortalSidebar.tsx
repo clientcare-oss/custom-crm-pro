@@ -404,7 +404,7 @@ export function ClientPortalSidebar({
                       {isUnexplored && (
                         <span className="text-emerald-400 font-bold text-base leading-none" title="Unexplored area">•</span>
                       )}
-                      {isOnboardingOrPreSale && (id === "details" || id === "smart-docs" || id === "files" || id === "tasks") && (
+                      {isOnboardingOrPreSale && (id === "details" || id === "smart-docs" || id === "files" || id === "tasks" || id === "tools") && (
                         <Lock className="h-3 w-3 text-white/30" />
                       )}
                     </span>
