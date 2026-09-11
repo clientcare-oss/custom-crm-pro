@@ -901,38 +901,85 @@ export default function CrewQuarters() {
           </div>
         </Card>
 
-        {/* Card 4C: Waypoint Inspiration Poster Tile */}
-        <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-b from-[#0B254A] via-[#051428] to-[#020A14] p-6 shadow-2xl flex flex-col items-center justify-between text-center relative overflow-hidden h-full group">
-          {/* Subtle Ocean Mountain Backdrop Silhouette */}
-          <div className="absolute inset-0 opacity-25 pointer-events-none">
-            <svg viewBox="0 0 400 300" fill="none" className="w-full h-full object-cover">
-              <path d="M0 240 Q100 210 200 235 T400 230 L400 300 L0 300 Z" fill="#0369a1" />
-              <path d="M0 260 Q150 245 280 265 T400 255 L400 300 L0 300 Z" fill="#0c4a6e" />
-              <path d="M40 230 L90 140 L140 230 Z" fill="#072343" />
-              <path d="M120 230 L180 110 L240 230 Z" fill="#0a2e58" />
-              <path d="M220 230 L300 130 L380 230 Z" fill="#072343" />
-            </svg>
-          </div>
+        {/* Card 4C: Waypoint Inspiration Poster Tile — Cinematic Lighthouse Theme */}
+        <div className="rounded-2xl border border-blue-500/40 bg-[#020B18] p-6 shadow-2xl flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px]">
+          {/* Authentic Cinematic Lighthouse Night Ocean Backdrop */}
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-70 group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+            style={{ backgroundImage: "url('/lighthouse-night-bg.png')" }}
+          />
+          {/* Subtle Twilight & Deep Ocean Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020B18] via-[#020B18]/50 to-[#020B18]/75 pointer-events-none" />
+          <div className="absolute inset-0 bg-radial-gradient from-transparent to-[#010814]/80 pointer-events-none" />
 
-          <div className="relative z-10 pt-4 flex flex-col items-center">
-            {/* Script Heading */}
-            <h3 className="font-serif italic text-2xl sm:text-3xl text-amber-300 tracking-wide leading-snug drop-shadow-[0_2px_10px_rgba(245,181,68,0.4)]">
+          {/* Upper Section: Elegant Script Typography */}
+          <div className="relative z-10 pt-3 flex flex-col items-center">
+            <h3 className="font-serif italic text-2xl sm:text-3xl text-[#F5CE85] tracking-wide leading-snug drop-shadow-[0_2px_14px_rgba(245,206,133,0.5)]">
               The work<br />you do matters.
             </h3>
-            <div className="w-12 h-0.5 bg-amber-400/80 rounded-full my-3 shadow-[0_0_8px_rgba(245,181,68,0.6)]" />
+            <div className="w-12 h-[2px] bg-gradient-to-r from-transparent via-[#F5CE85] to-transparent my-3 shadow-[0_0_10px_rgba(245,206,133,0.9)]" />
           </div>
 
-          {/* Waypoint Mountain Logo & Slogan Footer */}
+          {/* Lower Section: Waypoint Lighthouse Emblem & Brand Wordmark */}
           <div className="relative z-10 pb-2 flex flex-col items-center">
-            <svg viewBox="0 0 80 45" className="w-12 h-7 text-amber-400 mb-1" fill="currentColor">
-              <polygon points="40,5 55,38 25,38" fill="#F5B544" />
-              <polygon points="25,18 37,38 13,38" fill="#D99B26" />
-              <polygon points="55,18 67,38 43,38" fill="#E8A932" />
+            {/* Custom Golden Lighthouse Emblem (Replacing Mountains) */}
+            <svg
+              viewBox="0 0 70 55"
+              className="w-14 h-11 text-amber-400 mb-1 drop-shadow-[0_0_12px_rgba(245,181,68,0.5)]"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient id="posterGoldRayLeft" x1="100%" y1="50%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#FDE047" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#F5B544" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="posterGoldRayRight" x1="0%" y1="50%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#FDE047" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#F5B544" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="posterTowerGold" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#F5B544" />
+                  <stop offset="45%" stopColor="#FEF08A" />
+                  <stop offset="100%" stopColor="#D97706" />
+                </linearGradient>
+                <linearGradient id="posterBaseGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#D97706" />
+                  <stop offset="100%" stopColor="#92400E" />
+                </linearGradient>
+              </defs>
+
+              {/* Radiant Beacon Light Beams */}
+              <path d="M28 15 L2 8 L5 21 Z" fill="url(#posterGoldRayLeft)" />
+              <path d="M42 15 L68 8 L65 21 Z" fill="url(#posterGoldRayRight)" />
+
+              {/* Lighthouse Cap & Spire */}
+              <circle cx="35" cy="3.5" r="1.2" fill="#FEF08A" />
+              <rect x="34.4" y="3.5" width="1.2" height="3.5" fill="#F5B544" />
+              <path d="M30.5 9 C30.5 6.5 39.5 6.5 39.5 9 L40.5 11 L29.5 11 Z" fill="#F5B544" />
+
+              {/* Illuminated Lantern Room */}
+              <rect x="29" y="11" width="12" height="7" rx="1" fill="#FEF08A" />
+              <rect x="31" y="11" width="1.2" height="7" fill="#B45309" />
+              <rect x="37.8" y="11" width="1.2" height="7" fill="#B45309" />
+              <line x1="27" y1="18" x2="43" y2="18" stroke="#D97706" strokeWidth="1.6" strokeLinecap="round" />
+
+              {/* Tapered Lighthouse Tower */}
+              <polygon points="30,18 40,18 43,41 27,41" fill="url(#posterTowerGold)" />
+              {/* Slit Windows */}
+              <rect x="33.5" y="23" width="3" height="4" rx="1" fill="#020B18" />
+              <rect x="33.5" y="32" width="3" height="4" rx="1" fill="#020B18" />
+
+              {/* Stone Foundation Base & Coastline Rocks */}
+              <polygon points="25,41 45,41 48,46 22,46" fill="url(#posterBaseGold)" />
+              <path d="M12 50 C18 46 25 48 31 46 C38 44 45 47 58 49 C48 53 24 53 12 50 Z" fill="#F5B544" opacity="0.9" />
             </svg>
-            <div className="text-sm font-serif font-black tracking-[0.25em] text-white uppercase">
+
+            {/* Typography */}
+            <div className="text-sm font-serif font-black tracking-[0.25em] text-white uppercase drop-shadow-md">
               WAYPOINT
             </div>
-            <div className="text-[9px] font-mono tracking-[0.2em] text-amber-400/90 uppercase mt-0.5">
+            <div className="text-[9px] font-mono font-bold tracking-[0.22em] text-[#F5CE85] uppercase mt-0.5">
               ADVOCACY · EDUCATION · RESULTS
             </div>
           </div>
