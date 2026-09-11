@@ -86,7 +86,7 @@ export function WaypointScanStage3FillSign({
       </div>
 
       {/* Interactive Document Workspace */}
-      <div className="relative flex-1 w-full flex flex-col items-center justify-center min-h-[340px] max-h-[58vh] overflow-hidden p-2 select-none">
+      <div className="relative flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden p-1 select-none">
         <div
           onClick={onDocumentClick}
           className={`relative inline-block max-h-full max-w-full bg-white rounded-none shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-slate-300 transition-all ${

@@ -65,19 +65,19 @@ export function WaypointScanStage2Review({
 
   return (
     <div className="flex-1 flex flex-col items-center justify-between min-h-0 py-3 px-3 sm:px-6 w-full max-w-4xl mx-auto gap-3">
-      {/* Top Page Management Toolbar */}
-      <div className="w-full flex items-center justify-between flex-wrap gap-2 px-2">
-        {/* Multipage Thumbnails / Navigation */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-1">
+      {/* Top Controls Toolbar: Clean, Unified, All Above Preview */}
+      <div className="w-full shrink-0 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-2xl bg-[#081B36]/90 border border-blue-900/50 backdrop-blur-md shadow-lg z-20 overflow-x-auto">
+        {/* Left: Multipage Selector */}
+        <div className="flex items-center gap-1.5 shrink-0">
           {pages.map((p, idx) => (
             <button
               key={p.id}
               type="button"
               onClick={() => onSelectPageIndex(idx)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 idx === activePageIndex
                   ? "bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(245,181,68,0.4)]"
-                  : "bg-[#091D3C]/80 text-blue-200/70 hover:bg-[#0E2954] hover:text-white border border-blue-900/40"
+                  : "bg-white/5 text-blue-200/70 hover:bg-white/10 hover:text-white border border-white/10"
               }`}
             >
               Page {idx + 1}
@@ -88,36 +88,36 @@ export function WaypointScanStage2Review({
           <button
             type="button"
             onClick={onScanAnotherPage}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-[#0B2246]/60 hover:bg-[#0E2954] text-blue-300 border border-blue-800/40 hover:border-amber-400/40 transition-all cursor-pointer"
-            title="Scan another page"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/5 hover:bg-amber-400/20 text-blue-200 hover:text-amber-300 border border-white/10 hover:border-amber-400/40 transition-all cursor-pointer shrink-0"
+            title="Scan or upload another page"
           >
             <Plus className="w-3.5 h-3.5 text-amber-400" />
             <span>Add Page</span>
           </button>
         </div>
 
-        {/* Action Tools: Rotate, Auto-Orient, Crop, Delete, Reorder */}
-        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+        {/* Right: Document Tools (Rotate, Upright, Enhanced, Adjust Edges) */}
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           {/* Rotate Left 90 */}
           <button
             type="button"
             onClick={() => onRotate("ccw")}
-            className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer shrink-0"
             title="Rotate Left 90°"
           >
             <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">Rotate Left</span>
+            <span className="hidden sm:inline">Rotate Left</span>
           </button>
 
           {/* Rotate Right 90 */}
           <button
             type="button"
             onClick={() => onRotate("cw")}
-            className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer shrink-0"
             title="Rotate Right 90°"
           >
             <RotateCw className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">Rotate Right</span>
+            <span className="hidden sm:inline">Rotate Right</span>
           </button>
 
           {/* Auto-Orient Upright */}
@@ -125,7 +125,7 @@ export function WaypointScanStage2Review({
             <button
               type="button"
               onClick={onAutoOrient}
-              className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-amber-300 hover:text-amber-200 border border-amber-400/30 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-amber-300 hover:text-amber-200 border border-amber-400/30 text-xs font-semibold transition-colors cursor-pointer shrink-0"
               title="Auto-orient document upright"
             >
               <Compass className="w-3.5 h-3.5 text-amber-400" />
@@ -133,22 +133,22 @@ export function WaypointScanStage2Review({
             </button>
           )}
 
-          {/* Toggle Original vs Enhanced (if original available) */}
+          {/* Toggle Original vs Enhanced */}
           {currentPage.originalDataUrl && onToggleOriginal && (
             <button
               type="button"
               onClick={onToggleOriginal}
-              className={`flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
                 isShowingOriginal
                   ? "bg-blue-600/30 border-blue-400 text-blue-200"
-                  : "bg-[#091D3C]/80 border-blue-900/40 text-blue-300"
+                  : "bg-white/5 border-white/10 text-blue-300 hover:bg-white/10"
               }`}
               title="Toggle between cleaned scan and original capture"
             >
               {isShowingOriginal ? (
                 <>
                   <Eye className="w-3.5 h-3.5 text-blue-300" />
-                  <span className="hidden sm:inline">Original Photo</span>
+                  <span className="hidden sm:inline">Original</span>
                 </>
               ) : (
                 <>
@@ -159,11 +159,12 @@ export function WaypointScanStage2Review({
             </button>
           )}
 
+          {/* Adjust Edges */}
           {onAdjustEdges && (
             <button
               type="button"
               onClick={onAdjustEdges}
-              className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 hover:text-white border border-blue-900/40 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer shrink-0"
               title="Adjust document corners"
             >
               <Crop className="w-3.5 h-3.5 text-amber-400" />
@@ -171,13 +172,14 @@ export function WaypointScanStage2Review({
             </button>
           )}
 
+          {/* Page Reorder / Delete if multi-page */}
           {pages.length > 1 && (
             <>
               <button
                 type="button"
                 onClick={() => onMovePageLeft(activePageIndex)}
                 disabled={activePageIndex === 0}
-                className="p-2 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-blue-900/40 transition-colors cursor-pointer"
+                className="p-1 px-2 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 transition-colors cursor-pointer shrink-0"
                 title="Move page left"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
@@ -186,7 +188,7 @@ export function WaypointScanStage2Review({
                 type="button"
                 onClick={() => onMovePageRight(activePageIndex)}
                 disabled={activePageIndex === pages.length - 1}
-                className="p-2 rounded-xl bg-[#091D3C]/80 hover:bg-[#0E2954] text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-blue-900/40 transition-colors cursor-pointer"
+                className="p-1 px-2 rounded-xl bg-white/5 hover:bg-white/10 text-blue-200 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 transition-colors cursor-pointer shrink-0"
                 title="Move page right"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -194,7 +196,7 @@ export function WaypointScanStage2Review({
               <button
                 type="button"
                 onClick={() => onDeletePage(activePageIndex)}
-                className="p-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 transition-colors cursor-pointer"
+                className="p-1 px-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 transition-colors cursor-pointer shrink-0"
                 title="Delete this page"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -204,13 +206,13 @@ export function WaypointScanStage2Review({
         </div>
       </div>
 
-      {/* Document Sheet Display Area (Responsive, no squishing aspect ratio) */}
-      <div className="relative flex-1 w-full flex items-center justify-center min-h-[340px] max-h-[62vh] overflow-hidden p-2">
-        <div className="relative inline-block max-h-full max-w-full bg-white rounded-none overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-slate-300">
+      {/* Document Sheet Display Area (Strictly below toolbar, zero overlap) */}
+      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden p-1">
+        <div className="relative max-h-full max-w-full bg-white rounded-none overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-slate-300 flex items-center justify-center">
           <img
             src={isShowingOriginal && currentPage.originalDataUrl ? currentPage.originalDataUrl : currentPage.dataUrl}
             alt={`Page ${activePageIndex + 1}`}
-            className="max-h-[56vh] max-w-full w-auto h-auto block object-contain pointer-events-none select-none rounded-none"
+            className="max-h-[52vh] max-w-full w-auto h-auto block object-contain pointer-events-none select-none rounded-none"
           />
 
           {/* Low Sharpness / Blur Warning Pill */}
@@ -220,16 +222,6 @@ export function WaypointScanStage2Review({
               <span>{blurWarning}</span>
             </div>
           )}
-
-          {/* Quick Floating Rotate Button on Document Sheet */}
-          <button
-            type="button"
-            onClick={() => onRotate("cw")}
-            className="absolute bottom-3 right-3 p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 text-amber-400 border border-amber-400/40 shadow-lg backdrop-blur-md transition-transform active:scale-95 cursor-pointer z-10"
-            title="Rotate 90° Clockwise"
-          >
-            <RotateCw className="w-4 h-4 stroke-[2.5]" />
-          </button>
         </div>
       </div>
 
