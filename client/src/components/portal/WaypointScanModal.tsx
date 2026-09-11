@@ -83,7 +83,6 @@ export function WaypointScanModal({
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
-  const [viewportOrientation, setViewportOrientation] = useState<"portrait" | "landscape">("portrait");
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Raw Captured Photo & Corner Editing
@@ -173,10 +172,7 @@ export function WaypointScanModal({
 
   // Start live camera
   const startCamera = useCallback(
-    async (
-      mode: "environment" | "user" = facingMode,
-      orient: "portrait" | "landscape" = viewportOrientation
-    ) => {
+    async (mode: "environment" | "user" = facingMode) => {
       stopCamera();
       setCameraError(null);
 
@@ -186,13 +182,11 @@ export function WaypointScanModal({
       }
 
       try {
-        const isPort = orient === "portrait";
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: mode },
-            width: isPort ? { ideal: 1080 } : { ideal: 1920 },
-            height: isPort ? { ideal: 1440 } : { ideal: 1080 },
-            aspectRatio: isPort ? { ideal: 0.75 } : { ideal: 1.333 },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
           },
           audio: false,
         });
@@ -210,7 +204,7 @@ export function WaypointScanModal({
         setCameraActive(false);
       }
     },
-    [stopCamera, facingMode, viewportOrientation]
+    [stopCamera, facingMode]
   );
 
   // Lifecycle check & draft loading
@@ -230,7 +224,7 @@ export function WaypointScanModal({
           setExistingDraft(draft);
         } else {
           setStage("get");
-          startCamera(facingMode, viewportOrientation);
+          startCamera(facingMode);
         }
       });
     } else {
@@ -287,37 +281,14 @@ export function WaypointScanModal({
     setPages([]);
     setAnnotations({});
     setStage("get");
-    startCamera(facingMode, viewportOrientation);
+    startCamera(facingMode);
   };
 
   // Toggle front/back camera
   const handleToggleFacingMode = () => {
     const nextMode = facingMode === "environment" ? "user" : "environment";
     setFacingMode(nextMode);
-    startCamera(nextMode, viewportOrientation);
-  };
-
-  // Toggle between portrait and landscape viewport
-  const handleToggleOrientation = () => {
-    const nextOrient = viewportOrientation === "portrait" ? "landscape" : "portrait";
-    setViewportOrientation(nextOrient);
-    toast.info(
-      nextOrient === "portrait"
-        ? "Switched to Portrait Mode (8.5 × 11)"
-        : "Switched to Landscape Mode (11 × 8.5)"
-    );
-    startCamera(facingMode, nextOrient);
-  };
-
-  const handleSetOrientation = (orient: "portrait" | "landscape") => {
-    if (orient === viewportOrientation) return;
-    setViewportOrientation(orient);
-    toast.info(
-      orient === "portrait"
-        ? "Switched to Portrait Mode (8.5 × 11)"
-        : "Switched to Landscape Mode (11 × 8.5)"
-    );
-    startCamera(facingMode, orient);
+    startCamera(nextMode);
   };
 
   // Helper to rotate data URL asynchronously with 100% reliability
@@ -348,35 +319,13 @@ export function WaypointScanModal({
     const rawVH = video.videoHeight || 720;
 
     const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = rawVW;
+    tempCanvas.height = rawVH;
     const ctx = tempCanvas.getContext("2d");
     if (!ctx) return;
 
-    if (viewportOrientation === "portrait" && rawVW > rawVH) {
-      // Hardware webcam is landscape (e.g. 16:9 / 4:3), but user is scanning portrait.
-      // Viewfinder displays center 3:4 portrait area. Extract exact center crop matching user's view.
-      const targetAspect = 0.75; // 3/4
-      const visibleW = Math.round(rawVH * targetAspect);
-      const cropX = Math.max(0, Math.round((rawVW - visibleW) / 2));
-
-      tempCanvas.width = visibleW;
-      tempCanvas.height = rawVH;
-      ctx.drawImage(video, cropX, 0, visibleW, rawVH, 0, 0, visibleW, rawVH);
-    } else if (viewportOrientation === "landscape" && rawVH > rawVW) {
-      // Hardware camera is portrait (e.g. mobile phone upright), but user selected landscape.
-      // Viewfinder displays center 4:3 landscape area. Extract exact center crop matching user's view.
-      const targetAspect = 1.333; // 4/3
-      const visibleH = Math.round(rawVW / targetAspect);
-      const cropY = Math.max(0, Math.round((rawVH - visibleH) / 2));
-
-      tempCanvas.width = rawVW;
-      tempCanvas.height = visibleH;
-      ctx.drawImage(video, 0, cropY, rawVW, visibleH, 0, 0, rawVW, visibleH);
-    } else {
-      // Natural match (portrait camera with portrait mode, or landscape camera with landscape mode)
-      tempCanvas.width = rawVW;
-      tempCanvas.height = rawVH;
-      ctx.drawImage(video, 0, 0, rawVW, rawVH);
-    }
+    // Capture full high-resolution camera sensor frame (no artificial cropping)
+    ctx.drawImage(video, 0, 0, rawVW, rawVH);
 
     const rawData = tempCanvas.toDataURL("image/jpeg", 0.95);
     setRawCaptureDataUrl(rawData);
@@ -389,7 +338,8 @@ export function WaypointScanModal({
       setBlurWarning(null);
     }
 
-    // Corner Detection & Aspect-Preserving Warp
+    // Auto-detect paper corners and perspective-straighten
+    // Automatically detects portrait vs landscape documents from paper quadrilateral dimensions
     const corners = detectDocumentCorners(tempCanvas);
     setDetectedCorners(corners);
 
@@ -546,7 +496,8 @@ export function WaypointScanModal({
   };
 
   const handleApplyAdjustedCorners = (corners: CornerQuad) => {
-    if (!rawCaptureDataUrl) return;
+    const activeRawUrl = pages[activePageIndex]?.originalDataUrl || rawCaptureDataUrl;
+    if (!activeRawUrl) return;
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
@@ -571,7 +522,7 @@ export function WaypointScanModal({
       });
       toast.success("Page edges updated!");
     };
-    img.src = rawCaptureDataUrl;
+    img.src = activeRawUrl;
   };
 
   const handleRotatePage = async (direction: "cw" | "ccw" = "cw") => {
@@ -941,14 +892,11 @@ export function WaypointScanModal({
                 videoRef={videoRef}
                 cameraActive={cameraActive}
                 cameraError={cameraError}
-                orientation={viewportOrientation}
-                onToggleOrientation={handleToggleOrientation}
-                onSetOrientation={handleSetOrientation}
                 onScanPage={handleScanPage}
                 onToggleFacingMode={handleToggleFacingMode}
                 onNativeCapture={handleNativeCapture}
                 onFileOpen={handleFileOpen}
-                onStartCamera={() => startCamera(facingMode, viewportOrientation)}
+                onStartCamera={() => startCamera(facingMode)}
                 hasExistingPages={pages.length > 0}
                 onBackToReview={() => setStage("review")}
               />
@@ -966,7 +914,11 @@ export function WaypointScanModal({
                 onAutoOrient={handleAutoOrient}
                 onToggleOriginal={handleToggleOriginal}
                 isShowingOriginal={isShowingOriginal}
-                onAdjustEdges={rawCaptureDataUrl ? () => setShowAdjustEdgesModal(true) : undefined}
+                onAdjustEdges={
+                  (pages[activePageIndex]?.originalDataUrl || rawCaptureDataUrl)
+                    ? () => setShowAdjustEdgesModal(true)
+                    : undefined
+                }
                 onScanAnotherPage={handleScanAnotherPage}
                 onDeletePage={(idx) => {
                   if (pages.length <= 1) return;
@@ -1058,11 +1010,11 @@ export function WaypointScanModal({
         </WaypointWavyBackdrop>
 
         {/* Adjust Edges Sub-Modal */}
-        {rawCaptureDataUrl && (
+        {(pages[activePageIndex]?.originalDataUrl || rawCaptureDataUrl) && (
           <WaypointAdjustEdgesModal
             isOpen={showAdjustEdgesModal}
             onClose={() => setShowAdjustEdgesModal(false)}
-            imageSrc={rawCaptureDataUrl}
+            imageSrc={pages[activePageIndex]?.originalDataUrl || rawCaptureDataUrl!}
             initialCorners={
               detectedCorners || getNativeFallbackCorners(1200, 1600, 0.05)
             }
