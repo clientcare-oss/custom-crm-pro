@@ -1145,11 +1145,6 @@ function ParentTabs({
         <TabsTrigger value="files" className={parentTriggerClass}>
           <Folder className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>Files</span>
-          {files.length > 0 && (
-            <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
-              {files.length}
-            </span>
-          )}
         </TabsTrigger>
         <TabsTrigger value="appointments" className={parentTriggerClass}>
           <Calendar className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
@@ -1554,11 +1549,6 @@ function StudentTabs({
           <TabsTrigger value="files" className={primaryTriggerClass}>
             <Folder className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
             <span>Files</span>
-            {files.length > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
-                {files.length}
-              </span>
-            )}
           </TabsTrigger>
           <TabsTrigger value="call-logs" className={primaryTriggerClass}>
             <Phone className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
