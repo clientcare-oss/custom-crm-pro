@@ -17,6 +17,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { PhoneInput } from "@/components/PhoneInput";
 import { validatePhone, formatPhone } from "@/lib/phone";
+import ClientCallControls from "@/components/quo/ClientCallControls";
 
 export default function Contacts() {
   const { user } = useAuth();
@@ -304,14 +305,22 @@ export default function Contacts() {
                     </div>
                   )}
                   {contact.phone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-                      <a
-                        href={`tel:${contact.phone}`}
-                        className="text-foreground hover:text-amber-500 hover:underline transition-colors font-medium"
-                      >
-                        {formatPhone(contact.phone)}
-                      </a>
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                        <span className="text-foreground font-medium">
+                          {formatPhone(contact.phone)}
+                        </span>
+                      </div>
+                      <ClientCallControls
+                        contactId={contact.id}
+                        contactName={`${contact.firstName} ${contact.lastName}`}
+                        phone={contact.phone}
+                        quoSyncStatus={contact.quoSyncStatus}
+                        quoLastSyncAt={contact.quoLastSyncAt}
+                        quoSyncError={contact.quoSyncError}
+                        isAdminOrStaff={user?.role !== "client"}
+                      />
                     </div>
                   )}
                 </div>

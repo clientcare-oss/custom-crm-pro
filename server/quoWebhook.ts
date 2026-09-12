@@ -78,249 +78,289 @@ function verifyQuoSignature(rawBody: Buffer, sigHeader: string, secret: string):
 }
 
 export function registerQuoWebhookRoutes(app: Router) {
-  // Must be registered with raw body parser BEFORE express.json()
-  app.post(
-    "/api/quo/webhook",
-    raw({ type: "application/json" }),
-    async (req, res) => {
-      const sigHeader = req.headers["openphone-signature"] as string | undefined;
+  const webhookHandler = async (req: any, res: any) => {
+    const sigHeader = req.headers["openphone-signature"] as string | undefined;
 
-      // Read secret from DB first (set via Integrations page), fall back to env var
-      const dbSecret = await db.getOwnerQuoSecret(ENV.ownerOpenId).catch(() => null);
-      const webhookSecret = dbSecret || process.env.QUO_WEBHOOK_SECRET;
+    // Read secret from DB first (set via Integrations page), fall back to env var
+    const dbSecret = await db.getOwnerQuoSecret(ENV.ownerOpenId).catch(() => null);
+    const webhookSecret = dbSecret || process.env.QUO_WEBHOOK_SECRET;
 
-      // Verify signature if secret is configured
-      if (webhookSecret && sigHeader) {
-        const valid = verifyQuoSignature(req.body as Buffer, sigHeader, webhookSecret);
-        if (!valid) {
-          console.warn("[Quo Webhook] Signature mismatch — rejecting");
-          return res.status(401).json({ error: "Invalid signature" });
-        }
-      } else if (webhookSecret && !sigHeader) {
-        // Secret configured but no signature header — reject
-        console.warn("[Quo Webhook] Missing signature header — rejecting");
-        return res.status(401).json({ error: "Missing signature" });
+    // Verify signature if secret is configured
+    if (webhookSecret && sigHeader) {
+      const valid = verifyQuoSignature(req.body as Buffer, sigHeader, webhookSecret);
+      if (!valid) {
+        console.warn("[Quo Webhook] Signature mismatch — rejecting");
+        return res.status(401).json({ error: "Invalid signature" });
       }
-
-      let payload: any;
-      try {
-        payload = JSON.parse((req.body as Buffer).toString());
-      } catch {
-        return res.status(400).json({ error: "Invalid JSON" });
-      }
-
-      const eventType: string = payload?.type || payload?.event || "";
-      console.log(`[Quo Webhook] Received event: ${eventType}`);
-
-      // Get the database and owner
-      const database = await db.getDb();
-      if (!database) {
-        console.error("[Quo Webhook] Database unavailable");
-        return res.status(500).json({ error: "Database unavailable" });
-      }
-
-      const { contacts, callLogs, users } = await import("../drizzle/schema");
-      const { eq, and } = await import("drizzle-orm");
-
-      const [owner] = await database
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.role, "admin"))
-        .limit(1);
-
-      if (!owner) {
-        console.error("[Quo Webhook] No owner found");
-        return res.status(500).json({ error: "No owner found" });
-      }
-
-      const ownerId = owner.id;
-
-      // ─── CALL EVENTS ───────────────────────────────────────────────
-      if (
-        eventType === "call.completed" ||
-        eventType === "call.transcript.completed" ||
-        eventType === "call.summary.completed" ||
-        eventType === "call.recording.completed"
-      ) {
-        const callData = payload?.data?.object || payload?.data || payload?.call || {};
-        const quoCallId: string = callData?.id || callData?.callId || payload?.id || "";
-        const fromNumber: string = callData?.from || callData?.fromNumber || "";
-        const toNumber: string = callData?.to || callData?.toNumber || "";
-        const durationSeconds: number = callData?.duration || callData?.durationSeconds || 0;
-        const direction: string = callData?.direction || "inbound";
-
-        // Transcript (may be nested under transcript.text or direct string)
-        const transcript: string =
-          callData?.transcript?.text ||
-          callData?.transcript ||
-          payload?.transcript?.text ||
-          payload?.transcript ||
-          "";
-
-        // Summary
-        const summary: string =
-          callData?.summary?.text ||
-          callData?.summary ||
-          payload?.summary?.text ||
-          payload?.summary ||
-          "";
-
-        // Recording URL
-        const recordingUrl: string =
-          callData?.recordingUrl ||
-          callData?.recording?.url ||
-          payload?.recordingUrl ||
-          "";
-
-        // Voicemail detection — call.completed with voicemail data
-        const voicemailData = callData?.voicemail || payload?.voicemail;
-        const isVoicemail = !!(voicemailData || callData?.isVoicemail || payload?.isVoicemail);
-        const voicemailTranscript: string =
-          voicemailData?.transcript?.text ||
-          voicemailData?.transcript ||
-          voicemailData?.transcription ||
-          callData?.voicemailTranscript ||
-          "";
-
-        const participants: string[] = callData?.participants || [];
-
-        // Idempotency check — update existing record if same call ID
-        if (quoCallId) {
-          const [existing] = await database
-            .select({ id: callLogs.id })
-            .from(callLogs)
-            .where(eq(callLogs.quoCallId, quoCallId))
-            .limit(1);
-
-          if (existing) {
-            await database
-              .update(callLogs)
-              .set({
-                ...(transcript ? { transcript } : {}),
-                ...(summary ? { summary } : {}),
-                ...(recordingUrl ? { recordingUrl } : {}),
-                ...(voicemailTranscript ? { voicemailTranscript } : {}),
-                ...(isVoicemail ? { isVoicemail: true } : {}),
-                eventType,
-                rawPayload: payload,
-              })
-              .where(eq(callLogs.id, existing.id));
-            console.log(`[Quo Webhook] Updated existing call log #${existing.id} (${eventType})`);
-            return res.json({ received: true, action: "updated" });
-          }
-        }
-
-        // Auto-match to student by phone number
-        const allStudents = await database
-          .select({ id: contacts.id, firstName: contacts.firstName, lastName: contacts.lastName, phone: contacts.phone })
-          .from(contacts)
-          .where(and(eq(contacts.ownerId, ownerId), eq(contacts.jobTitle, "Student")));
-
-        const matchingStudents = allStudents.filter((s) => {
-          if (!s.phone) return false;
-          return phonesMatch(s.phone, fromNumber) || phonesMatch(s.phone, toNumber);
-        });
-
-        let studentId: number | null = null;
-        let status = "unassigned";
-        let matchedPhone: string | null = null;
-
-        if (matchingStudents.length === 1) {
-          studentId = matchingStudents[0].id;
-          status = "assigned";
-          matchedPhone = matchingStudents[0].phone || null;
-          console.log(`[Quo Webhook] Auto-assigned to student #${studentId}`);
-        } else if (matchingStudents.length > 1) {
-          console.log(`[Quo Webhook] Multiple matches (${matchingStudents.length}) — unassigned`);
-        } else {
-          console.log(`[Quo Webhook] No phone match — unassigned`);
-        }
-
-        await database.insert(callLogs).values({
-          ownerId,
-          studentId: studentId ?? undefined,
-          quoCallId: quoCallId || undefined,
-          fromNumber: formatPhone(fromNumber),
-          toNumber: formatPhone(toNumber),
-          durationSeconds,
-          direction,
-          transcript: transcript || undefined,
-          summary: summary || undefined,
-          recordingUrl: recordingUrl || undefined,
-          isVoicemail,
-          voicemailTranscript: voicemailTranscript || undefined,
-          participants: participants.length > 0 ? participants : undefined,
-          status,
-          matchedPhone: matchedPhone ? formatPhone(matchedPhone) : undefined,
-          assignedAt: status === "assigned" ? new Date() : undefined,
-          eventType,
-          rawPayload: payload,
-        });
-
-        console.log(`[Quo Webhook] Call log saved — type: ${eventType}, status: ${status}, voicemail: ${isVoicemail}`);
-        return res.json({ received: true, action: "created", status, eventType });
-      }
-
-      // ─── MESSAGE EVENTS ────────────────────────────────────────────
-      if (eventType === "message.received" || eventType === "message.delivered") {
-        const msgData = payload?.data?.object || payload?.data || payload?.message || {};
-        const quoMsgId: string = msgData?.id || payload?.id || "";
-        const fromNumber: string = msgData?.from || msgData?.fromNumber || "";
-        const toNumber: string = msgData?.to || msgData?.toNumber || "";
-        const smsBody: string = msgData?.body || msgData?.text || payload?.body || "";
-        const direction = eventType === "message.received" ? "inbound" : "outbound";
-
-        // Idempotency
-        if (quoMsgId) {
-          const [existing] = await database
-            .select({ id: callLogs.id })
-            .from(callLogs)
-            .where(eq(callLogs.quoCallId, quoMsgId))
-            .limit(1);
-          if (existing) {
-            return res.json({ received: true, action: "duplicate" });
-          }
-        }
-
-        // Auto-match to student
-        const allStudents = await database
-          .select({ id: contacts.id, phone: contacts.phone })
-          .from(contacts)
-          .where(and(eq(contacts.ownerId, ownerId), eq(contacts.jobTitle, "Student")));
-
-        const match = allStudents.find((s) => s.phone && (phonesMatch(s.phone, fromNumber) || phonesMatch(s.phone, toNumber)));
-        const studentId = match?.id ?? null;
-        const status = studentId ? "assigned" : "unassigned";
-
-        await database.insert(callLogs).values({
-          ownerId,
-          studentId: studentId ?? undefined,
-          quoCallId: quoMsgId || undefined,
-          fromNumber: formatPhone(fromNumber),
-          toNumber: formatPhone(toNumber),
-          durationSeconds: 0,
-          direction,
-          smsBody: smsBody || undefined,
-          status,
-          assignedAt: studentId ? new Date() : undefined,
-          eventType,
-          rawPayload: payload,
-        });
-
-        console.log(`[Quo Webhook] SMS log saved — type: ${eventType}, status: ${status}`);
-        return res.json({ received: true, action: "created", eventType });
-      }
-
-      // ─── CONTACT EVENTS ────────────────────────────────────────────
-      if (eventType === "contact.updated" || eventType === "contact.deleted") {
-        // Log but don't import — contacts are managed in the CRM
-        console.log(`[Quo Webhook] Contact event received: ${eventType} (logged only)`);
-        return res.json({ received: true, action: "logged", eventType });
-      }
-
-      // Acknowledge all other events
-      console.log(`[Quo Webhook] Unhandled event type: ${eventType}`);
-      return res.json({ received: true, action: "ignored", eventType });
+    } else if (webhookSecret && !sigHeader) {
+      // Secret configured but no signature header — reject
+      console.warn("[Quo Webhook] Missing signature header — rejecting");
+      return res.status(401).json({ error: "Missing signature" });
     }
-  );
+
+    let payload: any;
+    try {
+      payload = JSON.parse((req.body as Buffer).toString());
+    } catch {
+      return res.status(400).json({ error: "Invalid JSON" });
+    }
+
+    const eventType: string = payload?.type || payload?.event || "";
+    console.log(`[Quo Webhook] Received event: ${eventType}`);
+
+    // Get the database and owner
+    const database = await db.getDb();
+    if (!database) {
+      console.error("[Quo Webhook] Database unavailable");
+      return res.status(500).json({ error: "Database unavailable" });
+    }
+
+    const { contacts, callLogs, users, quoSettings } = await import("../drizzle/schema");
+    const { eq, and } = await import("drizzle-orm");
+
+    const [owner] = await database
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.role, "admin"))
+      .limit(1);
+
+    if (!owner) {
+      console.error("[Quo Webhook] No owner found");
+      return res.status(500).json({ error: "No owner found" });
+    }
+
+    const ownerId = owner.id;
+
+    // Update last sync on quoSettings if table exists
+    try {
+      await database
+        .update(quoSettings)
+        .set({ lastSyncAt: new Date(), status: "connected" })
+        .where(eq(quoSettings.ownerId, ownerId));
+    } catch (err) {
+      // Non-fatal if settings not yet initialized
+    }
+
+    // ─── CALL EVENTS ───────────────────────────────────────────────
+    if (
+      eventType === "call.completed" ||
+      eventType === "call.missed" ||
+      eventType === "call.transcript.completed" ||
+      eventType === "call.summary.completed" ||
+      eventType === "call.recording.completed"
+    ) {
+      const callData = payload?.data?.object || payload?.data || payload?.call || {};
+      const quoCallId: string = callData?.id || callData?.callId || payload?.id || "";
+      const fromNumber: string = callData?.from || callData?.fromNumber || "";
+      const toNumber: string = callData?.to || callData?.toNumber || "";
+      const durationSeconds: number = callData?.duration || callData?.durationSeconds || 0;
+      const direction: string = callData?.direction || "inbound";
+
+      // Transcript (may be nested under transcript.text or direct string)
+      const transcript: string =
+        callData?.transcript?.text ||
+        callData?.transcript ||
+        payload?.transcript?.text ||
+        payload?.transcript ||
+        "";
+
+      // Summary
+      const summary: string =
+        callData?.summary?.text ||
+        callData?.summary ||
+        payload?.summary?.text ||
+        payload?.summary ||
+        "";
+
+      // Recording URL
+      const recordingUrl: string =
+        callData?.recordingUrl ||
+        callData?.recording?.url ||
+        payload?.recordingUrl ||
+        "";
+
+      // Voicemail detection — call.completed with voicemail data
+      const voicemailData = callData?.voicemail || payload?.voicemail;
+      const isVoicemail = !!(voicemailData || callData?.isVoicemail || payload?.isVoicemail);
+      const voicemailTranscript: string =
+        voicemailData?.transcript?.text ||
+        voicemailData?.transcript ||
+        voicemailData?.transcription ||
+        callData?.voicemailTranscript ||
+        "";
+
+      const participants: string[] = callData?.participants || [];
+
+      // Detect missed call
+      const isMissed =
+        eventType === "call.missed" ||
+        callData?.status === "missed" ||
+        callData?.status === "unanswered" ||
+        callData?.answered === false ||
+        (isVoicemail && durationSeconds === 0);
+      const callbackStatus = isMissed ? "pending" : "none";
+
+      // Idempotency check — update existing record if same call ID
+      if (quoCallId) {
+        const [existing] = await database
+          .select({ id: callLogs.id })
+          .from(callLogs)
+          .where(eq(callLogs.quoCallId, quoCallId))
+          .limit(1);
+
+        if (existing) {
+          await database
+            .update(callLogs)
+            .set({
+              ...(transcript ? { transcript } : {}),
+              ...(summary ? { summary } : {}),
+              ...(recordingUrl ? { recordingUrl } : {}),
+              ...(voicemailTranscript ? { voicemailTranscript } : {}),
+              ...(isVoicemail ? { isVoicemail: true } : {}),
+              ...(isMissed ? { isMissed: true, callbackStatus: "pending" } : {}),
+              eventType,
+              rawPayload: payload,
+            })
+            .where(eq(callLogs.id, existing.id));
+          console.log(`[Quo Webhook] Updated existing call log #${existing.id} (${eventType})`);
+          return res.json({ received: true, action: "updated" });
+        }
+      }
+
+      // Auto-match to contact / student by phone number
+      const allContacts = await database
+        .select({
+          id: contacts.id,
+          firstName: contacts.firstName,
+          lastName: contacts.lastName,
+          phone: contacts.phone,
+          jobTitle: contacts.jobTitle,
+        })
+        .from(contacts)
+        .where(eq(contacts.ownerId, ownerId));
+
+      const matchingContacts = allContacts.filter((c) => {
+        if (!c.phone) return false;
+        return phonesMatch(c.phone, fromNumber) || phonesMatch(c.phone, toNumber);
+      });
+
+      let contactId: number | null = null;
+      let studentId: number | null = null;
+      let status = "unassigned";
+      let matchedPhone: string | null = null;
+
+      if (matchingContacts.length >= 1) {
+        const primaryMatch = matchingContacts[0];
+        contactId = primaryMatch.id;
+        matchedPhone = primaryMatch.phone || null;
+        status = "assigned";
+
+        if (primaryMatch.jobTitle === "Student") {
+          studentId = primaryMatch.id;
+        } else {
+          // If not student directly, check if any matched contact is student
+          const studentMatch = matchingContacts.find((c) => c.jobTitle === "Student");
+          if (studentMatch) studentId = studentMatch.id;
+        }
+        console.log(`[Quo Webhook] Auto-assigned to contact #${contactId} (student: ${studentId ?? "none"})`);
+      } else {
+        console.log(`[Quo Webhook] No phone match — unassigned`);
+      }
+
+      await database.insert(callLogs).values({
+        ownerId,
+        contactId: contactId ?? undefined,
+        studentId: studentId ?? undefined,
+        quoCallId: quoCallId || undefined,
+        fromNumber: formatPhone(fromNumber),
+        toNumber: formatPhone(toNumber),
+        durationSeconds,
+        direction,
+        transcript: transcript || undefined,
+        summary: summary || undefined,
+        recordingUrl: recordingUrl || undefined,
+        isVoicemail,
+        voicemailTranscript: voicemailTranscript || undefined,
+        participants: participants.length > 0 ? participants : undefined,
+        status,
+        matchedPhone: matchedPhone ? formatPhone(matchedPhone) : undefined,
+        assignedAt: status === "assigned" ? new Date() : undefined,
+        isMissed,
+        callbackStatus,
+        eventType,
+        rawPayload: payload,
+      });
+
+      console.log(`[Quo Webhook] Call log saved — type: ${eventType}, status: ${status}, missed: ${isMissed}`);
+      return res.json({ received: true, action: "created", status, eventType, isMissed });
+    }
+
+    // ─── MESSAGE EVENTS ────────────────────────────────────────────
+    if (eventType === "message.received" || eventType === "message.delivered") {
+      const msgData = payload?.data?.object || payload?.data || payload?.message || {};
+      const quoMsgId: string = msgData?.id || payload?.id || "";
+      const fromNumber: string = msgData?.from || msgData?.fromNumber || "";
+      const toNumber: string = msgData?.to || msgData?.toNumber || "";
+      const smsBody: string = msgData?.body || msgData?.text || payload?.body || "";
+      const direction = eventType === "message.received" ? "inbound" : "outbound";
+
+      // Idempotency
+      if (quoMsgId) {
+        const [existing] = await database
+          .select({ id: callLogs.id })
+          .from(callLogs)
+          .where(eq(callLogs.quoCallId, quoMsgId))
+          .limit(1);
+        if (existing) {
+          return res.json({ received: true, action: "duplicate" });
+        }
+      }
+
+      // Auto-match to contact
+      const allContacts = await database
+        .select({ id: contacts.id, phone: contacts.phone, jobTitle: contacts.jobTitle })
+        .from(contacts)
+        .where(eq(contacts.ownerId, ownerId));
+
+      const match = allContacts.find((c) => c.phone && (phonesMatch(c.phone, fromNumber) || phonesMatch(c.phone, toNumber)));
+      const contactId = match?.id ?? null;
+      const studentId = match?.jobTitle === "Student" ? match.id : null;
+      const status = contactId ? "assigned" : "unassigned";
+
+      await database.insert(callLogs).values({
+        ownerId,
+        contactId: contactId ?? undefined,
+        studentId: studentId ?? undefined,
+        quoCallId: quoMsgId || undefined,
+        fromNumber: formatPhone(fromNumber),
+        toNumber: formatPhone(toNumber),
+        durationSeconds: 0,
+        direction,
+        smsBody: smsBody || undefined,
+        status,
+        assignedAt: contactId ? new Date() : undefined,
+        eventType,
+        rawPayload: payload,
+      });
+
+      console.log(`[Quo Webhook] SMS log saved — type: ${eventType}, status: ${status}, contact: ${contactId}`);
+      return res.json({ received: true, action: "created", eventType });
+    }
+
+    // ─── CONTACT EVENTS ────────────────────────────────────────────
+    if (eventType === "contact.updated" || eventType === "contact.deleted") {
+      console.log(`[Quo Webhook] Contact event received: ${eventType} (logged only)`);
+      return res.json({ received: true, action: "logged", eventType });
+    }
+
+    // Acknowledge all other events
+    console.log(`[Quo Webhook] Unhandled event type: ${eventType}`);
+    return res.json({ received: true, action: "ignored", eventType });
+  };
+
+  // Register both endpoints with raw body parser for signature verification
+  const webhookPaths = ["/api/quo/webhook", "/api/integrations/quo/webhooks"];
+  webhookPaths.forEach((path) => {
+    app.post(path, raw({ type: "application/json" }), webhookHandler);
+  });
 }

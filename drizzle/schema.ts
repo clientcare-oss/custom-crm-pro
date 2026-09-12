@@ -85,6 +85,11 @@ export const contacts = mysqlTable("contacts", {
   attorneyEmail: varchar("attorneyEmail", { length: 320 }),
   attorneyFirm: varchar("attorneyFirm", { length: 200 }),
   attorneyAddress: text("attorneyAddress"),
+  // Quo (OpenPhone) integration fields
+  quoContactId: varchar("quoContactId", { length: 255 }),
+  quoSyncStatus: varchar("quoSyncStatus", { length: 50 }).default("not_synced"),
+  quoLastSyncAt: timestamp("quoLastSyncAt"),
+  quoSyncError: text("quoSyncError"),
   // Archive fields
   archivedAt: timestamp("archivedAt"),
   archiveReason: text("archiveReason"),
@@ -754,21 +759,80 @@ export const callLogs = mysqlTable("callLogs", {
   participants: json("participants").$type<string[]>(),
   status: varchar("status", { length: 20 }).default("unassigned").notNull(),
   matchedPhone: varchar("matchedPhone", { length: 30 }),
-  // Extended fields for voicemail, recordings, messages
+  // Extended fields for voicemail, recordings, messages, and callbacks
+  contactId: int("contactId"),                           // linked contact/parent (in addition to studentId)
   eventType: varchar("eventType", { length: 50 }),       // call.completed, message.received, etc.
   isVoicemail: boolean("isVoicemail").default(false),
   voicemailTranscript: text("voicemailTranscript"),
   recordingUrl: text("recordingUrl"),
   smsBody: text("smsBody"),                              // for message.received events
   rawPayload: json("rawPayload"),                        // full raw event for debugging
+  isMissed: boolean("isMissed").default(false),          // true if incoming call was unanswered / missed
+  callbackStatus: varchar("callbackStatus", { length: 50 }).default("none"), // "none" | "pending" | "completed" | "dismissed"
+  callbackTaskId: int("callbackTaskId"),                 // generated CRM task ID if converted to callback item
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   assignedAt: timestamp("assignedAt"),
 }, (t) => ({
   ownerIdIdx: index("callLogs_ownerId_idx").on(t.ownerId),
   studentIdIdx: index("callLogs_studentId_idx").on(t.studentId),
+  contactIdIdx: index("callLogs_contactId_idx").on(t.contactId),
 }));
 export type CallLog = typeof callLogs.$inferSelect;
 export type InsertCallLog = typeof callLogs.$inferInsert;
+
+// ============ QUO INTEGRATION SETTINGS ============
+export const quoSettings = mysqlTable("quoSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  status: varchar("status", { length: 50 }).default("disconnected").notNull(), // "disconnected" | "connected" | "pending_verification"
+  hasApiKey: boolean("hasApiKey").default(false).notNull(), // Secure flag indicating whether backend has API credentials configured
+  webhookUrl: text("webhookUrl"),
+  webhookSecret: varchar("webhookSecret", { length: 255 }),
+  primaryPhoneId: varchar("primaryPhoneId", { length: 255 }),
+  primaryPhoneNumber: varchar("primaryPhoneNumber", { length: 50 }),
+  primaryPhoneDisplayName: varchar("primaryPhoneDisplayName", { length: 100 }),
+  lastSyncAt: timestamp("lastSyncAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerIdIdx: index("quoSettings_ownerId_idx").on(t.ownerId),
+}));
+export type QuoSettings = typeof quoSettings.$inferSelect;
+export type InsertQuoSettings = typeof quoSettings.$inferInsert;
+
+// ============ QUO EMPLOYEE MAPPINGS ============
+export const quoEmployeeMappings = mysqlTable("quoEmployeeMappings", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),
+  employeeId: int("employeeId").notNull(),               // links to users.id
+  employeeName: varchar("employeeName", { length: 200 }),
+  quoUserId: varchar("quoUserId", { length: 255 }).notNull(),
+  quoUserDisplayName: varchar("quoUserDisplayName", { length: 200 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerIdIdx: index("quoEmployeeMappings_ownerId_idx").on(t.ownerId),
+  employeeIdIdx: index("quoEmployeeMappings_employeeId_idx").on(t.employeeId),
+}));
+export type QuoEmployeeMapping = typeof quoEmployeeMappings.$inferSelect;
+export type InsertQuoEmployeeMapping = typeof quoEmployeeMappings.$inferInsert;
+
+// ============ EMPLOYEE REGISTERED DEVICES (PUSH HANDOFF) ============
+export const employeeDevices = mysqlTable("employeeDevices", {
+  id: int("id").autoincrement().primaryKey(),
+  employeeId: int("employeeId").notNull(),               // links to users.id
+  deviceId: varchar("deviceId", { length: 255 }).notNull().unique(),
+  deviceName: varchar("deviceName", { length: 200 }),    // e.g. "Byron's iPhone 16 Pro"
+  platform: varchar("platform", { length: 50 }).default("web").notNull(), // "ios" | "android" | "web" | "other"
+  pushSubscription: text("pushSubscription"),            // JSON serialized WebPush subscription or device push token
+  enabled: boolean("enabled").default(true).notNull(),
+  lastSeenAt: timestamp("lastSeenAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  employeeIdIdx: index("employeeDevices_employeeId_idx").on(t.employeeId),
+}));
+export type EmployeeDevice = typeof employeeDevices.$inferSelect;
+export type InsertEmployeeDevice = typeof employeeDevices.$inferInsert;
 
 // ============ TEAM MANAGEMENT ============
 /**

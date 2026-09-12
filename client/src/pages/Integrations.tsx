@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { Plug, Phone, Copy, CheckCircle2, ExternalLink, AlertCircle, ChevronDown, ChevronUp, Eye, EyeOff, Save, Loader2, Mail, Wifi, WifiOff, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,12 @@ function QuoIntegrationCard() {
               Setup required
             </div>
           )}
+          <Link href="/settings/integrations/quo">
+            <Button variant="outline" size="sm" className="gap-1.5 border-cyan-800 text-cyan-400 hover:bg-cyan-950/30">
+              <Phone className="h-3.5 w-3.5" />
+              <span>Quo Console</span>
+            </Button>
+          </Link>
           <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} className="gap-1.5">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {expanded ? "Hide" : (isConfigured ? "Manage" : "Setup")}

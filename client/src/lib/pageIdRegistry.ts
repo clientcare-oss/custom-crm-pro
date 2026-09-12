@@ -31,6 +31,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/lead-forms":                      { id: "PG-012", name: "Lead Forms Builder", category: "Marketing" },
   "/automations":                     { id: "PG-013", name: "Automations Engine", category: "Automation" },
   "/integrations":                    { id: "PG-014", name: "Integrations & API", category: "Settings" },
+  "/integrations/quo":                { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
+  "/settings/integrations/quo":       { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
   "/workflows":                       { id: "PG-015", name: "Workflow Pipelines", category: "Automation" },
   "/knowledge-base":                  { id: "PG-016", name: "Knowledge Base", category: "Advocacy" },
   "/walkthroughs":                    { id: "PG-017", name: "System Walkthroughs", category: "Help" },

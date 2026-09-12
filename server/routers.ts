@@ -49,6 +49,7 @@ import { voyageLogRouter } from "./routers/voyageLog";
 import { automationsRouter } from "./routers/automations";
 import { feedbackRouter } from "./routers/feedback";
 import { firstMateRouter } from "./routers/firstMate";
+import { quoRouter } from "./routers/quo";
 
 export const appRouter = router({
   firstMate: firstMateRouter,
@@ -101,6 +102,7 @@ export const appRouter = router({
   services: servicesRouter,
   complaintEngine: complaintEngineRouter,
   automations: automationsRouter,
+  quo: quoRouter,
 });
 
 export type AppRouter = typeof appRouter;

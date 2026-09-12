@@ -30,6 +30,7 @@ import Templates from "./pages/Templates";
 import LeadForms from "./pages/LeadForms";
 import Automations from "./pages/Automations";
 import Integrations from "./pages/Integrations";
+import QuoSettings from "./pages/QuoSettings";
 import Workflows from "./pages/Workflows";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Walkthroughs from "./pages/Walkthroughs";
@@ -164,6 +165,8 @@ function Router() {
           <Route path="/lead-forms" component={LeadForms} />
           <Route path="/automations" component={Automations} />
           <Route path="/integrations" component={Integrations} />
+          <Route path="/settings/integrations/quo" component={QuoSettings} />
+          <Route path="/integrations/quo" component={QuoSettings} />
           <Route path="/workflows" component={Workflows} />
           <Route path="/knowledge-base" component={KnowledgeBase} />
           <Route path="/walkthroughs" component={Walkthroughs} />

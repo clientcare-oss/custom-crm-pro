@@ -30,6 +30,8 @@ import ContactFilesTab from "@/components/contact/ContactFilesTab";
 import ContactStudentsTab from "@/components/contact/ContactStudentsTab";
 import ContactFinancialsTab from "@/components/contact/ContactFinancialsTab";
 import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
+import ClientCallControls from "@/components/quo/ClientCallControls";
+import CallLogsWithCallback from "@/components/quo/CallLogsWithCallback";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -317,6 +319,7 @@ function RichText({ text }: { text: string }) {
 export default function ContactDetail() {
   const params = useParams<{ id: string }>();
   const contactId = parseInt(params.id ?? "0", 10);
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [showHistory, setShowHistory] = useState(false);
   const [editingCompass, setEditingCompass] = useState(false);
@@ -515,11 +518,24 @@ export default function ContactDetail() {
               </Button>
             )}
           </div>
-          <div className="flex flex-wrap gap-3 mt-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
             {contact.jobTitle && <span>{contact.jobTitle}</span>}
             {contact.company && <span>· {contact.company}</span>}
             {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
-            {contact.phone && <span>· {contact.phone}</span>}
+            {contact.phone && (
+              <div className="inline-flex items-center gap-2 flex-wrap">
+                <span>· {contact.phone}</span>
+                <ClientCallControls
+                  contactId={contact.id}
+                  contactName={fullName}
+                  phone={contact.phone}
+                  quoSyncStatus={contact.quoSyncStatus}
+                  quoLastSyncAt={contact.quoLastSyncAt}
+                  quoSyncError={contact.quoSyncError}
+                  isAdminOrStaff={user?.role !== "client"}
+                />
+              </div>
+            )}
           </div>
           {/* Case ID badge — students only */}
           {!isParent && contact.caseId && (
@@ -731,22 +747,25 @@ function ParentTabs({
         <ContactFinancialsTab invoices={invoices} contracts={contracts} />
       </TabsContent>
 
-      {/* ACTIVITY */}
-      <TabsContent value="activity" className="mt-4 space-y-3">
-        {messages.length === 0 ? (
-          <EmptyState icon={<MessageSquare className="h-8 w-8" />} text="No messages yet" />
-        ) : (
-          messages.map((msg: any) => (
-            <Card key={msg.id} className="p-4 rounded-lg border border-border">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {msg.senderId === contactId ? `${contact.firstName} ${contact.lastName}` : "You"}
-                </span>
-                <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString()}</span>
-              </div>
-              <p className="text-sm text-foreground">{msg.content}</p>
-            </Card>
-          ))
+      {/* ACTIVITY & COMMUNICATIONS */}
+      <TabsContent value="activity" className="mt-4 space-y-5">
+        <CallLogsWithCallback contactId={contactId} clientName={`${contact.firstName} ${contact.lastName}`} />
+
+        {messages.length > 0 && (
+          <div className="space-y-3 pt-3 border-t border-border/60">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portal Messages</h4>
+            {messages.map((msg: any) => (
+              <Card key={msg.id} className="p-4 rounded-lg border border-border">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {msg.senderId === contactId ? `${contact.firstName} ${contact.lastName}` : "You"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString()}</span>
+                </div>
+                <p className="text-sm text-foreground">{msg.content}</p>
+              </Card>
+            ))}
+          </div>
         )}
       </TabsContent>
 
@@ -1245,7 +1264,7 @@ function StudentTabs({
       </TabsContent>
       {/* CALL LOGS */}
       <TabsContent value="call-logs" className="mt-4">
-        <CallLogsTab studentId={contactId} />
+        <CallLogsWithCallback studentId={contactId} contactId={contactId} clientName={fullName} />
       </TabsContent>
       {/* TOOLS */}
       <TabsContent value="tools" className="mt-4">
