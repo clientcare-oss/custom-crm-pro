@@ -148,15 +148,15 @@ export function SimulatedCallCard({
 
   // ── 2. ACTIVE INCOMING CALL STATE ──
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-[#092244] via-[#061830] to-[#041022] border-2 border-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.25)] p-6 space-y-5 relative overflow-hidden animate-in fade-in">
+    <div className="rounded-2xl bg-gradient-to-br from-[#092244] via-[#061830] to-[#041022] border-[3px] border-yellow-400 animate-pulse-border-yellow p-6 space-y-5 relative overflow-hidden animate-in fade-in transition-all">
       {/* Top Test Banner Bar */}
-      <div className="flex items-center justify-between pb-3 border-b border-amber-400/30 flex-wrap gap-2">
+      <div className="flex items-center justify-between pb-3 border-b border-yellow-400/30 flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <Badge className="bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-0.5 tracking-wider uppercase flex items-center gap-1.5 shadow-sm">
-            <Radio className="h-3 w-3 animate-pulse" />
+          <Badge className="bg-yellow-400 text-slate-950 font-black text-xs px-2.5 py-0.5 tracking-wider uppercase flex items-center gap-1.5 shadow-sm">
+            <Radio className="h-3 w-3 animate-pulse text-slate-950" />
             SIMULATED INCOMING CALL
           </Badge>
-          <span className="text-[11px] text-amber-200/80 font-mono">
+          <span className="text-[11px] text-yellow-200/90 font-mono">
             Elapsed: <span className="font-bold text-white">{formatTimer(elapsedSeconds)}</span>
           </span>
         </div>
@@ -182,12 +182,12 @@ export function SimulatedCallCard({
         {/* Caller Identity Block */}
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-amber-400/10 border-2 border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.3)]">
+            <div className="w-14 h-14 rounded-2xl bg-yellow-400/10 border-2 border-yellow-400/50 flex items-center justify-center text-yellow-400 shadow-[0_0_25px_rgba(250,204,21,0.35)]">
               <PhoneIncoming className="h-7 w-7 animate-bounce" />
             </div>
             <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-yellow-500" />
             </span>
           </div>
 
@@ -214,7 +214,7 @@ export function SimulatedCallCard({
                 {simulation.phoneNumber}
               </span>
               {simulation.relatedStudent && (
-                <span className="text-amber-300 font-medium">
+                <span className="text-yellow-300 font-medium">
                   • Student: {simulation.relatedStudent}
                 </span>
               )}
@@ -230,7 +230,7 @@ export function SimulatedCallCard({
           <Button
             size="sm"
             onClick={() => onBeginIntake(simulation)}
-            className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs h-9 px-4 rounded-xl gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.25)]"
+            className="bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-bold text-xs h-9 px-4 rounded-xl gap-1.5 shadow-[0_0_15px_rgba(250,204,21,0.3)]"
           >
             <FileEdit className="h-4 w-4" />
             Begin Intake
@@ -270,8 +270,8 @@ export function SimulatedCallCard({
       </div>
 
       {/* Non-invasive Sub-Banner explaining behavior */}
-      <div className="p-2.5 rounded-xl bg-[#040D1A]/80 border border-amber-400/20 flex items-center justify-between text-[11px] text-slate-300">
-        <div className="flex items-center gap-1.5 text-amber-300">
+      <div className="p-2.5 rounded-xl bg-[#040D1A]/80 border border-yellow-400/25 flex items-center justify-between text-[11px] text-slate-300">
+        <div className="flex items-center gap-1.5 text-yellow-300">
           <Sparkles className="h-3.5 w-3.5" />
           <span>Mini First Mate on the right has adapted prompts for: <strong>"{simulation.scenario}"</strong></span>
         </div>

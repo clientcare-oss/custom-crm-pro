@@ -377,4 +377,27 @@ a,
 .animate-park-shrink {
   animation: parkSettleToStall 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
+
+/* ── Incoming Call Pulsing Yellow Border Effect (PG-018 Call Center) ── */
+@keyframes pulseBorderYellow {
+  0%, 100% {
+    border-color: #facc15; /* yellow-400 */
+    box-shadow:
+      0 0 0 2px rgba(250, 204, 21, 0.45),
+      0 0 25px rgba(250, 204, 21, 0.4),
+      inset 0 0 15px rgba(250, 204, 21, 0.08);
+  }
+  50% {
+    border-color: #fef08a; /* yellow-200 */
+    box-shadow:
+      0 0 0 6px rgba(250, 204, 21, 0.9),
+      0 0 45px rgba(250, 204, 21, 0.7),
+      inset 0 0 25px rgba(250, 204, 21, 0.2);
+  }
+}
+
+.animate-pulse-border-yellow {
+  animation: pulseBorderYellow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 
