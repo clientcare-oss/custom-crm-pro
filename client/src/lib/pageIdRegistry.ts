@@ -36,6 +36,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/workflows":                       { id: "PG-015", name: "Workflow Pipelines", category: "Automation" },
   "/knowledge-base":                  { id: "PG-016", name: "Knowledge Base", category: "Advocacy" },
   "/walkthroughs":                    { id: "PG-017", name: "System Walkthroughs", category: "Help" },
+  "/call-center":                     { id: "PG-018", name: "Call Center", category: "Communications" },
   "/call-logs":                       { id: "PG-018", name: "Unassigned Call Logs", category: "Communications" },
   "/team":                            { id: "PG-019", name: "Team & Staff Management", category: "Admin" },
   

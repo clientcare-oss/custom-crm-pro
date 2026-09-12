@@ -170,6 +170,7 @@ function Router() {
           <Route path="/workflows" component={Workflows} />
           <Route path="/knowledge-base" component={KnowledgeBase} />
           <Route path="/walkthroughs" component={Walkthroughs} />
+          <Route path="/call-center" component={UnassignedCallLogs} />
           <Route path="/call-logs" component={UnassignedCallLogs} />
           <Route path="/team" component={Team} />
           <Route path="/tools/state-complaint-builder/:id/:section?" component={ComplaintWorkspace} />

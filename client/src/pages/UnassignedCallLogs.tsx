@@ -10,7 +10,7 @@ import {
   Phone, PhoneIncoming, PhoneOutgoing, Loader2, Trash2, UserCheck,
   CheckCircle2, Settings2, MessageSquare, Voicemail, Eye, EyeOff,
   Copy, RefreshCw, Shield, ShieldCheck, ShieldAlert, ChevronDown, ChevronRight,
-  Mic, Radio, Info
+  Mic, Radio, Info, Headset
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -125,8 +125,8 @@ export default function UnassignedCallLogs() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <Phone className="h-7 w-7 text-accent" />
-            Call Logs
+            <Headset className="h-7 w-7 text-accent" />
+            Call Center & Call Logs
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Calls, voicemails, and messages from Quo (OpenPhone) — auto-matched to students when possible.
