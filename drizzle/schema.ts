@@ -79,6 +79,9 @@ export const contacts = mysqlTable("contacts", {
   gradeLevel: varchar("gradeLevel", { length: 50 }),
   countyDistrict: varchar("countyDistrict", { length: 200 }),
     challenges: text("challenges"),
+  previousSchool: varchar("previousSchool", { length: 200 }),
+  goingToSchool: varchar("goingToSchool", { length: 200 }),
+  planType: varchar("planType", { length: 50 }).default("No IEP/504 Yet"),
   // Attorney / Legal representation fields
   attorneyName: varchar("attorneyName", { length: 200 }),
   attorneyPhone: varchar("attorneyPhone", { length: 50 }),

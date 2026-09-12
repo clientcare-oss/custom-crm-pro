@@ -5,6 +5,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useParams, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +21,7 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
@@ -316,6 +323,19 @@ function RichText({ text }: { text: string }) {
   );
 }
 
+function calculateAge(dob?: string | null): number | null {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age >= 0 && age < 120 ? age : null;
+}
+
 export default function ContactDetail() {
   const params = useParams<{ id: string }>();
   const contactId = parseInt(params.id ?? "0", 10);
@@ -333,6 +353,20 @@ export default function ContactDetail() {
   const utils = trpc.useUtils();
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
+
+  const [showEditStudentModal, setShowEditStudentModal] = useState(false);
+  const [studentForm, setStudentForm] = useState({
+    firstName: "",
+    lastName: "",
+    dateOfBirth: "",
+    gradeLevel: "",
+    schoolName: "",
+    previousSchool: "",
+    goingToSchool: "",
+    planType: "No IEP/504 Yet",
+    diagnosis: "",
+    countyDistrict: "",
+  });
 
   const archiveMutation = trpc.contacts.archive.useMutation({
     onSuccess: () => {
@@ -362,6 +396,52 @@ export default function ContactDetail() {
   });
 
   const updateContactMutation = trpc.contacts.update.useMutation();
+
+  const handleSaveStudent = () => {
+    updateContactMutation.mutate(
+      {
+        id: contactId,
+        firstName: studentForm.firstName.trim() || undefined,
+        lastName: studentForm.lastName.trim() || undefined,
+        dateOfBirth: studentForm.dateOfBirth.trim() || undefined,
+        gradeLevel: studentForm.gradeLevel.trim() || undefined,
+        schoolName: studentForm.schoolName.trim() || undefined,
+        previousSchool: studentForm.previousSchool.trim() || undefined,
+        goingToSchool: studentForm.goingToSchool.trim() || undefined,
+        planType: studentForm.planType || "No IEP/504 Yet",
+        diagnosis: studentForm.diagnosis.trim() || undefined,
+        countyDistrict: studentForm.countyDistrict.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Student details updated successfully");
+          setShowEditStudentModal(false);
+          utils.contacts.detail.invalidate({ id: contactId });
+        },
+        onError: (err) => {
+          toast.error("Failed to update student details: " + err.message);
+        },
+      }
+    );
+  };
+
+  const handleQuickUpdatePlanType = (newPlanType: string) => {
+    updateContactMutation.mutate(
+      {
+        id: contactId,
+        planType: newPlanType,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Plan status updated to: ${newPlanType}`);
+          utils.contacts.detail.invalidate({ id: contactId });
+        },
+        onError: (err) => {
+          toast.error("Failed to update plan status: " + err.message);
+        },
+      }
+    );
+  };
 
   const handleSaveAttorney = () => {
     updateContactMutation.mutate({
@@ -408,6 +488,18 @@ export default function ContactDetail() {
         attorneyPhone: data.contact.attorneyPhone || "",
         attorneyEmail: data.contact.attorneyEmail || "",
         attorneyAddress: data.contact.attorneyAddress || "",
+      });
+      setStudentForm({
+        firstName: data.contact.firstName || "",
+        lastName: data.contact.lastName || "",
+        dateOfBirth: data.contact.dateOfBirth || "",
+        gradeLevel: data.contact.gradeLevel || "",
+        schoolName: data.contact.schoolName || "",
+        previousSchool: (data.contact as any).previousSchool || "",
+        goingToSchool: (data.contact as any).goingToSchool || "",
+        planType: (data.contact as any).planType || "No IEP/504 Yet",
+        diagnosis: (data.contact as any).diagnosis || "",
+        countyDistrict: (data.contact as any).countyDistrict || "",
       });
     }
   }, [data?.contact]);
@@ -460,6 +552,8 @@ export default function ContactDetail() {
     });
   };
   const fullName = `${contact.firstName} ${contact.lastName}`;
+  const calculatedAge = calculateAge(contact.dateOfBirth);
+  const currentPlanType = (contact as any).planType || "No IEP/504 Yet";
 
   return (
     <div className="space-y-6 p-8">
@@ -518,31 +612,173 @@ export default function ContactDetail() {
               </Button>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
-            {contact.jobTitle && <span>{contact.jobTitle}</span>}
-            {contact.company && <span>· {contact.company}</span>}
-            {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
-            {contact.phone && (
-              <div className="inline-flex items-center gap-2 flex-wrap">
-                <span>· {contact.phone}</span>
-                <ClientCallControls
-                  contactId={contact.id}
-                  contactName={fullName}
-                  phone={contact.phone}
-                  quoSyncStatus={contact.quoSyncStatus}
-                  quoLastSyncAt={contact.quoLastSyncAt}
-                  quoSyncError={contact.quoSyncError}
-                  isAdminOrStaff={user?.role !== "client"}
-                />
+
+          {/* For parent: show standard job title / contact details */}
+          {isParent ? (
+            <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
+              {contact.jobTitle && <span>{contact.jobTitle}</span>}
+              {contact.company && <span>· {contact.company}</span>}
+              {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
+              {contact.phone && (
+                <div className="inline-flex items-center gap-2 flex-wrap">
+                  <span>· {contact.phone}</span>
+                  <ClientCallControls
+                    contactId={contact.id}
+                    contactName={fullName}
+                    phone={contact.phone}
+                    quoSyncStatus={contact.quoSyncStatus}
+                    quoLastSyncAt={contact.quoLastSyncAt}
+                    quoSyncError={contact.quoSyncError}
+                    isAdminOrStaff={user?.role !== "client"}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            /* For student: Student Name is in h1, then 504 / IEP / No IEP Tag, Age, Grade, School, Transition */
+            <div className="mt-2.5 space-y-2">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                {/* Case ID badge */}
+                {contact.caseId && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-[#0F2342] border border-[#F5B544]/30 px-2.5 py-1 text-xs font-mono font-semibold text-[#F5B544] shadow-xs">
+                    Case: {contact.caseId}
+                  </span>
+                )}
+
+                {/* 504 OR IEP OR NO IEP/504 YET TAG */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold border transition-all cursor-pointer shadow-xs",
+                        currentPlanType === "IEP"
+                          ? "bg-indigo-500/20 text-indigo-200 border-indigo-500/40 hover:bg-indigo-500/30"
+                          : currentPlanType === "504"
+                          ? "bg-cyan-500/20 text-cyan-200 border-cyan-500/40 hover:bg-cyan-500/30"
+                          : "bg-slate-800/90 text-slate-300 border-slate-700 hover:bg-slate-700/70"
+                      )}
+                      title="Click to toggle IEP / 504 / No IEP/504 Yet plan status"
+                    >
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full",
+                          currentPlanType === "IEP"
+                            ? "bg-indigo-400 animate-pulse"
+                            : currentPlanType === "504"
+                            ? "bg-cyan-400"
+                            : "bg-slate-400"
+                        )}
+                      />
+                      <span>{currentPlanType}</span>
+                      <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl">
+                    <DropdownMenuItem
+                      onClick={() => handleQuickUpdatePlanType("IEP")}
+                      className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                      <span>IEP</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleQuickUpdatePlanType("504")}
+                      className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                      <span>504</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleQuickUpdatePlanType("No IEP/504 Yet")}
+                      className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                      <span>No IEP/504 Yet</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Age */}
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#07162B] border border-[#0E274D] px-2.5 py-1 text-xs text-slate-200 shadow-xs">
+                  <span className="text-slate-400 font-medium">Age:</span>
+                  <strong className="text-white font-semibold">
+                    {calculatedAge !== null
+                      ? `${calculatedAge} yrs`
+                      : (contact.dateOfBirth ? `${contact.dateOfBirth}` : "Not set")}
+                  </strong>
+                </span>
+
+                {/* Grade */}
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#07162B] border border-[#0E274D] px-2.5 py-1 text-xs text-slate-200 shadow-xs">
+                  <GraduationCap className="h-3.5 w-3.5 text-[#F5B544] shrink-0" />
+                  <span className="text-slate-400 font-medium">Grade:</span>
+                  <strong className="text-white font-semibold">
+                    {contact.gradeLevel || "Not set"}
+                  </strong>
+                </span>
+
+                {/* Current School */}
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#07162B] border border-[#0E274D] px-2.5 py-1 text-xs text-slate-200 shadow-xs">
+                  <School className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                  <span className="text-slate-400 font-medium">School:</span>
+                  <strong className="text-white font-semibold">
+                    {contact.schoolName || "Not set"}
+                  </strong>
+                </span>
+
+                {/* Transition: If applicable was at school ___ going to school ___ */}
+                {((contact as any).previousSchool || (contact as any).goingToSchool) && (
+                  <div className="inline-flex items-center gap-2 rounded-md bg-[#0F2342] border border-[#F5B544]/40 px-3 py-1 text-xs text-[#F5B544] shadow-xs">
+                    <span className="font-semibold uppercase tracking-wider text-[10px] text-[#F5B544]/90">Transition:</span>
+                    {(contact as any).previousSchool && (
+                      <span className="text-slate-200">
+                        Was at school <strong className="text-white font-semibold underline decoration-[#F5B544]/50 underline-offset-2">{(contact as any).previousSchool}</strong>
+                      </span>
+                    )}
+                    {(contact as any).previousSchool && (contact as any).goingToSchool && (
+                      <ArrowRight className="h-3.5 w-3.5 text-[#F5B544] shrink-0" />
+                    )}
+                    {(contact as any).goingToSchool && (
+                      <span className="text-slate-200">
+                        Going to school <strong className="text-white font-semibold underline decoration-[#F5B544]/50 underline-offset-2">{(contact as any).goingToSchool}</strong>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick Edit Student Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowEditStudentModal(true)}
+                  className="h-7 px-2.5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] border-[#0E274D] gap-1.5 rounded-md cursor-pointer"
+                  title="Edit student demographics and school transition"
+                >
+                  <Pencil className="h-3 w-3 text-[#F5B544]" />
+                  <span>Edit Student</span>
+                </Button>
               </div>
-            )}
-          </div>
-          {/* Case ID badge — students only */}
-          {!isParent && contact.caseId && (
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <span className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/20 px-2 py-0.5 text-xs font-mono font-semibold text-accent tracking-wide">
-                Case ID: {contact.caseId}
-              </span>
+
+              {/* Optional parent phone/email contact info if available */}
+              {(contact.email || contact.phone) && (
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                  {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
+                  {contact.phone && (
+                    <div className="inline-flex items-center gap-2 flex-wrap">
+                      <span>· {contact.phone}</span>
+                      <ClientCallControls
+                        contactId={contact.id}
+                        contactName={fullName}
+                        phone={contact.phone}
+                        quoSyncStatus={contact.quoSyncStatus}
+                        quoLastSyncAt={contact.quoLastSyncAt}
+                        quoSyncError={contact.quoSyncError}
+                        isAdminOrStaff={user?.role !== "client"}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -636,6 +872,195 @@ export default function ContactDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Student Details Dialog */}
+      <Dialog open={showEditStudentModal} onOpenChange={setShowEditStudentModal}>
+        <DialogContent className="max-w-lg bg-[#07162B] border-[#0E274D] text-slate-100 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-[#F5B544]" />
+              Edit Student Details
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-4 text-sm max-h-[75vh] overflow-y-auto pr-1">
+            {/* 504 / IEP / No IEP/504 Yet Plan Selector */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-300">Plan Status Tag</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "IEP", label: "IEP", color: "border-indigo-500/50 bg-indigo-500/20 text-indigo-200" },
+                  { value: "504", label: "504", color: "border-cyan-500/50 bg-cyan-500/20 text-cyan-200" },
+                  { value: "No IEP/504 Yet", label: "No IEP/504 Yet", color: "border-slate-700 bg-slate-800/80 text-slate-300" },
+                ].map((option) => {
+                  const isSelected = studentForm.planType === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setStudentForm((prev) => ({ ...prev, planType: option.value }))}
+                      className={cn(
+                        "py-2 px-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer text-center",
+                        isSelected
+                          ? "ring-2 ring-[#F5B544] border-transparent font-bold " + option.color
+                          : "border-[#0E274D] bg-[#0A1D38]/40 text-slate-400 hover:text-slate-200 hover:bg-[#0A1D38]"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Student Name */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">First Name</Label>
+                <Input
+                  value={studentForm.firstName}
+                  onChange={(e) => setStudentForm((prev) => ({ ...prev, firstName: e.target.value }))}
+                  placeholder="First name"
+                  className="bg-[#0A1D38] border-[#0E274D] text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">Last Name</Label>
+                <Input
+                  value={studentForm.lastName}
+                  onChange={(e) => setStudentForm((prev) => ({ ...prev, lastName: e.target.value }))}
+                  placeholder="Last name"
+                  className="bg-[#0A1D38] border-[#0E274D] text-white"
+                />
+              </div>
+            </div>
+
+            {/* Date of Birth & Live Calculated Age */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">Date of Birth</Label>
+                <Input
+                  type="date"
+                  value={studentForm.dateOfBirth}
+                  onChange={(e) => setStudentForm((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+                  className="bg-[#0A1D38] border-[#0E274D] text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">Current Age</Label>
+                <div className="h-9 px-3 rounded-md bg-[#0A1D38]/60 border border-[#0E274D] flex items-center text-sm font-semibold text-[#F5B544]">
+                  {calculateAge(studentForm.dateOfBirth) !== null
+                    ? `${calculateAge(studentForm.dateOfBirth)} years old`
+                    : "Enter DOB to calculate"}
+                </div>
+              </div>
+            </div>
+
+            {/* Grade Level & Current School */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">Grade Level</Label>
+                <Input
+                  value={studentForm.gradeLevel}
+                  onChange={(e) => setStudentForm((prev) => ({ ...prev, gradeLevel: e.target.value }))}
+                  placeholder="e.g. 5th Grade, Kindergarten"
+                  className="bg-[#0A1D38] border-[#0E274D] text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">Current School</Label>
+                <Input
+                  value={studentForm.schoolName}
+                  onChange={(e) => setStudentForm((prev) => ({ ...prev, schoolName: e.target.value }))}
+                  placeholder="e.g. Riverwood Middle School"
+                  className="bg-[#0A1D38] border-[#0E274D] text-white"
+                />
+              </div>
+            </div>
+
+            {/* School Transition Section */}
+            <div className="pt-2 border-t border-[#0E274D]/80">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <ArrowRight className="h-3.5 w-3.5 text-[#F5B544]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#F5B544]">
+                  School Transition (If Applicable)
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-3">
+                Track previous school campus and upcoming destination school when the student is transitioning.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-300">Was at School</Label>
+                  <Input
+                    value={studentForm.previousSchool}
+                    onChange={(e) => setStudentForm((prev) => ({ ...prev, previousSchool: e.target.value }))}
+                    placeholder="e.g. Sandy Springs Elementary"
+                    className="bg-[#0A1D38] border-[#0E274D] text-white"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-300">Going to School</Label>
+                  <Input
+                    value={studentForm.goingToSchool}
+                    onChange={(e) => setStudentForm((prev) => ({ ...prev, goingToSchool: e.target.value }))}
+                    placeholder="e.g. Riverwood High School"
+                    className="bg-[#0A1D38] border-[#0E274D] text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* County/District & Diagnosis */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">County / School District</Label>
+                <Input
+                  value={studentForm.countyDistrict}
+                  onChange={(e) => setStudentForm((prev) => ({ ...prev, countyDistrict: e.target.value }))}
+                  placeholder="e.g. Fulton County Schools"
+                  className="bg-[#0A1D38] border-[#0E274D] text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">Diagnosis / IEP Eligibility</Label>
+                <Input
+                  value={studentForm.diagnosis}
+                  onChange={(e) => setStudentForm((prev) => ({ ...prev, diagnosis: e.target.value }))}
+                  placeholder="e.g. Autism, ADHD, SLD, OHI"
+                  className="bg-[#0A1D38] border-[#0E274D] text-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-[#0E274D]/80">
+            <Button
+              variant="ghost"
+              onClick={() => setShowEditStudentModal(false)}
+              className="text-slate-400 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveStudent}
+              disabled={updateContactMutation.isPending}
+              className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-[#07162B] font-bold gap-1.5"
+            >
+              {updateContactMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Details
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -689,48 +1114,59 @@ function ParentTabs({
     }
   }, [students]);
 
+  const parentTriggerClass =
+    "group flex-none h-9 px-3 py-1.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer text-slate-300 dark:text-slate-300 hover:text-white dark:hover:text-white hover:bg-white/[0.06] dark:hover:bg-white/[0.06] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/70 dark:data-[state=active]:border-[#F5B544]/70 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_rgba(245,181,68,0.14)]";
+
   return (
-    <Tabs defaultValue="students">
-      <TabsList className="flex flex-wrap h-auto gap-1">
-        <TabsTrigger value="students" className="flex items-center gap-1.5">
-          <Users className="h-3.5 w-3.5" />
-          Students
+    <Tabs defaultValue="students" className="w-full">
+      <TabsList className="w-full h-auto flex items-center gap-1 sm:gap-1.5 bg-[#07162B] border border-[#0E274D] rounded-xl shadow-md p-1.5 sm:p-2 my-3 sm:my-3.5 overflow-x-auto no-scrollbar">
+        <TabsTrigger value="students" className={parentTriggerClass}>
+          <Users className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>Students</span>
           {students.length > 0 && (
-            <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{students.length}</span>
+            <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+              {students.length}
+            </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="financials" className="flex items-center gap-1.5">
-          <DollarSign className="h-3.5 w-3.5" />
-          Billing
+        <TabsTrigger value="financials" className={parentTriggerClass}>
+          <DollarSign className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>Billing</span>
           {invoices.length > 0 && (
-            <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{invoices.length}</span>
+            <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+              {invoices.length}
+            </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="activity" className="flex items-center gap-1.5">
-          <MessageSquare className="h-3.5 w-3.5" />
-          Communication
+        <TabsTrigger value="activity" className={parentTriggerClass}>
+          <MessageSquare className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>Communication</span>
         </TabsTrigger>
-        <TabsTrigger value="files" className="flex items-center gap-1.5">
-          <Folder className="h-3.5 w-3.5" />
-          Files
+        <TabsTrigger value="files" className={parentTriggerClass}>
+          <Folder className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>Files</span>
           {files.length > 0 && (
-            <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{files.length}</span>
+            <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+              {files.length}
+            </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="appointments" className="flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5" />
-          Appointments
+        <TabsTrigger value="appointments" className={parentTriggerClass}>
+          <Calendar className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>Appointments</span>
           {appointments.length > 0 && (
-            <span className="ml-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-xs">{appointments.length}</span>
+            <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+              {appointments.length}
+            </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="cases" className="flex items-center gap-1.5">
-          <ScrollText className="h-3.5 w-3.5" />
-          Cases
+        <TabsTrigger value="cases" className={parentTriggerClass}>
+          <ScrollText className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>State Complaints</span>
         </TabsTrigger>
-        <TabsTrigger value="details" className="flex items-center gap-1.5">
-          <Info className="h-3.5 w-3.5" />
-          Details
+        <TabsTrigger value="details" className={parentTriggerClass}>
+          <Info className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>Details</span>
         </TabsTrigger>
       </TabsList>
 
@@ -1069,30 +1505,156 @@ function StudentTabs({
   handleSaveAttorney: () => void;
   updateContactMutation: any;
 }) {
+  const [activeTab, setActiveTab] = useState("compass");
+
+  const secondaryItems = [
+    { value: "tools", label: "Tools", icon: Wrench },
+    { value: "projects", label: "State Complaints", icon: ScrollText, count: projects.length },
+    { value: "financials", label: "Billing", icon: DollarSign, count: invoices.length },
+    { value: "appointments", label: "Appts", icon: Calendar, count: appointments.length },
+    { value: "time-tracker", label: "Time", icon: Timer },
+    { value: "details", label: "Details", icon: Info },
+  ];
+
+  const currentSecondaryItem = secondaryItems.find((i) => i.value === activeTab);
+  const isSecondaryActive = Boolean(currentSecondaryItem);
+
+  const primaryTriggerClass =
+    "group flex-none h-9 px-3 py-1.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer text-slate-300 dark:text-slate-300 hover:text-white dark:hover:text-white hover:bg-white/[0.06] dark:hover:bg-white/[0.06] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/70 dark:data-[state=active]:border-[#F5B544]/70 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_rgba(245,181,68,0.14)]";
+
+  const secondaryTriggerClass =
+    "group flex-none h-8 px-2.5 py-1 rounded-md text-xs font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer text-slate-400 dark:text-slate-400 hover:text-slate-200 dark:hover:text-slate-200 hover:bg-white/[0.04] dark:hover:bg-white/[0.04] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/60 dark:data-[state=active]:border-[#F5B544]/60 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-xs";
+
   return (
-    <Tabs defaultValue="compass">
-      <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/40 p-1.5 rounded-xl border border-border/60">
-        <TabsTrigger value="compass" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Compass className="h-3.5 w-3.5" />Compass</TabsTrigger>
-        <TabsTrigger value="voyage-log" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Video className="h-3.5 w-3.5" />Voyage Log</TabsTrigger>
-        <TabsTrigger value="activity" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><MessageSquare className="h-3.5 w-3.5" />Messages</TabsTrigger>
-        <TabsTrigger value="tasks" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><CheckSquare className="h-3.5 w-3.5" />Tasks</TabsTrigger>
-        <TabsTrigger value="files" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
-          <Folder className="h-3.5 w-3.5" />Files{files.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{files.length}</span>}
-        </TabsTrigger>
-        <TabsTrigger value="time-tracker" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Timer className="h-3.5 w-3.5" />Time</TabsTrigger>
-        <TabsTrigger value="call-logs" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Phone className="h-3.5 w-3.5" />Calls</TabsTrigger>
-        <TabsTrigger value="tools" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Wrench className="h-3.5 w-3.5" />Tools</TabsTrigger>
-        <TabsTrigger value="projects" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
-          <FileText className="h-3.5 w-3.5" />Cases{projects.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{projects.length}</span>}
-        </TabsTrigger>
-        <TabsTrigger value="financials" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
-          <DollarSign className="h-3.5 w-3.5" />Billing{invoices.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{invoices.length}</span>}
-        </TabsTrigger>
-        <TabsTrigger value="appointments" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer">
-          <Calendar className="h-3.5 w-3.5" />Appts{appointments.length > 0 && <span className="ml-1 rounded-full bg-accent/15 text-accent px-1.5 py-0.5 text-[10px] font-bold">{appointments.length}</span>}
-        </TabsTrigger>
-        <TabsTrigger value="notes" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><FileText className="h-3.5 w-3.5" />Notes</TabsTrigger>
-        <TabsTrigger value="details" className="rounded-lg text-xs font-semibold px-3 py-2 flex items-center gap-1.5 text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-accent data-[state=active]:shadow-xs transition-all cursor-pointer"><Info className="h-3.5 w-3.5" />Details</TabsTrigger>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      {/* Unified Command Center Navigation Deck */}
+      <TabsList className="w-full h-auto flex flex-col p-1.5 sm:p-2 bg-[#07162B] border border-[#0E274D] rounded-xl shadow-md gap-1 my-3 sm:my-3.5">
+        {/* Level 1: Primary Case Work */}
+        <div className="flex items-center gap-1 sm:gap-1.5 w-full overflow-x-auto no-scrollbar py-0.5">
+          <TabsTrigger value="compass" className={primaryTriggerClass}>
+            <Compass className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+            <span>Compass</span>
+          </TabsTrigger>
+          <TabsTrigger value="voyage-log" className={primaryTriggerClass}>
+            <Video className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+            <span>Voyage Log</span>
+          </TabsTrigger>
+          <TabsTrigger value="activity" className={primaryTriggerClass}>
+            <MessageSquare className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+            <span>Messages</span>
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className={primaryTriggerClass}>
+            <CheckSquare className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+            <span>Tasks</span>
+          </TabsTrigger>
+          <TabsTrigger value="notes" className={primaryTriggerClass}>
+            <FileText className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+            <span>Notes</span>
+          </TabsTrigger>
+          <TabsTrigger value="files" className={primaryTriggerClass}>
+            <Folder className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+            <span>Files</span>
+            {files.length > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+                {files.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="call-logs" className={primaryTriggerClass}>
+            <Phone className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+            <span>Calls</span>
+          </TabsTrigger>
+        </div>
+
+        {/* Subtle Hairline Divider (NO banner, NO large box) */}
+        <div className="w-full h-px bg-[#0E274D]/80 my-0.5" />
+
+        {/* Level 2: Secondary Case Tools & Admin (Desktop & Tablet) */}
+        <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 w-full flex-wrap pt-0.5">
+          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400/80 dark:text-slate-500/80 select-none pl-2 pr-1.5 shrink-0">
+            Case Tools & Admin
+          </span>
+          {secondaryItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <TabsTrigger key={item.value} value={item.value} className={secondaryTriggerClass}>
+                <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+                <span>{item.label}</span>
+                {item.count !== undefined && item.count > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9.5px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+                    {item.count}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </div>
+
+        {/* Mobile View: Secondary Tools dropdown menu */}
+        <div className="flex sm:hidden items-center justify-between w-full px-1 py-0.5">
+          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400/80 select-none">
+            Case Tools & Admin
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border transition-all cursor-pointer",
+                  isSecondaryActive
+                    ? "bg-[#0B2144] border-[#F5B544]/70 text-[#F5B544] font-semibold shadow-xs"
+                    : "bg-transparent border-[#0E274D] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
+                )}
+              >
+                {currentSecondaryItem ? (
+                  <>
+                    <currentSecondaryItem.icon className="h-3.5 w-3.5 text-[#F5B544]" />
+                    <span>{currentSecondaryItem.label}</span>
+                    {currentSecondaryItem.count !== undefined && currentSecondaryItem.count > 0 && (
+                      <span className="ml-1 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B]">
+                        {currentSecondaryItem.count}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Wrench className="h-3.5 w-3.5 text-slate-400" />
+                    <span>More Tools</span>
+                  </>
+                )}
+                <ChevronDown className="h-3 w-3 ml-0.5 opacity-70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#07162B] border border-[#0E274D] text-slate-200 min-w-[180px] p-1 shadow-xl rounded-xl z-50">
+              {secondaryItems.map((item) => {
+                const Icon = item.icon;
+                const isSelected = activeTab === item.value;
+                return (
+                  <DropdownMenuItem
+                    key={item.value}
+                    onClick={() => setActiveTab(item.value)}
+                    className={cn(
+                      "flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors",
+                      isSelected
+                        ? "bg-[#0B2144] text-[#F5B544] font-semibold"
+                        : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className={cn("h-3.5 w-3.5", isSelected ? "text-[#F5B544]" : "text-slate-400")} />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.count !== undefined && item.count > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B]">
+                        {item.count}
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </TabsList>
 
       {/* COMPASS TAB */}

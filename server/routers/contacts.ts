@@ -66,6 +66,15 @@ export const contactsRouter = router({
           attorneyEmail: z.string().optional(),
           attorneyAddress: z.string().optional(),
           portalAccess: z.string().optional(),
+          dateOfBirth: z.string().optional(),
+          schoolName: z.string().optional(),
+          gradeLevel: z.string().optional(),
+          previousSchool: z.string().optional(),
+          goingToSchool: z.string().optional(),
+          diagnosis: z.string().optional(),
+          countyDistrict: z.string().optional(),
+          challenges: z.string().optional(),
+          planType: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
