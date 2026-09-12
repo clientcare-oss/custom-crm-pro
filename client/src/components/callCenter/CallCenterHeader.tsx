@@ -76,44 +76,33 @@ export function CallCenterHeader({
           />
         )}
 
-        {/* Quo Integration Linked Card */}
-        <div
-          onClick={onOpenSettings}
-          className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-[#061830] border border-sky-500/30 shadow-sm cursor-pointer hover:border-sky-400/50 transition-all group"
-        >
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-          </span>
-          <div className="text-left">
-            <div className="text-xs font-semibold text-emerald-400 leading-none flex items-center gap-1">
-              Quo Integration Linked
-            </div>
-            <div className="text-[10px] text-slate-400 leading-tight mt-0.5">
-              Calls open in Quo
-            </div>
-          </div>
-        </div>
-
-        {/* Employee Profile Pill with "Guided Horizons" */}
-        <div className="relative flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-[#061830] border border-sky-500/20 shadow-sm">
-          <Avatar className="h-8 w-8 rounded-lg border border-sky-400/30 bg-[#092244] text-white font-semibold">
+        {/* Employee Profile Pill with Quo Integration Linked by User */}
+        <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-[#061830] border border-sky-500/30 shadow-sm">
+          <Avatar className="h-8.5 w-8.5 rounded-lg border border-sky-400/30 bg-[#092244] text-white font-semibold">
             <AvatarFallback className="bg-[#092244] text-sky-200 text-xs font-bold">
               {userInit}
             </AvatarFallback>
           </Avatar>
           <div className="text-left">
             <div className="text-xs font-semibold text-white leading-none flex items-center gap-1.5">
-              {userName}
-              <ChevronDown className="h-3 w-3 text-slate-400" />
+              <span>{userName}</span>
+              <span className="text-[10px] text-slate-400 font-normal">({userRole})</span>
             </div>
-            <div className="text-[10px] text-slate-400 leading-tight mt-0.5">
-              {userRole}
-            </div>
-          </div>
-          {/* Subtle Script Motto */}
-          <div className="absolute -bottom-4 right-1 text-[11px] font-serif italic text-amber-400/70 pointer-events-none select-none">
-            Guided Horizons
+            {/* Clickable Quo Integration Link by User */}
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer group"
+              title="Click to manage Quo integration settings"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="underline decoration-emerald-500/40 underline-offset-2 group-hover:decoration-emerald-400">
+                Quo Integration Linked
+              </span>
+            </button>
           </div>
         </div>
       </div>
