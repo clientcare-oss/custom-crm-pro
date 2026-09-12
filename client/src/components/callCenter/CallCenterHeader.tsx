@@ -4,11 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/_core/hooks/useAuth";
 
+import { CallCenterTestPanel, SimulatedCallState } from "./CallCenterTestPanel";
+
 interface CallCenterHeaderProps {
   isQuoConfigured?: boolean;
   onOpenSettings?: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  onStartSimulation?: (sim: SimulatedCallState) => void;
+  activeSimulation?: SimulatedCallState | null;
+  onResetSimulation?: () => void;
 }
 
 export function CallCenterHeader({
@@ -16,6 +21,9 @@ export function CallCenterHeader({
   onOpenSettings,
   onRefresh,
   isRefreshing = false,
+  onStartSimulation,
+  activeSimulation = null,
+  onResetSimulation,
 }: CallCenterHeaderProps) {
   const { user } = useAuth();
   const userName = user?.name || "Wyatt";
@@ -57,6 +65,15 @@ export function CallCenterHeader({
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
           </Button>
+        )}
+
+        {/* Small Settings Gear for Call Center Testing (Admin / Dev only) */}
+        {onStartSimulation && onResetSimulation && (
+          <CallCenterTestPanel
+            onStartSimulation={onStartSimulation}
+            activeSimulation={activeSimulation}
+            onResetSimulation={onResetSimulation}
+          />
         )}
 
         {/* Quo Integration Linked Card */}

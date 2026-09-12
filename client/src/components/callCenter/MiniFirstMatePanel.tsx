@@ -22,11 +22,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 interface MiniFirstMatePanelProps {
   onAddToNotes?: (text: string) => void;
   clientContextName?: string;
+  scenario?: string | null;
 }
 
 export function MiniFirstMatePanel({
   onAddToNotes,
   clientContextName,
+  scenario,
 }: MiniFirstMatePanelProps) {
   const { user } = useAuth();
   const userName = user?.name ? user.name.split(" ")[0] : "Byron";
@@ -37,24 +39,90 @@ export function MiniFirstMatePanel({
   const [customResponse, setCustomResponse] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
 
-  // Suggested default opening matching reference mockup
-  const defaultOpening = `Hi, this is ${userName} with Waypoint Advocates. How can I help you today?`;
+  // Dynamically adapt suggestions based on scenario if provided
+  const { opening: defaultOpening, questions: defaultQuestions, nextSteps: defaultNextSteps } = React.useMemo(() => {
+    if (scenario === "New prospective client") {
+      return {
+        opening: `Hi ${clientContextName || "there"}, this is ${userName} with Waypoint Advocates. I'm glad you reached out. How can we best support your child's education?`,
+        questions: [
+          "How did you hear about Byron Honea and Waypoint Advocates?",
+          "What is your student's current grade and school district?",
+          "Does your child currently have an active IEP or 504 plan?",
+          "What is the most urgent challenge or upcoming meeting right now?",
+          "Can we schedule a 30-minute Discovery Call to review your goals?",
+        ],
+        nextSteps: [
+          "Complete parent and student intake fields",
+          "Tag core IEP / 504 dispute areas",
+          "Click Schedule Discovery to pick a consultation time",
+          "Queue parent welcome packet",
+        ],
+      };
+    }
+    if (scenario === "Existing client question") {
+      return {
+        opening: `Hello ${clientContextName || "there"}! Great to hear from you. How are things progressing with the school team?`,
+        questions: [
+          "Are you calling regarding an upcoming IEP meeting date or new PWN?",
+          "Did the district send any draft evaluations or progress reports?",
+          "Would you like Byron to follow up with you after this afternoon's sessions?",
+        ],
+        nextSteps: [
+          "Log parent update directly into client case file",
+          "Verify advocate calendar for meeting availability",
+          "Send confirmation SMS via Quo",
+        ],
+      };
+    }
+    if (scenario === "Needs advocate") {
+      return {
+        opening: `Hello, this is ${userName} with Waypoint Advocates. We're here to help. What is the immediate situation or dispute occurring with the school?`,
+        questions: [
+          "Is there an active manifestation determination (MDR) or disciplinary hearing?",
+          "What deadlines or written notices (PWN) did the district provide?",
+          "Have independent educational evaluations (IEE) been requested or completed?",
+        ],
+        nextSteps: [
+          "Flag case as high priority in Call Center",
+          "Capture all district dates and school contact personnel",
+          "Alert Byron for urgent case review",
+        ],
+      };
+    }
+    if (scenario === "School/provider calling") {
+      return {
+        opening: `Hello, thank you for calling Waypoint Advocates. Which student's educational team or case are you calling regarding?`,
+        questions: [
+          "What district or clinic facility are you representing?",
+          "Are you proposing dates for an upcoming IEP or eligibility conference?",
+          "Where should our advocate forward our FERPA release and representation notice?",
+        ],
+        nextSteps: [
+          "Identify matched student record",
+          "Record meeting times and requested evaluation documents",
+          "Notify assigned advocate",
+        ],
+      };
+    }
 
-  const defaultQuestions = [
-    "How did you hear about us?",
-    "What can we help you with?",
-    "Have you or your child received any evaluations?",
-    "What school or district are you working with?",
-    "What are your next steps?",
-  ];
-
-  const defaultNextSteps = [
-    "Summarize the conversation",
-    "Log notes in the client record",
-    "Schedule a follow-up or evaluation",
-    "Send additional information",
-    "Create a task for the team",
-  ];
+    return {
+      opening: `Hi, this is ${userName} with Waypoint Advocates. How can I help you today?`,
+      questions: [
+        "How did you hear about us?",
+        "What can we help you with?",
+        "Have you or your child received any evaluations?",
+        "What school or district are you working with?",
+        "What are your next steps?",
+      ],
+      nextSteps: [
+        "Summarize the conversation",
+        "Log notes in the client record",
+        "Schedule a follow-up or evaluation",
+        "Send additional information",
+        "Create a task for the team",
+      ],
+    };
+  }, [scenario, clientContextName, userName]);
 
   const handleCopyOpening = () => {
     navigator.clipboard.writeText(defaultOpening);

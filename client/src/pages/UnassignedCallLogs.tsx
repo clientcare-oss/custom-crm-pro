@@ -33,6 +33,8 @@ import { MiniFirstMatePanel } from "@/components/callCenter/MiniFirstMatePanel";
 import { BottomOperationalDeck } from "@/components/callCenter/BottomOperationalDeck";
 import { OpenQuoPhoneModal } from "@/components/callCenter/OpenQuoPhoneModal";
 import { AddNewContactModal } from "@/components/callCenter/AddNewContactModal";
+import { SimulatedCallCard } from "@/components/callCenter/SimulatedCallCard";
+import { SimulatedCallState } from "@/components/callCenter/CallCenterTestPanel";
 import SmsComposerDialog from "@/components/quo/SmsComposerDialog";
 
 export default function UnassignedCallLogs() {
@@ -59,6 +61,18 @@ export default function UnassignedCallLogs() {
 
   // SMS Dialog State
   const [smsContact, setSmsContact] = useState<{ id: number; name: string; phone: string } | null>(null);
+
+  // Simulated Call State (Testing & Development rig)
+  const [simulatedCall, setSimulatedCall] = useState<SimulatedCallState | null>(null);
+
+  // Create Lead Mutation for intentional test saves
+  const createLeadMutation = trpc.leads.create.useMutation({
+    onSuccess: () => {
+      toast.success("Lead created from simulated test call");
+      utils.leads.list.invalidate();
+    },
+    onError: (err) => toast.error(`Failed to create lead: ${err.message}`),
+  });
 
   // Filter / View mode
   const [activeStatFilter, setActiveStatFilter] = useState<string>("all");
@@ -221,6 +235,12 @@ export default function UnassignedCallLogs() {
           toast.success("Call Center synchronized");
         }}
         isRefreshing={isFetching}
+        onStartSimulation={(sim) => setSimulatedCall(sim)}
+        activeSimulation={simulatedCall}
+        onResetSimulation={() => {
+          setSimulatedCall(null);
+          toast.info("Simulation cleared. Restored to normal workstation state.");
+        }}
       />
 
       {/* Quo Integration Settings Drawer / Panel (if toggled) */}
@@ -326,14 +346,62 @@ export default function UnassignedCallLogs() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         {/* Left 2/3 Main Working Area */}
         <div className="xl:col-span-2 space-y-6">
-          {/* Default Hero Card: No Active Call */}
-          <NoActiveCallHero
-            onOpenQuoPhone={() => {
-              setTargetPhone(null);
-              setTargetName(null);
-              setShowQuoModal(true);
-            }}
-          />
+          {/* Active Simulated Call Card OR Default No Active Call Hero */}
+          {simulatedCall?.isActive ? (
+            <SimulatedCallCard
+              simulation={simulatedCall}
+              onEndCall={() => {
+                setSimulatedCall((prev) => (prev ? { ...prev, isEnded: true } : null));
+                toast.info("Simulated call ended. You can now test post-call notes and lead creation.");
+              }}
+              onReset={() => {
+                setSimulatedCall(null);
+                toast.success("Test call reset. Workstation restored to normal state.");
+              }}
+              onBeginIntake={(sim) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  parentName: sim.callerName === "Unknown Caller" ? "" : sim.callerName,
+                  phone: sim.phoneNumber,
+                  studentName: sim.relatedStudent ? sim.relatedStudent.split(" ")[0] : prev.studentName,
+                  notes: `[Simulated Call Scenario: ${sim.scenario}]\nCaller: ${sim.callerName} (${sim.phoneNumber})${sim.relatedStudent ? `\nStudent: ${sim.relatedStudent}` : ""}\n\n${prev.notes}`,
+                  selectedIssues: sim.scenario === "Needs advocate" ? ["IEP", "Discipline"] : sim.scenario === "Scheduling request" ? ["IEP"] : prev.selectedIssues,
+                }));
+                toast.success("Simulated caller data prefilled into Call Intake");
+              }}
+              onOpenContact={(sim) => {
+                const match = formattedContacts.find((c) => c.phone === sim.phoneNumber || c.name === sim.callerName);
+                if (match) {
+                  handleOpenQuoWithContact(match);
+                } else {
+                  toast.info(`Simulated contact snapshot: ${sim.callerName} (${sim.callerType})`);
+                }
+              }}
+              onOpenQuo={(sim) => {
+                setTargetPhone(sim.phoneNumber);
+                setTargetName(sim.callerName);
+                setShowQuoModal(true);
+              }}
+              onCreateLeadTest={(sim) => {
+                createLeadMutation.mutate({
+                  parentName: sim.callerName === "Unknown Caller" ? "New Inbound Inquiry" : sim.callerName,
+                  parentPhone: sim.phoneNumber,
+                  studentName: sim.relatedStudent || "Student",
+                  source: `Simulated Call Test (${sim.scenario})`,
+                  status: "New",
+                  notes: `Test simulated inbound call for scenario "${sim.scenario}". Caller: ${sim.callerName} (${sim.phoneNumber}).`,
+                });
+              }}
+            />
+          ) : (
+            <NoActiveCallHero
+              onOpenQuoPhone={() => {
+                setTargetPhone(null);
+                setTargetName(null);
+                setShowQuoModal(true);
+              }}
+            />
+          )}
 
           {/* Work Queue Summary (3 Cards directly below) */}
           <WorkQueueSummary
@@ -379,7 +447,8 @@ export default function UnassignedCallLogs() {
         <div className="xl:col-span-1 sticky top-6">
           <MiniFirstMatePanel
             onAddToNotes={handleAppendFirstMateText}
-            clientContextName={formData.parentName || formData.studentName}
+            clientContextName={simulatedCall?.callerName || formData.parentName || formData.studentName}
+            scenario={simulatedCall?.scenario || null}
           />
         </div>
       </div>
