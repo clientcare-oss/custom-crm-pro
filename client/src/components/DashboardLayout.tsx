@@ -672,7 +672,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarHeader>
 
           {/* ── Nav items with Expandable/Collapsible Sections ── */}
-          <SidebarContent className="bg-sidebar px-2 py-2 overflow-y-auto space-y-3">
+          <SidebarContent className="bg-sidebar px-2 py-1.5 overflow-y-auto space-y-1.5">
             {filteredMenuGroups.length === 0 && searchQuery ? (
               <div className="text-center py-8 px-3">
                 <Search className="h-6 w-6 mx-auto text-sidebar-foreground/30 mb-2" />
@@ -695,12 +695,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 const isCollapsedSection = !isSearching && (collapsedSections[group.groupLabel] ?? false);
 
                 return (
-                  <div key={group.groupLabel} className="space-y-1">
+                  <div key={group.groupLabel} className="space-y-0.5">
                     {/* Collapsible Section Header Button */}
                     <button
                       type="button"
                       onClick={() => toggleSection(group.groupLabel)}
-                      className="w-full flex items-center justify-between px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
+                      className="w-full flex items-center justify-between px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
                     >
                       <span className={hasActiveItem ? "text-amber-500/90 font-extrabold" : ""}>
                         {group.groupLabel}
@@ -757,33 +757,36 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarContent>
 
           {/* ── Footer: controls ── */}
-          <SidebarFooter className="bg-sidebar p-3 space-y-2">
-            {/* Quick Setup */}
-            <button
-              onClick={() => setQuickSetupOpen(true)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 bg-amber-500 hover:bg-amber-400 transition-all w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 shadow-sm group-data-[collapsible=icon]:justify-center"
-              title="Quick Client Setup"
-            >
-              <Zap className="h-4 w-4 text-[#0d1b2a] shrink-0" />
-              <span className="text-sm font-bold text-[#0d1b2a] group-data-[collapsible=icon]:hidden">
-                Quick Setup
-              </span>
-            </button>
+          <SidebarFooter className="bg-sidebar p-2.5 space-y-1.5">
+            {/* Side-by-side Quick Setup & Theme toggle */}
+            <div className="flex items-center gap-1.5 w-full group-data-[collapsible=icon]:flex-col">
+              {/* Quick Setup */}
+              <button
+                onClick={() => setQuickSetupOpen(true)}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 transition-all text-[#0d1b2a] font-bold text-xs shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 cursor-pointer min-w-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
+                title="Quick Client Setup"
+              >
+                <Zap className="h-3.5 w-3.5 text-[#0d1b2a] shrink-0" />
+                <span className="truncate group-data-[collapsible=icon]:hidden">
+                  Quick Setup
+                </span>
+              </button>
 
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
-              className="flex items-center justify-center gap-2 w-full rounded-lg p-2 hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-sidebar-foreground/50 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto"
-              aria-label="Toggle theme"
-            >
-              {theme === 'navy'
-                ? <Sun className="h-4 w-4 text-amber-400 shrink-0" />
-                : <Moon className="h-4 w-4 text-indigo-600 navy:text-indigo-300 shrink-0" />}
-              <span className="text-xs font-medium group-data-[collapsible=icon]:hidden text-sidebar-foreground/60">
-                {theme === 'navy' ? 'Light mode' : 'Dark mode'}
-              </span>
-            </button>
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
+                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-sidebar-accent border border-white/5 bg-black/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-sidebar-foreground/75 hover:text-sidebar-foreground text-xs font-medium cursor-pointer shrink-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
+                aria-label="Toggle theme"
+              >
+                {theme === 'navy'
+                  ? <Sun className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                  : <Moon className="h-3.5 w-3.5 text-indigo-400 shrink-0" />}
+                <span className="truncate group-data-[collapsible=icon]:hidden text-[11px]">
+                  {theme === 'navy' ? 'Light' : 'Dark'}
+                </span>
+              </button>
+            </div>
 
             {/* User profile with Go to Page button */}
             <div className="flex items-center justify-between gap-1.5 w-full">
