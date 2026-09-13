@@ -20,16 +20,11 @@ import {
   Archive,
   Info,
   ExternalLink,
-  RefreshCw,
-  Settings,
-  Bell,
-  Eye,
-  EyeOff
+  RefreshCw
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -80,36 +75,6 @@ export function PlanTransitionExperience({
     : "Liam Jenkins");
   const studentId = propStudentId || effectiveStudent?.id || 101;
   const storageKey = `waypoint_plan_transition_choice_${studentId}`;
-
-  // Settings bar: show on sidebar switch
-  const [showOnSidebar, setShowOnSidebar] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem("waypoint_plan_transition_show_sidebar");
-      if (stored !== null) return stored === "true";
-    } catch (e) {
-      console.error(e);
-    }
-    return true; // Always show on sidebar by default
-  });
-
-  const handleToggleSidebar = (checked: boolean) => {
-    setShowOnSidebar(checked);
-    try {
-      localStorage.setItem("waypoint_plan_transition_show_sidebar", String(checked));
-      window.dispatchEvent(new CustomEvent("waypoint:plan-transition-sidebar-toggle", { detail: { show: checked } }));
-      if (checked) {
-        toast.success("Sidebar Visibility Enabled", {
-          description: "Plan Renewal is pinned and visible on the navigation sidebar."
-        });
-      } else {
-        toast.info("Sidebar Visibility Setting Updated", {
-          description: "Plan Renewal visibility preference saved."
-        });
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   // Saved choice in localStorage (default to $100/mo live representation)
   const [selectedDirective, setSelectedDirective] = useState<TransitionDirective>(() => {
@@ -322,65 +287,6 @@ export function PlanTransitionExperience({
           <p className="text-[10px] text-blue-200/60 leading-tight">
             * Regardless of choice, all uploaded evaluations, meeting recordings, and IEP draft notes remain permanently secured under FERPA zero-trust standards.
           </p>
-        </div>
-      </div>
-
-      {/* ── Settings Bar & 60-Day Notification ── */}
-      <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-r from-[#071d40]/95 via-[#0B2553]/95 to-[#071d40]/95 p-4 sm:p-5 shadow-2xl backdrop-blur-md space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
-              <Settings className="w-4 h-4 text-amber-400 animate-spin-slow" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold text-white tracking-wide">
-                  Plan Renewal Settings & Sidebar Visibility
-                </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
-                  Always Visible in Sidebar
-                </span>
-              </div>
-              <p className="text-xs text-blue-200/70 mt-0.5">
-                Toggle sidebar visibility and review access rules for {studentName}'s advocacy continuity.
-              </p>
-            </div>
-          </div>
-
-          {/* Show on Sidebar Switch */}
-          <div className="flex items-center gap-3.5 bg-[#030C22]/85 px-4 py-2.5 rounded-xl border border-amber-400/30 shrink-0 self-start sm:self-auto shadow-inner">
-            <div className="flex items-center gap-2">
-              {showOnSidebar ? (
-                <Eye className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <EyeOff className="w-3.5 h-3.5 text-white/40" />
-              )}
-              <span className="text-xs font-semibold text-white select-none">
-                Show on Sidebar
-              </span>
-            </div>
-            <Switch
-              checked={showOnSidebar}
-              onCheckedChange={handleToggleSidebar}
-              className="data-[state=checked]:bg-amber-400 cursor-pointer"
-            />
-            <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-              showOnSidebar 
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" 
-                : "bg-white/10 text-white/50 border border-white/10"
-            }`}>
-              {showOnSidebar ? "ACTIVE" : "OFF"}
-            </span>
-          </div>
-        </div>
-
-        {/* 60-Day Notification Callout */}
-        <div className="flex items-start sm:items-center gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-xs text-amber-200">
-          <Bell className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0 animate-bounce" />
-          <div className="flex-1 leading-relaxed">
-            <span className="font-bold text-white">Sidebar Activation Notification:</span>{" "}
-            This page is configured to be visible on the sidebar <span className="font-semibold text-amber-300 underline decoration-amber-400/60 underline-offset-2">60 days before this client's plan ends</span> (currently <strong className="text-white font-mono">{daysRemaining} days remaining</strong> until {expirationDate}). It is permanently available under <strong>Plan Renewal</strong> in the sidebar so parents and advocates can plan ahead with zero disruption.
-          </div>
         </div>
       </div>
 
