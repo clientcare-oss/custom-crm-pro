@@ -97,9 +97,9 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { 
           icon: TrendingUp, 
-          label: "Leads Pipeline", 
+          label: "Leads", 
           path: "/leads",
-          keywords: ["leads", "discovery pipeline", "pipeline", "kanban", "intake"]
+          keywords: ["leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
         },
         { 
           icon: GitBranch, 
