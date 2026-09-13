@@ -58,8 +58,8 @@ interface RenewalRecord {
 const SAMPLE_RENEWALS: RenewalRecord[] = [
   {
     id: "ren-001",
-    parentName: "Sarah Jenkins",
-    parentEmail: "sarah.jenkins@example.com",
+    parentName: "Jennifer Jenkins",
+    parentEmail: "jennifer.jenkins@example.com",
     parentPhone: "(404) 555-0192",
     studentName: "Liam Jenkins",
     studentGrade: "5th → 6th Grade",

@@ -470,8 +470,8 @@ export const STATE_ENGINE_RULES: StateEngineRule[] = [
 export const SAMPLE_CLIENT_PERSONAS: SampleClientPersona[] = [
   {
     id: "persona-discovery",
-    name: "Sarah Jenkins (Prospective Parent)",
-    email: "sarah.jenkins@example.com",
+    name: "Jennifer Jenkins (Prospective Parent)",
+    email: "jennifer.jenkins@example.com",
     state: "DISCOVERY_SCHEDULED",
     stageName: "02 · Discovery Call Scheduled",
     studentsCount: 1,

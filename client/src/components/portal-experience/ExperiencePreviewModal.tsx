@@ -160,7 +160,7 @@ export function ExperiencePreviewModal({
   };
 
   const clientStage = getMappedClientStage();
-  const displayName = "Sarah Jenkins";
+  const displayName = "Jennifer Jenkins";
 
   const getContainerWidth = () => {
     switch (deviceMode) {
