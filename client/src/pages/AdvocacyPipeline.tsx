@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { AdvocacyPipelineHeader } from "@/components/pipeline/AdvocacyPipelineHeader";
@@ -14,11 +14,115 @@ import type {
   SavedViewItem,
   PipelineFilters,
 } from "@/components/pipeline/types";
-import { Loader2 } from "lucide-react";
 
-// ── Deterministic Sample Enrichment Dataset (Used if few CRM records present) ──
-const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
-  // Discovery
+// ── 8 Default Standard Stages ────────────────────────────────────────────────
+const DEFAULT_STAGES: PipelineStageItem[] = [
+  {
+    id: 1,
+    name: "Discovery",
+    slug: "discovery",
+    order: 1,
+    accentColor: "#38BDF8", // Cyan
+    iconName: "Compass",
+    category: "active",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 2,
+    name: "Intake / Onboarding",
+    slug: "intake-onboarding",
+    order: 2,
+    accentColor: "#34D399", // Emerald
+    iconName: "FileText",
+    category: "active",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 3,
+    name: "Records Review",
+    slug: "records-review",
+    order: 3,
+    accentColor: "#F59E0B", // Amber
+    iconName: "FileSearch",
+    category: "active",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 4,
+    name: "School Contact",
+    slug: "school-contact",
+    order: 4,
+    accentColor: "#F5B544", // Gold
+    iconName: "School",
+    category: "active",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 5,
+    name: "Meeting Scheduled",
+    slug: "meeting-scheduled",
+    order: 5,
+    accentColor: "#818CF8", // Indigo
+    iconName: "Calendar",
+    category: "active",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 6,
+    name: "State Complaint",
+    slug: "state-complaint",
+    order: 6,
+    accentColor: "#F87171", // Coral
+    iconName: "Scale",
+    category: "escalation",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 7,
+    name: "Monitoring",
+    slug: "monitoring",
+    order: 7,
+    accentColor: "#2DD4BF", // Teal
+    iconName: "Activity",
+    category: "active",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 8,
+    name: "Closed",
+    slug: "closed",
+    order: 8,
+    accentColor: "#94A3B8", // Slate
+    iconName: "CheckCircle2",
+    category: "completed",
+    isArchived: false,
+    isDefault: true,
+  },
+];
+
+// ── 9 Standard Saved Views (Tools Only ordered BEFORE On Hold) ───────────────
+const DEFAULT_SAVED_VIEWS: SavedViewItem[] = [
+  { id: 1, name: "All Clients", slug: "all-clients", filtersJson: "{}", isPinned: true, isDefault: true, order: 1 },
+  { id: 2, name: "$55 Plan", slug: "plan-55", filtersJson: JSON.stringify({ planTier: "$55" }), isPinned: true, isDefault: true, order: 2 },
+  { id: 3, name: "$105 Plan", slug: "plan-105", filtersJson: JSON.stringify({ planTier: "$105" }), isPinned: true, isDefault: true, order: 3 },
+  { id: 4, name: "Scholarship", slug: "scholarship", filtersJson: JSON.stringify({ planTier: "Scholarship" }), isPinned: true, isDefault: true, order: 4 },
+  { id: 5, name: "Pay Per Use", slug: "pay-per-use", filtersJson: JSON.stringify({ planTier: "Pay Per Use" }), isPinned: true, isDefault: true, order: 5 },
+  { id: 6, name: "Renewals", slug: "renewals", filtersJson: JSON.stringify({ accountStatus: "Renewal Needed" }), isPinned: true, isDefault: true, order: 6 },
+  { id: 7, name: "Nonpay", slug: "nonpay", filtersJson: JSON.stringify({ billingStatus: "Payment Failed" }), isPinned: true, isDefault: true, order: 7 },
+  { id: 8, name: "Tools Only", slug: "tools-only", filtersJson: JSON.stringify({ planTier: "Tools Only" }), isPinned: true, isDefault: true, order: 8 },
+  { id: 9, name: "On Hold", slug: "on-hold", filtersJson: JSON.stringify({ accountStatus: "On Hold" }), isPinned: true, isDefault: true, order: 9 },
+];
+
+// ── 19 Realistic Interactive Demo Cards matching Visual Reference ────────────
+const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
+  // 1. Discovery (3 clients)
   {
     id: 101,
     firstName: "Maya",
@@ -36,7 +140,9 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "JL",
     needsAttention: false,
     primaryTask: "Discovery call pending",
-    nextDate: "Tomorrow, 10:00 AM",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Tomorrow, 10:00 AM",
+    secondaryTaskIcon: "calendar",
   },
   {
     id: 102,
@@ -55,7 +161,9 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "MS",
     needsAttention: false,
     primaryTask: "Discovery call pending",
-    nextDate: "Apr 28, 2025",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Apr 28, 2025",
+    secondaryTaskIcon: "calendar",
   },
   {
     id: 103,
@@ -74,10 +182,12 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "KL",
     needsAttention: false,
     primaryTask: "Parent referral – call to schedule",
-    nextDate: "Apr 29, 2025",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Apr 29, 2025",
+    secondaryTaskIcon: "calendar",
   },
 
-  // Intake / Onboarding
+  // 2. Intake / Onboarding (3 clients)
   {
     id: 104,
     firstName: "Noah",
@@ -94,8 +204,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Erin Smith",
     assignedAdvocateInitials: "ES",
     needsAttention: false,
-    primaryTask: "Agreement sent · Awaiting signature",
-    nextDate: "In Progress",
+    primaryTask: "Agreement sent",
+    primaryTaskIcon: "check",
+    secondaryTask: "Awaiting parent signature",
+    secondaryTaskIcon: "clock",
   },
   {
     id: 105,
@@ -113,8 +225,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Daniel Torres",
     assignedAdvocateInitials: "DT",
     needsAttention: false,
-    primaryTask: "Portal setup · Send welcome email",
-    nextDate: "In Progress",
+    primaryTask: "Portal setup",
+    primaryTaskIcon: "check",
+    secondaryTask: "Send welcome email",
+    secondaryTaskIcon: "mail",
   },
   {
     id: 106,
@@ -132,11 +246,13 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Jordan Lee",
     assignedAdvocateInitials: "JL",
     needsAttention: false,
-    primaryTask: "Intake form in progress · Follow up with parent",
-    nextDate: "In Progress",
+    primaryTask: "Intake form in progress",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Follow up with parent",
+    secondaryTaskIcon: "check",
   },
 
-  // Records Review
+  // 3. Records Review (3 clients)
   {
     id: 107,
     firstName: "Ava",
@@ -153,8 +269,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Maya Singh",
     assignedAdvocateInitials: "MS",
     needsAttention: false,
-    primaryTask: "Records uploaded · Review and summarize",
-    nextDate: "In Progress",
+    primaryTask: "Records uploaded",
+    primaryTaskIcon: "check",
+    secondaryTask: "Review and summarize",
+    secondaryTaskIcon: "calendar",
   },
   {
     id: 108,
@@ -172,8 +290,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Erin Smith",
     assignedAdvocateInitials: "ES",
     needsAttention: false,
-    primaryTask: "Comparator needed · Request district data",
-    nextDate: "In Progress",
+    primaryTask: "Comparator needed",
+    primaryTaskIcon: "check",
+    secondaryTask: "Request district data",
+    secondaryTaskIcon: "check",
   },
   {
     id: 109,
@@ -191,11 +311,13 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Daniel Torres",
     assignedAdvocateInitials: "DT",
     needsAttention: false,
-    primaryTask: "Records uploaded · Identify key issues",
-    nextDate: "In Progress",
+    primaryTask: "Records uploaded",
+    primaryTaskIcon: "check",
+    secondaryTask: "Identify key issues",
+    secondaryTaskIcon: "calendar",
   },
 
-  // School Contact
+  // 4. School Contact (2 clients)
   {
     id: 110,
     firstName: "Oliver",
@@ -212,8 +334,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Kevin Liu",
     assignedAdvocateInitials: "KL",
     needsAttention: false,
-    primaryTask: "Notify school · Send formal letter",
-    nextDate: "In Progress",
+    primaryTask: "Notify school",
+    primaryTaskIcon: "check",
+    secondaryTask: "Send formal letter",
+    secondaryTaskIcon: "mail",
   },
   {
     id: 111,
@@ -231,11 +355,13 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Maya Singh",
     assignedAdvocateInitials: "MS",
     needsAttention: false,
-    primaryTask: "Request draft IEP · Follow up in 2 days",
-    nextDate: "In Progress",
+    primaryTask: "Request draft IEP",
+    primaryTaskIcon: "check",
+    secondaryTask: "Follow up in 2 days",
+    secondaryTaskIcon: "clock",
   },
 
-  // Meeting Scheduled
+  // 5. Meeting Scheduled (2 clients)
   {
     id: 112,
     firstName: "Benjamin",
@@ -252,7 +378,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Erin Smith",
     assignedAdvocateInitials: "ES",
     needsAttention: false,
-    primaryTask: "Pre-meeting prep & talking points",
+    primaryTask: "May 2, 2025 · 10:00 AM",
+    primaryTaskIcon: "calendar",
+    secondaryTask: "Pre-meeting prep",
+    secondaryTaskIcon: "clock",
     meetingDate: "May 2, 2025 · 10:00 AM",
   },
   {
@@ -271,11 +400,14 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Jordan Lee",
     assignedAdvocateInitials: "JL",
     needsAttention: false,
-    primaryTask: "Prepare talking points & parent concerns",
+    primaryTask: "May 5, 2025 · 1:00 PM",
+    primaryTaskIcon: "calendar",
+    secondaryTask: "Prepare talking points",
+    secondaryTaskIcon: "check",
     meetingDate: "May 5, 2025 · 1:00 PM",
   },
 
-  // State Complaint
+  // 6. State Complaint (2 clients)
   {
     id: 114,
     firstName: "Amelia",
@@ -292,8 +424,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Kevin Liu",
     assignedAdvocateInitials: "KL",
     needsAttention: false,
-    primaryTask: "Drafting · Review with legal template",
-    nextDate: "In Progress",
+    primaryTask: "Drafting",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Review with legal template",
+    secondaryTaskIcon: "check",
   },
   {
     id: 115,
@@ -311,11 +445,13 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Erin Smith",
     assignedAdvocateInitials: "ES",
     needsAttention: false,
-    primaryTask: "Waiting on parent approval · Share draft",
-    nextDate: "In Progress",
+    primaryTask: "Waiting on parent approval",
+    primaryTaskIcon: "check",
+    secondaryTask: "Share draft for review",
+    secondaryTaskIcon: "mail",
   },
 
-  // Monitoring
+  // 7. Monitoring (2 clients)
   {
     id: 116,
     firstName: "Harper",
@@ -332,8 +468,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Maya Singh",
     assignedAdvocateInitials: "MS",
     needsAttention: false,
-    primaryTask: "Progress monitoring · Check in with parent",
-    nextDate: "In Progress",
+    primaryTask: "Progress monitoring",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Check in with parent",
+    secondaryTaskIcon: "check",
   },
   {
     id: 117,
@@ -351,11 +489,13 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Jordan Lee",
     assignedAdvocateInitials: "JL",
     needsAttention: false,
-    primaryTask: "Waiting on transportation · Follow up with school",
-    nextDate: "In Progress",
+    primaryTask: "Waiting on transportation",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Follow up with school",
+    secondaryTaskIcon: "check",
   },
 
-  // Closed
+  // 8. Closed (2 clients)
   {
     id: 118,
     firstName: "Grace",
@@ -372,8 +512,10 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Daniel Torres",
     assignedAdvocateInitials: "DT",
     needsAttention: false,
-    primaryTask: "IEP in place · Case completed",
-    nextDate: "Closed Apr 15, 2025",
+    primaryTask: "IEP in place",
+    primaryTaskIcon: "check",
+    secondaryTask: "Closed Apr 15, 2025",
+    secondaryTaskIcon: "calendar",
   },
   {
     id: 119,
@@ -391,46 +533,123 @@ const SAMPLE_PIPELINE_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Kevin Liu",
     assignedAdvocateInitials: "KL",
     needsAttention: true,
-    primaryTask: "Vault only access · Case resolved",
-    nextDate: "Closed Apr 10, 2025",
+    attentionReason: "Payment Failed / Past Due",
+    primaryTask: "Vault only: access",
+    primaryTaskIcon: "clock",
+    secondaryTask: "Closed Apr 10, 2025",
+    secondaryTaskIcon: "calendar",
   },
 ];
 
 export default function AdvocacyPipeline() {
   const utils = trpc.useUtils();
 
-  // Queries
-  const { data: stages = [], isLoading: stagesLoading } = trpc.pipeline.stages.list.useQuery();
-  const { data: savedViews = [], isLoading: viewsLoading } = trpc.pipeline.views.list.useQuery();
-  const { data: dbCards = [], isLoading: cardsLoading } = trpc.pipeline.cards.list.useQuery();
+  // ── Database Queries ────────────────────────────────────────────────────────
+  const { data: serverStages } = trpc.pipeline.stages.list.useQuery();
+  const { data: serverViews } = trpc.pipeline.views.list.useQuery();
+  const { data: dbCards } = trpc.pipeline.cards.list.useQuery();
 
-  // Mutations
+  // ── Backend Mutations ───────────────────────────────────────────────────────
   const updateStageMutation = trpc.pipeline.cards.updateStage.useMutation({
-    onSuccess: () => {
-      utils.pipeline.cards.list.invalidate();
-    },
-    onError: (err) => toast.error("Failed to move card: " + err.message),
+    onSuccess: () => utils.pipeline.cards.list.invalidate(),
   });
 
   const upsertStageMutation = trpc.pipeline.stages.upsert.useMutation({
-    onSuccess: () => {
-      utils.pipeline.stages.list.invalidate();
-    },
+    onSuccess: () => utils.pipeline.stages.list.invalidate(),
   });
 
   const reorderStagesMutation = trpc.pipeline.stages.reorder.useMutation({
-    onSuccess: () => {
-      utils.pipeline.stages.list.invalidate();
-    },
+    onSuccess: () => utils.pipeline.stages.list.invalidate(),
   });
 
   const upsertViewMutation = trpc.pipeline.views.upsert.useMutation({
-    onSuccess: () => {
-      utils.pipeline.views.list.invalidate();
-    },
+    onSuccess: () => utils.pipeline.views.list.invalidate(),
   });
 
-  // Local active view & filter states
+  // ── Local Persistent State for Fluid Interaction & Refresh Retention ───────
+  const [stagesState, setStagesState] = useState<PipelineStageItem[]>(() => {
+    try {
+      const cached = localStorage.getItem("waypoint_advocacy_pipeline_stages");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Ignore parse error
+    }
+    return DEFAULT_STAGES;
+  });
+
+  const [cardsState, setCardsState] = useState<PipelineCardItem[]>(() => {
+    try {
+      const cached = localStorage.getItem("waypoint_advocacy_pipeline_cards");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Ignore parse error
+    }
+    return INITIAL_DEMO_CARDS;
+  });
+
+  const [customViewsState, setCustomViewsState] = useState<SavedViewItem[]>(() => {
+    try {
+      const cached = localStorage.getItem("waypoint_advocacy_pipeline_views");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Ignore parse error
+    }
+    return [];
+  });
+
+  // Sync server data when received, without wiping user's drag positions
+  useEffect(() => {
+    if (serverStages && serverStages.length > 0) {
+      setStagesState((prev) => {
+        // Keep order if already cached
+        const merged = serverStages.map((ss: any, idx: number) => {
+          const existing = prev.find((p) => p.slug === ss.slug || p.id === ss.id);
+          return {
+            id: ss.id,
+            name: ss.name,
+            slug: ss.slug || ss.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            order: existing?.order ?? idx + 1,
+            accentColor: ss.accentColor || "#38BDF8",
+            iconName: ss.iconName || "Compass",
+            category: ss.category || "active",
+            isArchived: ss.isArchived ?? false,
+            isDefault: ss.isDefault ?? false,
+          };
+        });
+        merged.sort((a, b) => a.order - b.order);
+        return merged;
+      });
+    }
+  }, [serverStages]);
+
+  // Combine default saved views + server saved views + custom views
+  const allSavedViews: SavedViewItem[] = useMemo(() => {
+    const list = [...DEFAULT_SAVED_VIEWS];
+    if (serverViews && serverViews.length > 0) {
+      serverViews.forEach((sv: any) => {
+        if (!list.some((v) => v.slug === sv.slug)) {
+          list.push(sv);
+        }
+      });
+    }
+    customViewsState.forEach((cv) => {
+      if (!list.some((v) => v.slug === cv.slug)) {
+        list.push(cv);
+      }
+    });
+    return list;
+  }, [serverViews, customViewsState]);
+
+  // Active View & Filter states
   const [activeViewSlug, setActiveViewSlug] = useState("all-clients");
   const [filters, setFilters] = useState<PipelineFilters>({});
 
@@ -439,24 +658,10 @@ export default function AdvocacyPipeline() {
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [showNewViewModal, setShowNewViewModal] = useState(false);
 
-  // Optimistic Card State for instant Drag-and-Drop
-  const [localMovedCards, setLocalMovedCards] = useState<Record<number, string>>({});
-
-  // Combine DB cards with sample reference data if database has few students
-  const allCards: PipelineCardItem[] = useMemo(() => {
-    const rawList = dbCards.length > 0 ? dbCards : SAMPLE_PIPELINE_CARDS;
-    return rawList.map((card: any) => {
-      if (localMovedCards[card.id]) {
-        return { ...card, pipelineStage: localMovedCards[card.id] };
-      }
-      return card;
-    });
-  }, [dbCards, localMovedCards]);
-
-  // Handle active saved view filter
+  // Active Saved View Rule object
   const activeViewObj = useMemo(() => {
-    return savedViews.find((v: any) => v.slug === activeViewSlug);
-  }, [savedViews, activeViewSlug]);
+    return allSavedViews.find((v) => v.slug === activeViewSlug);
+  }, [allSavedViews, activeViewSlug]);
 
   const viewRules = useMemo(() => {
     if (!activeViewObj?.filtersJson) return {};
@@ -467,12 +672,15 @@ export default function AdvocacyPipeline() {
     }
   }, [activeViewObj]);
 
-  // Filtered Cards matching Saved View + Filter Bar
+  // Filtered Cards matching (Saved View + Filter Bar)
   const filteredCards = useMemo(() => {
-    return allCards.filter((card) => {
+    return cardsState.filter((card) => {
       // 1. Saved View filters
-      if (viewRules.planTier && card.planTier.toLowerCase() !== viewRules.planTier.toLowerCase()) {
-        return false;
+      if (viewRules.planTier) {
+        const vt = viewRules.planTier.toLowerCase();
+        const ct = card.planTier.toLowerCase();
+        if (vt === "tools only" && !ct.includes("tools") && !ct.includes("vault")) return false;
+        if (vt !== "tools only" && ct !== vt) return false;
       }
       if (viewRules.accountStatus && card.accountStatus.toLowerCase() !== viewRules.accountStatus.toLowerCase()) {
         return false;
@@ -482,8 +690,11 @@ export default function AdvocacyPipeline() {
       }
 
       // 2. Filter Bar filters
-      if (filters.planTier && card.planTier.toLowerCase() !== filters.planTier.toLowerCase()) {
-        return false;
+      if (filters.planTier) {
+        const ft = filters.planTier.toLowerCase();
+        const ct = card.planTier.toLowerCase();
+        if (ft === "tools only" && !ct.includes("tools") && !ct.includes("vault")) return false;
+        if (ft !== "tools only" && ct !== ft) return false;
       }
       if (filters.advocate && card.assignedAdvocateName.toLowerCase() !== filters.advocate.toLowerCase()) {
         return false;
@@ -497,52 +708,134 @@ export default function AdvocacyPipeline() {
       if (filters.needsAttentionOnly && !card.needsAttention) {
         return false;
       }
+      if (filters.accountStatus && card.accountStatus.toLowerCase() !== filters.accountStatus.toLowerCase()) {
+        return false;
+      }
+      if (filters.billingStatus && card.billingStatus.toLowerCase() !== filters.billingStatus.toLowerCase()) {
+        return false;
+      }
 
       return true;
     });
-  }, [allCards, viewRules, filters]);
+  }, [cardsState, viewRules, filters]);
 
-  // Compute card counts per saved view
+  // Compute live card counts per saved view pill
   const viewCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    savedViews.forEach((view: any) => {
+    allSavedViews.forEach((view) => {
       try {
         const rules = JSON.parse(view.filtersJson || "{}");
-        const count = allCards.filter((card) => {
-          if (rules.planTier && card.planTier.toLowerCase() !== rules.planTier.toLowerCase()) return false;
+        const count = cardsState.filter((card) => {
+          if (rules.planTier) {
+            const vt = rules.planTier.toLowerCase();
+            const ct = card.planTier.toLowerCase();
+            if (vt === "tools only" && (ct.includes("tools") || ct.includes("vault"))) return true;
+            if (ct !== vt) return false;
+          }
           if (rules.accountStatus && card.accountStatus.toLowerCase() !== rules.accountStatus.toLowerCase()) return false;
           if (rules.billingStatus && card.billingStatus.toLowerCase() !== rules.billingStatus.toLowerCase()) return false;
           return true;
         }).length;
         counts[view.slug] = count;
       } catch {
-        counts[view.slug] = allCards.length;
+        counts[view.slug] = cardsState.length;
       }
     });
     return counts;
-  }, [allCards, savedViews]);
+  }, [cardsState, allSavedViews]);
 
-  // Drag-and-drop Card Move Handler
+  // ── Drag and Drop: Move Card Between Stages ─────────────────────────────────
   const handleMoveCard = (cardId: number, targetStageName: string) => {
-    // 1. Optimistically update local board immediately
-    setLocalMovedCards((prev) => ({ ...prev, [cardId]: targetStageName }));
+    setCardsState((prev) => {
+      const updated = prev.map((c) =>
+        c.id === cardId ? { ...c, pipelineStage: targetStageName } : c
+      );
+      try {
+        localStorage.setItem("waypoint_advocacy_pipeline_cards", JSON.stringify(updated));
+      } catch {
+        // Ignore storage error
+      }
+      return updated;
+    });
+
     toast.success(`Client moved to ${targetStageName}`);
 
-    // 2. Persist to database
+    // Persist to backend
     updateStageMutation.mutate({
       contactId: cardId,
       stage: targetStageName,
     });
   };
 
+  // ── Drag and Drop: Intra-Column Card Reordering ─────────────────────────────
+  const handleReorderCards = (draggedCardId: number, targetCardId: number, stageName: string) => {
+    setCardsState((prev) => {
+      const stageCards = prev.filter((c) => c.pipelineStage.toLowerCase() === stageName.toLowerCase());
+      const otherCards = prev.filter((c) => c.pipelineStage.toLowerCase() !== stageName.toLowerCase());
+
+      const draggedIndex = stageCards.findIndex((c) => c.id === draggedCardId);
+      const targetIndex = stageCards.findIndex((c) => c.id === targetCardId);
+
+      if (draggedIndex < 0 || targetIndex < 0) return prev;
+
+      const newStageCards = [...stageCards];
+      const [draggedItem] = newStageCards.splice(draggedIndex, 1);
+      newStageCards.splice(targetIndex, 0, draggedItem);
+
+      const combined = [...otherCards, ...newStageCards];
+      try {
+        localStorage.setItem("waypoint_advocacy_pipeline_cards", JSON.stringify(combined));
+      } catch {
+        // Ignore storage error
+      }
+      return combined;
+    });
+  };
+
+  // ── Drag and Drop: Stage Columns Reordering ─────────────────────────────────
+  const handleReorderStages = (draggedStageId: number, targetStageId: number) => {
+    setStagesState((prev) => {
+      const draggedIdx = prev.findIndex((s) => s.id === draggedStageId);
+      const targetIdx = prev.findIndex((s) => s.id === targetStageId);
+
+      if (draggedIdx < 0 || targetIdx < 0) return prev;
+
+      const newStages = [...prev];
+      const [draggedItem] = newStages.splice(draggedIdx, 1);
+      newStages.splice(targetIdx, 0, draggedItem);
+
+      const reordered = newStages.map((s, idx) => ({ ...s, order: idx + 1 }));
+      try {
+        localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(reordered));
+      } catch {
+        // Ignore storage error
+      }
+
+      // Persist to server
+      reorderStagesMutation.mutate(
+        reordered.map((s) => ({ id: s.id, order: s.order }))
+      );
+
+      toast.success("Pipeline stages reordered");
+      return reordered;
+    });
+  };
+
+  // ── Stage Customization Save Handler ────────────────────────────────────────
   const handleSaveStages = (updatedStages: PipelineStageItem[]) => {
+    setStagesState(updatedStages);
+    try {
+      localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(updatedStages));
+    } catch {
+      // Ignore storage error
+    }
+
     const reorderPayload = updatedStages.map((s, idx) => ({
       id: s.id,
       order: idx + 1,
     }));
     reorderStagesMutation.mutate(reorderPayload);
 
-    // Also persist new stages
     updatedStages.forEach((s) => {
       upsertStageMutation.mutate({
         id: s.isDefault ? undefined : s.id,
@@ -554,42 +847,82 @@ export default function AdvocacyPipeline() {
         isArchived: s.isArchived,
       });
     });
+
+    toast.success("Pipeline configuration saved");
   };
 
+  // ── Add New Stage Handler ───────────────────────────────────────────────────
   const handleAddCustomStage = (stageData: Partial<PipelineStageItem>) => {
     if (!stageData.name) return;
-    upsertStageMutation.mutate({
+    const newStage: PipelineStageItem = {
+      id: Date.now(),
       name: stageData.name,
+      slug: stageData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      order: stagesState.length + 1,
       accentColor: stageData.accentColor || "#38BDF8",
-      category: stageData.category || "active",
       iconName: stageData.iconName || "Compass",
-      order: stages.length + 1,
+      category: stageData.category || "active",
+      isArchived: false,
+      isDefault: false,
+    };
+
+    const updated = [...stagesState, newStage];
+    setStagesState(updated);
+    try {
+      localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(updated));
+    } catch {
+      // Ignore storage error
+    }
+
+    upsertStageMutation.mutate({
+      name: newStage.name,
+      accentColor: newStage.accentColor,
+      category: newStage.category,
+      iconName: newStage.iconName,
+      order: newStage.order,
     });
+
+    toast.success(`Stage "${newStage.name}" added to pipeline`);
   };
 
+  // ── Add New Custom Saved View Handler ───────────────────────────────────────
   const handleSaveNewView = (newViewData: {
     name: string;
     filters: PipelineFilters;
     isPinned: boolean;
   }) => {
+    const slug = newViewData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const newViewItem: SavedViewItem = {
+      id: Date.now(),
+      name: newViewData.name,
+      slug,
+      filtersJson: JSON.stringify(newViewData.filters),
+      isPinned: newViewData.isPinned,
+      isDefault: false,
+      order: allSavedViews.length + 1,
+    };
+
+    const updated = [...customViewsState, newViewItem];
+    setCustomViewsState(updated);
+    try {
+      localStorage.setItem("waypoint_advocacy_pipeline_views", JSON.stringify(updated));
+    } catch {
+      // Ignore storage error
+    }
+
     upsertViewMutation.mutate({
       name: newViewData.name,
       filtersJson: JSON.stringify(newViewData.filters),
       isPinned: newViewData.isPinned,
-      order: savedViews.length + 1,
+      order: newViewItem.order,
     });
+
+    setActiveViewSlug(slug);
+    toast.success(`Saved view "${newViewData.name}" created`);
   };
 
-  if (stagesLoading && viewsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#F5B544]" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4 p-4 sm:p-6 lg:p-8 bg-[#07162B] min-h-screen text-slate-100">
+    <div className="space-y-3.5 p-4 sm:p-6 lg:p-7 bg-[#07162B] min-h-screen text-slate-100">
       {/* 1. Page Header */}
       <AdvocacyPipelineHeader
         onCustomizePipeline={() => setShowCustomizeModal(true)}
@@ -597,9 +930,9 @@ export default function AdvocacyPipeline() {
         onNewView={() => setShowNewViewModal(true)}
       />
 
-      {/* 2. Saved Views Bar */}
+      {/* 2. Saved Views Bar (Tools Only before On Hold) */}
       <SavedViewsBar
-        views={savedViews}
+        views={allSavedViews}
         activeViewSlug={activeViewSlug}
         onSelectView={(view) => setActiveViewSlug(view.slug)}
         viewCounts={viewCounts}
@@ -615,11 +948,13 @@ export default function AdvocacyPipeline() {
 
       {/* 4. Kanban Pipeline Board */}
       <KanbanBoard
-        stages={stages}
+        stages={stagesState}
         cards={filteredCards}
         onMoveCard={handleMoveCard}
+        onReorderCards={handleReorderCards}
+        onReorderStages={handleReorderStages}
         onAddCard={(stageName) => {
-          toast.info(`Opening new client intake for stage: ${stageName}`);
+          toast.info(`Opening new student intake for stage: ${stageName}`);
         }}
         onAddCustomStage={() => setShowAddStageModal(true)}
         onEditStage={() => setShowCustomizeModal(true)}
@@ -629,7 +964,7 @@ export default function AdvocacyPipeline() {
       <CustomizePipelineModal
         open={showCustomizeModal}
         onOpenChange={setShowCustomizeModal}
-        stages={stages}
+        stages={stagesState}
         onSaveStages={handleSaveStages}
       />
 

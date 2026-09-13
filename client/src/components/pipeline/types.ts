@@ -29,7 +29,11 @@ export interface PipelineCardItem {
   assignedAdvocateInitials: string;
   caseId?: string;
   needsAttention: boolean;
+  attentionReason?: string;
   primaryTask?: string;
+  primaryTaskIcon?: "clock" | "check" | "calendar" | "alert" | "mail";
+  secondaryTask?: string;
+  secondaryTaskIcon?: "clock" | "check" | "calendar" | "alert" | "mail";
   nextDate?: string;
   meetingDate?: string;
   activeWorkstreams?: string[];
