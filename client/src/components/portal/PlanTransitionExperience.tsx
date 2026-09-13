@@ -342,60 +342,60 @@ export function PlanTransitionExperience({
       {/* ── Split Hero Section: Left Hero Card (Lighthouse) + Right Access Card ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
-        {/* Left Hero Card (8 Cols): Lighthouse strictly segregated on right, text on left */}
-        <div className="lg:col-span-8 relative overflow-hidden rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#061937] via-[#04132b] to-[#020b1a] shadow-2xl min-h-[310px] flex flex-col justify-between">
+        {/* Left Hero Card (8 Cols): Lighthouse on right, content on left */}
+        <div className="lg:col-span-8 relative overflow-hidden rounded-2xl border border-sky-600/35 bg-gradient-to-br from-[#061833] via-[#041126] to-[#020b18] shadow-2xl flex flex-col justify-between">
           
-          {/* Lighthouse Twilight Background Artwork (Cleanly confined to right 44% so it never collides with text) */}
-          <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[46%] lg:w-[44%] overflow-hidden pointer-events-none select-none">
+          {/* Lighthouse Twilight Background Artwork (Cleanly positioned on the right) */}
+          <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[48%] lg:w-[44%] overflow-hidden pointer-events-none select-none">
             <img
               src="/plan-transition-lighthouse.jpg"
               alt="Waypoint Lighthouse in twilight"
-              className="w-full h-full object-cover object-[center_25%] opacity-95"
+              className="w-full h-full object-cover object-[center_22%] opacity-95"
             />
-            {/* Seamless blended gradients on the left edge */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#04132b] via-[#04132b]/40 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#020b1a] via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#061937]/40 via-transparent to-transparent" />
+            {/* Seamless blended gradients on the left edge & top/bottom */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#041126] via-[#041126]/45 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#020b18] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#061833]/30 via-transparent to-transparent" />
 
             {/* Script Cursive Overlay: "Your journey continues here." */}
-            <div className="absolute top-6 left-3 sm:left-6 z-10">
-              <p className="font-serif italic text-amber-200/95 text-sm sm:text-base lg:text-lg tracking-wide select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-                Your journey continues here.
+            <div className="absolute top-10 sm:top-12 left-2 sm:left-4 z-10 text-left">
+              <p className="font-serif italic text-amber-200/90 text-base sm:text-lg leading-tight select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                Your journey<br />continues here.
               </p>
-              <div className="w-7 h-[2px] bg-amber-400/90 mt-1 shadow-sm" />
+              <div className="w-8 h-[2px] bg-amber-400/90 mt-2 shadow-sm" />
             </div>
           </div>
 
-          {/* Left Text & Stat Content (Strictly width-capped so text never runs over the lighthouse artwork) */}
-          <div className="relative z-10 p-5 sm:p-6 lg:p-7 space-y-2.5 w-full sm:max-w-[58%] lg:max-w-[56%]">
+          {/* Left Text & Stat Content (Strictly constrained so it never touches the lighthouse) */}
+          <div className="relative z-10 p-6 sm:p-7 lg:p-8 space-y-3.5 w-full sm:max-w-[58%] lg:max-w-[55%]">
             {/* Accent Gold Label */}
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-[2px] bg-amber-400" />
-              <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-[2px] bg-amber-400" />
+              <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-amber-400 uppercase">
                 Your Records Matter
               </span>
             </div>
 
-            {/* Display Serif Title */}
-            <h2 className="text-xl sm:text-2xl lg:text-[26px] font-serif font-normal text-white tracking-tight leading-snug">
-              Keep your Document Vault and essential tools.
+            {/* Display Serif Title (Exact 2-line break) */}
+            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-serif font-normal text-white tracking-tight leading-[1.18]">
+              Keep your Document Vault<br />and essential tools.
             </h2>
 
             {/* Descriptive Body */}
-            <p className="text-xs sm:text-[13px] text-sky-100/80 leading-relaxed font-normal">
-              You currently have records stored in your Document Vault for <strong className="text-white font-semibold">{studentName}</strong>. You can continue using the Vault and selected Waypoint tools after your advocacy plan ends — only if you choose a Tools Access plan or renew full advocacy.
+            <p className="text-xs sm:text-[13px] text-blue-200/80 leading-relaxed font-normal max-w-[460px]">
+              You currently have records stored in your Document Vault. You can continue using the Vault and selected Waypoint tools after your advocacy plan ends — only if you choose a Tools Access plan or renew full advocacy.
             </p>
 
-            {/* Inset Stat Card: 47 Records in Vault (Compact, sleek box) */}
-            <div className="rounded-xl bg-[#020a17]/95 border border-sky-500/35 px-3 py-2 sm:px-3.5 sm:py-2.5 backdrop-blur-md flex items-center gap-3 shadow-lg max-w-sm">
-              <div className="w-8 h-8 rounded-lg bg-sky-950/90 border border-sky-500/40 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
-                <FileText className="w-4 h-4 text-sky-400" />
+            {/* Inset Stat Card: 47 Records in Vault */}
+            <div className="rounded-xl bg-[#03132d]/75 border border-sky-500/30 p-3.5 backdrop-blur-md flex items-center gap-3.5 shadow-xl max-w-[480px]">
+              <div className="w-11 h-11 rounded-lg bg-sky-950/80 border border-sky-500/35 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+                <FileText className="w-5 h-5 text-sky-400" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs sm:text-[13px] font-bold text-white tracking-tight">
-                  You have <span className="text-amber-300 font-mono font-black">47 records</span> in your Document Vault
+                <div className="text-xs sm:text-sm font-semibold text-white tracking-tight">
+                  You have <span className="text-amber-300 font-bold font-mono">47</span> records in your Document Vault
                 </div>
-                <div className="text-[9.5px] sm:text-[10px] text-blue-200/75 flex flex-wrap items-center gap-1.5">
+                <div className="text-[10.5px] sm:text-[11px] text-blue-200/70 mt-0.5 flex flex-wrap items-center gap-1.5">
                   <span>6 IEPs</span>
                   <span className="text-white/40">•</span>
                   <span>3 Evaluations</span>
@@ -408,36 +408,39 @@ export function PlanTransitionExperience({
             </div>
 
             {/* Note below stat box */}
-            <p className="text-[10px] sm:text-[10.5px] text-sky-200/65 leading-relaxed pt-0.5">
+            <p className="text-[11px] text-blue-200/60 leading-relaxed max-w-[460px] pt-0.5">
               These records can remain organized and available if you keep Tools Access active. Don't lose access to your important documents.
             </p>
           </div>
         </div>
 
         {/* Right Side Card (4 Cols): "Your Current Access" */}
-        <div className="lg:col-span-4 rounded-3xl border border-sky-800/40 bg-gradient-to-b from-[#051630] via-[#041126] to-[#020b18] p-5 sm:p-6 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="space-y-4">
+        <div className="lg:col-span-4 rounded-2xl border border-sky-600/35 bg-gradient-to-b from-[#051630] via-[#041228] to-[#020b18] p-5 sm:p-6 shadow-xl flex flex-col justify-between space-y-4">
+          <div className="space-y-3.5">
             {/* Header */}
-            <div className="flex items-center gap-2.5 text-white font-bold text-base sm:text-lg border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2.5 pb-2">
               <BarChart3 className="w-5 h-5 text-sky-400" />
-              <span className="tracking-tight">Your Current Access</span>
+              <span className="font-serif text-lg text-white font-normal tracking-wide">Your Current Access</span>
             </div>
 
             {/* Metric Row 1: Current Plan Ends */}
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#020a17] border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
-                <Calendar className="w-4 h-4" />
+            <div className="flex items-start gap-3.5 pt-1">
+              <div className="w-10 h-10 rounded-xl bg-sky-950/60 border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+                <Calendar className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] text-slate-400 block font-medium">Current plan ends</span>
-                <span className="text-sm font-bold text-white block font-mono">{expirationDate}</span>
+                <span className="text-[11px] text-slate-400 block">Current plan ends</span>
+                <span className="text-sm font-bold text-white block tracking-wide font-sans">{expirationDate}</span>
                 <span className="text-[10px] text-slate-400 block mt-0.5">Your advocacy services will end on this date.</span>
               </div>
             </div>
 
+            {/* Hairline Divider */}
+            <div className="border-b border-sky-900/50" />
+
             {/* Metric Row 2: 47 Stored Records */}
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#020a17] border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+              <div className="w-10 h-10 rounded-xl bg-sky-950/60 border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
                 <FileText className="w-5 h-5" />
               </div>
               <div className="min-w-0">
@@ -446,25 +449,28 @@ export function PlanTransitionExperience({
               </div>
             </div>
 
+            {/* Hairline Divider */}
+            <div className="border-b border-sky-900/50" />
+
             {/* Metric Row 3: Next Step */}
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#020a17] border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+              <div className="w-10 h-10 rounded-xl bg-sky-950/60 border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
                 <Flag className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <span className="text-sm font-bold text-white block">Next step</span>
-                <span className="text-[11px] text-slate-400 block leading-tight">
+                <span className="text-[11px] text-slate-400 block leading-snug">
                   Choose a continuation option to keep your access.
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Bottom Compass Rose & Quote */}
-          <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+          {/* Bottom Compass Rose & Italic Quote */}
+          <div className="pt-3.5 border-t border-sky-900/50 flex items-center justify-between gap-3">
             <WaypointCompassRose className="w-8 h-8 text-amber-400/90 shrink-0" />
-            <p className="text-xs font-serif italic text-amber-200/80 text-right leading-relaxed">
-              “Same foundation. Brighter tomorrows.”
+            <p className="font-serif italic text-amber-200/85 text-xs text-right leading-tight select-none">
+              “Same foundation.<br />Brighter tomorrows.”
             </p>
           </div>
         </div>
