@@ -433,10 +433,10 @@ export function PortalStudentDetailsTab({
         </div>
       </div>
 
-      {/* ── THE IEP ZONE (Compact reference layout) ── */}
-      <div className="rounded-2xl border border-sky-800/40 bg-[#03132e] p-3.5 sm:p-4 shadow-xl space-y-2.5 relative overflow-hidden">
+      {/* ── THE IEP ZONE (Compact luminous layout) ── */}
+      <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-3.5 sm:p-4 shadow-2xl shadow-sky-950/40 space-y-2.5 relative overflow-hidden">
         {/* Subtle ambient lighting */}
-        <div className="absolute top-0 right-1/4 w-72 h-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute top-0 right-1/4 w-72 h-32 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Header */}
         <div className="flex items-center justify-between gap-2 relative z-10">
@@ -452,20 +452,20 @@ export function PortalStudentDetailsTab({
               <h3 className="font-serif font-bold text-base sm:text-lg text-white tracking-tight leading-tight">
                 IEP Zone
               </h3>
-              <p className="text-[11px] text-sky-200/70 font-normal leading-tight">
+              <p className="text-[11px] text-sky-200/80 font-normal leading-tight">
                 Your child's current plan, all in one place.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="font-serif italic text-[11px] sm:text-xs text-sky-200/70 font-light tracking-wide mr-1 hidden sm:inline-block">
+            <span className="font-serif italic text-[11px] sm:text-xs text-sky-200/80 font-light tracking-wide mr-1 hidden sm:inline-block">
               Plans create access. Advocacy creates opportunity.
             </span>
             <button
               type="button"
               onClick={() => toast.info("IEP Zone provides instant access to your active IEP, amendment comparisons, and document history.")}
-              className="p-1 rounded-full text-sky-400/80 hover:text-sky-300 hover:bg-white/5 transition-colors cursor-pointer"
+              className="p-1 rounded-full text-sky-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               title="About the IEP Zone"
             >
               <Info className="w-4 h-4" />
@@ -474,17 +474,17 @@ export function PortalStudentDetailsTab({
         </div>
 
         {/* Row 1: 3-Column Plan Overview & Comparator Container */}
-        <div className="rounded-xl border border-sky-800/35 bg-[#020b1c]/80 p-3 sm:p-3.5 relative z-10">
+        <div className="rounded-xl border border-sky-600/40 bg-[#061e45]/85 p-3 sm:p-3.5 relative z-10 shadow-inner">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-stretch">
             
             {/* Column 1 (4 cols): Current IEP */}
             <div className="lg:col-span-4 flex flex-col justify-between space-y-2">
-              <span className="text-[10px] font-medium text-sky-300/70 block">
+              <span className="text-[10px] font-medium text-sky-300/80 block">
                 Current IEP
               </span>
               <div className="flex items-center gap-3">
                 {/* PDF Badge Card */}
-                <div className="w-11 h-12 rounded-lg bg-[#061833] border border-sky-700/50 flex flex-col items-center justify-center shrink-0 shadow-xs">
+                <div className="w-11 h-12 rounded-lg bg-[#0a2c61] border border-sky-500/50 flex flex-col items-center justify-center shrink-0 shadow-xs">
                   <div className="w-5 h-6 rounded-[3px] bg-white flex items-center justify-center text-[7.5px] font-black text-slate-950 shadow-xs">
                     PDF
                   </div>
@@ -495,7 +495,7 @@ export function PortalStudentDetailsTab({
                   <h4 className="font-bold text-white text-xs sm:text-[13px] leading-tight truncate" title="September 2026 IEP">
                     September 2026 IEP
                   </h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                  <p className="text-[10px] text-slate-300 mt-0.5 leading-tight">
                     Effective: Sep 8, 2026
                   </p>
                 </div>
@@ -519,8 +519,8 @@ export function PortalStudentDetailsTab({
             </div>
 
             {/* Column 2 (4 cols): Latest Version Received */}
-            <div className="lg:col-span-4 lg:border-l border-sky-900/40 lg:pl-4 flex flex-col justify-between space-y-1">
-              <span className="text-[10px] font-medium text-sky-300/70 block">
+            <div className="lg:col-span-4 lg:border-l border-sky-700/40 lg:pl-4 flex flex-col justify-between space-y-1">
+              <span className="text-[10px] font-medium text-sky-300/80 block">
                 Latest Version Received
               </span>
               <div className="space-y-1">
@@ -537,23 +537,23 @@ export function PortalStudentDetailsTab({
                 </div>
               </div>
 
-              <p className="text-[9.5px] text-slate-400 leading-tight">
+              <p className="text-[9.5px] text-slate-300 leading-tight">
                 This is the most recent IEP we have on file.
               </p>
             </div>
 
             {/* Column 3 (4 cols): Use IEP Comparator Card */}
             <div className="lg:col-span-4">
-              <div className="h-full rounded-xl border border-sky-600/35 bg-gradient-to-br from-[#061c3d] via-[#04142b] to-[#020b18] p-2.5 sm:p-3 flex flex-col justify-between space-y-2">
+              <div className="h-full rounded-xl border border-sky-500/40 bg-gradient-to-br from-[#0a2c61] via-[#07224d] to-[#051a3b] p-2.5 sm:p-3 flex flex-col justify-between space-y-2 shadow-xs">
                 <div className="flex items-start gap-2.5">
-                  <div className="flex items-center text-sky-300 shrink-0 pt-0.5">
+                  <div className="flex items-center text-sky-200 shrink-0 pt-0.5">
                     <FileText className="w-4 h-4 text-sky-200" />
                     <ArrowLeftRight className="w-2.5 h-2.5 text-sky-300 -mx-0.5 z-10" />
                     <FileText className="w-4 h-4 text-sky-200" />
                   </div>
                   <div>
                     <h4 className="font-bold text-xs text-white leading-tight">Use IEP Comparator</h4>
-                    <p className="text-[9.5px] text-slate-300/80 leading-tight mt-0.5">
+                    <p className="text-[9.5px] text-slate-200/80 leading-tight mt-0.5">
                       Compare your new amendment with the previous IEP and quickly see what changed.
                     </p>
                   </div>
@@ -563,7 +563,7 @@ export function PortalStudentDetailsTab({
                   <button
                     type="button"
                     onClick={() => onNavigateTab("tools")}
-                    className="py-1 px-3 rounded-lg bg-[#072048] hover:bg-[#0c2e68] border border-sky-500/50 text-sky-200 hover:text-white font-semibold text-[10.5px] transition-all shadow-xs cursor-pointer"
+                    className="py-1 px-3 rounded-lg bg-[#0c316e] hover:bg-[#11408e] border border-sky-400/50 text-sky-100 hover:text-white font-semibold text-[10.5px] transition-all shadow-xs cursor-pointer"
                   >
                     Open IEP Comparator
                   </button>
@@ -597,12 +597,12 @@ export function PortalStudentDetailsTab({
           <button
             type="button"
             onClick={() => onNavigateTab("communication")}
-            className="w-full text-left rounded-xl px-3.5 py-2 border border-sky-600/35 bg-[#051836] hover:bg-[#08224d] text-white shadow-xs cursor-pointer transition-all flex items-center gap-2.5 group"
+            className="w-full text-left rounded-xl px-3.5 py-2 border border-sky-500/40 bg-gradient-to-r from-[#0a2c61] to-[#07224d] hover:from-[#0e3b82] hover:to-[#092b5e] text-white shadow-xs cursor-pointer transition-all flex items-center gap-2.5 group"
           >
             <Mail className="w-4 h-4 text-white shrink-0 group-hover:text-amber-300 transition-colors" />
             <div>
               <h4 className="font-bold text-xs text-white leading-tight">Request Latest IEP From School</h4>
-              <p className="text-[9.5px] text-slate-400 leading-tight">Need help getting the updated IEP?</p>
+              <p className="text-[9.5px] text-slate-300 leading-tight">Need help getting the updated IEP?</p>
             </div>
           </button>
 
@@ -610,12 +610,12 @@ export function PortalStudentDetailsTab({
           <button
             type="button"
             onClick={() => onNavigateTab("smart-docs")}
-            className="w-full text-left rounded-xl px-3.5 py-2 border border-sky-600/35 bg-[#051836] hover:bg-[#08224d] text-white shadow-xs cursor-pointer transition-all flex items-center gap-2.5 group"
+            className="w-full text-left rounded-xl px-3.5 py-2 border border-sky-500/40 bg-gradient-to-r from-[#0a2c61] to-[#07224d] hover:from-[#0e3b82] hover:to-[#092b5e] text-white shadow-xs cursor-pointer transition-all flex items-center gap-2.5 group"
           >
             <FileText className="w-4 h-4 text-white shrink-0 group-hover:text-amber-300 transition-colors" />
             <div>
               <h4 className="font-bold text-xs text-white leading-tight">View Past IEPs</h4>
-              <p className="text-[9.5px] text-slate-400 leading-tight">See previous versions.</p>
+              <p className="text-[9.5px] text-slate-300 leading-tight">See previous versions.</p>
             </div>
           </button>
 
@@ -626,8 +626,9 @@ export function PortalStudentDetailsTab({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
         
         {/* CARD 1: CURRENT FOCUS */}
-        <div className="rounded-2xl border border-sky-600/35 bg-gradient-to-b from-[#061938] via-[#041228] to-[#020b18] p-4 sm:p-5 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="space-y-3">
+        <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-4 sm:p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-sky-400/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-3 relative z-10">
             {/* Header */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-white">
@@ -636,7 +637,7 @@ export function PortalStudentDetailsTab({
               </div>
               <button
                 onClick={() => onNavigateTab("tasks")}
-                className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-950 text-sky-300 border border-sky-700/50 hover:bg-sky-900/60 cursor-pointer transition-colors"
+                className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#092857] text-sky-200 border border-sky-500/50 hover:bg-[#0d3778] cursor-pointer transition-colors"
               >
                 Tasks →
               </button>
@@ -647,23 +648,23 @@ export function PortalStudentDetailsTab({
               <h4 className="font-bold text-xs sm:text-sm text-white leading-snug">
                 Preparing for {studentFirstName}'s initial {planType} meeting
               </h4>
-              <p className="text-xs text-slate-300/80 mt-1 leading-relaxed">
+              <p className="text-xs text-slate-200/90 mt-1 leading-relaxed">
                 Waypoint is reviewing records and identifying needed supports.
               </p>
             </div>
           </div>
 
           {/* Footer Metadata */}
-          <div className="pt-3 border-t border-sky-900/40 space-y-1 text-xs">
-            <div className="flex items-center gap-2 text-slate-300">
+          <div className="pt-3 border-t border-sky-700/40 space-y-1 text-xs relative z-10">
+            <div className="flex items-center gap-2 text-slate-200">
               <Calendar className="w-3.5 h-3.5 text-sky-400 shrink-0" />
               <span>Next meeting: <strong className="text-white font-medium">{nextMeetingDisplay}</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-slate-300">
+            <div className="flex items-center gap-2 text-slate-200">
               <span className="w-3.5 h-3.5 rounded-full bg-emerald-400/20 text-emerald-400 flex items-center justify-center text-[9px] font-bold shrink-0">●</span>
               <span>Current stage: <strong className="text-white font-medium">Records Review</strong></span>
             </div>
-            <div className="pt-2 flex items-center justify-between border-t border-sky-900/30">
+            <div className="pt-2 flex items-center justify-between border-t border-sky-700/30">
               <button
                 onClick={() => onNavigateTab("notes")}
                 className="text-[11px] font-medium text-sky-300 hover:text-amber-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
@@ -676,15 +677,16 @@ export function PortalStudentDetailsTab({
         </div>
 
         {/* CARD 2: YOUR TASKS */}
-        <div className="rounded-2xl border border-sky-600/35 bg-gradient-to-b from-[#061938] via-[#041228] to-[#020b18] p-4 sm:p-5 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="space-y-3">
+        <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-4 sm:p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-amber-400/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-3 relative z-10">
             {/* Header */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <CheckSquare className="w-4 h-4 text-amber-400" />
                 <h3 className="font-serif font-bold text-sm text-white">Your Tasks</h3>
               </div>
-              <span className="font-mono text-[10.5px] text-slate-400">
+              <span className="font-mono text-[10.5px] text-sky-200/80">
                 {openTasksCount} open tasks
               </span>
             </div>
@@ -700,11 +702,11 @@ export function PortalStudentDetailsTab({
                   <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
                     task.completed 
                       ? "bg-amber-400 border-amber-400 text-slate-950" 
-                      : "border-sky-500/50 bg-[#020a17] group-hover:border-amber-400"
+                      : "border-sky-400/60 bg-[#051c3d] group-hover:border-amber-400"
                   }`}>
                     {task.completed && <CheckCircle2 className="w-3 h-3 text-slate-950 stroke-[3]" />}
                   </div>
-                  <span className={task.completed ? "line-through text-slate-500" : "text-slate-200"}>
+                  <span className={task.completed ? "line-through text-slate-400" : "text-slate-100"}>
                     {task.title}
                   </span>
                 </div>
@@ -713,7 +715,7 @@ export function PortalStudentDetailsTab({
           </div>
 
           {/* Action Button: View All Tasks */}
-          <div className="pt-2">
+          <div className="pt-2 relative z-10">
             <button
               onClick={() => onNavigateTab("tasks")}
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-400/20 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-1.5"
@@ -724,8 +726,9 @@ export function PortalStudentDetailsTab({
         </div>
 
         {/* CARD 3: UPCOMING */}
-        <div className="rounded-2xl border border-sky-600/35 bg-gradient-to-b from-[#061938] via-[#041228] to-[#020b18] p-4 sm:p-5 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="space-y-3">
+        <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-4 sm:p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-sky-400/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-3 relative z-10">
             {/* Header */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-white">
@@ -734,7 +737,7 @@ export function PortalStudentDetailsTab({
               </div>
               <button
                 onClick={() => onNavigateTab("appointments")}
-                className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-sky-950 text-sky-300 border border-sky-700/50 hover:bg-sky-900/60 cursor-pointer transition-colors"
+                className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#092857] text-sky-200 border border-sky-500/50 hover:bg-[#0d3778] cursor-pointer transition-colors"
               >
                 View All
               </button>
@@ -746,14 +749,14 @@ export function PortalStudentDetailsTab({
                 <div 
                   key={appt.id}
                   onClick={() => onNavigateTab("appointments")}
-                  className="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+                  className="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors group"
                 >
-                  <span className="font-medium text-slate-200 group-hover:text-amber-300 transition-colors truncate pr-2">
+                  <span className="font-medium text-slate-100 group-hover:text-amber-300 transition-colors truncate pr-2">
                     {appt.title}
                   </span>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400 shrink-0">
+                  <div className="flex items-center gap-1 text-[11px] text-sky-200/80 shrink-0">
                     <span>{appt.date} · {appt.time}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-sky-400 group-hover:text-amber-400" />
                   </div>
                 </div>
               ))}
@@ -761,10 +764,10 @@ export function PortalStudentDetailsTab({
           </div>
 
           {/* Action Button: View Appointments */}
-          <div className="pt-2">
+          <div className="pt-2 relative z-10">
             <button
               onClick={() => onNavigateTab("appointments")}
-              className="w-full py-2.5 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 text-xs font-semibold shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl bg-[#0a2c61] hover:bg-[#0e3b82] text-white border border-sky-400/50 text-xs font-semibold shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-1.5"
             >
               <span>View Appointments →</span>
             </button>
@@ -772,8 +775,9 @@ export function PortalStudentDetailsTab({
         </div>
 
         {/* CARD 4: CURRENT PLAN */}
-        <div className="rounded-2xl border border-sky-600/35 bg-gradient-to-b from-[#061938] via-[#041228] to-[#020b18] p-4 sm:p-5 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="space-y-3">
+        <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-4 sm:p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-sky-400/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-3 relative z-10">
             {/* Header */}
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-amber-400" />
@@ -785,14 +789,14 @@ export function PortalStudentDetailsTab({
               <span className="text-xs font-bold text-white block">
                 Current Support Type: {planType}
               </span>
-              <p className="text-xs text-slate-300/80 leading-relaxed">
+              <p className="text-xs text-slate-200/90 leading-relaxed">
                 Reviewing accommodations and classroom supports.
               </p>
             </div>
           </div>
 
           {/* Action Buttons: View Current Plan & IEP Blueprint */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-2 relative z-10">
             <button
               onClick={() => onNavigateTab("cases")}
               className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-400/20 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-1.5"
@@ -801,7 +805,7 @@ export function PortalStudentDetailsTab({
             </button>
             <button
               onClick={() => onNavigateTab("tools")}
-              className="w-full py-2 rounded-xl bg-[#06162d] hover:bg-[#0a2040] text-sky-200 border border-sky-600/40 text-xs font-semibold shadow-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5"
+              className="w-full py-2 rounded-xl bg-[#07224d] hover:bg-[#0b3373] text-sky-100 border border-sky-500/50 text-xs font-semibold shadow-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5"
             >
               <BookOpen className="w-3.5 h-3.5 text-sky-400" />
               <span>IEP Blueprint</span>
@@ -815,15 +819,16 @@ export function PortalStudentDetailsTab({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         
         {/* COLUMN 1 (5 COLS): CASE COMPASS */}
-        <div className="lg:col-span-5 rounded-2xl border border-sky-600/35 bg-gradient-to-br from-[#061833] via-[#041126] to-[#020b18] p-5 shadow-xl flex flex-col justify-between space-y-4">
-          <div>
+        <div className="lg:col-span-5 rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-sky-400/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative z-10">
             {/* Header */}
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-sky-900/40">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-sky-700/40">
               <div className="flex items-center gap-2">
                 <WaypointCompassRose className="w-5 h-5 text-amber-400" />
                 <h3 className="font-serif font-bold text-sm text-white">Case Compass</h3>
               </div>
-              <span className="font-serif italic text-xs text-sky-200/80">
+              <span className="font-serif italic text-xs text-sky-200/90">
                 Real Insight. Forward Motion.
               </span>
             </div>
@@ -835,7 +840,7 @@ export function PortalStudentDetailsTab({
                 <span className="font-bold text-amber-300 block font-serif tracking-wide">
                   What we see
                 </span>
-                <ul className="space-y-1.5 text-slate-300">
+                <ul className="space-y-1.5 text-slate-200">
                   <li className="flex items-start gap-1.5">
                     <span className="text-amber-400 shrink-0 leading-tight">•</span>
                     <span>Reading needs need clearer support</span>
@@ -856,7 +861,7 @@ export function PortalStudentDetailsTab({
                 <span className="font-bold text-amber-300 block font-serif tracking-wide">
                   What we're working toward
                 </span>
-                <ul className="space-y-1.5 text-slate-300">
+                <ul className="space-y-1.5 text-slate-200">
                   <li className="flex items-start gap-1.5">
                     <span className="text-amber-400 shrink-0 leading-tight">•</span>
                     <span>Stronger accommodations</span>
@@ -874,7 +879,7 @@ export function PortalStudentDetailsTab({
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 relative z-10">
             <button
               onClick={() => onNavigateTab("compass")}
               className="text-xs font-semibold text-sky-300 hover:text-amber-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
@@ -886,15 +891,16 @@ export function PortalStudentDetailsTab({
         </div>
 
         {/* COLUMN 2 (4 COLS): DOCUMENT VAULT */}
-        <div className="lg:col-span-4 rounded-2xl border border-sky-600/35 bg-gradient-to-br from-[#061833] via-[#041126] to-[#020b18] p-5 shadow-xl flex flex-col justify-between space-y-4">
-          <div>
+        <div className="lg:col-span-4 rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-sky-400/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative z-10">
             {/* Header */}
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-sky-900/40">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-sky-700/40">
               <div className="flex items-center gap-2">
                 <Folder className="w-4 h-4 text-sky-400" />
                 <h3 className="font-serif font-bold text-sm text-white">Document Vault</h3>
               </div>
-              <span className="font-mono text-xs text-slate-400">
+              <span className="font-mono text-xs text-sky-200/80">
                 {totalDocumentsCount} documents
               </span>
             </div>
@@ -905,17 +911,17 @@ export function PortalStudentDetailsTab({
                 <div 
                   key={doc.id}
                   onClick={() => onNavigateTab("smart-docs")}
-                  className="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+                  className="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors group"
                 >
                   <div className="flex items-center gap-2 truncate pr-2">
                     <FileText className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span className="font-medium text-slate-200 group-hover:text-amber-300 truncate">
+                    <span className="font-medium text-slate-100 group-hover:text-amber-300 truncate">
                       {doc.title}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400 shrink-0">
+                  <div className="flex items-center gap-1 text-[11px] text-sky-200/80 shrink-0">
                     <span>{doc.date}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-sky-400 group-hover:text-amber-400" />
                   </div>
                 </div>
               ))}
@@ -923,10 +929,10 @@ export function PortalStudentDetailsTab({
           </div>
 
           {/* Dual Action Buttons: Open Document Vault & Scan / Upload */}
-          <div className="grid grid-cols-2 gap-2 pt-2">
+          <div className="grid grid-cols-2 gap-2 pt-2 relative z-10">
             <button
               onClick={() => onNavigateTab("smart-docs")}
-              className="py-2 px-2.5 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-sky-200 border border-sky-500/40 text-xs font-semibold shadow-sm cursor-pointer transition-all text-center truncate"
+              className="py-2 px-2.5 rounded-xl bg-[#092857] hover:bg-[#0d3778] text-sky-100 border border-sky-500/50 text-xs font-semibold shadow-sm cursor-pointer transition-all text-center truncate"
             >
               Open Document Vault
             </button>
@@ -935,19 +941,20 @@ export function PortalStudentDetailsTab({
                 if (onOpenUploadModal) onOpenUploadModal();
                 else onNavigateTab("smart-docs");
               }}
-              className="py-2 px-2.5 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 text-xs font-semibold shadow-sm cursor-pointer transition-all flex items-center justify-center gap-1 truncate"
+              className="py-2 px-2.5 rounded-xl bg-[#0a2f66] hover:bg-[#0e3f88] text-white border border-sky-400/50 text-xs font-semibold shadow-sm cursor-pointer transition-all flex items-center justify-center gap-1 truncate"
             >
-              <Upload className="w-3.5 h-3.5 text-sky-400" />
+              <Upload className="w-3.5 h-3.5 text-sky-300" />
               <span>Scan / Upload Document</span>
             </button>
           </div>
         </div>
 
         {/* COLUMN 3 (3 COLS): PARK IT */}
-        <div className="lg:col-span-3 rounded-2xl border border-sky-600/35 bg-gradient-to-br from-[#061833] via-[#041126] to-[#020b18] p-5 shadow-xl flex flex-col justify-between space-y-3">
-          <div className="space-y-2">
+        <div className="lg:col-span-3 rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-3 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-sky-400/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-2 relative z-10">
             {/* Header with Car Icon and Info */}
-            <div className="flex items-center justify-between gap-2 pb-2 border-b border-sky-900/40">
+            <div className="flex items-center justify-between gap-2 pb-2 border-b border-sky-700/40">
               <div className="flex items-center gap-2 text-white">
                 <Car className="w-4 h-4 text-sky-400" />
                 <h3 className="font-serif font-bold text-sm text-white tracking-wider uppercase">
@@ -955,12 +962,12 @@ export function PortalStudentDetailsTab({
                 </h3>
               </div>
               <span title="Shared sticky note for your case">
-                <Info className="w-4 h-4 text-slate-400 hover:text-white cursor-pointer" />
+                <Info className="w-4 h-4 text-sky-300 hover:text-white cursor-pointer" />
               </span>
             </div>
 
             {/* Helper Note */}
-            <p className="text-[11px] text-slate-300/80 leading-snug">
+            <p className="text-[11px] text-slate-200/90 leading-snug">
               Think of this as a shared sticky note for your case, not a message to your advocate.
             </p>
 
@@ -971,16 +978,16 @@ export function PortalStudentDetailsTab({
                 onChange={(e) => setParkItText(e.target.value.slice(0, 500))}
                 rows={3}
                 placeholder="Jot down a quick note or topic..."
-                className="w-full rounded-xl bg-[#030d1d] border border-sky-500/30 p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 resize-none leading-relaxed shadow-inner"
+                className="w-full rounded-xl bg-[#061d40] border border-sky-500/40 p-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 resize-none leading-relaxed shadow-inner"
               />
-              <div className="text-[10px] font-mono text-slate-400 text-right pr-1 pt-0.5">
+              <div className="text-[10px] font-mono text-sky-200/80 text-right pr-1 pt-0.5">
                 {parkItText.length}/500
               </div>
             </div>
           </div>
 
           {/* Action Button: Park It */}
-          <div>
+          <div className="relative z-10">
             <button
               onClick={handleParkItSave}
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-400/20 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
@@ -993,7 +1000,7 @@ export function PortalStudentDetailsTab({
       </div>
 
       {/* ── BOTTOM QUICK ACTIONS DOCK ── */}
-      <div className="rounded-2xl border border-sky-700/40 bg-gradient-to-r from-[#031124] via-[#051733] to-[#031124] p-3 sm:p-4 shadow-xl flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-r from-[#092247] via-[#0c2b59] to-[#092247] p-3 sm:p-4 shadow-xl flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Left Label */}
         <div className="flex items-center gap-2 text-white shrink-0 self-start md:self-auto pl-1">
           <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -1007,7 +1014,7 @@ export function PortalStudentDetailsTab({
               if (onOpenScheduler) onOpenScheduler();
               else onNavigateTab("appointments");
             }}
-            className="px-3 py-2 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-[#0c2e63] hover:bg-[#103a7d] text-white border border-sky-400/45 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
           >
             <Calendar className="w-3.5 h-3.5 text-sky-400" />
             <span>Request Meeting</span>
@@ -1015,7 +1022,7 @@ export function PortalStudentDetailsTab({
 
           <button
             onClick={() => onNavigateTab("cases")}
-            className="px-3 py-2 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-[#0c2e63] hover:bg-[#103a7d] text-white border border-sky-400/45 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
           >
             <FileText className="w-3.5 h-3.5 text-sky-400" />
             <span>Parent Concerns</span>
@@ -1023,7 +1030,7 @@ export function PortalStudentDetailsTab({
 
           <button
             onClick={() => onNavigateTab("notes")}
-            className="px-3 py-2 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-[#0c2e63] hover:bg-[#103a7d] text-white border border-sky-400/45 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
           >
             <StickyNote className="w-3.5 h-3.5 text-amber-400" />
             <span>Advocate Notes · View All</span>
@@ -1031,7 +1038,7 @@ export function PortalStudentDetailsTab({
 
           <button
             onClick={() => onNavigateTab("smart-docs")}
-            className="px-3 py-2 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-[#0c2e63] hover:bg-[#103a7d] text-white border border-sky-400/45 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
           >
             <Folder className="w-3.5 h-3.5 text-sky-400" />
             <span>Records Request</span>
@@ -1039,7 +1046,7 @@ export function PortalStudentDetailsTab({
 
           <button
             onClick={() => onNavigateTab("communication")}
-            className="px-3 py-2 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-[#0c2e63] hover:bg-[#103a7d] text-white border border-sky-400/45 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
           >
             <Mail className="w-3.5 h-3.5 text-sky-400" />
             <span>Contact Waypoint</span>
@@ -1047,7 +1054,7 @@ export function PortalStudentDetailsTab({
 
           <button
             onClick={() => onNavigateTab("tasks")}
-            className="px-3 py-2 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-[#0c2e63] hover:bg-[#103a7d] text-white border border-sky-400/45 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
           >
             <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
             <span>Open Tasks</span>
@@ -1055,7 +1062,7 @@ export function PortalStudentDetailsTab({
 
           <button
             onClick={() => onNavigateTab("smart-docs")}
-            className="px-3 py-2 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-[#0c2e63] hover:bg-[#103a7d] text-white border border-sky-400/45 font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
           >
             <FileText className="w-3.5 h-3.5 text-sky-400" />
             <span>Open Document Vault</span>
