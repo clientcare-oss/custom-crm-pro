@@ -108,7 +108,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: LayoutDashboard, label: "Dashboard", path: "/" },
         { icon: LighthouseCottageIcon as any, label: "Crew Quarters", path: "/crew-quarters" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
-        { icon: CalendarClock, label: "Scheduler", path: "/scheduler" },
       ],
     },
     {
@@ -138,6 +137,12 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           label: "Advocate Case Workspace", 
           path: "/workspace",
           keywords: ["workspace", "advocate case workspace", "case workspace", "pg-031", "employee workspace", "roles"]
+        },
+        { 
+          icon: CalendarClock, 
+          label: "Scheduler", 
+          path: "/scheduler",
+          keywords: ["scheduler", "booking", "appointments", "availability", "experience", "pg-008"]
         },
       ],
     },
