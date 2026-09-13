@@ -85,12 +85,28 @@ export interface MenuGroup {
 function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGroup[] {
   return [
     {
-      groupLabel: "Call Center & Leads",
+      groupLabel: "Call Center & Inbound",
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
         { icon: MarineRadarIcon as any, label: "First Mate", path: "/first-mate" },
-        { icon: TrendingUp, label: "Leads", path: "/leads" },
         { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
+      ],
+    },
+    {
+      groupLabel: "Pipelines",
+      items: [
+        { 
+          icon: TrendingUp, 
+          label: "Leads Pipeline", 
+          path: "/leads",
+          keywords: ["leads", "discovery pipeline", "pipeline", "kanban", "intake"]
+        },
+        { 
+          icon: GitBranch, 
+          label: "Workflows", 
+          path: "/workflows",
+          keywords: ["workflows", "pipelines", "automation", "stages", "pipeline"]
+        },
       ],
     },
     {
@@ -149,7 +165,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
         { icon: Zap, label: "Automations", path: "/automations" },
         { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
-        { icon: GitBranch, label: "Workflows", path: "/workflows" },
         { icon: Brain, label: "BrainDump", path: "/brain-dump" },
       ],
     },
