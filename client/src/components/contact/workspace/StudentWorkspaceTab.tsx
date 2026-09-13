@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { StudentHeader } from "./StudentHeader";
 import { IepZoneCard } from "./IepZoneCard";
+import { RecordsAndMeetingPlanCard } from "./RecordsAndMeetingPlanCard";
 import { KeyDocumentsCard, type CaseDocItem } from "./KeyDocumentsCard";
 import { ToolLauncherCard } from "./ToolLauncherCard";
 import { NextActionsCard, type CaseTaskItem } from "./NextActionsCard";
@@ -282,7 +283,18 @@ export function StudentWorkspaceTab({
         onOpenCurrentPlan={() => onSwitchTab("files")}
       />
 
-      {/* 3. KEY CASE DOCUMENTS & ADVOCATE TOOLS ROW (2 Columns) */}
+      {/* 3. RECORDS REVIEW & UPCOMING MEETING PLAN (WITH QUICK DOCUMENT CREATOR) */}
+      <RecordsAndMeetingPlanCard
+        contact={contact}
+        contactId={contactId}
+        studentName={fullName}
+        compass={compass}
+        files={files}
+        appointments={appointments}
+        onSwitchTab={onSwitchTab}
+      />
+
+      {/* 4. KEY CASE DOCUMENTS & ADVOCATE TOOLS ROW (2 Columns) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Key Documents: 5 cols */}
         <div className="lg:col-span-5">
