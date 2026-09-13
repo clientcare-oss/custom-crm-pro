@@ -101,12 +101,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           path: "/leads",
           keywords: ["leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
         },
-        { 
-          icon: GitBranch, 
-          label: "Workflows", 
-          path: "/workflows",
-          keywords: ["workflows", "pipelines", "automation", "stages", "pipeline"]
-        },
       ],
     },
     {
@@ -165,6 +159,7 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
         { icon: Zap, label: "Automations", path: "/automations" },
         { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
+        { icon: GitBranch, label: "Workflows", path: "/workflows" },
         { icon: Brain, label: "BrainDump", path: "/brain-dump" },
       ],
     },
