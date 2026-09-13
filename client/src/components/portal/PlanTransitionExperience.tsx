@@ -343,7 +343,7 @@ export function PlanTransitionExperience({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
         {/* Left Hero Card (8 Cols): Lighthouse strictly segregated on right, text on left */}
-        <div className="lg:col-span-8 relative overflow-hidden rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#061937] via-[#04132b] to-[#020b1a] shadow-2xl min-h-[380px] flex flex-col justify-between">
+        <div className="lg:col-span-8 relative overflow-hidden rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#061937] via-[#04132b] to-[#020b1a] shadow-2xl min-h-[310px] flex flex-col justify-between">
           
           {/* Lighthouse Twilight Background Artwork (Cleanly confined to right 44% so it never collides with text) */}
           <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[46%] lg:w-[44%] overflow-hidden pointer-events-none select-none">
@@ -358,44 +358,44 @@ export function PlanTransitionExperience({
             <div className="absolute inset-0 bg-gradient-to-b from-[#061937]/40 via-transparent to-transparent" />
 
             {/* Script Cursive Overlay: "Your journey continues here." */}
-            <div className="absolute top-8 left-3 sm:left-6 z-10">
-              <p className="font-serif italic text-amber-200/95 text-base sm:text-lg lg:text-xl tracking-wide select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+            <div className="absolute top-6 left-3 sm:left-6 z-10">
+              <p className="font-serif italic text-amber-200/95 text-sm sm:text-base lg:text-lg tracking-wide select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                 Your journey continues here.
               </p>
-              <div className="w-8 h-[2px] bg-amber-400/90 mt-1 shadow-sm" />
+              <div className="w-7 h-[2px] bg-amber-400/90 mt-1 shadow-sm" />
             </div>
           </div>
 
           {/* Left Text & Stat Content (Strictly width-capped so text never runs over the lighthouse artwork) */}
-          <div className="relative z-10 p-6 sm:p-8 lg:p-9 space-y-3.5 w-full sm:max-w-[58%] lg:max-w-[56%]">
+          <div className="relative z-10 p-5 sm:p-6 lg:p-7 space-y-2.5 w-full sm:max-w-[58%] lg:max-w-[56%]">
             {/* Accent Gold Label */}
             <div className="flex items-center gap-2">
               <div className="w-5 h-[2px] bg-amber-400" />
-              <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-amber-400 uppercase">
+              <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase">
                 Your Records Matter
               </span>
             </div>
 
             {/* Display Serif Title */}
-            <h2 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug">
+            <h2 className="text-xl sm:text-2xl lg:text-[26px] font-serif font-normal text-white tracking-tight leading-snug">
               Keep your Document Vault and essential tools.
             </h2>
 
             {/* Descriptive Body */}
-            <p className="text-xs sm:text-sm text-sky-100/80 leading-relaxed font-normal">
+            <p className="text-xs sm:text-[13px] text-sky-100/80 leading-relaxed font-normal">
               You currently have records stored in your Document Vault for <strong className="text-white font-semibold">{studentName}</strong>. You can continue using the Vault and selected Waypoint tools after your advocacy plan ends — only if you choose a Tools Access plan or renew full advocacy.
             </p>
 
-            {/* Inset Stat Card: 47 Records in Vault */}
-            <div className="rounded-2xl bg-[#020a17]/95 border border-sky-500/35 p-3.5 sm:p-4 backdrop-blur-md flex items-center gap-3.5 shadow-xl">
-              <div className="w-11 h-11 rounded-xl bg-sky-950/90 border border-sky-500/40 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
-                <FileText className="w-5 h-5 text-sky-400" />
+            {/* Inset Stat Card: 47 Records in Vault (Compact, sleek box) */}
+            <div className="rounded-xl bg-[#020a17]/95 border border-sky-500/35 px-3 py-2 sm:px-3.5 sm:py-2.5 backdrop-blur-md flex items-center gap-3 shadow-lg max-w-sm">
+              <div className="w-8 h-8 rounded-lg bg-sky-950/90 border border-sky-500/40 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
+                <FileText className="w-4 h-4 text-sky-400" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white tracking-tight">
+                <div className="text-xs sm:text-[13px] font-bold text-white tracking-tight">
                   You have <span className="text-amber-300 font-mono font-black">47 records</span> in your Document Vault
                 </div>
-                <div className="text-[10px] sm:text-[11px] text-blue-200/75 mt-0.5 flex flex-wrap items-center gap-1.5">
+                <div className="text-[9.5px] sm:text-[10px] text-blue-200/75 flex flex-wrap items-center gap-1.5">
                   <span>6 IEPs</span>
                   <span className="text-white/40">•</span>
                   <span>3 Evaluations</span>
@@ -408,25 +408,25 @@ export function PlanTransitionExperience({
             </div>
 
             {/* Note below stat box */}
-            <p className="text-[10px] sm:text-[11px] text-sky-200/65 leading-relaxed pt-0.5">
+            <p className="text-[10px] sm:text-[10.5px] text-sky-200/65 leading-relaxed pt-0.5">
               These records can remain organized and available if you keep Tools Access active. Don't lose access to your important documents.
             </p>
           </div>
         </div>
 
         {/* Right Side Card (4 Cols): "Your Current Access" */}
-        <div className="lg:col-span-4 rounded-3xl border border-sky-800/40 bg-gradient-to-b from-[#051630] via-[#041126] to-[#020b18] p-6 sm:p-7 shadow-xl flex flex-col justify-between space-y-6">
-          <div className="space-y-5">
+        <div className="lg:col-span-4 rounded-3xl border border-sky-800/40 bg-gradient-to-b from-[#051630] via-[#041126] to-[#020b18] p-5 sm:p-6 shadow-xl flex flex-col justify-between space-y-4">
+          <div className="space-y-4">
             {/* Header */}
-            <div className="flex items-center gap-2.5 text-white font-bold text-base sm:text-lg border-b border-white/10 pb-3.5">
+            <div className="flex items-center gap-2.5 text-white font-bold text-base sm:text-lg border-b border-white/10 pb-2.5">
               <BarChart3 className="w-5 h-5 text-sky-400" />
               <span className="tracking-tight">Your Current Access</span>
             </div>
 
             {/* Metric Row 1: Current Plan Ends */}
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#020a17] border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
-                <Calendar className="w-5 h-5" />
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#020a17] border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+                <Calendar className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <span className="text-[11px] text-slate-400 block font-medium">Current plan ends</span>
