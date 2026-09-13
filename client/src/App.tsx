@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import CompanyDashboard from "./pages/CompanyDashboard";
 import Contacts from "./pages/Contacts";
 import Leads from "./pages/Leads";
 import Projects from "./pages/Projects";
@@ -138,8 +139,11 @@ function Router() {
     return (
       <DashboardLayout>
         <Switch>
-          <Route path="/" component={Dashboard} />
+          <Route path="/" component={CrewQuarters} />
           <Route path="/crew-quarters" component={CrewQuarters} />
+          <Route path="/company/dashboard" component={CompanyDashboard} />
+          <Route path="/company-dashboard" component={CompanyDashboard} />
+          <Route path="/dashboard" component={CompanyDashboard} />
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/students/:id" component={ContactDetail} />
           <Route path="/project-workspace/:id" component={ContactDetail} />

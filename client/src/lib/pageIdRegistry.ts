@@ -8,7 +8,11 @@ export interface PageIdInfo {
 // ─── Static Exact Route Mappings ─────────────────────────────────────────────
 export const PAGE_IDS: Record<string, PageIdInfo> = {
   // Core Admin & Advocacy Suite
-  "/":                                { id: "PG-001", name: "Dashboard", category: "Core" },
+  "/":                                { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
+  "/crew-quarters":                   { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
+  "/company/dashboard":               { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
+  "/company-dashboard":               { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
+  "/dashboard":                       { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
   "/contacts":                        { id: "PG-002", name: "Contacts", category: "CRM" },
   "/leads":                           { id: "PG-003", name: "Leads", category: "CRM" },
   "/students":                        { id: "PG-004", name: "Students", category: "CRM" },
@@ -60,7 +64,6 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/case-compass":                    { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },
   "/tools/case-compass":              { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },
   "/first-mate/popout":               { id: "PG-037-POP", name: "First Mate Floating Copilot", category: "Advocacy" },
-  "/crew-quarters":                   { id: "PG-038", name: "Crew Quarters", category: "Employee", description: "Personal employee home base and operational station" },
   "/advocacy-pipeline":               { id: "PG-039", name: "Advocacy Pipeline", category: "CRM", description: "Interactive Kanban-style case management pipeline" },
   "/pipeline":                        { id: "PG-039", name: "Advocacy Pipeline", category: "CRM", description: "Interactive Kanban-style case management pipeline" },
   

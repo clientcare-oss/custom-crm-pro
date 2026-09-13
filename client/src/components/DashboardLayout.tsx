@@ -85,6 +85,17 @@ export interface MenuGroup {
 function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGroup[] {
   return [
     {
+      groupLabel: "Overview",
+      items: [
+        { 
+          icon: LighthouseCottageIcon as any, 
+          label: "Crew Quarters", 
+          path: "/",
+          keywords: ["crew quarters", "home", "dashboard", "personal", "employee", "pg-038", "my work"]
+        },
+      ],
+    },
+    {
       groupLabel: "Call Center & Scheduling",
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
@@ -106,13 +117,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           path: "/leads",
           keywords: ["leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
         },
-      ],
-    },
-    {
-      groupLabel: "Overview",
-      items: [
-        { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-        { icon: LighthouseCottageIcon as any, label: "Crew Quarters", path: "/crew-quarters" },
       ],
     },
     {
@@ -185,6 +189,17 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
         { icon: UserCheck, label: "Team", path: "/team" },
         { icon: Heart, label: "Sponsors", path: "/sponsors" },
+      ],
+    },
+    {
+      groupLabel: "Company",
+      items: [
+        { 
+          icon: LayoutDashboard, 
+          label: "Dashboard", 
+          path: "/company/dashboard",
+          keywords: ["company dashboard", "dashboard", "operations", "overview", "business", "metrics", "pg-001"]
+        },
       ],
     },
     {
@@ -558,6 +573,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(
     (item) =>
+      (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
+      (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
       item.path === location ||
       (item.path === "/manage-experiences" && location === "/portal-management") ||
       (item.path === "/portal-management" && location === "/manage-experiences")
@@ -703,9 +720,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                         <SidebarMenu className="gap-0.5">
                           {group.items.map((item) => {
                             const isActive = 
-                              location === item.path ||
-                              (item.path === "/manage-experiences" && (location === "/portal-management" || location.startsWith("/manage-experiences"))) ||
-                              (item.path === "/portal-management" && (location === "/manage-experiences" || location.startsWith("/portal-management")));
+                              (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
+                              (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
+                              (item.path !== "/" && item.path !== "/company/dashboard" && (
+                                location === item.path ||
+                                (item.path === "/manage-experiences" && (location === "/portal-management" || location.startsWith("/manage-experiences"))) ||
+                                (item.path === "/portal-management" && (location === "/manage-experiences" || location.startsWith("/portal-management")))
+                              ));
                             return (
                               <SidebarMenuItem key={item.path}>
                                 <SidebarMenuButton
