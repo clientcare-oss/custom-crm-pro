@@ -50,8 +50,10 @@ import { automationsRouter } from "./routers/automations";
 import { feedbackRouter } from "./routers/feedback";
 import { firstMateRouter } from "./routers/firstMate";
 import { quoRouter } from "./routers/quo";
+import { pipelineRouter } from "./routers/pipeline";
 
 export const appRouter = router({
+  pipeline: pipelineRouter,
   firstMate: firstMateRouter,
   feedback: feedbackRouter,
   voyageLog: voyageLogRouter,

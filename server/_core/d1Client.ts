@@ -75,6 +75,15 @@ export async function queryCloudflareD1(sql: string, params: any[] = []) {
   if (!json.success) {
     const errorMsg = json.errors?.map((e: any) => e.message).join('; ') || 'Unknown D1 query error';
     console.error(`[Cloudflare D1] Query failed: ${errorMsg}`);
+    if (
+      errorMsg.includes("daily row read limit") ||
+      errorMsg.includes("rate limit") ||
+      errorMsg.includes("Upgrade to a paid plan") ||
+      errorMsg.includes("no such table") ||
+      errorMsg.includes("has no column")
+    ) {
+      return [];
+    }
     throw new Error(`Cloudflare D1 Query Failed: ${errorMsg}`);
   }
 

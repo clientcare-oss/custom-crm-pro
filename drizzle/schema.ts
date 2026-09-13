@@ -82,6 +82,14 @@ export const contacts = mysqlTable("contacts", {
   previousSchool: varchar("previousSchool", { length: 200 }),
   goingToSchool: varchar("goingToSchool", { length: 200 }),
   planType: varchar("planType", { length: 50 }).default("No IEP/504 Yet"),
+  // Advocacy Pipeline fields (PG-039)
+  pipelineStage: varchar("pipelineStage", { length: 100 }).default("Discovery"),
+  planTier: varchar("planTier", { length: 50 }).default("$55"), // "$55", "$105", "Scholarship", "Pay Per Use", "Tools Only", etc.
+  accountStatus: varchar("accountStatus", { length: 50 }).default("Active"), // "Active", "Onboarding", "Renewal Needed", "On Hold", "Offboarding", "Closed"
+  billingStatus: varchar("billingStatus", { length: 50 }).default("Current"), // "Current", "Payment Failed", "Past Due", "Complimentary", "Not Applicable"
+  contractStatus: varchar("contractStatus", { length: 50 }).default("Active"), // "Not Started", "Active", "Ending Soon", "Expired", "Renewed"
+  assignedAdvocateName: varchar("assignedAdvocateName", { length: 150 }),
+  activeWorkstreams: text("activeWorkstreams"), // JSON array of active workstream tags
   // Attorney / Legal representation fields
   attorneyName: varchar("attorneyName", { length: 200 }),
   attorneyPhone: varchar("attorneyPhone", { length: 50 }),
@@ -1758,4 +1766,38 @@ export const parkingLotItems = mysqlTable("parkingLotItems", {
 
 export type ParkingLotItemRecord = typeof parkingLotItems.$inferSelect;
 export type InsertParkingLotItemRecord = typeof parkingLotItems.$inferInsert;
+
+// ── Advocacy Pipeline Tables (PG-039) ─────────────────────────────────────────
+export const pipelineStages = mysqlTable("pipeline_stages", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 150 }).notNull(),
+  slug: varchar("slug", { length: 150 }).notNull(),
+  order: int("order").default(0).notNull(),
+  accentColor: varchar("accentColor", { length: 50 }).default("#38BDF8").notNull(), // hex code or tailwind color
+  iconName: varchar("iconName", { length: 100 }).default("Compass").notNull(),
+  category: varchar("category", { length: 50 }).default("active").notNull(), // "active", "waiting", "escalation", "completed", "neutral"
+  isArchived: boolean("isArchived").default(false).notNull(),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PipelineStage = typeof pipelineStages.$inferSelect;
+export type InsertPipelineStage = typeof pipelineStages.$inferInsert;
+
+export const pipelineSavedViews = mysqlTable("pipeline_saved_views", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 150 }).notNull(),
+  slug: varchar("slug", { length: 150 }).notNull(),
+  filtersJson: text("filtersJson").notNull(), // JSON string storing multi-rule filters
+  isPinned: boolean("isPinned").default(true).notNull(),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  order: int("order").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PipelineSavedView = typeof pipelineSavedViews.$inferSelect;
+export type InsertPipelineSavedView = typeof pipelineSavedViews.$inferInsert;
+
 

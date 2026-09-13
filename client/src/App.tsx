@@ -59,6 +59,7 @@ import DiscoveryWorksheetBuilder from "./pages/DiscoveryWorksheetBuilder";
 import FirstMate from "./pages/FirstMate";
 import FirstMatePopout from "./pages/FirstMatePopout";
 import CrewQuarters from "./pages/CrewQuarters";
+import AdvocacyPipeline from "./pages/AdvocacyPipeline";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -146,6 +147,8 @@ function Router() {
           <Route path="/students" component={Students} />
           <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
           <Route path="/first-mate" component={FirstMate} />
+          <Route path="/advocacy-pipeline" component={AdvocacyPipeline} />
+          <Route path="/pipeline" component={AdvocacyPipeline} />
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />

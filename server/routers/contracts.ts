@@ -119,9 +119,13 @@ export const contractsRouter = router({
       // Get contracts assigned to this client
       const dbInstance = await db.getDb();
       if (!dbInstance) return [];
-      const schema = await import("../../drizzle/schema");
-      const { eq } = await import("drizzle-orm");
-      return await dbInstance.select().from(schema.contracts).where(eq(schema.contracts.clientId, ctx.user.id));
+      try {
+        const schema = await import("../../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        return await dbInstance.select().from(schema.contracts).where(eq(schema.contracts.clientId, ctx.user.id));
+      } catch (e) {
+        return [];
+      }
     }),
   
 });

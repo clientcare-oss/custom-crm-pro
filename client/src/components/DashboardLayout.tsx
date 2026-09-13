@@ -95,6 +95,12 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Pipelines",
       items: [
         { 
+          icon: Workflow, 
+          label: "Advocacy Pipeline", 
+          path: "/advocacy-pipeline",
+          keywords: ["advocacy pipeline", "pipeline", "kanban", "stages", "cases", "pg-039"]
+        },
+        { 
           icon: TrendingUp, 
           label: "Leads", 
           path: "/leads",
