@@ -26,7 +26,9 @@ import {
   Building,
   RefreshCw,
   Plus,
-  StickyNote
+  StickyNote,
+  Eye,
+  ArrowLeftRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -427,6 +429,195 @@ export function PortalStudentDetailsTab({
               <div className="w-12 h-[2px] bg-gradient-to-r from-amber-400 to-amber-300 mx-auto sm:mx-0 shadow-sm" />
             </div>
           </div>
+
+        </div>
+      </div>
+
+      {/* ── THE IEP ZONE (Compact reference layout) ── */}
+      <div className="rounded-2xl border border-sky-800/40 bg-[#03132e] p-3.5 sm:p-4 shadow-xl space-y-2.5 relative overflow-hidden">
+        {/* Subtle ambient lighting */}
+        <div className="absolute top-0 right-1/4 w-72 h-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between gap-2 relative z-10">
+          <div className="flex items-center gap-2.5">
+            {/* Standalone Amber Document Icon */}
+            <svg className="w-6 h-6 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <rect x="8" y="12" width="8" height="5" rx="1" />
+              <line x1="10" y1="14" x2="14" y2="14" />
+            </svg>
+            <div>
+              <h3 className="font-serif font-bold text-base sm:text-lg text-white tracking-tight leading-tight">
+                IEP Zone
+              </h3>
+              <p className="text-[11px] text-sky-200/70 font-normal leading-tight">
+                Your child's current plan, all in one place.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <span className="font-serif italic text-[11px] sm:text-xs text-sky-200/70 font-light tracking-wide mr-1 hidden sm:inline-block">
+              Plans create access. Advocacy creates opportunity.
+            </span>
+            <button
+              type="button"
+              onClick={() => toast.info("IEP Zone provides instant access to your active IEP, amendment comparisons, and document history.")}
+              className="p-1 rounded-full text-sky-400/80 hover:text-sky-300 hover:bg-white/5 transition-colors cursor-pointer"
+              title="About the IEP Zone"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Row 1: 3-Column Plan Overview & Comparator Container */}
+        <div className="rounded-xl border border-sky-800/35 bg-[#020b1c]/80 p-3 sm:p-3.5 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-stretch">
+            
+            {/* Column 1 (4 cols): Current IEP */}
+            <div className="lg:col-span-4 flex flex-col justify-between space-y-2">
+              <span className="text-[10px] font-medium text-sky-300/70 block">
+                Current IEP
+              </span>
+              <div className="flex items-center gap-3">
+                {/* PDF Badge Card */}
+                <div className="w-11 h-12 rounded-lg bg-[#061833] border border-sky-700/50 flex flex-col items-center justify-center shrink-0 shadow-xs">
+                  <div className="w-5 h-6 rounded-[3px] bg-white flex items-center justify-center text-[7.5px] font-black text-slate-950 shadow-xs">
+                    PDF
+                  </div>
+                </div>
+
+                {/* Plan Title & Effective Date */}
+                <div className="min-w-0">
+                  <h4 className="font-bold text-white text-xs sm:text-[13px] leading-tight truncate" title="September 2026 IEP">
+                    September 2026 IEP
+                  </h4>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                    Effective: Sep 8, 2026
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Button: Open IEP */}
+              <div className="pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const iepFile = files?.find((f: any) => (f?.name || f?.title || "").toLowerCase().includes("iep"));
+                    if (iepFile?.url) window.open(iepFile.url, "_blank");
+                    else onNavigateTab("smart-docs");
+                  }}
+                  className="w-full sm:w-auto py-1 px-4 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-[11px] shadow-xs cursor-pointer transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Eye className="w-3 h-3 text-slate-950 stroke-[2.5]" />
+                  <span>Open IEP</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Column 2 (4 cols): Latest Version Received */}
+            <div className="lg:col-span-4 lg:border-l border-sky-900/40 lg:pl-4 flex flex-col justify-between space-y-1">
+              <span className="text-[10px] font-medium text-sky-300/70 block">
+                Latest Version Received
+              </span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-white">
+                  <Calendar className="w-4 h-4 text-white stroke-[1.8]" />
+                  <span className="text-sm sm:text-base font-bold tracking-tight text-white">Sep 13, 2026</span>
+                </div>
+
+                <div>
+                  <span className="inline-flex items-center gap-1 bg-[#03261e] border border-emerald-500/50 text-emerald-400 rounded-full px-2 py-0.5 text-[9.5px] font-semibold shadow-xs">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400 stroke-[2.5]" />
+                    <span>Up to date</span>
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-[9.5px] text-slate-400 leading-tight">
+                This is the most recent IEP we have on file.
+              </p>
+            </div>
+
+            {/* Column 3 (4 cols): Use IEP Comparator Card */}
+            <div className="lg:col-span-4">
+              <div className="h-full rounded-xl border border-sky-600/35 bg-gradient-to-br from-[#061c3d] via-[#04142b] to-[#020b18] p-2.5 sm:p-3 flex flex-col justify-between space-y-2">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex items-center text-sky-300 shrink-0 pt-0.5">
+                    <FileText className="w-4 h-4 text-sky-200" />
+                    <ArrowLeftRight className="w-2.5 h-2.5 text-sky-300 -mx-0.5 z-10" />
+                    <FileText className="w-4 h-4 text-sky-200" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-white leading-tight">Use IEP Comparator</h4>
+                    <p className="text-[9.5px] text-slate-300/80 leading-tight mt-0.5">
+                      Compare your new amendment with the previous IEP and quickly see what changed.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onNavigateTab("tools")}
+                    className="py-1 px-3 rounded-lg bg-[#072048] hover:bg-[#0c2e68] border border-sky-500/50 text-sky-200 hover:text-white font-semibold text-[10.5px] transition-all shadow-xs cursor-pointer"
+                  >
+                    Open IEP Comparator
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Row 2: 3 Bottom Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3 relative z-10">
+          
+          {/* Card 1: Upload New IEP */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenUploadModal) onOpenUploadModal();
+              else onNavigateTab("smart-docs");
+            }}
+            className="w-full text-left rounded-xl px-3.5 py-2 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-xs cursor-pointer transition-all flex items-center gap-2.5"
+          >
+            <Upload className="w-4 h-4 text-slate-950 stroke-[2.2] shrink-0" />
+            <div>
+              <h4 className="font-bold text-xs text-slate-950 leading-tight">Upload New IEP</h4>
+              <p className="text-[9.5px] text-slate-900 font-medium leading-tight">Add the latest IEP or amendment.</p>
+            </div>
+          </button>
+
+          {/* Card 2: Request Latest IEP From School */}
+          <button
+            type="button"
+            onClick={() => onNavigateTab("communication")}
+            className="w-full text-left rounded-xl px-3.5 py-2 border border-sky-600/35 bg-[#051836] hover:bg-[#08224d] text-white shadow-xs cursor-pointer transition-all flex items-center gap-2.5 group"
+          >
+            <Mail className="w-4 h-4 text-white shrink-0 group-hover:text-amber-300 transition-colors" />
+            <div>
+              <h4 className="font-bold text-xs text-white leading-tight">Request Latest IEP From School</h4>
+              <p className="text-[9.5px] text-slate-400 leading-tight">Need help getting the updated IEP?</p>
+            </div>
+          </button>
+
+          {/* Card 3: View Past IEPs */}
+          <button
+            type="button"
+            onClick={() => onNavigateTab("smart-docs")}
+            className="w-full text-left rounded-xl px-3.5 py-2 border border-sky-600/35 bg-[#051836] hover:bg-[#08224d] text-white shadow-xs cursor-pointer transition-all flex items-center gap-2.5 group"
+          >
+            <FileText className="w-4 h-4 text-white shrink-0 group-hover:text-amber-300 transition-colors" />
+            <div>
+              <h4 className="font-bold text-xs text-white leading-tight">View Past IEPs</h4>
+              <p className="text-[9.5px] text-slate-400 leading-tight">See previous versions.</p>
+            </div>
+          </button>
 
         </div>
       </div>
