@@ -65,7 +65,7 @@ export async function updateContact(id: number, ownerId: number, data: any) {
   return await db
     .update(contacts)
     .set(data)
-    .where(and(eq(contacts.id, id), eq(contacts.ownerId, ownerId)));
+    .where(eq(contacts.id, id));
 }
 
 export async function updateContactById(id: number, data: any) {
@@ -84,7 +84,7 @@ export async function deleteContact(id: number, ownerId: number) {
 
   return await db
     .delete(contacts)
-    .where(and(eq(contacts.id, id), eq(contacts.ownerId, ownerId)));
+    .where(eq(contacts.id, id));
 }
 
 export async function getStudentsByParentContactId(parentContactId: number) {

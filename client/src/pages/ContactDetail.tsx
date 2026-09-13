@@ -436,6 +436,7 @@ export default function ContactDetail() {
         onSuccess: () => {
           toast.success(`Plan status updated to: ${newPlanType}`);
           utils.contacts.detail.invalidate({ id: contactId });
+          utils.contacts.list.invalidate();
         },
         onError: (err) => {
           toast.error("Failed to update plan status: " + err.message);

@@ -46,6 +46,19 @@ export function StudentHeader({
   onUpdatePlanType,
   calculatedAge,
 }: StudentHeaderProps) {
+  const [localPlanType, setLocalPlanType] = React.useState<string>(contact.planType || "No IEP/504 Yet");
+
+  React.useEffect(() => {
+    if (contact.planType !== undefined) {
+      setLocalPlanType(contact.planType || "No IEP/504 Yet");
+    }
+  }, [contact.planType]);
+
+  const handleSelectPlan = (newPlan: string) => {
+    setLocalPlanType(newPlan);
+    onUpdatePlanType(newPlan);
+  };
+
   const fullName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || "Student";
   const initials = `${(contact.firstName || "S")[0]}${(contact.lastName || "W")[0]}`.toUpperCase();
   const parentFullName = parentContact
@@ -53,7 +66,7 @@ export function StudentHeader({
     : (contact.parentName || "Parent");
   const parentPhone = parentContact?.phone || contact.parentPhone || contact.phone || "(404) 555-0199";
   const caseNumber = contact.caseId || `WP-${new Date().getFullYear()}-${String(contact.id).padStart(4, "0")}`;
-  const currentPlanType = contact.planType || "No IEP/504 Yet";
+  const currentPlanType = localPlanType || contact.planType || "No IEP/504 Yet";
   const planTypeTier = contact.servicePlan || contact.planTier || "Monthly $55";
   const isArchived = Boolean(contact.archivedAt);
 
@@ -155,15 +168,15 @@ export function StudentHeader({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl">
-                    <DropdownMenuItem onClick={() => onUpdatePlanType("IEP")} className="gap-2 cursor-pointer text-xs font-semibold">
+                    <DropdownMenuItem onClick={() => handleSelectPlan("IEP")} className="gap-2 cursor-pointer text-xs font-semibold hover:bg-white/[0.08]">
                       <span className="w-2 h-2 rounded-full bg-indigo-400" />
                       <span>IEP PLAN</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onUpdatePlanType("504")} className="gap-2 cursor-pointer text-xs font-semibold">
+                    <DropdownMenuItem onClick={() => handleSelectPlan("504")} className="gap-2 cursor-pointer text-xs font-semibold hover:bg-white/[0.08]">
                       <span className="w-2 h-2 rounded-full bg-cyan-400" />
                       <span>504 PLAN</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onUpdatePlanType("No IEP/504 Yet")} className="gap-2 cursor-pointer text-xs font-semibold">
+                    <DropdownMenuItem onClick={() => handleSelectPlan("No IEP/504 Yet")} className="gap-2 cursor-pointer text-xs font-semibold hover:bg-white/[0.08]">
                       <span className="w-2 h-2 rounded-full bg-slate-400" />
                       <span>NO IEP/504 YET</span>
                     </DropdownMenuItem>
