@@ -21,7 +21,7 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap, Home } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
@@ -39,6 +39,7 @@ import ContactFinancialsTab from "@/components/contact/ContactFinancialsTab";
 import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 import ClientCallControls from "@/components/quo/ClientCallControls";
 import CallLogsWithCallback from "@/components/quo/CallLogsWithCallback";
+import { StudentWorkspaceTab } from "@/components/contact/workspace/StudentWorkspaceTab";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -556,240 +557,88 @@ export default function ContactDetail() {
   const currentPlanType = (contact as any).planType || "No IEP/504 Yet";
 
   return (
-    <div className="space-y-6 p-8">
-      {/* Back */}
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Back Button */}
       <Button
         variant="outline"
         onClick={() => setLocation(isParent ? "/contacts" : "/projects")}
-        className="inline-flex items-center gap-2 text-sm"
+        className="inline-flex items-center gap-2 text-xs h-8 border-[#0E274D] bg-[#07162B] text-slate-300 hover:text-white hover:bg-white/[0.06]"
       >
-        <ArrowLeft className="h-4 w-4" /> {isParent ? "All Contacts" : "All Students"}
+        <ArrowLeft className="h-3.5 w-3.5" /> {isParent ? "All Contacts" : "All Students"}
       </Button>
 
-      {/* Header */}
-      <div className="flex items-start gap-4 flex-wrap">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent font-bold text-xl flex-shrink-0">
-          {contact.firstName.charAt(0).toUpperCase()}
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">{fullName}</h1>
-            {/* Preview Portal button for both students and parents */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const url = isParent
-                  ? `/portal?preview=true&parentContactId=${contact.id}`
-                  : `/portal?preview=true&contactId=${contact.id}${contact.parentContactId ? `&parentContactId=${contact.parentContactId}` : ""}`;
-                window.open(url, "_blank");
-              }}
-              className="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 cursor-pointer"
-              title="Preview how this case appears to the parent in the Client Portal"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              Preview Parent Portal
-            </Button>
-            {/* Archive / Unarchive button */}
-            {(contact as any).archivedAt ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => unarchiveMutation.mutate({ id: contact.id })}
-                disabled={unarchiveMutation.isPending}
-                className="inline-flex items-center gap-1.5 text-xs border-green-500/40 text-green-600 hover:bg-green-500/10"
-              >
-                Unarchive
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowArchiveDialog(true)}
-                className="inline-flex items-center gap-1.5 text-xs border-amber-500/40 text-amber-600 hover:bg-amber-500/10"
-              >
-                Archive
-              </Button>
-            )}
-          </div>
-
-          {/* For parent: show standard job title / contact details */}
-          {isParent ? (
-            <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
-              {contact.jobTitle && <span>{contact.jobTitle}</span>}
-              {contact.company && <span>· {contact.company}</span>}
-              {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
-              {contact.phone && (
-                <div className="inline-flex items-center gap-2 flex-wrap">
-                  <span>· {contact.phone}</span>
-                  <ClientCallControls
-                    contactId={contact.id}
-                    contactName={fullName}
-                    phone={contact.phone}
-                    quoSyncStatus={contact.quoSyncStatus}
-                    quoLastSyncAt={contact.quoLastSyncAt}
-                    quoSyncError={contact.quoSyncError}
-                    isAdminOrStaff={user?.role !== "client"}
-                  />
-                </div>
-              )}
+      {/* Header — For Parent contacts only */}
+      {isParent && (
+        <>
+          <div className="flex items-start gap-4 flex-wrap">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent font-bold text-xl flex-shrink-0">
+              {contact.firstName.charAt(0).toUpperCase()}
             </div>
-          ) : (
-            /* For student: Student Name is in h1, then 504 / IEP / No IEP Tag, Age, Grade, School, Transition */
-            <div className="mt-2.5 space-y-2">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                {/* Case ID badge */}
-                {contact.caseId && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-[#0F2342] border border-[#F5B544]/30 px-2.5 py-1 text-xs font-mono font-semibold text-[#F5B544] shadow-xs">
-                    Case: {contact.caseId}
-                  </span>
-                )}
-
-                {/* 504 OR IEP OR NO IEP/504 YET TAG */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold border transition-all cursor-pointer shadow-xs",
-                        currentPlanType === "IEP"
-                          ? "bg-indigo-500/20 text-indigo-200 border-indigo-500/40 hover:bg-indigo-500/30"
-                          : currentPlanType === "504"
-                          ? "bg-cyan-500/20 text-cyan-200 border-cyan-500/40 hover:bg-cyan-500/30"
-                          : "bg-slate-800/90 text-slate-300 border-slate-700 hover:bg-slate-700/70"
-                      )}
-                      title="Click to toggle IEP / 504 / No IEP/504 Yet plan status"
-                    >
-                      <span
-                        className={cn(
-                          "w-2 h-2 rounded-full",
-                          currentPlanType === "IEP"
-                            ? "bg-indigo-400 animate-pulse"
-                            : currentPlanType === "504"
-                            ? "bg-cyan-400"
-                            : "bg-slate-400"
-                        )}
-                      />
-                      <span>{currentPlanType}</span>
-                      <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl">
-                    <DropdownMenuItem
-                      onClick={() => handleQuickUpdatePlanType("IEP")}
-                      className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                      <span>IEP</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleQuickUpdatePlanType("504")}
-                      className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                      <span>504</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleQuickUpdatePlanType("No IEP/504 Yet")}
-                      className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-slate-400" />
-                      <span>No IEP/504 Yet</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Age */}
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#07162B] border border-[#0E274D] px-2.5 py-1 text-xs text-slate-200 shadow-xs">
-                  <span className="text-slate-400 font-medium">Age:</span>
-                  <strong className="text-white font-semibold">
-                    {calculatedAge !== null
-                      ? `${calculatedAge} yrs`
-                      : (contact.dateOfBirth ? `${contact.dateOfBirth}` : "Not set")}
-                  </strong>
-                </span>
-
-                {/* Grade */}
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#07162B] border border-[#0E274D] px-2.5 py-1 text-xs text-slate-200 shadow-xs">
-                  <GraduationCap className="h-3.5 w-3.5 text-[#F5B544] shrink-0" />
-                  <span className="text-slate-400 font-medium">Grade:</span>
-                  <strong className="text-white font-semibold">
-                    {contact.gradeLevel || "Not set"}
-                  </strong>
-                </span>
-
-                {/* Current School */}
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#07162B] border border-[#0E274D] px-2.5 py-1 text-xs text-slate-200 shadow-xs">
-                  <School className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                  <span className="text-slate-400 font-medium">School:</span>
-                  <strong className="text-white font-semibold">
-                    {contact.schoolName || "Not set"}
-                  </strong>
-                </span>
-
-                {/* Transition: If applicable was at school ___ going to school ___ */}
-                {((contact as any).previousSchool || (contact as any).goingToSchool) && (
-                  <div className="inline-flex items-center gap-2 rounded-md bg-[#0F2342] border border-[#F5B544]/40 px-3 py-1 text-xs text-[#F5B544] shadow-xs">
-                    <span className="font-semibold uppercase tracking-wider text-[10px] text-[#F5B544]/90">Transition:</span>
-                    {(contact as any).previousSchool && (
-                      <span className="text-slate-200">
-                        Was at school <strong className="text-white font-semibold underline decoration-[#F5B544]/50 underline-offset-2">{(contact as any).previousSchool}</strong>
-                      </span>
-                    )}
-                    {(contact as any).previousSchool && (contact as any).goingToSchool && (
-                      <ArrowRight className="h-3.5 w-3.5 text-[#F5B544] shrink-0" />
-                    )}
-                    {(contact as any).goingToSchool && (
-                      <span className="text-slate-200">
-                        Going to school <strong className="text-white font-semibold underline decoration-[#F5B544]/50 underline-offset-2">{(contact as any).goingToSchool}</strong>
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Quick Edit Student Button */}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">{fullName}</h1>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowEditStudentModal(true)}
-                  className="h-7 px-2.5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] border-[#0E274D] gap-1.5 rounded-md cursor-pointer"
-                  title="Edit student demographics and school transition"
+                  onClick={() => {
+                    const url = `/portal?preview=true&parentContactId=${contact.id}`;
+                    window.open(url, "_blank");
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 cursor-pointer"
+                  title="Preview how this case appears to the parent in the Client Portal"
                 >
-                  <Pencil className="h-3 w-3 text-[#F5B544]" />
-                  <span>Edit Student</span>
+                  <Eye className="h-3.5 w-3.5" />
+                  Preview Parent Portal
                 </Button>
+                {(contact as any).archivedAt ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => unarchiveMutation.mutate({ id: contact.id })}
+                    disabled={unarchiveMutation.isPending}
+                    className="inline-flex items-center gap-1.5 text-xs border-green-500/40 text-green-600 hover:bg-green-500/10"
+                  >
+                    Unarchive
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowArchiveDialog(true)}
+                    className="inline-flex items-center gap-1.5 text-xs border-amber-500/40 text-amber-600 hover:bg-amber-500/10"
+                  >
+                    Archive
+                  </Button>
+                )}
               </div>
 
-              {/* Optional parent phone/email contact info if available */}
-              {(contact.email || contact.phone) && (
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                  {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
-                  {contact.phone && (
-                    <div className="inline-flex items-center gap-2 flex-wrap">
-                      <span>· {contact.phone}</span>
-                      <ClientCallControls
-                        contactId={contact.id}
-                        contactName={fullName}
-                        phone={contact.phone}
-                        quoSyncStatus={contact.quoSyncStatus}
-                        quoLastSyncAt={contact.quoLastSyncAt}
-                        quoSyncError={contact.quoSyncError}
-                        isAdminOrStaff={user?.role !== "client"}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
+                {contact.jobTitle && <span>{contact.jobTitle}</span>}
+                {contact.company && <span>· {contact.company}</span>}
+                {contact.email && <a href={`mailto:${contact.email}`} className="text-accent hover:underline">{contact.email}</a>}
+                {contact.phone && (
+                  <div className="inline-flex items-center gap-2 flex-wrap">
+                    <span>· {contact.phone}</span>
+                    <ClientCallControls
+                      contactId={contact.id}
+                      contactName={fullName}
+                      phone={contact.phone}
+                      quoSyncStatus={contact.quoSyncStatus}
+                      quoLastSyncAt={contact.quoLastSyncAt}
+                      quoSyncError={contact.quoSyncError}
+                      isAdminOrStaff={user?.role !== "client"}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Case Participants bar */}
-      <CaseParticipants contactId={contactId} contactName={fullName} parentContactId={contact.parentContactId} />
+          <CaseParticipants contactId={contactId} contactName={fullName} parentContactId={contact.parentContactId} />
+        </>
+      )}
 
-      {/* ═══════════════════════════════════════════════════
-          TABS — split by parent vs student
-      ═══════════════════════════════════════════════════ */}
+      {/* TABS — split by parent vs student */}
       {isParent ? (
         <ParentTabs
           contact={contact}
@@ -835,6 +684,15 @@ export default function ContactDetail() {
           setAttorneyForm={setAttorneyForm}
           handleSaveAttorney={handleSaveAttorney}
           updateContactMutation={updateContactMutation}
+          onEditStudent={() => setShowEditStudentModal(true)}
+          onArchive={() => setShowArchiveDialog(true)}
+          onUnarchive={() => unarchiveMutation.mutate({ id: contact.id })}
+          onPreviewPortal={() => {
+            const url = `/portal?preview=true&contactId=${contact.id}${contact.parentContactId ? `&parentContactId=${contact.parentContactId}` : ""}`;
+            window.open(url, "_blank");
+          }}
+          onUpdatePlanType={handleQuickUpdatePlanType}
+          calculatedAge={calculatedAge}
         />
       )}
 
@@ -1472,6 +1330,12 @@ function StudentTabs({
   setAttorneyForm,
   handleSaveAttorney,
   updateContactMutation,
+  onEditStudent,
+  onArchive,
+  onUnarchive,
+  onPreviewPortal,
+  onUpdatePlanType,
+  calculatedAge,
 }: {
   contact: any;
   contactId: number;
@@ -1499,76 +1363,48 @@ function StudentTabs({
   setAttorneyForm: (v: any) => void;
   handleSaveAttorney: () => void;
   updateContactMutation: any;
+  onEditStudent: () => void;
+  onArchive: () => void;
+  onUnarchive?: () => void;
+  onPreviewPortal: () => void;
+  onUpdatePlanType: (newPlan: string) => void;
+  calculatedAge: number | null;
 }) {
-  const [activeTab, setActiveTab] = useState("compass");
+  const [activeTab, setActiveTab] = useState("workspace");
 
-  const secondaryItems = [
-    { value: "tools", label: "Tools", icon: Wrench },
-    { value: "projects", label: "State Complaints", icon: ScrollText, count: projects.length },
+  const primaryItems = [
+    { value: "workspace", label: "Workspace", icon: Home },
+    { value: "voyage-log", label: "Voyage Log", icon: Video },
+    { value: "activity", label: "Messages", icon: MessageSquare },
+    { value: "tasks", label: "Tasks", icon: CheckSquare },
+    { value: "notes", label: "Notes", icon: FileText },
+    { value: "files", label: "Files", icon: Folder },
+    { value: "call-logs", label: "Calls", icon: Phone },
     { value: "financials", label: "Billing", icon: DollarSign, count: invoices.length },
     { value: "appointments", label: "Appts", icon: Calendar, count: appointments.length },
     { value: "time-tracker", label: "Time", icon: Timer },
     { value: "details", label: "Details", icon: Info },
   ];
 
-  const currentSecondaryItem = secondaryItems.find((i) => i.value === activeTab);
-  const isSecondaryActive = Boolean(currentSecondaryItem);
+  const secondaryItems = [
+    { value: "compass", label: "Case Compass", icon: Compass },
+    { value: "tools", label: "Tools", icon: Wrench },
+    { value: "projects", label: "State Complaints", icon: ScrollText, count: projects.length },
+  ];
 
   const primaryTriggerClass =
     "group flex-none h-9 px-3 py-1.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer text-slate-300 dark:text-slate-300 hover:text-white dark:hover:text-white hover:bg-white/[0.06] dark:hover:bg-white/[0.06] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/70 dark:data-[state=active]:border-[#F5B544]/70 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_rgba(245,181,68,0.14)]";
-
-  const secondaryTriggerClass =
-    "group flex-none h-8 px-2.5 py-1 rounded-md text-xs font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer text-slate-400 dark:text-slate-400 hover:text-slate-200 dark:hover:text-slate-200 hover:bg-white/[0.04] dark:hover:bg-white/[0.04] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/60 dark:data-[state=active]:border-[#F5B544]/60 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-xs";
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       {/* Unified Command Center Navigation Deck */}
       <TabsList className="w-full h-auto flex flex-col p-1.5 sm:p-2 bg-[#07162B] border border-[#0E274D] rounded-xl shadow-md gap-1 my-3 sm:my-3.5">
-        {/* Level 1: Primary Case Work */}
         <div className="flex items-center gap-1 sm:gap-1.5 w-full overflow-x-auto no-scrollbar py-0.5">
-          <TabsTrigger value="compass" className={primaryTriggerClass}>
-            <Compass className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-            <span>Compass</span>
-          </TabsTrigger>
-          <TabsTrigger value="voyage-log" className={primaryTriggerClass}>
-            <Video className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-            <span>Voyage Log</span>
-          </TabsTrigger>
-          <TabsTrigger value="activity" className={primaryTriggerClass}>
-            <MessageSquare className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-            <span>Messages</span>
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className={primaryTriggerClass}>
-            <CheckSquare className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-            <span>Tasks</span>
-          </TabsTrigger>
-          <TabsTrigger value="notes" className={primaryTriggerClass}>
-            <FileText className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-            <span>Notes</span>
-          </TabsTrigger>
-          <TabsTrigger value="files" className={primaryTriggerClass}>
-            <Folder className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-            <span>Files</span>
-          </TabsTrigger>
-          <TabsTrigger value="call-logs" className={primaryTriggerClass}>
-            <Phone className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-            <span>Calls</span>
-          </TabsTrigger>
-        </div>
-
-        {/* Subtle Hairline Divider (NO banner, NO large box) */}
-        <div className="w-full h-px bg-[#0E274D]/80 my-0.5" />
-
-        {/* Level 2: Secondary Case Tools & Admin (Desktop & Tablet) */}
-        <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 w-full flex-wrap pt-0.5">
-          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400/80 dark:text-slate-500/80 select-none pl-2 pr-1.5 shrink-0">
-            Case Tools & Admin
-          </span>
-          {secondaryItems.map((item) => {
+          {primaryItems.map((item) => {
             const Icon = item.icon;
             return (
-              <TabsTrigger key={item.value} value={item.value} className={secondaryTriggerClass}>
-                <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+              <TabsTrigger key={item.value} value={item.value} className={primaryTriggerClass}>
+                <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
                 <span>{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9.5px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
@@ -1579,73 +1415,31 @@ function StudentTabs({
             );
           })}
         </div>
-
-        {/* Mobile View: Secondary Tools dropdown menu */}
-        <div className="flex sm:hidden items-center justify-between w-full px-1 py-0.5">
-          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400/80 select-none">
-            Case Tools & Admin
-          </span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border transition-all cursor-pointer",
-                  isSecondaryActive
-                    ? "bg-[#0B2144] border-[#F5B544]/70 text-[#F5B544] font-semibold shadow-xs"
-                    : "bg-transparent border-[#0E274D] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
-                )}
-              >
-                {currentSecondaryItem ? (
-                  <>
-                    <currentSecondaryItem.icon className="h-3.5 w-3.5 text-[#F5B544]" />
-                    <span>{currentSecondaryItem.label}</span>
-                    {currentSecondaryItem.count !== undefined && currentSecondaryItem.count > 0 && (
-                      <span className="ml-1 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B]">
-                        {currentSecondaryItem.count}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Wrench className="h-3.5 w-3.5 text-slate-400" />
-                    <span>More Tools</span>
-                  </>
-                )}
-                <ChevronDown className="h-3 w-3 ml-0.5 opacity-70" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#07162B] border border-[#0E274D] text-slate-200 min-w-[180px] p-1 shadow-xl rounded-xl z-50">
-              {secondaryItems.map((item) => {
-                const Icon = item.icon;
-                const isSelected = activeTab === item.value;
-                return (
-                  <DropdownMenuItem
-                    key={item.value}
-                    onClick={() => setActiveTab(item.value)}
-                    className={cn(
-                      "flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors",
-                      isSelected
-                        ? "bg-[#0B2144] text-[#F5B544] font-semibold"
-                        : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className={cn("h-3.5 w-3.5", isSelected ? "text-[#F5B544]" : "text-slate-400")} />
-                      <span>{item.label}</span>
-                    </div>
-                    {item.count !== undefined && item.count > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B]">
-                        {item.count}
-                      </span>
-                    )}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </TabsList>
+
+      {/* 1. WORKSPACE TAB (PRIMARY CASE CONSOLE) */}
+      <TabsContent value="workspace" className="mt-4">
+        <StudentWorkspaceTab
+          contact={contact}
+          contactId={contactId}
+          fullName={fullName}
+          projects={projects}
+          invoices={invoices}
+          contracts={contracts}
+          appointments={appointments}
+          files={files}
+          messages={messages}
+          compass={compass}
+          compassHistory={compassHistory}
+          onSwitchTab={setActiveTab}
+          onEditStudent={onEditStudent}
+          onArchive={onArchive}
+          onUnarchive={onUnarchive}
+          onPreviewPortal={onPreviewPortal}
+          onUpdatePlanType={onUpdatePlanType}
+          calculatedAge={calculatedAge}
+        />
+      </TabsContent>
 
       {/* COMPASS TAB */}
       <TabsContent value="compass" className="mt-4">
