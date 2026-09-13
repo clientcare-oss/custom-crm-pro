@@ -88,7 +88,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Call Center & Inbound",
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
-        { icon: MarineRadarIcon as any, label: "First Mate", path: "/first-mate" },
       ],
     },
     {
@@ -160,6 +159,7 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
     {
       groupLabel: "Advocacy & AI Tools",
       items: [
+        { icon: MarineRadarIcon as any, label: "First Mate", path: "/first-mate" },
         { icon: Wrench, label: "Tools", path: "/tools" },
         { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
         { icon: Zap, label: "Automations", path: "/automations" },
