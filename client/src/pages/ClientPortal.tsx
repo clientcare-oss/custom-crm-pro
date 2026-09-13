@@ -1397,6 +1397,14 @@ export default function ClientPortal() {
       case "communication":
         return (
           <PortalCommunicationTab
+            effectiveStudent={effectiveStudent}
+            portalUser={portalUser}
+            user={user}
+            portalStudents={portalStudents}
+            selectedStudentId={selectedStudentId}
+            onSelectStudent={setSelectedStudentId}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenScheduler={() => setShowMeetingScheduler(true)}
             messages={messages}
             currentUserId={user?.id ? Number(user.id) : undefined}
             onSendMessage={(msgText) => {
