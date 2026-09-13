@@ -387,36 +387,27 @@ export function PlanTransitionExperience({
             </p>
           </div>
 
-          {/* BOTTOM SECTION: 47 Records Box Spanning ALL THE WAY ACROSS BOTTOM OF BOX */}
-          <div className="relative z-10 w-full rounded-xl bg-[#03132d]/90 border border-sky-400/35 p-3 sm:p-3.5 backdrop-blur-md shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="w-10 h-10 rounded-lg bg-sky-950/90 border border-sky-400/40 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
-                <FileText className="w-5 h-5 text-sky-400" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-xs sm:text-sm font-bold text-white tracking-tight block">
-                  You have <span className="text-amber-300 font-bold font-mono text-sm sm:text-base">47 records</span> in your Document Vault
-                </span>
-              </div>
+          {/* BOTTOM SECTION: 47 Records Box Spanning ALL THE WAY ACROSS BOTTOM */}
+          <div className="relative z-10 w-full rounded-xl bg-[#03132d]/85 border border-sky-500/30 p-3.5 backdrop-blur-md shadow-xl flex items-center gap-4">
+            {/* Icon */}
+            <div className="w-10 h-10 rounded-lg bg-sky-950/80 border border-sky-500/35 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+              <FileText className="w-5 h-5 text-sky-400" />
             </div>
 
-            {/* Horizontal breakdown on one line with bright high-contrast pill styling */}
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-sky-100">
-              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
-                6 IEPs
-              </span>
-              <span className="text-amber-400/80">•</span>
-              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
-                3 Evaluations
-              </span>
-              <span className="text-amber-400/80">•</span>
-              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
-                12 Progress Reports
-              </span>
-              <span className="text-amber-400/80">•</span>
-              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
-                26 Other Records
-              </span>
+            {/* Content: Title on Top, Breakdown on Bottom (Clean, horizontal, never wraps) */}
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-white tracking-tight">
+                You have <span className="text-amber-400 font-bold font-mono">47 records</span> in your Document Vault
+              </div>
+              <div className="text-xs text-sky-200/90 mt-0.5 flex items-center gap-2 flex-wrap font-medium">
+                <span>6 IEPs</span>
+                <span className="text-amber-400/80">•</span>
+                <span>3 Evaluations</span>
+                <span className="text-amber-400/80">•</span>
+                <span>12 Progress Reports</span>
+                <span className="text-amber-400/80">•</span>
+                <span>26 Other Records</span>
+              </div>
             </div>
           </div>
         </div>
