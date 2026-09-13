@@ -109,7 +109,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
         { icon: Users, label: "Contacts", path: "/contacts" },
-        { icon: Compass, label: "Case Compass", path: "/case-compass" },
       ],
     },
     {
@@ -120,6 +119,12 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           label: "Client Portal", 
           path: "/portal-management",
           keywords: ["portal", "client portal", "manage experiences", "experiences", "journey", "stages", "parent portal"]
+        },
+        { 
+          icon: Compass, 
+          label: "Case Compass", 
+          path: "/case-compass",
+          keywords: ["compass", "case compass", "cases", "disputes", "iep", "experience", "strategy"]
         },
       ],
     },
