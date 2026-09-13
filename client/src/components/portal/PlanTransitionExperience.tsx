@@ -118,10 +118,35 @@ export function PlanTransitionExperience({
     return "renew-100";
   });
 
-  const [advocacySubTier, setAdvocacySubTier] = useState<"renew-100" | "renew-55">("renew-100");
-  const [toolsSubTier, setToolsSubTier] = useState<"tools-suite" | "vault-only">("tools-suite");
+  const [advocacySubTier, setAdvocacySubTier] = useState<"renew-100" | "renew-55">(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === "renew-55") return "renew-55";
+    } catch (e) {
+      console.error(e);
+    }
+    return "renew-100";
+  });
+  const [toolsSubTier, setToolsSubTier] = useState<"tools-suite" | "vault-only">(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === "vault-only") return "vault-only";
+    } catch (e) {
+      console.error(e);
+    }
+    return "tools-suite";
+  });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync selected directive changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, selectedDirective);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [selectedDirective, storageKey]);
 
   const transitionOptions: Record<string, TransitionOption> = {
     "renew-100": {
@@ -286,56 +311,29 @@ export function PlanTransitionExperience({
         </div>
       </div>
 
-      {/* ── Top Header Row (Title + Center Wine Banner + Clean Vertically Stacked Buttons) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center pt-1 pb-1">
-        {/* Left: Serif Headline (4 cols) */}
-        <div className="lg:col-span-4 space-y-1 text-center lg:text-left">
-          <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-normal text-white tracking-tight leading-tight">
+      {/* ── Top Header Row (Title + Center Wine Banner) ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1 pb-1">
+        {/* Left: Serif Headline */}
+        <div className="space-y-1">
+          <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-serif font-normal text-white tracking-tight leading-tight">
             Plan Transition
           </h1>
           <p className="text-xs sm:text-sm text-slate-300/80 font-normal">
-            Your tools. Your records. What's next — you choose.
+            Your tools. Your records. What's next — you choose below.
           </p>
         </div>
 
-        {/* Center: Burgundy/Wine End Date Banner Pill (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center text-center px-2">
+        {/* Right: Burgundy/Wine End Date Banner Pill */}
+        <div className="flex flex-col items-start md:items-end text-left md:text-right">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#390d19]/90 border border-rose-500/40 text-rose-200 shadow-lg shadow-rose-950/40">
             <Calendar className="w-4 h-4 text-rose-400 shrink-0" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide">
               Your advocacy plan ends {expirationDate}.
             </span>
           </div>
-          <p className="text-[11px] sm:text-xs text-slate-300/80 mt-2 leading-relaxed text-center max-w-sm">
-            To keep using your Document Vault and Waypoint tools after your advocacy plan ends, choose a continuation option.
+          <p className="text-[11px] sm:text-xs text-slate-300/80 mt-1.5 leading-relaxed max-w-md">
+            To keep using your Document Vault and Waypoint tools after your advocacy plan ends, choose a continuation option below.
           </p>
-        </div>
-
-        {/* Right: Quick Action Buttons STACKED ON TOP OF EACH OTHER (3 cols) */}
-        <div className="lg:col-span-3 flex flex-col items-center lg:items-end gap-1.5 shrink-0">
-          <div className="flex flex-col gap-2 w-full max-w-[240px]">
-            {/* Top Button: Renew Full Advocacy */}
-            <button
-              onClick={() => handleSelectDirective(advocacySubTier)}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-amber-400/20 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <RefreshCw className="w-4 h-4 text-slate-950" />
-              <span>Renew Full Advocacy →</span>
-            </button>
-
-            {/* Bottom Button: Keep Vault + Tools */}
-            <button
-              onClick={() => handleSelectDirective(toolsSubTier)}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold text-xs sm:text-sm shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <Folder className="w-4 h-4 text-sky-400" />
-              <span>Keep Vault + Tools →</span>
-            </button>
-          </div>
-
-          <span className="text-[9px] font-mono tracking-widest text-slate-400 uppercase text-center lg:text-right block pt-0.5">
-            SAME SUPPORT. YOUR CHOICE. A BRIGHTER PATH AHEAD.
-          </span>
         </div>
       </div>
 
@@ -475,237 +473,351 @@ export function PlanTransitionExperience({
       </div>
 
       {/* ── The 3 Main Decision Cards (Renew Full Advocacy, Tools Access, No Plan) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch pt-2">
-        
-        {/* ── CARD 1: RENEW FULL ADVOCACY (Recommended) ── */}
-        <div className="rounded-3xl border-2 border-amber-400 bg-gradient-to-b from-[#081f44] via-[#051630] to-[#030d1e] p-6 sm:p-7 shadow-[0_0_35px_rgba(245,181,68,0.18)] flex flex-col justify-between relative overflow-hidden">
-          {/* Top Gold Ambient Glow Bar */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" />
+      {(() => {
+        const isAdvocacySelected = selectedDirective === "renew-100" || selectedDirective === "renew-55";
+        const isToolsSelected = selectedDirective === "tools-suite" || selectedDirective === "vault-only";
+        const isNoPlanSelected = selectedDirective === "no-plan";
 
-          <div className="space-y-4">
-            {/* Header Row */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-amber-400">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span className="font-mono font-bold text-xs sm:text-sm tracking-wider uppercase">
-                  Renew Full Advocacy
-                </span>
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch pt-2">
+            
+            {/* ── CARD 1: RENEW FULL ADVOCACY (Recommended) ── */}
+            <div
+              onClick={() => setSelectedDirective(advocacySubTier)}
+              className={`rounded-3xl p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all duration-300 ${
+                isAdvocacySelected
+                  ? "border-2 border-amber-400 bg-gradient-to-b from-[#081f44] via-[#051630] to-[#030d1e] shadow-[0_0_35px_rgba(245,181,68,0.25)] -translate-y-1 ring-1 ring-amber-400/40"
+                  : "border border-sky-600/35 bg-gradient-to-b from-[#061938] via-[#041228] to-[#020b18] hover:border-amber-400/50 hover:bg-[#071f45] opacity-90 hover:opacity-100"
+              }`}
+            >
+              {/* Top Gold Ambient Glow Bar */}
+              {isAdvocacySelected && (
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 shadow-[0_0_12px_rgba(245,181,68,0.6)]" />
+              )}
+
+              <div className="space-y-4">
+                {/* Header Row */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className={`flex items-center gap-1.5 transition-colors ${isAdvocacySelected ? "text-amber-400" : "text-amber-400/80"}`}>
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span className="font-mono font-bold text-xs sm:text-sm tracking-wider uppercase">
+                      Renew Full Advocacy
+                    </span>
+                  </div>
+                  <Badge className={`font-bold font-mono text-[10px] px-2.5 py-0.5 rounded-md uppercase tracking-wider transition-all shadow-sm ${
+                    isAdvocacySelected
+                      ? "bg-amber-400 text-slate-950 shadow-amber-400/20"
+                      : "bg-amber-400/15 text-amber-300/90 border border-amber-400/30"
+                  }`}>
+                    Recommended
+                  </Badge>
+                </div>
+
+                {/* Subtitle */}
+                <p className="text-xs sm:text-sm text-blue-200/85">
+                  Continue your partnership. Keep moving forward.
+                </p>
+
+                {/* Tier Selector Pills: $100/mo vs $55/mo */}
+                <div className={`p-1 rounded-xl grid grid-cols-2 gap-1 text-[11px] font-mono transition-all ${
+                  isAdvocacySelected
+                    ? "bg-[#020a17] border border-amber-400/40"
+                    : "bg-[#020a17]/70 border border-sky-800/40"
+                }`}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAdvocacySubTier("renew-100");
+                      setSelectedDirective("renew-100");
+                    }}
+                    className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
+                      advocacySubTier === "renew-100" && isAdvocacySelected
+                        ? "bg-amber-400 text-slate-950 shadow-md"
+                        : advocacySubTier === "renew-100"
+                        ? "bg-amber-400/20 text-amber-300 border border-amber-400/30"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    $100 / mo • Full Representation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAdvocacySubTier("renew-55");
+                      setSelectedDirective("renew-55");
+                    }}
+                    className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
+                      advocacySubTier === "renew-55" && isAdvocacySelected
+                        ? "bg-amber-400 text-slate-950 shadow-md"
+                        : advocacySubTier === "renew-55"
+                        ? "bg-amber-400/20 text-amber-300 border border-amber-400/30"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    $55 / mo • Advisory Coaching
+                  </button>
+                </div>
+
+                {/* Checklist */}
+                <ul className="space-y-3 pt-2 text-xs text-white/90">
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isAdvocacySelected ? "text-amber-400" : "text-amber-400/70"}`} />
+                    <span>Full access to all Waypoint tools</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isAdvocacySelected ? "text-amber-400" : "text-amber-400/70"}`} />
+                    <span>Ongoing advocate support</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isAdvocacySelected ? "text-amber-400" : "text-amber-400/70"}`} />
+                    <span>Meeting attendance (Advocate included in both plans)</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isAdvocacySelected ? "text-amber-400" : "text-amber-400/70"}`} />
+                    <span>Strategy help</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isAdvocacySelected ? "text-amber-400" : "text-amber-400/70"}`} />
+                    <span>Case tools & compliance monitoring</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isAdvocacySelected ? "text-amber-400" : "text-amber-400/70"}`} />
+                    <span>Uninterrupted advocacy (no gap in support)</span>
+                  </li>
+                </ul>
               </div>
-              <Badge className="bg-amber-400 text-slate-950 font-bold font-mono text-[10px] px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
-                Recommended
-              </Badge>
-            </div>
 
-            {/* Subtitle */}
-            <p className="text-xs sm:text-sm text-blue-200/85">
-              Continue your partnership. Keep moving forward.
-            </p>
-
-            {/* Tier Selector Pills: $100/mo vs $55/mo */}
-            <div className="p-1 rounded-xl bg-[#020a17] border border-amber-400/30 grid grid-cols-2 gap-1 text-[11px] font-mono">
-              <button
-                type="button"
-                onClick={() => setAdvocacySubTier("renew-100")}
-                className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
-                  advocacySubTier === "renew-100"
-                    ? "bg-amber-400 text-slate-950 shadow-sm"
-                    : "text-amber-300/80 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                $100 / mo • Full Representation
-              </button>
-              <button
-                type="button"
-                onClick={() => setAdvocacySubTier("renew-55")}
-                className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
-                  advocacySubTier === "renew-55"
-                    ? "bg-amber-400 text-slate-950 shadow-sm"
-                    : "text-amber-300/80 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                $55 / mo • Advisory Coaching
-              </button>
-            </div>
-
-            {/* Checklist */}
-            <ul className="space-y-3 pt-2 text-xs text-white/90">
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Full access to all Waypoint tools</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Ongoing advocate support</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Meeting attendance (Advocate included in both plans)</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Strategy help</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Case tools & compliance monitoring</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Uninterrupted advocacy (no gap in support)</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Action Button */}
-          <div className="pt-6">
-            <button
-              onClick={() => handleSelectDirective(advocacySubTier)}
-              className="w-full h-11 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-400/20 cursor-pointer flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <RefreshCw className="w-4 h-4 text-slate-950" />
-              <span>Renew Full Advocacy →</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ── CARD 2: TOOLS ACCESS ── */}
-        <div className="rounded-3xl border border-sky-500/40 bg-gradient-to-b from-[#061938] via-[#041228] to-[#020b18] p-6 sm:p-7 shadow-xl flex flex-col justify-between">
-          <div className="space-y-4">
-            {/* Header Row */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sky-400">
-                <Folder className="w-4 h-4 text-sky-400" />
-                <span className="font-mono font-bold text-xs sm:text-sm tracking-wider uppercase">
-                  Tools Access
-                </span>
+              {/* Action Button */}
+              <div className="pt-6">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectDirective(advocacySubTier);
+                  }}
+                  className={`w-full h-11 rounded-xl font-bold text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] ${
+                    isAdvocacySelected
+                      ? "bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-lg shadow-amber-400/20"
+                      : "bg-[#0a2347] hover:bg-[#0f2e5b] text-sky-200 border border-sky-500/40"
+                  }`}
+                >
+                  <RefreshCw className={`w-4 h-4 ${isAdvocacySelected ? "text-slate-950" : "text-amber-400/80"}`} />
+                  <span>{isAdvocacySelected ? "Renew Full Advocacy →" : "Select Full Advocacy"}</span>
+                </button>
               </div>
             </div>
 
-            {/* Subtitle */}
-            <p className="text-xs sm:text-sm text-blue-200/80">
-              Keep your Document Vault and selected tools.
-            </p>
-
-            {/* Tier Selector Pills: $35/mo Tools & AI vs $15/mo Vault */}
-            <div className="p-1 rounded-xl bg-[#020a17] border border-sky-600/30 grid grid-cols-2 gap-1 text-[11px] font-mono">
-              <button
-                type="button"
-                onClick={() => setToolsSubTier("tools-suite")}
-                className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
-                  toolsSubTier === "tools-suite"
-                    ? "bg-sky-500 text-slate-950 shadow-sm"
-                    : "text-sky-300/80 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                $35 / mo • Tools & AI
-              </button>
-              <button
-                type="button"
-                onClick={() => setToolsSubTier("vault-only")}
-                className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
-                  toolsSubTier === "vault-only"
-                    ? "bg-sky-500 text-slate-950 shadow-sm"
-                    : "text-sky-300/80 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                $15 / mo • Vault Only
-              </button>
-            </div>
-
-            {/* Checklist */}
-            <ul className="space-y-3 pt-2 text-xs text-white/90">
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                <span>Document Vault (all your existing records)</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                <span>Upload new records</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                <span>Scan documents</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                <span>Past reports & historical versions</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                <span>Downloads (individual or ZIP bundles)</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                <span>Selected self-service tools & AI guides</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Action Button */}
-          <div className="pt-6">
-            <button
-              onClick={() => handleSelectDirective(toolsSubTier)}
-              className="w-full h-11 rounded-xl bg-[#092246] hover:bg-[#0d2e5e] text-white border border-sky-400/50 font-semibold text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] shadow-md"
+            {/* ── CARD 2: TOOLS ACCESS ── */}
+            <div
+              onClick={() => setSelectedDirective(toolsSubTier)}
+              className={`rounded-3xl p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all duration-300 ${
+                isToolsSelected
+                  ? "border-2 border-amber-400 bg-gradient-to-b from-[#081f44] via-[#051630] to-[#030d1e] shadow-[0_0_35px_rgba(245,181,68,0.25)] -translate-y-1 ring-1 ring-amber-400/40"
+                  : "border border-sky-600/35 bg-gradient-to-b from-[#061938] via-[#041228] to-[#020b18] hover:border-amber-400/50 hover:bg-[#071f45] opacity-90 hover:opacity-100"
+              }`}
             >
-              <Folder className="w-4 h-4 text-sky-400" />
-              <span>Choose Tools Access →</span>
-            </button>
-          </div>
-        </div>
+              {/* Top Gold Ambient Glow Bar */}
+              {isToolsSelected && (
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 shadow-[0_0_12px_rgba(245,181,68,0.6)]" />
+              )}
 
-        {/* ── CARD 3: NO PLAN SELECTED ── */}
-        <div className="rounded-3xl border border-slate-700/60 bg-gradient-to-b from-[#051122] via-[#030c18] to-[#020811] p-6 sm:p-7 shadow-lg flex flex-col justify-between opacity-95">
-          <div className="space-y-4">
-            {/* Header Row */}
-            <div className="flex items-center gap-2 text-slate-300">
-              <Ban className="w-4 h-4 text-slate-400" />
-              <span className="font-mono font-bold text-xs sm:text-sm tracking-wider uppercase text-slate-300">
-                No Plan Selected
-              </span>
+              <div className="space-y-4">
+                {/* Header Row */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className={`flex items-center gap-2 transition-colors ${isToolsSelected ? "text-amber-400" : "text-sky-400"}`}>
+                    <Folder className="w-4 h-4" />
+                    <span className="font-mono font-bold text-xs sm:text-sm tracking-wider uppercase">
+                      Tools Access
+                    </span>
+                  </div>
+                  {isToolsSelected && (
+                    <Badge className="bg-amber-400 text-slate-950 font-bold font-mono text-[10px] px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm animate-in fade-in">
+                      Selected
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Subtitle */}
+                <p className="text-xs sm:text-sm text-blue-200/80">
+                  Keep your Document Vault and selected tools.
+                </p>
+
+                {/* Tier Selector Pills: $35/mo Tools & AI vs $15/mo Vault */}
+                <div className={`p-1 rounded-xl grid grid-cols-2 gap-1 text-[11px] font-mono transition-all ${
+                  isToolsSelected
+                    ? "bg-[#020a17] border border-amber-400/40"
+                    : "bg-[#020a17]/70 border border-sky-800/40"
+                }`}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setToolsSubTier("tools-suite");
+                      setSelectedDirective("tools-suite");
+                    }}
+                    className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
+                      toolsSubTier === "tools-suite" && isToolsSelected
+                        ? "bg-amber-400 text-slate-950 shadow-md"
+                        : toolsSubTier === "tools-suite"
+                        ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    $35 / mo • Tools & AI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setToolsSubTier("vault-only");
+                      setSelectedDirective("vault-only");
+                    }}
+                    className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
+                      toolsSubTier === "vault-only" && isToolsSelected
+                        ? "bg-amber-400 text-slate-950 shadow-md"
+                        : toolsSubTier === "vault-only"
+                        ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    $15 / mo • Vault Only
+                  </button>
+                </div>
+
+                {/* Checklist */}
+                <ul className="space-y-3 pt-2 text-xs text-white/90">
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isToolsSelected ? "text-amber-400" : "text-teal-400"}`} />
+                    <span>Document Vault (all your existing records)</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isToolsSelected ? "text-amber-400" : "text-teal-400"}`} />
+                    <span>Upload new records</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isToolsSelected ? "text-amber-400" : "text-teal-400"}`} />
+                    <span>Scan documents</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isToolsSelected ? "text-amber-400" : "text-teal-400"}`} />
+                    <span>Past reports & historical versions</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isToolsSelected ? "text-amber-400" : "text-teal-400"}`} />
+                    <span>Downloads (individual or ZIP bundles)</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isToolsSelected ? "text-amber-400" : "text-teal-400"}`} />
+                    <span>Selected self-service tools & AI guides</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-6">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectDirective(toolsSubTier);
+                  }}
+                  className={`w-full h-11 rounded-xl font-bold text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] ${
+                    isToolsSelected
+                      ? "bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-lg shadow-amber-400/20"
+                      : "bg-[#092246] hover:bg-[#0d2e5e] text-sky-200 border border-sky-400/40 font-semibold"
+                  }`}
+                >
+                  <Folder className={`w-4 h-4 ${isToolsSelected ? "text-slate-950" : "text-sky-400"}`} />
+                  <span>{isToolsSelected ? "Keep Tools Access →" : "Select Tools Access"}</span>
+                </button>
+              </div>
             </div>
 
-            {/* Subtitle */}
-            <p className="text-xs sm:text-sm text-slate-400">
-              If you do nothing, access will end.
-            </p>
-
-            {/* Spacing placeholder matching height of tier pills */}
-            <div className="py-1.5 px-3 rounded-xl bg-[#020a17]/50 border border-white/5 text-[11px] font-mono text-slate-500 text-center">
-              Term concludes on {expirationDate}
-            </div>
-
-            {/* Checklist with Gray/Red X Circles */}
-            <ul className="space-y-3 pt-2 text-xs text-slate-400">
-              <li className="flex items-start gap-2.5">
-                <XCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                <span>Advocacy services end on {expirationDate}</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <XCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                <span>Access to your Document Vault and tools may expire</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <XCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                <span>You may not be able to view, download, or upload your records</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <XCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                <span>To keep your records and tools, choose a continuation option before your plan ends</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Action note / button */}
-          <div className="pt-6">
-            <button
-              onClick={() => handleSelectDirective("no-plan")}
-              className="w-full h-11 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10 text-xs font-semibold cursor-pointer transition-colors"
+            {/* ── CARD 3: NO PLAN SELECTED ── */}
+            <div
+              onClick={() => setSelectedDirective("no-plan")}
+              className={`rounded-3xl p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all duration-300 ${
+                isNoPlanSelected
+                  ? "border-2 border-amber-400 bg-gradient-to-b from-[#081f44] via-[#051630] to-[#030d1e] shadow-[0_0_35px_rgba(245,181,68,0.25)] -translate-y-1 ring-1 ring-amber-400/40"
+                  : "border border-slate-700/60 bg-gradient-to-b from-[#051122] via-[#030c18] to-[#020811] hover:border-amber-400/50 hover:bg-[#06162d] opacity-80 hover:opacity-100"
+              }`}
             >
-              Conclude Without Renewal
-            </button>
+              {/* Top Gold Ambient Glow Bar */}
+              {isNoPlanSelected && (
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 shadow-[0_0_12px_rgba(245,181,68,0.6)]" />
+              )}
+
+              <div className="space-y-4">
+                {/* Header Row */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className={`flex items-center gap-2 transition-colors ${isNoPlanSelected ? "text-amber-400" : "text-slate-300"}`}>
+                    <Ban className="w-4 h-4" />
+                    <span className="font-mono font-bold text-xs sm:text-sm tracking-wider uppercase">
+                      No Plan Selected
+                    </span>
+                  </div>
+                  {isNoPlanSelected && (
+                    <Badge className="bg-amber-400 text-slate-950 font-bold font-mono text-[10px] px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm animate-in fade-in">
+                      Selected
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Subtitle */}
+                <p className="text-xs sm:text-sm text-slate-400">
+                  If you do nothing, access will end.
+                </p>
+
+                {/* Spacing placeholder matching height of tier pills */}
+                <div className={`py-1.5 px-3 rounded-xl text-[11px] font-mono text-center transition-all ${
+                  isNoPlanSelected
+                    ? "bg-[#020a17] border border-amber-400/40 text-amber-200/90"
+                    : "bg-[#020a17]/50 border border-white/5 text-slate-500"
+                }`}>
+                  Term concludes on {expirationDate}
+                </div>
+
+                {/* Checklist with Gray/Red X Circles */}
+                <ul className="space-y-3 pt-2 text-xs text-slate-400">
+                  <li className="flex items-start gap-2.5">
+                    <XCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isNoPlanSelected ? "text-amber-400/80" : "text-slate-500"}`} />
+                    <span className={isNoPlanSelected ? "text-slate-200" : ""}>Advocacy services end on {expirationDate}</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <XCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isNoPlanSelected ? "text-amber-400/80" : "text-slate-500"}`} />
+                    <span className={isNoPlanSelected ? "text-slate-200" : ""}>Access to your Document Vault and tools may expire</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <XCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isNoPlanSelected ? "text-amber-400/80" : "text-slate-500"}`} />
+                    <span className={isNoPlanSelected ? "text-slate-200" : ""}>You may not be able to view, download, or upload your records</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <XCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isNoPlanSelected ? "text-amber-400/80" : "text-slate-500"}`} />
+                    <span className={isNoPlanSelected ? "text-slate-200" : ""}>To keep your records and tools, choose a continuation option before your plan ends</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Action note / button */}
+              <div className="pt-6">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectDirective("no-plan");
+                  }}
+                  className={`w-full h-11 rounded-xl text-xs font-bold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${
+                    isNoPlanSelected
+                      ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-400/20"
+                      : "bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10 font-semibold"
+                  }`}
+                >
+                  <span>{isNoPlanSelected ? "Conclude Without Renewal →" : "Select No Plan"}</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* ── Reassurance Banner: Need Advocacy Later? ── */}
       <div className="rounded-2xl border border-sky-900/50 bg-[#041126]/90 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl backdrop-blur-md">
