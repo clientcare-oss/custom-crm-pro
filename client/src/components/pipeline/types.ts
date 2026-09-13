@@ -47,6 +47,8 @@ export interface SavedViewItem {
   filtersJson: string; // JSON string representing filter rules
   isPinned: boolean;
   isDefault?: boolean;
+  isPrivate?: boolean;
+  createdBy?: string | number;
   order: number;
 }
 

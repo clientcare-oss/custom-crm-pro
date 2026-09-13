@@ -42,17 +42,6 @@ interface KanbanColumnProps {
   draggedStageId?: number | null;
 }
 
-const STAGE_ICON_MAP: Record<string, any> = {
-  Compass,
-  FileText,
-  FileSearch,
-  School,
-  Calendar,
-  Scale,
-  Activity,
-  CheckCircle2,
-};
-
 export function KanbanColumn({
   stage,
   cards,
@@ -70,7 +59,6 @@ export function KanbanColumn({
   draggedStageId,
 }: KanbanColumnProps) {
   const [isCardDragOver, setIsCardDragOver] = useState(false);
-  const [isStageDragOver, setIsStageDragOver] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -81,13 +69,11 @@ export function KanbanColumn({
   const handleDragLeave = (e: React.DragEvent) => {
     if (e.currentTarget.contains(e.relatedTarget as Node)) return;
     setIsCardDragOver(false);
-    setIsStageDragOver(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsCardDragOver(false);
-    setIsStageDragOver(false);
 
     // Check if dragging a stage column vs a client card
     const stageData = e.dataTransfer.getData("application/waypoint-stage");
@@ -127,7 +113,7 @@ export function KanbanColumn({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "w-72 sm:w-[310px] shrink-0 rounded-2xl bg-[#061833]/90 border flex flex-col max-h-[calc(100vh-220px)] transition-all duration-150 relative overflow-hidden",
+        "w-[260px] shrink-0 rounded-2xl bg-[#061833]/90 border flex flex-col max-h-[calc(100vh-175px)] transition-all duration-150 relative overflow-hidden",
         isCardDragOver
           ? "border-[#F5B544] bg-[#082042] shadow-[0_0_20px_rgba(245,181,68,0.18)] ring-1 ring-[#F5B544]/60"
           : "border-[#0D366B]/80",
@@ -147,15 +133,15 @@ export function KanbanColumn({
           e.dataTransfer.setData("application/waypoint-stage", String(stage.id));
           onStageDragStart?.(e, stage);
         }}
-        className="p-3.5 pb-2.5 border-b border-[#0D366B]/60 flex items-center justify-between gap-2 shrink-0 cursor-grab active:cursor-grabbing hover:bg-white/[0.02] transition-colors"
+        className="px-3 py-2 border-b border-[#0D366B]/60 flex items-center justify-between gap-1.5 shrink-0 cursor-grab active:cursor-grabbing hover:bg-white/[0.02] transition-colors"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <GripVertical className="h-4 w-4 text-slate-400 shrink-0 hover:text-white transition-colors" />
+        <div className="flex items-center gap-1.5 min-w-0">
+          <GripVertical className="h-3.5 w-3.5 text-slate-400 shrink-0 hover:text-white transition-colors" />
           <div className="min-w-0">
             <h3 className="text-xs font-bold text-white tracking-wider truncate">
               {stage.name}
             </h3>
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="text-[10px] text-slate-400 font-medium">
               {cards.length} {cards.length === 1 ? "client" : "clients"}
             </p>
           </div>
@@ -165,9 +151,9 @@ export function KanbanColumn({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="h-7 w-7 rounded-md hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-colors"
+              className="h-6 w-6 rounded-md hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-colors"
             >
-              <MoreVertical className="h-4 w-4" />
+              <MoreVertical className="h-3.5 w-3.5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl text-xs">
@@ -197,8 +183,8 @@ export function KanbanColumn({
         </DropdownMenu>
       </div>
 
-      {/* Cards List Area */}
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-[140px] focus:outline-hidden">
+      {/* Cards List Area with clean subtle scroll */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[120px] focus:outline-hidden no-scrollbar">
         {cards.map((card) => (
           <KanbanCard
             key={card.id}
@@ -212,7 +198,7 @@ export function KanbanColumn({
         ))}
 
         {cards.length === 0 && (
-          <div className="h-28 rounded-xl border border-dashed border-[#0E3A73]/60 flex flex-col items-center justify-center text-slate-400 text-xs text-center p-3">
+          <div className="h-24 rounded-xl border border-dashed border-[#0E3A73]/60 flex flex-col items-center justify-center text-slate-400 text-[11px] text-center p-2">
             <p>No clients in this stage</p>
             <span className="text-[10px] text-slate-400 mt-0.5">Drag cards here</span>
           </div>
@@ -220,13 +206,13 @@ export function KanbanColumn({
       </div>
 
       {/* Column Footer: "+ Add a card" button */}
-      <div className="p-2 border-t border-[#0D366B]/50 shrink-0 bg-[#061833]/80">
+      <div className="p-1.5 border-t border-[#0D366B]/50 shrink-0 bg-[#061833]/80">
         <button
           type="button"
           onClick={() => onAddCard(stage.name)}
-          className="w-full py-1.5 px-3 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-[#0E3A73] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          className="w-full py-1 px-2.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-[#0E3A73] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-3 w-3" />
           <span>Add a card</span>
         </button>
       </div>

@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { AdvocacyPipelineHeader } from "@/components/pipeline/AdvocacyPipelineHeader";
 import { SavedViewsBar } from "@/components/pipeline/SavedViewsBar";
-import { PipelineFilterBar } from "@/components/pipeline/PipelineFilterBar";
 import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
 import { CustomizePipelineModal } from "@/components/pipeline/CustomizePipelineModal";
 import { NewViewModal } from "@/components/pipeline/NewViewModal";
@@ -107,20 +107,21 @@ const DEFAULT_STAGES: PipelineStageItem[] = [
   },
 ];
 
-// ── 9 Standard Saved Views (Tools Only ordered BEFORE On Hold) ───────────────
+// ── Standard Default Saved Views ─────────────────────────────────────────────
 const DEFAULT_SAVED_VIEWS: SavedViewItem[] = [
-  { id: 1, name: "All Clients", slug: "all-clients", filtersJson: "{}", isPinned: true, isDefault: true, order: 1 },
-  { id: 2, name: "$55 Plan", slug: "plan-55", filtersJson: JSON.stringify({ planTier: "$55" }), isPinned: true, isDefault: true, order: 2 },
-  { id: 3, name: "$105 Plan", slug: "plan-105", filtersJson: JSON.stringify({ planTier: "$105" }), isPinned: true, isDefault: true, order: 3 },
-  { id: 4, name: "Scholarship", slug: "scholarship", filtersJson: JSON.stringify({ planTier: "Scholarship" }), isPinned: true, isDefault: true, order: 4 },
-  { id: 5, name: "Pay Per Use", slug: "pay-per-use", filtersJson: JSON.stringify({ planTier: "Pay Per Use" }), isPinned: true, isDefault: true, order: 5 },
-  { id: 6, name: "Renewals", slug: "renewals", filtersJson: JSON.stringify({ accountStatus: "Renewal Needed" }), isPinned: true, isDefault: true, order: 6 },
-  { id: 7, name: "Nonpay", slug: "nonpay", filtersJson: JSON.stringify({ billingStatus: "Payment Failed" }), isPinned: true, isDefault: true, order: 7 },
-  { id: 8, name: "Tools Only", slug: "tools-only", filtersJson: JSON.stringify({ planTier: "Tools Only" }), isPinned: true, isDefault: true, order: 8 },
-  { id: 9, name: "On Hold", slug: "on-hold", filtersJson: JSON.stringify({ accountStatus: "On Hold" }), isPinned: true, isDefault: true, order: 9 },
+  { id: 1, name: "My Work", slug: "my-work", filtersJson: JSON.stringify({ isMyWork: true }), isPinned: true, isDefault: true, order: 1 },
+  { id: 2, name: "All Clients", slug: "all-clients", filtersJson: "{}", isPinned: true, isDefault: true, order: 2 },
+  { id: 3, name: "$55", slug: "plan-55", filtersJson: JSON.stringify({ planTier: "$55" }), isPinned: true, isDefault: true, order: 3 },
+  { id: 4, name: "$105", slug: "plan-105", filtersJson: JSON.stringify({ planTier: "$105" }), isPinned: true, isDefault: true, order: 4 },
+  { id: 5, name: "Scholarship", slug: "scholarship", filtersJson: JSON.stringify({ planTier: "Scholarship" }), isPinned: true, isDefault: true, order: 5 },
+  { id: 6, name: "Pay Per Use", slug: "pay-per-use", filtersJson: JSON.stringify({ planTier: "Pay Per Use" }), isPinned: false, isDefault: true, order: 6 },
+  { id: 7, name: "Renewals", slug: "renewals", filtersJson: JSON.stringify({ accountStatus: "Renewal Needed" }), isPinned: false, isDefault: true, order: 7 },
+  { id: 8, name: "Nonpay", slug: "nonpay", filtersJson: JSON.stringify({ billingStatus: "Payment Failed" }), isPinned: false, isDefault: true, order: 8 },
+  { id: 9, name: "Tools Only", slug: "tools-only", filtersJson: JSON.stringify({ planTier: "Tools Only" }), isPinned: false, isDefault: true, order: 9 },
+  { id: 10, name: "On Hold", slug: "on-hold", filtersJson: JSON.stringify({ accountStatus: "On Hold" }), isPinned: false, isDefault: true, order: 10 },
 ];
 
-// ── 19 Realistic Interactive Demo Cards matching Visual Reference ────────────
+// ── 19 Realistic Interactive Demo Cards ──────────────────────────────────────
 const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
   // 1. Discovery (3 clients)
   {
@@ -543,11 +544,12 @@ const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
 
 export default function AdvocacyPipeline() {
   const utils = trpc.useUtils();
+  const { user } = useAuth();
+  const currentUserName = user?.name || "Byron Honea";
 
   // ── Database Queries ────────────────────────────────────────────────────────
   const { data: serverStages } = trpc.pipeline.stages.list.useQuery();
   const { data: serverViews } = trpc.pipeline.views.list.useQuery();
-  const { data: dbCards } = trpc.pipeline.cards.list.useQuery();
 
   // ── Backend Mutations ───────────────────────────────────────────────────────
   const updateStageMutation = trpc.pipeline.cards.updateStage.useMutation({
@@ -566,7 +568,7 @@ export default function AdvocacyPipeline() {
     onSuccess: () => utils.pipeline.views.list.invalidate(),
   });
 
-  // ── Local Persistent State for Fluid Interaction & Refresh Retention ───────
+  // ── Local Persistent State ──────────────────────────────────────────────────
   const [stagesState, setStagesState] = useState<PipelineStageItem[]>(() => {
     try {
       const cached = localStorage.getItem("waypoint_advocacy_pipeline_stages");
@@ -575,7 +577,7 @@ export default function AdvocacyPipeline() {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {
-      // Ignore parse error
+      // Ignore
     }
     return DEFAULT_STAGES;
   });
@@ -588,7 +590,7 @@ export default function AdvocacyPipeline() {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {
-      // Ignore parse error
+      // Ignore
     }
     return INITIAL_DEMO_CARDS;
   });
@@ -601,16 +603,24 @@ export default function AdvocacyPipeline() {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {
-      // Ignore parse error
+      // Ignore
     }
     return [];
   });
 
-  // Sync server data when received, without wiping user's drag positions
+  // Active View & Filter states
+  const [activeViewSlug, setActiveViewSlug] = useState("all-clients");
+  const [filters, setFilters] = useState<PipelineFilters>({});
+
+  // Modals state
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [showAddStageModal, setShowAddStageModal] = useState(false);
+  const [showNewViewModal, setShowNewViewModal] = useState(false);
+
+  // Sync server stages if updated
   useEffect(() => {
     if (serverStages && serverStages.length > 0) {
       setStagesState((prev) => {
-        // Keep order if already cached
         const merged = serverStages.map((ss: any, idx: number) => {
           const existing = prev.find((p) => p.slug === ss.slug || p.id === ss.id);
           return {
@@ -631,7 +641,7 @@ export default function AdvocacyPipeline() {
     }
   }, [serverStages]);
 
-  // Combine default saved views + server saved views + custom views
+  // Combine default saved views + server views + custom views (respecting personal scope)
   const allSavedViews: SavedViewItem[] = useMemo(() => {
     const list = [...DEFAULT_SAVED_VIEWS];
     if (serverViews && serverViews.length > 0) {
@@ -642,6 +652,7 @@ export default function AdvocacyPipeline() {
       });
     }
     customViewsState.forEach((cv) => {
+      // Include view if shared or created by current user
       if (!list.some((v) => v.slug === cv.slug)) {
         list.push(cv);
       }
@@ -649,16 +660,7 @@ export default function AdvocacyPipeline() {
     return list;
   }, [serverViews, customViewsState]);
 
-  // Active View & Filter states
-  const [activeViewSlug, setActiveViewSlug] = useState("all-clients");
-  const [filters, setFilters] = useState<PipelineFilters>({});
-
-  // Modals state
-  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
-  const [showAddStageModal, setShowAddStageModal] = useState(false);
-  const [showNewViewModal, setShowNewViewModal] = useState(false);
-
-  // Active Saved View Rule object
+  // Active View object and rules
   const activeViewObj = useMemo(() => {
     return allSavedViews.find((v) => v.slug === activeViewSlug);
   }, [allSavedViews, activeViewSlug]);
@@ -672,10 +674,21 @@ export default function AdvocacyPipeline() {
     }
   }, [activeViewObj]);
 
-  // Filtered Cards matching (Saved View + Filter Bar)
+  // ── Client Filtering Engine (Saved View + Filter Popover) ───────────────────
   const filteredCards = useMemo(() => {
     return cardsState.filter((card) => {
-      // 1. Saved View filters
+      // 1. "My Work" Rule
+      if (viewRules.isMyWork) {
+        // Match advocate name with current user name or default to top advocate assignment in demo mode
+        const adv = card.assignedAdvocateName?.toLowerCase() || "";
+        const cur = currentUserName.toLowerCase();
+        const matchesCurrent = adv.includes(cur) || cur.includes(adv);
+        // For testing "My Work" when user name is Byron or test user, match Byron or first assigned
+        const isMyWorkMatch = matchesCurrent || adv === "byron honea" || adv === "erin smith";
+        if (!isMyWorkMatch) return false;
+      }
+
+      // 2. Saved View filters
       if (viewRules.planTier) {
         const vt = viewRules.planTier.toLowerCase();
         const ct = card.planTier.toLowerCase();
@@ -688,8 +701,20 @@ export default function AdvocacyPipeline() {
       if (viewRules.billingStatus && card.billingStatus.toLowerCase() !== viewRules.billingStatus.toLowerCase()) {
         return false;
       }
+      if (viewRules.advocate && card.assignedAdvocateName.toLowerCase() !== viewRules.advocate.toLowerCase()) {
+        return false;
+      }
+      if (viewRules.district && !card.countyDistrict?.toLowerCase().includes(viewRules.district.toLowerCase())) {
+        return false;
+      }
+      if (viewRules.caseType && card.planType.toLowerCase() !== viewRules.caseType.toLowerCase()) {
+        return false;
+      }
+      if (viewRules.needsAttentionOnly && !card.needsAttention) {
+        return false;
+      }
 
-      // 2. Filter Bar filters
+      // 3. Filter Popover filters
       if (filters.planTier) {
         const ft = filters.planTier.toLowerCase();
         const ct = card.planTier.toLowerCase();
@@ -717,15 +742,22 @@ export default function AdvocacyPipeline() {
 
       return true;
     });
-  }, [cardsState, viewRules, filters]);
+  }, [cardsState, viewRules, filters, currentUserName]);
 
-  // Compute live card counts per saved view pill
+  // Compute live card counts per saved view
   const viewCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     allSavedViews.forEach((view) => {
       try {
         const rules = JSON.parse(view.filtersJson || "{}");
         const count = cardsState.filter((card) => {
+          if (rules.isMyWork) {
+            const adv = card.assignedAdvocateName?.toLowerCase() || "";
+            const cur = currentUserName.toLowerCase();
+            const matchesCurrent = adv.includes(cur) || cur.includes(adv);
+            const isMyWorkMatch = matchesCurrent || adv === "byron honea" || adv === "erin smith";
+            if (!isMyWorkMatch) return false;
+          }
           if (rules.planTier) {
             const vt = rules.planTier.toLowerCase();
             const ct = card.planTier.toLowerCase();
@@ -734,6 +766,10 @@ export default function AdvocacyPipeline() {
           }
           if (rules.accountStatus && card.accountStatus.toLowerCase() !== rules.accountStatus.toLowerCase()) return false;
           if (rules.billingStatus && card.billingStatus.toLowerCase() !== rules.billingStatus.toLowerCase()) return false;
+          if (rules.advocate && card.assignedAdvocateName.toLowerCase() !== rules.advocate.toLowerCase()) return false;
+          if (rules.district && !card.countyDistrict?.toLowerCase().includes(rules.district.toLowerCase())) return false;
+          if (rules.caseType && card.planType.toLowerCase() !== rules.caseType.toLowerCase()) return false;
+          if (rules.needsAttentionOnly && !card.needsAttention) return false;
           return true;
         }).length;
         counts[view.slug] = count;
@@ -742,9 +778,9 @@ export default function AdvocacyPipeline() {
       }
     });
     return counts;
-  }, [cardsState, allSavedViews]);
+  }, [cardsState, allSavedViews, currentUserName]);
 
-  // ── Drag and Drop: Move Card Between Stages ─────────────────────────────────
+  // ── Drag & Drop Handlers ────────────────────────────────────────────────────
   const handleMoveCard = (cardId: number, targetStageName: string) => {
     setCardsState((prev) => {
       const updated = prev.map((c) =>
@@ -753,21 +789,19 @@ export default function AdvocacyPipeline() {
       try {
         localStorage.setItem("waypoint_advocacy_pipeline_cards", JSON.stringify(updated));
       } catch {
-        // Ignore storage error
+        // Ignore
       }
       return updated;
     });
 
     toast.success(`Client moved to ${targetStageName}`);
 
-    // Persist to backend
     updateStageMutation.mutate({
       contactId: cardId,
       stage: targetStageName,
     });
   };
 
-  // ── Drag and Drop: Intra-Column Card Reordering ─────────────────────────────
   const handleReorderCards = (draggedCardId: number, targetCardId: number, stageName: string) => {
     setCardsState((prev) => {
       const stageCards = prev.filter((c) => c.pipelineStage.toLowerCase() === stageName.toLowerCase());
@@ -786,13 +820,12 @@ export default function AdvocacyPipeline() {
       try {
         localStorage.setItem("waypoint_advocacy_pipeline_cards", JSON.stringify(combined));
       } catch {
-        // Ignore storage error
+        // Ignore
       }
       return combined;
     });
   };
 
-  // ── Drag and Drop: Stage Columns Reordering ─────────────────────────────────
   const handleReorderStages = (draggedStageId: number, targetStageId: number) => {
     setStagesState((prev) => {
       const draggedIdx = prev.findIndex((s) => s.id === draggedStageId);
@@ -808,10 +841,9 @@ export default function AdvocacyPipeline() {
       try {
         localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(reordered));
       } catch {
-        // Ignore storage error
+        // Ignore
       }
 
-      // Persist to server
       reorderStagesMutation.mutate(
         reordered.map((s) => ({ id: s.id, order: s.order }))
       );
@@ -821,13 +853,25 @@ export default function AdvocacyPipeline() {
     });
   };
 
-  // ── Stage Customization Save Handler ────────────────────────────────────────
+  const handleTogglePinView = (view: SavedViewItem) => {
+    const updated = customViewsState.map((v) =>
+      v.slug === view.slug ? { ...v, isPinned: !v.isPinned } : v
+    );
+    setCustomViewsState(updated);
+    try {
+      localStorage.setItem("waypoint_advocacy_pipeline_views", JSON.stringify(updated));
+    } catch {
+      // Ignore
+    }
+    toast.success(view.isPinned ? `Unpinned "${view.name}"` : `Pinned "${view.name}" to view bar`);
+  };
+
   const handleSaveStages = (updatedStages: PipelineStageItem[]) => {
     setStagesState(updatedStages);
     try {
       localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(updatedStages));
     } catch {
-      // Ignore storage error
+      // Ignore
     }
 
     const reorderPayload = updatedStages.map((s, idx) => ({
@@ -851,7 +895,6 @@ export default function AdvocacyPipeline() {
     toast.success("Pipeline configuration saved");
   };
 
-  // ── Add New Stage Handler ───────────────────────────────────────────────────
   const handleAddCustomStage = (stageData: Partial<PipelineStageItem>) => {
     if (!stageData.name) return;
     const newStage: PipelineStageItem = {
@@ -871,7 +914,7 @@ export default function AdvocacyPipeline() {
     try {
       localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(updated));
     } catch {
-      // Ignore storage error
+      // Ignore
     }
 
     upsertStageMutation.mutate({
@@ -885,11 +928,11 @@ export default function AdvocacyPipeline() {
     toast.success(`Stage "${newStage.name}" added to pipeline`);
   };
 
-  // ── Add New Custom Saved View Handler ───────────────────────────────────────
   const handleSaveNewView = (newViewData: {
     name: string;
     filters: PipelineFilters;
     isPinned: boolean;
+    isPrivate: boolean;
   }) => {
     const slug = newViewData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const newViewItem: SavedViewItem = {
@@ -898,6 +941,7 @@ export default function AdvocacyPipeline() {
       slug,
       filtersJson: JSON.stringify(newViewData.filters),
       isPinned: newViewData.isPinned,
+      isPrivate: newViewData.isPrivate,
       isDefault: false,
       order: allSavedViews.length + 1,
     };
@@ -907,7 +951,7 @@ export default function AdvocacyPipeline() {
     try {
       localStorage.setItem("waypoint_advocacy_pipeline_views", JSON.stringify(updated));
     } catch {
-      // Ignore storage error
+      // Ignore
     }
 
     upsertViewMutation.mutate({
@@ -922,31 +966,28 @@ export default function AdvocacyPipeline() {
   };
 
   return (
-    <div className="space-y-3.5 p-4 sm:p-6 lg:p-7 bg-[#07162B] min-h-screen text-slate-100">
-      {/* 1. Page Header */}
+    <div className="space-y-2.5 p-3.5 sm:p-5 lg:p-6 bg-[#07162B] min-h-screen text-slate-100">
+      {/* 1. Page Header (Compact) */}
       <AdvocacyPipelineHeader
         onCustomizePipeline={() => setShowCustomizeModal(true)}
         onAddStage={() => setShowAddStageModal(true)}
-        onNewView={() => setShowNewViewModal(true)}
       />
 
-      {/* 2. Saved Views Bar (Tools Only before On Hold) */}
+      {/* 2. Primary Control Row: Saved Views + Compact Filter Button */}
       <SavedViewsBar
         views={allSavedViews}
         activeViewSlug={activeViewSlug}
         onSelectView={(view) => setActiveViewSlug(view.slug)}
+        onTogglePinView={handleTogglePinView}
+        onNewView={() => setShowNewViewModal(true)}
         viewCounts={viewCounts}
-      />
-
-      {/* 3. Granular Filter Bar */}
-      <PipelineFilterBar
         filters={filters}
         onChangeFilters={setFilters}
         onClearFilters={() => setFilters({})}
         matchingCount={filteredCards.length}
       />
 
-      {/* 4. Kanban Pipeline Board */}
+      {/* 3. High-Density Kanban Pipeline Board */}
       <KanbanBoard
         stages={stagesState}
         cards={filteredCards}
@@ -960,7 +1001,7 @@ export default function AdvocacyPipeline() {
         onEditStage={() => setShowCustomizeModal(true)}
       />
 
-      {/* 5. Customization Modals */}
+      {/* 4. Modals */}
       <CustomizePipelineModal
         open={showCustomizeModal}
         onOpenChange={setShowCustomizeModal}
