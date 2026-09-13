@@ -381,11 +381,6 @@ export function PlanTransitionExperience({
               Keep your Document Vault<br />and essential tools.
             </h2>
 
-            {/* Descriptive Body */}
-            <p className="text-xs sm:text-[13px] text-blue-200/80 leading-relaxed font-normal max-w-[460px]">
-              You currently have records stored in your Document Vault. You can continue using the Vault and selected Waypoint tools after your advocacy plan ends — only if you choose a Tools Access plan or renew full advocacy.
-            </p>
-
             {/* Inset Stat Card: 47 Records in Vault */}
             <div className="rounded-xl bg-[#03132d]/75 border border-sky-500/30 p-3.5 backdrop-blur-md flex items-center gap-3.5 shadow-xl max-w-[480px]">
               <div className="w-11 h-11 rounded-lg bg-sky-950/80 border border-sky-500/35 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
