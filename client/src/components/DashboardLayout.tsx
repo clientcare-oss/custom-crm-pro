@@ -88,6 +88,7 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Call Center & Scheduling",
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
+        { icon: Calendar, label: "Calendar", path: "/calendar" },
       ],
     },
     {
@@ -106,7 +107,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: LayoutDashboard, label: "Dashboard", path: "/" },
         { icon: LighthouseCottageIcon as any, label: "Crew Quarters", path: "/crew-quarters" },
-        { icon: Calendar, label: "Calendar", path: "/calendar" },
       ],
     },
     {
