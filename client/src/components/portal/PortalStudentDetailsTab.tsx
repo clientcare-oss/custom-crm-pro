@@ -331,16 +331,20 @@ export function PortalStudentDetailsTab({
       </div>
 
       {/* ── MASTER STUDENT PROFILE CARD (Dual Split Panel) ── */}
-      <div className="rounded-2xl border border-sky-600/35 bg-gradient-to-br from-[#061833] via-[#041126] to-[#020b18] p-5 sm:p-6 shadow-2xl">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#051630] p-5 sm:p-6 shadow-2xl shadow-sky-950/50 relative overflow-hidden">
+        {/* Subtle luminous ambient glows */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-sky-400/10 rounded-full blur-3xl pointer-events-none -translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none translate-x-1/3 translate-y-1/3" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
           
           {/* Left Panel (6 Cols): Avatar, Identity & Support Badge */}
-          <div className="lg:col-span-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 lg:pr-6 lg:border-r border-sky-900/50">
+          <div className="lg:col-span-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 lg:pr-6 lg:border-r border-sky-700/40">
             {/* Avatar & Student Name */}
             <div className="flex items-center gap-4 text-center sm:text-left">
               {/* Gold Ring Circular Avatar */}
-              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 border-amber-400 p-1 shrink-0 shadow-lg shadow-amber-400/10">
-                <div className="w-full h-full rounded-full bg-gradient-to-b from-[#0a2347] to-[#030d1d] flex items-center justify-center text-white font-serif font-bold text-2xl tracking-wider shadow-inner">
+              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 border-amber-400 p-1 shrink-0 shadow-lg shadow-amber-400/20">
+                <div className="w-full h-full rounded-full bg-gradient-to-b from-[#0e356d] via-[#092349] to-[#051733] flex items-center justify-center text-white font-serif font-bold text-2xl tracking-wider shadow-inner">
                   {studentInitials}
                 </div>
               </div>
@@ -350,7 +354,7 @@ export function PortalStudentDetailsTab({
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight leading-tight">
                   {studentFullName}
                 </h2>
-                <p className="text-xs sm:text-sm text-sky-200/80 font-medium">
+                <p className="text-xs sm:text-sm text-sky-200/90 font-medium">
                   {parentFullName}
                 </p>
                 <div className="pt-0.5">
@@ -358,10 +362,10 @@ export function PortalStudentDetailsTab({
                     {planType}
                   </Badge>
                 </div>
-                <p className="text-xs text-slate-300 font-normal pt-0.5">
+                <p className="text-xs text-slate-200 font-normal pt-0.5">
                   {studentGrade} · {studentSchool}
                 </p>
-                <p className="text-[11px] font-serif italic text-sky-300/80">
+                <p className="text-[11px] font-serif italic text-sky-300/90">
                   Student page is already connected to your case.
                 </p>
               </div>
@@ -372,42 +376,42 @@ export function PortalStudentDetailsTab({
           <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
             {/* Left side: 2-column info grid (7 cols) */}
             <div className="sm:col-span-7 grid grid-cols-1 gap-2 text-xs">
-              <div className="flex items-center justify-between py-1 border-b border-sky-900/40">
-                <span className="text-sky-300/70 flex items-center gap-2">
+              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
+                <span className="text-sky-300 flex items-center gap-2">
                   <User className="w-3.5 h-3.5 text-sky-400" /> Age:
                 </span>
                 <span className="font-semibold text-white">{studentAge}</span>
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-900/40">
-                <span className="text-sky-300/70 flex items-center gap-2">
+              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
+                <span className="text-sky-300 flex items-center gap-2">
                   <GraduationCap className="w-3.5 h-3.5 text-sky-400" /> Grade:
                 </span>
                 <span className="font-semibold text-white">{studentGrade.replace(/[^0-9]/g, "") || studentGrade}</span>
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-900/40">
-                <span className="text-sky-300/70 flex items-center gap-2">
+              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
+                <span className="text-sky-300 flex items-center gap-2">
                   <School className="w-3.5 h-3.5 text-sky-400" /> School:
                 </span>
                 <span className="font-semibold text-white truncate max-w-[140px] text-right" title={studentSchool}>
                   {studentSchool}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-900/40">
-                <span className="text-sky-300/70 flex items-center gap-2">
+              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
+                <span className="text-sky-300 flex items-center gap-2">
                   <RefreshCw className="w-3.5 h-3.5 text-sky-400" /> Transfer School:
                 </span>
                 <span className="font-semibold text-white truncate max-w-[140px] text-right" title={transferSchool}>
                   {transferSchool}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-900/40">
-                <span className="text-sky-300/70 flex items-center gap-2">
+              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
+                <span className="text-sky-300 flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-sky-400" /> GTID:
                 </span>
                 <span className="font-mono font-semibold text-white">{studentGtid}</span>
               </div>
               <div className="flex items-center justify-between py-1">
-                <span className="text-sky-300/70 flex items-center gap-2">
+                <span className="text-sky-300 flex items-center gap-2">
                   <Folder className="w-3.5 h-3.5 text-sky-400" /> Case Type:
                 </span>
                 <span className="font-semibold text-white">{caseType}</span>
@@ -415,11 +419,11 @@ export function PortalStudentDetailsTab({
             </div>
 
             {/* Right side: Inspiration Quote (5 cols) */}
-            <div className="sm:col-span-5 sm:border-l border-sky-900/50 sm:pl-5 flex flex-col justify-center text-center sm:text-left space-y-2">
+            <div className="sm:col-span-5 sm:border-l border-sky-700/40 sm:pl-5 flex flex-col justify-center text-center sm:text-left space-y-2">
               <p className="font-serif italic text-amber-200 text-sm sm:text-base leading-snug">
                 “Advocacy turns potential into possibility.”
               </p>
-              <div className="w-12 h-[2px] bg-amber-400 mx-auto sm:mx-0 shadow-sm" />
+              <div className="w-12 h-[2px] bg-gradient-to-r from-amber-400 to-amber-300 mx-auto sm:mx-0 shadow-sm" />
             </div>
           </div>
 
