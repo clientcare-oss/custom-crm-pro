@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { UserPlus, UserCheck, Briefcase, Search, ExternalLink, GraduationCap, Phone, Mail, Building, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,18 +38,40 @@ export function CallerIdentitySelector({
   // Queries for real CRM data
   const { data: contactsData = [], isLoading: contactsLoading } = trpc.contacts.list.useQuery();
 
-  // Filter contacts by search query
+  // Helper to resolve student for any parent contact
+  const getStudentForContact = useCallback((contact: any) => {
+    if (!contact) return null;
+    if (contact.studentName) {
+      return { id: contact.studentId || null, name: contact.studentName, gradeLevel: contact.gradeLevel, schoolName: contact.schoolName };
+    }
+    // Check if the contact itself is marked as a student
+    if (contact.jobTitle === "Student") {
+      const studentName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || contact.name;
+      return { id: contact.id, name: studentName, gradeLevel: contact.gradeLevel, schoolName: contact.schoolName };
+    }
+    // Look up child contact where parentContactId points to this contact
+    const child = contactsData.find((c: any) => c.parentContactId === contact.id && (c.jobTitle === "Student" || !c.jobTitle));
+    if (child) {
+      const childName = `${child.firstName || ""} ${child.lastName || ""}`.trim() || child.name;
+      return { id: child.id, name: childName, gradeLevel: child.gradeLevel, schoolName: child.schoolName };
+    }
+    return null;
+  }, [contactsData]);
+
+  // Filter contacts by search query (focus on primary/parent clients)
   const matchingContacts = useMemo(() => {
-    if (!searchTerm.trim()) return contactsData.slice(0, 8);
+    const clientContacts = contactsData.filter((c: any) => c.jobTitle !== "Student");
+    if (!searchTerm.trim()) return clientContacts.slice(0, 10);
     const q = searchTerm.toLowerCase();
-    return contactsData.filter((c: any) => {
+    return clientContacts.filter((c: any) => {
       const name = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
       const phone = (c.phone || "").toLowerCase();
       const email = (c.email || "").toLowerCase();
-      const student = (c.studentName || "").toLowerCase();
-      return name.includes(q) || phone.includes(q) || email.includes(q) || student.includes(q);
+      const student = getStudentForContact(c);
+      const studentName = (student?.name || "").toLowerCase();
+      return name.includes(q) || phone.includes(q) || email.includes(q) || studentName.includes(q);
     }).slice(0, 10);
-  }, [contactsData, searchTerm]);
+  }, [contactsData, searchTerm, getStudentForContact]);
 
   // Selected contact details if active
   const selectedContact = useMemo(() => {
@@ -74,6 +96,7 @@ export function CallerIdentitySelector({
 
   const handlePickClient = (contact: any) => {
     const fullName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || contact.name || "Client";
+    const student = getStudentForContact(contact);
     updateCall({
       contactId: contact.id,
       contactName: fullName,
@@ -82,13 +105,12 @@ export function CallerIdentitySelector({
         phone: contact.phone || call.callerInfo.phone || "",
         email: contact.email || call.callerInfo.email || "",
       },
-      // If student is attached to contact
-      studentId: contact.studentId || null,
-      studentName: contact.studentName || null,
+      studentId: student?.id || contact.studentId || null,
+      studentName: student?.name || contact.studentName || null,
       callerCategory: "client",
       callType: call.callType || "Current Client",
     });
-    toast.success(`Connected client: ${fullName}`);
+    toast.success(`Connected client: ${fullName}${student?.name ? ` (Student: ${student.name})` : ""}`);
   };
 
   const handlePickOtherContact = (contact: any) => {
@@ -298,6 +320,7 @@ export function CallerIdentitySelector({
               matchingContacts.map((c: any) => {
                 const fullName = `${c.firstName || ""} ${c.lastName || ""}`.trim() || c.name || "Contact";
                 const isSelected = call.contactId === c.id;
+                const student = getStudentForContact(c);
                 return (
                   <div
                     key={c.id}
@@ -313,10 +336,13 @@ export function CallerIdentitySelector({
                       <div className="text-[11px] text-slate-400 truncate">
                         {c.phone || c.email || "No phone listed"}
                       </div>
-                      {c.studentName && (
+                      {student?.name && (
                         <div className="text-[11px] text-amber-300 font-medium truncate flex items-center gap-1 mt-0.5">
-                          <GraduationCap className="h-3 w-3" />
-                          Student: {c.studentName}
+                          <GraduationCap className="h-3 w-3 text-amber-400" />
+                          <span>Student: {student.name}</span>
+                          {student.gradeLevel && (
+                            <span className="text-slate-400 font-normal">({student.gradeLevel})</span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -356,9 +382,10 @@ export function CallerIdentitySelector({
                         <Mail className="h-3 w-3" /> {call.callerInfo.email}
                       </span>
                     )}
-                    {call.studentName && (
-                      <span className="text-amber-300 font-medium">
-                        Student: {call.studentName}
+                    {(call.studentName || getStudentForContact(selectedContact)?.name) && (
+                      <span className="text-amber-300 font-medium flex items-center gap-1">
+                        <GraduationCap className="h-3 w-3 text-amber-400" />
+                        Student: {call.studentName || getStudentForContact(selectedContact)?.name}
                       </span>
                     )}
                   </div>

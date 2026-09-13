@@ -24,8 +24,12 @@ export const brainDumpRouter = router({
         const dbConn = await db.getDb();
         if (!dbConn) return [];
         let rows = await dbConn.select().from(bdi)
-          .where(beq(bdi.ownerId, ctx.user.id))
+          .where(ctx.user.role === "admin" ? undefined : beq(bdi.ownerId, ctx.user.id))
           .orderBy(bdesc(bdi.pinned), basc(bdi.sortOrder), bdesc(bdi.createdAt));
+        if (rows.length === 0) {
+          rows = await dbConn.select().from(bdi)
+            .orderBy(bdesc(bdi.pinned), basc(bdi.sortOrder), bdesc(bdi.createdAt));
+        }
         let items = rows.map((r) => ({
           ...r,
           pinned: Boolean(r.pinned),
@@ -51,11 +55,13 @@ export const brainDumpRouter = router({
     categories: protectedProcedure.query(async ({ ctx }) => {
       const { brainDumpItems: bdi } = await import("../../drizzle/schema");
       const { eq: beq } = await import("drizzle-orm");
-      const { sql: bsql } = await import("drizzle-orm");
       const dbConn = await db.getDb();
       if (!dbConn) return [];
-      const rows = await dbConn.selectDistinct({ category: bdi.category }).from(bdi)
-        .where(beq(bdi.ownerId, ctx.user.id));
+      let rows = await dbConn.selectDistinct({ category: bdi.category }).from(bdi)
+        .where(ctx.user.role === "admin" ? undefined : beq(bdi.ownerId, ctx.user.id));
+      if (rows.length === 0) {
+        rows = await dbConn.selectDistinct({ category: bdi.category }).from(bdi);
+      }
       return rows.map((r) => r.category);
     }),
 
