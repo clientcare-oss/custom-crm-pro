@@ -99,7 +99,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: LayoutDashboard, label: "Dashboard", path: "/" },
         { icon: LighthouseCottageIcon as any, label: "Crew Quarters", path: "/crew-quarters" },
-        { icon: LayoutGrid, label: "Workspace", path: "/workspace" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
         { icon: CalendarClock, label: "Scheduler", path: "/scheduler" },
       ],
@@ -125,6 +124,12 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           label: "Case Compass", 
           path: "/case-compass",
           keywords: ["compass", "case compass", "cases", "disputes", "iep", "experience", "strategy"]
+        },
+        { 
+          icon: LayoutGrid, 
+          label: "Advocate Case Workspace", 
+          path: "/workspace",
+          keywords: ["workspace", "advocate case workspace", "case workspace", "pg-031", "employee workspace", "roles"]
         },
       ],
     },
