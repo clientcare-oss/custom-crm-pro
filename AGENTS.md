@@ -101,6 +101,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-021`: BrainDump (`/brain-dump`)
   - `PG-022`: Bill Guardian (`/bill-guardian`)
   - `PG-023`: Client Portal (`/portal`, `/client-portal`, `/project-workspace/:id`)
+  - `PG-023-TRN`: Plan Transition (`/portal?tab=plan-transition`)
   - `PG-024`: Settings (`/settings`)
   - `PG-025`: Case Compass Console (`/case-compass`, `/tools/case-compass`)
   - `PG-026`: Page ID Showcase (`/page-id-showcase`)

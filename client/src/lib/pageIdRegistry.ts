@@ -203,6 +203,8 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
   "renewals":         { id: "PG-023-RNW", name: "Plan Renewal", category: "Portal" },
   "iep-comparator":   { id: "PG-023-IEP", name: "IEP Comparator", category: "Portal" },
   "meeting-prep":     { id: "PG-023-PREP", name: "Meeting Prep Center", category: "Portal" },
+  "plan-transition":  { id: "PG-023-TRN", name: "Plan Transition", category: "Portal" },
+  "transition":       { id: "PG-023-TRN", name: "Plan Transition", category: "Portal" },
 
   // Onboarding Stage Modules
   "discovery-call":   { id: "PG-027-S02", name: "Discovery Call Scheduled", category: "Portal Stage" },

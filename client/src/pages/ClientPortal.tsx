@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard,
   GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight,
-  CircleParking, UploadCloud, Camera, HardDrive
+  CircleParking, UploadCloud, Camera, HardDrive, RefreshCw
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -56,6 +56,7 @@ import { ExplorePortalExperience } from "@/components/portal/onboarding/ExploreP
 import { TourDiscoveryCard } from "@/components/portal/onboarding/TourDiscoveryCard";
 import { LockedModulePreview } from "@/components/portal/onboarding/LockedModulePreview";
 import { RenewalListingExperience } from "@/components/portal/onboarding/RenewalListingExperience";
+import { PlanTransitionExperience } from "@/components/portal/PlanTransitionExperience";
 import { PortalAppointmentsTab } from "@/components/portal/PortalAppointmentsTab";
 import { PortalMembershipTab } from "@/components/portal/PortalMembershipTab";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
@@ -552,8 +553,9 @@ const NAV_ITEMS = [
   { id: "files",         icon: ActionCenterIcon, label: "Action Center" },
   { id: "tools",         icon: Wrench,           label: "Tools" },
   { id: "cases",         icon: Briefcase,      label: "Cases" },
-  { id: "financials",    icon: CreditCard,     label: "Membership" },
-  { id: "voyage-log",    icon: Video,          label: "Voyage Log" },
+  { id: "financials",       icon: CreditCard,     label: "Membership" },
+  { id: "plan-transition",  icon: RefreshCw,      label: "Plan Transition" },
+  { id: "voyage-log",       icon: Video,          label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,     label: "Notes" },
   { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
   { id: "renewal",       icon: Sparkles,       label: "Plan Renewal" },
@@ -940,6 +942,8 @@ export default function ClientPortal() {
       toast.success(`"${newDoc.title}" safely uploaded & encrypted into ${newDoc.workspaceName}!`);
     }, 600);
   };
+
+  const daysUntilPlanEnd = 45; // Simulated 45 days remaining in active advocacy plan cycle
 
   const filteredNavItems = NAV_ITEMS.filter(({ id }) => {
     if (id === "attorney" && !effectiveStudent?.attorneyName && (!isWorkspaceMode || !isAdminView)) return false;
@@ -1918,6 +1922,20 @@ export default function ClientPortal() {
           </div>
         );
 
+      case "plan-transition":
+      case "transition":
+        return (
+          <div className="p-4 sm:p-6 lg:p-8">
+            <PlanTransitionExperience
+              studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "Liam Jenkins"}
+              studentGrade={effectiveStudent?.grade || "5th Grade → 6th Grade"}
+              currentTierName="Full IEP Representation (2025–2026)"
+              studentId={effectiveStudentContactId ? String(effectiveStudentContactId) : undefined}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2019,6 +2037,7 @@ export default function ClientPortal() {
           onStartTour={handleStartTour}
           onEndExploration={handleEndExploration}
           onResetTour={handleResetTour}
+          daysUntilPlanEnd={daysUntilPlanEnd}
         />
       </div>
 
@@ -2046,6 +2065,7 @@ export default function ClientPortal() {
               onStartTour={handleStartTour}
               onEndExploration={handleEndExploration}
               onResetTour={handleResetTour}
+              daysUntilPlanEnd={daysUntilPlanEnd}
             />
           </div>
         </div>

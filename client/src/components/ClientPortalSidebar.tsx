@@ -4,7 +4,7 @@ import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
   ChevronLeft, ChevronRight, Home, Video, Sparkles, CheckCircle2, Lock, PenTool, GraduationCap,
-  MapPin, RotateCcw, CreditCard, PenLine, FileSignature, CircleParking
+  MapPin, RotateCcw, CreditCard, PenLine, FileSignature, CircleParking, RefreshCw
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -30,6 +30,7 @@ export const NAV_ITEMS = [
   { id: "tools",         icon: Wrench,        label: "Tools" },
   { id: "cases",         icon: Briefcase,     label: "Cases" },
   { id: "financials",    icon: CreditCard,    label: "Membership" },
+  { id: "plan-transition", icon: RefreshCw,   label: "Plan Transition" },
   { id: "voyage-log",    icon: Video,         label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,    label: "Notes" },
   { id: "attorney",      icon: Scale,         label: "Legal Counsel" },
@@ -59,6 +60,7 @@ interface ClientPortalSidebarProps {
   onStartTour?: () => void;
   onEndExploration?: () => void;
   onResetTour?: () => void;
+  daysUntilPlanEnd?: number;
 }
 
 export function ClientPortalSidebar({
@@ -81,7 +83,8 @@ export function ClientPortalSidebar({
   exploredTourIds = [],
   onStartTour,
   onEndExploration,
-  onResetTour
+  onResetTour,
+  daysUntilPlanEnd
 }: ClientPortalSidebarProps) {
   const [location, setLocation] = useLocation();
   const isWorkspace = location.startsWith("/projects/");
@@ -128,8 +131,18 @@ export function ClientPortalSidebar({
     }
   }
 
-  // Regular nav items filtered by attorney / custom props
-  const baseItems = navItems || NAV_ITEMS.filter(({ id }) => id !== "attorney" || hasAttorney);
+  // Regular nav items filtered by attorney / custom props - Plan Transition always shown with daysRemaining badge
+  const daysRemaining = daysUntilPlanEnd ?? 45;
+  const rawItems = navItems || NAV_ITEMS.filter(({ id }) => id !== "attorney" || hasAttorney);
+  const baseItems: Array<{ id: string; icon: any; label: string; badge?: string }> = rawItems.map((item) => {
+    if (item.id === "plan-transition") {
+      return {
+        ...item,
+        badge: `${daysRemaining}d`,
+      };
+    }
+    return item;
+  });
 
   return (
     <div className={`flex flex-col h-full border-r transition-all duration-[300ms] ease-in-out
@@ -372,7 +385,8 @@ export function ClientPortalSidebar({
             </div>
           )}
 
-          {baseItems.map(({ id, icon: Icon, label }) => {
+          {baseItems.map((item) => {
+            const { id, icon: Icon, label, badge } = item;
             const isActive = activeTab === id;
             const isTourTarget = isExplorationActive && TOUR_MODULES.some(m => m.id === id);
             const isUnexplored = isTourTarget && !exploredTourIds.includes(id);
@@ -396,11 +410,16 @@ export function ClientPortalSidebar({
                       : "border border-transparent text-white/60 hover:text-white hover:bg-white/5"
                   }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : isLight ? "text-slate-450" : "text-white/40"}`} />
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : isLight ? "text-slate-450" : "text-white/40"} ${id === "plan-transition" && isActive ? "animate-spin-slow" : ""}`} />
                 {(!isCollapsed || mobile) && (
                   <span className="truncate flex-1 flex items-center justify-between">
                     <span>{label === "Details" || label === "Student Workspace" ? "My Students" : label}</span>
                     <span className="flex items-center gap-1.5">
+                      {badge && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/35 shadow-xs">
+                          {badge}
+                        </span>
+                      )}
                       {isUnexplored && (
                         <span className="text-emerald-400 font-bold text-base leading-none" title="Unexplored area">•</span>
                       )}

@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Receipt,
   User,
-  ShieldAlert
+  ShieldAlert,
+  Wrench
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
+import VaultSafeIcon from "@/components/ui/VaultSafeIcon";
 
 interface PortalMembershipTabProps {
   displayName?: string;
@@ -399,6 +401,66 @@ export function PortalMembershipTab({
               </Button>
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      {/* ── Plan Transition Block (Choose what happens when your plan ends: keep vault, tool, renew) ── */}
+      <div className="rounded-3xl border border-amber-400/40 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 sm:p-7 shadow-2xl relative overflow-hidden group">
+        {/* Top gold accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/80 to-transparent" />
+        
+        {/* Ambient background glow */}
+        <div className="absolute -right-12 -bottom-12 w-48 h-48 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge className="bg-amber-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider font-mono">
+                Transition Planning
+              </Badge>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                60-Day Window Active (Available in Sidebar)
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+              <RefreshCw className="w-5 h-5 text-amber-400" />
+              Plan Transition
+            </h3>
+
+            <p className="text-xs sm:text-sm text-blue-200/80 leading-relaxed">
+              Choose what happens when your plan ends. Select whether to <strong className="text-amber-300">keep your vault</strong>, retain <strong className="text-cyan-300">self-advocacy tools</strong>, or <strong className="text-emerald-300">renew active representation</strong> with Byron Honea.
+            </p>
+
+            {/* Quick badges for the 3 paths */}
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
+              <span className="px-2.5 py-1 rounded-lg bg-[#030C22] border border-amber-400/30 text-[11px] font-medium text-amber-300 flex items-center gap-1.5">
+                <VaultSafeIcon className="w-3.5 h-3.5 text-amber-400" /> Keep Vault
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#030C22] border border-cyan-400/30 text-[11px] font-medium text-cyan-300 flex items-center gap-1.5">
+                <Wrench className="w-3.5 h-3.5 text-cyan-400" /> Tool Access
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#030C22] border border-emerald-400/30 text-[11px] font-medium text-emerald-300 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Renew Plan
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0">
+            <Button
+              onClick={() => onNavigateTab?.("plan-transition")}
+              className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs h-11 px-5 rounded-xl shadow-lg shadow-amber-400/25 hover:shadow-amber-400/40 cursor-pointer flex items-center justify-center gap-2 transition-all group-hover:scale-105"
+            >
+              <Sparkles className="w-4 h-4 text-slate-950" />
+              <span>Plan Transition</span>
+              <ArrowRight className="w-4 h-4 text-slate-950 ml-1" />
+            </Button>
+
+            <span className="text-[10px] text-blue-200/60 text-center sm:text-right md:text-center block">
+              Opens full transition management page
+            </span>
+          </div>
         </div>
       </div>
 
