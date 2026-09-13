@@ -21,7 +21,6 @@ import {
   Share2, 
   Upload, 
   Car, 
-  BookOpen, 
   ShieldCheck,
   Building,
   RefreshCw,
@@ -622,8 +621,8 @@ export function PortalStudentDetailsTab({
         </div>
       </div>
 
-      {/* ── MIDDLE 4-COLUMN ACTION & STATUS CARDS ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+      {/* ── MIDDLE 3-COLUMN ACTION & STATUS CARDS ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
         
         {/* CARD 1: CURRENT FOCUS */}
         <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-4 sm:p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
@@ -770,45 +769,6 @@ export function PortalStudentDetailsTab({
               className="w-full py-2.5 rounded-xl bg-[#0a2c61] hover:bg-[#0e3b82] text-white border border-sky-400/50 text-xs font-semibold shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-1.5"
             >
               <span>View Appointments →</span>
-            </button>
-          </div>
-        </div>
-
-        {/* CARD 4: CURRENT PLAN */}
-        <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#061a3b] p-4 sm:p-5 shadow-xl shadow-sky-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-36 h-36 bg-sky-400/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="space-y-3 relative z-10">
-            {/* Header */}
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-amber-400" />
-              <h3 className="font-serif font-bold text-sm text-white">Current Plan</h3>
-            </div>
-
-            {/* Plan Info */}
-            <div className="space-y-1">
-              <span className="text-xs font-bold text-white block">
-                Current Support Type: {planType}
-              </span>
-              <p className="text-xs text-slate-200/90 leading-relaxed">
-                Reviewing accommodations and classroom supports.
-              </p>
-            </div>
-          </div>
-
-          {/* Action Buttons: View Current Plan & IEP Blueprint */}
-          <div className="space-y-2 pt-2 relative z-10">
-            <button
-              onClick={() => onNavigateTab("cases")}
-              className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-400/20 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-1.5"
-            >
-              <span>View Current Plan →</span>
-            </button>
-            <button
-              onClick={() => onNavigateTab("tools")}
-              className="w-full py-2 rounded-xl bg-[#07224d] hover:bg-[#0b3373] text-sky-100 border border-sky-500/50 text-xs font-semibold shadow-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-sky-400" />
-              <span>IEP Blueprint</span>
             </button>
           </div>
         </div>
