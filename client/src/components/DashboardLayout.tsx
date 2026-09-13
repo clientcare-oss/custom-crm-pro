@@ -89,7 +89,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
         { icon: MarineRadarIcon as any, label: "First Mate", path: "/first-mate" },
-        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
       ],
     },
     {
@@ -143,8 +142,9 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       ],
     },
     {
-      groupLabel: "Documents & Billing",
+      groupLabel: "Templates & Forms",
       items: [
+        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
         { icon: LayoutTemplate, label: "Smart Files", path: "/smart-files" },
         { icon: ScrollText, label: "Contracts", path: "/contracts" },
         { icon: FileText, label: "Invoices", path: "/invoices" },
