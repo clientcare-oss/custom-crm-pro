@@ -85,7 +85,7 @@ export interface MenuGroup {
 function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGroup[] {
   return [
     {
-      groupLabel: "Call Center & Inbound",
+      groupLabel: "Call Center & Scheduling",
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
       ],
