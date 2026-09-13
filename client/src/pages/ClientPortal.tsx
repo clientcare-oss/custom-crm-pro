@@ -1920,9 +1920,11 @@ export default function ClientPortal() {
               currentTierName="Full IEP Representation (2025–2026)"
               studentId={effectiveStudentContactId ? String(effectiveStudentContactId) : undefined}
               effectiveStudent={effectiveStudent}
-              daysRemaining={45}
-              expirationDate="September 30, 2026"
+              daysRemaining={48}
+              expirationDate="October 31, 2026"
               onNavigateTab={(tab) => setActiveTab(tab)}
+              pageId="PG-023-RNW"
+              pageName="Plan Renewal"
             />
           </div>
         );

@@ -44,6 +44,8 @@ interface PlanTransitionExperienceProps {
   daysRemaining?: number;
   expirationDate?: string;
   onNavigateTab?: (tabId: string) => void;
+  pageId?: string;
+  pageName?: string;
 }
 
 export type TransitionDirective = "vault-only" | "tools-suite" | "renew-55" | "renew-100" | "no-plan";
@@ -94,6 +96,8 @@ export function PlanTransitionExperience({
   daysRemaining = 48,
   expirationDate = "October 31, 2026",
   onNavigateTab,
+  pageId = "PG-023-RNW",
+  pageName = "Plan Renewal",
 }: PlanTransitionExperienceProps) {
   const studentName = propStudentName || (effectiveStudent 
     ? `${effectiveStudent.firstName || ""} ${effectiveStudent.lastName || ""}`.trim() 
@@ -154,6 +158,7 @@ export function PlanTransitionExperience({
       borderGlow: "border-blue-400/70 shadow-[0_0_25px_rgba(96,165,250,0.2)]",
       highlights: [
         "Full access to Document Vault and all Advocacy Tools & AI Utilities",
+        "Advocate meeting attendance & special education coaching included",
         "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
         "Quarterly IEP goal progress audit & school compliance monitoring",
         "Direct strategic advisory with Master IEP Coach® Byron Honea",
@@ -277,14 +282,14 @@ export function PlanTransitionExperience({
             <Clock className="w-3 h-3 text-amber-400" />
             {daysRemaining} Days Until Transition
           </span>
-          <PageIdBadge id="PG-023-TRN" name="Plan Transition" />
+          <PageIdBadge id={pageId} name={pageName} />
         </div>
       </div>
 
-      {/* ── Top Header Row (Title + Center Wine Banner + Dual CTA Buttons) ── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pt-1">
-        {/* Left: Serif Headline */}
-        <div className="space-y-1">
+      {/* ── Top Header Row (Title + Center Wine Banner + Clean Vertically Stacked Buttons) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center pt-1 pb-1">
+        {/* Left: Serif Headline (4 cols) */}
+        <div className="lg:col-span-4 space-y-1 text-center lg:text-left">
           <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-normal text-white tracking-tight leading-tight">
             Plan Transition
           </h1>
@@ -293,42 +298,42 @@ export function PlanTransitionExperience({
           </p>
         </div>
 
-        {/* Center: Burgundy/Wine End Date Pill Banner */}
-        <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto lg:mx-0">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#390d19]/90 border border-rose-500/40 text-rose-200 shadow-lg shadow-rose-950/40">
+        {/* Center: Burgundy/Wine End Date Banner Pill (5 cols) */}
+        <div className="lg:col-span-5 flex flex-col items-center justify-center text-center px-2">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#390d19]/90 border border-rose-500/40 text-rose-200 shadow-lg shadow-rose-950/40">
             <Calendar className="w-4 h-4 text-rose-400 shrink-0" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide">
               Your advocacy plan ends {expirationDate}.
             </span>
           </div>
-          <p className="text-[11px] text-slate-300/75 mt-1.5 leading-snug text-center">
+          <p className="text-[11px] sm:text-xs text-slate-300/80 mt-2 leading-relaxed text-center max-w-sm">
             To keep using your Document Vault and Waypoint tools after your advocacy plan ends, choose a continuation option.
           </p>
         </div>
 
-        {/* Right: Quick Action Buttons */}
-        <div className="flex flex-col items-stretch sm:items-end gap-1.5 shrink-0">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            {/* Renew Full Advocacy Button */}
+        {/* Right: Quick Action Buttons STACKED ON TOP OF EACH OTHER (3 cols) */}
+        <div className="lg:col-span-3 flex flex-col items-center lg:items-end gap-1.5 shrink-0">
+          <div className="flex flex-col gap-2 w-full max-w-[240px]">
+            {/* Top Button: Renew Full Advocacy */}
             <button
               onClick={() => handleSelectDirective(advocacySubTier)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-400/25 cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-amber-400/20 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
             >
               <RefreshCw className="w-4 h-4 text-slate-950" />
               <span>Renew Full Advocacy →</span>
             </button>
 
-            {/* Keep Vault + Tools Button */}
+            {/* Bottom Button: Keep Vault + Tools */}
             <button
               onClick={() => handleSelectDirective(toolsSubTier)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold text-xs sm:text-sm shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#071d40] hover:bg-[#0c2a5c] text-white border border-sky-500/40 font-semibold text-xs sm:text-sm shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
             >
               <Folder className="w-4 h-4 text-sky-400" />
               <span>Keep Vault + Tools →</span>
             </button>
           </div>
 
-          <span className="text-[9px] font-mono tracking-widest text-slate-400 uppercase text-center sm:text-right block mt-0.5">
+          <span className="text-[9px] font-mono tracking-widest text-slate-400 uppercase text-center lg:text-right block pt-0.5">
             SAME SUPPORT. YOUR CHOICE. A BRIGHTER PATH AHEAD.
           </span>
         </div>
@@ -337,41 +342,41 @@ export function PlanTransitionExperience({
       {/* ── Split Hero Section: Left Hero Card (Lighthouse) + Right Access Card ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
-        {/* Left Hero Card (8 Cols): Lighthouse + Vault Stats */}
-        <div className="lg:col-span-8 relative overflow-hidden rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#061937] via-[#04132b] to-[#020b1a] p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col justify-between">
+        {/* Left Hero Card (8 Cols): Lighthouse strictly segregated on right, text on left */}
+        <div className="lg:col-span-8 relative overflow-hidden rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#061937] via-[#04132b] to-[#020b1a] shadow-2xl min-h-[380px] flex flex-col justify-between">
           
-          {/* Lighthouse Twilight Background Artwork (Faded seamlessly on right side) */}
-          <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[54%] overflow-hidden pointer-events-none select-none">
+          {/* Lighthouse Twilight Background Artwork (Cleanly confined to right 42% so it never collides with text) */}
+          <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[44%] lg:w-[42%] overflow-hidden pointer-events-none select-none">
             <img
               src="/lighthouse-night-bg.png"
               alt="Waypoint Lighthouse in twilight"
-              className="w-full h-full object-cover object-[right_center] opacity-85 mix-blend-screen"
+              className="w-full h-full object-cover object-[center_right] opacity-90 mix-blend-screen"
             />
-            {/* Seamless blended gradients */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#04132b] via-[#04132b]/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#020b1a] via-transparent to-[#061937]/40" />
+            {/* Seamless blended gradients on the left edge */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#04132b] via-[#04132b]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#020b1a] via-transparent to-transparent" />
 
             {/* Script Cursive Overlay: "Your journey continues here." */}
-            <div className="absolute top-8 sm:top-12 left-6 sm:left-12 z-10">
-              <p className="font-serif italic text-amber-200/90 text-lg sm:text-xl lg:text-2xl tracking-wide select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+            <div className="absolute top-8 left-4 sm:left-6 z-10">
+              <p className="font-serif italic text-amber-200/95 text-base sm:text-lg lg:text-xl tracking-wide select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                 Your journey continues here.
               </p>
-              <div className="w-10 h-[2px] bg-amber-400/90 mt-1.5 shadow-sm" />
+              <div className="w-8 h-[2px] bg-amber-400/90 mt-1 shadow-sm" />
             </div>
           </div>
 
-          {/* Left Text & Stat Content */}
-          <div className="relative z-10 space-y-4 max-w-xl">
+          {/* Left Text & Stat Content (Strictly width-capped so text never runs over the lighthouse artwork) */}
+          <div className="relative z-10 p-6 sm:p-8 lg:p-9 space-y-3.5 w-full sm:max-w-[58%] lg:max-w-[56%]">
             {/* Accent Gold Label */}
             <div className="flex items-center gap-2">
               <div className="w-5 h-[2px] bg-amber-400" />
-              <span className="text-[11px] font-mono font-bold tracking-widest text-amber-400 uppercase">
+              <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-amber-400 uppercase">
                 Your Records Matter
               </span>
             </div>
 
             {/* Display Serif Title */}
-            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-serif font-normal text-white tracking-tight leading-snug">
+            <h2 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug">
               Keep your Document Vault and essential tools.
             </h2>
 
@@ -381,15 +386,15 @@ export function PlanTransitionExperience({
             </p>
 
             {/* Inset Stat Card: 47 Records in Vault */}
-            <div className="rounded-2xl bg-[#020a17]/90 border border-sky-500/35 p-4 sm:p-4.5 backdrop-blur-md max-w-lg flex items-center gap-4 shadow-xl">
-              <div className="w-12 h-12 rounded-xl bg-sky-950/90 border border-sky-500/40 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
-                <FileText className="w-6 h-6 text-sky-400" />
+            <div className="rounded-2xl bg-[#020a17]/95 border border-sky-500/35 p-3.5 sm:p-4 backdrop-blur-md flex items-center gap-3.5 shadow-xl">
+              <div className="w-11 h-11 rounded-xl bg-sky-950/90 border border-sky-500/40 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
+                <FileText className="w-5 h-5 text-sky-400" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm sm:text-base font-bold text-white tracking-tight">
+                <div className="text-xs sm:text-sm font-bold text-white tracking-tight">
                   You have <span className="text-amber-300 font-mono font-black">47 records</span> in your Document Vault
                 </div>
-                <div className="text-[11px] sm:text-xs text-blue-200/75 mt-0.5 flex flex-wrap items-center gap-1.5">
+                <div className="text-[10px] sm:text-[11px] text-blue-200/75 mt-0.5 flex flex-wrap items-center gap-1.5">
                   <span>6 IEPs</span>
                   <span className="text-white/40">•</span>
                   <span>3 Evaluations</span>
@@ -402,7 +407,7 @@ export function PlanTransitionExperience({
             </div>
 
             {/* Note below stat box */}
-            <p className="text-[11px] sm:text-xs text-sky-200/65 leading-relaxed pt-1">
+            <p className="text-[10px] sm:text-[11px] text-sky-200/65 leading-relaxed pt-0.5">
               These records can remain organized and available if you keep Tools Access active. Don't lose access to your important documents.
             </p>
           </div>
@@ -502,7 +507,7 @@ export function PlanTransitionExperience({
                     : "text-amber-300/80 hover:text-white hover:bg-white/5"
                 }`}
               >
-                $100 / mo • Meetings
+                $100 / mo • Full Representation
               </button>
               <button
                 type="button"
@@ -513,7 +518,7 @@ export function PlanTransitionExperience({
                     : "text-amber-300/80 hover:text-white hover:bg-white/5"
                 }`}
               >
-                $55 / mo • Advisory
+                $55 / mo • Advisory Coaching
               </button>
             </div>
 
@@ -529,7 +534,7 @@ export function PlanTransitionExperience({
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Meeting attendance {advocacySubTier === "renew-100" ? "(Included in $100/mo)" : "(Optional add-on in $55/mo)"}</span>
+                <span>Meeting attendance (Advocate included in both plans)</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
