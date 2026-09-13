@@ -183,11 +183,6 @@ export function StudentHeader({
                 {" · "}
                 {contact.schoolName || contact.goingToSchool || contact.countyDistrict || "School Not Set"}
               </p>
-
-              {/* Connected to case status line */}
-              <p className="text-xs text-sky-400/90 italic truncate">
-                Student page is already connected to your case.
-              </p>
             </div>
           </div>
 
