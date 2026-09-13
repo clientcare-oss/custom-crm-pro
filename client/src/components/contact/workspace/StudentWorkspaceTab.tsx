@@ -260,30 +260,31 @@ export function StudentWorkspaceTab({
         calculatedAge={calculatedAge}
       />
 
-      {/* 2. MIDDLE SECTION: IEP ZONE + KEY CASE DOCUMENTS (2 Columns) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-7">
-          <IepZoneCard
-            contact={contact}
-            compass={compass}
-            onStart504={() => {
-              onUpdatePlanType("504");
-              toast.success("504 path initialized for " + fullName);
-            }}
-            onRequestEvaluation={() => {
-              toast.info("Evaluation request workflow opened");
-              onSwitchTab("tasks");
-            }}
-            onUploadDocument={() => onSwitchTab("files")}
-            onCreateBlueprint={() => {
-              toast.info("Opening IEP Blueprint Builder...");
-              onSwitchTab("files");
-            }}
-            onCompareIeps={() => setLocation(`/tools/iep-comparator?studentId=${contactId}`)}
-            onOpenCurrentPlan={() => onSwitchTab("files")}
-          />
-        </div>
+      {/* 2. IEP / 504 PLAN ZONE — FULL WIDTH COMMAND CENTER */}
+      <IepZoneCard
+        contact={contact}
+        compass={compass}
+        latestFile={files.find((f: any) => f.fileName?.toLowerCase().includes("iep") || f.fileName?.toLowerCase().includes("504")) || files[0]}
+        onStart504={() => {
+          onUpdatePlanType("504");
+          toast.success("504 path initialized for " + fullName);
+        }}
+        onRequestEvaluation={() => {
+          toast.info("Evaluation request workflow opened");
+          onSwitchTab("tasks");
+        }}
+        onUploadDocument={() => onSwitchTab("files")}
+        onCreateBlueprint={() => {
+          toast.info("Opening IEP Blueprint Builder...");
+          onSwitchTab("files");
+        }}
+        onCompareIeps={() => setLocation(`/tools/iep-comparator?studentId=${contactId}`)}
+        onOpenCurrentPlan={() => onSwitchTab("files")}
+      />
 
+      {/* 3. KEY CASE DOCUMENTS & ADVOCATE TOOLS ROW (2 Columns) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Key Documents: 5 cols */}
         <div className="lg:col-span-5">
           <KeyDocumentsCard
             documents={caseDocuments}
@@ -294,12 +295,9 @@ export function StudentWorkspaceTab({
             }}
           />
         </div>
-      </div>
 
-      {/* 3. WORKSPACE CORE: LET'S GET TO WORK + NEXT ACTIONS + MEETINGS & TIMELINE (3 Columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-        {/* Tool Launcher: 5 cols */}
-        <div className="lg:col-span-5">
+        {/* Tool Launcher: 7 cols */}
+        <div className="lg:col-span-7">
           <ToolLauncherCard
             contactId={contactId}
             caseId={contact.caseId}
@@ -307,9 +305,12 @@ export function StudentWorkspaceTab({
             onLaunchTool={handleLaunchTool}
           />
         </div>
+      </div>
 
-        {/* Next Actions: 4 cols */}
-        <div className="lg:col-span-4">
+      {/* 4. NEXT ACTIONS & MEETINGS / TIMELINE (2 Columns) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Next Actions: 7 cols */}
+        <div className="lg:col-span-7">
           <NextActionsCard
             tasks={caseTasks}
             onToggleTask={toggleTaskStatus}
@@ -318,8 +319,8 @@ export function StudentWorkspaceTab({
           />
         </div>
 
-        {/* Meetings & Timeline: 3 cols */}
-        <div className="lg:col-span-3">
+        {/* Meetings & Timeline: 5 cols */}
+        <div className="lg:col-span-5">
           <MeetingsTimelineCard
             nextMeeting={nextMeetingObj}
             lastMeeting={lastMeetingObj}
@@ -333,7 +334,7 @@ export function StudentWorkspaceTab({
         </div>
       </div>
 
-      {/* 4. BOTTOM FULL-WIDTH: INTERNAL NOTES & STRATEGY (WAYPOINT ONLY) */}
+      {/* 5. BOTTOM FULL-WIDTH: INTERNAL NOTES & STRATEGY (WAYPOINT ONLY) */}
       <InternalStrategyCard
         notes={displayNotes}
         onAddNote={() => setShowAddNoteModal(true)}
