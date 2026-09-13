@@ -325,15 +325,89 @@ export function PlanTransitionExperience({
         </div>
       </div>
 
-      {/* ── Top Header Row (Title & Subtitle) ── */}
-      <div className="space-y-1 pt-1 pb-1">
-        <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-normal text-white tracking-tight leading-tight">
-          Plan Transition
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-300/80 font-normal">
-          Your tools. Your records. What's next — you choose below.
-        </p>
-      </div>
+      {/* ── Top Header Row: Title on Left, 60-Day Countdown / No Action Bar in Open Space on Right ── */}
+      {(() => {
+        const isWithin60Days = daysRemaining <= 60;
+        const countdownPct = Math.max(0, Math.min(100, Math.round((daysRemaining / 60) * 100)));
+
+        return (
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pt-1 pb-1">
+            {/* Left: Serif Headline */}
+            <div className="space-y-1">
+              <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-normal text-white tracking-tight leading-tight">
+                Plan Transition
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300/80 font-normal">
+                Your tools. Your records. What's next — you choose below.
+              </p>
+            </div>
+
+            {/* Right (In the open space): 60-Day Countdown / No Action Bar */}
+            <div className="w-full lg:max-w-md shrink-0">
+              {isWithin60Days ? (
+                /* WITHIN 60 DAYS: Red glowing bar that goes down each day until end of paid period */
+                <div className="rounded-2xl bg-[#1c060d]/90 border border-rose-500/40 p-3 sm:p-3.5 shadow-xl shadow-rose-950/40 backdrop-blur-md">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,1)]"></span>
+                      </span>
+                      <span className="font-mono text-xs font-bold text-rose-200 tracking-wide uppercase">
+                        Action Required: {daysRemaining} Days Left
+                      </span>
+                    </div>
+                    <span className="font-mono text-[10.5px] font-semibold text-rose-300/90">
+                      {countdownPct}% of 60-day window
+                    </span>
+                  </div>
+
+                  {/* Glowing Red Bar that goes down each day until end of paid period */}
+                  <div className="w-full bg-[#0d0205] border border-rose-950/90 rounded-full h-2.5 p-0.5 overflow-hidden shadow-inner">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-rose-600 via-rose-500 to-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.95)] transition-all duration-700"
+                      style={{ width: `${countdownPct}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10.5px] text-rose-300/70 mt-1.5">
+                    <span>Decreases daily until {expirationDate}</span>
+                    <span className="font-medium text-rose-200/90">60-Day Window Active</span>
+                  </div>
+                </div>
+              ) : (
+                /* GREATER THAN 60 DAYS: No Action Required bar */
+                <div className="rounded-2xl bg-[#031526]/85 border border-emerald-500/30 p-3 sm:p-3.5 shadow-xl backdrop-blur-md">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-2 text-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="font-mono text-xs font-bold uppercase tracking-wider">
+                        No Action Required
+                      </span>
+                    </div>
+                    <span className="font-mono text-[10.5px] text-emerald-400/80">
+                      {daysRemaining} Days Active
+                    </span>
+                  </div>
+
+                  {/* Stable Full Green/Teal Bar */}
+                  <div className="w-full bg-[#020d18] border border-emerald-950/90 rounded-full h-2.5 p-0.5 overflow-hidden shadow-inner">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.35)]"
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10.5px] text-slate-400 mt-1.5">
+                    <span>Advocacy plan fully active</span>
+                    <span>Action window opens at 60 days</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Split Hero Section: Left Hero Card (Lighthouse) + Right Access Card ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
