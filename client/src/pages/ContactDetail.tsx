@@ -1395,20 +1395,20 @@ function StudentTabs({
   ];
 
   const triggerClass =
-    "group flex-1 min-w-0 h-8 sm:h-9 px-2 py-1 sm:py-1.5 rounded-lg text-[12px] sm:text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer text-slate-300 dark:text-slate-300 hover:text-white dark:hover:text-white hover:bg-white/[0.06] dark:hover:bg-white/[0.06] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/70 dark:data-[state=active]:border-[#F5B544]/70 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_rgba(245,181,68,0.14)] whitespace-nowrap";
+    "group flex-1 min-w-max h-8 sm:h-9 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-[12px] md:text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer text-slate-300 dark:text-slate-300 hover:text-white dark:hover:text-white hover:bg-white/[0.06] dark:hover:bg-white/[0.06] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/70 dark:data-[state=active]:border-[#F5B544]/70 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_rgba(245,181,68,0.14)] whitespace-nowrap";
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       {/* Unified Command Center 2-Row Navigation Deck (No Horizontal Scrollbar) */}
       <TabsList className="w-full h-auto flex flex-col p-1.5 sm:p-2 bg-[#07162B] border border-[#0E274D] rounded-xl shadow-md gap-1.5 my-3 sm:my-3.5">
         {/* Row 1: Core Case Flow */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-1 sm:gap-1.5 w-full">
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full">
           {row1Items.map((item) => {
             const Icon = item.icon;
             return (
               <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
                 <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-                <span title={item.label} className="truncate">{item.label}</span>
+                <span className="whitespace-nowrap">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
                     {item.count}
@@ -1420,13 +1420,13 @@ function StudentTabs({
         </div>
 
         {/* Row 2: Tools, Complaints & Practice Operations */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#0E274D]/60">
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#0E274D]/60">
           {row2Items.map((item) => {
             const Icon = item.icon;
             return (
               <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
                 <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-                <span title={item.label} className="truncate">{item.label}</span>
+                <span className="whitespace-nowrap">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
                     {item.count}
