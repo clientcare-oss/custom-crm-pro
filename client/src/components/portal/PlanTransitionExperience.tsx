@@ -345,19 +345,20 @@ export function PlanTransitionExperience({
         {/* Left Hero Card (8 Cols): Lighthouse strictly segregated on right, text on left */}
         <div className="lg:col-span-8 relative overflow-hidden rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#061937] via-[#04132b] to-[#020b1a] shadow-2xl min-h-[380px] flex flex-col justify-between">
           
-          {/* Lighthouse Twilight Background Artwork (Cleanly confined to right 42% so it never collides with text) */}
-          <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[44%] lg:w-[42%] overflow-hidden pointer-events-none select-none">
+          {/* Lighthouse Twilight Background Artwork (Cleanly confined to right 44% so it never collides with text) */}
+          <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[46%] lg:w-[44%] overflow-hidden pointer-events-none select-none">
             <img
-              src="/lighthouse-night-bg.png"
+              src="/plan-transition-lighthouse.jpg"
               alt="Waypoint Lighthouse in twilight"
-              className="w-full h-full object-cover object-[center_right] opacity-90 mix-blend-screen"
+              className="w-full h-full object-cover object-[center_25%] opacity-95"
             />
             {/* Seamless blended gradients on the left edge */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#04132b] via-[#04132b]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#04132b] via-[#04132b]/40 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#020b1a] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#061937]/40 via-transparent to-transparent" />
 
             {/* Script Cursive Overlay: "Your journey continues here." */}
-            <div className="absolute top-8 left-4 sm:left-6 z-10">
+            <div className="absolute top-8 left-3 sm:left-6 z-10">
               <p className="font-serif italic text-amber-200/95 text-base sm:text-lg lg:text-xl tracking-wide select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                 Your journey continues here.
               </p>
