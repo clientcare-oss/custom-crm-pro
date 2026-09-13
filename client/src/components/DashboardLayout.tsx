@@ -26,7 +26,7 @@ import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { FirstMateGlobalLauncher } from "@/components/firstMate/FirstMateGlobalLauncher";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
@@ -188,7 +188,59 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
         { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
         { icon: UserCheck, label: "Team", path: "/team" },
-        { icon: Heart, label: "Sponsors", path: "/sponsors" },
+      ],
+    },
+    {
+      groupLabel: "Giving & Impact",
+      items: [
+        { 
+          icon: HandHeart, 
+          label: "Overview", 
+          path: "/giving",
+          keywords: ["giving", "impact", "donations", "nonprofit", "501c3", "overview", "charity", "pg-040"]
+        },
+        { 
+          icon: Users, 
+          label: "Supporters", 
+          path: "/giving/supporters",
+          keywords: ["supporters", "donors", "sponsors", "partners", "pg-040-sup"]
+        },
+        { 
+          icon: DollarSign, 
+          label: "Donations", 
+          path: "/giving/donations",
+          keywords: ["donations", "gifts", "contributions", "pg-040-don"]
+        },
+        { 
+          icon: GraduationCap, 
+          label: "Scholarships", 
+          path: "/giving/scholarships",
+          keywords: ["scholarships", "awards", "grants", "iep", "pg-040-sch"]
+        },
+        { 
+          icon: Landmark, 
+          label: "Funds", 
+          path: "/giving/funds",
+          keywords: ["funds", "campaigns", "restricted funds", "endowments", "pg-040-fnd"]
+        },
+        { 
+          icon: Receipt, 
+          label: "Receipts & Statements", 
+          path: "/giving/receipts",
+          keywords: ["receipts", "tax statements", "501c3", "acknowledgments", "letters", "pg-040-rec"]
+        },
+        { 
+          icon: BarChart3, 
+          label: "Reports", 
+          path: "/giving/reports",
+          keywords: ["reports", "giving reports", "form 990", "analytics", "pg-040-rep"]
+        },
+        { 
+          icon: Globe, 
+          label: "Website Tools", 
+          path: "/giving/website-tools",
+          keywords: ["website tools", "donation forms", "donate button", "campaign page", "embed", "progress bar", "public give", "pg-040-web"]
+        },
       ],
     },
     {
@@ -575,6 +627,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     (item) =>
       (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
       (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
+      (item.path === "/giving" && (location === "/giving" || location === "/giving/overview")) ||
+      (item.path === "/giving/supporters" && (location === "/giving/supporters" || location === "/sponsors")) ||
       item.path === location ||
       (item.path === "/manage-experiences" && location === "/portal-management") ||
       (item.path === "/portal-management" && location === "/manage-experiences")
@@ -722,7 +776,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                             const isActive = 
                               (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
                               (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
-                              (item.path !== "/" && item.path !== "/company/dashboard" && (
+                              (item.path === "/giving" && (location === "/giving" || location === "/giving/overview")) ||
+                              (item.path === "/giving/supporters" && (location === "/giving/supporters" || location === "/sponsors")) ||
+                              (item.path !== "/" && item.path !== "/company/dashboard" && item.path !== "/giving" && item.path !== "/giving/supporters" && (
                                 location === item.path ||
                                 (item.path === "/manage-experiences" && (location === "/portal-management" || location.startsWith("/manage-experiences"))) ||
                                 (item.path === "/portal-management" && (location === "/manage-experiences" || location.startsWith("/portal-management")))

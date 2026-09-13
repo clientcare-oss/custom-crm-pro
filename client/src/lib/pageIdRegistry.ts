@@ -52,7 +52,17 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/first-mate":                      { id: "PG-037", name: "First Mate Live Advocacy Copilot", category: "Advocacy", description: "Live Advocacy Copilot and real-time meeting assistant" },
   "/ai-connections":                  { id: "PG-032", name: "AI Connections", category: "AI" },
   "/services":                        { id: "PG-035", name: "Advocacy Services Catalog", category: "Catalog" },
-  "/sponsors":                        { id: "PG-036", name: "Sponsors & Partners", category: "Catalog" },
+  "/sponsors":                        { id: "PG-040-SUP", name: "Supporters & Sponsors", category: "Giving & Impact" },
+  "/giving":                          { id: "PG-040", name: "Giving & Impact Overview", category: "Giving & Impact", description: "Charitable giving, donations, and 501(c)(3) operations" },
+  "/giving/overview":                 { id: "PG-040", name: "Giving & Impact Overview", category: "Giving & Impact" },
+  "/giving/supporters":               { id: "PG-040-SUP", name: "Supporters & Donors", category: "Giving & Impact", description: "Sponsors, donors, and philanthropic contributors" },
+  "/giving/donations":                { id: "PG-040-DON", name: "Donations & Contributions", category: "Giving & Impact", description: "Charitable contribution ledger and fund allocations" },
+  "/giving/scholarships":             { id: "PG-040-SCH", name: "Scholarships & Grants", category: "Giving & Impact", description: "IEP advocacy family scholarships and grant awards" },
+  "/giving/funds":                    { id: "PG-040-FND", name: "Charitable Funds & Endowments", category: "Giving & Impact", description: "Restricted and unrestricted charitable funds" },
+  "/giving/receipts":                 { id: "PG-040-REC", name: "Receipts & Statements", category: "Giving & Impact", description: "Official 501(c)(3) tax receipts and year-end statements" },
+  "/giving/reports":                  { id: "PG-040-REP", name: "Giving Reports & Analytics", category: "Giving & Impact", description: "Form 990 readiness and charitable giving metrics" },
+  "/giving/website-tools":            { id: "PG-040-WEB", name: "Website Tools", category: "Giving & Impact", description: "Donation forms, buttons, progress bars, and campaign builders for public website" },
+  "/giving/501c3":                    { id: "PG-040-SET", name: "Manage 501(c)(3)", category: "Giving & Impact" },
   "/tech-tasks":                      { id: "PG-034", name: "Technical Tasks & Backlog", category: "Productivity" },
   
   // Case & Client Portals
@@ -111,6 +121,14 @@ export interface DynamicRoutePattern {
 }
 
 export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
+  // Public Giving & Website Tools
+  {
+    matcher: (path) => /^\/give\/[^/]+/.test(path),
+    id: "PG-040-PUB",
+    name: "Public Giving Tool",
+    category: "Public",
+  },
+  
   // Discovery Call Process / Lead Discovery
   {
     matcher: (path) => /^\/leads\/[^/]+\/discovery/.test(path),

@@ -250,12 +250,25 @@ export function SimulatedCallCard({
 
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => onOpenQuo(simulation)}
-            className="border-sky-500/40 text-sky-300 hover:bg-sky-500/10 text-xs h-9 px-3 rounded-xl gap-1.5"
+            asChild
+            className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20 bg-emerald-500/10 text-xs h-9 px-3 rounded-xl gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.2)] font-semibold border cursor-pointer"
           >
-            <ExternalLink className="h-4 w-4" />
-            Open Quo
+            <a
+              href="quo://"
+              onClick={() => {
+                try {
+                  window.location.href = "quo://";
+                } catch {}
+                toast.success("Opening Quo desktop app...", {
+                  description: `Connecting with ${simulation.callerName} (${simulation.phoneNumber})`,
+                  icon: <Phone className="h-4 w-4 text-emerald-400" />,
+                });
+                onOpenQuo(simulation);
+              }}
+            >
+              <Phone className="h-4 w-4 text-emerald-400 fill-emerald-400 animate-pulse" />
+              Answer in Quo
+            </a>
           </Button>
 
           <Button

@@ -42,6 +42,7 @@ import { discoveryRouter } from "./routers/discovery";
 import { resourcesRouter } from "./routers/resources";
 import { emailTemplatesRouter } from "./routers/emailTemplates";
 import { sponsorsRouter } from "./routers/sponsors";
+import { givingRouter } from "./routers/giving";
 import { servicesRouter } from "./routers/services";
 import { complaintEngineRouter } from "./routers/complaintEngine";
 import { portalProvisioningRouter } from "./routers/portalProvisioning";
@@ -105,6 +106,7 @@ export const appRouter = router({
   complaintEngine: complaintEngineRouter,
   automations: automationsRouter,
   quo: quoRouter,
+  giving: givingRouter,
 });
 
 export type AppRouter = typeof appRouter;

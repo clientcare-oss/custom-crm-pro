@@ -18,6 +18,7 @@ interface OpenQuoPhoneModalProps {
   onOpenChange: (open: boolean) => void;
   targetPhone?: string | null;
   targetName?: string | null;
+  mode?: "call" | "answer";
 }
 
 export function OpenQuoPhoneModal({
@@ -25,6 +26,7 @@ export function OpenQuoPhoneModal({
   onOpenChange,
   targetPhone,
   targetName,
+  mode = "call",
 }: OpenQuoPhoneModalProps) {
   const [copied, setCopied] = React.useState(false);
   const { data: settings } = trpc.quo.getSettings.useQuery(undefined, { enabled: open });
@@ -46,7 +48,7 @@ export function OpenQuoPhoneModal({
       window.location.href = `openphone://call?number=${clean}`;
       setTimeout(() => {
         // Fallback to web or tel
-        toast.info("Opening Quo call session...");
+        toast.info(mode === "answer" ? "Answering in Quo..." : "Opening Quo call session...");
       }, 500);
     } else {
       window.open("https://my.openphone.com", "_blank");
@@ -69,10 +71,16 @@ export function OpenQuoPhoneModal({
             </div>
             <div>
               <DialogTitle className="text-xl font-bold text-white tracking-tight">
-                {targetPhone ? "Call via Quo" : "Open Quo Phone System"}
+                {mode === "answer"
+                  ? "Answer via Quo"
+                  : targetPhone
+                  ? "Call via Quo"
+                  : "Open Quo Phone System"}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-400">
-                Waypoint Advocates VoIP & Telephony System
+                {mode === "answer"
+                  ? "Incoming Call • Waypoint Advocates VoIP & Telephony"
+                  : "Waypoint Advocates VoIP & Telephony System"}
               </DialogDescription>
             </div>
           </div>
@@ -82,7 +90,9 @@ export function OpenQuoPhoneModal({
           {targetPhone && (
             <div className="p-3.5 rounded-xl bg-[#092244] border border-sky-500/20 flex items-center justify-between">
               <div>
-                <div className="text-xs text-sky-300 font-medium">Destination Client</div>
+                <div className="text-xs text-sky-300 font-medium">
+                  {mode === "answer" ? "Incoming Caller" : "Destination Client"}
+                </div>
                 <div className="text-sm font-semibold text-white">{targetName || "Selected Contact"}</div>
                 <div className="text-xs font-mono text-slate-300">{targetPhone}</div>
               </div>
@@ -99,7 +109,9 @@ export function OpenQuoPhoneModal({
 
           <div className="p-3.5 rounded-xl bg-[#040D1A]/80 border border-slate-800 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-medium">Outbound Caller ID</span>
+              <span className="text-slate-400 font-medium">
+                {mode === "answer" ? "Receiving Line" : "Outbound Caller ID"}
+              </span>
               <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[10px] gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Active Line
@@ -110,7 +122,9 @@ export function OpenQuoPhoneModal({
           </div>
 
           <div className="text-xs text-slate-400 leading-relaxed">
-            Calls are placed through your local Quo desktop app or web dialer. Call logs, recordings, and AI transcripts automatically sync back to this Call Center workstation upon completion.
+            {mode === "answer"
+              ? "Connecting to your Quo desktop app or web client to answer this call. Audio, transcript, and intake forms will stay synchronized."
+              : "Calls are placed through your local Quo desktop app or web dialer. Call logs, recordings, and AI transcripts automatically sync back to this Call Center workstation upon completion."}
           </div>
         </div>
 
@@ -125,10 +139,18 @@ export function OpenQuoPhoneModal({
           </Button>
           <Button
             onClick={handleCallInQuo}
-            className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold gap-1.5 w-full sm:w-auto flex-1"
+            className={`${
+              mode === "answer"
+                ? "bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold"
+                : "bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold"
+            } gap-1.5 w-full sm:w-auto flex-1`}
           >
             <Phone className="h-4 w-4 fill-current" />
-            {targetPhone ? "Place Call in Quo" : "Open Quo Dial Pad"}
+            {mode === "answer"
+              ? "Answer in Quo"
+              : targetPhone
+              ? "Place Call in Quo"
+              : "Open Quo Dial Pad"}
           </Button>
         </DialogFooter>
       </DialogContent>

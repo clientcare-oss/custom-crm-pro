@@ -80,6 +80,8 @@ export {
   getVaultSubscription,
 };
 
+export * from "./db/giving";
+
 // ============ CONTACTS ============
 // Contact functions are imported and re-exported from ./db/contacts
 

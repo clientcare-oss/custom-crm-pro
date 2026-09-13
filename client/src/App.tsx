@@ -45,6 +45,15 @@ import DynamicForm from "./pages/DynamicForm";
 import AiConnections from "./pages/AiConnections";
 import BillGuardian from "./pages/BillGuardian";
 import Sponsors from "./pages/Sponsors";
+import GivingOverview from "./pages/giving/GivingOverview";
+import SupportersPage from "./pages/giving/SupportersPage";
+import DonationsPage from "./pages/giving/DonationsPage";
+import ScholarshipsPage from "./pages/giving/ScholarshipsPage";
+import FundsPage from "./pages/giving/FundsPage";
+import ReceiptsPage from "./pages/giving/ReceiptsPage";
+import GivingReportsPage from "./pages/giving/GivingReportsPage";
+import WebsiteToolsPage from "./pages/giving/WebsiteToolsPage";
+import PublicGivingPage from "./pages/giving/PublicGivingPage";
 import Services from "./pages/Services";
 import PageIdShowcase from "./pages/PageIdShowcase";
 import PortalBook from "./pages/PortalBook";
@@ -59,6 +68,7 @@ import IepComparator from "./pages/IepComparator";
 import DiscoveryWorksheetBuilder from "./pages/DiscoveryWorksheetBuilder";
 import FirstMate from "./pages/FirstMate";
 import FirstMatePopout from "./pages/FirstMatePopout";
+import { ActiveCallProvider } from "./contexts/ActiveCallContext";
 import CrewQuarters from "./pages/CrewQuarters";
 import AdvocacyPipeline from "./pages/AdvocacyPipeline";
 // Students page replaces Projects page
@@ -136,6 +146,16 @@ function Router() {
         </Switch>
       );
     }
+
+    if (window.location.pathname.startsWith('/give/') || window.location.pathname === '/give') {
+      return (
+        <Switch>
+          <Route path="/give/:slug" component={PublicGivingPage} />
+          <Route path="/give/embed/:id" component={PublicGivingPage} />
+        </Switch>
+      );
+    }
+
     return (
       <DashboardLayout>
         <Switch>
@@ -187,7 +207,16 @@ function Router() {
           <Route path="/brain-dump" component={BrainDump} />
           <Route path="/ai-connections" component={AiConnections} />
               <Route path="/services" component={Services} />
-              <Route path="/sponsors" component={Sponsors} />
+              <Route path="/giving" component={GivingOverview} />
+              <Route path="/giving/overview" component={GivingOverview} />
+              <Route path="/giving/supporters" component={SupportersPage} />
+              <Route path="/sponsors" component={SupportersPage} />
+              <Route path="/giving/donations" component={DonationsPage} />
+              <Route path="/giving/scholarships" component={ScholarshipsPage} />
+              <Route path="/giving/funds" component={FundsPage} />
+              <Route path="/giving/receipts" component={ReceiptsPage} />
+              <Route path="/giving/reports" component={GivingReportsPage} />
+              <Route path="/giving/website-tools" component={WebsiteToolsPage} />
               <Route path="/bill-guardian" component={BillGuardian} />
           <Route path="/page-id-showcase" component={PageIdShowcase} />
           <Route path="/portal/book" component={PortalBook} />
@@ -231,13 +260,15 @@ function App() {
       <ThemeProvider defaultTheme="navy" switchable={true}>
         <TerminologyProvider>
           <FirstMateProvider>
-            <TooltipProvider>
-              <AutoTruncateTooltip />
-              <Toaster />
-              <Router />
-              <PageIdBadge />
-              <WaypointScanGlobalModal />
-            </TooltipProvider>
+            <ActiveCallProvider>
+              <TooltipProvider>
+                <AutoTruncateTooltip />
+                <Toaster />
+                <Router />
+                <PageIdBadge />
+                <WaypointScanGlobalModal />
+              </TooltipProvider>
+            </ActiveCallProvider>
           </FirstMateProvider>
         </TerminologyProvider>
       </ThemeProvider>

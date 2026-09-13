@@ -64,11 +64,21 @@ export function NoActiveCallHero({ onOpenQuoPhone }: NoActiveCallHeroProps) {
         {/* Primary Gold Action Button */}
         <div className="mt-5">
           <Button
-            onClick={onOpenQuoPhone}
-            className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-6 py-2.5 h-auto rounded-xl shadow-[0_4px_20px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_25px_rgba(245,158,11,0.5)] transition-all transform hover:-translate-y-0.5 gap-2 text-sm"
+            asChild
+            className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-6 py-2.5 h-auto rounded-xl shadow-[0_4px_20px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_25px_rgba(245,158,11,0.5)] transition-all transform hover:-translate-y-0.5 gap-2 text-sm cursor-pointer"
           >
-            <ExternalLink className="h-4 w-4 stroke-[2.5]" />
-            Open Quo Phone
+            <a
+              href="quo://"
+              onClick={() => {
+                try {
+                  window.location.href = "quo://";
+                } catch {}
+                onOpenQuoPhone();
+              }}
+            >
+              <ExternalLink className="h-4 w-4 stroke-[2.5]" />
+              Open Quo Phone
+            </a>
           </Button>
         </div>
       </div>

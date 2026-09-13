@@ -4,31 +4,20 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Settings2,
-  ShieldCheck,
-  ShieldAlert,
-  Loader2,
-  ListFilter,
-  LayoutDashboard,
-  Eye,
-  EyeOff,
-  Copy,
-} from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { useActiveCall } from "@/contexts/ActiveCallContext";
 
 // Subcomponents
 import { CallCenterHeader } from "@/components/callCenter/CallCenterHeader";
 import { CallCenterStats } from "@/components/callCenter/CallCenterStats";
 import { NoActiveCallHero } from "@/components/callCenter/NoActiveCallHero";
-import { WorkQueueSummary } from "@/components/callCenter/WorkQueueSummary";
+import { ResumeCallHero } from "@/components/callCenter/ResumeCallHero";
+import { CallWorkspace } from "@/components/callCenter/CallWorkspace";
+import { QuoSettingsDrawer } from "@/components/callCenter/QuoSettingsDrawer";
 import {
   ContactLookupSection,
   ContactItem,
 } from "@/components/callCenter/ContactLookupSection";
-import {
-  CallIntakeSection,
-  IntakeFormData,
-} from "@/components/callCenter/CallIntakeSection";
 import { MiniFirstMatePanel } from "@/components/callCenter/MiniFirstMatePanel";
 import { BottomOperationalDeck } from "@/components/callCenter/BottomOperationalDeck";
 import { OpenQuoPhoneModal } from "@/components/callCenter/OpenQuoPhoneModal";
@@ -39,9 +28,10 @@ import SmsComposerDialog from "@/components/quo/SmsComposerDialog";
 
 export default function UnassignedCallLogs() {
   const utils = trpc.useUtils();
+  const { call, startCall, updateCall, discardCallSession } = useActiveCall();
 
   // Queries
-  const { data: logs = [], isLoading: logsLoading, refetch: refetchLogs, isFetching } =
+  const { data: logs = [], refetch: refetchLogs, isFetching } =
     trpc.callLogs.listAll.useQuery({ filter: "all", limit: 100 });
   const { data: contactsData = [], isLoading: contactsLoading } =
     trpc.contacts.list.useQuery();
@@ -53,11 +43,11 @@ export default function UnassignedCallLogs() {
   const [showQuoModal, setShowQuoModal] = useState(false);
   const [targetPhone, setTargetPhone] = useState<string | null>(null);
   const [targetName, setTargetName] = useState<string | null>(null);
+  const [quoModalMode, setQuoModalMode] = useState<"call" | "answer">("call");
 
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [secretInput, setSecretInput] = useState("");
-  const [showSecret, setShowSecret] = useState(false);
+  const [showFirstMateAssist, setShowFirstMateAssist] = useState(false);
 
   // SMS Dialog State
   const [smsContact, setSmsContact] = useState<{ id: number; name: string; phone: string } | null>(null);
@@ -65,7 +55,10 @@ export default function UnassignedCallLogs() {
   // Simulated Call State (Testing & Development rig)
   const [simulatedCall, setSimulatedCall] = useState<SimulatedCallState | null>(null);
 
-  // Create Lead Mutation for intentional test saves
+  // Filter / View mode
+  const [activeStatFilter, setActiveStatFilter] = useState<string>("all");
+
+  // Create Lead Mutation for simulated test calls
   const createLeadMutation = trpc.leads.create.useMutation({
     onSuccess: () => {
       toast.success("Lead created from simulated test call");
@@ -74,46 +67,10 @@ export default function UnassignedCallLogs() {
     onError: (err) => toast.error(`Failed to create lead: ${err.message}`),
   });
 
-  // Filter / View mode
-  const [activeStatFilter, setActiveStatFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"workstation" | "rawLogs">("workstation");
-
-  // Call Intake State
-  const initialFormData: IntakeFormData = {
-    parentName: "",
-    phone: "",
-    email: "",
-    studentName: "",
-    ageGrade: "",
-    state: "Georgia",
-    schoolDistrict: "",
-    notes: "",
-    selectedIssues: [],
-  };
-  const [formData, setFormData] = useState<IntakeFormData>(() => {
-    try {
-      const saved = localStorage.getItem("waypoint_call_intake_draft");
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // ignore
-    }
-    return initialFormData;
-  });
-
-  // Save Quo Signing Secret Mutation
-  const saveSecretMutation = trpc.system.setQuoSecret.useMutation({
-    onSuccess: () => {
-      toast.success("Quo signing secret saved successfully");
-      setSecretInput("");
-      utils.system.getQuoStatus.invalidate();
-    },
-    onError: (e) => toast.error("Failed to save: " + e.message),
-  });
-
   // Transform CRM contacts for Contact Lookup
   const formattedContacts: ContactItem[] = useMemo(() => {
     if (contactsData.length > 0) {
-      return contactsData.slice(0, 15).map((c: any) => ({
+      return contactsData.slice(0, 25).map((c: any) => ({
         id: c.id,
         name: c.name || `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Unnamed Contact",
         phone: c.phone || null,
@@ -125,45 +82,7 @@ export default function UnassignedCallLogs() {
         parentName: c.parentName || null,
       }));
     }
-    // Realistic fallback items matching reference mockup
-    return [
-      {
-        id: 101,
-        name: "Jennifer Smith",
-        phone: "(770) 555-1234",
-        city: "Marietta",
-        state: "GA",
-        status: "Client",
-        studentName: "Liam Smith",
-      },
-      {
-        id: 102,
-        name: "Amy Jones",
-        phone: "(678) 555-9876",
-        city: "Atlanta",
-        state: "GA",
-        status: "Lead",
-        studentName: "Maya Jones",
-      },
-      {
-        id: 103,
-        name: "Michael Brown",
-        phone: "(404) 555-2468",
-        city: "Decatur",
-        state: "GA",
-        status: "Prospect",
-        studentName: "Ethan Brown",
-      },
-      {
-        id: 104,
-        name: "Sarah Thompson",
-        phone: "(770) 555-6789",
-        city: "Roswell",
-        state: "GA",
-        status: "Client",
-        studentName: "Lucas Thompson",
-      },
-    ];
+    return [];
   }, [contactsData]);
 
   // Derived Counts for Stats & Work Queues
@@ -182,9 +101,16 @@ export default function UnassignedCallLogs() {
 
   // Handlers
   const handleOpenQuoWithContact = (contact: ContactItem) => {
-    setTargetPhone(contact.phone || null);
-    setTargetName(contact.name);
-    setShowQuoModal(true);
+    if (!contact.phone) {
+      toast.error("Contact does not have a telephone number");
+      return;
+    }
+    const clean = contact.phone.replace(/\D/g, "");
+    const formatted = clean.length === 10 ? `+1${clean}` : `+${clean}`;
+    try {
+      window.location.href = `openphone://call?number=${formatted}`;
+    } catch {}
+    toast.success(`Opening Quo desktop app to call ${contact.name}...`);
   };
 
   const handleOpenSmsWithContact = (contact: ContactItem) => {
@@ -199,33 +125,67 @@ export default function UnassignedCallLogs() {
     });
   };
 
-  const handlePrefillIntakeFromContact = (contact: ContactItem) => {
-    setFormData((prev) => ({
-      ...prev,
-      parentName: contact.name,
-      phone: contact.phone || prev.phone,
-      email: contact.email || prev.email,
-      studentName: contact.studentName || prev.studentName,
-    }));
-  };
-
   const handleDirectCallPhone = (phone: string, name?: string) => {
-    setTargetPhone(phone);
-    setTargetName(name || "Inbound Caller");
-    setShowQuoModal(true);
+    const clean = phone.replace(/\D/g, "");
+    const formatted = clean.length === 10 ? `+1${clean}` : `+${clean}`;
+    try {
+      window.location.href = `openphone://call?number=${formatted}`;
+    } catch {}
+    toast.success(`Opening Quo desktop app for ${name || phone}...`);
   };
 
-  const handleAppendFirstMateText = (text: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      notes: prev.notes ? `${prev.notes}\n\n${text}` : text,
-    }));
+  const handleScrollToContactList = () => {
+    const el = document.getElementById("contact-lookup-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.classList.add("ring-2", "ring-amber-400", "transition-all", "duration-500");
+      setTimeout(() => {
+        el.classList.remove("ring-2", "ring-amber-400");
+      }, 1500);
+      const input = el.querySelector("input");
+      if (input) input.focus();
+    }
+  };
+
+  // Start Fake Test Call Simulation (Tucked behind Developer / Testing in Settings Gear)
+  const handleStartSimulation = (sim: SimulatedCallState) => {
+    setSimulatedCall(sim);
+    startCall({
+      callerCategory:
+        sim.callerType === "Existing Client"
+          ? "existing_client"
+          : sim.callerType === "Existing Lead"
+          ? "new_lead"
+          : "other_contact",
+      callerInfo: {
+        name: sim.callerName,
+        phone: sim.phoneNumber,
+      },
+      studentName: sim.relatedStudent ? sim.relatedStudent.split(" (")[0] : undefined,
+      callType:
+        sim.scenario === "New prospective client"
+          ? "New Lead / Sales"
+          : sim.scenario === "Existing client question"
+          ? "Current Client"
+          : sim.scenario === "Needs advocate"
+          ? "Advocacy / Case Question"
+          : sim.scenario === "Scheduling request"
+          ? "Scheduling"
+          : "General Question",
+      isSimulated: true,
+    });
+    toast.success(`Simulated test call started: ${sim.callerName}`);
+  };
+
+  const handleResetSimulation = () => {
+    setSimulatedCall(null);
+    toast.info("Simulation cleared. Restored to standard state.");
   };
 
   const webhookUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/quo/webhook`;
 
   return (
-    <div className="min-h-screen bg-[#040D1A] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="min-h-screen bg-[#040D1A] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8">
       {/* Top Header */}
       <CallCenterHeader
         isQuoConfigured={quoStatus?.configured ?? true}
@@ -235,222 +195,170 @@ export default function UnassignedCallLogs() {
           toast.success("Call Center synchronized");
         }}
         isRefreshing={isFetching}
-        onStartSimulation={(sim) => setSimulatedCall(sim)}
+        onStartSimulation={handleStartSimulation}
         activeSimulation={simulatedCall}
-        onResetSimulation={() => {
-          setSimulatedCall(null);
-          toast.info("Simulation cleared. Restored to normal workstation state.");
-        }}
+        onResetSimulation={handleResetSimulation}
       />
 
       {/* Quo Integration Settings Drawer / Panel (if toggled) */}
-      {showSettings && (
-        <Card className="p-5 rounded-2xl border border-sky-500/30 bg-[#061830] space-y-4 animate-in fade-in shadow-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5 text-amber-400" />
-              <h2 className="text-base font-bold text-white">Quo Integration Configuration</h2>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSettings(false)}
-              className="text-slate-400 hover:text-white"
-            >
-              Close
-            </Button>
-          </div>
+      <QuoSettingsDrawer
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        isConfigured={quoStatus?.configured ?? true}
+      />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div className="p-3.5 rounded-xl bg-[#040D1A] border border-slate-800 space-y-2">
-              <div className="text-slate-400 font-medium">Webhook Endpoint URL</div>
-              <div className="flex items-center gap-2">
-                <code className="font-mono text-sky-300 bg-sky-950/40 px-2 py-1 rounded flex-1 truncate">
-                  {webhookUrl}
-                </code>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    navigator.clipboard.writeText(webhookUrl);
-                    toast.success("Webhook URL copied");
-                  }}
-                  className="h-7 text-xs border-sky-500/30 text-sky-300"
-                >
-                  <Copy className="h-3 w-3 mr-1" /> Copy
-                </Button>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Configure this URL inside your Quo / OpenPhone Dashboard under Integrations → Webhooks.
-              </p>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-[#040D1A] border border-slate-800 space-y-2">
-              <div className="text-slate-400 font-medium">Webhook Signing Secret</div>
-              <div className="flex items-center gap-2">
-                <Input
-                  type={showSecret ? "text" : "password"}
-                  placeholder="Paste Quo signing secret..."
-                  value={secretInput}
-                  onChange={(e) => setSecretInput(e.target.value)}
-                  className="h-7 text-xs bg-[#061830] border-slate-700 text-white"
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowSecret(!showSecret)}
-                  className="h-7 w-7 p-0 text-slate-400 hover:text-white"
-                >
-                  {showSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!secretInput.trim() || saveSecretMutation.isPending}
-                  onClick={() => saveSecretMutation.mutate({ secret: secretInput.trim() })}
-                  className="h-7 text-xs bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold"
-                >
-                  Save
-                </Button>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                {quoStatus?.configured ? (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Secret configured and active
-                  </span>
-                ) : (
-                  <span className="text-amber-400 flex items-center gap-1">
-                    <ShieldAlert className="h-3.5 w-3.5" /> Secret not configured yet
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Top 5 Metric Cards in Horizontal Row */}
+      {/* Top 7 Metric & Quick Access Cards in Horizontal Row */}
       <CallCenterStats
         callsTodayCount={callsTodayCount}
         missedCallsCount={missedCount}
         callbacksCount={callbacksCount}
         voicemailCount={voicemailCount}
         scheduledCallsCount={scheduledCount}
+        leadsCount={leadsCount}
+        contactsCount={formattedContacts.length}
         activeFilter={activeStatFilter}
         onSelectStat={(key) => {
           setActiveStatFilter(key);
           toast.info(`Filtered view for: ${key}`);
         }}
+        onViewLeads={() => {
+          window.location.href = "/leads";
+        }}
+        onScrollToContactList={handleScrollToContactList}
       />
 
-      {/* Main 2-Column Workstation Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        {/* Left 2/3 Main Working Area */}
-        <div className="xl:col-span-2 space-y-6">
-          {/* Active Simulated Call Card OR Default No Active Call Hero */}
-          {simulatedCall?.isActive ? (
-            <SimulatedCallCard
-              simulation={simulatedCall}
-              onEndCall={() => {
-                setSimulatedCall((prev) => (prev ? { ...prev, isEnded: true } : null));
-                toast.info("Simulated call ended. You can now test post-call notes and lead creation.");
-              }}
-              onReset={() => {
-                setSimulatedCall(null);
-                toast.success("Test call reset. Workstation restored to normal state.");
-              }}
-              onBeginIntake={(sim) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  parentName: sim.callerName === "Unknown Caller" ? "" : sim.callerName,
-                  phone: sim.phoneNumber,
-                  studentName: sim.relatedStudent ? sim.relatedStudent.split(" ")[0] : prev.studentName,
-                  notes: `[Simulated Call Scenario: ${sim.scenario}]\nCaller: ${sim.callerName} (${sim.phoneNumber})${sim.relatedStudent ? `\nStudent: ${sim.relatedStudent}` : ""}\n\n${prev.notes}`,
-                  selectedIssues: sim.scenario === "Needs advocate" ? ["IEP", "Discipline"] : sim.scenario === "Scheduling request" ? ["IEP"] : prev.selectedIssues,
-                }));
-                toast.success("Simulated caller data prefilled into Call Intake");
-              }}
-              onOpenContact={(sim) => {
-                const match = formattedContacts.find((c) => c.phone === sim.phoneNumber || c.name === sim.callerName);
-                if (match) {
-                  handleOpenQuoWithContact(match);
-                } else {
-                  toast.info(`Simulated contact snapshot: ${sim.callerName} (${sim.callerType})`);
-                }
-              }}
-              onOpenQuo={(sim) => {
-                setTargetPhone(sim.phoneNumber);
-                setTargetName(sim.callerName);
-                setShowQuoModal(true);
-              }}
-              onCreateLeadTest={(sim) => {
-                createLeadMutation.mutate({
-                  parentName: sim.callerName === "Unknown Caller" ? "New Inbound Inquiry" : sim.callerName,
-                  parentPhone: sim.phoneNumber,
-                  studentName: sim.relatedStudent || "Student",
-                  source: `Simulated Call Test (${sim.scenario})`,
-                  status: "New",
-                  notes: `Test simulated inbound call for scenario "${sim.scenario}". Caller: ${sim.callerName} (${sim.phoneNumber}).`,
+      {/* PRIMARY PHONE / CALL AREA (TOP OF PAGE) */}
+      <div className="space-y-4">
+        {simulatedCall?.isActive ? (
+          <SimulatedCallCard
+            simulation={simulatedCall}
+            onEndCall={() => {
+              setSimulatedCall((prev) => (prev ? { ...prev, isEnded: true } : null));
+              toast.info("Simulated call ended. Continue notes and wrap up below.");
+            }}
+            onReset={() => {
+              handleResetSimulation();
+              discardCallSession();
+            }}
+            onBeginIntake={(sim) => {
+              updateCall({
+                callerInfo: { name: sim.callerName, phone: sim.phoneNumber },
+                studentName: sim.relatedStudent || undefined,
+              });
+              const el = document.getElementById("call-workspace");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            onOpenContact={(sim) => {
+              const match = formattedContacts.find((c) => c.phone === sim.phoneNumber || c.name === sim.callerName);
+              if (match) {
+                handleOpenQuoWithContact(match);
+              } else {
+                toast.info(`Simulated contact: ${sim.callerName} (${sim.callerType})`);
+              }
+            }}
+            onOpenQuo={() => {
+              try {
+                window.location.href = "quo://";
+              } catch {}
+            }}
+            onCreateLeadTest={(sim) => {
+              createLeadMutation.mutate({
+                parentName: sim.callerName === "Unknown Caller" ? "New Inbound Inquiry" : sim.callerName,
+                parentPhone: sim.phoneNumber,
+                studentName: sim.relatedStudent || "Student",
+                source: `Simulated Call Test (${sim.scenario})`,
+                status: "New",
+                notes: `Test simulated inbound call for scenario "${sim.scenario}". Caller: ${sim.callerName} (${sim.phoneNumber}).`,
+              });
+            }}
+          />
+        ) : call.isActive ? (
+          <ResumeCallHero
+            onResumeCall={() => {
+              const el = document.getElementById("call-workspace");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          />
+        ) : (
+          <NoActiveCallHero
+            onOpenQuoPhone={() => {
+              try {
+                window.location.href = "quo://";
+              } catch {}
+              toast.success("Opening Quo desktop app...");
+            }}
+          />
+        )}
+      </div>
+
+      {/* Toggle Bar for Optional Live AI First Mate Panel */}
+      <div className="flex items-center justify-end">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setShowFirstMateAssist(!showFirstMateAssist)}
+          className="text-xs text-sky-400 hover:text-sky-300 hover:bg-sky-950/40 rounded-xl"
+        >
+          <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
+          {showFirstMateAssist ? "Hide First Mate Live Assist" : "Show First Mate Live Assist"}
+        </Button>
+      </div>
+
+      {/* Main Workspace Layout with Optional First Mate Assist Side Panel */}
+      <div className={`grid grid-cols-1 ${showFirstMateAssist ? "xl:grid-cols-3" : "grid-cols-1"} gap-6 items-start`}>
+        {/* Main Operational Call Workspace (Directly below Phone Call Window) */}
+        <div className={showFirstMateAssist ? "xl:col-span-2 space-y-6" : "space-y-6"}>
+          <CallWorkspace
+            onAddNewContactRequest={() => setShowAddContactModal(true)}
+            onCallInQuo={(phone, name) => handleDirectCallPhone(phone, name)}
+          />
+        </div>
+
+        {/* Optional Live First Mate Panel */}
+        {showFirstMateAssist && (
+          <div className="xl:col-span-1 sticky top-6">
+            <MiniFirstMatePanel
+              onAddToNotes={(text) => {
+                updateCall({
+                  generalNotes: call.generalNotes ? `${call.generalNotes}\n\n${text}` : text,
                 });
+                toast.success("Added AI suggestion to call notes");
               }}
+              clientContextName={call.callerInfo.name || call.contactName || undefined}
+              scenario={call.callType || undefined}
             />
-          ) : (
-            <NoActiveCallHero
-              onOpenQuoPhone={() => {
-                setTargetPhone(null);
-                setTargetName(null);
-                setShowQuoModal(true);
-              }}
-            />
-          )}
+          </div>
+        )}
+      </div>
 
-          {/* Work Queue Summary (3 Cards directly below) */}
-          <WorkQueueSummary
-            callbacksCount={callbacksCount}
-            voicemailsCount={voicemailCount}
-            leadsCount={leadsCount}
-            onViewCallbacks={() => toast.info("Opening callbacks waiting queue")}
-            onViewVoicemails={() => toast.info("Navigating to unread voicemails")}
-            onViewLeads={() => {
-              window.location.href = "/leads";
-            }}
-          />
-
-          {/* Contact Lookup Section */}
-          <ContactLookupSection
-            contacts={formattedContacts}
-            isLoading={contactsLoading}
-            onAddNewContact={() => setShowAddContactModal(true)}
-            onCallInQuo={handleOpenQuoWithContact}
-            onOpenSms={handleOpenSmsWithContact}
-            onPrefillIntake={handlePrefillIntakeFromContact}
-            onScheduleAppointment={(contact) => {
-              window.location.href = `/scheduler?contactId=${contact.id}`;
-            }}
-          />
-
-          {/* Call Intake Section */}
-          <CallIntakeSection
-            formData={formData}
-            setFormData={setFormData}
-            onScheduleDiscovery={() => {
-              window.location.href = "/scheduler";
-            }}
-            onClearForm={() => {
-              setFormData(initialFormData);
-              localStorage.removeItem("waypoint_call_intake_draft");
-              toast.info("Intake form cleared");
-            }}
-          />
-        </div>
-
-        {/* Right 1/3: Mini First Mate Panel */}
-        <div className="xl:col-span-1 sticky top-6">
-          <MiniFirstMatePanel
-            onAddToNotes={handleAppendFirstMateText}
-            clientContextName={simulatedCall?.callerName || formData.parentName || formData.studentName}
-            scenario={simulatedCall?.scenario || null}
-          />
-        </div>
+      {/* Contact Lookup Section with anchor target */}
+      <div id="contact-lookup-section" className="scroll-mt-6 rounded-2xl">
+        <ContactLookupSection
+          contacts={formattedContacts}
+          isLoading={contactsLoading}
+          onAddNewContact={() => setShowAddContactModal(true)}
+          onCallInQuo={handleOpenQuoWithContact}
+          onOpenSms={handleOpenSmsWithContact}
+          onPrefillIntake={(contact) => {
+            updateCall({
+              callerCategory: "existing_client",
+              contactId: contact.id,
+              contactName: contact.name,
+              callerInfo: {
+                name: contact.name,
+                phone: contact.phone || undefined,
+                email: contact.email || undefined,
+              },
+              studentName: contact.studentName || undefined,
+            });
+            toast.success(`Loaded ${contact.name} into Call Workspace`);
+            const el = document.getElementById("call-workspace");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          onScheduleAppointment={(contact) => {
+            window.location.href = `/scheduler?contactId=${contact.id}`;
+          }}
+        />
       </div>
 
       {/* Bottom Operational Deck (3 Cards: Needs Attention, Today's Schedule, Voicemails) */}
@@ -466,12 +374,15 @@ export default function UnassignedCallLogs() {
           toast.info("Viewing all priority items");
         }}
         onCreateLeadFromVoicemail={(phone, summary) => {
-          setFormData((prev) => ({
-            ...prev,
-            phone,
-            notes: `Inbound Voicemail: "${summary}"\n\n${prev.notes}`,
-          }));
-          toast.success("Voicemail loaded into Call Intake");
+          startCall({
+            callerCategory: "new_lead",
+            callType: "New Lead / Sales",
+            callerInfo: { name: "Inbound Voicemail", phone },
+            generalNotes: `Inbound Voicemail:\n"${summary}"`,
+          });
+          toast.success("Voicemail loaded into Call Workspace");
+          const el = document.getElementById("call-workspace");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
         }}
       />
 
@@ -481,6 +392,7 @@ export default function UnassignedCallLogs() {
         onOpenChange={setShowQuoModal}
         targetPhone={targetPhone}
         targetName={targetName}
+        mode={quoModalMode}
       />
 
       {/* Modal: Add New Contact */}
@@ -489,12 +401,14 @@ export default function UnassignedCallLogs() {
         onOpenChange={setShowAddContactModal}
         onSuccess={(newC) => {
           if (newC?.name) {
-            setFormData((prev) => ({
-              ...prev,
-              parentName: newC.name,
-              phone: newC.phone || prev.phone,
-              email: newC.email || prev.email,
-            }));
+            updateCall({
+              callerInfo: {
+                name: newC.name,
+                phone: newC.phone || undefined,
+                email: newC.email || undefined,
+              },
+            });
+            toast.success(`New contact ${newC.name} added and selected in call`);
           }
         }}
       />
