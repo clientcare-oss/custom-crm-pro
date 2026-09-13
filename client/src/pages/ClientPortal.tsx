@@ -554,11 +554,10 @@ const NAV_ITEMS = [
   { id: "tools",         icon: Wrench,           label: "Tools" },
   { id: "cases",         icon: Briefcase,      label: "Cases" },
   { id: "financials",       icon: CreditCard,     label: "Membership" },
-  { id: "plan-transition",  icon: RefreshCw,      label: "Plan Transition" },
+  { id: "renewal",          icon: Sparkles,       label: "Plan Renewal" },
   { id: "voyage-log",       icon: Video,          label: "Voyage Log" },
-  { id: "notes",         icon: StickyNote,     label: "Notes" },
-  { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
-  { id: "renewal",       icon: Sparkles,       label: "Plan Renewal" },
+  { id: "notes",            icon: StickyNote,     label: "Notes" },
+  { id: "attorney",         icon: Scale,          label: "Legal Counsel" },
 ] as const;
 
 type NavId = typeof NAV_ITEMS[number]["id"] | string;
@@ -1911,17 +1910,6 @@ export default function ClientPortal() {
 
       case "renewal":
       case "renewals":
-        return (
-          <div className="p-5">
-            <RenewalListingExperience
-              studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "Liam Jenkins"}
-              studentGrade={effectiveStudent?.grade || "5th Grade → 6th Grade"}
-              currentTierName="Full IEP Representation (2025–2026)"
-              onNavigateTab={(tab) => setActiveTab(tab)}
-            />
-          </div>
-        );
-
       case "plan-transition":
       case "transition":
         return (
@@ -1931,6 +1919,9 @@ export default function ClientPortal() {
               studentGrade={effectiveStudent?.grade || "5th Grade → 6th Grade"}
               currentTierName="Full IEP Representation (2025–2026)"
               studentId={effectiveStudentContactId ? String(effectiveStudentContactId) : undefined}
+              effectiveStudent={effectiveStudent}
+              daysRemaining={45}
+              expirationDate="September 30, 2026"
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
           </div>

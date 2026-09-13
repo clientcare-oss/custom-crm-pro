@@ -436,29 +436,29 @@ export function PortalMembershipTab({
             {/* Quick badges for the 3 paths */}
             <div className="flex items-center gap-2 pt-1 flex-wrap">
               <span className="px-2.5 py-1 rounded-lg bg-[#030C22] border border-amber-400/30 text-[11px] font-medium text-amber-300 flex items-center gap-1.5">
-                <VaultSafeIcon className="w-3.5 h-3.5 text-amber-400" /> Keep Vault
+                <VaultSafeIcon className="w-3.5 h-3.5 text-amber-400" /> Keep Vault ($15/mo)
               </span>
               <span className="px-2.5 py-1 rounded-lg bg-[#030C22] border border-cyan-400/30 text-[11px] font-medium text-cyan-300 flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-cyan-400" /> Tool Access
+                <Wrench className="w-3.5 h-3.5 text-cyan-400" /> Tool Access ($35/mo)
               </span>
               <span className="px-2.5 py-1 rounded-lg bg-[#030C22] border border-emerald-400/30 text-[11px] font-medium text-emerald-300 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Renew Plan
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Renew ($55 or $100/mo)
               </span>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0">
             <Button
-              onClick={() => onNavigateTab?.("plan-transition")}
+              onClick={() => onNavigateTab?.("renewal")}
               className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs h-11 px-5 rounded-xl shadow-lg shadow-amber-400/25 hover:shadow-amber-400/40 cursor-pointer flex items-center justify-center gap-2 transition-all group-hover:scale-105"
             >
               <Sparkles className="w-4 h-4 text-slate-950" />
-              <span>Plan Transition</span>
+              <span>Plan Renewal & Transition</span>
               <ArrowRight className="w-4 h-4 text-slate-950 ml-1" />
             </Button>
 
             <span className="text-[10px] text-blue-200/60 text-center sm:text-right md:text-center block">
-              Opens full transition management page
+              Opens full renewal and transition options
             </span>
           </div>
         </div>

@@ -30,7 +30,7 @@ export const NAV_ITEMS = [
   { id: "tools",         icon: Wrench,        label: "Tools" },
   { id: "cases",         icon: Briefcase,     label: "Cases" },
   { id: "financials",    icon: CreditCard,    label: "Membership" },
-  { id: "plan-transition", icon: RefreshCw,   label: "Plan Transition" },
+  { id: "renewal",       icon: Sparkles,      label: "Plan Renewal" },
   { id: "voyage-log",    icon: Video,         label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,    label: "Notes" },
   { id: "attorney",      icon: Scale,         label: "Legal Counsel" },
@@ -131,11 +131,11 @@ export function ClientPortalSidebar({
     }
   }
 
-  // Regular nav items filtered by attorney / custom props - Plan Transition always shown with daysRemaining badge
+  // Regular nav items filtered by attorney / custom props - Plan Renewal shown with daysRemaining badge
   const daysRemaining = daysUntilPlanEnd ?? 45;
   const rawItems = navItems || NAV_ITEMS.filter(({ id }) => id !== "attorney" || hasAttorney);
   const baseItems: Array<{ id: string; icon: any; label: string; badge?: string }> = rawItems.map((item) => {
-    if (item.id === "plan-transition") {
+    if (item.id === "renewal") {
       return {
         ...item,
         badge: `${daysRemaining}d`,

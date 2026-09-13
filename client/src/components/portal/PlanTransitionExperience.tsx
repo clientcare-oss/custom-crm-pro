@@ -47,7 +47,7 @@ interface PlanTransitionExperienceProps {
   onNavigateTab?: (tabId: string) => void;
 }
 
-export type TransitionDirective = "vault-only" | "tools-suite" | "renew-full";
+export type TransitionDirective = "vault-only" | "tools-suite" | "renew-55" | "renew-100" | "renew-full";
 
 interface TransitionOption {
   id: TransitionDirective;
@@ -99,11 +99,11 @@ export function PlanTransitionExperience({
       window.dispatchEvent(new CustomEvent("waypoint:plan-transition-sidebar-toggle", { detail: { show: checked } }));
       if (checked) {
         toast.success("Sidebar Visibility Enabled", {
-          description: "Plan Transition is pinned and visible in the client navigation sidebar."
+          description: "Plan Renewal is pinned and visible on the navigation sidebar."
         });
       } else {
         toast.info("Sidebar Visibility Setting Updated", {
-          description: "Plan Transition visibility preference saved."
+          description: "Plan Renewal visibility preference saved."
         });
       }
     } catch (e) {
@@ -111,17 +111,18 @@ export function PlanTransitionExperience({
     }
   };
 
-  // Saved choice in localStorage
+  // Saved choice in localStorage (default to $100/mo live representation)
   const [selectedDirective, setSelectedDirective] = useState<TransitionDirective>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved === "vault-only" || saved === "tools-suite" || saved === "renew-full") {
+      if (saved === "vault-only" || saved === "tools-suite" || saved === "renew-55" || saved === "renew-100") {
         return saved;
       }
+      if (saved === "renew-full") return "renew-100";
     } catch (e) {
       console.error(e);
     }
-    return "renew-full";
+    return "renew-100";
   });
 
   const [isSaved, setIsSaved] = useState(false);
@@ -131,9 +132,9 @@ export function PlanTransitionExperience({
   const transitionOptions: TransitionOption[] = [
     {
       id: "vault-only",
-      title: "Keep Document Vault Only",
+      title: "Keep Document Vault",
       subtitle: "Permanent Zero-Trust Storage & Infinite Downloads",
-      badge: "Records Preservation",
+      badge: "Vault Continuity",
       badgeColor: "bg-amber-400/15 text-amber-300 border-amber-400/30",
       price: "$15.00",
       cadence: "/ month per student",
@@ -141,17 +142,17 @@ export function PlanTransitionExperience({
       accentColor: "text-amber-400",
       borderGlow: "group-hover:border-amber-400/70 hover:shadow-[0_0_25px_rgba(245,181,68,0.15)]",
       highlights: [
-        "Permanent Cloudflare R2 zero-trust encrypted storage for all historical IEPs, 504s, and clinical evals",
+        "Permanent Cloudflare R2 zero-trust encrypted storage for all historical IEPs, 504s, and evals",
         "Full download portability: export individual records or complete multi-year archive bundles anytime",
-        "Continued parent upload capabilities for new report cards, physician letters, and therapy progress notes",
+        "Continued parent upload capabilities for new report cards, letters, and therapy notes",
         "Byron Honea's verified provenance audit tags remain sealed and protected",
-        "Removes monthly live coaching retainer while keeping all student records secure and instantly accessible"
+        "Removes monthly coaching retainer while keeping all student records secure and accessible"
       ],
-      recommendedFor: "Families who have reached stable school accommodations and want permanent encrypted records preservation."
+      recommendedFor: "Families who have reached stable accommodations and want permanent encrypted records preservation."
     },
     {
       id: "tools-suite",
-      title: "Advocacy Tools & AI Suite",
+      title: "Advocacy Tools & AI",
       subtitle: "Self-Advocacy Intelligence with Proprietary IEP AI Utilities",
       badge: "Empowered Parent",
       badgeColor: "bg-cyan-400/15 text-cyan-300 border-cyan-400/30",
@@ -170,22 +171,42 @@ export function PlanTransitionExperience({
       recommendedFor: "Parents wanting self-directed advocacy backed by Waypoint's professional-grade software & AI intelligence."
     },
     {
-      id: "renew-full",
-      title: "Renew Full Advocacy Advisory",
-      subtitle: "Continuous Master IEP Coach® Direct Partnership with Byron Honea",
-      badge: "Continuous Representation",
-      badgeColor: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
+      id: "renew-55",
+      title: "Essential IEP Advisory",
+      subtitle: "Ongoing Special Education Coaching & Document Review Checks",
+      badge: "Continuous Advisory",
+      badgeColor: "bg-blue-400/15 text-blue-300 border-blue-400/30",
       price: "$55.00",
-      cadence: "/ month (or $105/mo Live Representation)",
+      cadence: "/ month per student",
       icon: ShieldCheck,
-      accentColor: "text-emerald-400",
-      borderGlow: "group-hover:border-emerald-400/70 hover:shadow-[0_0_25px_rgba(52,211,153,0.15)]",
+      accentColor: "text-blue-400",
+      borderGlow: "group-hover:border-blue-400/70 hover:shadow-[0_0_25px_rgba(96,165,250,0.15)]",
       highlights: [
-        "Full representation & continuity: seamless rollover with zero lapse in special education protection",
-        "Unlimited IEP/504 draft audits, document reviews, and Prior Written Notice dissent drafting",
-        "Pre-meeting parent strategy agendas & debrief sessions delivered 48 hours prior to meetings",
-        "Direct priority messaging & strategic advisory with Master IEP Coach® Byron Honea",
-        "Option to co-chair and have live advocate representation at all annual district IEP/504 conferences"
+        "Includes Document Vault and all Advocacy Tools & AI Utilities",
+        "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
+        "Quarterly IEP goal progress audit & school compliance monitoring",
+        "Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior",
+        "Direct priority messaging & strategic advisory with Master IEP Coach® Byron Honea"
+      ],
+      recommendedFor: "Families wanting continuous IEP oversight, draft reviews, and expert coaching between school meetings."
+    },
+    {
+      id: "renew-100",
+      title: "Full Meeting Representation",
+      subtitle: "Live Advocate Attendance at All School Conferences & Dispute Defense",
+      badge: "Comprehensive • $100/mo",
+      badgeColor: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
+      price: "$100.00",
+      cadence: "/ month per student",
+      icon: Scale,
+      accentColor: "text-emerald-400",
+      borderGlow: "group-hover:border-emerald-400/70 hover:shadow-[0_0_25px_rgba(52,211,153,0.25)]",
+      highlights: [
+        "Includes everything in Essential Continuity & Advisory ($55/mo tier), plus:",
+        "Live advocate attendance & co-chairing at all IEP, 504 & MDR school meetings (virtual/in-person)",
+        "Priority rapid document turnarounds (Prior Written Notices, evaluation requests, dissents)",
+        "Dedicated 1-on-1 strategy prep & debrief session with Byron before and after every meeting",
+        "Campus & grade transition defense and administrative dispute filing support"
       ],
       recommendedFor: "Families with active disputes, upcoming annual reviews, grade transitions, or complex clinical needs."
     }
@@ -234,9 +255,9 @@ export function PlanTransitionExperience({
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-400/10 text-amber-300 border border-amber-400/30">
             <Clock className="w-3 h-3 text-amber-400" />
-            60-Day Transition Window Active
+            60-Day Renewal Window Active
           </span>
-          <PageIdBadge id="PG-023-TRN" name="Plan Transition" />
+          <PageIdBadge id="PG-023-RNW" name="Plan Renewal" />
         </div>
       </div>
 
@@ -249,7 +270,7 @@ export function PlanTransitionExperience({
           <div className="space-y-2 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="bg-amber-400 text-slate-950 font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 shadow-sm font-mono">
-                Plan Continuity & Transition
+                Plan Renewal & Transition
               </Badge>
               <Badge variant="outline" className="text-xs font-mono border-emerald-400/40 text-emerald-300 bg-emerald-400/10">
                 <CheckCircle2 className="h-3 w-3 mr-1 inline text-emerald-400" />
@@ -259,18 +280,18 @@ export function PlanTransitionExperience({
 
             <h1 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight flex items-center gap-2.5">
               <RefreshCw className="h-7 w-7 text-amber-400" />
-              Choose What Happens When Your Plan Ends
+              Plan Renewal & Continuity Transition
             </h1>
 
             <p className="text-xs sm:text-sm text-blue-200/80 leading-relaxed">
-              As your active advocacy plan term for <strong className="text-white font-semibold">{studentName}</strong> approaches its renewal date, you have complete control over your child’s educational records and software access. Select your continuity path below.
+              As your active advocacy plan term for <strong className="text-white font-semibold">{studentName}</strong> approaches its renewal date, choose what happens next. Retain your secure records, access self-advocacy AI tools, or continue direct representation ($55/mo or $100/mo) with Byron Honea.
             </p>
           </div>
 
           {/* 60-Day Countdown Card */}
           <div className="bg-[#030C22]/90 border border-amber-400/30 p-5 rounded-2xl text-center sm:text-right shadow-xl shrink-0 backdrop-blur-md space-y-1">
             <span className="text-[10px] uppercase tracking-wider text-amber-400/90 font-mono font-bold block">
-              Transition Window Status
+              Renewal Window Status
             </span>
             <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono block">
               {daysRemaining} Days <span className="text-xs text-white/60 font-normal font-sans">Remaining</span>
@@ -280,7 +301,7 @@ export function PlanTransitionExperience({
             </span>
             <div className="pt-2 flex items-center justify-center sm:justify-end gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] text-emerald-400 font-semibold font-mono">Sidebar Available 60d Prior</span>
+              <span className="text-[10px] text-emerald-400 font-semibold font-mono">Sidebar Visible 60d Prior</span>
             </div>
           </div>
         </div>
@@ -314,7 +335,7 @@ export function PlanTransitionExperience({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm font-bold text-white tracking-wide">
-                  Plan Transition Settings & Sidebar Visibility
+                  Plan Renewal Settings & Sidebar Visibility
                 </h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
                   Always Visible in Sidebar
@@ -358,29 +379,29 @@ export function PlanTransitionExperience({
           <Bell className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0 animate-bounce" />
           <div className="flex-1 leading-relaxed">
             <span className="font-bold text-white">Sidebar Activation Notification:</span>{" "}
-            This page will be visible on the sidebar <span className="font-semibold text-amber-300 underline decoration-amber-400/60 underline-offset-2">60 days before this client's plan ends</span> (currently <strong className="text-white font-mono">{daysRemaining} days remaining</strong> until {expirationDate}). It is permanently available in the sidebar so parents and advocates can plan ahead with zero disruption.
+            This page is configured to be visible on the sidebar <span className="font-semibold text-amber-300 underline decoration-amber-400/60 underline-offset-2">60 days before this client's plan ends</span> (currently <strong className="text-white font-mono">{daysRemaining} days remaining</strong> until {expirationDate}). It is permanently available under <strong>Plan Renewal</strong> in the sidebar so parents and advocates can plan ahead with zero disruption.
           </div>
         </div>
       </div>
 
-      {/* ── The 3 Core Choices (Keep Vault, Tool Access, Renew Plan) ── */}
+      {/* ── The 4 Core Choices (Keep Vault, Tool Access, $55 Advisory, $100 Representation) ── */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <Layers className="h-5 w-5 text-amber-400" />
-              Select Your Plan Transition Directive
+              Select Your Plan Renewal & Transition Directive
             </h2>
             <p className="text-xs text-blue-200/60">
-              Click any path to preview benefits and lock in your continuity choice before the window closes.
+              Click any path below to preview benefits and lock in your continuity choice before the term closes.
             </p>
           </div>
           <Badge variant="outline" className="text-xs font-mono border-blue-900/40 text-white/70 self-start sm:self-auto">
-            3 Available Paths
+            4 Available Paths
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           {transitionOptions.map((option) => {
             const isSelected = selectedDirective === option.id;
             const Icon = option.icon;
