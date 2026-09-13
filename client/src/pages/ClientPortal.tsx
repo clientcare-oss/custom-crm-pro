@@ -670,6 +670,13 @@ export default function ClientPortal() {
     }
   }, [activeTab]);
 
+  const contentAreaRef = useRef<HTMLDivElement>(null);
+
+  // Smoothly scroll content container to top whenever active tab changes
+  useEffect(() => {
+    contentAreaRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeTab]);
+
   const handleDismissTourIntro = (moduleId: string) => {
     setAcknowledgedTourIntros((prev) => {
       const next = Array.from(new Set([...prev, moduleId]));
@@ -1977,7 +1984,7 @@ export default function ClientPortal() {
         )}
 
         {/* Scrollable content area */}
-        <div className={`flex-1 overflow-y-auto relative ${isLight ? "bg-[#f8fafc]" : "bg-[#000821] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,35,64,0.35),rgba(0,8,33,1))]"}`}>
+        <div ref={contentAreaRef} className={`flex-1 overflow-y-auto relative ${isLight ? "bg-[#f8fafc]" : "bg-[#000821] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,35,64,0.35),rgba(0,8,33,1))]"}`}>
           <ScopedErrorBoundary moduleName={NAV_ITEMS.find(n => n.id === activeTab)?.label ?? "Portal Tab"}>
             {renderContent()}
           </ScopedErrorBoundary>

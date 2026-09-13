@@ -90,6 +90,44 @@ export function ClientPortalSidebar({
   const isWorkspace = location.startsWith("/projects/");
   const isLight = theme === "blue";
 
+  const navRef = React.useRef<HTMLElement>(null);
+  const isFirstRender = React.useRef(true);
+
+  // Auto-scroll sidebar to reveal and center whichever tab is activated from internal parent navigation or tab change
+  React.useEffect(() => {
+    if (!activeTab || !navRef.current) return;
+
+    const nav = navRef.current;
+    const timer = setTimeout(() => {
+      const activeBtn = nav.querySelector<HTMLElement>(`[data-nav-id="${activeTab}"]`);
+      if (!activeBtn) return;
+
+      const navRect = nav.getBoundingClientRect();
+      const btnRect = activeBtn.getBoundingClientRect();
+
+      // Check if button is already comfortably visible within the middle view
+      const isComfortablyVisible = (
+        btnRect.top >= navRect.top + 36 &&
+        btnRect.bottom <= navRect.bottom - 36
+      );
+
+      if (!isComfortablyVisible) {
+        const currentScrollTop = nav.scrollTop;
+        const relativeTop = btnRect.top - navRect.top;
+        const targetScrollTop = currentScrollTop + relativeTop - (nav.clientHeight / 2) + (btnRect.height / 2);
+
+        nav.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: isFirstRender.current ? "auto" : "smooth",
+        });
+      }
+
+      isFirstRender.current = false;
+    }, 70);
+
+    return () => clearTimeout(timer);
+  }, [activeTab, isCollapsed]);
+
   const totalTourCount = TOUR_MODULES.length || 6;
   const exploredCount = exploredTourIds.length;
   const isTourAllExplored = exploredCount >= totalTourCount;
@@ -234,7 +272,7 @@ export function ClientPortalSidebar({
       </div>
 
       {/* Nav Items Container */}
-      <nav className="flex-1 px-3 py-3 space-y-3 overflow-y-auto">
+      <nav ref={navRef} className="flex-1 px-3 py-3 space-y-3 overflow-y-auto scroll-smooth custom-scrollbar">
         
         {/* ── 1. GETTING STARTED CONDITIONAL SIDEBAR GROUP ── */}
         {isOnboardingOrPreSale && gettingStartedModules.length > 0 && (
@@ -257,6 +295,7 @@ export function ClientPortalSidebar({
                 return (
                   <button
                     key={id}
+                    data-nav-id={id}
                     onClick={() => {
                       onSelectTab(id);
                       if (onCloseMobile) onCloseMobile();
@@ -338,6 +377,7 @@ export function ClientPortalSidebar({
               return (
                 <button
                   key={id}
+                  data-nav-id={id}
                   onClick={() => {
                     onSelectTab(id);
                     if (onCloseMobile) onCloseMobile();
@@ -394,6 +434,7 @@ export function ClientPortalSidebar({
             return (
               <button
                 key={id}
+                data-nav-id={id}
                 onClick={() => {
                   onSelectTab(id);
                   if (onCloseMobile) onCloseMobile();
