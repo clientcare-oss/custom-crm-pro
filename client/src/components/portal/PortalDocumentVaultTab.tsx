@@ -90,7 +90,7 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
   { id: "progress-reports", name: "Progress Reports", fileCount: 6, description: "Quarterly IEP goal tracking and special education progress marks" },
 ];
 
-export interface FolderVisualConfig {
+interface FolderVisualConfig {
   icon: React.ComponentType<{ className?: string }>;
   badge: string;
   badgeClass: string;
@@ -101,7 +101,7 @@ export interface FolderVisualConfig {
   glowClass: string;
 }
 
-export const FOLDER_VISUAL_MAP: Record<string, FolderVisualConfig> = {
+const FOLDER_VISUAL_MAP: Record<string, FolderVisualConfig> = {
   "ieps-504s": {
     icon: FileText,
     badge: "Legally Binding",
@@ -174,7 +174,7 @@ export const FOLDER_VISUAL_MAP: Record<string, FolderVisualConfig> = {
   },
 };
 
-export function getFolderVisual(id: string): FolderVisualConfig {
+function getFolderVisual(id: string): FolderVisualConfig {
   return FOLDER_VISUAL_MAP[id] || {
     icon: Folder,
     badge: "Custom Dossier",
