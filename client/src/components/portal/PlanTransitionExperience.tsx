@@ -865,7 +865,7 @@ export function PlanTransitionExperience({
                   </li>
                   <li className="flex items-start gap-2.5">
                     <XCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isNoPlanSelected ? "text-amber-400/80" : "text-slate-500"}`} />
-                    <span className={isNoPlanSelected ? "text-slate-200" : ""}>To keep your records and tools, choose a continuation option before your plan ends</span>
+                    <span className={isNoPlanSelected ? "text-slate-200" : ""}>You can renew anytime, but you may have to re-upload documents</span>
                   </li>
                 </ul>
               </div>
@@ -892,18 +892,32 @@ export function PlanTransitionExperience({
       })()}
 
       {/* ── Reassurance Banner: Need Advocacy Later? ── */}
-      <div className="rounded-2xl border border-sky-900/50 bg-[#041126]/90 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <WaypointCompassRose className="w-6 h-6 text-amber-400 shrink-0" />
-          <p className="text-xs sm:text-sm text-slate-200">
-            <strong className="text-white font-semibold mr-1.5">Need advocacy later?</strong>
-            <span className="text-slate-400">Renew anytime and pick back up without starting over.</span>
-          </p>
+      <div className="rounded-2xl border border-sky-800/50 bg-[#041126]/90 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl backdrop-blur-md">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center shrink-0 shadow-inner">
+            <WaypointCompassRose className="w-5 h-5 text-amber-400" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-sm text-white">Need advocacy later?</span>
+              <span className="text-xs font-semibold text-amber-300">You can renew anytime.</span>
+            </div>
+            <p className="text-xs text-slate-300/90 leading-relaxed">
+              If you continue without preserving your advocacy plan or Document Vault, you can renew anytime. However, without active vault preservation, <strong className="text-amber-200 font-semibold">you may have to re-upload your documents</strong> when you return.
+            </p>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2.5 self-end md:self-auto text-xs font-serif italic text-amber-200/80">
-          <span>Your records. Your progress. Always within reach.</span>
-          <div className="w-6 h-[2px] bg-amber-400/90" />
+        <div className="flex items-center gap-2.5 self-start md:self-center shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/5 w-full md:w-auto justify-between md:justify-end">
+          <div className="text-left md:text-right">
+            <span className="font-serif italic text-amber-200/90 text-xs block">
+              Doors are always open.
+            </span>
+            <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
+              Preserving your vault avoids re-uploading
+            </span>
+          </div>
+          <div className="hidden sm:block w-7 h-[2px] bg-amber-400/80 shrink-0" />
         </div>
       </div>
 
