@@ -81,13 +81,10 @@ export function IepZoneCard({
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-center">
-          <span className="text-xs italic text-slate-300 font-serif hidden sm:inline">
-            Plans create access. Advocacy creates opportunity.
-          </span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="text-slate-400 hover:text-white transition-colors cursor-pointer">
-                <Info className="h-3.5 w-3.5" />
+              <button className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1">
+                <Info className="h-4 w-4" />
               </button>
             </TooltipTrigger>
             <TooltipContent className="bg-[#07162B] border-[#0E274D] text-slate-200 text-xs max-w-xs">

@@ -57,20 +57,15 @@ export function StudentHeader({
 
   return (
     <div className="space-y-4">
-      {/* Top Banner Row: Title + Tagline + Actions + Mountain Crest */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[#0E274D]/80 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-serif">
-              Student Workspace
-            </h1>
-            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-[#0F2342] border border-[#F5B544]/30 text-[#F5B544]">
-              PG-030
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 italic">
-            Advocacy. Clarity. Progress. A brighter path forward.
-          </p>
+      {/* Top Banner Row: Title + PG-030 Badge + Actions */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-[#0E274D]/80 pb-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-serif">
+            Student Workspace
+          </h1>
+          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-[#0F2342] border border-[#F5B544]/30 text-[#F5B544]">
+            PG-030
+          </span>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -78,7 +73,7 @@ export function StudentHeader({
             variant="outline"
             size="sm"
             onClick={onPreviewPortal}
-            className="h-9 px-3 text-xs font-semibold border-[#F5B544]/40 bg-[#0B2144]/80 text-[#F5B544] hover:bg-[#F5B544]/15 hover:text-[#F5B544] hover:border-[#F5B544] shadow-xs cursor-pointer transition-all"
+            className="h-8 sm:h-9 px-3 text-xs font-semibold border-[#F5B544]/40 bg-[#0B2144]/80 text-[#F5B544] hover:bg-[#F5B544]/15 hover:text-[#F5B544] hover:border-[#F5B544] shadow-xs cursor-pointer transition-all"
           >
             <Eye className="h-3.5 w-3.5 mr-1.5" />
             Preview Parent Portal
@@ -89,7 +84,7 @@ export function StudentHeader({
               variant="outline"
               size="sm"
               onClick={onUnarchive}
-              className="h-9 px-3 text-xs border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+              className="h-8 sm:h-9 px-3 text-xs border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
             >
               <Archive className="h-3.5 w-3.5 mr-1.5" />
               Unarchive
@@ -99,37 +94,26 @@ export function StudentHeader({
               variant="outline"
               size="sm"
               onClick={onArchive}
-              className="h-9 px-3 text-xs border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white cursor-pointer"
+              className="h-8 sm:h-9 px-3 text-xs border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white cursor-pointer"
             >
               <Archive className="h-3.5 w-3.5 mr-1.5" />
               Archive
             </Button>
           )}
-
-          {/* Nautical Mountain Silhouette Watermark Crest */}
-          <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-[#0E274D]">
-            <div className="text-right">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-[#F5B544]">Waypoint Advocates</div>
-              <div className="text-[8.5px] uppercase tracking-wider text-slate-400">Students · Families · Brighter Futures</div>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-[#0F2342] border border-[#F5B544]/30 flex items-center justify-center text-[#F5B544] shadow-inner">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Main Student Header Console — Exact Visual Reference Match */}
-      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+      <div className="rounded-3xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-5 sm:p-6 shadow-xl relative overflow-hidden">
         {/* Subtle radial glow background behind avatar */}
         <div className="absolute top-1/2 -left-10 -translate-y-1/2 w-64 h-64 bg-[#F5B544]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-          {/* SECTION 1 (LEFT): Avatar + Names + Plan Badge + Connection Status (5 cols) */}
-          <div className="lg:col-span-5 flex items-center gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center relative z-10">
+          {/* SECTION 1 (LEFT): Avatar + Names + Plan Badge (5 cols) */}
+          <div className="lg:col-span-5 flex items-center gap-4 sm:gap-5">
             {/* Glowing Golden Ring Avatar */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#07162B] border-2 border-[#F5B544] shadow-[0_0_26px_rgba(245,181,68,0.35)] flex items-center justify-center text-2xl sm:text-3xl font-bold font-serif text-white shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#07162B] border-2 border-[#F5B544] shadow-[0_0_24px_rgba(245,181,68,0.35)] flex items-center justify-center text-xl sm:text-2xl font-bold font-serif text-white shrink-0">
               {initials}
             </div>
 
