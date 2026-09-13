@@ -26,10 +26,12 @@ import {
   Eye, 
   Check, 
   Copy,
-  Info
+  Info,
+  Workflow
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { ClientExperienceDesigner } from "@/components/portal-experience/ClientExperienceDesigner";
 
@@ -46,6 +48,18 @@ export default function PortalManagement() {
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
   const [customPassword, setCustomPassword] = useState("TestParent2026!");
   const [copyingLink, setCopyingLink] = useState(false);
+  const [activeTab, setActiveTab] = useState<"experiences" | "access">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "access" || params.get("tab") === "directory" || params.get("tab") === "clients") {
+        return "access";
+      }
+      if (params.get("tab") === "experiences" || params.get("tab") === "stages" || params.get("tab") === "designer") {
+        return "experiences";
+      }
+    }
+    return "experiences";
+  });
 
   // Queries
   const { data: contacts, isLoading: loadingContacts, refetch: refetchContacts } = 
@@ -137,25 +151,54 @@ export default function PortalManagement() {
         {/* Top Header Row */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-5">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Client Portal Experience
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage parent accounts, provision secure logins, and preview the client experience.
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Manage Experiences
+              </h1>
+              <Badge variant="outline" className="font-mono text-xs text-primary border-primary/30">
+                PG-027
+              </Badge>
+            </div>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Central administrative workspace for client journey stages (PG-027-S01 to S14), page designs, and parent portal access.
             </p>
           </div>
-          <Button
-            onClick={() => window.open("/portal", "_blank")}
-            variant="outline"
-            className="flex items-center gap-2 hover:bg-muted"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open Portal Page
-          </Button>
+          <div className="flex items-center gap-2.5">
+            <Button
+              onClick={() => window.open("/portal", "_blank")}
+              variant="outline"
+              className="flex items-center gap-2 hover:bg-muted"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open Client Portal
+            </Button>
+          </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Tab switcher */}
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "experiences" | "access")} className="w-full space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <TabsList className="bg-muted/50 p-1 rounded-xl border border-border/50 flex gap-1 w-fit">
+              <TabsTrigger value="experiences" className="rounded-lg flex items-center gap-2 px-4 py-2 font-medium">
+                <Workflow className="h-4 w-4 text-primary" />
+                Experience Designer & Stages
+                <Badge variant="secondary" className="ml-1 text-[10px] py-0 px-1.5 bg-primary/10 text-primary">14 Stages</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="access" className="rounded-lg flex items-center gap-2 px-4 py-2 font-medium">
+                <UserCheck className="h-4 w-4 text-primary" />
+                Client Directory & Access
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* TAB 1: EXPERIENCES */}
+          <TabsContent value="experiences" className="mt-0 space-y-6 focus-visible:outline-none">
+            <ClientExperienceDesigner />
+          </TabsContent>
+
+          {/* TAB 2: ACCESS & PREVIEW VIEWPORT */}
+          <TabsContent value="access" className="mt-0 space-y-6 focus-visible:outline-none">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* Left Column: Client Directory */}
           <div className="lg:col-span-5 flex flex-col gap-4">
@@ -357,13 +400,10 @@ export default function PortalManagement() {
                 </div>
               </div>
             </Card>
+            </div>
           </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* NEW EXTENSION: Client Portal Experience Designer (14 Stages & Library)    */}
-        {/* ========================================================================= */}
-        <ClientExperienceDesigner />
+        </TabsContent>
+        </Tabs>
 
         {/* Dialog for provisioning confirmation */}
         <Dialog open={provisionOpen} onOpenChange={setProvisionOpen}>

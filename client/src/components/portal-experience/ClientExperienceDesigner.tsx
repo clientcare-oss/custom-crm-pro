@@ -168,7 +168,7 @@ export function ClientExperienceDesigner() {
   const publishedPagesCount = pages.filter((p) => p.status === "published").length;
 
   return (
-    <div className="mt-12 pt-8 border-t-2 border-primary/20 space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300">
       
       {/* Section Header Banner */}
       <div className="bg-gradient-to-r from-primary/10 via-background to-primary/5 p-6 rounded-2xl border border-primary/20 shadow-sm relative overflow-hidden">

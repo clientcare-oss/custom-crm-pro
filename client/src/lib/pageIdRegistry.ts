@@ -55,6 +55,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/client-portal":                   { id: "PG-023", name: "Client Portal", category: "Portal" },
   "/portal":                          { id: "PG-023", name: "Client Portal", category: "Portal" },
   "/portal-management":               { id: "PG-027", name: "Portal Experience Management", category: "Portal Admin" },
+  "/manage-experiences":              { id: "PG-027", name: "Manage Experiences Workspace", category: "Portal Admin" },
   "/workspace":                       { id: "PG-031", name: "Advocate Case Workspace", category: "Advocacy" },
   "/case-compass":                    { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },
   "/tools/case-compass":              { id: "PG-025", name: "Case Compass Console", category: "Advocacy" },

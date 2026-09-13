@@ -26,7 +26,7 @@ import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { FirstMateGlobalLauncher } from "@/components/firstMate/FirstMateGlobalLauncher";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
@@ -74,6 +74,7 @@ export interface MenuItem {
   icon: LucideIcon;
   label: string;
   path: string;
+  keywords?: string[];
 }
 
 export interface MenuGroup {
@@ -109,7 +110,17 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
         { icon: Users, label: "Contacts", path: "/contacts" },
         { icon: Compass, label: "Case Compass", path: "/case-compass" },
-        { icon: Shield, label: "Client Portal", path: "/portal-management" },
+      ],
+    },
+    {
+      groupLabel: "Manage Experiences",
+      items: [
+        { 
+          icon: Shield, 
+          label: "Client Portal", 
+          path: "/portal-management",
+          keywords: ["portal", "client portal", "manage experiences", "experiences", "journey", "stages", "parent portal"]
+        },
       ],
     },
     {
@@ -307,7 +318,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           : group.items.filter(
               (item) =>
                 item.label.toLowerCase().includes(q) ||
-                item.path.toLowerCase().includes(q)
+                item.path.toLowerCase().includes(q) ||
+                (item.keywords && item.keywords.some((k) => k.toLowerCase().includes(q)))
             );
         return {
           ...group,
@@ -513,7 +525,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     });
   };
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem = menuItems.find(
+    (item) =>
+      item.path === location ||
+      (item.path === "/manage-experiences" && location === "/portal-management") ||
+      (item.path === "/portal-management" && location === "/manage-experiences")
+  );
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -654,7 +671,10 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       <div className="rounded-xl bg-black/20 border border-white/5 p-1 shadow-inner animate-in fade-in duration-150">
                         <SidebarMenu className="gap-0.5">
                           {group.items.map((item) => {
-                            const isActive = location === item.path;
+                            const isActive = 
+                              location === item.path ||
+                              (item.path === "/manage-experiences" && (location === "/portal-management" || location.startsWith("/manage-experiences"))) ||
+                              (item.path === "/portal-management" && (location === "/manage-experiences" || location.startsWith("/portal-management")));
                             return (
                               <SidebarMenuItem key={item.path}>
                                 <SidebarMenuButton
