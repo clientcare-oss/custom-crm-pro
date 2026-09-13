@@ -1377,7 +1377,7 @@ function StudentTabs({
   const row1Items: TabItem[] = [
     { value: "workspace", label: "Workspace", icon: Home },
     { value: "voyage-log", label: "Voyage Log", icon: Video },
-    { value: "activity", label: "Messages", icon: MessageSquare },
+    { value: "activity", label: "Communication", icon: MessageSquare },
     { value: "tasks", label: "Tasks", icon: CheckSquare },
     { value: "notes", label: "Notes", icon: FileText },
     { value: "files", label: "Files", icon: Folder },
@@ -1388,7 +1388,6 @@ function StudentTabs({
     { value: "compass", label: "Case Compass", icon: Compass },
     { value: "tools", label: "Tools", icon: Wrench },
     { value: "projects", label: "State Complaints", icon: ScrollText, count: projects.length },
-    { value: "call-logs", label: "Calls", icon: Phone },
     { value: "financials", label: "Billing", icon: DollarSign, count: invoices.length },
     { value: "appointments", label: "Appts", icon: Calendar, count: appointments.length },
     { value: "time-tracker", label: "Time", icon: Timer },

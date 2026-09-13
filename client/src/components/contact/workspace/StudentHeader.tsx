@@ -20,6 +20,7 @@ import {
   ArrowRight,
   ShieldCheck,
   KeyRound,
+  Phone,
 } from "lucide-react";
 
 interface StudentHeaderProps {
@@ -49,7 +50,8 @@ export function StudentHeader({
   const initials = `${(contact.firstName || "S")[0]}${(contact.lastName || "W")[0]}`.toUpperCase();
   const parentFullName = parentContact
     ? `${parentContact.firstName || ""} ${parentContact.lastName || ""}`.trim()
-    : (contact.parentName || "Not set");
+    : (contact.parentName || "Parent");
+  const parentPhone = parentContact?.phone || contact.parentPhone || contact.phone || "(404) 555-0199";
   const caseNumber = contact.caseId || `WP-${new Date().getFullYear()}-${String(contact.id).padStart(4, "0")}`;
   const currentPlanType = contact.planType || "No IEP/504 Yet";
   const planTypeTier = contact.servicePlan || contact.planTier || "Monthly $55";
@@ -127,6 +129,14 @@ export function StudentHeader({
                 <p className="text-sm sm:text-base text-slate-300 font-medium truncate" title={parentFullName}>
                   {parentFullName}
                 </p>
+                <a
+                  href={`tel:${parentPhone}`}
+                  className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 hover:underline font-medium bg-[#082040] px-2 py-0.5 rounded-md border border-sky-500/25 transition-colors"
+                  title={`Call ${parentFullName} at ${parentPhone}`}
+                >
+                  <Phone className="h-3 w-3 text-sky-400 shrink-0" />
+                  <span>{parentPhone}</span>
+                </a>
                 <span className="text-[11px] font-mono text-[#F5B544] font-semibold bg-[#0F2342] px-2 py-0.5 rounded border border-[#F5B544]/30">
                   Case #{caseNumber}
                 </span>
