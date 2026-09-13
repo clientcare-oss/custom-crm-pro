@@ -292,17 +292,31 @@ export function PlanTransitionExperience({
   return (
     <div className="max-w-7xl mx-auto space-y-7 text-white animate-in fade-in duration-300 pb-12">
       
-      {/* ── Top Bar: Back Nav & Page Identification ── */}
-      <div className="flex items-center justify-between gap-4">
-        <button
-          onClick={() => onNavigateTab?.("financials")}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-sky-200/70 hover:text-amber-300 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Membership & Billing</span>
-        </button>
+      {/* ── Top Bar: Back Nav & Red Box in Center & Page Identification ── */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+        {/* Left: Back to Billing */}
+        <div className="w-full sm:w-auto flex justify-start">
+          <button
+            onClick={() => onNavigateTab?.("financials")}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-sky-200/70 hover:text-amber-300 transition-colors cursor-pointer shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Membership & Billing</span>
+          </button>
+        </div>
 
-        <div className="flex items-center gap-2">
+        {/* Center: Red/Wine End Date Box (retained exact size, shape & setting) */}
+        <div className="flex justify-center flex-1">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#390d19]/90 border border-rose-500/40 text-rose-200 shadow-lg shadow-rose-950/40 shrink-0">
+            <Calendar className="w-4 h-4 text-rose-400 shrink-0" />
+            <span className="text-xs sm:text-sm font-semibold tracking-wide">
+              Your advocacy plan ends {expirationDate}.
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Days Remaining & PageIdBadge */}
+        <div className="w-full sm:w-auto flex items-center justify-end gap-2 shrink-0">
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-400/10 text-amber-300 border border-amber-400/30">
             <Clock className="w-3 h-3 text-amber-400" />
             {daysRemaining} Days Until Transition
@@ -311,30 +325,14 @@ export function PlanTransitionExperience({
         </div>
       </div>
 
-      {/* ── Top Header Row (Title + Center Wine Banner) ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1 pb-1">
-        {/* Left: Serif Headline */}
-        <div className="space-y-1">
-          <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-serif font-normal text-white tracking-tight leading-tight">
-            Plan Transition
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300/80 font-normal">
-            Your tools. Your records. What's next — you choose below.
-          </p>
-        </div>
-
-        {/* Right: Burgundy/Wine End Date Banner Pill */}
-        <div className="flex flex-col items-start md:items-end text-left md:text-right">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#390d19]/90 border border-rose-500/40 text-rose-200 shadow-lg shadow-rose-950/40">
-            <Calendar className="w-4 h-4 text-rose-400 shrink-0" />
-            <span className="text-xs sm:text-sm font-semibold tracking-wide">
-              Your advocacy plan ends {expirationDate}.
-            </span>
-          </div>
-          <p className="text-[11px] sm:text-xs text-slate-300/80 mt-1.5 leading-relaxed max-w-md">
-            To keep using your Document Vault and Waypoint tools after your advocacy plan ends, choose a continuation option below.
-          </p>
-        </div>
+      {/* ── Top Header Row (Title & Subtitle) ── */}
+      <div className="space-y-1 pt-1 pb-1">
+        <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-normal text-white tracking-tight leading-tight">
+          Plan Transition
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-300/80 font-normal">
+          Your tools. Your records. What's next — you choose below.
+        </p>
       </div>
 
       {/* ── Split Hero Section: Left Hero Card (Lighthouse) + Right Access Card ── */}
