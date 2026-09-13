@@ -61,7 +61,7 @@ export function StudentHeader({
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-[#0E274D]/80 pb-3">
         <div className="flex items-center gap-2.5">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-serif">
-            Student Workspace
+            Advocate Student Workspace
           </h1>
           <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-[#0F2342] border border-[#F5B544]/30 text-[#F5B544]">
             PG-030
