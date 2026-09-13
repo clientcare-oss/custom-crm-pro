@@ -362,8 +362,8 @@ export function PlanTransitionExperience({
                     </span>
                   </div>
 
-                  {/* Glowing Red Bar that goes down each day until end of paid period */}
-                  <div className="w-full bg-[#0d0205] border border-rose-950/90 rounded-full h-2.5 p-0.5 overflow-hidden shadow-inner">
+                  {/* Glowing Red Bar anchored to the right: decreases to the right, taking away the left side as days count down */}
+                  <div className="w-full bg-[#0d0205] border border-rose-950/90 rounded-full h-2.5 p-0.5 overflow-hidden shadow-inner flex justify-end">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-rose-600 via-rose-500 to-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.95)] transition-all duration-700"
                       style={{ width: `${countdownPct}%` }}
