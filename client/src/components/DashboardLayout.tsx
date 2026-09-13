@@ -90,7 +90,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: Headset, label: "Call Center", path: "/call-center" },
         { icon: MarineRadarIcon as any, label: "First Mate", path: "/first-mate" },
         { icon: TrendingUp, label: "Leads", path: "/leads" },
-        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
         { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
       ],
     },
@@ -159,6 +158,7 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: CheckSquare, label: "Tasks", path: "/tasks" },
         { icon: Layers, label: "Tech Tasks", path: "/tech-tasks" },
+        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
         { icon: LayoutTemplate, label: "Templates", path: "/templates" },
         { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
         { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
