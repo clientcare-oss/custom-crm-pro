@@ -542,6 +542,7 @@ function ContractsTabContent({ contracts, isPreview }: { contracts: any[]; isPre
 
 // ── Nav items config ─────────────────────────────────────────────────────────
 const NAV_ITEMS = [
+  { id: "details",       icon: GraduationCap,  label: "My Students" },
   { id: "appointments",  icon: Calendar,       label: "Appointments" },
   { id: "compass",       icon: Compass,        label: "Compass" },
   { id: "communication", icon: MessageSquare,  label: "Communication" },
@@ -555,7 +556,6 @@ const NAV_ITEMS = [
   { id: "voyage-log",    icon: Video,          label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,     label: "Notes" },
   { id: "attorney",      icon: Scale,          label: "Legal Counsel" },
-  { id: "details",       icon: Info,           label: "Details" },
   { id: "renewal",       icon: Sparkles,       label: "Plan Renewal" },
 ] as const;
 
@@ -1757,9 +1757,9 @@ export default function ClientPortal() {
                   <div>
                     <div className="flex items-center gap-2.5 flex-wrap">
                       <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                        Student Workspace
+                        My Students
                       </h1>
-                      <PageIdBadge id="PG-023-STU" name="Student Workspace" />
+                      <PageIdBadge id="PG-023-STU" name="My Students" />
                     </div>
                     <p className="text-xs sm:text-sm text-white/60 mt-0.5">
                       Student educational profile, district records, and IEP case details for {effectiveStudent.firstName}.

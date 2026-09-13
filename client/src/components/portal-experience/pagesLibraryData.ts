@@ -200,7 +200,7 @@ export const INITIAL_PORTAL_PAGES: PortalExperiencePage[] = [
   {
     id: "page-15",
     pageId: "PG-027-P15",
-    name: "Student Workspace",
+    name: "My Students",
     slug: "student-workspace",
     route: "/portal/student-workspace",
     category: "Active Workspaces",

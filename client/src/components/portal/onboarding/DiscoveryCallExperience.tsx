@@ -110,7 +110,7 @@ export function DiscoveryCallExperience({
         <div className="space-y-3 max-w-lg lg:max-w-[52%] xl:max-w-[54%] pt-2">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl lg:text-[36px] font-serif font-normal text-white tracking-tight leading-[1.2]">
-              Your discovery call is scheduled!
+              Your Discovery Call is Scheduled!
             </h1>
             <div className="hidden sm:block">
               <PageIdBadge id="PG-027-S01" name="Discovery Inquiry" />

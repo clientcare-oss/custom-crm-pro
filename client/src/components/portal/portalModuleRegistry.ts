@@ -341,10 +341,10 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   },
   {
     id: "details",
-    name: "Student Workspace",
+    name: "My Students",
     icon: Info,
     sidebarGroup: "permanent",
-    displayOrder: 25,
+    displayOrder: 18,
     visibleStages: ["DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "ONBOARDING", "ACTIVE", "CLOSING"],
     unlockedStages: ["ACTIVE", "CLOSING"],
     lockedPreviewAllowed: true,

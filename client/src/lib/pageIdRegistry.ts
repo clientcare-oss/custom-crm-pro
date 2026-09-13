@@ -145,13 +145,13 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
   {
     matcher: (path) => /^\/contacts\/[^/]+/.test(path),
     id: "PG-030",
-    name: "Contact Detail",
+    name: "Student Workspace",
     category: "CRM",
   },
   {
     matcher: (path) => /^\/students\/[^/]+/.test(path),
     id: "PG-030",
-    name: "Student Detail",
+    name: "Student Workspace",
     category: "CRM",
   },
 
@@ -195,7 +195,7 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
   "financials":       { id: "PG-023-MBR", name: "Portal Membership", category: "Portal" },
   "voyage-log":       { id: "PG-023-VOY", name: "Voyage Meeting Logs", category: "Portal" },
   "notes":            { id: "PG-023-NTE", name: "Case Notes", category: "Portal" },
-  "details":          { id: "PG-023-STU", name: "Student Workspace", category: "Portal" },
+  "details":          { id: "PG-023-STU", name: "My Students", category: "Portal" },
   "tools":            { id: "PG-023-TLS", name: "Advocacy Tools", category: "Portal" },
   "cases":            { id: "PG-023-CAS", name: "Case Management", category: "Portal" },
   "attorney":         { id: "PG-023-ATTY", name: "Legal Counsel Info", category: "Portal" },

@@ -19,6 +19,7 @@ import {
 const LOGO_URL = "/waypoint-logo.png";
 
 export const NAV_ITEMS = [
+  { id: "details",       icon: GraduationCap, label: "My Students" },
   { id: "appointments",  icon: Calendar,         label: "Appointments" },
   { id: "compass",       icon: Compass,          label: "Compass" },
   { id: "communication", icon: MessageSquare,     label: "Communication" },
@@ -32,7 +33,6 @@ export const NAV_ITEMS = [
   { id: "voyage-log",    icon: Video,         label: "Voyage Log" },
   { id: "notes",         icon: StickyNote,    label: "Notes" },
   { id: "attorney",      icon: Scale,         label: "Legal Counsel" },
-  { id: "details",       icon: GraduationCap, label: "Student Workspace" },
 ] as const;
 
 export type NavId = typeof NAV_ITEMS[number]["id"] | string;
@@ -399,7 +399,7 @@ export function ClientPortalSidebar({
                 <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : isLight ? "text-slate-450" : "text-white/40"}`} />
                 {(!isCollapsed || mobile) && (
                   <span className="truncate flex-1 flex items-center justify-between">
-                    <span>{label === "Details" ? "Student Workspace" : label}</span>
+                    <span>{label === "Details" || label === "Student Workspace" ? "My Students" : label}</span>
                     <span className="flex items-center gap-1.5">
                       {isUnexplored && (
                         <span className="text-emerald-400 font-bold text-base leading-none" title="Unexplored area">•</span>
