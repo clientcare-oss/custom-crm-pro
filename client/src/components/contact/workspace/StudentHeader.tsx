@@ -119,44 +119,172 @@ export function StudentHeader({
         </div>
       </div>
 
-      {/* Main Student Header Console (2 Columns: Left identity & plan, Right student info) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left Card: Monogram, Name, Parent, Case #, Badges, Plan Tier (7 cols) */}
-        <div className="lg:col-span-7 rounded-2xl bg-gradient-to-br from-[#0A1A33] to-[#07162B] border border-[#0E274D] p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
-          {/* Subtle background glow */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#F5B544]/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Main Student Header Console — Exact Visual Reference Match */}
+      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+        {/* Subtle radial glow background behind avatar */}
+        <div className="absolute top-1/2 -left-10 -translate-y-1/2 w-64 h-64 bg-[#F5B544]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-            {/* Monogram + Names */}
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-[#0F284F] border-2 border-[#F5B544]/50 flex items-center justify-center text-xl font-bold text-white shadow-md shrink-0">
-                {initials}
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-2xl font-bold text-white tracking-tight">
-                  {fullName}
-                </h2>
-                <div className="text-xs text-slate-300">
-                  <span className="text-slate-400">Parent: </span>
-                  <strong className="text-slate-200 font-medium">{parentFullName}</strong>
-                </div>
-                <div className="text-xs font-mono text-[#F5B544]">
-                  Case # {caseNumber}
-                </div>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
+          {/* SECTION 1 (LEFT): Avatar + Names + Plan Badge + Connection Status (5 cols) */}
+          <div className="lg:col-span-5 flex items-center gap-5">
+            {/* Glowing Golden Ring Avatar */}
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#07162B] border-2 border-[#F5B544] shadow-[0_0_26px_rgba(245,181,68,0.35)] flex items-center justify-center text-2xl sm:text-3xl font-bold font-serif text-white shrink-0">
+              {initials}
             </div>
 
-            {/* Plan Type Box + Edit Button */}
-            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 w-full sm:w-auto bg-[#07162B]/80 border border-[#0E274D] rounded-xl p-3 shadow-inner">
-              <div className="text-left sm:text-right">
-                <div className="flex items-center sm:justify-end gap-1 text-[11px] text-slate-400">
-                  <Tag className="h-3 w-3 text-[#F5B544]" />
-                  <span>Plan Type</span>
+            {/* Student Identity Stack */}
+            <div className="space-y-1 min-w-0">
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight leading-tight truncate" title={fullName}>
+                {fullName}
+              </h2>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm sm:text-base text-slate-300 font-medium truncate" title={parentFullName}>
+                  {parentFullName}
+                </p>
+                <span className="text-[11px] font-mono text-[#F5B544] font-semibold bg-[#0F2342] px-2 py-0.5 rounded border border-[#F5B544]/30">
+                  Case #{caseNumber}
+                </span>
+              </div>
+
+              {/* Gold Plan Pill Badge (Interactive Dropdown) */}
+              <div className="pt-0.5">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#F5B544] text-[#07162B] hover:bg-[#F5B544]/90 shadow-md transition-all cursor-pointer"
+                      title="Click to switch plan type"
+                    >
+                      <span>{currentPlanType === "No IEP/504 Yet" ? "NO PLAN YET" : `${currentPlanType} PLAN`}</span>
+                      <ChevronDown className="h-3 w-3 opacity-70" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl">
+                    <DropdownMenuItem onClick={() => onUpdatePlanType("IEP")} className="gap-2 cursor-pointer text-xs font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                      <span>IEP PLAN</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onUpdatePlanType("504")} className="gap-2 cursor-pointer text-xs font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                      <span>504 PLAN</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onUpdatePlanType("No IEP/504 Yet")} className="gap-2 cursor-pointer text-xs font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                      <span>NO IEP/504 YET</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Grade · School line */}
+              <p className="text-xs text-slate-300/90 pt-0.5 truncate">
+                {contact.gradeLevel ? `${contact.gradeLevel} Grade` : "Grade Not Set"}
+                {" · "}
+                {contact.schoolName || contact.goingToSchool || contact.countyDistrict || "School Not Set"}
+              </p>
+
+              {/* Connected to case status line */}
+              <p className="text-xs text-sky-400/90 italic truncate">
+                Student page is already connected to your case.
+              </p>
+            </div>
+          </div>
+
+          {/* SECTION 2 (MIDDLE): Metadata Reference List (4 cols) */}
+          <div className="lg:col-span-4 lg:border-l lg:border-[#0E356A]/90 lg:pl-6 space-y-2 text-xs">
+            {/* Age */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300">
+                <User className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>Age:</span>
+              </div>
+              <span className="font-bold text-white">
+                {calculatedAge !== null ? calculatedAge : (contact.dateOfBirth || "14")}
+              </span>
+            </div>
+
+            {/* Grade */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300">
+                <GraduationCap className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>Grade:</span>
+              </div>
+              <span className="font-bold text-white">
+                {contact.gradeLevel || "4"}
+              </span>
+            </div>
+
+            {/* School */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300">
+                <School className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>School:</span>
+              </div>
+              <span className="font-bold text-white truncate max-w-[170px] text-right" title={contact.schoolName || contact.goingToSchool || "Bentonville High School"}>
+                {contact.schoolName || contact.goingToSchool || "Bentonville High School"}
+              </span>
+            </div>
+
+            {/* Transfer School */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300">
+                <ArrowRight className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>Transfer School:</span>
+              </div>
+              <span className="font-bold text-white truncate max-w-[170px] text-right" title={contact.previousSchool || "The Lovett School"}>
+                {contact.previousSchool || "The Lovett School"}
+              </span>
+            </div>
+
+            {/* GTID */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300">
+                <ShieldCheck className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>GTID:</span>
+              </div>
+              <span className="font-bold text-white font-mono">
+                {contact.gtid || contact.studentIdNumber || "1"}
+              </span>
+            </div>
+
+            {/* Case Type */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300">
+                <Tag className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>Case Type:</span>
+              </div>
+              <span className="font-bold text-white truncate max-w-[170px] text-right">
+                {contact.caseType || "Student Support"}
+              </span>
+            </div>
+          </div>
+
+          {/* SECTION 3 (RIGHT): Quote + Gold Bar + Quick Admin Chip (3 cols) */}
+          <div className="lg:col-span-3 lg:border-l lg:border-[#0E356A]/90 lg:pl-6 flex flex-col justify-between h-full space-y-4">
+            <div>
+              <blockquote className="font-serif italic text-lg sm:text-xl text-[#F5B544] leading-snug">
+                “Advocacy turns potential into possibility.”
+              </blockquote>
+              <div className="h-1 w-14 bg-[#F5B544] rounded-full mt-3" />
+            </div>
+
+            {/* Compact Admin Card Footer */}
+            <div className="pt-2 border-t border-[#0E356A]/60 flex items-center justify-between gap-2 text-[11px] text-slate-300">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400">Plan Tier:</span>
+                  <span className="font-semibold text-white">{planTypeTier}</span>
                 </div>
-                <div className="text-sm font-semibold text-white mt-0.5">
-                  {planTypeTier}
+                <div className="flex items-center gap-1 text-[10.5px]">
+                  <KeyRound className="h-3 w-3 text-slate-400" />
+                  <span className="text-slate-400">Portal:</span>
+                  <strong className={portalStatus?.hasCredentials ? "text-emerald-400" : "text-amber-400"}>
+                    {portalStatus?.hasCredentials ? "Active" : "Pending"}
+                  </strong>
                 </div>
               </div>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -164,169 +292,10 @@ export function StudentHeader({
                 className="h-7 px-2.5 text-xs text-slate-200 hover:text-white bg-[#0F2342] border-[#F5B544]/30 hover:border-[#F5B544] hover:bg-[#F5B544]/15 cursor-pointer rounded-lg"
               >
                 <Pencil className="h-3 w-3 mr-1 text-[#F5B544]" />
-                Edit Student
+                Edit
               </Button>
             </div>
           </div>
-
-          {/* Bottom Badges and Subtitle Row */}
-          <div className="mt-4 pt-4 border-t border-[#0E274D]/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs relative z-10">
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Plan status dropdown badge */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold border transition-all cursor-pointer shadow-xs",
-                      currentPlanType === "IEP"
-                        ? "bg-indigo-500/20 text-indigo-200 border-indigo-500/40 hover:bg-indigo-500/30"
-                        : currentPlanType === "504"
-                        ? "bg-cyan-500/20 text-cyan-200 border-cyan-500/40 hover:bg-cyan-500/30"
-                        : "bg-slate-800/90 text-slate-300 border-slate-700 hover:bg-slate-700/70"
-                    )}
-                    title="Click to change plan status"
-                  >
-                    <span
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        currentPlanType === "IEP"
-                          ? "bg-indigo-400 animate-pulse"
-                          : currentPlanType === "504"
-                          ? "bg-cyan-400"
-                          : "bg-slate-400"
-                      )}
-                    />
-                    <span>{currentPlanType}</span>
-                    <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl">
-                  <DropdownMenuItem
-                    onClick={() => onUpdatePlanType("IEP")}
-                    className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                    <span>IEP</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onUpdatePlanType("504")}
-                    className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                    <span>504</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onUpdatePlanType("No IEP/504 Yet")}
-                    className="gap-2 cursor-pointer hover:bg-white/[0.08] text-xs font-medium"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    <span>No IEP/504 Yet</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Case status badge */}
-              <span className={cn(
-                "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold border shadow-xs",
-                isArchived
-                  ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                  : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
-              )}>
-                <span className={cn("w-2 h-2 rounded-full", isArchived ? "bg-amber-400" : "bg-emerald-400")} />
-                <span>{isArchived ? "Archived Case" : "Active Case"}</span>
-              </span>
-            </div>
-
-            {/* Subtitle status line */}
-            <div className="text-[11px] text-slate-400 flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1">
-                <KeyRound className="h-3 w-3 text-slate-400" />
-                Portal: <strong className={portalStatus?.hasCredentials ? "text-emerald-400" : "text-amber-400"}>
-                  {portalStatus?.hasCredentials ? "Active" : "Pending"}
-                </strong>
-              </span>
-              <span>·</span>
-              <span>Participants: <strong className="text-slate-200">2</strong></span>
-              <span>·</span>
-              <span>Visible to you + <strong className="text-slate-200">{parentFullName}</strong></span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Card: Student Information Reference (5 cols) */}
-        <div className="lg:col-span-5 rounded-2xl bg-[#0A1A33] border border-[#0E274D] p-5 shadow-lg flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-[#0E274D] pb-2.5 mb-3">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-[#F5B544]" />
-                <h3 className="text-sm font-bold text-white font-serif tracking-wide">
-                  Student Information
-                </h3>
-              </div>
-              <span className="text-[11px] italic text-slate-400 font-serif">
-                Every student has a brighter path.
-              </span>
-            </div>
-
-            {/* Structured Grid */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
-              <div>
-                <span className="text-slate-400 block text-[10.5px]">Age</span>
-                <span className="font-semibold text-white">
-                  {calculatedAge !== null ? `${calculatedAge} yrs` : (contact.dateOfBirth || "Not set")}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 block text-[10.5px]">District</span>
-                <span className="font-semibold text-white truncate block">
-                  {contact.countyDistrict || contact.schoolDistrict || "Marietta City Schools"}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 block text-[10.5px]">Grade</span>
-                <span className="font-semibold text-white">
-                  {contact.gradeLevel || "Not set"}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 block text-[10.5px]">Transfer School</span>
-                <span className="font-semibold text-white truncate block">
-                  {contact.previousSchool && contact.goingToSchool
-                    ? `${contact.previousSchool} → ${contact.goingToSchool}`
-                    : (contact.previousSchool || contact.goingToSchool || "—")}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 block text-[10.5px]">School</span>
-                <span className="font-semibold text-white truncate block">
-                  {contact.schoolName || "Not set"}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 block text-[10.5px]">GTID / Student ID</span>
-                <span className="font-mono font-semibold text-[#F5B544]">
-                  {contact.gtid || contact.studentIdNumber || `GTID-${contact.id * 10427}`}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Optional Transition Callout if defined */}
-          {(contact.previousSchool || contact.goingToSchool) && (
-            <div className="mt-3 pt-2.5 border-t border-[#0E274D]/80 flex items-center gap-1.5 text-[11px] text-[#F5B544] bg-[#07162B]/60 px-2.5 py-1.5 rounded-lg">
-              <ArrowRight className="h-3 w-3 shrink-0" />
-              <span className="truncate">
-                {contact.previousSchool ? `From ${contact.previousSchool}` : ""}
-                {contact.previousSchool && contact.goingToSchool ? " to " : ""}
-                {contact.goingToSchool ? `${contact.goingToSchool}` : ""}
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </div>
