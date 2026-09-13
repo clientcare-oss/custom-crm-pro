@@ -1406,9 +1406,9 @@ function StudentTabs({
           {row1Items.map((item) => {
             const Icon = item.icon;
             return (
-              <TabsTrigger key={item.value} value={item.value} className={triggerClass}>
+              <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
                 <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-                <span className="truncate">{item.label}</span>
+                <span title={item.label} className="truncate">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
                     {item.count}
@@ -1424,9 +1424,9 @@ function StudentTabs({
           {row2Items.map((item) => {
             const Icon = item.icon;
             return (
-              <TabsTrigger key={item.value} value={item.value} className={triggerClass}>
+              <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
                 <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
-                <span className="truncate">{item.label}</span>
+                <span title={item.label} className="truncate">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
                     {item.count}

@@ -64,6 +64,7 @@ import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
 import PageIdBadge from "./components/PageIdBadge";
 import { WaypointScanGlobalModal } from "./components/portal/WaypointScanGlobalModal";
+import { AutoTruncateTooltip } from "./components/AutoTruncateTooltip";
 
 function Router() {
   // First Mate standalone pop-out window: mount immediately to prevent auth-loading flicker or remount loops
@@ -224,6 +225,7 @@ function App() {
         <TerminologyProvider>
           <FirstMateProvider>
             <TooltipProvider>
+              <AutoTruncateTooltip />
               <Toaster />
               <Router />
               <PageIdBadge />
