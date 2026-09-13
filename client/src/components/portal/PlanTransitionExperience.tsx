@@ -342,70 +342,82 @@ export function PlanTransitionExperience({
       {/* ── Split Hero Section: Left Hero Card (Lighthouse) + Right Access Card ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
-        {/* Left Hero Card (8 Cols): Lighthouse on right, content on left */}
-        <div className="lg:col-span-8 relative overflow-hidden rounded-2xl border border-sky-600/35 bg-gradient-to-br from-[#061833] via-[#041126] to-[#020b18] shadow-2xl flex flex-col justify-between">
+        {/* Left Hero Card (8 Cols): Lighthouse on top-right, text at top, stat box spanning all the way across bottom */}
+        <div className="lg:col-span-8 relative overflow-hidden rounded-2xl border border-sky-600/35 bg-gradient-to-br from-[#061833] via-[#041126] to-[#020b18] shadow-2xl p-5 sm:p-6 flex flex-col justify-between gap-5">
           
           {/* Lighthouse Twilight Background Artwork (Cleanly positioned on the right) */}
           <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[48%] lg:w-[44%] overflow-hidden pointer-events-none select-none">
             <img
               src="/plan-transition-lighthouse.jpg"
               alt="Waypoint Lighthouse in twilight"
-              className="w-full h-full object-cover object-[center_22%] opacity-95"
+              className="w-full h-full object-cover object-[center_20%] opacity-95"
             />
             {/* Seamless blended gradients on the left edge & top/bottom */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#041126] via-[#041126]/45 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#041126] via-[#041126]/40 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#020b18] via-transparent to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-b from-[#061833]/30 via-transparent to-transparent" />
 
-            {/* Script Cursive Overlay: "Your journey continues here." */}
-            <div className="absolute top-10 sm:top-12 left-2 sm:left-4 z-10 text-left">
-              <p className="font-serif italic text-amber-200/90 text-base sm:text-lg leading-tight select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+            {/* Script Cursive Overlay: "Your journey continues here." (moved up) */}
+            <div className="absolute top-6 sm:top-8 left-2 sm:left-4 z-10 text-left">
+              <p className="font-serif italic text-amber-200 text-base sm:text-lg leading-tight select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                 Your journey<br />continues here.
               </p>
-              <div className="w-8 h-[2px] bg-amber-400/90 mt-2 shadow-sm" />
+              <div className="w-8 h-[2px] bg-amber-400 mt-2 shadow-sm" />
             </div>
           </div>
 
-          {/* Left Text & Stat Content (Strictly constrained so it never touches the lighthouse) */}
-          <div className="relative z-10 p-6 sm:p-7 lg:p-8 space-y-3.5 w-full sm:max-w-[58%] lg:max-w-[55%]">
+          {/* TOP SECTION: Text Content moved up & brightened */}
+          <div className="relative z-10 space-y-2.5 w-full sm:max-w-[58%] lg:max-w-[55%]">
             {/* Accent Gold Label */}
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-[2px] bg-amber-400" />
-              <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-amber-400 uppercase">
+              <span className="text-[10.5px] font-mono font-bold tracking-[0.2em] text-amber-300 uppercase">
                 Your Records Matter
               </span>
             </div>
 
-            {/* Display Serif Title (Exact 2-line break) */}
+            {/* Display Serif Title (Moved up & crisp white) */}
             <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-serif font-normal text-white tracking-tight leading-[1.18]">
               Keep your Document Vault<br />and essential tools.
             </h2>
 
-            {/* Inset Stat Card: 47 Records in Vault */}
-            <div className="rounded-xl bg-[#03132d]/75 border border-sky-500/30 p-3.5 backdrop-blur-md flex items-center gap-3.5 shadow-xl max-w-[480px]">
-              <div className="w-11 h-11 rounded-lg bg-sky-950/80 border border-sky-500/35 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+            {/* Brightened note below headline */}
+            <p className="text-xs sm:text-[13px] text-sky-100 font-normal leading-relaxed pt-0.5">
+              These records can remain organized and available if you keep Tools Access active. Don't lose access to your important documents.
+            </p>
+          </div>
+
+          {/* BOTTOM SECTION: 47 Records Box Spanning ALL THE WAY ACROSS BOTTOM OF BOX */}
+          <div className="relative z-10 w-full rounded-xl bg-[#03132d]/90 border border-sky-400/35 p-3 sm:p-3.5 backdrop-blur-md shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-sky-950/90 border border-sky-400/40 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
                 <FileText className="w-5 h-5 text-sky-400" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs sm:text-sm font-semibold text-white tracking-tight">
-                  You have <span className="text-amber-300 font-bold font-mono">47</span> records in your Document Vault
-                </div>
-                <div className="text-[10.5px] sm:text-[11px] text-blue-200/70 mt-0.5 flex flex-wrap items-center gap-1.5">
-                  <span>6 IEPs</span>
-                  <span className="text-white/40">•</span>
-                  <span>3 Evaluations</span>
-                  <span className="text-white/40">•</span>
-                  <span>12 Progress Reports</span>
-                  <span className="text-white/40">•</span>
-                  <span>26 Other Records</span>
-                </div>
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight block">
+                  You have <span className="text-amber-300 font-bold font-mono text-sm sm:text-base">47 records</span> in your Document Vault
+                </span>
               </div>
             </div>
 
-            {/* Note below stat box */}
-            <p className="text-[11px] text-blue-200/60 leading-relaxed max-w-[460px] pt-0.5">
-              These records can remain organized and available if you keep Tools Access active. Don't lose access to your important documents.
-            </p>
+            {/* Horizontal breakdown on one line with bright high-contrast pill styling */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-sky-100">
+              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
+                6 IEPs
+              </span>
+              <span className="text-amber-400/80">•</span>
+              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
+                3 Evaluations
+              </span>
+              <span className="text-amber-400/80">•</span>
+              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
+                12 Progress Reports
+              </span>
+              <span className="text-amber-400/80">•</span>
+              <span className="px-2.5 py-1 rounded-md bg-sky-950/90 border border-sky-500/40 text-white shadow-sm">
+                26 Other Records
+              </span>
+            </div>
           </div>
         </div>
 
