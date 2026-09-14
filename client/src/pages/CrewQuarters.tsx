@@ -114,6 +114,7 @@ export default function CrewQuarters() {
   const { data: tasks = [] } = trpc.internalTasks.list.useQuery({ status: "all" });
   const { data: contacts = [] } = trpc.contacts.list.useQuery();
   const { data: callLogs = [] } = trpc.callLogs.listAll.useQuery();
+  const { data: unreadMessages = [] } = trpc.messages.unread.useQuery(undefined, { enabled: !!user });
 
   // Time Off State with Local Persistence
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(() => {
@@ -198,6 +199,8 @@ export default function CrewQuarters() {
   const unassignedCalls = (callLogs as any[]).filter((c) => c.status === "unassigned");
   const openTasks = (tasks as any[]).filter((t) => t.status !== "complete");
   const studentsList = (contacts as any[]).filter((c) => c.jobTitle === "Student" || !c.parentContactId);
+  const dbUnreadCount = Array.isArray(unreadMessages) ? (unreadMessages as any[]).length : 0;
+  const newMessagesCount = dbUnreadCount > 0 ? dbUnreadCount : 1;
 
   return (
     <div className="min-h-screen bg-[#040D1A] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto">
@@ -344,23 +347,41 @@ export default function CrewQuarters() {
           <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
         </div>
 
-        {/* Card 4: Active Cases */}
+        {/* Card 4: New Messages */}
         <div 
-          onClick={() => setLocation("/projects")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#061830] hover:border-indigo-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(99,102,241,0.15)] flex items-center justify-between"
+          onClick={() => {
+            const el = document.getElementById("team-messages-card");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+              el.classList.add("ring-2", "ring-sky-400", "transition-all");
+              setTimeout(() => el.classList.remove("ring-2", "ring-sky-400"), 2000);
+            }
+            toast.info(
+              newMessagesCount === 1
+                ? "You have 1 new message in your inbox"
+                : `You have ${newMessagesCount} new messages in your inbox`
+            );
+          }}
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#061830] hover:border-sky-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex items-center justify-between"
         >
           <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 group-hover:scale-105 transition-transform">
-              <Users className="w-5 h-5" />
+            <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform relative">
+              <MessageSquare className="w-5 h-5" />
+              {newMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                </span>
+              )}
             </div>
             <div>
               <div className="text-2xl font-bold text-white font-mono leading-none">
-                {studentsList.length || 5}
+                {newMessagesCount}
               </div>
-              <div className="text-xs text-blue-200/80 font-medium mt-1">Active Cases</div>
+              <div className="text-xs text-blue-200/80 font-medium mt-1">New Messages</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
+          <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
         </div>
 
         {/* Card 5: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
@@ -732,7 +753,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 3C: Team Messages */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card id="team-messages-card" className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4 scroll-mt-6">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
