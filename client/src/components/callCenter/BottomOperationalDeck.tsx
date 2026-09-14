@@ -115,7 +115,10 @@ export function BottomOperationalDeck({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-1">
       {/* ── CARD 1: NEEDS ATTENTION ── */}
-      <div className="p-4 rounded-2xl bg-[#000821] border border-sky-500/20 flex flex-col justify-between shadow-sm">
+      <div
+        id="needs-attention-box"
+        className="p-4 rounded-2xl bg-[#000821] border border-sky-500/20 flex flex-col justify-between shadow-sm scroll-mt-6 transition-all duration-300"
+      >
         <div>
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center gap-2">

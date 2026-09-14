@@ -135,6 +135,17 @@ export default function UnassignedCallLogs() {
     toast.success(`Opening Quo desktop app for ${name || phone}...`);
   };
 
+  const handleScrollToNeedsAttention = () => {
+    const el = document.getElementById("needs-attention-box");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-rose-400", "shadow-[0_0_20px_rgba(244,63,94,0.3)]");
+      setTimeout(() => {
+        el.classList.remove("ring-2", "ring-rose-400", "shadow-[0_0_20px_rgba(244,63,94,0.3)]");
+      }, 1500);
+    }
+  };
+
   const handleScrollToContactList = () => {
     const el = document.getElementById("contact-lookup-section");
     if (el) {
@@ -214,23 +225,21 @@ export default function UnassignedCallLogs() {
         isConfigured={quoStatus?.configured ?? true}
       />
 
-      {/* Top 7 Metric & Quick Access Cards in Horizontal Row */}
+      {/* Top 6 Metric & Quick Access Cards in Horizontal Row */}
       <CallCenterStats
         callsTodayCount={callsTodayCount}
         missedCallsCount={missedCount}
         callbacksCount={callbacksCount}
         voicemailCount={voicemailCount}
         scheduledCallsCount={scheduledCount}
-        leadsCount={leadsCount}
+        needsAttentionCount={3}
         contactsCount={formattedContacts.length}
         activeFilter={activeStatFilter}
         onSelectStat={(key) => {
           setActiveStatFilter(key);
           toast.info(`Filtered view for: ${key}`);
         }}
-        onViewLeads={() => {
-          window.location.href = "/leads";
-        }}
+        onScrollToNeedsAttention={handleScrollToNeedsAttention}
         onScrollToContactList={handleScrollToContactList}
       />
 

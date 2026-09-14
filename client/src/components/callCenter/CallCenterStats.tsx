@@ -1,5 +1,14 @@
 import React from "react";
-import { Phone, PhoneMissed, Calendar, Voicemail, CalendarCheck, Users, ArrowUpRight, BookUser, ArrowDown } from "lucide-react";
+import {
+  Phone,
+  PhoneMissed,
+  Calendar,
+  Voicemail,
+  CalendarCheck,
+  BookUser,
+  ArrowDown,
+  AlertCircle,
+} from "lucide-react";
 
 interface CallCenterStatsProps {
   callsTodayCount?: number;
@@ -8,10 +17,12 @@ interface CallCenterStatsProps {
   voicemailCount?: number;
   scheduledCallsCount?: number;
   leadsCount?: number;
+  needsAttentionCount?: number;
   contactsCount?: number;
   activeFilter?: string;
   onSelectStat?: (filterKey: string) => void;
   onViewLeads?: () => void;
+  onScrollToNeedsAttention?: () => void;
   onScrollToContactList?: () => void;
 }
 
@@ -22,10 +33,12 @@ export function CallCenterStats({
   voicemailCount = 1,
   scheduledCallsCount = 4,
   leadsCount = 3,
+  needsAttentionCount = 3,
   contactsCount = 15,
   activeFilter,
   onSelectStat,
   onViewLeads,
+  onScrollToNeedsAttention,
   onScrollToContactList,
 }: CallCenterStatsProps) {
   const stats = [
@@ -62,14 +75,14 @@ export function CallCenterStats({
       iconBg: "bg-indigo-500/10 border-indigo-500/20",
     },
     {
-      key: "leads",
-      label: "Leads to Follow Up",
-      count: leadsCount,
-      icon: Users,
-      iconColor: "text-emerald-400",
-      iconBg: "bg-emerald-500/10 border-emerald-500/20",
-      isActionableLink: true,
-      action: onViewLeads,
+      key: "needs-attention",
+      label: "Needs Attention",
+      count: needsAttentionCount ?? leadsCount ?? 3,
+      icon: AlertCircle,
+      iconColor: "text-rose-400",
+      iconBg: "bg-rose-500/10 border-rose-500/20",
+      isAnchorLink: true,
+      action: onScrollToNeedsAttention,
     },
     {
       key: "contacts",
@@ -101,8 +114,8 @@ export function CallCenterStats({
             className={`flex items-center justify-between gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-[#000821] border transition-all cursor-pointer group min-h-[42px] whitespace-nowrap shrink-0 ${
               isActive
                 ? "border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] bg-[#001035]"
-                : stat.key === "leads"
-                ? "border-emerald-500/30 hover:border-emerald-400/60 hover:bg-emerald-500/10"
+                : stat.key === "needs-attention"
+                ? "border-rose-500/30 hover:border-rose-400/60 hover:bg-rose-500/10"
                 : stat.key === "contacts"
                 ? "border-amber-400/30 hover:border-amber-400/60 hover:bg-amber-400/10"
                 : "border-sky-500/20 hover:border-sky-400/40 hover:bg-sky-500/10"
@@ -123,11 +136,14 @@ export function CallCenterStats({
                 </div>
               </div>
             </div>
-            {stat.isActionableLink && (
-              <ArrowUpRight className="h-3 w-3 text-emerald-400/70 group-hover:text-emerald-300 transition-all shrink-0 ml-0.5" />
-            )}
             {stat.isAnchorLink && (
-              <ArrowDown className="h-3 w-3 text-amber-400/70 group-hover:text-amber-300 transition-all shrink-0 animate-bounce ml-0.5" />
+              <ArrowDown
+                className={`h-3 w-3 ${
+                  stat.key === "needs-attention"
+                    ? "text-rose-400/70 group-hover:text-rose-300"
+                    : "text-amber-400/70 group-hover:text-amber-300"
+                } transition-all shrink-0 animate-bounce ml-0.5`}
+              />
             )}
           </div>
         );
