@@ -10,7 +10,7 @@
  *   - Converts between tables when type changes (General ↔ Project)
  */
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Shield, Bot, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import VoiceInput from "@/components/VoiceInput";
@@ -45,6 +45,8 @@ interface ProjectTaskEdit {
   dueDate?: Date | string | null;
   assignedToUserId?: number | null;
   assignedTo?: number | null;
+  assignmentSource?: "manager" | "system_automation" | "self" | "employee" | null;
+  assignedByName?: string | null;
   studentContactId?: number;
   seenByClient?: boolean;
   description?: string | null;
@@ -58,6 +60,8 @@ interface InternalTaskEdit {
   status: string;
   assigneeId?: number | null;
   assigneeContactId?: number | null;
+  assignmentSource?: "manager" | "system_automation" | "self" | "employee" | null;
+  assignedByName?: string | null;
   dueDate?: Date | string | null;
   linkedStudentId?: number | null;
 }
@@ -103,6 +107,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
   const [assigneeId, setAssigneeId] = useState("");
   const [taskType, setTaskType] = useState<TaskType>("general");
   const [studentId, setStudentId] = useState("");
+  const [assignmentSource, setAssignmentSource] = useState<"manager" | "system_automation" | "employee">("manager");
 
   // Populate form when task changes
   useEffect(() => {
@@ -112,6 +117,7 @@ export function EditTaskModal({ task, open, onClose }: Props) {
     setDueDate(toDateString(task.dueDate));
     setTaskType(getInitialTaskType(task));
     setDescription(task.description ?? "");
+    setAssignmentSource(((task as any)?.assignmentSource as any) || "manager");
 
     if (task.kind === "project") {
       setPriority(task.priority ?? "Medium");
@@ -203,6 +209,13 @@ export function EditTaskModal({ task, open, onClose }: Props) {
       }
     }
 
+    const assignedByName =
+      assignmentSource === "manager"
+        ? "Byron Honea"
+        : assignmentSource === "system_automation"
+        ? "System Automation"
+        : "Team Member";
+
     const initialType = getInitialTaskType(task);
     const typeChanged = taskType !== initialType;
 
@@ -232,6 +245,8 @@ export function EditTaskModal({ task, open, onClose }: Props) {
           assignedToUserId: userAssignee,
           assignedTo: contactAssignee,
           priority: priority || null,
+          assignmentSource,
+          assignedByName,
         });
         return;
       }
@@ -248,6 +263,8 @@ export function EditTaskModal({ task, open, onClose }: Props) {
           assignedTo: contactAssignee,
           priority: priority || null,
           seenByClient: taskType === "client_facing",
+          assignmentSource,
+          assignedByName,
         });
         return;
       }
@@ -265,6 +282,8 @@ export function EditTaskModal({ task, open, onClose }: Props) {
         assignedTo: contactAssignee,
         priority: priority || null,
         seenByClient: taskType === "client_facing",
+        assignmentSource,
+        assignedByName,
       });
     } else {
       updateInternal.mutate({
@@ -275,6 +294,8 @@ export function EditTaskModal({ task, open, onClose }: Props) {
         dueDate: dueDate || null,
         assigneeId: userAssignee,
         assigneeContactId: contactAssignee,
+        assignmentSource,
+        assignedByName,
       });
     }
   }
@@ -448,6 +469,42 @@ export function EditTaskModal({ task, open, onClose }: Props) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Assignment Origin */}
+          <div className="space-y-1.5 pt-1">
+            <Label className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+              <span>Assignment Origin</span>
+              <span className="text-[11px] font-normal text-muted-foreground/80">Who assigned this task</span>
+            </Label>
+            <Select value={assignmentSource} onValueChange={(v) => setAssignmentSource(v as any)}>
+              <SelectTrigger className="text-xs h-9 bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manager" className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <Shield className="h-3.5 w-3.5 text-indigo-500" />
+                    <span className="font-medium">Manager</span>
+                    <span className="text-muted-foreground text-[11px]">(Supervisor Assigned)</span>
+                  </span>
+                </SelectItem>
+                <SelectItem value="system_automation" className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <Bot className="h-3.5 w-3.5 text-cyan-500" />
+                    <span className="font-medium">System Automation</span>
+                    <span className="text-muted-foreground text-[11px]">(Triggered Workflow)</span>
+                  </span>
+                </SelectItem>
+                <SelectItem value="employee" className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="font-medium">Team Member</span>
+                    <span className="text-muted-foreground text-[11px]">(Self / Peer Assigned)</span>
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

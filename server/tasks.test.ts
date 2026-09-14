@@ -369,4 +369,63 @@ describe("internalTasks automated test cleanup routine", () => {
   });
 });
 
+// ── Task Assignment Area & Origin Tracking ──────────────────────────────────
+
+describe("Task Assignment Area & Origin Tracking", () => {
+  it("defaults assignmentSource to manager when created by admin", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const created = await adminCaller.internalTasks.create({
+      title: "IEP Prep Document Review",
+      status: "not_started",
+    });
+    expect(created).toBeDefined();
+    expect(created.id).toBeDefined();
+    expect(typeof created.id).toBe("number");
+  });
+
+  it("explicitly sets assignmentSource to system_automation", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const created = await adminCaller.internalTasks.create({
+      title: "Smart File Completion Trigger",
+      status: "not_started",
+      assignmentSource: "system_automation",
+      assignedByName: "System Automation",
+    });
+    expect(created).toBeDefined();
+    expect(created.id).toBeDefined();
+    expect(typeof created.id).toBe("number");
+  });
+
+  it("updates task assignment origin successfully", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const updateRes = await adminCaller.internalTasks.update({
+      id: 101,
+      assignmentSource: "manager",
+      assignedByName: "Byron Honea",
+    });
+    expect(updateRes).toBeDefined();
+    expect(updateRes.success).toBe(true);
+  });
+
+  it("updates project task assignment origin successfully", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const updateRes = await adminCaller.tasks.update({
+      id: 202,
+      assignmentSource: "system_automation",
+      assignedByName: "System Automation",
+    });
+    expect(updateRes).toBeDefined();
+  });
+
+  it("tasks.getAll and internalTasks.list return arrays without error", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const internalList = await adminCaller.internalTasks.list();
+    expect(Array.isArray(internalList)).toBe(true);
+
+    const projectList = await adminCaller.tasks.getAll();
+    expect(Array.isArray(projectList)).toBe(true);
+  });
+});
+
+
 

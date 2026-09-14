@@ -199,6 +199,12 @@ export const projectTasks = mysqlTable("projectTasks", {
   priority: mysqlEnum("priority", ["High", "Medium", "Low"]).default("Medium").notNull(),
   seenByClient: boolean("seenByClient").default(false).notNull(),
   smartFileAssignmentId: int("smartFileAssignmentId"),
+  /** Who assigned the task: "manager" | "system_automation" | "self" | "employee" */
+  assignmentSource: varchar("assignmentSource", { length: 50 }).default("manager"),
+  /** User ID who assigned the task */
+  assignedByUserId: int("assignedByUserId"),
+  /** Display name of the assigner or automation label */
+  assignedByName: varchar("assignedByName", { length: 255 }),
   /** Timestamp when task was first moved to "In Progress" status */
   startedAt: timestamp("startedAt"),
   /** Timestamp when task was marked as "Done" */
@@ -645,6 +651,12 @@ export const internalTasks = mysqlTable("internalTasks", {
   linkedStudentId: int("linkedStudentId"),
   linkedStudentName: varchar("linkedStudentName", { length: 255 }),
   createdBy: int("createdBy").notNull(),
+  /** Who assigned the task: "manager" | "system_automation" | "self" | "employee" */
+  assignmentSource: varchar("assignmentSource", { length: 50 }).default("manager"),
+  /** User ID who assigned the task */
+  assignedByUserId: int("assignedByUserId"),
+  /** Display name of the assigner or automation label */
+  assignedByName: varchar("assignedByName", { length: 255 }),
   /** Timestamp when task was first moved to "in_progress" status */
   startedAt: timestamp("startedAt"),
   /** Timestamp when task was marked as "paused" */

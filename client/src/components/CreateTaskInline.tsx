@@ -15,7 +15,7 @@
  *   - Selecting a team member keeps type as "case"
  */
 import { useState } from "react";
-import { Plus, Loader2, FileText, Users, Briefcase } from "lucide-react";
+import { Plus, Loader2, FileText, Users, Briefcase, Shield, Bot, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import VoiceInput from "@/components/VoiceInput";
@@ -65,6 +65,7 @@ const TYPE_CONFIG: Record<TaskType, { label: string; icon: React.ReactNode; colo
 
 export function CreateTaskInline({ studentContactId, parentContactId, caseId, projectId, onCreated }: Props) {
   const { user } = useAuth();
+  const isOwnerOrAdmin = user?.role === "admin" || (user as any)?.id === 1 || (user as any)?.id === "1";
   const utils = trpc.useUtils();
 
   // When in student context, always start as "case"; otherwise "general"
@@ -73,6 +74,9 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
   const [taskType, setTaskType] = useState<TaskType>(defaultType);
   const [title, setTitle] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
+  const [assignmentSource, setAssignmentSource] = useState<"manager" | "system_automation" | "employee">(
+    isOwnerOrAdmin ? "manager" : "employee"
+  );
   const [priority, setPriority] = useState("Medium");
   const [dueDate, setDueDate] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ? String(projectId) : "");
@@ -121,6 +125,7 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
     if (!projectId) setSelectedProjectId("");
     if (!studentContactId) setSelectedContactId("");
     if (isStudentContext) setTaskType("case");
+    setAssignmentSource(isOwnerOrAdmin ? "manager" : "employee");
   }
 
   /**
@@ -157,6 +162,7 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
         title: title.trim(),
         assigneeId: generalAssigneeId,
         assigneeContactId: generalAssigneeContactId,
+        assignmentSource,
         projectId: selectedProjectId ? parseInt(selectedProjectId) : undefined,
         dueDate: dueDate || undefined,
         status: "not_started",
@@ -192,6 +198,7 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
         priority,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         status: "Todo",
+        assignmentSource,
         assignedTo,
         assignedToUserId,
       });
@@ -414,6 +421,41 @@ export function CreateTaskInline({ studentContactId, parentContactId, caseId, pr
           onChange={(e) => setDueDate(e.target.value)}
           className="text-xs h-8 w-36"
         />
+
+        {/* Assignment Origin */}
+        <Select value={assignmentSource} onValueChange={(v) => setAssignmentSource(v as any)}>
+          <SelectTrigger className="text-xs h-8 w-44 border-border bg-background" title="Assignment Origin">
+            <span className="flex items-center gap-1.5 truncate">
+              {assignmentSource === "manager" && <Shield className="h-3 w-3 text-indigo-500 shrink-0" />}
+              {assignmentSource === "system_automation" && <Bot className="h-3 w-3 text-cyan-500 shrink-0" />}
+              {assignmentSource === "employee" && <UserCheck className="h-3 w-3 text-emerald-500 shrink-0" />}
+              <span>
+                {assignmentSource === "manager" ? "Manager Assigned" :
+                 assignmentSource === "system_automation" ? "System Automation" : "Team Assigned"}
+              </span>
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="manager" className="text-xs">
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5 text-indigo-500" />
+                Manager (Supervisor)
+              </span>
+            </SelectItem>
+            <SelectItem value="system_automation" className="text-xs">
+              <span className="flex items-center gap-1.5">
+                <Bot className="h-3.5 w-3.5 text-cyan-500" />
+                System Automation
+              </span>
+            </SelectItem>
+            <SelectItem value="employee" className="text-xs">
+              <span className="flex items-center gap-1.5">
+                <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                Team / Self-Assigned
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Auto-type indicator when in student context */}
         {isStudentContext && (

@@ -55,6 +55,8 @@ import { ConfirmDeleteTasksDialog, TaskPreviewItem } from "@/components/tasks/Co
 import { TaskDeleteRequestModal, type TaskToDeleteInfo } from "@/components/tasks/TaskDeleteRequestModal";
 import { TaskDeletionReviewModal } from "@/components/tasks/TaskDeletionReviewModal";
 import { PurgeTestTasksDialog } from "@/components/tasks/PurgeTestTasksDialog";
+import { TaskAssignmentBadge } from "@/components/tasks/TaskAssignmentBadge";
+import { TaskAssignmentArea, type AssignmentFilterValue } from "@/components/tasks/TaskAssignmentArea";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Resource = { id: number; label: string; url: string };
@@ -74,6 +76,9 @@ type Task = {
   title: string;
   description: string | null;
   status: "not_started" | "in_progress" | "paused" | "stuck" | "complete";
+  assignmentSource?: string | null;
+  assignedByName?: string | null;
+  assignedByUserId?: number | null;
   projectId: number | null;
   projectName: string | null;
   assigneeId: number | null;
@@ -346,14 +351,26 @@ function TaskRow({
                 Deletion Pending Approval
               </Badge>
             )}
+            {/* Assignment Origin Badge */}
+            <TaskAssignmentBadge
+              source={task.assignmentSource}
+              assignedByName={task.assignedByName}
+              compact
+            />
             {task.projectName && (
               <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded px-1.5 py-0.5 flex items-center gap-1">
                 <FolderOpen className="h-3 w-3" />{task.projectName}
               </span>
             )}
-            {task.assigneeName && (
+            {task.assigneeName ? (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <User className="h-3 w-3" />{task.assigneeName}
+                <User className="h-3 w-3 text-primary/70" />
+                <span className="font-medium text-foreground">{task.assigneeName}</span>
+              </span>
+            ) : (
+              <span className="text-xs text-amber-600/80 italic flex items-center gap-1">
+                <User className="h-3 w-3 text-amber-500" />
+                Unassigned
               </span>
             )}
             {task.dueDate && (
@@ -437,7 +454,7 @@ function TaskRow({
             <Link2 className="h-4 w-4" />
           </button>
           <button
-            onClick={() => setEditPayload({ kind: "internal", id: task.id, title: task.title, description: task.description, status: task.status, assigneeId: task.assigneeId, assigneeContactId: (task as any).assigneeContactId, dueDate: task.dueDate })}
+            onClick={() => setEditPayload({ kind: "internal", id: task.id, title: task.title, description: task.description, status: task.status, assigneeId: task.assigneeId, assigneeContactId: (task as any).assigneeContactId, assignmentSource: (task as any).assignmentSource, assignedByName: (task as any).assignedByName, dueDate: task.dueDate })}
             className="text-muted-foreground hover:text-blue-500 transition-colors"
             title="Edit task"
           >
@@ -548,6 +565,8 @@ type StudentTask = {
   description: string | null;
   status: string | null;
   priority: string | null;
+  assignmentSource?: string | null;
+  assignedByName?: string | null;
   dueDate: Date | null;
   startedAt: Date | null;
   completedAt: Date | null;
@@ -690,8 +709,13 @@ function StudentTaskRow({
               }`}>{task.priority}</span>
             )}
           </div>
-          {/* Metadata bar: source | assignee | due */}
+          {/* Metadata bar: origin | source | assignee | due */}
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <TaskAssignmentBadge
+              source={task.assignmentSource}
+              assignedByName={task.assignedByName}
+              compact
+            />
             {task.projectName && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <FileText className="h-3 w-3 text-amber-500" />
@@ -767,7 +791,7 @@ function StudentTaskRow({
             </button>
           )}
           <button
-            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedToUserId: task.assignedToUserId, assignedTo: task.assignedTo, seenByClient: task.seenByClient, studentContactId: task.studentContactId, description: task.description })}
+            onClick={() => setEditPayload({ kind: "project", id: task.id, title: task.title, status: task.status ?? "Todo", priority: task.priority, dueDate: task.dueDate, assignedToUserId: task.assignedToUserId, assignedTo: task.assignedTo, assignmentSource: (task as any).assignmentSource, assignedByName: (task as any).assignedByName, seenByClient: task.seenByClient, studentContactId: task.studentContactId, description: task.description })}
             className="text-muted-foreground hover:text-blue-500 transition-colors"
             title="Edit task"
           >
@@ -1078,6 +1102,40 @@ export default function Tasks() {
   const testSampleTitles: string[] = (testTasksData?.sampleTitles as string[]) ?? [];
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
 
+  // Assignment Origin filter state
+  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilterValue>("all");
+
+  const allGeneral = tasks as unknown as Task[];
+  const allStudent = studentTasks as unknown as StudentTask[];
+  const combinedTasks = [...allGeneral, ...allStudent];
+
+  const assignmentCounts = {
+    total: combinedTasks.length,
+    manager: combinedTasks.filter((t) => (t.assignmentSource || "manager").toLowerCase() === "manager").length,
+    automation: combinedTasks.filter((t) => (t.assignmentSource || "").toLowerCase() === "system_automation").length,
+    team: combinedTasks.filter((t) => {
+      const s = (t.assignmentSource || "").toLowerCase();
+      return s === "employee" || s === "self";
+    }).length,
+    unassigned: combinedTasks.filter((t) => {
+      const hasAssignee = (t as any).assigneeId || (t as any).assigneeContactId || (t as any).assignedToUserId || (t as any).assignedTo;
+      return !hasAssignee;
+    }).length,
+  };
+
+  const matchesAssignmentFilter = (t: { assignmentSource?: string | null; assigneeId?: number | null; assigneeContactId?: number | null; assignedToUserId?: number | null; assignedTo?: number | null }) => {
+    if (assignmentFilter === "all") return true;
+    if (assignmentFilter === "unassigned") {
+      const hasAssignee = t.assigneeId || t.assigneeContactId || t.assignedToUserId || t.assignedTo;
+      return !hasAssignee;
+    }
+    const source = (t.assignmentSource || "manager").toLowerCase();
+    if (assignmentFilter === "manager") return source === "manager";
+    if (assignmentFilter === "system_automation") return source === "system_automation";
+    if (assignmentFilter === "employee") return source === "employee" || source === "self";
+    return true;
+  };
+
   // Multi-select state
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedGeneralIds, setSelectedGeneralIds] = useState<Set<number>>(new Set());
@@ -1105,8 +1163,8 @@ export default function Tasks() {
     });
   };
 
-  const visibleGeneralTasks = tasks as unknown as Task[];
-  const visibleStudentTasks = studentTasks as StudentTask[];
+  const visibleGeneralTasks = allGeneral.filter(matchesAssignmentFilter);
+  const visibleStudentTasks = allStudent.filter(matchesAssignmentFilter);
   const allVisibleTasksCount = visibleGeneralTasks.length + visibleStudentTasks.length;
 
   const allSelected =
@@ -1282,6 +1340,13 @@ export default function Tasks() {
         <CreateTaskInline />
       </div>
 
+      {/* ── Assignment Origin & Ownership Control Area ── */}
+      <TaskAssignmentArea
+        currentFilter={assignmentFilter}
+        onFilterChange={setAssignmentFilter}
+        counts={assignmentCounts}
+      />
+
       {/* Status filter */}
       <div className="flex gap-1 mb-5 border-b border-border pb-3 flex-wrap">
         {(["all", "not_started", "in_progress", "paused", "stuck", "complete"] as const).map((s) => (
@@ -1300,7 +1365,7 @@ export default function Tasks() {
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold text-foreground">General Tasks</h2>
           <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-            {(tasks as unknown as Task[]).filter((t) => t.status !== "complete").length} open
+            {visibleGeneralTasks.filter((t) => t.status !== "complete").length} open
           </span>
         </div>
         {isOwnerOrAdmin && testTasksCount > 0 && (
@@ -1319,13 +1384,17 @@ export default function Tasks() {
         <div className="space-y-3">
           {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-muted/40 rounded-lg animate-pulse" />)}
         </div>
-      ) : tasks.length === 0 ? (
+      ) : visibleGeneralTasks.length === 0 ? (
         <div className="border border-dashed border-border rounded-lg p-6 text-center">
-          <p className="text-sm text-muted-foreground">No general tasks yet — click "New Task" to create one.</p>
+          <p className="text-sm text-muted-foreground">
+            {assignmentFilter !== "all"
+              ? `No general tasks match the selected assignment origin filter.`
+              : 'No general tasks yet — click "New Task" to create one.'}
+          </p>
         </div>
       ) : (
         <div>
-          {[...(tasks as unknown as Task[])].sort((a, b) => {
+          {[...visibleGeneralTasks].sort((a, b) => {
             if (a.status === "complete" && b.status !== "complete") return 1;
             if (a.status !== "complete" && b.status === "complete") return -1;
             return 0;
@@ -1351,18 +1420,22 @@ export default function Tasks() {
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-base font-semibold text-foreground">Client Facing Tasks</h2>
           <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-            {clientFacingTasks.filter((t) => t.status !== "Done").length} open
+            {clientFacingTasks.filter(matchesAssignmentFilter).filter((t) => t.status !== "Done").length} open
           </span>
         </div>
         {studentTasksLoading ? (
           <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
-        ) : clientFacingTasks.length === 0 ? (
+        ) : clientFacingTasks.filter(matchesAssignmentFilter).length === 0 ? (
           <div className="border border-dashed border-border rounded-lg p-6 text-center">
-            <p className="text-sm text-muted-foreground">No client-facing tasks — assign a task to a client from their Contact Detail page.</p>
+            <p className="text-sm text-muted-foreground">
+              {assignmentFilter !== "all"
+                ? `No client-facing tasks match the selected assignment origin filter.`
+                : 'No client-facing tasks — assign a task to a client from their Contact Detail page.'}
+            </p>
           </div>
         ) : (
           <div>
-            {clientFacingTasks.map((t) => (
+            {clientFacingTasks.filter(matchesAssignmentFilter).map((t) => (
               <StudentTaskRow
                 key={t.id}
                 task={t}
@@ -1383,18 +1456,22 @@ export default function Tasks() {
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-base font-semibold text-foreground">Case Tasks</h2>
           <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-            {caseTasks.filter((t) => t.status !== "Done").length} open
+            {caseTasks.filter(matchesAssignmentFilter).filter((t) => t.status !== "Done").length} open
           </span>
         </div>
         {studentTasksLoading ? (
           <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
-        ) : caseTasks.length === 0 ? (
+        ) : caseTasks.filter(matchesAssignmentFilter).length === 0 ? (
           <div className="border border-dashed border-border rounded-lg p-6 text-center">
-            <p className="text-sm text-muted-foreground">No case tasks yet — create one from a student's Contact Detail page.</p>
+            <p className="text-sm text-muted-foreground">
+              {assignmentFilter !== "all"
+                ? `No case tasks match the selected assignment origin filter.`
+                : "No case tasks yet — create one from a student's Contact Detail page."}
+            </p>
           </div>
         ) : (
           <div>
-            {caseTasks.map((t) => (
+            {caseTasks.filter(matchesAssignmentFilter).map((t) => (
               <StudentTaskRow
                 key={t.id}
                 task={t}

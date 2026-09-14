@@ -55,10 +55,11 @@ export const internalTasksRouter = router({
         const { internalTasks, internalSubtasks, users, projects, contacts } = await import("../../drizzle/schema");
         const tasks = await database.select().from(internalTasks).orderBy(asc(internalTasks.createdAt));
         const subtasks = await database.select().from(internalSubtasks).orderBy(asc(internalSubtasks.sortOrder));
-        const allUsers = await database.select({ id: users.id, name: users.name }).from(users);
+        const allUsers = await database.select({ id: users.id, name: users.name, role: users.role }).from(users);
         const allProjects = await database.select({ id: projects.id, name: projects.name }).from(projects);
         const allContacts = await database.select({ id: contacts.id, firstName: contacts.firstName, lastName: contacts.lastName }).from(contacts);
         const userMap = Object.fromEntries(allUsers.map(u => [u.id, u.name]));
+        const userRoleMap = Object.fromEntries(allUsers.map(u => [u.id, u.role]));
         const projectMap = Object.fromEntries(allProjects.map(p => [p.id, p.name]));
         const contactMap = Object.fromEntries(allContacts.map(c => [c.id, `${c.firstName} ${c.lastName}`]));
         const subtasksByTask = subtasks.reduce((acc, s) => {
@@ -66,17 +67,54 @@ export const internalTasksRouter = router({
           acc[s.taskId].push(s);
           return acc;
         }, {} as Record<number, typeof subtasks>);
-        let result = tasks.map(t => ({
-          ...t,
-          resources: t.resources ? JSON.parse(t.resources) : [],
-          assigneeName: t.assigneeId ? userMap[t.assigneeId] : (t.assigneeContactId ? contactMap[t.assigneeContactId] : null),
-          projectName: t.projectId ? projectMap[t.projectId] : null,
-          subtasks: (subtasksByTask[t.id] || []).map(s => ({
-            ...s,
-            resources: s.resources ? JSON.parse(s.resources) : [],
-            assigneeName: s.assigneeId ? userMap[s.assigneeId] : null,
-          })),
-        }));
+        let result = tasks.map(t => {
+          let source: "manager" | "system_automation" | "self" | "employee" = (t.assignmentSource as any) || "manager";
+          let assignedByName = t.assignedByName;
+          let assignedByUserId = t.assignedByUserId || t.createdBy;
+
+          if (!t.assignmentSource) {
+            const creatorRole = userRoleMap[t.createdBy];
+            const isCreatorAdmin = creatorRole === "admin" || t.createdBy === 1;
+            const lowerTitle = (t.title || "").toLowerCase();
+
+            if (t.createdBy === 0 || lowerTitle.includes("[system test]") || lowerTitle.includes("[automation]")) {
+              source = "system_automation";
+              assignedByName = "System Automation";
+            } else if (isCreatorAdmin) {
+              source = "manager";
+              assignedByName = userMap[t.createdBy] || "Byron Honea";
+            } else if (t.assigneeId === t.createdBy) {
+              source = "self";
+              assignedByName = userMap[t.createdBy] || "Self-Assigned";
+            } else {
+              source = "employee";
+              assignedByName = userMap[t.createdBy] || "Team Member";
+            }
+          } else if (!assignedByName) {
+            if (source === "system_automation") {
+              assignedByName = "System Automation";
+            } else if (assignedByUserId && userMap[assignedByUserId]) {
+              assignedByName = userMap[assignedByUserId];
+            } else if (source === "manager") {
+              assignedByName = "Byron Honea";
+            }
+          }
+
+          return {
+            ...t,
+            assignmentSource: source,
+            assignedByName,
+            assignedByUserId,
+            resources: t.resources ? JSON.parse(t.resources) : [],
+            assigneeName: t.assigneeId ? userMap[t.assigneeId] : (t.assigneeContactId ? contactMap[t.assigneeContactId] : null),
+            projectName: t.projectId ? projectMap[t.projectId] : null,
+            subtasks: (subtasksByTask[t.id] || []).map(s => ({
+              ...s,
+              resources: s.resources ? JSON.parse(s.resources) : [],
+              assigneeName: s.assigneeId ? userMap[s.assigneeId] : null,
+            })),
+          };
+        });
         if (input?.status && input.status !== "all") {
           result = result.filter(t => t.status === input.status);
         }
@@ -94,6 +132,8 @@ export const internalTasksRouter = router({
         projectId: z.number().optional(),
         assigneeId: z.number().optional(),
         assigneeContactId: z.number().optional(),
+        assignmentSource: z.enum(["manager", "system_automation", "self", "employee"]).optional(),
+        assignedByName: z.string().optional(),
         dueDate: z.string().optional(),
         linkedFileId: z.number().optional(),
         linkedFileName: z.string().optional(),
@@ -106,6 +146,10 @@ export const internalTasksRouter = router({
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
         const { internalTasks } = await import("../../drizzle/schema");
+        const isCreatorAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        const defaultSource = input.assignmentSource || (isCreatorAdmin ? "manager" : input.assigneeId === ctx.user.id ? "self" : "employee");
+        const defaultAssignedByName = input.assignedByName || (defaultSource === "manager" ? (ctx.user.name || "Byron Honea") : defaultSource === "system_automation" ? "System Automation" : (ctx.user.name || "Team Member"));
+
         const result = await database.insert(internalTasks).values({
           title: input.title,
           description: input.description,
@@ -113,6 +157,9 @@ export const internalTasksRouter = router({
           projectId: input.projectId,
           assigneeId: input.assigneeId,
           assigneeContactId: input.assigneeContactId,
+          assignmentSource: defaultSource,
+          assignedByUserId: ctx.user.id,
+          assignedByName: defaultAssignedByName,
           dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
           resources: input.resources || "[]",
           linkedFileId: input.linkedFileId,
@@ -136,12 +183,14 @@ export const internalTasksRouter = router({
     update: protectedProcedure
       .input(z.object({
         id: z.number(),
-        title: z.string().min(1).optional(),
+        title: z.string().optional(),
         description: z.string().optional(),
         status: z.enum(["not_started", "in_progress", "paused", "stuck", "complete"]).optional(),
         projectId: z.number().nullable().optional(),
         assigneeId: z.number().nullable().optional(),
         assigneeContactId: z.number().nullable().optional(),
+        assignmentSource: z.enum(["manager", "system_automation", "self", "employee"]).optional(),
+        assignedByName: z.string().optional(),
         dueDate: z.string().nullable().optional(),
         linkedFileId: z.number().nullable().optional(),
         linkedFileName: z.string().nullable().optional(),
@@ -149,7 +198,7 @@ export const internalTasksRouter = router({
         linkedStudentId: z.number().nullable().optional(),
         linkedStudentName: z.string().nullable().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
         const { internalTasks } = await import("../../drizzle/schema");
@@ -159,8 +208,18 @@ export const internalTasksRouter = router({
         if (data.description !== undefined) updateData.description = data.description;
         if (data.status !== undefined) updateData.status = data.status;
         if (data.projectId !== undefined) updateData.projectId = data.projectId;
-        if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
+        if (data.assigneeId !== undefined) {
+          updateData.assigneeId = data.assigneeId;
+          // If assigned by an admin/owner, record as manager assigned
+          if (ctx.user.role === "admin" || ctx.user.id === 1) {
+            updateData.assignmentSource = "manager";
+            updateData.assignedByUserId = ctx.user.id;
+            updateData.assignedByName = ctx.user.name || "Byron Honea";
+          }
+        }
         if (data.assigneeContactId !== undefined) updateData.assigneeContactId = data.assigneeContactId;
+        if (data.assignmentSource !== undefined) updateData.assignmentSource = data.assignmentSource;
+        if (data.assignedByName !== undefined) updateData.assignedByName = data.assignedByName;
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
         if (data.linkedFileId !== undefined) updateData.linkedFileId = data.linkedFileId;
         if (data.linkedFileName !== undefined) updateData.linkedFileName = data.linkedFileName;

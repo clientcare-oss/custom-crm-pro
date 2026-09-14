@@ -345,8 +345,29 @@ export async function getAllTasksForOwner(ownerId?: number) {
       assignedToUserName = contactsMap.get(task.assignedTo) ?? null;
     }
 
+    // Resolve assignmentSource & assignedByName for project tasks
+    let assignmentSource: "manager" | "system_automation" | "self" | "employee" = (task.assignmentSource as any) || "manager";
+    let assignedByName = task.assignedByName;
+    if (!task.assignmentSource) {
+      if (task.smartFileAssignmentId) {
+        assignmentSource = "system_automation";
+        assignedByName = "Smart File Automation";
+      } else {
+        assignmentSource = "manager";
+        assignedByName = "Byron Honea";
+      }
+    } else if (!assignedByName) {
+      if (assignmentSource === "system_automation") {
+        assignedByName = "System Automation";
+      } else if (assignmentSource === "manager") {
+        assignedByName = "Byron Honea";
+      }
+    }
+
     result.push({
       ...task,
+      assignmentSource,
+      assignedByName,
       projectName: proj?.name ?? "",
       clientName: proj?.clientName ?? null,
       assignedToUserName,

@@ -32,12 +32,23 @@ export const tasksRouter = router({
           dueDate: z.date().optional(),
           assignedTo: z.number().optional(),
           assignedToUserId: z.number().optional(),
+          assignmentSource: z.enum(["manager", "system_automation", "self", "employee"]).optional(),
+          assignedByName: z.string().optional(),
           priority: z.string().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
         if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
-        return await db.createTask(input);
+        const isCreatorAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        const defaultSource = input.assignmentSource || (isCreatorAdmin ? "manager" : "employee");
+        const defaultAssignedByName = input.assignedByName || (defaultSource === "manager" ? (ctx.user.name || "Byron Honea") : (ctx.user.name || "Team Member"));
+
+        return await db.createTask({
+          ...input,
+          assignmentSource: defaultSource,
+          assignedByUserId: ctx.user.id,
+          assignedByName: defaultAssignedByName,
+        });
       }),
     update: protectedProcedure
       .input(
@@ -49,6 +60,8 @@ export const tasksRouter = router({
           dueDate: z.date().optional().nullable(),
           assignedTo: z.number().optional().nullable(),
           assignedToUserId: z.number().optional().nullable(),
+          assignmentSource: z.enum(["manager", "system_automation", "self", "employee"]).optional(),
+          assignedByName: z.string().optional(),
           priority: z.string().optional().nullable(),
           seenByClient: z.boolean().optional(),
         })
@@ -56,7 +69,27 @@ export const tasksRouter = router({
       .mutation(async ({ input, ctx }) => {
         if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         const { id, ...data } = input;
-        return await db.updateTask(id, data);
+        const updatePayload: any = { ...data };
+        if (data.assignedToUserId !== undefined || data.assignedTo !== undefined) {
+          if (ctx.user.role === "admin" || ctx.user.id === 1) {
+            updatePayload.assignmentSource = data.assignmentSource || "manager";
+            updatePayload.assignedByUserId = ctx.user.id;
+            updatePayload.assignedByName = ctx.user.name || "Byron Honea";
+          }
+        }
+        if (data.assignmentSource !== undefined) {
+          updatePayload.assignmentSource = data.assignmentSource;
+          if (data.assignmentSource === "manager") {
+            updatePayload.assignedByName = data.assignedByName || (ctx.user.name || "Byron Honea");
+            updatePayload.assignedByUserId = ctx.user.id;
+          } else if (data.assignmentSource === "system_automation") {
+            updatePayload.assignedByName = data.assignedByName || "System Automation";
+            updatePayload.assignedByUserId = null;
+          } else {
+            updatePayload.assignedByName = data.assignedByName || (ctx.user.name || "Team Member");
+          }
+        }
+        return await db.updateTask(id, updatePayload);
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
@@ -93,9 +126,14 @@ export const tasksRouter = router({
         if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         return await db.addTaskStep(input.taskId, input.title);
       }),
-    // Toggle a step complete/incomplete
+    // Toggle a task step completion
     toggleStep: protectedProcedure
-      .input(z.object({ stepId: z.number(), isComplete: z.boolean() }))
+      .input(
+        z.object({
+          stepId: z.number(),
+          isComplete: z.boolean(),
+        })
+      )
       .mutation(async ({ input, ctx }) => {
         if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         return await db.toggleTaskStep(input.stepId, input.isComplete);
@@ -124,6 +162,8 @@ export const tasksRouter = router({
           dueDate: z.date().optional(),
           assignedTo: z.number().optional(),
           assignedToUserId: z.number().optional(),
+          assignmentSource: z.enum(["manager", "system_automation", "self", "employee"]).optional(),
+          assignedByName: z.string().optional(),
           priority: z.string().optional(),
         })
       )
@@ -167,8 +207,25 @@ export const tasksRouter = router({
           projectId = inserted[0]?.id;
         }
         if (!projectId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not resolve project for student" });
-         const { studentContactId, ...taskData } = input;
-        return await db.createTask({ ...taskData, projectId });
+        const { studentContactId, ...taskData } = input;
+        const isCreatorAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        const defaultSource = input.assignmentSource || (isCreatorAdmin ? "manager" : "employee");
+        const defaultAssignedByName = input.assignedByName || (defaultSource === "manager" ? (ctx.user.name || "Byron Honea") : defaultSource === "system_automation" ? "System Automation" : (ctx.user.name || "Team Member"));
+
+        return await db.createTask({
+          projectId,
+          title: input.title,
+          description: input.description,
+          status: input.status || "Todo",
+          dueDate: input.dueDate,
+          assignedTo: input.assignedTo,
+          assignedToUserId: input.assignedToUserId,
+          assignmentSource: defaultSource,
+          assignedByUserId: ctx.user.id,
+          assignedByName: defaultAssignedByName,
+          priority: (input.priority || "Medium") as "High" | "Medium" | "Low",
+          seenByClient: false,
+        });
       }),
     // Convert a task between types: General ↔ Client-Facing ↔ Case
     convertType: adminProcedure
@@ -187,12 +244,18 @@ export const tasksRouter = router({
           assignedToUserId: z.number().optional().nullable(),
           assignedTo: z.number().optional().nullable(),
           priority: z.string().optional().nullable(),
+          assignmentSource: z.enum(["manager", "system_automation", "self", "employee"]).optional(),
+          assignedByName: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
         const { internalTasks, internalSubtasks, projectTasks, projects: projectsTable, contacts: contactsTable } = await import("../../drizzle/schema");
+
+        const isCreatorAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        const resolvedSource = input.assignmentSource || (isCreatorAdmin ? "manager" : "employee");
+        const resolvedAssignedByName = input.assignedByName || (resolvedSource === "manager" ? (ctx.user.name || "Byron Honea") : resolvedSource === "system_automation" ? "System Automation" : (ctx.user.name || "Team Member"));
 
         if (input.fromKind === "internal" && (input.toType === "client_facing" || input.toType === "case")) {
           // General → Client-Facing or Case: delete from internalTasks, insert into projectTasks
@@ -248,6 +311,9 @@ export const tasksRouter = router({
             dueDate: input.dueDate ? new Date(input.dueDate) : null,
             assignedTo: input.assignedTo || null,
             assignedToUserId: input.assignedToUserId || null,
+            assignmentSource: resolvedSource,
+            assignedByName: resolvedAssignedByName,
+            assignedByUserId: ctx.user.id,
             priority: (input.priority || "Medium") as "High" | "Medium" | "Low",
             seenByClient: input.toType === "client_facing",
           });
@@ -267,14 +333,18 @@ export const tasksRouter = router({
             dueDate: input.dueDate ? new Date(input.dueDate) : null,
             assigneeId: input.assignedToUserId || null,
             assigneeContactId: input.assignedTo || null,
+            assignmentSource: resolvedSource,
+            assignedByName: resolvedAssignedByName,
+            assignedByUserId: ctx.user.id,
             createdBy: ctx.user.id,
           });
           return { success: true, converted: "to_internal" };
 
         } else if (input.fromKind === "project" && (input.toType === "client_facing" || input.toType === "case")) {
-          // Client-Facing ↔ Case: just toggle seenByClient
+          // Client-Facing ↔ Case: toggle seenByClient, and update assignment origin if passed
           await database.update(projectTasks).set({
             seenByClient: input.toType === "client_facing",
+            ...(input.assignmentSource ? { assignmentSource: input.assignmentSource, assignedByName: resolvedAssignedByName } : {}),
           }).where(eq(projectTasks.id, input.id));
           return { success: true, converted: "toggled_visibility" };
         }
