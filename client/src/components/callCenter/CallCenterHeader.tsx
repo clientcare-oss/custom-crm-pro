@@ -32,9 +32,8 @@ export function CallCenterHeader({
   onResetSimulation,
 }: CallCenterHeaderProps) {
   const { user } = useAuth();
-  const userName = user?.name || "Wyatt";
-  const userInit = (user?.name ? user.name[0] : "W").toUpperCase();
-  const userRole = user?.role === "admin" ? "Practice Lead" : "Front Desk / Intake";
+  const userName = user?.name || "Byron Honea";
+  const userInit = (user?.name ? user.name[0] : "B").toUpperCase();
 
   return (
     <header className="flex items-center justify-between gap-3 pb-2 border-b border-sky-500/10 w-full">
@@ -90,33 +89,16 @@ export function CallCenterHeader({
           />
         )}
 
-        {/* Employee Profile Pill with Quo Integration Linked */}
+        {/* Employee Profile Pill — solely shows Byron Honea */}
         <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#000821] border border-sky-500/25 shadow-xs whitespace-nowrap h-8">
           <Avatar className="h-6 w-6 rounded-md border border-sky-400/30 bg-[#001035] text-white font-semibold shrink-0">
             <AvatarFallback className="bg-[#001035] text-sky-200 text-[10px] font-bold">
               {userInit}
             </AvatarFallback>
           </Avatar>
-          <div className="flex items-center gap-2 text-left whitespace-nowrap">
-            <span className="text-xs font-semibold text-white whitespace-nowrap">
-              {userName} <span className="text-[10px] text-slate-400 font-normal">({userRole})</span>
-            </span>
-            <span className="text-slate-600">•</span>
-            <button
-              type="button"
-              onClick={onOpenSettings}
-              className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer group whitespace-nowrap leading-none"
-              title="Click to manage Quo integration settings"
-            >
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-              </span>
-              <span className="underline decoration-emerald-500/40 underline-offset-2 group-hover:decoration-emerald-400">
-                Quo Linked
-              </span>
-            </button>
-          </div>
+          <span className="text-xs font-semibold text-white whitespace-nowrap">
+            {userName}
+          </span>
         </div>
 
         {/* 3. Red Developer Bug / Feedback & Issues Button — perfectly aligned on the top line */}
