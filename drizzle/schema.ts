@@ -90,6 +90,8 @@ export const contacts = mysqlTable("contacts", {
   contractStatus: varchar("contractStatus", { length: 50 }).default("Active"), // "Not Started", "Active", "Ending Soon", "Expired", "Renewed"
   assignedAdvocateName: varchar("assignedAdvocateName", { length: 150 }),
   activeWorkstreams: text("activeWorkstreams"), // JSON array of active workstream tags
+  planMonthsRemaining: int("planMonthsRemaining").default(6), // remaining commitment months on active plan
+  planExpiresAt: timestamp("planExpiresAt"), // date plan commitment ends
   // Attorney / Legal representation fields
   attorneyName: varchar("attorneyName", { length: 200 }),
   attorneyPhone: varchar("attorneyPhone", { length: 50 }),
