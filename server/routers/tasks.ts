@@ -59,6 +59,15 @@ export const tasksRouter = router({
       .mutation(async ({ input }) => {
         return await db.deleteTask(input.id);
       }),
+    bulkDelete: adminProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ input }) => {
+        if (input.ids.length === 0) return { success: true, count: 0 };
+        for (const id of input.ids) {
+          await db.deleteTask(id);
+        }
+        return { success: true, count: input.ids.length };
+      }),
     // Add a step to a task
     addStep: adminProcedure
       .input(z.object({ taskId: z.number(), title: z.string().min(1) }))

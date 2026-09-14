@@ -42,10 +42,14 @@ import {
   BookOpen,
   Paperclip,
   FileText,
+  ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import TaskResourcePanel from "@/components/tasks/TaskResourcePanel";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BulkTaskActionBar } from "@/components/tasks/BulkTaskActionBar";
+import { ConfirmDeleteTasksDialog, TaskPreviewItem } from "@/components/tasks/ConfirmDeleteTasksDialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Resource = { id: number; label: string; url: string };
@@ -204,10 +208,16 @@ function TaskRow({
   task,
   users,
   projects,
+  isSelectMode,
+  isSelected,
+  onToggleSelect,
 }: {
   task: Task;
   users: { id: number; name: string }[];
   projects: { id: number; name: string }[];
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
@@ -278,9 +288,23 @@ function TaskRow({
   });
 
   return (
-    <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${isComplete ? "border-green-200 bg-green-50/30" : "border-border bg-card"}`}>
+    <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${
+      isSelected
+        ? "border-primary/70 bg-primary/5 ring-2 ring-primary/40 shadow-sm"
+        : isComplete
+        ? "border-green-200 bg-green-50/30"
+        : "border-border bg-card"
+    }`}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
+        {isSelectMode && (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelect?.(task.id)}
+            className="h-4 w-4 shrink-0 transition-transform data-[state=checked]:scale-110"
+            aria-label={`Select task ${task.title}`}
+          />
+        )}
         <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
@@ -487,7 +511,17 @@ const STUDENT_STATUS_CONFIG: Record<string, { label: string; color: string }> = 
   Done: { label: "Done", color: "bg-green-100 text-green-700 border-green-200" },
 };
 
-function StudentTaskRow({ task }: { task: StudentTask }) {
+function StudentTaskRow({
+  task,
+  isSelectMode,
+  isSelected,
+  onToggleSelect,
+}: {
+  task: StudentTask;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [addingStep, setAddingStep] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState("");
@@ -530,9 +564,21 @@ function StudentTaskRow({ task }: { task: StudentTask }) {
   const deleteStep = trpc.tasks.deleteStep.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
   return (
     <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${
-      isDone ? "border-green-200 bg-green-50/30" : "border-border bg-card"
+      isSelected
+        ? "border-primary/70 bg-primary/5 ring-2 ring-primary/40 shadow-sm"
+        : isDone
+        ? "border-green-200 bg-green-50/30"
+        : "border-border bg-card"
     }`}>
       <div className="flex items-center gap-3 px-4 py-3">
+        {isSelectMode && (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelect?.(task.id)}
+            className="h-4 w-4 shrink-0 transition-transform data-[state=checked]:scale-110"
+            aria-label={`Select task ${task.title}`}
+          />
+        )}
         <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
@@ -891,103 +937,267 @@ export default function Tasks() {
   // Split into client-facing (visible to client) and case tasks (internal only)
   const clientFacingTasks = (studentTasks as StudentTask[]).filter((t) => t.seenByClient);
   const caseTasks = (studentTasks as StudentTask[]).filter((t) => !t.seenByClient);
+
+  // Multi-select state
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedGeneralIds, setSelectedGeneralIds] = useState<Set<number>>(new Set());
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set());
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const totalSelected = selectedGeneralIds.size + selectedProjectIds.size;
+
+  const toggleGeneralTask = (id: number) => {
+    setSelectedGeneralIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleProjectTask = (id: number) => {
+    setSelectedProjectIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const visibleGeneralTasks = tasks as unknown as Task[];
+  const visibleStudentTasks = studentTasks as StudentTask[];
+  const allVisibleTasksCount = visibleGeneralTasks.length + visibleStudentTasks.length;
+
+  const allSelected =
+    allVisibleTasksCount > 0 &&
+    visibleGeneralTasks.every((t) => selectedGeneralIds.has(t.id)) &&
+    visibleStudentTasks.every((t) => selectedProjectIds.has(t.id));
+
+  const selectAll = () => {
+    setSelectedGeneralIds(new Set(visibleGeneralTasks.map((t) => t.id)));
+    setSelectedProjectIds(new Set(visibleStudentTasks.map((t) => t.id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedGeneralIds(new Set());
+    setSelectedProjectIds(new Set());
+  };
+
+  const exitSelectMode = () => {
+    deselectAll();
+    setIsSelectMode(false);
+  };
+
+  const selectedTaskPreviews: TaskPreviewItem[] = [
+    ...visibleGeneralTasks
+      .filter((t) => selectedGeneralIds.has(t.id))
+      .map((t) => ({ id: t.id, title: t.title, kind: "general" as const })),
+    ...visibleStudentTasks
+      .filter((t) => selectedProjectIds.has(t.id))
+      .map((t) => ({ id: t.id, title: t.title, kind: "case" as const })),
+  ];
+
+  const bulkDeleteInternal = trpc.internalTasks.bulkDelete.useMutation();
+  const bulkDeleteTasks = trpc.tasks.bulkDelete.useMutation();
+
+  const handleBatchDelete = async () => {
+    if (totalSelected === 0) return;
+    setIsDeleting(true);
+    try {
+      const generalIds = Array.from(selectedGeneralIds);
+      const projectIds = Array.from(selectedProjectIds);
+
+      const promises: Promise<any>[] = [];
+      if (generalIds.length > 0) {
+        promises.push(bulkDeleteInternal.mutateAsync({ ids: generalIds }));
+      }
+      if (projectIds.length > 0) {
+        promises.push(bulkDeleteTasks.mutateAsync({ ids: projectIds }));
+      }
+
+      await Promise.all(promises);
+      await Promise.all([
+        utils.internalTasks.list.invalidate(),
+        utils.tasks.getAll.invalidate(),
+      ]);
+
+      toast.success(`${totalSelected} task${totalSelected === 1 ? "" : "s"} deleted successfully`);
+      deselectAll();
+      setIsConfirmDeleteOpen(false);
+      setIsSelectMode(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete selected tasks");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{completedTasks}/{totalTasks} tasks complete</p>
-          </div>
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{completedTasks}/{totalTasks} tasks complete</p>
         </div>
-        {/* Unified task creation */}
-        <div className="mb-6">
-          <CreateTaskInline />
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isSelectMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              if (isSelectMode) {
+                exitSelectMode();
+              } else {
+                setIsSelectMode(true);
+              }
+            }}
+            className={`gap-1.5 transition-all shadow-xs ${
+              isSelectMode
+                ? "bg-primary text-primary-foreground font-semibold"
+                : "border-border text-foreground hover:bg-muted"
+            }`}
+          >
+            <ListChecks className="h-4 w-4" />
+            {isSelectMode ? "Exit Select Mode" : "Select Multiple"}
+          </Button>
         </div>
-        {/* Status filter */}
-        <div className="flex gap-1 mb-5 border-b border-border pb-3 flex-wrap">
-          {(["all", "not_started", "in_progress", "paused", "stuck", "complete"] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-            >
-              {s === "all" ? "All" : STATUS_CONFIG[s].label}
-            </button>
+      </div>
+
+      {/* Bulk Action Sticky Bar */}
+      {isSelectMode && (
+        <BulkTaskActionBar
+          totalSelected={totalSelected}
+          totalVisible={allVisibleTasksCount}
+          allSelected={allSelected}
+          onSelectAll={selectAll}
+          onDeselectAll={deselectAll}
+          onOpenDeleteDialog={() => setIsConfirmDeleteOpen(true)}
+          onExitSelectMode={exitSelectMode}
+          isDeleting={isDeleting}
+        />
+      )}
+
+      {/* Unified task creation */}
+      <div className="mb-6">
+        <CreateTaskInline />
+      </div>
+
+      {/* Status filter */}
+      <div className="flex gap-1 mb-5 border-b border-border pb-3 flex-wrap">
+        {(["all", "not_started", "in_progress", "paused", "stuck", "complete"] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+          >
+            {s === "all" ? "All" : STATUS_CONFIG[s].label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Section 1: General Tasks ── */}
+      <div className="flex items-center gap-2 mb-3">
+        <h2 className="text-base font-semibold text-foreground">General Tasks</h2>
+        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+          {(tasks as unknown as Task[]).filter((t) => t.status !== "complete").length} open
+        </span>
+      </div>
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-muted/40 rounded-lg animate-pulse" />)}
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="border border-dashed border-border rounded-lg p-6 text-center">
+          <p className="text-sm text-muted-foreground">No general tasks yet — click "New Task" to create one.</p>
+        </div>
+      ) : (
+        <div>
+          {[...(tasks as unknown as Task[])].sort((a, b) => {
+            if (a.status === "complete" && b.status !== "complete") return 1;
+            if (a.status !== "complete" && b.status === "complete") return -1;
+            return 0;
+          }).map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              users={users}
+              projects={projects}
+              isSelectMode={isSelectMode}
+              isSelected={selectedGeneralIds.has(task.id)}
+              onToggleSelect={toggleGeneralTask}
+            />
           ))}
         </div>
-        {/* ── Section 1: General Tasks ── */}
+      )}
+
+      {/* ── Section 2: Client Facing Tasks ── */}
+      <div className="mt-8">
         <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-base font-semibold text-foreground">General Tasks</h2>
-          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-            {(tasks as unknown as Task[]).filter((t) => t.status !== "complete").length} open
+          <h2 className="text-base font-semibold text-foreground">Client Facing Tasks</h2>
+          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            {clientFacingTasks.filter((t) => t.status !== "Done").length} open
           </span>
         </div>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-muted/40 rounded-lg animate-pulse" />)}
-          </div>
-        ) : tasks.length === 0 ? (
+        {studentTasksLoading ? (
+          <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
+        ) : clientFacingTasks.length === 0 ? (
           <div className="border border-dashed border-border rounded-lg p-6 text-center">
-            <p className="text-sm text-muted-foreground">No general tasks yet — click "New Task" to create one.</p>
+            <p className="text-sm text-muted-foreground">No client-facing tasks — assign a task to a client from their Contact Detail page.</p>
           </div>
         ) : (
           <div>
-            {[...(tasks as unknown as Task[])].sort((a, b) => {
-              if (a.status === "complete" && b.status !== "complete") return 1;
-              if (a.status !== "complete" && b.status === "complete") return -1;
-              return 0;
-            }).map((task) => (
-              <TaskRow key={task.id} task={task} users={users} projects={projects} />
+            {clientFacingTasks.map((t) => (
+              <StudentTaskRow
+                key={t.id}
+                task={t}
+                isSelectMode={isSelectMode}
+                isSelected={selectedProjectIds.has(t.id)}
+                onToggleSelect={toggleProjectTask}
+              />
             ))}
           </div>
         )}
+      </div>
 
-        {/* ── Section 2: Client Facing Tasks ── */}
-        <div className="mt-8">
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-base font-semibold text-foreground">Client Facing Tasks</h2>
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              {clientFacingTasks.filter((t) => t.status !== "Done").length} open
-            </span>
-          </div>
-          {studentTasksLoading ? (
-            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
-          ) : clientFacingTasks.length === 0 ? (
-            <div className="border border-dashed border-border rounded-lg p-6 text-center">
-              <p className="text-sm text-muted-foreground">No client-facing tasks — assign a task to a client from their Contact Detail page.</p>
-            </div>
-          ) : (
-            <div>
-              {clientFacingTasks.map((t) => (
-                <StudentTaskRow key={t.id} task={t} />
-              ))}
-            </div>
-          )}
+      {/* ── Section 3: Case Tasks ── */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-base font-semibold text-foreground">Case Tasks</h2>
+          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+            {caseTasks.filter((t) => t.status !== "Done").length} open
+          </span>
         </div>
-
-        {/* ── Section 3: Case Tasks ── */}
-        <div className="mt-8">
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-base font-semibold text-foreground">Case Tasks</h2>
-            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-              {caseTasks.filter((t) => t.status !== "Done").length} open
-            </span>
+        {studentTasksLoading ? (
+          <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
+        ) : caseTasks.length === 0 ? (
+          <div className="border border-dashed border-border rounded-lg p-6 text-center">
+            <p className="text-sm text-muted-foreground">No case tasks yet — create one from a student's Contact Detail page.</p>
           </div>
-          {studentTasksLoading ? (
-            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-muted/40 rounded-lg animate-pulse" />)}</div>
-          ) : caseTasks.length === 0 ? (
-            <div className="border border-dashed border-border rounded-lg p-6 text-center">
-              <p className="text-sm text-muted-foreground">No case tasks yet — create one from a student's Contact Detail page.</p>
-            </div>
-          ) : (
-            <div>
-              {caseTasks.map((t) => (
-                <StudentTaskRow key={t.id} task={t} />
-              ))}
-            </div>
-          )}
-        </div>
+        ) : (
+          <div>
+            {caseTasks.map((t) => (
+              <StudentTaskRow
+                key={t.id}
+                task={t}
+                isSelectMode={isSelectMode}
+                isSelected={selectedProjectIds.has(t.id)}
+                onToggleSelect={toggleProjectTask}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDeleteTasksDialog
+        open={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={handleBatchDelete}
+        isDeleting={isDeleting}
+        totalSelected={totalSelected}
+        taskPreviews={selectedTaskPreviews}
+      />
     </div>
   );
 }
+

@@ -215,6 +215,19 @@ export const internalTasksRouter = router({
         return { success: true };
       }),
 
+    bulkDelete: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        if (input.ids.length === 0) return { success: true, count: 0 };
+        const { internalTasks, internalSubtasks } = await import("../../drizzle/schema");
+        const { inArray } = await import("drizzle-orm");
+        await database.delete(internalSubtasks).where(inArray(internalSubtasks.taskId, input.ids));
+        await database.delete(internalTasks).where(inArray(internalTasks.id, input.ids));
+        return { success: true, count: input.ids.length };
+      }),
+
     addResource: protectedProcedure
       .input(z.object({
         taskId: z.number(),
