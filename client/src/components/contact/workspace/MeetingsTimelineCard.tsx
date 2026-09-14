@@ -22,6 +22,7 @@ interface MeetingsTimelineCardProps {
   activities: ActivityItem[];
   onPrepMeeting: () => void;
   onViewNotes: () => void;
+  onOpenActivityTimeline?: () => void;
 }
 
 export function MeetingsTimelineCard({
@@ -30,6 +31,7 @@ export function MeetingsTimelineCard({
   activities,
   onPrepMeeting,
   onViewNotes,
+  onOpenActivityTimeline,
 }: MeetingsTimelineCardProps) {
   return (
     <div className="rounded-2xl bg-gradient-to-br from-[#0A1A33] to-[#07162B] border border-[#0E274D] p-5 shadow-lg flex flex-col justify-between">
@@ -42,6 +44,16 @@ export function MeetingsTimelineCard({
               Meetings & Timeline
             </h3>
           </div>
+          {onOpenActivityTimeline && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onOpenActivityTimeline}
+              className="text-xs text-[#F5B544] hover:text-[#FFDF8A] hover:bg-white/[0.06] p-0 h-auto font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <span>Activity Timeline →</span>
+            </Button>
+          )}
         </div>
 
         {/* Next Meeting Box */}

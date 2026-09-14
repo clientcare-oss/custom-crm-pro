@@ -177,10 +177,29 @@ export function StudentWorkspaceTab({
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [noteContent, setNoteContent] = useState("");
 
+  const recordActivityMutation = trpc.caseActivity.create.useMutation({
+    onSuccess: () => {
+      utils.caseActivity.list.invalidate();
+    },
+  });
+
   // Mutations
   const createTaskMutation = trpc.internalTasks.create.useMutation({
     onSuccess: () => {
       toast.success("Action added to case workflow");
+      recordActivityMutation.mutate({
+        studentContactId: contactId,
+        caseId: contact.caseId,
+        eventType: "next_step",
+        title: taskTitle.trim(),
+        description: `Added action item to case workflow for ${fullName}`,
+        whyReason: "Case progression and student advocacy follow-through",
+        ownerName: "Byron Honea",
+        ownerRole: "Advocate",
+        isActionNeeded: true,
+        categoryColor: "yellow",
+        nextStepAction: taskTitle.trim(),
+      });
       setShowAddTaskModal(false);
       setTaskTitle("");
       setTaskDueDate("");
@@ -192,6 +211,18 @@ export function StudentWorkspaceTab({
   const createNoteMutation = trpc.notes.create.useMutation({
     onSuccess: () => {
       toast.success("Internal strategy note saved (Waypoint-only)");
+      recordActivityMutation.mutate({
+        studentContactId: contactId,
+        caseId: contact.caseId,
+        eventType: "strategy_decision",
+        title: "Internal Strategy Note Logged",
+        description: noteContent.slice(0, 160) + (noteContent.length > 160 ? "..." : ""),
+        whyReason: "Advocate strategy alignment and case planning",
+        ownerName: "Byron Honea",
+        ownerRole: "Advocate",
+        sources: [{ type: "note", label: "Advocate note" }],
+        categoryColor: "amber",
+      });
       setShowAddNoteModal(false);
       setNoteContent("");
       utils.notes.list.invalidate({ projectId: defaultProjectId });
@@ -239,7 +270,7 @@ export function StudentWorkspaceTab({
         onSwitchTab("files");
         break;
       case "timeline-builder":
-        toast.info(`Launching Timeline Builder for ${fullName}...`);
+        onSwitchTab("activity-timeline");
         break;
       default:
         toast.info(`Launching ${toolKey} for ${fullName}...`);
@@ -271,8 +302,20 @@ export function StudentWorkspaceTab({
           toast.success("504 path initialized for " + fullName);
         }}
         onRequestEvaluation={() => {
-          toast.info("Evaluation request workflow opened");
-          onSwitchTab("tasks");
+          recordActivityMutation.mutate({
+            studentContactId: contactId,
+            caseId: contact.caseId,
+            eventType: "evaluation_request",
+            title: "Evaluation Request Initiated",
+            description: `Formal evaluation request initiated in student workspace for ${fullName}.`,
+            whyReason: "Concerns regarding academic performance and procedural safeguard timelines.",
+            ownerName: "Byron Honea",
+            ownerRole: "Advocate",
+            sources: [{ type: "email", label: "Evaluation Request Letter" }],
+            categoryColor: "blue",
+          });
+          toast.info("Evaluation request workflow recorded to Activity Timeline");
+          onSwitchTab("activity-timeline");
         }}
         onUploadDocument={() => onSwitchTab("files")}
         onCreateBlueprint={() => {
@@ -342,6 +385,7 @@ export function StudentWorkspaceTab({
               onSwitchTab("appointments");
             }}
             onViewNotes={() => onSwitchTab("notes")}
+            onOpenActivityTimeline={() => onSwitchTab("activity-timeline")}
           />
         </div>
       </div>

@@ -81,6 +81,7 @@ export {
 };
 
 export * from "./db/giving";
+export * from "./db/caseActivity";
 
 // ============ CONTACTS ============
 // Contact functions are imported and re-exported from ./db/contacts

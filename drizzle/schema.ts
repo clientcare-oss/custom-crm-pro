@@ -1852,4 +1852,33 @@ export const pipelineSavedViews = mysqlTable("pipeline_saved_views", {
 export type PipelineSavedView = typeof pipelineSavedViews.$inferSelect;
 export type InsertPipelineSavedView = typeof pipelineSavedViews.$inferInsert;
 
+// ── Student Workspace Activity Timeline (PG-030) ──────────────────────────────
+export const caseActivityTimeline = mysqlTable("case_activity_timeline", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("studentContactId").notNull(),
+  caseId: varchar("caseId", { length: 50 }),
+  eventType: varchar("eventType", { length: 50 }).notNull(), // "evaluation_request", "strategy_decision", "client_contact", "school_response", "next_step", "consultation", "meeting", "note", "general"
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  whyReason: text("whyReason"), // "Why did it happen?" rationale
+  ownerName: varchar("ownerName", { length: 200 }).notNull(),
+  ownerRole: varchar("ownerRole", { length: 100 }).default("Staff"),
+  sources: text("sources"), // JSON array of { type, label, url?, excerpt?, id? }
+  quoteText: text("quoteText"), // Verbatim callout excerpt
+  nextStepAction: varchar("nextStepAction", { length: 255 }),
+  isActionNeeded: boolean("isActionNeeded").default(false),
+  isCompleted: boolean("isCompleted").default(false),
+  categoryColor: varchar("categoryColor", { length: 50 }).default("blue"), // "blue", "teal", "amber", "purple", "cyan", "yellow"
+  eventDate: timestamp("eventDate").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  studentContactIdIdx: index("case_activity_studentContactId_idx").on(t.studentContactId),
+  eventTypeIdx: index("case_activity_eventType_idx").on(t.eventType),
+  eventDateIdx: index("case_activity_eventDate_idx").on(t.eventDate),
+}));
+
+export type CaseActivityTimelineItem = typeof caseActivityTimeline.$inferSelect;
+export type InsertCaseActivityTimelineItem = typeof caseActivityTimeline.$inferInsert;
+
 

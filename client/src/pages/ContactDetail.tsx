@@ -21,7 +21,7 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap, Home } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap, Home, Milestone } from "lucide-react";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
@@ -40,6 +40,7 @@ import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 import ClientCallControls from "@/components/quo/ClientCallControls";
 import CallLogsWithCallback from "@/components/quo/CallLogsWithCallback";
 import { StudentWorkspaceTab } from "@/components/contact/workspace/StudentWorkspaceTab";
+import { ActivityTimeline } from "@/components/contact/workspace/ActivityTimeline";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -1377,12 +1378,12 @@ function StudentTabs({
 
   const row1Items: TabItem[] = [
     { value: "workspace", label: "Workspace", icon: Home },
+    { value: "activity-timeline", label: "Activity Timeline", icon: Milestone },
     { value: "voyage-log", label: "Voyage Log", icon: Video },
     { value: "activity", label: "Communication", icon: MessageSquare },
     { value: "tasks", label: "Tasks", icon: CheckSquare },
     { value: "notes", label: "Notes", icon: FileText },
     { value: "files", label: "Files", icon: Folder },
-    { value: "details", label: "Details", icon: Info },
   ];
 
   const row2Items: TabItem[] = [
@@ -1392,6 +1393,7 @@ function StudentTabs({
     { value: "financials", label: "Billing", icon: DollarSign, count: invoices.length },
     { value: "appointments", label: "Appts", icon: Calendar, count: appointments.length },
     { value: "time-tracker", label: "Time", icon: Timer },
+    { value: "details", label: "Details", icon: Info },
   ];
 
   const triggerClass =
@@ -1460,6 +1462,11 @@ function StudentTabs({
           onUpdatePlanType={onUpdatePlanType}
           calculatedAge={calculatedAge}
         />
+      </TabsContent>
+
+      {/* 2. ACTIVITY TIMELINE TAB (COMPLETE CASE HISTORY & ASK CASE HISTORY) */}
+      <TabsContent value="activity-timeline" className="mt-4">
+        <ActivityTimeline contact={contact} onSwitchTab={setActiveTab} />
       </TabsContent>
 
       {/* COMPASS TAB */}

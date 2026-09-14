@@ -52,8 +52,10 @@ import { feedbackRouter } from "./routers/feedback";
 import { firstMateRouter } from "./routers/firstMate";
 import { quoRouter } from "./routers/quo";
 import { pipelineRouter } from "./routers/pipeline";
+import { caseActivityRouter } from "./routers/caseActivity";
 
 export const appRouter = router({
+  caseActivity: caseActivityRouter,
   pipeline: pipelineRouter,
   firstMate: firstMateRouter,
   feedback: feedbackRouter,
