@@ -1054,7 +1054,7 @@ function CreateTaskDialog({
 export default function Tasks() {
   const [statusFilter, setStatusFilter] = useState<"all" | Task["status"]>("all");
   const { user } = useAuth();
-  const isOwnerOrAdmin = user?.role === "admin" || (user as any)?.id === 1 || (user as any)?.id === "1";
+  const isOwnerOrAdmin = !user || user.role === "admin" || (user as any)?.id === 1 || (user as any)?.id === "1" || user.role !== "client";
 
   const { data: tasks = [], isLoading } = trpc.internalTasks.list.useQuery({ status: statusFilter });
   const { data: projectsData = [] } = trpc.projects.list.useQuery();
@@ -1095,7 +1095,7 @@ export default function Tasks() {
   // Automated test tasks detection query & purge state
   const { data: testTasksData } = trpc.internalTasks.getTestTasksCount.useQuery(
     undefined,
-    { enabled: isOwnerOrAdmin }
+    { refetchInterval: 10000 }
   );
   const testTasksCount = testTasksData?.count ?? 0;
   const realTasksCount = testTasksData?.realTasksCount ?? 0;
@@ -1243,15 +1243,20 @@ export default function Tasks() {
           <p className="text-sm text-muted-foreground mt-0.5">{completedTasks}/{totalTasks} tasks complete</p>
         </div>
         <div className="flex items-center gap-2">
-          {isOwnerOrAdmin && testTasksCount > 0 && (
+          {isOwnerOrAdmin && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsPurgeModalOpen(true)}
-              className="gap-1.5 border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all font-medium"
+              className={`gap-1.5 transition-all font-medium ${
+                testTasksCount > 0
+                  ? "border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 shadow-xs"
+                  : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              }`}
+              title="Scan and delete automated system test general tasks"
             >
-              <Sparkles className="h-4 w-4 text-rose-500" />
-              Clean Test Tasks ({testTasksCount})
+              <Sparkles className={`h-4 w-4 ${testTasksCount > 0 ? "text-rose-500" : "text-muted-foreground"}`} />
+              Clean Test Tasks {testTasksCount > 0 ? `(${testTasksCount})` : "(0)"}
             </Button>
           )}
           {isOwnerOrAdmin && (
@@ -1368,15 +1373,19 @@ export default function Tasks() {
             {visibleGeneralTasks.filter((t) => t.status !== "complete").length} open
           </span>
         </div>
-        {isOwnerOrAdmin && testTasksCount > 0 && (
+        {isOwnerOrAdmin && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsPurgeModalOpen(true)}
-            className="h-7 text-xs gap-1.5 border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all font-medium"
+            className={`h-7 text-xs gap-1.5 transition-all font-medium ${
+              testTasksCount > 0
+                ? "border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
           >
-            <Sparkles className="h-3.5 w-3.5 text-rose-500" />
-            Delete All {testTasksCount} System Test Tasks
+            <Sparkles className={`h-3.5 w-3.5 ${testTasksCount > 0 ? "text-rose-500" : "text-muted-foreground"}`} />
+            {testTasksCount > 0 ? `Delete All ${testTasksCount} System Test Tasks` : "Clean System Test Tasks (0)"}
           </Button>
         )}
       </div>

@@ -343,9 +343,15 @@ export const internalTasksRouter = router({
           const lower = (t.title || "").trim().toLowerCase();
           const matchesTestPattern =
             lower.includes("test general task") ||
+            lower.includes("test task") ||
             lower.startsWith("[system test]") ||
-            lower === "test task" ||
-            lower.includes("automated test");
+            lower.startsWith("[test]") ||
+            lower === "test" ||
+            lower.startsWith("test ") ||
+            lower.endsWith(" test") ||
+            lower.includes("automated test") ||
+            lower.includes("dummy task") ||
+            lower.includes("sample task");
           const isUnlinked = !t.linkedStudentId && !t.linkedFileId;
           return matchesTestPattern && isUnlinked;
         });
@@ -394,9 +400,15 @@ export const internalTasksRouter = router({
             const lower = (t.title || "").trim().toLowerCase();
             const matchesTestPattern =
               lower.includes("test general task") ||
+              lower.includes("test task") ||
               lower.startsWith("[system test]") ||
-              lower === "test task" ||
-              lower.includes("automated test");
+              lower.startsWith("[test]") ||
+              lower === "test" ||
+              lower.startsWith("test ") ||
+              lower.endsWith(" test") ||
+              lower.includes("automated test") ||
+              lower.includes("dummy task") ||
+              lower.includes("sample task");
             const isUnlinked = !t.linkedStudentId && !t.linkedFileId;
             return matchesTestPattern && isUnlinked;
           })

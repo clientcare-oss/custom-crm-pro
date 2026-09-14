@@ -93,32 +93,46 @@ export function PurgeTestTasksDialog({
             </div>
           </div>
 
-          {/* Sample preview */}
-          {sampleTitles.length > 0 && (
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-muted-foreground">
-                Matching test titles detected:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {sampleTitles.map((title, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono bg-muted text-muted-foreground border border-border"
-                  >
-                    &ldquo;{title}&rdquo;
-                  </span>
-                ))}
+          {testTasksCount === 0 ? (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-900 dark:text-emerald-200 space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-sm text-emerald-700 dark:text-emerald-300">
+                <ShieldCheck className="h-4 w-4" />
+                No System Test Tasks Found
               </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                All tasks currently in your database are active human operational or client case tasks ({realTasksCount} tasks). There are no automated test tasks requiring deletion.
+              </p>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Sample preview */}
+              {sampleTitles.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Matching test titles detected:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sampleTitles.map((title, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono bg-muted text-muted-foreground border border-border"
+                      >
+                        &ldquo;{title}&rdquo;
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* Destructive Warning */}
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive font-medium flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span>
-              This will permanently delete all {testTasksCount} test general tasks and their child steps.
-            </span>
-          </div>
+              {/* Destructive Warning */}
+              <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive font-medium flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>
+                  This will permanently delete all {testTasksCount} test general tasks and their child steps.
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
@@ -140,6 +154,11 @@ export function PurgeTestTasksDialog({
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Deleting {testTasksCount} Test Tasks...
+              </>
+            ) : testTasksCount === 0 ? (
+              <>
+                <ShieldCheck className="h-4 w-4" />
+                No Test Tasks to Delete
               </>
             ) : (
               <>
