@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import {
   Calendar,
+  CalendarCheck,
   Phone,
   CheckSquare,
   Users,
@@ -65,6 +66,7 @@ interface TimeOffRequest {
   type: string;
   startDate: string;
   endDate: string;
+  returnDate?: string;
   days: number;
   status: "Approved" | "Pending" | "Denied";
   notes?: string;
@@ -77,6 +79,7 @@ const DEFAULT_TIME_OFF: TimeOffRequest[] = [
     type: "Vacation",
     startDate: "Oct 10, 2026",
     endDate: "Oct 12, 2026",
+    returnDate: "Oct 13, 2026",
     days: 3,
     status: "Approved",
     notes: "Fall family trip",
@@ -87,6 +90,7 @@ const DEFAULT_TIME_OFF: TimeOffRequest[] = [
     type: "Personal",
     startDate: "Nov 26, 2026",
     endDate: "Nov 28, 2026",
+    returnDate: "Nov 30, 2026",
     days: 3,
     status: "Approved",
     notes: "Thanksgiving holiday",
@@ -97,6 +101,7 @@ const DEFAULT_TIME_OFF: TimeOffRequest[] = [
     type: "Training / Conference",
     startDate: "Dec 22, 2026",
     endDate: "Dec 23, 2026",
+    returnDate: "Dec 24, 2026",
     days: 2,
     status: "Pending",
     notes: "National Special Ed Advocacy Summit",
@@ -131,6 +136,7 @@ export default function CrewQuarters() {
     type: "Vacation",
     startDate: "",
     endDate: "",
+    returnDate: "",
     notes: "",
   });
 
@@ -155,12 +161,17 @@ export default function CrewQuarters() {
       toast.error("Please provide both start and end dates.");
       return;
     }
+    if (!timeOffForm.returnDate) {
+      toast.error("Please specify when will be your first day back on the job after leave.");
+      return;
+    }
 
     const newReq: TimeOffRequest = {
       id: `to-${Date.now()}`,
       type: timeOffForm.type,
       startDate: timeOffForm.startDate,
       endDate: timeOffForm.endDate,
+      returnDate: timeOffForm.returnDate,
       days: 1,
       status: "Pending",
       notes: timeOffForm.notes,
@@ -175,7 +186,7 @@ export default function CrewQuarters() {
 
     toast.success("Time off request submitted to management for review!");
     setTimeOffModalOpen(false);
-    setTimeOffForm({ type: "Vacation", startDate: "", endDate: "", notes: "" });
+    setTimeOffForm({ type: "Vacation", startDate: "", endDate: "", returnDate: "", notes: "" });
   };
 
   // Derive employee details
@@ -664,18 +675,30 @@ export default function CrewQuarters() {
                 Upcoming Time Off
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
-                  <span className="font-semibold text-white">Oct 10, 2025</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
-                    Approved
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
-                  <span className="font-semibold text-white">Nov 26 – Nov 28, 2025</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
-                    Approved
-                  </span>
-                </div>
+                {timeOffRequests.filter((r) => r.status === "Approved").length === 0 ? (
+                  <div className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs text-blue-300/70 text-center">
+                    No approved upcoming leave scheduled.
+                  </div>
+                ) : (
+                  timeOffRequests.filter((r) => r.status === "Approved").slice(0, 2).map((r) => (
+                    <div key={r.id} className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-white">
+                          {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
+                          Approved
+                        </span>
+                      </div>
+                      {r.returnDate && (
+                        <div className="text-[10px] text-amber-300/90 mt-1 flex items-center gap-1">
+                          <CalendarCheck className="w-3 h-3 text-amber-400 shrink-0" />
+                          <span>First day back: <strong className="text-amber-200">{r.returnDate}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -684,12 +707,30 @@ export default function CrewQuarters() {
               <div className="text-[11px] font-semibold text-blue-300/80 uppercase tracking-wider">
                 Pending Requests
               </div>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
-                <span className="font-semibold text-white">Dec 22, 2025</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
-                  Pending
-                </span>
-              </div>
+              {timeOffRequests.filter((r) => r.status === "Pending").length === 0 ? (
+                <div className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs text-blue-300/70 text-center">
+                  No requests currently pending review.
+                </div>
+              ) : (
+                timeOffRequests.filter((r) => r.status === "Pending").slice(0, 2).map((r) => (
+                  <div key={r.id} className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-white">
+                        {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
+                        Pending
+                      </span>
+                    </div>
+                    {r.returnDate && (
+                      <div className="text-[10px] text-amber-300/90 mt-1 flex items-center gap-1">
+                        <CalendarCheck className="w-3 h-3 text-amber-400 shrink-0" />
+                        <span>First day back: <strong className="text-amber-200">{r.returnDate}</strong></span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -1061,6 +1102,12 @@ export default function CrewQuarters() {
                       <div>
                         <div className="font-bold text-white">{r.type}</div>
                         <div className="text-[10px] text-blue-300/80">{r.startDate} — {r.endDate}</div>
+                        {r.returnDate && (
+                          <div className="text-[10px] text-amber-300/90 font-medium flex items-center gap-1 mt-0.5">
+                            <CalendarCheck className="w-3 h-3 text-amber-400 shrink-0" />
+                            <span>First day back: <strong className="text-amber-200">{r.returnDate}</strong></span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
                         <Button
@@ -1190,6 +1237,7 @@ export default function CrewQuarters() {
                   value={timeOffForm.startDate}
                   onChange={(e) => setTimeOffForm({ ...timeOffForm, startDate: e.target.value })}
                   className="bg-blue-950/80 border-blue-800/80 text-white rounded-xl text-xs"
+                  required
                 />
               </div>
               <div className="space-y-1.5">
@@ -1199,8 +1247,30 @@ export default function CrewQuarters() {
                   value={timeOffForm.endDate}
                   onChange={(e) => setTimeOffForm({ ...timeOffForm, endDate: e.target.value })}
                   className="bg-blue-950/80 border-blue-800/80 text-white rounded-xl text-xs"
+                  required
                 />
               </div>
+            </div>
+
+            {/* Explicit First Day Back Question */}
+            <div className="space-y-2 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3">
+              <div className="flex items-center gap-2">
+                <CalendarCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <Label htmlFor="returnDateInput" className="text-xs text-amber-200 font-semibold leading-snug">
+                  When will be your first day back on job after leave?
+                </Label>
+              </div>
+              <Input
+                id="returnDateInput"
+                type="date"
+                value={timeOffForm.returnDate}
+                onChange={(e) => setTimeOffForm({ ...timeOffForm, returnDate: e.target.value })}
+                className="bg-blue-950/90 border-amber-400/40 text-white rounded-xl text-xs focus-visible:ring-amber-400/50"
+                required
+              />
+              <p className="text-[11px] text-amber-300/80">
+                Confirms the exact morning you will resume caseload duties and client communications.
+              </p>
             </div>
 
             <div className="space-y-1.5">
