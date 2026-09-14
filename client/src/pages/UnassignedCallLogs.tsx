@@ -310,6 +310,31 @@ export default function UnassignedCallLogs() {
         </Button>
       </div>
 
+      {/* Operational Activity Deck (3 Cards: Needs Attention, Today's Schedule, Voicemails) */}
+      <BottomOperationalDeck
+        onCallNumber={handleDirectCallPhone}
+        onOpenSchedule={() => {
+          window.location.href = "/calendar";
+        }}
+        onViewAllVoicemails={() => {
+          toast.info("Filtering to all voicemails");
+        }}
+        onViewAllNeedsAttention={() => {
+          toast.info("Viewing all priority items");
+        }}
+        onCreateLeadFromVoicemail={(phone, summary) => {
+          startCall({
+            callerCategory: "new_lead",
+            callType: "New Lead / Sales",
+            callerInfo: { name: "Inbound Voicemail", phone },
+            generalNotes: `Inbound Voicemail:\n"${summary}"`,
+          });
+          toast.success("Voicemail loaded into Call Workspace");
+          const el = document.getElementById("call-workspace");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+      />
+
       {/* Main Workspace Layout with Optional First Mate Assist Side Panel */}
       <div className={`grid grid-cols-1 ${showFirstMateAssist ? "xl:grid-cols-3" : "grid-cols-1"} gap-6 items-start`}>
         {/* Main Operational Call Workspace (Directly below Phone Call Window) */}
@@ -366,31 +391,6 @@ export default function UnassignedCallLogs() {
           }}
         />
       </div>
-
-      {/* Bottom Operational Deck (3 Cards: Needs Attention, Today's Schedule, Voicemails) */}
-      <BottomOperationalDeck
-        onCallNumber={handleDirectCallPhone}
-        onOpenSchedule={() => {
-          window.location.href = "/calendar";
-        }}
-        onViewAllVoicemails={() => {
-          toast.info("Filtering to all voicemails");
-        }}
-        onViewAllNeedsAttention={() => {
-          toast.info("Viewing all priority items");
-        }}
-        onCreateLeadFromVoicemail={(phone, summary) => {
-          startCall({
-            callerCategory: "new_lead",
-            callType: "New Lead / Sales",
-            callerInfo: { name: "Inbound Voicemail", phone },
-            generalNotes: `Inbound Voicemail:\n"${summary}"`,
-          });
-          toast.success("Voicemail loaded into Call Workspace");
-          const el = document.getElementById("call-workspace");
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
-      />
 
       {/* Modal: Open Quo Phone */}
       <OpenQuoPhoneModal
