@@ -256,25 +256,28 @@ export default function CrewQuarters() {
 
             {/* Date & Day Badge */}
             <div className="flex items-center gap-3 bg-[#0A1F3B]/80 backdrop-blur-md border border-blue-700/50 rounded-2xl p-3 shadow-lg">
-              <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30">
+              <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0">
                 <Calendar className="w-5 h-5" />
               </div>
-              <div className="pr-2">
-                <div className="text-xs font-bold text-white">
-                  {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+              <div className="flex items-center gap-2.5 pr-2">
+                <span className="text-2xl sm:text-3xl font-black text-white font-mono leading-none">
+                  {new Date().getDate()}
+                </span>
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-bold text-white leading-tight">
+                    {new Date().toLocaleDateString(undefined, { weekday: "long" })}
+                  </span>
+                  <span className="text-[11px] font-medium text-blue-200/90 leading-tight">
+                    {new Date().toLocaleDateString(undefined, { month: "short" })}
+                  </span>
                 </div>
-                <div className="text-[10px] text-blue-300 font-medium">Make it a great day.</div>
               </div>
 
-              {/* Employee Avatar */}
-              <div className="pl-3 border-l border-blue-800/60 flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-bold flex items-center justify-center text-sm shadow-md ring-2 ring-amber-400/30">
-                  {userInitials}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <div className="text-xs font-bold text-white truncate max-w-[130px]">{employeeName}</div>
-                  <div className="text-[10px] text-amber-300/90 font-medium truncate max-w-[130px]">{employeeRole}</div>
-                </div>
+              {/* Employee Name */}
+              <div className="pl-3.5 border-l border-blue-800/60 flex items-center">
+                <span className="text-sm font-bold text-white tracking-wide whitespace-nowrap">
+                  {employeeName}
+                </span>
               </div>
             </div>
           </div>
