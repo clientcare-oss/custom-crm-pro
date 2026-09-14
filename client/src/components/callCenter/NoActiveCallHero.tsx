@@ -1,12 +1,13 @@
 import React from "react";
-import { Headset, ExternalLink, Sparkles } from "lucide-react";
+import { Headset, ExternalLink, Sparkles, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NoActiveCallHeroProps {
   onOpenQuoPhone: () => void;
+  onOpenCallWorkspace?: () => void;
 }
 
-export function NoActiveCallHero({ onOpenQuoPhone }: NoActiveCallHeroProps) {
+export function NoActiveCallHero({ onOpenQuoPhone, onOpenCallWorkspace }: NoActiveCallHeroProps) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#000821] via-[#001035] to-[#000821] border border-sky-500/25 p-5 sm:p-6 text-center shadow-lg">
       {/* Background Nautical Bathymetric Ocean Wave SVG */}
@@ -61,8 +62,8 @@ export function NoActiveCallHero({ onOpenQuoPhone }: NoActiveCallHeroProps) {
           Use Quo to place or receive calls. Work callbacks, voicemails, and lead follow-up from here.
         </p>
 
-        {/* Primary Gold Action Button */}
-        <div className="mt-3.5 sm:mt-4">
+        {/* Primary Gold Action Button & Workspace Launcher */}
+        <div className="mt-3.5 sm:mt-4 flex items-center justify-center gap-3 flex-wrap">
           <Button
             asChild
             className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-5 py-2 h-auto rounded-xl shadow-[0_4px_16px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_22px_rgba(245,158,11,0.5)] transition-all transform hover:-translate-y-0.5 gap-2 text-xs sm:text-sm cursor-pointer"
@@ -80,6 +81,17 @@ export function NoActiveCallHero({ onOpenQuoPhone }: NoActiveCallHeroProps) {
               Open Quo Phone
             </a>
           </Button>
+
+          {onOpenCallWorkspace && (
+            <Button
+              variant="outline"
+              onClick={onOpenCallWorkspace}
+              className="bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border-sky-500/30 font-bold px-5 py-2 h-auto rounded-xl gap-2 text-xs sm:text-sm cursor-pointer transition-all"
+            >
+              <PhoneCall className="h-3.5 w-3.5 text-amber-400" />
+              Open Call Workspace
+            </Button>
+          )}
         </div>
       </div>
     </div>

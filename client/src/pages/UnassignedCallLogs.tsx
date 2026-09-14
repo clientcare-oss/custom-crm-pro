@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles } from "lucide-react";
+import { Sparkles, PhoneCall, ChevronUp } from "lucide-react";
 import { useActiveCall } from "@/contexts/ActiveCallContext";
 
 // Subcomponents
@@ -48,6 +48,7 @@ export default function UnassignedCallLogs() {
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFirstMateAssist, setShowFirstMateAssist] = useState(false);
+  const [showCallWorkspace, setShowCallWorkspace] = useState(false);
 
   // SMS Dialog State
   const [smsContact, setSmsContact] = useState<{ id: number; name: string; phone: string } | null>(null);
@@ -281,8 +282,11 @@ export default function UnassignedCallLogs() {
         ) : call.isActive ? (
           <ResumeCallHero
             onResumeCall={() => {
-              const el = document.getElementById("call-workspace");
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              setShowCallWorkspace(true);
+              setTimeout(() => {
+                const el = document.getElementById("call-workspace");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 100);
             }}
           />
         ) : (
@@ -293,21 +297,15 @@ export default function UnassignedCallLogs() {
               } catch {}
               toast.success("Opening Quo desktop app...");
             }}
+            onOpenCallWorkspace={() => {
+              setShowCallWorkspace(true);
+              setTimeout(() => {
+                const el = document.getElementById("call-workspace");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 100);
+            }}
           />
         )}
-      </div>
-
-      {/* Toggle Bar for Optional Live AI First Mate Panel */}
-      <div className="flex items-center justify-end">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowFirstMateAssist(!showFirstMateAssist)}
-          className="text-xs text-sky-400 hover:text-sky-300 hover:bg-sky-950/40 rounded-xl"
-        >
-          <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
-          {showFirstMateAssist ? "Hide First Mate Live Assist" : "Show First Mate Live Assist"}
-        </Button>
       </div>
 
       {/* Operational Activity Deck (3 Cards: Needs Attention, Today's Schedule, Voicemails) */}
@@ -323,6 +321,7 @@ export default function UnassignedCallLogs() {
           toast.info("Viewing all priority items");
         }}
         onCreateLeadFromVoicemail={(phone, summary) => {
+          setShowCallWorkspace(true);
           startCall({
             callerCategory: "new_lead",
             callType: "New Lead / Sales",
@@ -330,37 +329,111 @@ export default function UnassignedCallLogs() {
             generalNotes: `Inbound Voicemail:\n"${summary}"`,
           });
           toast.success("Voicemail loaded into Call Workspace");
-          const el = document.getElementById("call-workspace");
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          setTimeout(() => {
+            const el = document.getElementById("call-workspace");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 100);
         }}
       />
 
-      {/* Main Workspace Layout with Optional First Mate Assist Side Panel */}
-      <div className={`grid grid-cols-1 ${showFirstMateAssist ? "xl:grid-cols-3" : "grid-cols-1"} gap-6 items-start`}>
-        {/* Main Operational Call Workspace (Directly below Phone Call Window) */}
-        <div className={showFirstMateAssist ? "xl:col-span-2 space-y-6" : "space-y-6"}>
-          <CallWorkspace
-            onAddNewContactRequest={() => setShowAddContactModal(true)}
-            onCallInQuo={(phone, name) => handleDirectCallPhone(phone, name)}
-          />
+      {/* Operational Call Workspace Bar & Toggle Button */}
+      <div className="flex items-center justify-between gap-4 flex-wrap bg-[#000821] border border-sky-500/20 rounded-2xl p-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+            <PhoneCall className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-bold text-white tracking-tight">OPERATIONAL WORKSPACE</span>
+              <span className="text-xs text-slate-400 font-mono">PG-018 · Dynamic Call Brain</span>
+              {call.isActive && (
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                  Active Session
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {showCallWorkspace
+                ? "Interactive caller identification, live SOP guidance, and call wrap-up actions."
+                : "Operational call workspace is minimized. Click 'Show Call Workspace' to open."}
+            </p>
+          </div>
         </div>
 
-        {/* Optional Live First Mate Panel */}
-        {showFirstMateAssist && (
-          <div className="xl:col-span-1 sticky top-6">
-            <MiniFirstMatePanel
-              onAddToNotes={(text) => {
-                updateCall({
-                  generalNotes: call.generalNotes ? `${call.generalNotes}\n\n${text}` : text,
-                });
-                toast.success("Added AI suggestion to call notes");
-              }}
-              clientContextName={call.callerInfo.name || call.contactName || undefined}
-              scenario={call.callType || undefined}
+        <div className="flex items-center gap-2.5">
+          {showCallWorkspace && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowFirstMateAssist(!showFirstMateAssist)}
+              className="text-xs text-sky-400 hover:text-sky-300 hover:bg-sky-950/40 rounded-xl"
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
+              {showFirstMateAssist ? "Hide First Mate Live Assist" : "Show First Mate Live Assist"}
+            </Button>
+          )}
+
+          <Button
+            size="sm"
+            onClick={() => {
+              const next = !showCallWorkspace;
+              setShowCallWorkspace(next);
+              if (next) {
+                setTimeout(() => {
+                  const el = document.getElementById("call-workspace");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 100);
+              }
+            }}
+            className={showCallWorkspace
+              ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-4 py-2 rounded-xl gap-1.5 cursor-pointer"
+              : "bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.3)] gap-1.5 cursor-pointer"
+            }
+          >
+            {showCallWorkspace ? (
+              <>
+                <ChevronUp className="h-3.5 w-3.5" />
+                <span>Hide Call Workspace</span>
+              </>
+            ) : (
+              <>
+                <PhoneCall className="h-3.5 w-3.5" />
+                <span>Show Call Workspace</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Workspace Layout with Optional First Mate Assist Side Panel (Hidden until shown) */}
+      {showCallWorkspace && (
+        <div className={`grid grid-cols-1 ${showFirstMateAssist ? "xl:grid-cols-3" : "grid-cols-1"} gap-6 items-start animate-in fade-in duration-300`}>
+          {/* Main Operational Call Workspace (Directly below Phone Call Window) */}
+          <div className={showFirstMateAssist ? "xl:col-span-2 space-y-6" : "space-y-6"}>
+            <CallWorkspace
+              onAddNewContactRequest={() => setShowAddContactModal(true)}
+              onCallInQuo={(phone, name) => handleDirectCallPhone(phone, name)}
+              onCloseWorkspace={() => setShowCallWorkspace(false)}
             />
           </div>
-        )}
-      </div>
+
+          {/* Optional Live First Mate Panel */}
+          {showFirstMateAssist && (
+            <div className="xl:col-span-1 sticky top-6">
+              <MiniFirstMatePanel
+                onAddToNotes={(text) => {
+                  updateCall({
+                    generalNotes: call.generalNotes ? `${call.generalNotes}\n\n${text}` : text,
+                  });
+                  toast.success("Added AI suggestion to call notes");
+                }}
+                clientContextName={call.callerInfo.name || call.contactName || undefined}
+                scenario={call.callType || undefined}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Contact Lookup Section with anchor target */}
       <div id="contact-lookup-section" className="scroll-mt-6 rounded-2xl">
@@ -371,6 +444,7 @@ export default function UnassignedCallLogs() {
           onCallInQuo={handleOpenQuoWithContact}
           onOpenSms={handleOpenSmsWithContact}
           onPrefillIntake={(contact) => {
+            setShowCallWorkspace(true);
             updateCall({
               callerCategory: "existing_client",
               contactId: contact.id,
@@ -383,8 +457,10 @@ export default function UnassignedCallLogs() {
               studentName: contact.studentName || undefined,
             });
             toast.success(`Loaded ${contact.name} into Call Workspace`);
-            const el = document.getElementById("call-workspace");
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            setTimeout(() => {
+              const el = document.getElementById("call-workspace");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 100);
           }}
           onScheduleAppointment={(contact) => {
             window.location.href = `/scheduler?contactId=${contact.id}`;

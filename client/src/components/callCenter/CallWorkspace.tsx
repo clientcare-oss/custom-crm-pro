@@ -12,6 +12,7 @@ import {
   ArrowDown,
   CheckCircle2,
   FileEdit,
+  ChevronUp,
 } from "lucide-react";
 import { CallerIdentitySelector } from "./CallerIdentitySelector";
 import { CallTypeSelector } from "./CallTypeSelector";
@@ -26,11 +27,13 @@ import { RequestCallbackModal } from "./RequestCallbackModal";
 interface CallWorkspaceProps {
   onAddNewContactRequest?: () => void;
   onCallInQuo?: (phone: string, name?: string) => void;
+  onCloseWorkspace?: () => void;
 }
 
 export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
   onAddNewContactRequest,
   onCallInQuo,
+  onCloseWorkspace,
 }) => {
   const { call, setGeneralNotes, endCallSession } = useActiveCall();
 
@@ -66,6 +69,17 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
                 OPERATIONAL WORKSPACE
               </Badge>
               <span className="text-xs text-slate-400 font-mono">PG-018 · Dynamic Call Brain</span>
+              {onCloseWorkspace && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onCloseWorkspace}
+                  className="h-6 px-2 text-xs text-slate-400 hover:text-white hover:bg-white/10 rounded-lg ml-2"
+                >
+                  <ChevronUp className="h-3.5 w-3.5 mr-1" />
+                  Hide Workspace
+                </Button>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
               <PhoneCall className="h-7 w-7 text-amber-400" />
