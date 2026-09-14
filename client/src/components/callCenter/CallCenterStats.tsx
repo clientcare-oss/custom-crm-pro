@@ -92,7 +92,7 @@ export function CallCenterStats({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5 pt-2">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
       {stats.map((stat) => {
         const Icon = stat.icon;
         const isActive = activeFilter === stat.key;
@@ -106,7 +106,7 @@ export function CallCenterStats({
                 onSelectStat?.(stat.key);
               }
             }}
-            className={`flex items-center justify-between gap-2 p-3 rounded-2xl bg-[#061830] border transition-all cursor-pointer group ${
+            className={`flex items-center justify-between gap-2 px-3 py-1.5 sm:py-2 rounded-xl bg-[#061830] border transition-all cursor-pointer group min-h-[44px] ${
               isActive
                 ? "border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
                 : stat.key === "leads"
@@ -118,24 +118,24 @@ export function CallCenterStats({
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 ${stat.iconBg} ${stat.iconColor}`}
+                className={`w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${stat.iconBg} ${stat.iconColor}`}
               >
-                <Icon className="h-4.5 w-4.5" />
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:h-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-xl font-black text-white leading-tight font-sans">
+                <div className="text-base sm:text-lg font-black text-white leading-none font-sans">
                   {stat.count}
                 </div>
-                <div className="text-[11px] font-semibold text-slate-300 truncate leading-tight">
+                <div className="text-[11px] sm:text-xs font-semibold text-slate-300 whitespace-nowrap leading-tight mt-0.5">
                   {stat.label}
                 </div>
               </div>
             </div>
             {stat.isActionableLink && (
-              <ArrowUpRight className="h-4 w-4 text-emerald-400/60 group-hover:text-emerald-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all flex-shrink-0" />
+              <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400/70 group-hover:text-emerald-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all flex-shrink-0" />
             )}
             {stat.isAnchorLink && (
-              <ArrowDown className="h-4 w-4 text-amber-400/60 group-hover:text-amber-300 group-hover:translate-y-0.5 transition-all flex-shrink-0 animate-bounce" />
+              <ArrowDown className="h-3.5 w-3.5 text-amber-400/70 group-hover:text-amber-300 group-hover:translate-y-0.5 transition-all flex-shrink-0 animate-bounce" />
             )}
           </div>
         );

@@ -185,7 +185,7 @@ export default function UnassignedCallLogs() {
   const webhookUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/quo/webhook`;
 
   return (
-    <div className="min-h-screen bg-[#040D1A] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="min-h-screen bg-[#040D1A] text-slate-100 p-4 sm:p-6 space-y-4 sm:space-y-5">
       {/* Top Header */}
       <CallCenterHeader
         isQuoConfigured={quoStatus?.configured ?? true}
