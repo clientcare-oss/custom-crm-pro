@@ -264,6 +264,115 @@ export const internalTasksRouter = router({
         return { success: true, count: input.ids.length };
       }),
 
+    // Get count and sample of automated system test tasks
+    getTestTasksCount: protectedProcedure.query(async () => {
+      const database = await db.getDb();
+      if (!database) return { count: 0, sampleTitles: [], realTasksCount: 0 };
+      const { internalTasks } = await import("../../drizzle/schema");
+
+      try {
+        const allTasks = await database
+          .select({
+            id: internalTasks.id,
+            title: internalTasks.title,
+            linkedStudentId: internalTasks.linkedStudentId,
+            linkedFileId: internalTasks.linkedFileId,
+          })
+          .from(internalTasks);
+
+        const testTasks = allTasks.filter((t) => {
+          const lower = (t.title || "").trim().toLowerCase();
+          const matchesTestPattern =
+            lower.includes("test general task") ||
+            lower.startsWith("[system test]") ||
+            lower === "test task" ||
+            lower.includes("automated test");
+          const isUnlinked = !t.linkedStudentId && !t.linkedFileId;
+          return matchesTestPattern && isUnlinked;
+        });
+
+        const sampleTitles = Array.from(new Set(testTasks.map((t) => t.title))).slice(0, 5);
+        const realTasksCount = allTasks.length - testTasks.length;
+
+        return {
+          count: testTasks.length,
+          sampleTitles,
+          realTasksCount,
+        };
+      } catch (err) {
+        console.error("Failed to get test tasks count:", err);
+        return { count: 0, sampleTitles: [], realTasksCount: 0 };
+      }
+    }),
+
+    // Purge all automated system test general tasks (Owner / Admin only)
+    purgeTestTasks: protectedProcedure.mutation(async ({ ctx }) => {
+      const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+      if (!isOwnerOrAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only owner or admin can purge automated test tasks.",
+        });
+      }
+
+      const database = await db.getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const { internalTasks, internalSubtasks, taskDeletionRequests } = await import("../../drizzle/schema");
+      const { inArray } = await import("drizzle-orm");
+
+      try {
+        const allTasks = await database
+          .select({
+            id: internalTasks.id,
+            title: internalTasks.title,
+            linkedStudentId: internalTasks.linkedStudentId,
+            linkedFileId: internalTasks.linkedFileId,
+          })
+          .from(internalTasks);
+
+        const testTaskIds = allTasks
+          .filter((t) => {
+            const lower = (t.title || "").trim().toLowerCase();
+            const matchesTestPattern =
+              lower.includes("test general task") ||
+              lower.startsWith("[system test]") ||
+              lower === "test task" ||
+              lower.includes("automated test");
+            const isUnlinked = !t.linkedStudentId && !t.linkedFileId;
+            return matchesTestPattern && isUnlinked;
+          })
+          .map((t) => t.id);
+
+        if (testTaskIds.length === 0) {
+          return { success: true, count: 0 };
+        }
+
+        const chunkSize = 50;
+        for (let i = 0; i < testTaskIds.length; i += chunkSize) {
+          const chunk = testTaskIds.slice(i, i + chunkSize);
+          try {
+            await database.delete(internalSubtasks).where(inArray(internalSubtasks.taskId, chunk));
+          } catch {
+            // Ignore if no subtasks
+          }
+          try {
+            await database.delete(taskDeletionRequests).where(inArray(taskDeletionRequests.taskId, chunk));
+          } catch {
+            // Ignore if table or rows not present
+          }
+          await database.delete(internalTasks).where(inArray(internalTasks.id, chunk));
+        }
+
+        return { success: true, count: testTaskIds.length };
+      } catch (err) {
+        console.error("Error purging test tasks:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: err instanceof Error ? err.message : "Failed to purge test tasks",
+        });
+      }
+    }),
+
     // Submit a request to the owner/supervisor to delete a task
     requestDeletion: protectedProcedure
       .input(z.object({

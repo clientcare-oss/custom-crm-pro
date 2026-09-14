@@ -44,6 +44,7 @@ import {
   FileText,
   ListChecks,
   ShieldAlert,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -53,6 +54,7 @@ import { BulkTaskActionBar } from "@/components/tasks/BulkTaskActionBar";
 import { ConfirmDeleteTasksDialog, TaskPreviewItem } from "@/components/tasks/ConfirmDeleteTasksDialog";
 import { TaskDeleteRequestModal, type TaskToDeleteInfo } from "@/components/tasks/TaskDeleteRequestModal";
 import { TaskDeletionReviewModal } from "@/components/tasks/TaskDeletionReviewModal";
+import { PurgeTestTasksDialog } from "@/components/tasks/PurgeTestTasksDialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Resource = { id: number; label: string; url: string };
@@ -1066,6 +1068,16 @@ export default function Tasks() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [requestDeleteTask, setRequestDeleteTask] = useState<TaskToDeleteInfo | null>(null);
 
+  // Automated test tasks detection query & purge state
+  const { data: testTasksData } = trpc.internalTasks.getTestTasksCount.useQuery(
+    undefined,
+    { enabled: isOwnerOrAdmin }
+  );
+  const testTasksCount = testTasksData?.count ?? 0;
+  const realTasksCount = testTasksData?.realTasksCount ?? 0;
+  const testSampleTitles: string[] = (testTasksData?.sampleTitles as string[]) ?? [];
+  const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
+
   // Multi-select state
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedGeneralIds, setSelectedGeneralIds] = useState<Set<number>>(new Set());
@@ -1173,6 +1185,17 @@ export default function Tasks() {
           <p className="text-sm text-muted-foreground mt-0.5">{completedTasks}/{totalTasks} tasks complete</p>
         </div>
         <div className="flex items-center gap-2">
+          {isOwnerOrAdmin && testTasksCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPurgeModalOpen(true)}
+              className="gap-1.5 border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all font-medium"
+            >
+              <Sparkles className="h-4 w-4 text-rose-500" />
+              Clean Test Tasks ({testTasksCount})
+            </Button>
+          )}
           {isOwnerOrAdmin && (
             <Button
               variant="outline"
@@ -1273,11 +1296,24 @@ export default function Tasks() {
       </div>
 
       {/* ── Section 1: General Tasks ── */}
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-base font-semibold text-foreground">General Tasks</h2>
-        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-          {(tasks as unknown as Task[]).filter((t) => t.status !== "complete").length} open
-        </span>
+      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold text-foreground">General Tasks</h2>
+          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+            {(tasks as unknown as Task[]).filter((t) => t.status !== "complete").length} open
+          </span>
+        </div>
+        {isOwnerOrAdmin && testTasksCount > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsPurgeModalOpen(true)}
+            className="h-7 text-xs gap-1.5 border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all font-medium"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-rose-500" />
+            Delete All {testTasksCount} System Test Tasks
+          </Button>
+        )}
       </div>
       {isLoading ? (
         <div className="space-y-3">
@@ -1395,6 +1431,15 @@ export default function Tasks() {
       <TaskDeletionReviewModal
         open={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
+      />
+
+      {/* Purge System Test Tasks Dialog */}
+      <PurgeTestTasksDialog
+        open={isPurgeModalOpen}
+        onClose={() => setIsPurgeModalOpen(false)}
+        testTasksCount={testTasksCount}
+        realTasksCount={realTasksCount}
+        sampleTitles={testSampleTitles}
       />
     </div>
   );

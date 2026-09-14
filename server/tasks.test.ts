@@ -343,3 +343,30 @@ describe("Supervisor Task Deletion Protection & Approval Workflow", () => {
   });
 });
 
+describe("internalTasks automated test cleanup routine", () => {
+  it("allows querying test tasks count safely", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const res = await adminCaller.internalTasks.getTestTasksCount();
+    expect(res).toBeDefined();
+    expect(typeof res.count).toBe("number");
+    expect(Array.isArray(res.sampleTitles)).toBe(true);
+    expect(typeof res.realTasksCount).toBe("number");
+  });
+
+  it("blocks non-admin employee from purging test tasks", async () => {
+    const empCaller = appRouter.createCaller(createEmployeeContext(2));
+    await expect(empCaller.internalTasks.purgeTestTasks()).rejects.toThrow(
+      "Only owner or admin can purge automated test tasks."
+    );
+  });
+
+  it("allows owner/admin to execute purgeTestTasks", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const res = await adminCaller.internalTasks.purgeTestTasks();
+    expect(res).toBeDefined();
+    expect(res.success).toBe(true);
+    expect(typeof res.count).toBe("number");
+  });
+});
+
+
