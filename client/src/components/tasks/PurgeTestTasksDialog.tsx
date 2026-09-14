@@ -50,24 +50,24 @@ export function PurgeTestTasksDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isPurging && !isOpen && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[82vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border shadow-2xl">
+        <DialogHeader className="shrink-0 px-5 pt-4 pb-3 border-b border-border/50 bg-background">
           <div className="flex items-center gap-2.5 text-rose-500">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
-              <Sparkles className="h-5 w-5" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
+              <Sparkles className="h-4.5 w-4.5" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-foreground">
+              <DialogTitle className="text-base font-bold text-foreground">
                 Delete System Test Tasks
               </DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Automated one-click cleanup routine for system-generated test general tasks
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Automated one-click cleanup routine for test general tasks
               </p>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 text-sm">
+        <div className="flex-1 overflow-y-auto px-5 py-3.5 space-y-3 min-h-0 text-xs sm:text-sm">
           {/* Status summary pills */}
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="destructive" className="gap-1.5 px-2.5 py-1 text-xs font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
@@ -135,34 +135,36 @@ export function PurgeTestTasksDialog({
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="shrink-0 px-5 py-3 border-t border-border/50 bg-muted/25 flex items-center justify-end gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={isPurging}
-            className="text-xs"
+            className="text-xs h-8"
           >
             Cancel
           </Button>
           <Button
             variant="destructive"
+            size="sm"
             onClick={() => purgeMutation.mutate()}
             disabled={isPurging || testTasksCount === 0}
-            className="gap-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20"
+            className="gap-2 text-xs h-8 font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
           >
             {isPurging ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 Deleting {testTasksCount} Test Tasks...
               </>
             ) : testTasksCount === 0 ? (
               <>
-                <ShieldCheck className="h-4 w-4" />
+                <ShieldCheck className="h-3.5 w-3.5" />
                 No Test Tasks to Delete
               </>
             ) : (
               <>
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
                 Delete All {testTasksCount} at Once
               </>
             )}
