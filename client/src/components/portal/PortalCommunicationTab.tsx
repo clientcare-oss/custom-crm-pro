@@ -103,7 +103,8 @@ export function PortalCommunicationTab({
       parentContactId: typeof parentContactId === "number" ? parentContactId : undefined,
     },
     {
-      refetchInterval: 12000, // Background poll every 12s for new messages
+      refetchInterval: 60000, // Background poll every 60s
+      refetchIntervalInBackground: false,
     }
   );
 

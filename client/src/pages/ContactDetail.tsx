@@ -2254,10 +2254,13 @@ function TimeTrackerTab({ studentId, studentName, contact }: { studentId: number
   const [notesInput, setNotesInput] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch active timer
+  // Fetch active timer (only poll if a timer is actively running)
   const { data: activeEntry, refetch: refetchActive } = trpc.timeTracker.getActive.useQuery(
     { studentId },
-    { refetchInterval: 5000 }
+    {
+      refetchInterval: (query) => (query.state.data ? 15000 : false),
+      refetchIntervalInBackground: false,
+    }
   );
 
   // Fetch session log

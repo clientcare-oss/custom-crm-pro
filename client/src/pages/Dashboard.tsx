@@ -23,7 +23,11 @@ export default function Dashboard() {
   const isLoading = leadsLoading || projectsLoading || invoicesLoading || tasksLoading;
   const { data: briefing, isLoading: briefingLoading } = trpc.ai.dailyBriefing.useQuery(undefined, { enabled: user?.role === "admin" });
   const { data: unreadMessages } = trpc.messages.unread.useQuery(undefined, { enabled: !!user });
-  const { data: billAlert } = trpc.billGuardian.getAlertSummary.useQuery(undefined, { enabled: user?.role === "admin", refetchInterval: 5 * 60 * 1000 });
+  const { data: billAlert } = trpc.billGuardian.getAlertSummary.useQuery(undefined, {
+    enabled: user?.role === "admin",
+    refetchInterval: 5 * 60 * 1000,
+    refetchIntervalInBackground: false,
+  });
 
   // Calculate metrics
   const openTasks = (allTasks as any[] | undefined)?.filter((t) => t.status !== "complete").length ?? 0;

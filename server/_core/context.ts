@@ -29,6 +29,14 @@ function getHeader(req: any, name: string): string | undefined {
   return undefined;
 }
 
+// 60-second in-memory cache for authenticated user profiles to avoid repeated D1 reads per tRPC batch
+interface CachedUserEntry {
+  user: User;
+  expiresAt: number;
+}
+const userAuthCache = new Map<string, CachedUserEntry>();
+const AUTH_CACHE_TTL_MS = 60 * 1000;
+
 export async function authenticateClerkOrSession(req: any): Promise<User | null> {
   const secretKey =
     process.env.CLERK_SECRET_KEY ||
@@ -58,6 +66,11 @@ export async function authenticateClerkOrSession(req: any): Promise<User | null>
       const clerkUserId = payload?.sub;
 
       if (clerkUserId) {
+        const cached = userAuthCache.get(clerkUserId);
+        if (cached && Date.now() < cached.expiresAt) {
+          return cached.user;
+        }
+
         const dbConn = await getDb();
         if (dbConn) {
           const [existing] = await dbConn
@@ -66,6 +79,7 @@ export async function authenticateClerkOrSession(req: any): Promise<User | null>
             .where(eq(users.openId, clerkUserId))
             .limit(1);
           if (existing) {
+            userAuthCache.set(clerkUserId, { user: existing, expiresAt: Date.now() + AUTH_CACHE_TTL_MS });
             return existing;
           }
         }
@@ -94,7 +108,10 @@ export async function authenticateClerkOrSession(req: any): Promise<User | null>
               .from(users)
               .where(eq(users.openId, clerkUser.id))
               .limit(1);
-            if (created) return created;
+            if (created) {
+              userAuthCache.set(clerkUserId, { user: created, expiresAt: Date.now() + AUTH_CACHE_TTL_MS });
+              return created;
+            }
           }
 
           return {

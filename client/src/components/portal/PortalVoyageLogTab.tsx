@@ -153,8 +153,9 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
         const hasProcessing = queryResult?.state?.data?.some(
           (d: any) => d.status === "uploading" || d.status === "processing"
         );
-        return hasProcessing ? 3000 : false;
-      }
+        return hasProcessing ? 5000 : false;
+      },
+      refetchIntervalInBackground: false,
     }
   );
 

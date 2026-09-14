@@ -110,6 +110,8 @@ export const contacts = mysqlTable("contacts", {
   ownerIdIdx: index("contacts_ownerId_idx").on(t.ownerId),
   parentContactIdIdx: index("contacts_parentContactId_idx").on(t.parentContactId),
   portalUserIdIdx: index("contacts_portalUserId_idx").on(t.portalUserId),
+  jobTitleIdx: index("contacts_jobTitle_idx").on(t.jobTitle),
+  caseIdIdx: index("contacts_caseId_idx").on(t.caseId),
 }));
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
@@ -204,6 +206,8 @@ export const projectTasks = mysqlTable("projectTasks", {
 }, (t) => ({
   projectIdIdx: index("projectTasks_projectId_idx").on(t.projectId),
   assignedToUserIdIdx: index("projectTasks_assignedToUserId_idx").on(t.assignedToUserId),
+  assignedToIdx: index("projectTasks_assignedTo_idx").on(t.assignedTo),
+  statusIdx: index("projectTasks_status_idx").on(t.status),
 }));
 
 export type ProjectTask = typeof projectTasks.$inferSelect;
@@ -219,7 +223,9 @@ export const projectTaskSteps = mysqlTable("projectTaskSteps", {
   isComplete: boolean("isComplete").default(false).notNull(),
   sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => ({
+  taskIdIdx: index("projectTaskSteps_taskId_idx").on(t.taskId),
+}));
 export type ProjectTaskStep = typeof projectTaskSteps.$inferSelect;
 export type InsertProjectTaskStep = typeof projectTaskSteps.$inferInsert;
 
@@ -351,7 +357,11 @@ export const appointments = mysqlTable("appointments", {
   clientMeetingLink: varchar("clientMeetingLink", { length: 1024 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  ownerIdIdx: index("appointments_ownerId_idx").on(t.ownerId),
+  clientIdIdx: index("appointments_clientId_idx").on(t.clientId),
+  caseIdIdx: index("appointments_caseId_idx").on(t.caseId),
+}));
 
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = typeof appointments.$inferInsert;
@@ -663,7 +673,9 @@ export const internalSubtasks = mysqlTable("internalSubtasks", {
   sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  taskIdIdx: index("internalSubtasks_taskId_idx").on(t.taskId),
+}));
 
 export type InternalSubtask = typeof internalSubtasks.$inferSelect;
 export type InsertInternalSubtask = typeof internalSubtasks.$inferInsert;

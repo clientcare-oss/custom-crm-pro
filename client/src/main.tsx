@@ -12,7 +12,16 @@ import "./index.css";
 
 initConsoleLogger();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // Keep data fresh for 60s to prevent spamming D1 on back-and-forth navigation
+      refetchOnWindowFocus: false, // Do NOT refetch queries merely because the browser window/tab gained focus
+      refetchIntervalInBackground: false, // Never poll when the tab is hidden or minimized
+      retry: 1,
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
