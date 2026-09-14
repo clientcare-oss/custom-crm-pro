@@ -73,7 +73,7 @@ export function CallCenterStats({
     },
     {
       key: "contacts",
-      label: "See Contact List",
+      label: "Contacts",
       count: contactsCount,
       icon: BookUser,
       iconColor: "text-amber-300",
