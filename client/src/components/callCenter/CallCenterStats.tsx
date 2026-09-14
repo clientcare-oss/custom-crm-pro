@@ -2,7 +2,6 @@ import React from "react";
 import {
   Phone,
   PhoneMissed,
-  Calendar,
   Voicemail,
   CalendarCheck,
   BookUser,
@@ -51,14 +50,6 @@ export function CallCenterStats({
       iconBg: "bg-rose-500/10 border-rose-500/20",
     },
     {
-      key: "callbacks",
-      label: "Callbacks",
-      count: callbacksCount,
-      icon: Calendar,
-      iconColor: "text-cyan-400",
-      iconBg: "bg-cyan-500/10 border-cyan-500/20",
-    },
-    {
       key: "voicemails",
       label: "Voicemail",
       count: voicemailCount,
@@ -97,7 +88,7 @@ export function CallCenterStats({
   ];
 
   return (
-    <div className="grid grid-cols-6 gap-1.5 sm:gap-2 w-full overflow-x-auto scrollbar-none">
+    <div className="grid grid-cols-5 gap-1.5 sm:gap-2 w-full overflow-x-auto scrollbar-none">
       {stats.map((stat) => {
         const Icon = stat.icon;
         const isActive = activeFilter === stat.key;

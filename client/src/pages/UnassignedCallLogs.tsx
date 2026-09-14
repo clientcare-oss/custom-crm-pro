@@ -225,7 +225,7 @@ export default function UnassignedCallLogs() {
         isConfigured={quoStatus?.configured ?? true}
       />
 
-      {/* Top 6 Metric & Quick Access Cards in Horizontal Row */}
+      {/* Top 5 Metric & Quick Access Cards in Horizontal Row */}
       <CallCenterStats
         callsTodayCount={callsTodayCount}
         missedCallsCount={missedCount}
