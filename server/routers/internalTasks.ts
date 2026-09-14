@@ -223,8 +223,14 @@ export const internalTasksRouter = router({
         if (input.ids.length === 0) return { success: true, count: 0 };
         const { internalTasks, internalSubtasks } = await import("../../drizzle/schema");
         const { inArray } = await import("drizzle-orm");
-        await database.delete(internalSubtasks).where(inArray(internalSubtasks.taskId, input.ids));
-        await database.delete(internalTasks).where(inArray(internalTasks.id, input.ids));
+        
+        // Chunk to avoid SQLite variable limit (e.g. max 100 per statement)
+        const chunkSize = 100;
+        for (let i = 0; i < input.ids.length; i += chunkSize) {
+          const chunk = input.ids.slice(i, i + chunkSize);
+          await database.delete(internalSubtasks).where(inArray(internalSubtasks.taskId, chunk));
+          await database.delete(internalTasks).where(inArray(internalTasks.id, chunk));
+        }
         return { success: true, count: input.ids.length };
       }),
 
