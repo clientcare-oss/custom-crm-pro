@@ -185,9 +185,15 @@ export default function UnassignedCallLogs() {
   const webhookUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/quo/webhook`;
 
   return (
-    <div className="min-h-screen bg-[#040D1A] text-slate-100 p-4 sm:p-6 space-y-4 sm:space-y-5">
+    <div className="min-h-screen bg-[#000821] text-slate-100 px-2 sm:px-3 pt-0 pb-6 space-y-3 sm:space-y-3.5">
       {/* Top Header */}
       <CallCenterHeader
+        callsTodayCount={callsTodayCount}
+        activeFilter={activeStatFilter}
+        onSelectStat={(key) => {
+          setActiveStatFilter(key);
+          toast.info(`Filtered view for: ${key}`);
+        }}
         isQuoConfigured={quoStatus?.configured ?? true}
         onOpenSettings={() => setShowSettings(!showSettings)}
         onRefresh={() => {

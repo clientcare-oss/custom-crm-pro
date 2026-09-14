@@ -8,7 +8,7 @@ interface NoActiveCallHeroProps {
 
 export function NoActiveCallHero({ onOpenQuoPhone }: NoActiveCallHeroProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#061830] via-[#082245] to-[#041022] border border-sky-500/25 p-5 sm:p-6 text-center shadow-lg">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#000821] via-[#001035] to-[#000821] border border-sky-500/25 p-5 sm:p-6 text-center shadow-lg">
       {/* Background Nautical Bathymetric Ocean Wave SVG */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none opacity-25"
@@ -48,7 +48,7 @@ export function NoActiveCallHero({ onOpenQuoPhone }: NoActiveCallHeroProps) {
           <div className="w-12 h-12 rounded-full bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-[0_0_24px_rgba(56,189,248,0.2)]">
             <Headset className="h-6 w-6" />
           </div>
-          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#061830] flex items-center justify-center">
+          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#000821] flex items-center justify-center">
             <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
           </span>
         </div>

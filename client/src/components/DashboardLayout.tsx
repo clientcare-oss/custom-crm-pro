@@ -916,8 +916,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             {children}
           </ScopedErrorBoundary>
 
-          {/* Floating Action Buttons (embedded directly in header on First Mate) */}
-          {!location.startsWith("/first-mate") && (
+          {/* Floating Action Buttons (embedded directly in header on First Mate and Call Center) */}
+          {!location.startsWith("/first-mate") && !location.startsWith("/call-center") && !location.startsWith("/call-logs") && (
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
               <Button
                 onClick={() => setIssueReporterOpen(true)}
@@ -925,17 +925,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 title="Report Issue / Feedback to Linear Backlog (⌥+F)"
               >
                 <Bug className="w-3.5 h-3.5" /> Feedback & Issues
-              </Button>
-              <Button
-                onClick={() => {
-                  const rule = devRules.find((r: any) => r.tabKey === pageKey);
-                  setDevRuleText(rule?.content || "");
-                  setIsDevRulesOpen(true);
-                }}
-                className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all cursor-pointer"
-                title="Developer Guidelines & Page Rules"
-              >
-                <BookOpen className="w-3.5 h-3.5" /> Dev Info
               </Button>
             </div>
           )}

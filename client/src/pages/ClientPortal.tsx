@@ -1997,22 +1997,6 @@ export default function ClientPortal() {
             {renderContent()}
           </ScopedErrorBoundary>
 
-          {/* Golden Developer Guidelines Floating Button */}
-          {isAdminView && (
-            <div className="absolute top-4 right-4 z-20">
-              <Button
-                onClick={() => {
-                  const rule = devRules.find((r: any) => r.tabKey === activeTab);
-                  setDevRuleText(rule?.content || "");
-                  setIsDevRulesOpen(true);
-                }}
-                className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded-lg text-xs font-bold gap-1 shadow-lg shadow-amber-500/5 transition-all"
-                title="Developer Guidelines & Page Rules"
-              >
-                <BookOpen className="w-3.5 h-3.5" /> Dev Info
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 

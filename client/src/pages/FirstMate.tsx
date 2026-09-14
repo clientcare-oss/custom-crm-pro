@@ -452,9 +452,6 @@ export default function FirstMate() {
             </Badge>
           </button>
 
-          {/* Subtle Vertical Divider */}
-          <div className="h-4 w-px bg-white/15 mx-0.5 shrink-0" />
-
           {/* 4. Feedback & Issues */}
           <button
             type="button"
@@ -464,17 +461,6 @@ export default function FirstMate() {
           >
             <Bug className="w-3.5 h-3.5 text-rose-500" />
             <span>Feedback & Issues</span>
-          </button>
-
-          {/* 5. Dev Info */}
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new CustomEvent("open-dev-rules"))}
-            className="h-8 px-2.5 bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 hover:text-amber-300 border border-amber-400/30 rounded-lg text-xs font-bold flex items-center gap-1 shadow-lg shadow-amber-500/5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
-            title="Developer Guidelines & Page Rules"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-            <span>Dev Info</span>
           </button>
         </div>
       </header>

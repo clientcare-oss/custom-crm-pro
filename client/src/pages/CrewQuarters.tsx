@@ -214,16 +214,16 @@ export default function CrewQuarters() {
   const newMessagesCount = dbUnreadCount > 0 ? dbUnreadCount : 1;
 
   return (
-    <div className="min-h-screen bg-[#040D1A] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto">
+    <div className="min-h-screen bg-[#000821] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto">
       
       {/* ── Top Header & Personalized Welcome Banner ── */}
-      <div className="relative overflow-hidden rounded-3xl border border-blue-900/50 bg-[#061830] shadow-[0_15px_45px_rgba(0,0,0,0.4)] p-6 sm:p-8">
+      <div className="relative overflow-hidden rounded-3xl border border-blue-900/50 bg-[#000821] shadow-[0_15px_45px_rgba(0,0,0,0.4)] p-6 sm:p-8">
         {/* Subtle bathymetric wave texture */}
         <div
           className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-25 mix-blend-screen"
           style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#040D1A] via-[#061830]/85 to-[#040D1A]/90 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#000821] via-[#001035]/85 to-[#000821]/90 pointer-events-none" />
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -304,7 +304,7 @@ export default function CrewQuarters() {
         {/* Card 1: Meetings Today */}
         <div 
           onClick={() => setLocation("/calendar")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#061830] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
         >
           <div className="flex items-center gap-3.5">
             <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
@@ -323,7 +323,7 @@ export default function CrewQuarters() {
         {/* Card 2: Callbacks */}
         <div 
           onClick={() => setLocation("/call-logs")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#061830] hover:border-emerald-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(52,211,153,0.15)] flex items-center justify-between"
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-emerald-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(52,211,153,0.15)] flex items-center justify-between"
         >
           <div className="flex items-center gap-3.5">
             <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
@@ -342,7 +342,7 @@ export default function CrewQuarters() {
         {/* Card 3: Tasks Due */}
         <div 
           onClick={() => setLocation("/tasks")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#061830] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
         >
           <div className="flex items-center gap-3.5">
             <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
@@ -373,7 +373,7 @@ export default function CrewQuarters() {
                 : `You have ${newMessagesCount} new messages in your inbox`
             );
           }}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#061830] hover:border-sky-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex items-center justify-between"
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex items-center justify-between"
         >
           <div className="flex items-center gap-3.5">
             <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform relative">
@@ -396,7 +396,7 @@ export default function CrewQuarters() {
         </div>
 
         {/* Card 5: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
-        <div className="col-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#020b17] via-[#041326] to-[#010812] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
+        <div className="col-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
           {/* Multi-Layered, Ultra-Fine Bathymetric Topographic Ocean Depth Contours */}
           <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
             <svg
@@ -465,7 +465,7 @@ export default function CrewQuarters() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
         {/* Card 2A: Today's Schedule */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -512,7 +512,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 2B: My Tasks */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -564,7 +564,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 2C: Quick Actions Grid */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -641,7 +641,7 @@ export default function CrewQuarters() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
         {/* Card 3A: Time Off Center */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -741,7 +741,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 3B: My Cases */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -794,7 +794,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 3C: Team Messages */}
-        <Card id="team-messages-card" className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4 scroll-mt-6">
+        <Card id="team-messages-card" className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4 scroll-mt-6">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -856,7 +856,7 @@ export default function CrewQuarters() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
         {/* Card 4A: Company Announcements */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -919,7 +919,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 4B: Training & Resources */}
-        <Card className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
@@ -967,7 +967,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 4C: Waypoint Inspiration Poster Tile — Vibrant Cinematic Lighthouse Theme */}
-        <div className="rounded-2xl border border-blue-400/50 bg-[#061830] p-6 shadow-2xl flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px]">
+        <div className="rounded-2xl border border-blue-400/50 bg-[#000821] p-6 shadow-2xl flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px]">
           {/* Vibrant Cinematic Lighthouse Night Ocean Backdrop (Bright & Rich) */}
           <div
             className="absolute inset-0 bg-cover bg-[position:72%_center] brightness-[1.2] contrast-[1.08] saturate-[1.2] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
@@ -1053,7 +1053,7 @@ export default function CrewQuarters() {
 
       {/* ── Owner / Admin Management Oversight Deck (Visible to Admin Role) ── */}
       {user?.role === "admin" && (
-        <div className="mt-8 rounded-3xl border border-amber-400/40 bg-gradient-to-br from-[#061830] via-[#082042] to-[#040E1C] p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="mt-8 rounded-3xl border border-amber-400/40 bg-gradient-to-br from-[#000821] via-[#001035] to-[#000821] p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-800/60 pb-5">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -1098,7 +1098,7 @@ export default function CrewQuarters() {
                 {timeOffRequests
                   .filter((r) => r.status === "Pending")
                   .map((r) => (
-                    <div key={r.id} className="p-2.5 rounded-xl bg-[#041021] border border-blue-800/40 flex items-center justify-between text-xs">
+                    <div key={r.id} className="p-2.5 rounded-xl bg-[#000821] border border-blue-800/40 flex items-center justify-between text-xs">
                       <div>
                         <div className="font-bold text-white">{r.type}</div>
                         <div className="text-[10px] text-blue-300/80">{r.startDate} — {r.endDate}</div>
@@ -1149,7 +1149,7 @@ export default function CrewQuarters() {
                   { name: "Sarah Jenkins", cases: 6, capacity: "60%" },
                   { name: "Marcus Vance", cases: 4, capacity: "40%" },
                 ].map((emp, idx) => (
-                  <div key={idx} className="p-2.5 rounded-xl bg-[#041021] border border-blue-800/40 flex items-center justify-between text-xs">
+                  <div key={idx} className="p-2.5 rounded-xl bg-[#000821] border border-blue-800/40 flex items-center justify-between text-xs">
                     <div>
                       <div className="font-bold text-white">{emp.name}</div>
                       <div className="text-[10px] text-blue-300/80">{emp.cases} Active Cases</div>
@@ -1192,7 +1192,7 @@ export default function CrewQuarters() {
 
       {/* ── Time Off Request Modal ── */}
       <Dialog open={timeOffModalOpen} onOpenChange={setTimeOffModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#061830] border border-blue-800/80 text-white shadow-2xl rounded-2xl">
+        <DialogContent className="sm:max-w-md bg-[#000821] border border-blue-800/80 text-white shadow-2xl rounded-2xl">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30">
@@ -1219,7 +1219,7 @@ export default function CrewQuarters() {
                 <SelectTrigger className="bg-blue-950/80 border-blue-800/80 text-white rounded-xl text-xs">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#061830] border-blue-800 text-white">
+                <SelectContent className="bg-[#000821] border-blue-800 text-white">
                   <SelectItem value="Vacation">Vacation / PTO</SelectItem>
                   <SelectItem value="Personal">Personal Day</SelectItem>
                   <SelectItem value="Medical / Sick">Medical / Sick Leave</SelectItem>
@@ -1305,7 +1305,7 @@ export default function CrewQuarters() {
 
       {/* ── Quick Add Task Modal ── */}
       <Dialog open={taskModalOpen} onOpenChange={setTaskModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#061830] border border-blue-800/80 text-white shadow-2xl rounded-2xl">
+        <DialogContent className="sm:max-w-md bg-[#000821] border border-blue-800/80 text-white shadow-2xl rounded-2xl">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
@@ -1356,7 +1356,7 @@ export default function CrewQuarters() {
                 <SelectTrigger className="bg-blue-950/80 border-blue-800/80 text-white rounded-xl text-xs">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#061830] border-blue-800 text-white">
+                <SelectContent className="bg-[#000821] border-blue-800 text-white">
                   <SelectItem value="high">High Priority</SelectItem>
                   <SelectItem value="medium">Normal / Medium</SelectItem>
                   <SelectItem value="low">Low Priority</SelectItem>
