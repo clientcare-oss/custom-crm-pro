@@ -682,6 +682,32 @@ export const internalSubtasks = mysqlTable("internalSubtasks", {
 export type InternalSubtask = typeof internalSubtasks.$inferSelect;
 export type InsertInternalSubtask = typeof internalSubtasks.$inferInsert;
 
+// ============ TASK DELETION REQUESTS ============
+export const taskDeletionRequests = mysqlTable("taskDeletionRequests", {
+  id: int("id").autoincrement().primaryKey(),
+  taskType: mysqlEnum("taskType", ["general", "project"]).notNull(),
+  taskId: int("taskId").notNull(),
+  taskTitle: varchar("taskTitle", { length: 255 }).notNull(),
+  taskDescription: text("taskDescription"),
+  taskDetails: text("taskDetails"), // JSON snapshot: { assignedTo, dueDate, linkedStudentName, linkedStudentId, projectName, projectId, subtasks, priority }
+  requestedByUserId: int("requestedByUserId").notNull(),
+  requestedByUserName: varchar("requestedByUserName", { length: 255 }).notNull(),
+  reason: text("reason"),
+  status: mysqlEnum("status", ["pending", "approved", "declined"]).default("pending").notNull(),
+  reviewedByUserId: int("reviewedByUserId"),
+  reviewedAt: timestamp("reviewedAt"),
+  declineReason: text("declineReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  taskIdIdx: index("taskDeletionRequests_taskId_idx").on(t.taskId),
+  statusIdx: index("taskDeletionRequests_status_idx").on(t.status),
+  requestedByIdx: index("taskDeletionRequests_requestedByUserId_idx").on(t.requestedByUserId),
+}));
+
+export type TaskDeletionRequest = typeof taskDeletionRequests.$inferSelect;
+export type InsertTaskDeletionRequest = typeof taskDeletionRequests.$inferInsert;
+
 // ============ KNOWLEDGE BASE ============
 export const knowledgeBase = mysqlTable("knowledgeBase", {
   id: int("id").autoincrement().primaryKey(),

@@ -240,3 +240,106 @@ describe("portal student data procedures", () => {
     ).rejects.toThrow();
   });
 });
+
+// ── Supervisor Task Deletion Approval Workflow ──────────────────────────────
+
+function createEmployeeContext(userId: number = 2): TrpcContext {
+  return {
+    user: {
+      id: userId,
+      openId: "employee-user-789",
+      email: "employee@example.com",
+      name: "Employee Advocate",
+      loginMethod: "manus",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
+  };
+}
+
+describe("Supervisor Task Deletion Protection & Approval Workflow", () => {
+  it("blocks employee from deleting supervisor-assigned task with exact quote", async () => {
+    const empCaller = appRouter.createCaller(createEmployeeContext(2));
+
+    // Employee tries to delete directly
+    await expect(
+      empCaller.internalTasks.delete({ id: 999 })
+    ).rejects.toThrow(
+      "You may not delete this task. It was assigned by owner or supervisor. Request delete from them?"
+    );
+  });
+
+  it("employee can submit deletion request with full snapshot and reason", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext(1));
+    const empCaller = appRouter.createCaller(createEmployeeContext(2));
+
+    // Employee requests deletion
+    const reqRes = await empCaller.internalTasks.requestDeletion({
+      taskId: 101,
+      taskType: "general",
+      reason: "Parent moved out of district, IEP case closed",
+    });
+
+    expect(reqRes.success).toBe(true);
+    expect(reqRes.requestId).toBeDefined();
+
+    // Owner checks pending deletion requests
+    const pendingRequests = await adminCaller.internalTasks.listDeletionRequests({
+      status: "pending",
+    });
+    expect(Array.isArray(pendingRequests)).toBe(true);
+
+    // Owner approves deletion
+    const reviewRes = await adminCaller.internalTasks.reviewDeletionRequest({
+      requestId: reqRes.requestId ?? 1,
+      action: "approve",
+    });
+    expect(reviewRes.success).toBe(true);
+    expect(reviewRes.action).toBe("approved");
+  });
+
+  it("owner can decline deletion request and task remains active", async () => {
+    const adminCaller = appRouter.createCaller(createAdminContext(1));
+    const empCaller = appRouter.createCaller(createEmployeeContext(2));
+
+    const reqRes = await empCaller.internalTasks.requestDeletion({
+      taskId: 102,
+      taskType: "general",
+      reason: "Seems redundant with intake form",
+    });
+    expect(reqRes.success).toBe(true);
+
+    // Owner declines deletion
+    const reviewRes = await adminCaller.internalTasks.reviewDeletionRequest({
+      requestId: reqRes.requestId ?? 2,
+      action: "decline",
+      declineReason: "Required for state IDEA compliance",
+    });
+    expect(reviewRes.success).toBe(true);
+    expect(reviewRes.action).toBe("declined");
+  });
+
+  it("non-admin employee cannot review or approve deletion requests", async () => {
+    const empCaller = appRouter.createCaller(createEmployeeContext(2));
+    await expect(
+      empCaller.internalTasks.reviewDeletionRequest({
+        requestId: 1,
+        action: "approve",
+      })
+    ).rejects.toThrow("Only the owner or supervisor can review deletion requests");
+  });
+
+  it("blocks employee from deleting project case tasks with exact quote", async () => {
+    const empCaller = appRouter.createCaller(createEmployeeContext(2));
+    await expect(
+      empCaller.tasks.delete({ id: 105 })
+    ).rejects.toThrow(
+      "You may not delete this task. It was assigned by owner or supervisor. Request delete from them?"
+    );
+  });
+});
+

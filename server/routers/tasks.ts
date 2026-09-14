@@ -11,16 +11,18 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 export const tasksRouter = router({
 
     // Get all tasks for a specific student contact (across all their projects)
-    getByStudent: adminProcedure
+    getByStudent: protectedProcedure
       .input(z.object({ studentContactId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         return await db.getTasksByStudent(input.studentContactId);
       }),
     // Get all tasks across all students for the Tasks main page
-    getAll: adminProcedure.query(async ({ ctx }) => {
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
       return await db.getAllTasksForOwner(ctx.user.id);
     }),
-    create: adminProcedure
+    create: protectedProcedure
       .input(
         z.object({
           projectId: z.number(),
@@ -33,10 +35,11 @@ export const tasksRouter = router({
           priority: z.string().optional(),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         return await db.createTask(input);
       }),
-    update: adminProcedure
+    update: protectedProcedure
       .input(
         z.object({
           id: z.number(),
@@ -50,18 +53,33 @@ export const tasksRouter = router({
           seenByClient: z.boolean().optional(),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         const { id, ...data } = input;
         return await db.updateTask(id, data);
       }),
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        if (!isOwnerOrAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You may not delete this task. It was assigned by owner or supervisor. Request delete from them?",
+          });
+        }
         return await db.deleteTask(input.id);
       }),
-    bulkDelete: adminProcedure
+    bulkDelete: protectedProcedure
       .input(z.object({ ids: z.array(z.number()) }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        if (!isOwnerOrAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You may not delete tasks assigned by owner or supervisor. Please submit a deletion request.",
+          });
+        }
         if (input.ids.length === 0) return { success: true, count: 0 };
         for (const id of input.ids) {
           await db.deleteTask(id);
@@ -69,21 +87,30 @@ export const tasksRouter = router({
         return { success: true, count: input.ids.length };
       }),
     // Add a step to a task
-    addStep: adminProcedure
+    addStep: protectedProcedure
       .input(z.object({ taskId: z.number(), title: z.string().min(1) }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         return await db.addTaskStep(input.taskId, input.title);
       }),
     // Toggle a step complete/incomplete
-    toggleStep: adminProcedure
+    toggleStep: protectedProcedure
       .input(z.object({ stepId: z.number(), isComplete: z.boolean() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role === "client") throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access internal tasks" });
         return await db.toggleTaskStep(input.stepId, input.isComplete);
       }),
-    // Delete a step
-    deleteStep: adminProcedure
+    // Delete a step (supervisor/admin protected)
+    deleteStep: protectedProcedure
       .input(z.object({ stepId: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        if (!isOwnerOrAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You may not delete this task step. It was assigned by owner or supervisor.",
+          });
+        }
         return await db.deleteTaskStep(input.stepId);
       }),
     // Create a task for a student — auto-creates a default project if the student has none

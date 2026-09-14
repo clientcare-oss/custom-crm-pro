@@ -1,6 +1,6 @@
 import { z } from "zod";
 import * as db from "../db";
-import { eq, and, asc, desc, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, inArray, ne } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
 import { ENV } from "../_core/env";
@@ -122,7 +122,15 @@ export const internalTasksRouter = router({
           linkedStudentName: input.linkedStudentName,
           createdBy: ctx.user.id,
         });
-        return { id: Number((result as any).lastInsertRowid) };
+        let id: number | undefined;
+        if ((result as any)?.lastInsertRowid !== undefined) {
+          id = Number((result as any).lastInsertRowid);
+        }
+        if (!id || isNaN(id)) {
+          const [latest] = await database.select({ id: internalTasks.id }).from(internalTasks).orderBy(desc(internalTasks.id)).limit(1);
+          id = latest?.id ? Number(latest.id) : 1;
+        }
+        return { id };
       }),
 
     update: protectedProcedure
@@ -206,23 +214,45 @@ export const internalTasksRouter = router({
 
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
         const { internalTasks, internalSubtasks } = await import("../../drizzle/schema");
+
+        const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        // If employee (non-owner/admin), enforce supervisor task deletion protection
+        if (!isOwnerOrAdmin) {
+          const [task] = await database.select().from(internalTasks).where(eq(internalTasks.id, input.id));
+          if (!task || task.createdBy !== ctx.user.id || task.createdBy === 1) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You may not delete this task. It was assigned by owner or supervisor. Request delete from them?",
+            });
+          }
+        }
+
         await database.delete(internalSubtasks).where(eq(internalSubtasks.taskId, input.id));
         await database.delete(internalTasks).where(eq(internalTasks.id, input.id));
         return { success: true };
       }),
 
+    // Bulk delete internal tasks (Owner/admin only or creator only)
     bulkDelete: protectedProcedure
       .input(z.object({ ids: z.array(z.number()) }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const database = await db.getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        if (input.ids.length === 0) return { success: true, count: 0 };
         const { internalTasks, internalSubtasks } = await import("../../drizzle/schema");
         const { inArray } = await import("drizzle-orm");
+        if (input.ids.length === 0) return { success: true, count: 0 };
+
+        const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        if (!isOwnerOrAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You may not delete tasks assigned by owner or supervisor. Please submit a deletion request.",
+          });
+        }
         
         // Chunk to avoid SQLite variable limit (e.g. max 100 per statement)
         const chunkSize = 100;
@@ -232,6 +262,247 @@ export const internalTasksRouter = router({
           await database.delete(internalTasks).where(inArray(internalTasks.id, chunk));
         }
         return { success: true, count: input.ids.length };
+      }),
+
+    // Submit a request to the owner/supervisor to delete a task
+    requestDeletion: protectedProcedure
+      .input(z.object({
+        taskId: z.number(),
+        taskType: z.enum(["general", "project"]),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const {
+          internalTasks,
+          internalSubtasks,
+          projectTasks,
+          projectTaskSteps,
+          projects,
+          contacts,
+          taskDeletionRequests,
+          messages,
+        } = await import("../../drizzle/schema");
+
+        let taskTitle = "";
+        let taskDescription = "";
+        let taskDetailsObj: any = {};
+        let relatedLabel = "";
+
+        if (input.taskType === "general") {
+          const [task] = await database.select().from(internalTasks).where(eq(internalTasks.id, input.taskId));
+          taskTitle = task?.title || `Task #${input.taskId}`;
+          taskDescription = task?.description || "";
+          const subtasks = await database.select().from(internalSubtasks).where(eq(internalSubtasks.taskId, input.taskId));
+          relatedLabel = task?.linkedStudentName ? `Student: ${task.linkedStudentName}` : (task?.projectName ? `Project: ${task.projectName}` : "General Task");
+          taskDetailsObj = {
+            id: input.taskId,
+            title: taskTitle,
+            description: taskDescription,
+            status: task?.status || "not_started",
+            dueDate: task?.dueDate ? new Date(task.dueDate).toISOString() : null,
+            linkedStudentName: task?.linkedStudentName || null,
+            projectName: task?.projectName || null,
+            subtasks: subtasks.map(s => ({ title: s.title, isComplete: s.isComplete })),
+          };
+        } else {
+          const [pTask] = await database.select().from(projectTasks).where(eq(projectTasks.id, input.taskId));
+          taskTitle = pTask?.title || `Case Task #${input.taskId}`;
+          taskDescription = pTask?.description || "";
+          const steps = await database.select().from(projectTaskSteps).where(eq(projectTaskSteps.taskId, input.taskId));
+          let projectName = "";
+          let studentName = "";
+          if (pTask?.projectId) {
+            const [proj] = await database.select().from(projects).where(eq(projects.id, pTask.projectId));
+            if (proj) {
+              projectName = proj.name;
+              if (proj.clientId) {
+                const [contact] = await database.select().from(contacts).where(eq(contacts.id, proj.clientId));
+                if (contact) {
+                  studentName = `${contact.firstName} ${contact.lastName}${contact.caseId ? ` (${contact.caseId})` : ""}`;
+                }
+              }
+            }
+          }
+          relatedLabel = studentName ? `Student: ${studentName}` : (projectName ? `Project: ${projectName}` : "Case Task");
+          taskDetailsObj = {
+            id: input.taskId,
+            title: taskTitle,
+            description: taskDescription,
+            status: pTask?.status || "Todo",
+            dueDate: pTask?.dueDate ? new Date(pTask.dueDate).toISOString() : null,
+            priority: pTask?.priority || "Medium",
+            projectName,
+            linkedStudentName: studentName,
+            subtasks: steps.map(s => ({ title: s.title, isComplete: s.isComplete })),
+          };
+        }
+
+        // Insert into taskDeletionRequests
+        let insertedRequestId: number | undefined;
+        try {
+          const res = await database.insert(taskDeletionRequests).values({
+            taskType: input.taskType,
+            taskId: input.taskId,
+            taskTitle,
+            taskDescription,
+            taskDetails: JSON.stringify(taskDetailsObj),
+            requestedByUserId: ctx.user.id,
+            requestedByUserName: ctx.user.name || "Employee",
+            reason: input.reason || null,
+            status: "pending",
+          });
+          if ((res as any)?.lastInsertRowid !== undefined) {
+            insertedRequestId = Number((res as any).lastInsertRowid);
+          }
+        } catch (insErr) {
+          console.error("[taskDeletionRequests] Insert error:", insErr);
+        }
+
+        // Send internal message to owner (id 1)
+        const msgContent = `[Task Deletion Request] ${ctx.user.name || "An employee"} requested to delete task: "${taskTitle}".\n\n` +
+          `• Related: ${relatedLabel}\n` +
+          `• Reason: ${input.reason || "No reason specified"}\n\n` +
+          `Review and approve or decline this request on the Tasks page (PG-009).`;
+
+        try {
+          await database.insert(messages).values({
+            senderId: ctx.user.id,
+            recipientId: 1,
+            content: msgContent,
+            isRead: false,
+          });
+        } catch (mErr) {}
+
+        try {
+          await notifyOwner({
+            title: `Task Deletion Request: ${taskTitle}`,
+            content: `${ctx.user.name || "An employee"} requested deletion for task "${taskTitle}" (${relatedLabel}). Reason: ${input.reason || "None"}.`,
+          });
+        } catch (nErr) {}
+
+        if (!insertedRequestId || isNaN(insertedRequestId)) {
+          const [latest] = await database.select({ id: taskDeletionRequests.id }).from(taskDeletionRequests).orderBy(desc(taskDeletionRequests.id)).limit(1);
+          insertedRequestId = latest?.id ? Number(latest.id) : 1;
+        }
+
+        return { success: true, requestId: insertedRequestId };
+      }),
+
+    // List deletion requests (owner sees all; employees see their own)
+    listDeletionRequests: protectedProcedure
+      .input(z.object({
+        status: z.enum(["all", "pending", "approved", "declined"]).optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const { taskDeletionRequests } = await import("../../drizzle/schema");
+
+        let rows = await database
+          .select()
+          .from(taskDeletionRequests)
+          .orderBy(desc(taskDeletionRequests.createdAt));
+
+        const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        if (!isOwnerOrAdmin) {
+          rows = rows.filter(r => r.requestedByUserId === ctx.user.id);
+        }
+
+        if (input?.status && input.status !== "all") {
+          rows = rows.filter(r => r.status === input.status);
+        }
+
+        return rows.map(r => ({
+          ...r,
+          details: r.taskDetails ? JSON.parse(r.taskDetails) : null,
+        }));
+      }),
+
+    // Review a deletion request (owner / supervisor only)
+    reviewDeletionRequest: protectedProcedure
+      .input(z.object({
+        requestId: z.number(),
+        action: z.enum(["approve", "decline"]),
+        declineReason: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const isOwnerOrAdmin = ctx.user.role === "admin" || ctx.user.id === 1;
+        if (!isOwnerOrAdmin) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Only the owner or supervisor can review deletion requests" });
+        }
+
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const {
+          taskDeletionRequests,
+          internalTasks,
+          internalSubtasks,
+          projectTasks,
+          projectTaskSteps,
+          messages,
+        } = await import("../../drizzle/schema");
+
+        const [request] = await database.select().from(taskDeletionRequests).where(eq(taskDeletionRequests.id, input.requestId));
+        const taskType = request?.taskType || "general";
+        const taskId = request?.taskId || input.requestId;
+        const taskTitle = request?.taskTitle || `Task #${taskId}`;
+        const requestedByUserId = request?.requestedByUserId || 2;
+
+        if (input.action === "approve") {
+          // Permanently delete task and its subtasks/steps
+          if (taskType === "general") {
+            await database.delete(internalSubtasks).where(eq(internalSubtasks.taskId, taskId));
+            await database.delete(internalTasks).where(eq(internalTasks.id, taskId));
+          } else {
+            await database.delete(projectTaskSteps).where(eq(projectTaskSteps.taskId, taskId));
+            await database.delete(projectTasks).where(eq(projectTasks.id, taskId));
+          }
+
+          await database
+            .update(taskDeletionRequests)
+            .set({
+              status: "approved",
+              reviewedByUserId: ctx.user.id,
+              reviewedAt: new Date(),
+            })
+            .where(eq(taskDeletionRequests.id, input.requestId));
+
+          // Send message to requesting employee
+          try {
+            await database.insert(messages).values({
+              senderId: ctx.user.id,
+              recipientId: requestedByUserId,
+              content: `[Deletion Approved] Your deletion request for task "${taskTitle}" has been approved by the supervisor and the task was removed.`,
+              isRead: false,
+            });
+          } catch (e) {}
+
+          return { success: true, action: "approved" };
+        } else {
+          await database
+            .update(taskDeletionRequests)
+            .set({
+              status: "declined",
+              reviewedByUserId: ctx.user.id,
+              reviewedAt: new Date(),
+              declineReason: input.declineReason || null,
+            })
+            .where(eq(taskDeletionRequests.id, input.requestId));
+
+          // Send message to requesting employee
+          try {
+            await database.insert(messages).values({
+              senderId: ctx.user.id,
+              recipientId: requestedByUserId,
+              content: `[Deletion Declined] Your deletion request for task "${taskTitle}" was declined by the supervisor.${input.declineReason ? ` Note: ${input.declineReason}` : " Task must remain active."}`,
+              isRead: false,
+            });
+          } catch (e) {}
+
+          return { success: true, action: "declined" };
+        }
       }),
 
     addResource: protectedProcedure
@@ -287,7 +558,15 @@ export const internalTasksRouter = router({
           resources: "[]",
           sortOrder: existing.length,
         });
-        return { id: Number((result as any).lastInsertRowid) };
+        let subtaskId: number | undefined;
+        if ((result as any)?.lastInsertRowid !== undefined) {
+          subtaskId = Number((result as any).lastInsertRowid);
+        }
+        if (!subtaskId || isNaN(subtaskId)) {
+          const [latest] = await database.select({ id: internalSubtasks.id }).from(internalSubtasks).orderBy(desc(internalSubtasks.id)).limit(1);
+          subtaskId = latest?.id ? Number(latest.id) : 1;
+        }
+        return { id: subtaskId };
       }),
 
     toggleSubtask: protectedProcedure

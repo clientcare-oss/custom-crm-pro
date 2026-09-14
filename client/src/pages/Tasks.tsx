@@ -43,6 +43,7 @@ import {
   Paperclip,
   FileText,
   ListChecks,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -50,6 +51,8 @@ import TaskResourcePanel from "@/components/tasks/TaskResourcePanel";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BulkTaskActionBar } from "@/components/tasks/BulkTaskActionBar";
 import { ConfirmDeleteTasksDialog, TaskPreviewItem } from "@/components/tasks/ConfirmDeleteTasksDialog";
+import { TaskDeleteRequestModal, type TaskToDeleteInfo } from "@/components/tasks/TaskDeleteRequestModal";
+import { TaskDeletionReviewModal } from "@/components/tasks/TaskDeletionReviewModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Resource = { id: number; label: string; url: string };
@@ -211,6 +214,9 @@ function TaskRow({
   isSelectMode,
   isSelected,
   onToggleSelect,
+  isOwnerOrAdmin,
+  isDeletionPending,
+  onRequestDelete,
 }: {
   task: Task;
   users: { id: number; name: string }[];
@@ -218,6 +224,9 @@ function TaskRow({
   isSelectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: number) => void;
+  isOwnerOrAdmin?: boolean;
+  isDeletionPending?: boolean;
+  onRequestDelete?: (task: TaskToDeleteInfo) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
@@ -270,6 +279,22 @@ function TaskRow({
       utils.internalTasks.list.invalidate();
       toast("Task deleted");
     },
+    onError: (err) => {
+      if (err.message?.includes("Request delete from them?")) {
+        onRequestDelete?.({
+          id: task.id,
+          title: task.title,
+          type: "general",
+          description: task.description,
+          projectName: task.projectName,
+          studentName: task.linkedStudentName,
+          dueDate: task.dueDate,
+          subtaskCount: task.subtasks.length,
+        });
+      } else {
+        toast.error(err.message || "Failed to delete task");
+      }
+    },
   });
   const updateStatus = trpc.internalTasks.update.useMutation({
     onSuccess: () => utils.internalTasks.list.invalidate(),
@@ -313,6 +338,12 @@ function TaskRow({
             <span className={`font-normal text-lg ${isComplete ? "line-through text-muted-foreground" : "text-foreground"}`}>
               {task.title}
             </span>
+            {isDeletionPending && (
+              <Badge variant="outline" className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/40 text-xs font-semibold flex items-center gap-1">
+                <ShieldAlert className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                Deletion Pending Approval
+              </Badge>
+            )}
             {task.projectName && (
               <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded px-1.5 py-0.5 flex items-center gap-1">
                 <FolderOpen className="h-3 w-3" />{task.projectName}
@@ -410,7 +441,30 @@ function TaskRow({
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => deleteTask.mutate({ id: task.id })} className="text-muted-foreground hover:text-red-500 transition-colors">
+          <button
+            onClick={() => {
+              if (isDeletionPending) {
+                toast.info("A deletion request for this task is already pending owner review.");
+                return;
+              }
+              if (!isOwnerOrAdmin) {
+                onRequestDelete?.({
+                  id: task.id,
+                  title: task.title,
+                  type: "general",
+                  description: task.description,
+                  projectName: task.projectName,
+                  studentName: task.linkedStudentName,
+                  dueDate: task.dueDate,
+                  subtaskCount: task.subtasks.length,
+                });
+                return;
+              }
+              deleteTask.mutate({ id: task.id });
+            }}
+            className="text-muted-foreground hover:text-red-500 transition-colors"
+            title={isOwnerOrAdmin ? "Delete task" : "Request task deletion"}
+          >
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
@@ -516,11 +570,17 @@ function StudentTaskRow({
   isSelectMode,
   isSelected,
   onToggleSelect,
+  isOwnerOrAdmin,
+  isDeletionPending,
+  onRequestDelete,
 }: {
   task: StudentTask;
   isSelectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: number) => void;
+  isOwnerOrAdmin?: boolean;
+  isDeletionPending?: boolean;
+  onRequestDelete?: (task: TaskToDeleteInfo) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [addingStep, setAddingStep] = useState(false);
@@ -543,6 +603,22 @@ function StudentTaskRow({
   const updateTask = trpc.tasks.update.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
   const deleteTask = trpc.tasks.delete.useMutation({
     onSuccess: () => { utils.tasks.getAll.invalidate(); toast("Task deleted"); },
+    onError: (err) => {
+      if (err.message?.includes("Request delete from them?")) {
+        onRequestDelete?.({
+          id: task.id,
+          title: task.title,
+          type: "project",
+          description: task.description,
+          projectName: task.projectName,
+          studentName: task.clientName,
+          dueDate: task.dueDate,
+          subtaskCount: task.steps?.length ?? 0,
+        });
+      } else {
+        toast.error(err.message || "Failed to delete task");
+      }
+    },
   });
   const addStep = trpc.tasks.addStep.useMutation({
     onSuccess: () => { utils.tasks.getAll.invalidate(); setNewStepTitle(""); setAddingStep(false); },
@@ -561,7 +637,12 @@ function StudentTaskRow({
       });
     },
   });
-  const deleteStep = trpc.tasks.deleteStep.useMutation({ onSuccess: () => utils.tasks.getAll.invalidate() });
+  const deleteStep = trpc.tasks.deleteStep.useMutation({
+    onSuccess: () => utils.tasks.getAll.invalidate(),
+    onError: (err) => {
+      toast.error(err.message || "Failed to delete task step");
+    },
+  });
   return (
     <div className={`border rounded-lg mb-3 overflow-hidden transition-all ${
       isSelected
@@ -593,6 +674,12 @@ function StudentTaskRow({
             <span className={`font-normal text-lg ${
               isDone ? "line-through text-muted-foreground" : "text-foreground"
             }`}>{task.title}</span>
+            {isDeletionPending && (
+              <Badge variant="outline" className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/40 text-xs font-semibold flex items-center gap-1">
+                <ShieldAlert className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                Deletion Pending Approval
+              </Badge>
+            )}
             {task.priority && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                 task.priority === "High" ? "bg-red-100 text-red-700" :
@@ -684,7 +771,30 @@ function StudentTaskRow({
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => deleteTask.mutate({ id: task.id })} className="text-muted-foreground hover:text-red-500 transition-colors">
+          <button
+            onClick={() => {
+              if (isDeletionPending) {
+                toast.info("A deletion request for this task is already pending owner review.");
+                return;
+              }
+              if (!isOwnerOrAdmin) {
+                onRequestDelete?.({
+                  id: task.id,
+                  title: task.title,
+                  type: "project",
+                  description: task.description,
+                  projectName: task.projectName,
+                  studentName: task.clientName,
+                  dueDate: task.dueDate,
+                  subtaskCount: task.steps?.length ?? 0,
+                });
+                return;
+              }
+              deleteTask.mutate({ id: task.id });
+            }}
+            className="text-muted-foreground hover:text-red-500 transition-colors"
+            title={isOwnerOrAdmin ? "Delete task" : "Request task deletion"}
+          >
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
@@ -918,6 +1028,8 @@ function CreateTaskDialog({
 export default function Tasks() {
   const [statusFilter, setStatusFilter] = useState<"all" | Task["status"]>("all");
   const { user } = useAuth();
+  const isOwnerOrAdmin = user?.role === "admin" || (user as any)?.id === 1 || (user as any)?.id === "1";
+
   const { data: tasks = [], isLoading } = trpc.internalTasks.list.useQuery({ status: statusFilter });
   const { data: projectsData = [] } = trpc.projects.list.useQuery();
   const { data: teamUsers = [] } = trpc.internalTasks.getTeamUsers.useQuery();
@@ -937,6 +1049,22 @@ export default function Tasks() {
   // Split into client-facing (visible to client) and case tasks (internal only)
   const clientFacingTasks = (studentTasks as StudentTask[]).filter((t) => t.seenByClient);
   const caseTasks = (studentTasks as StudentTask[]).filter((t) => !t.seenByClient);
+
+  // Deletion requests queries & state
+  const { data: deletionRequests = [] } = trpc.internalTasks.listDeletionRequests.useQuery(
+    { status: "pending" },
+    { refetchInterval: 15000 }
+  );
+  const pendingRequestsCount = deletionRequests.filter((r: any) => r.status === "pending").length;
+  const pendingGeneralTaskIds = new Set(
+    deletionRequests.filter((r: any) => r.status === "pending" && r.taskType === "general").map((r: any) => r.taskId)
+  );
+  const pendingCaseTaskIds = new Set(
+    deletionRequests.filter((r: any) => r.status === "pending" && r.taskType === "project").map((r: any) => r.taskId)
+  );
+
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [requestDeleteTask, setRequestDeleteTask] = useState<TaskToDeleteInfo | null>(null);
 
   // Multi-select state
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -1003,6 +1131,10 @@ export default function Tasks() {
 
   const handleBatchDelete = async () => {
     if (totalSelected === 0) return;
+    if (!isOwnerOrAdmin) {
+      toast.error("You may not bulk delete supervisor-assigned tasks. Please request deletion individually so full context can be reviewed.");
+      return;
+    }
     setIsDeleting(true);
     try {
       const generalIds = Array.from(selectedGeneralIds);
@@ -1041,6 +1173,22 @@ export default function Tasks() {
           <p className="text-sm text-muted-foreground mt-0.5">{completedTasks}/{totalTasks} tasks complete</p>
         </div>
         <div className="flex items-center gap-2">
+          {isOwnerOrAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsReviewModalOpen(true)}
+              className="gap-1.5 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-all font-medium"
+            >
+              <ShieldAlert className="h-4 w-4 text-amber-500" />
+              Deletion Requests
+              {pendingRequestsCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-[11px] bg-rose-500 text-white font-mono">
+                  {pendingRequestsCount}
+                </Badge>
+              )}
+            </Button>
+          )}
           <Button
             variant={isSelectMode ? "default" : "outline"}
             size="sm"
@@ -1062,6 +1210,35 @@ export default function Tasks() {
           </Button>
         </div>
       </div>
+
+      {/* Supervisor Deletion Requests Banner (Fail-Safe) */}
+      {isOwnerOrAdmin && pendingRequestsCount > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-600/10 to-transparent p-4 text-amber-900 dark:text-amber-100 flex items-center justify-between gap-4 flex-wrap shadow-lg shadow-amber-500/5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 animate-pulse">
+              <ShieldAlert className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                Action Required: {pendingRequestsCount} Task Deletion Request{pendingRequestsCount === 1 ? "" : "s"} Pending
+                <Badge variant="destructive" className="bg-rose-500 text-white font-mono text-[10px]">
+                  Review Needed
+                </Badge>
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Employees have requested to delete supervisor-assigned tasks. Review the full task context and approve or decline.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setIsReviewModalOpen(true)}
+            className="gap-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/20"
+          >
+            <ShieldAlert className="h-4 w-4" />
+            Review Requests ({pendingRequestsCount})
+          </Button>
+        </div>
+      )}
 
       {/* Bulk Action Sticky Bar */}
       {isSelectMode && (
@@ -1125,6 +1302,9 @@ export default function Tasks() {
               isSelectMode={isSelectMode}
               isSelected={selectedGeneralIds.has(task.id)}
               onToggleSelect={toggleGeneralTask}
+              isOwnerOrAdmin={isOwnerOrAdmin}
+              isDeletionPending={pendingGeneralTaskIds.has(task.id)}
+              onRequestDelete={(t) => setRequestDeleteTask(t)}
             />
           ))}
         </div>
@@ -1153,6 +1333,9 @@ export default function Tasks() {
                 isSelectMode={isSelectMode}
                 isSelected={selectedProjectIds.has(t.id)}
                 onToggleSelect={toggleProjectTask}
+                isOwnerOrAdmin={isOwnerOrAdmin}
+                isDeletionPending={pendingCaseTaskIds.has(t.id)}
+                onRequestDelete={(tInfo) => setRequestDeleteTask(tInfo)}
               />
             ))}
           </div>
@@ -1182,6 +1365,9 @@ export default function Tasks() {
                 isSelectMode={isSelectMode}
                 isSelected={selectedProjectIds.has(t.id)}
                 onToggleSelect={toggleProjectTask}
+                isOwnerOrAdmin={isOwnerOrAdmin}
+                isDeletionPending={pendingCaseTaskIds.has(t.id)}
+                onRequestDelete={(tInfo) => setRequestDeleteTask(tInfo)}
               />
             ))}
           </div>
@@ -1196,6 +1382,19 @@ export default function Tasks() {
         isDeleting={isDeleting}
         totalSelected={totalSelected}
         taskPreviews={selectedTaskPreviews}
+      />
+
+      {/* Employee Delete Request Modal */}
+      <TaskDeleteRequestModal
+        open={!!requestDeleteTask}
+        onClose={() => setRequestDeleteTask(null)}
+        task={requestDeleteTask}
+      />
+
+      {/* Supervisor Deletion Review Console */}
+      <TaskDeletionReviewModal
+        open={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
       />
     </div>
   );
