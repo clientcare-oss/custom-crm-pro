@@ -1881,4 +1881,46 @@ export const caseActivityTimeline = mysqlTable("case_activity_timeline", {
 export type CaseActivityTimelineItem = typeof caseActivityTimeline.$inferSelect;
 export type InsertCaseActivityTimelineItem = typeof caseActivityTimeline.$inferInsert;
 
+// ── First Mate Session Runs & AI Learning Repository (PG-037) ─────────────────
+export const firstMateSessions = mysqlTable("first_mate_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: varchar("sessionId", { length: 128 }).notNull().unique(),
+  sessionType: varchar("sessionType", { length: 64 }).default("IEP_MEETING").notNull(),
+  mode: varchar("mode", { length: 32 }).default("LIVE").notNull(), // "LIVE" | "SIMULATOR"
+  status: varchar("status", { length: 32 }).default("COMPLETED").notNull(), // "ACTIVE" | "PAUSED" | "ENDED" | "COMPLETED"
+  title: varchar("title", { length: 255 }).notNull(),
+  studentName: varchar("studentName", { length: 255 }),
+  studentContactId: int("studentContactId"),
+  language: varchar("language", { length: 16 }).default("en"),
+  durationSeconds: int("durationSeconds").default(0).notNull(),
+  turnCount: int("turnCount").default(0).notNull(),
+  keyIssue: varchar("keyIssue", { length: 255 }),
+  keyIssuePriority: varchar("keyIssuePriority", { length: 64 }),
+  quickAnswer: text("quickAnswer"),
+  sayThis: text("sayThis"),
+  whyItMatters: text("whyItMatters"),
+  summary: text("summary"),
+  liveAssistJson: text("liveAssistJson"), // JSON string of liveAssist data
+  transcriptJson: text("transcriptJson").notNull(), // JSON string of NormalizedTranscriptEvent[]
+  detectionsJson: text("detectionsJson"), // JSON string of requests, refusals, commitments
+  askHistoryJson: text("askHistoryJson"), // JSON string of in-session Q&A
+  notesJson: text("notesJson"), // JSON string of advocate notes
+  aiModel: varchar("aiModel", { length: 128 }),
+  aiLatencyMs: int("aiLatencyMs"),
+  advocateRating: int("advocateRating"), // 1 - 5 star rating
+  advocateFeedback: text("advocateFeedback"), // Quality critique and prompt improvement notes
+  tags: text("tags"), // comma-separated or json string of tags
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  sessionIdIdx: index("fm_sessions_sessionId_idx").on(t.sessionId),
+  studentContactIdIdx: index("fm_sessions_studentContactId_idx").on(t.studentContactId),
+  modeIdx: index("fm_sessions_mode_idx").on(t.mode),
+  createdAtIdx: index("fm_sessions_createdAt_idx").on(t.createdAt),
+}));
+
+export type FirstMateSessionRecord = typeof firstMateSessions.$inferSelect;
+export type InsertFirstMateSessionRecord = typeof firstMateSessions.$inferInsert;
+
+
 

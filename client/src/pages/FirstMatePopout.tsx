@@ -129,12 +129,15 @@ export default function FirstMatePopout() {
   // Collapsible sections
   const [isOpenMattersExpanded, setIsOpenMattersExpanded] = useState(false);
   const [isTranscriptExpanded, setIsTranscriptExpanded] = useState(false);
-  const transcriptBottomRef = useRef<HTMLDivElement>(null);
+  const transcriptContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll transcript when expanded
+  // Auto-scroll transcript inside container when expanded WITHOUT jumping the window scroll
   useEffect(() => {
     if (isTranscriptExpanded && density === "FULL") {
-      transcriptBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      const el = transcriptContainerRef.current;
+      if (el) {
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      }
     }
   }, [session.transcript.length, isTranscriptExpanded, density]);
 
@@ -787,7 +790,10 @@ export default function FirstMatePopout() {
             </div>
 
             {isTranscriptExpanded && (
-              <div className="p-2.5 space-y-2 max-h-48 overflow-y-auto text-xs bg-black/30">
+              <div
+                ref={transcriptContainerRef}
+                className="p-2.5 space-y-2 max-h-48 overflow-y-auto text-xs bg-black/30"
+              >
                 {session.transcript.length === 0 ? (
                   <p className="text-[11px] text-slate-500 italic text-center py-4">No speech turns recorded yet.</p>
                 ) : (
@@ -822,7 +828,6 @@ export default function FirstMatePopout() {
                     );
                   })
                 )}
-                <div ref={transcriptBottomRef} />
               </div>
             )}
 

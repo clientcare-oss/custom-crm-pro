@@ -10,7 +10,14 @@ import {
 } from "../firstMateAi";
 import { eq } from "drizzle-orm";
 import { firstMateSessionStore } from "../firstMate/sessionStore";
-import { getDb } from "../db";
+import {
+  getDb,
+  saveFirstMateSessionRun,
+  listFirstMateSessionRuns,
+  getFirstMateSessionRunBySessionId,
+  updateFirstMateSessionFeedback,
+  deleteFirstMateSessionRun,
+} from "../db";
 import { contacts, leads, projects, projectNotes } from "../../drizzle/schema";
 import {
   isSilenceHallucination,
@@ -712,6 +719,71 @@ ${transcriptFormatted}
         summary,
       });
 
+      // 9. Automatically record session run into AI Learning & Runs Repository (PG-037)
+      try {
+        const recordedData = {
+          sessionId: effectiveSessionId,
+          sessionType: session.sessionType || "IEP_MEETING",
+          mode: (session.mode || "LIVE") as "LIVE" | "SIMULATOR",
+          status: "COMPLETED",
+          title: session.title || `First Mate Session: ${resolvedStudentName}`,
+          studentName: resolvedStudentName,
+          studentContactId: resolvedStudentId,
+          language: session.language || "en",
+          durationSeconds: session.durationSeconds || 0,
+          turnCount: session.transcript?.length || 0,
+          keyIssue: session.liveAssist?.currentIssue || "Collaborative Advocacy Review",
+          keyIssuePriority: session.liveAssist?.currentIssuePriority || "High Priority",
+          quickAnswer: session.liveAssist?.quickAnswer || "",
+          sayThis: session.liveAssist?.sayThis || "",
+          whyItMatters: session.liveAssist?.whyItMatters || "",
+          summary,
+          liveAssist: session.liveAssist,
+          transcript: session.transcript || [],
+          requests: session.requests || [],
+          refusals: session.refusals || [],
+          commitments: session.commitments || [],
+          askHistory: session.askHistory || [],
+          notes: session.notes || [],
+          aiModel: session.liveAssist?.provenanceMeta?.model || "@cf/meta/llama-3.1-8b-instruct",
+          aiLatencyMs: session.liveAssist?.provenanceMeta?.latencyMs || 350,
+        };
+
+        firstMateSessionStore.recordRun(recordedData);
+
+        await saveFirstMateSessionRun({
+          sessionId: effectiveSessionId,
+          sessionType: session.sessionType || "IEP_MEETING",
+          mode: (session.mode || "LIVE") as "LIVE" | "SIMULATOR",
+          status: "COMPLETED",
+          title: session.title || `First Mate Session: ${resolvedStudentName}`,
+          studentName: resolvedStudentName,
+          studentContactId: resolvedStudentId,
+          language: session.language || "en",
+          durationSeconds: session.durationSeconds || 0,
+          turnCount: session.transcript?.length || 0,
+          keyIssue: session.liveAssist?.currentIssue || "Collaborative Advocacy Review",
+          keyIssuePriority: session.liveAssist?.currentIssuePriority || "High Priority",
+          quickAnswer: session.liveAssist?.quickAnswer || "",
+          sayThis: session.liveAssist?.sayThis || "",
+          whyItMatters: session.liveAssist?.whyItMatters || "",
+          summary,
+          liveAssistJson: JSON.stringify(session.liveAssist || {}),
+          transcriptJson: JSON.stringify(session.transcript || []),
+          detectionsJson: JSON.stringify({
+            requests: session.requests || [],
+            refusals: session.refusals || [],
+            commitments: session.commitments || [],
+          }),
+          askHistoryJson: JSON.stringify(session.askHistory || []),
+          notesJson: JSON.stringify(session.notes || []),
+          aiModel: session.liveAssist?.provenanceMeta?.model || "@cf/meta/llama-3.1-8b-instruct",
+          aiLatencyMs: session.liveAssist?.provenanceMeta?.latencyMs || 350,
+        });
+      } catch (recErr) {
+        console.warn("[FirstMate] Failed to archive session run:", recErr);
+      }
+
       return {
         success: true,
         noteId,
@@ -722,6 +794,307 @@ ${transcriptFormatted}
         noteTitle,
         visibility: "Advocate Only" as const,
       };
+    }),
+
+  /**
+   * ── AI LEARNING & SESSION RECORDING ENDPOINTS (PG-037) ──
+   */
+  listRecordedSessions: publicProcedure
+    .input(
+      z
+        .object({
+          mode: z.enum(["ALL", "LIVE", "SIMULATOR"]).optional(),
+          search: z.string().optional(),
+          limit: z.number().optional(),
+        })
+        .optional()
+    )
+    .query(async ({ input }) => {
+      const dbRecords = await listFirstMateSessionRuns(input);
+      const memoryRecords = firstMateSessionStore.listRecordedRuns(input);
+
+      // Merge and deduplicate by sessionId
+      const recordMap = new Map<string, any>();
+
+      // Memory records first
+      for (const m of memoryRecords) {
+        recordMap.set(m.sessionId, m);
+      }
+
+      // Database records overwrite with parsed JSON
+      for (const d of dbRecords) {
+        let liveAssist = {};
+        let transcript = [];
+        let requests = [];
+        let refusals = [];
+        let commitments = [];
+        let askHistory = [];
+        let notes = [];
+
+        try {
+          if (d.liveAssistJson) liveAssist = JSON.parse(d.liveAssistJson);
+        } catch {}
+        try {
+          if (d.transcriptJson) transcript = JSON.parse(d.transcriptJson);
+        } catch {}
+        try {
+          if (d.detectionsJson) {
+            const det = JSON.parse(d.detectionsJson);
+            requests = det.requests || [];
+            refusals = det.refusals || [];
+            commitments = det.commitments || [];
+          }
+        } catch {}
+        try {
+          if (d.askHistoryJson) askHistory = JSON.parse(d.askHistoryJson);
+        } catch {}
+        try {
+          if (d.notesJson) notes = JSON.parse(d.notesJson);
+        } catch {}
+
+        recordMap.set(d.sessionId, {
+          sessionId: d.sessionId,
+          sessionType: d.sessionType,
+          mode: d.mode,
+          status: d.status,
+          title: d.title,
+          studentName: d.studentName || "Student",
+          studentContactId: d.studentContactId,
+          language: d.language || "en",
+          durationSeconds: d.durationSeconds,
+          turnCount: d.turnCount,
+          keyIssue: d.keyIssue,
+          keyIssuePriority: d.keyIssuePriority,
+          quickAnswer: d.quickAnswer,
+          sayThis: d.sayThis,
+          whyItMatters: d.whyItMatters,
+          summary: d.summary,
+          liveAssist,
+          transcript,
+          requests,
+          refusals,
+          commitments,
+          askHistory,
+          notes,
+          aiModel: d.aiModel,
+          aiLatencyMs: d.aiLatencyMs,
+          advocateRating: d.advocateRating,
+          advocateFeedback: d.advocateFeedback,
+          tags: d.tags,
+          createdAt: d.createdAt instanceof Date ? d.createdAt.getTime() : Number(d.createdAt) || Date.now(),
+          updatedAt: d.updatedAt instanceof Date ? d.updatedAt.getTime() : Number(d.updatedAt) || Date.now(),
+        });
+      }
+
+      const merged = Array.from(recordMap.values());
+      merged.sort((a, b) => b.createdAt - a.createdAt);
+
+      const limit = input?.limit || 50;
+      return {
+        sessions: merged.slice(0, limit),
+        totalCount: merged.length,
+      };
+    }),
+
+  getRecordedSession: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .query(async ({ input }) => {
+      const dbRecord = await getFirstMateSessionRunBySessionId(input.sessionId);
+      if (dbRecord) {
+        let liveAssist = {};
+        let transcript = [];
+        let requests = [];
+        let refusals = [];
+        let commitments = [];
+        let askHistory = [];
+        let notes = [];
+
+        try {
+          if (dbRecord.liveAssistJson) liveAssist = JSON.parse(dbRecord.liveAssistJson);
+        } catch {}
+        try {
+          if (dbRecord.transcriptJson) transcript = JSON.parse(dbRecord.transcriptJson);
+        } catch {}
+        try {
+          if (dbRecord.detectionsJson) {
+            const det = JSON.parse(dbRecord.detectionsJson);
+            requests = det.requests || [];
+            refusals = det.refusals || [];
+            commitments = det.commitments || [];
+          }
+        } catch {}
+        try {
+          if (dbRecord.askHistoryJson) askHistory = JSON.parse(dbRecord.askHistoryJson);
+        } catch {}
+        try {
+          if (dbRecord.notesJson) notes = JSON.parse(dbRecord.notesJson);
+        } catch {}
+
+        return {
+          session: {
+            sessionId: dbRecord.sessionId,
+            sessionType: dbRecord.sessionType,
+            mode: dbRecord.mode,
+            status: dbRecord.status,
+            title: dbRecord.title,
+            studentName: dbRecord.studentName,
+            studentContactId: dbRecord.studentContactId,
+            language: dbRecord.language,
+            durationSeconds: dbRecord.durationSeconds,
+            turnCount: dbRecord.turnCount,
+            keyIssue: dbRecord.keyIssue,
+            keyIssuePriority: dbRecord.keyIssuePriority,
+            quickAnswer: dbRecord.quickAnswer,
+            sayThis: dbRecord.sayThis,
+            whyItMatters: dbRecord.whyItMatters,
+            summary: dbRecord.summary,
+            liveAssist,
+            transcript,
+            requests,
+            refusals,
+            commitments,
+            askHistory,
+            notes,
+            aiModel: dbRecord.aiModel,
+            aiLatencyMs: dbRecord.aiLatencyMs,
+            advocateRating: dbRecord.advocateRating,
+            advocateFeedback: dbRecord.advocateFeedback,
+            tags: dbRecord.tags,
+            createdAt: dbRecord.createdAt instanceof Date ? dbRecord.createdAt.getTime() : Number(dbRecord.createdAt) || Date.now(),
+            updatedAt: dbRecord.updatedAt instanceof Date ? dbRecord.updatedAt.getTime() : Number(dbRecord.updatedAt) || Date.now(),
+          },
+        };
+      }
+
+      const memRecord = firstMateSessionStore.getRecordedRun(input.sessionId);
+      if (memRecord) {
+        return { session: memRecord };
+      }
+
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Recorded session with id ${input.sessionId} was not found.`,
+      });
+    }),
+
+  saveSessionRecord: publicProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        sessionType: z.string().optional(),
+        mode: z.enum(["LIVE", "SIMULATOR"]).optional(),
+        status: z.string().optional(),
+        title: z.string().optional(),
+        studentName: z.string().optional(),
+        studentContactId: z.number().optional(),
+        language: z.string().optional(),
+        durationSeconds: z.number().optional(),
+        turnCount: z.number().optional(),
+        keyIssue: z.string().optional(),
+        keyIssuePriority: z.string().optional(),
+        quickAnswer: z.string().optional(),
+        sayThis: z.string().optional(),
+        whyItMatters: z.string().optional(),
+        summary: z.string().optional(),
+        liveAssist: z.any().optional(),
+        transcript: z.array(z.any()).optional(),
+        requests: z.array(z.any()).optional(),
+        refusals: z.array(z.any()).optional(),
+        commitments: z.array(z.any()).optional(),
+        askHistory: z.array(z.any()).optional(),
+        notes: z.array(z.any()).optional(),
+        aiModel: z.string().optional(),
+        aiLatencyMs: z.number().optional(),
+        advocateRating: z.number().optional(),
+        advocateFeedback: z.string().optional(),
+        tags: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // 1. Record in memory cache
+      const memRun = firstMateSessionStore.recordRun(input as any);
+
+      // 2. Persist to database
+      try {
+        await saveFirstMateSessionRun({
+          sessionId: input.sessionId,
+          sessionType: input.sessionType || "IEP_MEETING",
+          mode: input.mode || "LIVE",
+          status: input.status || "COMPLETED",
+          title: input.title || `Session ${input.sessionId}`,
+          studentName: input.studentName || "Student",
+          studentContactId: input.studentContactId,
+          language: input.language || "en",
+          durationSeconds: input.durationSeconds || 0,
+          turnCount: input.turnCount || input.transcript?.length || 0,
+          keyIssue: input.keyIssue,
+          keyIssuePriority: input.keyIssuePriority,
+          quickAnswer: input.quickAnswer,
+          sayThis: input.sayThis,
+          whyItMatters: input.whyItMatters,
+          summary: input.summary,
+          liveAssistJson: JSON.stringify(input.liveAssist || {}),
+          transcriptJson: JSON.stringify(input.transcript || []),
+          detectionsJson: JSON.stringify({
+            requests: input.requests || [],
+            refusals: input.refusals || [],
+            commitments: input.commitments || [],
+          }),
+          askHistoryJson: JSON.stringify(input.askHistory || []),
+          notesJson: JSON.stringify(input.notes || []),
+          aiModel: input.aiModel || "@cf/meta/llama-3.1-8b-instruct",
+          aiLatencyMs: input.aiLatencyMs || 350,
+          advocateRating: input.advocateRating,
+          advocateFeedback: input.advocateFeedback,
+          tags: input.tags,
+        });
+      } catch (err) {
+        console.warn("[FirstMate] Failed to save session record to database:", err);
+      }
+
+      return { success: true, session: memRun };
+    }),
+
+  updateSessionFeedback: publicProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        advocateRating: z.number().min(1).max(5).optional(),
+        advocateFeedback: z.string().optional(),
+        tags: z.union([z.string(), z.array(z.string())]).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const normalizedTags =
+        input.tags === undefined
+          ? undefined
+          : typeof input.tags === "string"
+          ? input.tags
+          : JSON.stringify(input.tags);
+
+      // 1. Update in-memory
+      firstMateSessionStore.updateRunFeedback(input.sessionId, {
+        advocateRating: input.advocateRating,
+        advocateFeedback: input.advocateFeedback,
+        tags: normalizedTags,
+      });
+
+      // 2. Update database
+      await updateFirstMateSessionFeedback(input.sessionId, {
+        advocateRating: input.advocateRating,
+        advocateFeedback: input.advocateFeedback,
+        tags: normalizedTags,
+      });
+
+      return { success: true };
+    }),
+
+  deleteRecordedSession: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ input }) => {
+      firstMateSessionStore.deleteRecordedRun(input.sessionId);
+      await deleteFirstMateSessionRun(input.sessionId);
+      return { success: true };
     }),
 });
 

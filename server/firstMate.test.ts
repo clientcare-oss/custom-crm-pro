@@ -987,6 +987,89 @@ describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", { timeout: 30
       }
     }
   });
+
+  // ── PG-037 SESSION RECORDING & AI LEARNING REPOSITORY ──
+  it("PG-037: should record and list First Mate session runs for AI improvement", async () => {
+    const { appRouter } = await import("./routers");
+    const caller = appRouter.createCaller({
+      user: { id: 1, openId: "test-advocate", role: "admin", name: "Byron Honea" },
+    } as any);
+
+    const testRunSessionId = `fm-run-test-${Date.now()}`;
+    const saveResult = await caller.firstMate.saveSessionRecord({
+      sessionId: testRunSessionId,
+      sessionType: "IEP_MEETING",
+      mode: "SIMULATOR",
+      status: "COMPLETED",
+      title: "Simulator Test: Evaluation Refusal Practice",
+      studentName: "Lucas Vance",
+      language: "en",
+      durationSeconds: 320,
+      turnCount: 4,
+      keyIssue: "Evaluation Refusal",
+      keyIssuePriority: "High Priority",
+      sayThis: "Under IDEA Child Find, passing grades cannot be used to deny an evaluation.",
+      whyItMatters: "IDEA 34 CFR § 300.111(c)(1)",
+      transcript: [
+        {
+          id: "tx-t1",
+          sessionId: testRunSessionId,
+          speakerRole: "Parent",
+          text: "I want an evaluation for reading dyslexia.",
+          timestamp: Date.now() - 300000,
+          confidence: 0.99,
+          isFinal: true,
+          source: "simulator",
+        },
+        {
+          id: "tx-t2",
+          sessionId: testRunSessionId,
+          speakerRole: "School",
+          text: "His grades are C+, so no evaluation is needed.",
+          timestamp: Date.now() - 250000,
+          confidence: 0.98,
+          isFinal: true,
+          source: "simulator",
+        },
+      ],
+      requests: [{ id: "r1", type: "REQUEST", summary: "Dyslexia evaluation", speaker: "Parent" }],
+      refusals: [{ id: "rf1", type: "POSSIBLE_REFUSAL", summary: "Declined citing C+ grades", speaker: "School" }],
+      advocateRating: 5,
+      advocateFeedback: "Spot on citation of Child Find regulations. Exactly what Byron teaches.",
+      tags: "dyslexia, child-find, passing-grades",
+    });
+
+    expect(saveResult.success).toBe(true);
+    expect(saveResult.session.sessionId).toBe(testRunSessionId);
+
+    // List runs
+    const listResult = await caller.firstMate.listRecordedSessions();
+    expect(listResult.sessions.length).toBeGreaterThan(0);
+    const found = listResult.sessions.find((s) => s.sessionId === testRunSessionId);
+    expect(found).toBeDefined();
+    expect(found?.studentName).toBe("Lucas Vance");
+    expect(found?.advocateRating).toBe(5);
+    expect(found?.advocateFeedback).toContain("Child Find");
+
+    // Filter by mode
+    const simList = await caller.firstMate.listRecordedSessions({ mode: "SIMULATOR" });
+    expect(simList.sessions.some((s) => s.sessionId === testRunSessionId)).toBe(true);
+
+    // Update feedback
+    const feedbackResult = await caller.firstMate.updateSessionFeedback({
+      sessionId: testRunSessionId,
+      advocateRating: 4,
+      advocateFeedback: "Updated critique: Add prompt for 60-day timeline.",
+      tags: "dyslexia, timeline, 60-days",
+    });
+    expect(feedbackResult.success).toBe(true);
+
+    // Fetch single
+    const single = await caller.firstMate.getRecordedSession({ sessionId: testRunSessionId });
+    expect(single.session.advocateRating).toBe(4);
+    expect(single.session.advocateFeedback).toContain("60-day timeline");
+  });
 });
+
 
 

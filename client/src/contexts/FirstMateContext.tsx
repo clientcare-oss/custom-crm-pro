@@ -388,6 +388,8 @@ interface FirstMateContextValue {
   }>;
   isProcessingEndSession: boolean;
   clearAskHistory: () => void;
+  recordCurrentSession: (override?: Partial<FirstMateSession>) => Promise<{ success: boolean; sessionId?: string }>;
+  loadSessionFromHistory: (session: FirstMateSession) => void;
 }
 
 const FirstMateContext = createContext<FirstMateContextValue | null>(null);
@@ -631,6 +633,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   const askMutation = trpc.firstMate.ask.useMutation();
   const generateSummaryMutation = trpc.firstMate.generateSummary.useMutation();
   const endSessionAndProcessMutation = trpc.firstMate.endSessionAndProcess.useMutation();
+  const saveSessionRecordMutation = trpc.firstMate.saveSessionRecord.useMutation();
   const [isProcessingEndSession, setIsProcessingEndSession] = useState(false);
 
   // ── BUILD 3: LIVE AUDIO & MICROPHONE ABSTRACTION STATE ──
@@ -978,6 +981,74 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     toast.success("Session resumed");
   }, []);
 
+  const recordCurrentSession = useCallback(
+    async (override?: Partial<FirstMateSession>) => {
+      const cur = { ...sessionRef.current, ...(override || {}) };
+      if (!cur || !cur.sessionId) return { success: false };
+
+      try {
+        const payload = {
+          sessionId: cur.sessionId,
+          sessionType: cur.sessionType || "IEP_MEETING",
+          mode: (cur.mode as any) || "LIVE",
+          status: cur.status || "COMPLETED",
+          title: cur.title || `First Mate Session: ${cur.sessionState?.studentName || cur.attachedName || "Advocacy Case"}`,
+          studentName: cur.sessionState?.studentName || cur.attachedName || "Student",
+          studentContactId: cur.attachedStudentId || cur.attachedClientId || undefined,
+          language: cur.language || "en",
+          durationSeconds: cur.durationSeconds || 0,
+          turnCount: cur.transcript?.length || 0,
+          keyIssue: cur.liveAssist?.currentIssue || cur.sessionState?.currentTopic || "Advocacy Guidance",
+          keyIssuePriority: cur.liveAssist?.currentIssuePriority || "High Priority",
+          quickAnswer: cur.liveAssist?.quickAnswer || "",
+          sayThis: cur.liveAssist?.sayThis || "",
+          whyItMatters: cur.liveAssist?.whyItMatters || "",
+          summary: cur.summary || "",
+          liveAssist: cur.liveAssist,
+          transcript: cur.transcript || [],
+          requests: cur.requests || [],
+          refusals: cur.refusals || [],
+          commitments: cur.commitments || [],
+          askHistory: cur.askHistory || [],
+          notes: cur.notes || [],
+          aiModel: cur.liveAssist?.provenanceMeta?.model || "@cf/meta/llama-3.1-8b-instruct",
+          aiLatencyMs: cur.liveAssist?.provenanceMeta?.latencyMs || 350,
+        };
+
+        // 1. Save in local storage archive
+        try {
+          const ARCHIVE_KEY = "waypoint_first_mate_recorded_runs";
+          const existingRaw = localStorage.getItem(ARCHIVE_KEY);
+          let runs: any[] = existingRaw ? JSON.parse(existingRaw) : [];
+          runs = runs.filter((r) => r.sessionId !== payload.sessionId);
+          runs.unshift({ ...payload, createdAt: Date.now(), updatedAt: Date.now() });
+          localStorage.setItem(ARCHIVE_KEY, JSON.stringify(runs.slice(0, 100)));
+        } catch (storageErr) {
+          console.warn("Failed to save run to localStorage archive:", storageErr);
+        }
+
+        // 2. Save to backend tRPC / database
+        await saveSessionRecordMutation.mutateAsync(payload);
+        return { success: true, sessionId: payload.sessionId };
+      } catch (err: any) {
+        console.warn("[FirstMateContext] recordCurrentSession error:", err);
+        return { success: false };
+      }
+    },
+    [saveSessionRecordMutation]
+  );
+
+  const loadSessionFromHistory = useCallback((historicalSession: any) => {
+    const normalized = normalizeSession(historicalSession);
+    sessionRef.current = normalized;
+    setSession(normalized);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      channelRef.current?.postMessage({ type: "SYNC_SESSION", session: normalized });
+    } catch {}
+    toast.success(`Loaded run into First Mate (${normalized.transcript.length} turns)`);
+  }, []);
+
   const endSession = useCallback(() => {
     setSession((prev) => {
       const ended: FirstMateSession = {
@@ -992,10 +1063,11 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         setHasPreviousSession(true);
         channelRef.current?.postMessage({ type: "SYNC_SESSION", session: ended });
       } catch (e) {}
+      recordCurrentSession(ended);
       return ended;
     });
     toast.info("Session ended");
-  }, []);
+  }, [recordCurrentSession]);
 
   const endSessionAndProcess = useCallback(
     async (options?: { studentId?: number; studentName?: string }) => {
@@ -1040,6 +1112,8 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
           channelRef.current?.postMessage({ type: "SYNC_SESSION", session: endedSession });
         } catch (e) {}
 
+        recordCurrentSession(endedSession);
+
         toast.success(
           `Session ended & processed! Attached summary & full transcript to ${result.studentName}'s notes (Advocate Only).`
         );
@@ -1066,6 +1140,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
           setHasPreviousSession(true);
           channelRef.current?.postMessage({ type: "SYNC_SESSION", session: endedSession });
         } catch (e) {}
+        recordCurrentSession(endedSession);
 
         toast.error(err?.message || "Failed to process session notes to student file.");
         return { success: false };
@@ -1073,7 +1148,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         setIsProcessingEndSession(false);
       }
     },
-    [isPopout, endSessionAndProcessMutation]
+    [isPopout, endSessionAndProcessMutation, recordCurrentSession]
   );
 
   const startNewSession = useCallback((newType?: FirstMateSessionType) => {
@@ -1085,6 +1160,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.warn("Failed to archive previous session:", e);
       }
+      recordCurrentSession({ status: cur.status === "ACTIVE" || cur.status === "PAUSED" ? "ENDED" : cur.status });
     }
 
     if (!isPopout) {
@@ -1811,6 +1887,8 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         hasPreviousSession,
         endSessionAndProcess,
         isProcessingEndSession,
+        recordCurrentSession,
+        loadSessionFromHistory,
       }}
     >
       {children}

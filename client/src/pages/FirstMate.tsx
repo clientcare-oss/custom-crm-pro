@@ -59,6 +59,7 @@ import type {
 } from "../../../shared/firstMate";
 import { SUPPORTED_LANGUAGES, isSilenceHallucination } from "../../../shared/firstMate";
 import { RadarReticleIcon, FirstMateReticleLogo } from "@/components/firstMate/RadarReticleIcon";
+import { RunHistoryTab } from "@/components/firstMate/RunHistoryTab";
 
 // Format seconds into HH:MM:SS or MM:SS
 function formatDuration(totalSeconds: number): string {
@@ -155,12 +156,20 @@ export default function FirstMate() {
     startNewSession,
     continuePreviousSession,
     hasPreviousSession,
+    recordCurrentSession,
+    loadSessionFromHistory,
   } = useFirstMate();
 
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   // Active top tab
   const [activeTab, setActiveTab] = useState<"assist" | "simulator" | "history" | "summaries" | "settings">("assist");
+
+  // Fetch recorded runs count for top tab badge
+  const { data: recordedRunsData } = trpc.firstMate.listRecordedSessions.useQuery(undefined, {
+    staleTime: 10000,
+  });
+  const recordedRunsCount = recordedRunsData?.totalCount || 0;
 
   // Simulator input state
   const [simulatorSpeaker, setSimulatorSpeaker] = useState<SpeakerRole>("Parent");
@@ -318,10 +327,16 @@ export default function FirstMate() {
   const { data: attachableData } = trpc.firstMate.getAttachableRecords.useQuery();
   const attachableRecords = attachableData?.records || [];
 
-  // Auto-scroll transcript on new turns
+  // Transcript feed scroll container ref
+  const transcriptContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll transcript on new turns inside container WITHOUT moving the window scroll
   useEffect(() => {
-    transcriptBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [session.transcript]);
+    const el = transcriptContainerRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+  }, [session.transcript, interimTranscript]);
 
   // Handle submit manual turn
   const handleAddTurn = async (e?: React.FormEvent) => {
@@ -495,6 +510,23 @@ export default function FirstMate() {
           >
             <Radio className="w-2.5 h-2.5 text-amber-400" />
             Simulator
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={`px-2.5 py-1 rounded font-medium text-[11px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+              activeTab === "history"
+                ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            <Layers className="w-2.5 h-2.5 text-purple-400" />
+            <span>Run History & Learning</span>
+            {recordedRunsCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-200 font-mono text-[9.5px]">
+                {recordedRunsCount}
+              </span>
+            )}
           </button>
           <button
             type="button"
@@ -927,6 +959,21 @@ export default function FirstMate() {
                 </>
               )}
 
+              {/* Quick Snapshot Run */}
+              <Button
+                type="button"
+                onClick={async () => {
+                  await recordCurrentSession();
+                  toast.success("Active session run snapshot saved to history!");
+                }}
+                disabled={session.transcript.length === 0}
+                className="h-6.5 px-2 bg-purple-600/25 hover:bg-purple-600/40 text-purple-200 border border-purple-500/40 font-bold text-[10.5px] rounded flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                title="Snapshot this session run now into Run History & AI Learning repository"
+              >
+                <Bookmark className="w-2.5 h-2.5 text-purple-300" />
+                <span>Snapshot</span>
+              </Button>
+
               {/* Minimize Collapse Toggle */}
               <button
                 type="button"
@@ -941,8 +988,21 @@ export default function FirstMate() {
         )}
       </div>
 
-      {/* ── 1. THEMED LIVE ASSIST GUIDANCE (5 COLORED BLOCKS) ── */}
-      <div className="mt-2.5 space-y-2">
+      {activeTab === "history" ? (
+        <RunHistoryTab
+          activeSession={session}
+          onLoadSession={(s) => {
+            loadSessionFromHistory(s);
+            setActiveTab("assist");
+          }}
+          onSnapshotCurrent={async () => {
+            await recordCurrentSession();
+          }}
+        />
+      ) : (
+        <>
+          {/* ── 1. THEMED LIVE ASSIST GUIDANCE (5 COLORED BLOCKS) ── */}
+          <div className="mt-2.5 space-y-2">
         {/* Tier 1: Immediate Primary Guidance (Current Issue & Say This) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
           {/* CARD 1: CURRENT ISSUE (RED/CORAL) - 5 Cols */}
@@ -1337,6 +1397,7 @@ export default function FirstMate() {
 
         {/* Transcript Messages Feed */}
         <div
+          ref={transcriptContainerRef}
           className={`overflow-y-auto py-2.5 space-y-2.5 transition-all duration-300 pr-1.5 ${
             isTranscriptCollapsed ? "max-h-[175px]" : "max-h-[420px]"
           }`}
@@ -1660,6 +1721,8 @@ export default function FirstMate() {
           </div>
         )}
       </div>
+        </>
+      )}
 
       {/* ── BOTTOM ACTION BAR (ASK FIRST MATE) ── */}
       <div className="mt-4 bg-[#08182b] border border-white/10 rounded-xl p-3 shadow-xl space-y-3">

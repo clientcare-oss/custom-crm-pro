@@ -34,6 +34,7 @@ import {
   discoveryWorksheets,
   voyageLogs,
   parkingLotItems,
+  firstMateSessions,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -44,8 +45,20 @@ import { getContactsByOwner, getContactById, getContactByEmail, createContact, u
 import { getTasksByProject, createTask, updateTask, deleteTask, getTaskSteps } from "./db/tasks";
 import { getInvoicesByClient, getInvoiceById, getInvoiceLineItems, getContractsByClient, getVaultSubscription } from "./db/billing";
 import { getVoyageLogsForStudent, getVoyageLogsForParent, createVoyageLog, updateVoyageLog, getVoyageLogById } from "./db/voyageLog";
+import {
+  saveFirstMateSessionRun,
+  listFirstMateSessionRuns,
+  getFirstMateSessionRunBySessionId,
+  updateFirstMateSessionFeedback,
+  deleteFirstMateSessionRun,
+} from "./db/firstMateSessions";
 
 export {
+  saveFirstMateSessionRun,
+  listFirstMateSessionRuns,
+  getFirstMateSessionRunBySessionId,
+  updateFirstMateSessionFeedback,
+  deleteFirstMateSessionRun,
   getVoyageLogsForStudent,
   getVoyageLogsForParent,
   createVoyageLog,
