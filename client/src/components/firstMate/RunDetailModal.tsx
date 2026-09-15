@@ -204,26 +204,58 @@ export function RunDetailModal({
                 </div>
               </div>
 
-              {/* Say This Guidance */}
-              <div className="bg-[#06111f] border border-cyan-500/30 rounded-xl p-4 space-y-2">
+              {/* Applicable Legal Principle & Distinctions */}
+              {run.liveAssist?.applicablePrinciple && (
+                <div className="bg-[#06111f] border border-sky-500/30 rounded-xl p-3.5 space-y-1.5">
+                  <span className="text-[10.5px] font-bold text-sky-400 uppercase tracking-wider block">
+                    Applicable Legal Principle / Standard
+                  </span>
+                  <p className="text-xs text-sky-100 leading-relaxed font-medium">
+                    {run.liveAssist.applicablePrinciple}
+                  </p>
+                  {run.liveAssist.distinctions && run.liveAssist.distinctions.length > 0 && (
+                    <div className="pt-2 border-t border-white/5 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Key Distinctions & Conditions:
+                      </span>
+                      <ul className="space-y-0.5">
+                        {run.liveAssist.distinctions.map((d: string, di: number) => (
+                          <li key={di} className="text-xs text-slate-300 flex items-start gap-1.5">
+                            <span className="text-cyan-400 font-bold">•</span>
+                            <span>{d}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {run.liveAssist.missingFacts && run.liveAssist.missingFacts.length > 0 && (
+                    <div className="pt-1 text-[11px] text-amber-300">
+                      <strong>Missing Facts to Verify:</strong> {run.liveAssist.missingFacts.join(" • ")}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Say This Guidance (Secondary) */}
+              <div className="bg-[#06111f] border border-emerald-500/30 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> What To Say In The Meeting (Say This)
+                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Suggested Client Wording (Secondary)
                   </span>
                   <button
                     onClick={() => {
                       const text = run.sayThis || run.liveAssist?.sayThis || "";
                       if (text) {
                         navigator.clipboard.writeText(text);
-                        toast.success("Copied guidance to clipboard");
+                        toast.success("Copied client phrasing to clipboard");
                       }
                     }}
-                    className="text-[11px] text-cyan-400 hover:text-cyan-200 flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] text-emerald-400 hover:text-emerald-200 flex items-center gap-1 cursor-pointer"
                   >
                     <Copy className="w-3 h-3" /> Copy
                   </button>
                 </div>
-                <p className="text-sm font-medium text-white italic leading-relaxed bg-[#0b213a]/50 p-3 rounded-lg border border-cyan-500/20">
+                <p className="text-sm font-medium text-white italic leading-relaxed bg-[#0b213a]/50 p-3 rounded-lg border border-emerald-500/20">
                   "{run.sayThis || run.liveAssist?.sayThis || "N/A"}"
                 </p>
               </div>
@@ -389,9 +421,43 @@ export function RunDetailModal({
                         {new Date(q.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
-                    <div className="bg-black/40 p-2.5 rounded-lg border border-white/5 text-xs text-slate-200 leading-relaxed">
-                      <strong className="text-cyan-300 block mb-1">First Mate Answer:</strong>
-                      {q.answer}
+                    <div className="bg-black/40 p-3 rounded-lg border border-white/5 text-xs text-slate-200 leading-relaxed space-y-2">
+                      {q.applicablePrinciple && (
+                        <div className="p-2 rounded bg-sky-950/40 border border-sky-500/30 text-sky-200 text-xs">
+                          <strong className="text-sky-300 block mb-0.5 text-[10px] uppercase tracking-wide">
+                            Applicable Legal Principle:
+                          </strong>
+                          {q.applicablePrinciple}
+                        </div>
+                      )}
+                      <div>
+                        <strong className="text-cyan-300 block mb-1">Substantive Internal Guidance:</strong>
+                        <p className="whitespace-pre-line">{q.answer}</p>
+                      </div>
+                      {q.distinctions && q.distinctions.length > 0 && (
+                        <div className="text-[11px] text-slate-300 bg-[#06111f] p-2 rounded border border-white/5 space-y-0.5">
+                          <strong className="text-cyan-400 block mb-0.5 text-[10px] uppercase">
+                            Distinctions & Conditions:
+                          </strong>
+                          {q.distinctions.map((d: string, di: number) => (
+                            <p key={di}>• {d}</p>
+                          ))}
+                        </div>
+                      )}
+                      {q.missingFacts && q.missingFacts.length > 0 && (
+                        <div className="text-[11px] text-amber-300 bg-amber-950/30 p-2 rounded border border-amber-500/30">
+                          <strong className="block mb-0.5 text-[10px] uppercase">Missing Facts to Verify:</strong>
+                          {q.missingFacts.join(" • ")}
+                        </div>
+                      )}
+                      {q.suggestedClientWording && (
+                        <div className="p-2 rounded bg-emerald-950/30 border border-emerald-500/30 text-emerald-200 text-xs">
+                          <strong className="text-emerald-300 block mb-0.5 text-[10px] uppercase">
+                            Suggested Client Wording (Secondary):
+                          </strong>
+                          <p className="italic text-emerald-100">"{q.suggestedClientWording}"</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))

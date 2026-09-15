@@ -43,7 +43,38 @@ function generateOfflineHeuristicResponse<T = any>(
     let relatedIssue: string | null = "Evaluation Refusal Dispute";
     let suggestedFollowUp: string | null = "Can the school provide the screening baseline data?";
 
-    if (queryText.includes("umbrella")) {
+    let applicablePrinciple: string | null = null;
+    let distinctions: string[] | null = null;
+    let conditions: string[] | null = null;
+    let missingFacts: string[] | null = null;
+    let suggestedClientWording: string | null = null;
+    let advocateNextAction: string | null = null;
+
+    if (
+      (queryText.includes("504") && (queryText.includes("placement") || queryText.includes("day") || queryText.includes("mdr") || queryText.includes("same"))) ||
+      (queryText.includes("days out of placement") || queryText.includes("same mdr") || queryText.includes("mdr process apply"))
+    ) {
+      answer = "Yes, both Section 504 and IEP (IDEA) share the 10-school-day threshold: removals exceeding 10 consecutive school days (or cumulative days forming a pattern) constitute a significant change in placement that triggers a Manifestation Determination Review (MDR). However, two critical distinctions apply: (1) Under IDEA, educational services (FAPE) must continue on day 11 and beyond even if the behavior is not a manifestation; Section 504 does not mandate continued services during suspension unless non-disabled peers receive them. (2) Under Section 504, schools may immediately discipline students for current illegal drug or alcohol use without conducting an MDR (29 U.S.C. § 705(20)(C)(iv)), whereas IDEA still requires an MDR.";
+      applicablePrinciple = "Both Section 504 and IDEA treat removals exceeding 10 consecutive school days (or cumulative days forming a pattern) as a change in placement triggering an MDR.";
+      distinctions = [
+        "FAPE Continuity: IDEA mandates continued educational services on day 11+ regardless of manifestation outcome; Section 504 only requires services if non-disabled students receive them.",
+        "Drug/Alcohol Exception: Section 504 waives the MDR for current illegal drug or alcohol use; IDEA requires an MDR even for drug incidents (though 45-day IAES applies).",
+        "MDR Prongs: IDEA explicitly reviews LEA implementation failures as an independent manifestation prong; 504 focuses on disability causation."
+      ];
+      conditions = [
+        "Threshold is 10 consecutive school days, or cumulative days exceeding 10 where a series of removals forms a pattern.",
+        "MDR must be held within 10 school days of the decision to change placement."
+      ];
+      missingFacts = [
+        "How many cumulative days has the student been removed from school this year?",
+        "Did the disciplinary incident involve current drug or alcohol use?",
+        "Is the school providing educational services (e.g. tutoring) during the exclusion?"
+      ];
+      suggestedClientWording = "Suggested Client Wording: 'Because cumulative removals exceed 10 school days, we request an immediate Manifestation Determination Review and written confirmation of continued educational services.'";
+      advocateNextAction = "Request an immediate accounting of all disciplinary removal days and verify the MDR scheduling date.";
+      relatedIssue = "Disciplinary Removals & MDR (Section 504 vs IDEA)";
+      suggestedFollowUp = "Request the school's official calculation of cumulative disciplinary removal days.";
+    } else if (queryText.includes("umbrella")) {
       const match = textLower.match(/([a-z]+)\s+umbrella/i);
       const color = match ? match[1] : "purple";
       answer = `Mason brought a ${color} umbrella to school today.`;
@@ -76,6 +107,12 @@ function generateOfflineHeuristicResponse<T = any>(
       confidence: "high",
       relatedIssue,
       suggestedFollowUp,
+      applicablePrinciple,
+      distinctions,
+      conditions,
+      missingFacts,
+      suggestedClientWording,
+      advocateNextAction,
     };
 
     return {

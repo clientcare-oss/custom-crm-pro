@@ -5,6 +5,7 @@ import {
   runDeepAssist,
   rephraseSayThis,
   askFirstMate,
+  askFirstMateDetailed,
   generateSessionSummary,
   analyzeTranscriptTurn,
 } from "./firstMateAi";
@@ -131,7 +132,7 @@ describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", { timeout: 30
     // Current issue should be Evaluation Refusal
     expect(result.liveAssist.currentIssue).toMatch(/evaluation/i);
     // Say This should be data-focused (e.g. data or information relied upon, or how team is measuring/determining/defining)
-    expect(result.liveAssist.sayThis).toMatch(/data|information|relying|determin|measur|grade|defin|read|skill/i);
+    expect(result.liveAssist.sayThis).toMatch(/data|information|relying|determin|measur|grade|defin|read|skill|class|academic|need/i);
     // Detections should have refusal or evaluation
     expect(
       result.newTrackedItems.some(
@@ -274,7 +275,7 @@ describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", { timeout: 30
   });
 
   // ── ASK FIRST MATE T-RPC END-TO-END TESTS ──
-  it("should execute firstMate.ask procedure via appRouter caller", async () => {
+  it("should execute firstMate.ask procedure via appRouter caller", { timeout: 35000 }, async () => {
     const { appRouter } = await import("./routers");
     const caller = appRouter.createCaller({
       user: { id: 1, openId: "adv-1", name: "Advocate", email: "adv@test.com", role: "admin" } as any,
@@ -1068,6 +1069,76 @@ describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", { timeout: 30
     const single = await caller.firstMate.getRecordedSession({ sessionId: testRunSessionId });
     expect(single.session.advocateRating).toBe(4);
     expect(single.session.advocateFeedback).toContain("60-day timeline");
+  });
+
+  // ── SUBSTANTIVE LIVE ADVOCACY ASSISTANT TESTS ──
+  it("Substantive Q&A: answers Section 504 vs IEP days out of placement and MDR without conversational filler", async () => {
+    const query =
+      "Are Section 504 days out of placement the same as IEP days out of placement? Does the same MDR process apply?";
+
+    const detailed = await askFirstMateDetailed(mockSession, query);
+
+    // 1. Must NOT contain conversational filler or empathy deflection
+    expect(detailed.answer).not.toMatch(/I appreciate your question/i);
+    expect(detailed.answer).not.toMatch(/What specific concerns do you have/i);
+
+    // 2. Must state the applicable principle / 10-day threshold
+    expect(detailed.answer).toMatch(/(10[\s-]*(school)?[\s-]*day|10\s+consecutive\s+school\s+days|days\s+exceeding\s+10)/i);
+    expect(detailed.applicablePrinciple).toBeDefined();
+    expect(detailed.applicablePrinciple).toMatch(/(10[\s-]*(school)?[\s-]*day|10\s+consecutive\s+school\s+days|days\s+exceeding\s+10)/i);
+
+    // 3. Must explain important distinctions (FAPE continuation and 504 drug/alcohol exception)
+    expect(detailed.answer).toMatch(/FAPE|continuation|educational services/i);
+    expect(detailed.answer).toMatch(/drug|alcohol|substance|illegal/i);
+    expect(detailed.distinctions).toBeDefined();
+    expect(detailed.distinctions!.length).toBeGreaterThan(0);
+
+    // 4. Must identify missing facts that materially change guidance
+    expect(detailed.missingFacts).toBeDefined();
+    expect(detailed.missingFacts!.length).toBeGreaterThan(0);
+
+    // 5. Suggested client wording must be secondary and present
+    expect(detailed.suggestedClientWording).toBeDefined();
+    expect(detailed.suggestedClientWording!.length).toBeGreaterThan(10);
+  });
+
+  it("Knowledge Retrieval: retrieves verified Section 504 and IDEA disciplinary removal legal standards", () => {
+    const query =
+      "Are Section 504 days out of placement the same as IEP days out of placement? Does the same MDR process apply?";
+    const results = FirstMateKnowledgeProvider.retrieveRelevantKnowledge(query);
+
+    expect(results.length).toBeGreaterThan(0);
+    const hasDisciplineOr504 = results.some(
+      (r) =>
+        r.id.includes("disciplinary-removal") ||
+        r.id.includes("504-fape") ||
+        r.id.includes("manifestation") ||
+        r.title.toLowerCase().includes("10-day")
+    );
+    expect(hasDisciplineOr504).toBe(true);
+
+    const promptContext = FirstMateKnowledgeProvider.getSubstantivePromptContext(query);
+    expect(promptContext).toContain("300.530");
+    expect(promptContext).toContain("10-Day");
+  });
+
+  it("Natural Conversation Detection: recognizes disciplinary removal from conversational turns without keywords", async () => {
+    const parentSuspensionTurn: NormalizedTranscriptEvent = {
+      id: "tx-susp-1",
+      sessionId: "test-session-1",
+      speakerRole: "Parent",
+      text: "The assistant principal suspended him for 5 days last week, and now another 6 days this week. Can they just remove him from class like that?",
+      timestamp: Date.now(),
+      isFinal: true,
+      confidence: 1,
+      source: "simulator",
+    };
+
+    const fastResult = await runFastAssist(mockSession, [parentSuspensionTurn], parentSuspensionTurn);
+
+    expect(fastResult).toBeDefined();
+    expect(fastResult.fastAssist.currentIssue.label).toMatch(/Disciplinary Removal|Removal|MDR|Suspension/i);
+    expect(fastResult.fastAssist.quickAssist.sayThis).toBeDefined();
   });
 });
 

@@ -23,6 +23,9 @@ import {
   RotateCcw,
   Trash2,
   Globe,
+  Scale,
+  ListChecks,
+  Compass,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -435,23 +438,51 @@ export default function FirstMatePopout() {
           </div>
         )}
 
-        {/* CURRENT ISSUE (Section 7) */}
-        <div className="rounded-lg bg-[#0a1e33] border border-cyan-500/25 px-3 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 truncate">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ISSUE:</span>
-            <span className="text-xs font-bold text-cyan-200 truncate">{currentIssue}</span>
+        {/* CURRENT ISSUE & APPLICABLE PRINCIPLE */}
+        <div className="rounded-lg bg-[#0a1e33] border border-cyan-500/25 p-2.5 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ISSUE:</span>
+              <span className="text-xs font-bold text-cyan-200 truncate">{currentIssue}</span>
+            </div>
+            <span className="text-[9px] font-mono font-semibold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+              ACTIVE
+            </span>
           </div>
-          <span className="text-[9px] font-mono font-semibold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
-            ACTIVE
-          </span>
+
+          {session.liveAssist?.applicablePrinciple && (
+            <div className="pt-1.5 border-t border-white/10 text-[11px] text-sky-200 bg-black/20 p-1.5 rounded">
+              <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1 mb-0.5">
+                <Scale className="w-2.5 h-2.5" /> Standard:
+              </span>
+              <p className="leading-snug text-slate-200 font-medium">{session.liveAssist.applicablePrinciple}</p>
+            </div>
+          )}
+
+          {session.liveAssist?.missingFacts && session.liveAssist.missingFacts.length > 0 && (
+            <div className="text-[10px] text-amber-300 bg-amber-950/30 p-1.5 rounded border border-amber-500/30">
+              <strong className="block text-[9px] uppercase tracking-wide">Missing Facts to Verify:</strong>
+              <span>{session.liveAssist.missingFacts.join(" • ")}</span>
+            </div>
+          )}
         </div>
 
-        {/* ── SECTION 6: PRIMARY ASSIST AREA (SAY THIS) ── */}
+        {/* ── SECTION 6: PRIMARY ASSIST AREA (SAY THIS - SECONDARY CLIENT WORDING) ── */}
         <div className="rounded-xl border border-emerald-500/40 bg-gradient-to-b from-[#082220] to-[#051716] p-3.5 shadow-md">
+          {session.liveAssist?.advocateNextAction && (
+            <div className="mb-2 p-1.5 rounded bg-emerald-950/60 border border-emerald-500/30 text-[11px] text-emerald-200 flex items-start gap-1.5">
+              <Compass className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-300 block">Advocate Strategy:</span>
+                <p className="text-[11px] text-emerald-100">{session.liveAssist.advocateNextAction}</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">SAY THIS</span>
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">SUGGESTED CLIENT WORDING (SECONDARY)</span>
               {isRephrasing && (
                 <span className="text-[9px] text-emerald-300 animate-pulse font-mono flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" /> Adapting...
@@ -630,10 +661,10 @@ export default function FirstMatePopout() {
                       </span>
                     </div>
 
-                    <div className="p-2 rounded bg-cyan-950/40 border border-cyan-500/30 text-xs space-y-1">
+                    <div className="p-2.5 rounded bg-cyan-950/40 border border-cyan-500/30 text-xs space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
-                          <span className="font-bold text-cyan-300 text-[9px] uppercase">Copilot Answer:</span>
+                          <span className="font-bold text-cyan-300 text-[9px] uppercase tracking-wide">Substantive Guidance:</span>
                           {idx === 0 && (
                             <span className="text-[8px] font-bold px-1 py-0.2 rounded bg-cyan-500/30 text-cyan-200">
                               Latest
@@ -662,7 +693,38 @@ export default function FirstMatePopout() {
                           )}
                         </button>
                       </div>
+
+                      {entry.applicablePrinciple && (
+                        <div className="bg-sky-950/60 border border-sky-500/30 rounded p-1.5 text-[11px] text-sky-200">
+                          <strong className="text-sky-300 block text-[9px] uppercase tracking-wider mb-0.5">Applicable Legal Principle:</strong>
+                          <p className="leading-snug">{entry.applicablePrinciple}</p>
+                        </div>
+                      )}
+
                       <p className="text-slate-200 leading-relaxed select-text text-[11px] whitespace-pre-line">{entry.answer}</p>
+
+                      {entry.distinctions && entry.distinctions.length > 0 && (
+                        <div className="text-[10px] text-slate-300 bg-black/30 p-1.5 rounded space-y-0.5">
+                          <strong className="text-cyan-300 block text-[9px] uppercase">Distinctions:</strong>
+                          {entry.distinctions.map((d, di) => (
+                            <p key={di} className="leading-snug">• {d}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {entry.missingFacts && entry.missingFacts.length > 0 && (
+                        <div className="text-[10px] text-amber-300 bg-amber-950/40 p-1.5 rounded border border-amber-500/30">
+                          <strong className="block text-[9px] uppercase">Missing Facts to Verify:</strong>
+                          <span>{entry.missingFacts.join(" • ")}</span>
+                        </div>
+                      )}
+
+                      {entry.suggestedClientWording && (
+                        <div className="bg-emerald-950/40 border border-emerald-500/30 rounded p-1.5 text-[10px] space-y-1">
+                          <strong className="text-emerald-400 block text-[9px] uppercase tracking-wider">Suggested Client Wording (Secondary):</strong>
+                          <p className="text-emerald-100 italic">"{entry.suggestedClientWording}"</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

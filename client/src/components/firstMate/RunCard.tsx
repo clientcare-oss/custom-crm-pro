@@ -117,12 +117,12 @@ export function RunCard({
 
         {sayThisText && (
           <div className="bg-[#06111f] border border-white/5 rounded-lg p-2.5 text-xs text-slate-200 flex items-start gap-2.5">
-            <div className="p-1 rounded bg-cyan-500/20 text-cyan-300 shrink-0 mt-0.5">
+            <div className="p-1 rounded bg-emerald-500/20 text-emerald-300 shrink-0 mt-0.5">
               <MessageSquare className="w-3 h-3" />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-cyan-400 block mb-0.5">
-                AI Spoken Guidance (Say This):
+              <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400 block mb-0.5">
+                Suggested Client Wording (Secondary):
               </span>
               <p className="italic text-slate-300 line-clamp-2 leading-relaxed">
                 "{sayThisText}"

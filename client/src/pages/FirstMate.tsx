@@ -38,6 +38,9 @@ import {
   Mic,
   MicOff,
   Globe,
+  Scale,
+  ListChecks,
+  Compass,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -1024,16 +1027,66 @@ export default function FirstMate() {
                 {session.liveAssist?.currentIssueDescription ||
                   "School is declining to conduct an evaluation despite parent concerns."}
               </p>
+
+              {session.liveAssist?.applicablePrinciple && (
+                <div className="mt-2.5 pt-2 border-t border-rose-500/20">
+                  <span className="text-[10px] font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1 mb-1">
+                    <Scale className="w-3 h-3 text-rose-400" /> Applicable Principle / Standard
+                  </span>
+                  <p className="text-xs text-rose-100 font-medium leading-relaxed bg-black/25 p-2 rounded border border-rose-500/20">
+                    {session.liveAssist.applicablePrinciple}
+                  </p>
+                </div>
+              )}
+
+              {session.liveAssist?.distinctions && session.liveAssist.distinctions.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  <span className="text-[9.5px] font-bold text-rose-300/90 uppercase tracking-wider block">
+                    Key Distinctions & Conditions:
+                  </span>
+                  <ul className="space-y-1">
+                    {session.liveAssist.distinctions.map((d, i) => (
+                      <li key={i} className="text-[11px] text-rose-100/90 flex items-start gap-1.5">
+                        <span className="text-rose-400 font-bold">•</span>
+                        <span>{d}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {session.liveAssist?.missingFacts && session.liveAssist.missingFacts.length > 0 && (
+                <div className="mt-2 text-[10px] text-amber-300/90 bg-amber-950/30 border border-amber-500/30 p-1.5 rounded flex items-start gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-amber-200 block">Missing Facts to Verify:</strong>
+                    <span>{session.liveAssist.missingFacts.join(" • ")}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* CARD 2: SAY THIS (TEAL/EMERALD) - 7 Cols */}
           <div className="lg:col-span-7 rounded-xl border border-emerald-500/40 bg-gradient-to-b from-[#082220] to-[#051716] p-4 shadow-lg flex flex-col justify-between">
             <div>
+              {session.liveAssist?.advocateNextAction && (
+                <div className="mb-2.5 p-2 rounded-lg bg-emerald-950/50 border border-emerald-500/30 text-xs text-emerald-200 flex items-start gap-2">
+                  <Compass className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Advocate Strategy:</span>
+                    <p className="text-xs text-emerald-100 font-medium">{session.liveAssist.advocateNextAction}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Say This</span>
+                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Suggested Client Wording (Secondary)</span>
+                  <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-semibold px-1.5 py-0">
+                    Secondary
+                  </Badge>
                   {isRephrasing && (
                     <span className="text-[10px] text-emerald-400 animate-pulse font-mono flex items-center gap-1">
                       <Sparkles className="w-3 h-3" /> Adapting tone...
@@ -1686,13 +1739,24 @@ export default function FirstMate() {
                 <button
                   type="button"
                   onClick={() => {
+                    setSimulatorSpeaker("Advocate");
+                    setSimulatorText("Are Section 504 days out of placement the same as IEP days out of placement? Does the same MDR process apply?");
+                  }}
+                  className="px-2 py-1 rounded bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30 border border-cyan-400/40 whitespace-nowrap cursor-pointer font-bold"
+                  title="Scenario 2: 504 vs IEP Removals & MDR"
+                >
+                  2. 504 vs IEP MDR
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     setSimulatorSpeaker("School");
                     setSimulatorText("We're recommending reducing speech from 60 minutes to 30 minutes.");
                   }}
                   className="px-2 py-1 rounded bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 whitespace-nowrap cursor-pointer"
-                  title="Scenario 2: Service Reduction"
+                  title="Scenario 3: Service Reduction"
                 >
-                  2. Service Reduction
+                  3. Service Reduction
                 </button>
                 <button
                   type="button"
@@ -1701,9 +1765,9 @@ export default function FirstMate() {
                     setSimulatorText("Yes, we can put transition warnings and visual schedules into the IEP.");
                   }}
                   className="px-2 py-1 rounded bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 whitespace-nowrap cursor-pointer"
-                  title="Scenario 3: Team Commitment"
+                  title="Scenario 4: Team Commitment"
                 >
-                  3. Commitment
+                  4. Commitment
                 </button>
                 <button
                   type="button"
@@ -1712,9 +1776,9 @@ export default function FirstMate() {
                     setSimulatorText("We haven't received an evaluation request.");
                   }}
                   className="px-2 py-1 rounded bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30 whitespace-nowrap cursor-pointer"
-                  title="Scenario 4: Timeline Conflict with Earlier Parent Statement"
+                  title="Scenario 5: Timeline Conflict with Earlier Parent Statement"
                 >
-                  4. Memory Conflict
+                  5. Memory Conflict
                 </button>
               </div>
             </form>
@@ -1885,11 +1949,11 @@ export default function FirstMate() {
                   </div>
 
                   {/* Copilot Answer Card */}
-                  <div className="bg-[#07192b] border border-cyan-500/20 rounded-md p-2.5 space-y-1.5">
+                  <div className="bg-[#07192b] border border-cyan-500/20 rounded-md p-3 space-y-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wide flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" /> First Mate Copilot:
+                          <Sparkles className="w-3 h-3" /> First Mate Substantive Guidance:
                         </span>
                         {entry.provenance && (
                           <span
@@ -1937,7 +2001,92 @@ export default function FirstMate() {
                       </button>
                     </div>
 
+                    {/* Applicable Principle / Rule Highlight */}
+                    {entry.applicablePrinciple && (
+                      <div className="bg-sky-950/40 border border-sky-500/30 rounded p-2 text-xs">
+                        <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1 mb-0.5">
+                          <Scale className="w-3 h-3 text-sky-300" /> Applicable Principle / Legal Rule
+                        </span>
+                        <p className="text-sky-100 font-semibold leading-relaxed">
+                          {entry.applicablePrinciple}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Substantive Response Body */}
                     <p className="text-slate-200 leading-relaxed whitespace-pre-line text-xs">{entry.answer}</p>
+
+                    {/* Key Distinctions & Conditions */}
+                    {((entry.distinctions && entry.distinctions.length > 0) || (entry.conditions && entry.conditions.length > 0)) && (
+                      <div className="bg-[#051322] border border-cyan-500/20 rounded p-2 space-y-1.5 text-xs">
+                        <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1">
+                          <ListChecks className="w-3 h-3 text-cyan-400" /> Important Distinctions & Conditions
+                        </span>
+                        <ul className="space-y-1">
+                          {(entry.distinctions || []).map((d, i) => (
+                            <li key={`dist-${i}`} className="text-slate-300 text-[11px] flex items-start gap-1.5">
+                              <span className="text-cyan-400 font-bold">•</span>
+                              <span>{d}</span>
+                            </li>
+                          ))}
+                          {(entry.conditions || []).map((c, i) => (
+                            <li key={`cond-${i}`} className="text-slate-300 text-[11px] flex items-start gap-1.5">
+                              <span className="text-purple-400 font-bold">•</span>
+                              <span><strong className="text-purple-300">Condition:</strong> {c}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Missing Facts that would materially change guidance */}
+                    {entry.missingFacts && entry.missingFacts.length > 0 && (
+                      <div className="bg-amber-950/30 border border-amber-500/30 rounded p-2 text-xs space-y-1">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-amber-400" /> Missing Facts (Would Materially Change Guidance)
+                        </span>
+                        <ul className="space-y-0.5">
+                          {entry.missingFacts.map((f, i) => (
+                            <li key={`fact-${i}`} className="text-amber-200/90 text-[11px] flex items-start gap-1.5">
+                              <span className="text-amber-400 font-bold">•</span>
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Advocate Next Action */}
+                    {entry.advocateNextAction && (
+                      <div className="bg-indigo-950/40 border border-indigo-500/30 rounded p-2 text-xs flex items-start gap-1.5">
+                        <Compass className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-indigo-300 text-[10px] uppercase tracking-wide block">Advocate Action:</strong>
+                          <span className="text-indigo-100 text-[11px]">{entry.advocateNextAction}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Suggested Client Wording (Secondary - Clearly Labeled) */}
+                    {entry.suggestedClientWording && (
+                      <div className="bg-emerald-950/30 border border-emerald-500/30 rounded p-2 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3 text-emerald-400" /> Suggested Client Wording (Secondary)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(entry.suggestedClientWording || "", "client wording")}
+                            className="text-[9px] text-emerald-400 hover:text-emerald-200 flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <Copy className="w-2.5 h-2.5" /> Copy
+                          </button>
+                        </div>
+                        <p className="text-emerald-100 text-xs italic bg-black/30 p-1.5 rounded border border-emerald-500/20">
+                          "{entry.suggestedClientWording}"
+                        </p>
+                      </div>
+                    )}
 
                     {entry.suggestedFollowUp && (
                       <div className="mt-1 pt-1.5 border-t border-white/5 flex items-center gap-1.5 text-[11px] text-cyan-300/90">

@@ -320,6 +320,12 @@ export interface FirstMateAskHistoryEntry {
   confidence?: string;
   relatedIssue?: string | null;
   suggestedFollowUp?: string | null;
+  applicablePrinciple?: string | null;
+  distinctions?: string[] | null;
+  conditions?: string[] | null;
+  missingFacts?: string[] | null;
+  suggestedClientWording?: string | null;
+  advocateNextAction?: string | null;
   provenance?: FirstMateProvenance;
   provider?: string;
   model?: string;
@@ -336,6 +342,12 @@ export interface LiveAssistPanelData {
   confidence: "High" | "Medium" | "Low";
   sources: RelatedSource[];
   sourceVerificationNote?: string;
+  applicablePrinciple?: string;
+  distinctions?: string[];
+  conditions?: string[];
+  missingFacts?: string[];
+  suggestedClientWording?: string;
+  advocateNextAction?: string;
   provenanceMeta?: FirstMateProvenanceMeta;
 }
 
@@ -389,6 +401,10 @@ export interface FastAssistOutput {
   quickAssist: {
     sayThis: string;
     askNext: string;
+    applicablePrinciple?: string;
+    distinctions?: string[];
+    missingFacts?: string[];
+    suggestedClientWording?: string;
   };
   alert: {
     type: AlertType;
