@@ -16,6 +16,7 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
   private selectedDeviceId: string = "";
 
   private chunkListeners: Set<(chunk: Blob, mimeType: string) => void> = new Set();
+  private rawPcmListeners: Set<(buffer: ArrayBuffer) => void> = new Set();
   private errorListeners: Set<(err: Error) => void> = new Set();
   private statusListeners: Set<(status: AudioInputStatus) => void> = new Set();
   private levelListeners: Set<(level: number) => void> = new Set();
@@ -113,10 +114,11 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
       this.setStatus("requesting_permission");
 
       // Audio stream constraints with optional device selection
+      // Audio stream constraints with optional device selection
       const audioConstraints: MediaTrackConstraints = {
         channelCount: 1,
         echoCancellation: true,
-        noiseSuppression: false, // Don't aggressively filter out quiet or conversational speech
+        noiseSuppression: true, // Filter out background HVAC/fan hum
         autoGainControl: true,
       };
 
@@ -172,6 +174,8 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
       source.connect(analyser);
       this.analyserNode = analyser;
 
+      let lastSpeechTimestamp = Date.now();
+
       // 2. High-sensitivity continuous RMS volume monitor (~25fps)
       const dataArray = new Float32Array(analyser.fftSize);
       if (this.levelInterval) clearInterval(this.levelInterval);
@@ -197,6 +201,10 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
           if (abs > peak) peak = abs;
         }
         const rms = Math.sqrt(sumSquares / dataArray.length);
+
+        if (rms > 0.005) {
+          lastSpeechTimestamp = Date.now();
+        }
 
         // Responsive logarithmic / power scaling: maps conversational speech (0.003 to 0.05) to 0.15 - 0.85
         let normalized = 0;
@@ -237,12 +245,21 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
       processor.connect(muteNode);
       muteNode.connect(ctx.destination);
 
-      // 4. Fixed cadence chunk flusher (every 2.5s)
+      // 4. Intelligent Cadence & Voice Activity Silence Flusher
       if (this.flushInterval) clearInterval(this.flushInterval);
       this.flushInterval = setInterval(() => {
         if (this.status !== "listening") return;
-        this.flushCurrentBuffer(ctx.sampleRate);
-      }, this.CHUNK_INTERVAL_MS);
+        const durationMs = (this.pcmBufferSampleCount / ctx.sampleRate) * 1000;
+        const silenceMs = Date.now() - lastSpeechTimestamp;
+
+        // When streaming raw PCM to WebSocket (AssemblyAI), flush every 250ms for low latency
+        const targetFlushMs = this.rawPcmListeners.size > 0 ? 250 : 600;
+        const maxLimitMs = this.rawPcmListeners.size > 0 ? 500 : 1500;
+
+        if ((durationMs >= targetFlushMs && silenceMs >= 150) || durationMs >= maxLimitMs) {
+          this.flushCurrentBuffer(ctx.sampleRate);
+        }
+      }, 100);
 
       this.setStatus("listening");
     } catch (err: any) {
@@ -264,7 +281,7 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
    * Resamples captured PCM to 16kHz mono, encodes to self-contained WAV Blob with 44-byte header
    */
   private flushCurrentBuffer(inputSampleRate: number) {
-    if (this.pcmBufferSampleCount < 2000) {
+    if (this.pcmBufferSampleCount < 1000) {
       return;
     }
 
@@ -301,21 +318,38 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
       int16Samples[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
     }
 
-    // Encode as self-contained WAV container with 44-byte RIFF header
-    const wavBlob = this.encodeWav(int16Samples, targetSampleRate);
+    // Emit raw PCM16 for direct WebSocket streaming (AssemblyAI)
+    if (this.rawPcmListeners.size > 0) {
+      const pcmCopy = int16Samples.buffer.slice(0);
+      this.rawPcmListeners.forEach((fn) => fn(pcmCopy));
+    }
 
-    // Emit to chunk listeners
-    this.chunkListeners.forEach((fn) => fn(wavBlob, "audio/wav"));
+    // Encode as self-contained WAV container with 44-byte RIFF header for chunk listeners
+    if (this.chunkListeners.size > 0) {
+      const wavBlob = this.encodeWav(int16Samples, targetSampleRate);
+      this.chunkListeners.forEach((fn) => fn(wavBlob, "audio/wav"));
+    }
   }
 
+  /**
+   * High-quality Box-Averaging anti-aliasing downsampler (e.g. 48kHz / 44.1kHz -> 16kHz mono)
+   */
   private downsampleTo16kHz(buffer: Float32Array, fromRate: number, toRate: number = 16000): Float32Array {
     if (fromRate === toRate) return buffer;
     const ratio = fromRate / toRate;
     const newLength = Math.round(buffer.length / ratio);
     const result = new Float32Array(newLength);
+
     for (let i = 0; i < newLength; i++) {
-      const originalIndex = Math.round(i * ratio);
-      result[i] = buffer[Math.min(originalIndex, buffer.length - 1)];
+      const nextOffset = Math.round((i + 1) * ratio);
+      const currentOffset = Math.round(i * ratio);
+      let sum = 0;
+      let count = 0;
+      for (let j = currentOffset; j < nextOffset && j < buffer.length; j++) {
+        sum += buffer[j];
+        count++;
+      }
+      result[i] = count > 0 ? sum / count : 0;
     }
     return result;
   }
@@ -402,6 +436,11 @@ export class BrowserMicrophoneAudioProvider implements AudioInputProvider {
   public onAudioChunk(handler: (chunk: Blob, mimeType: string) => void): () => void {
     this.chunkListeners.add(handler);
     return () => this.chunkListeners.delete(handler);
+  }
+
+  public onRawPcmChunk(handler: (buffer: ArrayBuffer) => void): () => void {
+    this.rawPcmListeners.add(handler);
+    return () => this.rawPcmListeners.delete(handler);
   }
 
   public onAudioLevel(handler: (level: number) => void): () => void {

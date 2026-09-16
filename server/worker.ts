@@ -82,7 +82,45 @@ export default {
       }
     }
 
-    // 3. Handle favicon requests gracefully
+    // 3. Handle AssemblyAI Temporary Token Endpoint for First Mate
+    if (url.pathname === "/api/first-mate/assembly-token") {
+      try {
+        const apiKey = process.env.ASSEMBLYAI_API_KEY || (env && env.ASSEMBLYAI_API_KEY);
+        const expiresInSeconds = 480;
+        if (apiKey) {
+          const response = await fetch("https://streaming.assemblyai.com/v3/token", {
+            method: "POST",
+            headers: {
+              Authorization: apiKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ expires_in_seconds: expiresInSeconds }),
+          });
+          if (response.ok) {
+            const data = (await response.json()) as any;
+            return new Response(
+              JSON.stringify({ token: data.token, expiresInSeconds, provider: "AssemblyAI" }),
+              { headers: { "Content-Type": "application/json" } }
+            );
+          }
+        }
+        return new Response(
+          JSON.stringify({
+            token: `mock-assemblyai-realtime-token-${Date.now()}`,
+            expiresInSeconds,
+            provider: "AssemblyAI (Mock)",
+          }),
+          { headers: { "Content-Type": "application/json" } }
+        );
+      } catch (err: any) {
+        return new Response(
+          JSON.stringify({ error: "Failed to generate AssemblyAI token", details: err?.message }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // 4. Handle favicon requests gracefully
     if (url.pathname === "/favicon.ico") {
       return new Response(null, { status: 204 });
     }

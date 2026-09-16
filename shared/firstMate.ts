@@ -149,7 +149,7 @@ export function isSilenceHallucination(text: string, targetLanguage: string = "e
     return true;
   }
 
-  // English & common subtitle credits hallucinations
+  // English & common subtitle credits / website URL / software metadata hallucinations
   const englishHallucinations = [
     "you",
     "thank you",
@@ -169,10 +169,111 @@ export function isSilenceHallucination(text: string, targetLanguage: string = "e
     "captions by",
     "amaraorg",
     "watching",
+    "normaldotm",
+    "microsoft office word",
+    "msworddoc",
+    "worddocument8",
+    "worddocument",
+    "please see the complete disclaimer",
+    "please see the complete disclaimer at",
+    "sitesgooglecom",
+    "httpssitesgooglecom",
+    "verbalink",
+    "verbalinkcom",
+    "wwwverbalinkcom",
+    "page page of numpages",
+    "page page of numpages wwwverbalinkcom",
+    "this is an educational video",
+    "to view this educational video simply click on the video",
+    "uga extension office",
+    "university of georgia college of agricultural",
+    "for more information please visit wwwideaorg",
+    "for more information visit wwwideaorg",
+    "for more information please visit wwwideagov",
+    "for more information visit wwwideagov",
+    "for more information visit ideaorg",
+    "for more information visit ideagov",
+    "for more information please visit",
+    "for more information visit",
+    "please visit wwwideaorg",
+    "visit wwwideaorg",
+    "mdr",
+    "manifestation determination review",
+    "pwn",
+    "prior written notice",
+    "child find",
+    "fape",
+    "fba",
+    "bip",
+    "iee",
+    "lea",
   ];
 
-  if (englishHallucinations.includes(clean)) {
+  if (
+    englishHallucinations.includes(clean) ||
+    clean.includes("thanks for watching") ||
+    clean.includes("thank you for watching") ||
+    clean.includes("watching this video") ||
+    clean.includes("dont forget to subscribe") ||
+    clean.includes("subscribe to my channel") ||
+    clean.includes("normaldotm") ||
+    clean.includes("microsoft office word") ||
+    clean.includes("msworddoc") ||
+    clean.includes("worddocument") ||
+    clean.includes("edited-pjd") ||
+    clean.includes("editedpjd") ||
+    clean.includes("sites.google.com") ||
+    clean.includes("sitesgooglecom") ||
+    clean.includes("complete disclaimer") ||
+    clean.includes("disclaimer at http") ||
+    clean.includes("verbalink") ||
+    clean.includes("page of numpages") ||
+    clean.includes("educational video") ||
+    clean.includes("uga extension") ||
+    clean.includes("university of georgia") ||
+    clean.includes("for more information visit") ||
+    clean.includes("for more information please visit") ||
+    clean.includes("visit wwwidea") ||
+    clean.includes("visit ideagov") ||
+    clean.includes("visit ideaorg") ||
+    (clean.includes("for more information") && (clean.includes("ideaorg") || clean.includes("ideagov") || clean.includes("visit")))
+  ) {
     return true;
+  }
+
+  // 1. Detect Whisper Acronym List Dumps (e.g., "IDEA, IEP, Section 504, MDR, FAPE, PWN, IEE, BIP, FBA, LEA...")
+  const acronymList = ["idea", "iep", "section 504", "504", "mdr", "fape", "pwn", "iee", "bip", "fba", "lea"];
+  const foundAcronyms = acronymList.filter((a) => clean.includes(a));
+  if (
+    foundAcronyms.length >= 4 &&
+    !clean.includes(" is ") &&
+    !clean.includes(" are ") &&
+    !clean.includes(" have ") &&
+    !clean.includes(" should ") &&
+    !clean.includes(" question ") &&
+    !clean.includes(" student ") &&
+    !clean.includes(" school ")
+  ) {
+    return true;
+  }
+
+  // 2. Detect repeated single acronym / word loops (e.g. "IEP. IEP. IEP. IEP. IEP." or "504 504 504 504")
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length >= 3) {
+    const firstWord = words[0];
+    if (words.every((w) => w === firstWord)) {
+      return true;
+    }
+  }
+
+  // 3. Detect Whisper Phrase Repetition Loops (e.g., "Independent Educational Evaluation Plan, Independent Educational Evaluation Plan")
+  const parts = clean.split(/[,;\n\r]+/).map((s) => s.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (parts[i].length > 10 && parts[i] === parts[i + 1]) {
+        return true;
+      }
+    }
   }
 
   return false;
@@ -496,6 +597,155 @@ export interface FirstMateSession {
   }>;
   alerts: FirstMateAlert[];
   liveAssist: LiveAssistPanelData;
+  guidanceFeed?: FirstMateGuidanceItem[];
+  autoScroll?: boolean;
   askHistory?: FirstMateAskHistoryEntry[];
   devLogs: FirstMateDevLogEntry[];
 }
+
+export interface FirstMateGuidanceItem {
+  id: string;
+  sessionId: string;
+  timestamp: number;
+  source: "auto" | "ask" | "action";
+  topicLabel?: string;
+  heading?: string;
+  content: string;
+  sources?: RelatedSource[];
+  suggestedClientWording?: string;
+  expandedExplanation?: string;
+  isExplainingMore?: boolean;
+  isWordingVisible?: boolean;
+  areSourcesVisible?: boolean;
+  correctionNote?: string;
+  confidence?: "High" | "Medium" | "Low";
+  userQuestion?: string;
+  triggerQuote?: string;
+  provenanceMeta?: FirstMateProvenanceMeta;
+}
+
+export type TranscriptionProviderType = "assemblyai" | "whisper";
+
+export interface AssemblyAiTokenResponse {
+  token: string;
+  expiresInSeconds: number;
+}
+
+export type GateDecision = "PASS" | "IGNORE";
+
+export interface ResponseGateResult {
+  decision: GateDecision;
+  reason: string;
+  isSubstantive: boolean;
+  isBackchannel: boolean;
+  isDuplicate: boolean;
+  matchedKeywords?: string[];
+}
+
+/**
+ * Reusable Waypoint special-education transcription vocabulary.
+ * Boosts AssemblyAI recognition for special-education law, procedures, and clinical terminology.
+ */
+export const WAYPOINT_SPED_KEYTERMS: string[] = [
+  "IDEA",
+  "IEP",
+  "Section 504",
+  "504 Plan",
+  "FAPE",
+  "LRE",
+  "Child Find",
+  "FBA",
+  "BIP",
+  "MDR",
+  "manifestation determination",
+  "prior written notice",
+  "PWN",
+  "IEE",
+  "independent educational evaluation",
+  "reevaluation",
+  "eligibility",
+  "accommodations",
+  "modifications",
+  "paraprofessional",
+  "occupational therapy",
+  "OT",
+  "physical therapy",
+  "PT",
+  "speech-language pathology",
+  "SLP",
+  "AAC",
+  "assistive technology",
+  "AT",
+  "ESY",
+  "extended school year",
+  "functional behavior assessment",
+  "behavior intervention plan",
+  "procedural safeguards",
+  "related services",
+  "specific learning disability",
+  "SLD",
+  "other health impairment",
+  "OHI",
+  "dyslexia",
+  "MTSS",
+  "RTI",
+  "progress monitoring",
+  "baseline",
+  "annual goal",
+  "measurable annual goal",
+  "present levels",
+  "PLAAFP",
+  "placement",
+  "least restrictive environment",
+  "comparable services",
+  "transition services",
+  "state complaint",
+  "due process",
+  "mediation",
+  "facilitated IEP",
+  "independent evaluator",
+  "school psychologist",
+  "BCBA",
+  "behavior analyst",
+];
+
+/**
+ * Supplements general Waypoint vocabulary with relevant case terms when available from Student Workspace
+ */
+export function buildCaseAwareKeyterms(session?: Partial<FirstMateSession>): string[] {
+  const terms = new Set<string>(WAYPOINT_SPED_KEYTERMS);
+
+  if (!session) return Array.from(terms);
+
+  // Student name
+  if (session.attachedName) terms.add(session.attachedName);
+  if (session.sessionState?.studentName) terms.add(session.sessionState.studentName);
+
+  // School & District
+  if (session.sessionState?.school) terms.add(session.sessionState.school);
+  if (session.sessionState?.district) terms.add(session.sessionState.district);
+
+  // Suspected disabilities & diagnoses
+  if (Array.isArray(session.sessionState?.suspectedDisabilities)) {
+    session.sessionState.suspectedDisabilities.forEach((d) => {
+      if (d && typeof d === "string") terms.add(d.trim());
+    });
+  }
+
+  // Evaluations
+  if (Array.isArray(session.sessionState?.evaluations)) {
+    session.sessionState.evaluations.forEach((e) => {
+      if (e && typeof e === "string") terms.add(e.trim());
+    });
+  }
+
+  // Services & Accommodations
+  if (Array.isArray(session.sessionState?.services)) {
+    session.sessionState.services.forEach((s) => {
+      if (s && typeof s === "string") terms.add(s.trim());
+    });
+  }
+
+  return Array.from(terms);
+}
+

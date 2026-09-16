@@ -3,7 +3,64 @@ import type { FirstMateSession, FirstMateSessionType } from "../../shared/firstM
 // Server-side in-memory active session store
 const sessionStore = new Map<string, FirstMateSession>();
 
+export function createCleanServerSession(sessionId: string, initialType?: FirstMateSessionType): FirstMateSession {
+  return {
+    sessionId,
+    sessionType: initialType || "IEP_MEETING",
+    status: "READY",
+    mode: "LIVE",
+    startedAt: null,
+    endedAt: null,
+    durationSeconds: 0,
+    createdBy: "advocate",
+    attachedName: "",
+    attachedSubtitle: "",
+    title: "New Advocacy Session",
+    notes: [],
+    summary: "",
+    transcript: [],
+    sessionState: {
+      studentName: "",
+      grade: "",
+      currentTopic: "Initial Discussion",
+      currentDispute: "",
+      openIssues: [],
+      suspectedDisabilities: [],
+    },
+    detectedIssues: [],
+    requests: [],
+    proposals: [],
+    refusals: [],
+    commitments: [],
+    openIssues: [],
+    threads: [],
+    conflicts: [],
+    dismissedItemIds: [],
+    savedMoments: [],
+    alerts: [],
+    liveAssist: {
+      currentIssue: "Ready for conversation",
+      currentIssuePriority: "Standard",
+      currentIssueDescription: "Listening for speaker statements.",
+      quickAnswer: "Waiting for speech audio or transcript input.",
+      sayThis: "Thank you for convening today's meeting. Before we begin, can we review the agenda?",
+      askNext: [
+        "What baseline evaluation data will be reviewed today?",
+        "Can we confirm the goals and agenda items for this discussion?",
+      ],
+      whyItMatters: "Setting an explicit agenda and baseline metrics establishes advocate control.",
+      confidence: "High",
+      sources: [],
+    },
+    guidanceFeed: [],
+    devLogs: [],
+  };
+}
+
 export function createInitialSession(sessionId: string, initialType?: FirstMateSessionType): FirstMateSession {
+  if (sessionId !== "default" && sessionId !== "fm-demo-eval-refusal") {
+    return createCleanServerSession(sessionId, initialType);
+  }
   return {
     sessionId,
     sessionType: initialType || "IEP_MEETING",
@@ -97,10 +154,40 @@ export function createInitialSession(sessionId: string, initialType?: FirstMateS
       sources: [
         {
           title: "34 CFR § 300.111(c)(1) — Child find applies to children advancing from grade to grade",
+          url: "https://sites.ed.gov/idea/regs/b/b/300.111",
           isVerified: true,
         },
       ],
     },
+    guidanceFeed: [
+      {
+        id: "guidance-init-1",
+        sessionId,
+        timestamp: Date.now() - 240000,
+        source: "auto",
+        topicLabel: "Evaluation Refusal",
+        heading: "Passing Grades Do Not Disqualify a Student From Special Education Evaluation",
+        content:
+          "Under IDEA 34 CFR § 300.111(c)(1), school districts cannot legally refuse or delay an initial special education evaluation solely because a student is passing from grade to grade or earning average marks.\n\nKey statutory requirements:\n\n• **Comprehensive Assessment Mandate**: When a parent requests an evaluation for suspected learning disabilities (such as reading comprehension or dyslexia), the district must evaluate in all areas of suspected disability (34 CFR § 300.304).\n\n• **Mandatory Prior Written Notice (PWN)**: Under 34 CFR § 300.503, the school cannot issue verbal or informal refusals. They must provide formal written notice detailing the specific evaluative data relied upon and procedural safeguard rights.",
+        sources: [
+          {
+            title: "IDEA 34 CFR § 300.111(c)(1) — Child Find & Passing Grades",
+            url: "https://sites.ed.gov/idea/regs/b/b/300.111",
+            isVerified: true,
+          },
+          {
+            title: "IDEA 34 CFR § 300.503 — Prior Written Notice (PWN)",
+            url: "https://sites.ed.gov/idea/regs/b/e/300.503",
+            isVerified: true,
+          },
+        ],
+        suggestedClientWording:
+          "Suggested Client Wording: 'Under IDEA Child Find regulations (34 CFR § 300.111), passing grades cannot be used as the sole basis to refuse an evaluation. We request formal Prior Written Notice detailing the specific evaluative data relied upon for this refusal.'",
+        expandedExplanation:
+          "If the parent submitted a written request for evaluation, state timelines require the district to either obtain consent and evaluate or formally issue PWN refusing the evaluation. Tiered interventions (RTI/MTSS) cannot be used to delay evaluation.",
+        confidence: "High",
+      },
+    ],
     devLogs: [],
   };
 }

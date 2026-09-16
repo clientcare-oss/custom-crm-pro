@@ -402,6 +402,35 @@ export function registerRestApiRoutes(app: ReturnType<typeof Router>) {
     });
   });
 
+  // AssemblyAI temporary token endpoint for First Mate Realtime transcription
+  app.post("/api/first-mate/assembly-token", async (req: Request, res: Response) => {
+    try {
+      const apiKey = process.env.ASSEMBLYAI_API_KEY;
+      const expiresInSeconds = 480;
+      if (apiKey) {
+        const response = await fetch("https://streaming.assemblyai.com/v3/token", {
+          method: "POST",
+          headers: {
+            Authorization: apiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expires_in_seconds: expiresInSeconds }),
+        });
+        if (response.ok) {
+          const data = (await response.json()) as any;
+          return res.json({ token: data.token, expiresInSeconds, provider: "AssemblyAI" });
+        }
+      }
+      return res.json({
+        token: `mock-assemblyai-realtime-token-${Date.now()}`,
+        expiresInSeconds,
+        provider: "AssemblyAI (Mock)",
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Failed to generate AssemblyAI token", details: err?.message });
+    }
+  });
+
   // Mount the router
   (app as any).use("/api/v1", router);
 }

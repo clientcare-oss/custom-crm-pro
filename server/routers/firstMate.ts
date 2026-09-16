@@ -8,6 +8,7 @@ import {
   askFirstMateDetailed,
   generateSessionSummary,
 } from "../firstMateAi";
+import { WHISPER_SPED_VOCABULARY_PROMPT } from "../firstMate/terminologyNormalizer";
 import { eq } from "drizzle-orm";
 import { firstMateSessionStore } from "../firstMate/sessionStore";
 import {
@@ -214,6 +215,7 @@ export const firstMateRouter = router({
         missingFacts: result.missingFacts ?? null,
         suggestedClientWording: result.suggestedClientWording ?? null,
         advocateNextAction: result.advocateNextAction ?? null,
+        sources: (result as any).sources ?? [],
         provenance: result.provenance,
         provider: result.provider,
         model: result.model,
@@ -285,6 +287,57 @@ export const firstMateRouter = router({
       return { records: [] };
     }
   }),
+
+  /**
+   * Mint a short-lived temporary AssemblyAI Realtime WebSocket token (v3).
+   * Uses protected ASSEMBLYAI_API_KEY from environment, never exposes permanent key to browser.
+   */
+  getAssemblyAiToken: publicProcedure
+    .input(
+      z.object({
+        expiresInSeconds: z.number().min(60).max(600).default(480),
+      }).optional()
+    )
+    .mutation(async ({ input }) => {
+      const apiKey = process.env.ASSEMBLYAI_API_KEY;
+      const expiresInSeconds = input?.expiresInSeconds ?? 480;
+
+      if (apiKey) {
+        try {
+          const response = await fetch("https://streaming.assemblyai.com/v3/token", {
+            method: "POST",
+            headers: {
+              Authorization: apiKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              expires_in_seconds: expiresInSeconds,
+            }),
+          });
+
+          if (response.ok) {
+            const data = (await response.json()) as any;
+            return {
+              token: data.token as string,
+              expiresInSeconds,
+              provider: "AssemblyAI" as const,
+            };
+          } else {
+            const errText = await response.text();
+            console.warn("[FirstMate] AssemblyAI token error:", response.status, errText);
+          }
+        } catch (err: any) {
+          console.warn("[FirstMate] AssemblyAI token fetch failed:", err?.message);
+        }
+      }
+
+      // Offline / Test heuristic fallback
+      return {
+        token: `mock-assemblyai-realtime-token-${Date.now()}`,
+        expiresInSeconds,
+        provider: "AssemblyAI (Mock)" as const,
+      };
+    }),
 
   /**
    * BUILD 3: Mint an ephemeral Realtime client secret session token.
@@ -377,6 +430,7 @@ export const firstMateRouter = router({
           formData.append("model", "whisper-1");
           formData.append("response_format", "json");
           formData.append("language", targetLanguage);
+          formData.append("prompt", WHISPER_SPED_VOCABULARY_PROMPT);
 
           const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
             method: "POST",
@@ -418,6 +472,7 @@ export const firstMateRouter = router({
           const whisperPayload: any = {
             audio: Array.from(audioBuffer),
             language: targetLanguage,
+            initial_prompt: WHISPER_SPED_VOCABULARY_PROMPT,
           };
           const res = await cfAi.run("@cf/openai/whisper", whisperPayload);
           let text = (res.text || "").trim();

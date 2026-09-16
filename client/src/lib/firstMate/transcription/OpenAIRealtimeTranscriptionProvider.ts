@@ -157,6 +157,10 @@ export class OpenAIRealtimeTranscriptionProvider {
 
     this.audioChunksCaptured++;
     this.chunkQueue.push({ blob, mimeType });
+    // Cap chunk queue to max 2 items to prevent network backlog lag/freezing
+    if (this.chunkQueue.length > 2) {
+      this.chunkQueue = this.chunkQueue.slice(-2);
+    }
     this.emitDiagnostics();
     if (this.status === "connected" || this.status === "transcribing") {
       this.processNextChunk();
@@ -165,6 +169,11 @@ export class OpenAIRealtimeTranscriptionProvider {
 
   private async processNextChunk(): Promise<void> {
     if (this.isProcessingChunk || this.chunkQueue.length === 0) return;
+
+    // Prune backlogged chunks before starting next transcription call
+    if (this.chunkQueue.length > 2) {
+      this.chunkQueue = this.chunkQueue.slice(-2);
+    }
 
     this.isProcessingChunk = true;
     this.setStatus("transcribing");

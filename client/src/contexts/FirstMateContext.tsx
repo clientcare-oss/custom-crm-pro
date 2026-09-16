@@ -17,6 +17,8 @@ import type {
   TranscriptionProviderStatus,
   MicrophoneDiagnostics,
   FirstMateAskHistoryEntry,
+  FirstMateGuidanceItem,
+  TranscriptionProviderType,
 } from "../../../shared/firstMate";
 import {
   isSilenceHallucination,
@@ -25,11 +27,43 @@ import {
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { BrowserMicrophoneAudioProvider } from "../lib/firstMate/audio/BrowserMicrophoneAudioProvider";
+import { AssemblyAIRealtimeTranscriptionProvider } from "../lib/firstMate/transcription/AssemblyAIRealtimeTranscriptionProvider";
 import { OpenAIRealtimeTranscriptionProvider } from "../lib/firstMate/transcription/OpenAIRealtimeTranscriptionProvider";
+import { evaluateMeaningfulTurn } from "../lib/firstMate/responseGate";
 
 const STORAGE_KEY = "waypoint_first_mate_session";
 const PREVIOUS_STORAGE_KEY = "waypoint_first_mate_previous_session";
 const CHANNEL_NAME = "waypoint_first_mate_sync";
+
+const INITIAL_GUIDANCE_FEED: FirstMateGuidanceItem[] = [
+  {
+    id: "g-init-1",
+    sessionId: "default",
+    timestamp: Date.now() - 240000,
+    source: "auto",
+    topicLabel: "Evaluation Refusal",
+    heading: "Passing Grades Do Not Disqualify a Student From Special Education Evaluation",
+    content:
+      "Under IDEA 34 CFR § 300.111(c)(1), school districts cannot legally refuse or delay an initial special education evaluation solely because a student is passing from grade to grade or earning average marks.\n\nKey statutory requirements:\n\n• **Comprehensive Assessment Mandate**: When a parent requests an evaluation for suspected learning disabilities (such as reading comprehension or dyslexia), the district must evaluate in all areas of suspected disability (34 CFR § 300.304).\n\n• **Mandatory Prior Written Notice (PWN)**: Under 34 CFR § 300.503, the school cannot issue verbal or informal refusals. They must provide formal written notice detailing the specific evaluative data relied upon and procedural safeguard rights.",
+    sources: [
+      {
+        title: "IDEA 34 CFR § 300.111(c)(1) — Child Find & Passing Grades",
+        url: "https://sites.ed.gov/idea/regs/b/b/300.111",
+        isVerified: true,
+      },
+      {
+        title: "IDEA 34 CFR § 300.503 — Prior Written Notice (PWN)",
+        url: "https://sites.ed.gov/idea/regs/b/e/300.503",
+        isVerified: true,
+      },
+    ],
+    suggestedClientWording:
+      "Suggested Client Wording: 'Under IDEA Child Find regulations (34 CFR § 300.111), passing grades cannot be used as the sole basis to refuse an evaluation. We request formal Prior Written Notice detailing the specific evaluative data relied upon for this refusal.'",
+    expandedExplanation:
+      "If the parent submitted a written request for evaluation, state timelines require the district to either obtain consent and evaluate or formally issue PWN refusing the evaluation. Tiered interventions (RTI/MTSS) cannot be used to delay evaluation.",
+    confidence: "High",
+  },
+];
 
 const INITIAL_LIVE_ASSIST: LiveAssistPanelData = {
   currentIssue: "Evaluation Refusal",
@@ -202,6 +236,8 @@ function createDefaultSession(): FirstMateSession {
       },
     ],
     liveAssist: INITIAL_LIVE_ASSIST,
+    guidanceFeed: INITIAL_GUIDANCE_FEED,
+    autoScroll: false,
     askHistory: [],
     devLogs: [],
   };
@@ -265,6 +301,8 @@ export function createCleanSession(type: FirstMateSessionType = "IEP_MEETING"): 
         procedureName: "session.clean",
       },
     },
+    guidanceFeed: [],
+    autoScroll: false,
     askHistory: [],
     devLogs: [],
   };
@@ -323,6 +361,8 @@ function normalizeSession(raw: any): FirstMateSession {
       detections: Array.isArray(raw.liveAssist?.detections) ? raw.liveAssist.detections : [],
       sources: Array.isArray(raw.liveAssist?.sources) ? raw.liveAssist.sources : [],
     },
+    guidanceFeed: Array.isArray(raw.guidanceFeed) ? raw.guidanceFeed : (def.guidanceFeed || []),
+    autoScroll: typeof raw.autoScroll === "boolean" ? raw.autoScroll : (def.autoScroll ?? false),
     askHistory: Array.isArray(raw.askHistory) ? raw.askHistory : [],
     devLogs: Array.isArray(raw.devLogs) ? raw.devLogs : [],
   };
@@ -330,6 +370,11 @@ function normalizeSession(raw: any): FirstMateSession {
 
 interface FirstMateContextValue {
   session: FirstMateSession;
+  guidanceFeed: FirstMateGuidanceItem[];
+  autoScroll: boolean;
+  setAutoScroll: (enabled: boolean) => void;
+  toggleGuidanceAction: (guidanceId: string, action: "explainMore" | "wording" | "sources") => void;
+  clearGuidanceFeed: () => void;
   isAnalyzing: boolean;
   isFastAnalyzing: boolean;
   isDeepAnalyzing: boolean;
@@ -354,6 +399,7 @@ interface FirstMateContextValue {
   addNote: (note: string) => void;
   saveMoment: (note: string) => void;
   askQuestion: (query: string) => Promise<string>;
+  regenerateGuidance: (guidanceId?: string) => Promise<void>;
   generateSummary: () => Promise<string>;
   clearTranscript: () => void;
   lastAskMeta: FirstMateProvenanceMeta | null;
@@ -361,6 +407,8 @@ interface FirstMateContextValue {
   // ── BUILD 3: LIVE AUDIO & MICROPHONE ABSTRACTION ──
   audioInputStatus: AudioInputStatus;
   transcriptionStatus: TranscriptionProviderStatus;
+  transcriptionProviderType: TranscriptionProviderType;
+  setTranscriptionProviderType: (provider: TranscriptionProviderType) => void;
   interimTranscript: string;
   selectedSpeaker: SpeakerRole;
   setSelectedSpeaker: (role: SpeakerRole) => void;
@@ -414,6 +462,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   const [isFastAnalyzing, setIsFastAnalyzing] = useState(false);
   const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
   const [isRephrasing, setIsRephrasing] = useState(false);
+  const [transcriptionProviderType, setTranscriptionProviderType] = useState<TranscriptionProviderType>("assemblyai");
   const [lastAskMeta, setLastAskMeta] = useState<FirstMateProvenanceMeta | null>(null);
   const [duplicatesSuppressed, setDuplicatesSuppressed] = useState<number>(0);
   const [hasPreviousSession, setHasPreviousSession] = useState<boolean>(() => {
@@ -636,6 +685,73 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   const saveSessionRecordMutation = trpc.firstMate.saveSessionRecord.useMutation();
   const [isProcessingEndSession, setIsProcessingEndSession] = useState(false);
 
+  // ── GUIDANCE FEED & AUTO SCROLL STATE ──
+  const [autoScroll, setAutoScrollState] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("waypoint_first_mate_autoscroll");
+      return saved === "true"; // default to false (OFF)
+    } catch {
+      return false;
+    }
+  });
+
+  const setAutoScroll = useCallback((enabled: boolean) => {
+    setAutoScrollState(enabled);
+    try {
+      localStorage.setItem("waypoint_first_mate_autoscroll", enabled ? "true" : "false");
+    } catch {}
+    setSession((prev) => {
+      const next = { ...prev, autoScroll: enabled };
+      sessionRef.current = next;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const toggleGuidanceAction = useCallback(
+    (guidanceId: string, action: "explainMore" | "wording" | "sources") => {
+      setSession((prev) => {
+        const updatedFeed = (prev.guidanceFeed || []).map((item) => {
+          if (item.id !== guidanceId) return item;
+          if (action === "explainMore") {
+            return { ...item, isExplainingMore: !item.isExplainingMore };
+          }
+          if (action === "wording") {
+            return { ...item, isWordingVisible: !item.isWordingVisible };
+          }
+          if (action === "sources") {
+            return { ...item, areSourcesVisible: !item.areSourcesVisible };
+          }
+          return item;
+        });
+        const next = { ...prev, guidanceFeed: updatedFeed };
+        sessionRef.current = next;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+        } catch {}
+        return next;
+      });
+    },
+    []
+  );
+
+  const clearGuidanceFeed = useCallback(() => {
+    setSession((prev) => {
+      const next = { ...prev, guidanceFeed: [] };
+      sessionRef.current = next;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        channelRef.current?.postMessage({ type: "SYNC_SESSION", session: next });
+      } catch {}
+      return next;
+    });
+    toast.info("Guidance feed cleared");
+  }, []);
+
   // ── BUILD 3: LIVE AUDIO & MICROPHONE ABSTRACTION STATE ──
   const [audioInputStatus, setAudioInputStatus] = useState<AudioInputStatus>("inactive");
   const [transcriptionStatus, setTranscriptionStatus] = useState<TranscriptionProviderStatus>("disconnected");
@@ -704,6 +820,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
   }, [session.language, language, isPopout]);
 
   const audioProviderRef = useRef<BrowserMicrophoneAudioProvider | null>(null);
+  const assemblyAiProviderRef = useRef<AssemblyAIRealtimeTranscriptionProvider | null>(null);
   const transcriptionProviderRef = useRef<OpenAIRealtimeTranscriptionProvider | null>(null);
   const addTranscriptTurnRef = useRef<((speakerRole: SpeakerRole, text: string, source?: any) => Promise<void>) | null>(null);
 
@@ -748,6 +865,22 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
 
     const activeLanguage = session.language || language || "en";
 
+    // 1. Primary Provider: AssemblyAI Realtime Universal-3.5 Pro
+    if (!assemblyAiProviderRef.current) {
+      assemblyAiProviderRef.current = new AssemblyAIRealtimeTranscriptionProvider({
+        trpcClient: trpcUtils.client,
+        sessionId: session.sessionId,
+        speakerRole: selectedSpeaker,
+        language: activeLanguage,
+        session,
+      });
+    } else {
+      assemblyAiProviderRef.current.setSpeaker(selectedSpeaker);
+      assemblyAiProviderRef.current.setLanguage(activeLanguage);
+      assemblyAiProviderRef.current.updateCaseContext(session);
+    }
+
+    // 2. Fallback Provider: OpenAI/Workers AI Whisper
     if (!transcriptionProviderRef.current) {
       transcriptionProviderRef.current = new OpenAIRealtimeTranscriptionProvider({
         trpcClient: trpcUtils.client,
@@ -759,13 +892,14 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       transcriptionProviderRef.current.setSpeaker(selectedSpeaker);
       transcriptionProviderRef.current.setLanguage(activeLanguage);
     }
-  }, [session.sessionId, session.language, language, selectedSpeaker, trpcUtils.client, selectedAudioDevice, isPopout]);
+  }, [session.sessionId, session.language, language, selectedSpeaker, trpcUtils.client, selectedAudioDevice, isPopout, session]);
 
   // Connect audio provider chunks to transcription provider
   useEffect(() => {
-    if (!audioProviderRef.current || !transcriptionProviderRef.current) return;
+    if (!audioProviderRef.current) return;
 
-    transcriptionProviderRef.current.setCallbacks({
+    // Callbacks for primary provider (AssemblyAI)
+    assemblyAiProviderRef.current?.setCallbacks({
       onInterimTranscript: (text) => {
         setInterimTranscript(text);
       },
@@ -773,7 +907,6 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         setInterimTranscript("");
         setLastTranscriptText(text);
         setLastTranscriptLatencyMs(latencyMs);
-        // Automatically feed finalized turn into First Mate session engine!
         if (addTranscriptTurnRef.current) {
           addTranscriptTurnRef.current(selectedSpeaker, text, "microphone");
         }
@@ -789,14 +922,49 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
+    // Callbacks for fallback provider (Whisper)
+    transcriptionProviderRef.current?.setCallbacks({
+      onInterimTranscript: (text) => {
+        setInterimTranscript(text);
+      },
+      onFinalTranscript: (text, latencyMs) => {
+        setInterimTranscript("");
+        setLastTranscriptText(text);
+        setLastTranscriptLatencyMs(latencyMs);
+        if (addTranscriptTurnRef.current) {
+          addTranscriptTurnRef.current(selectedSpeaker, text, "microphone");
+        }
+      },
+      onStatusChange: (st) => {
+        setTranscriptionStatus(st);
+      },
+      onDiagnosticsUpdate: (metrics) => {
+        setDiagMetrics((prev) => ({ ...prev, ...metrics }));
+      },
+      onError: (err) => {
+        setLastMicError(err.message);
+      },
+    });
+
+    // Stream raw PCM16 audio directly to AssemblyAI WebSocket (Primary)
+    const unsubscribeRawPcm = audioProviderRef.current.onRawPcmChunk((pcm16) => {
+      if (transcriptionProviderType === "assemblyai") {
+        assemblyAiProviderRef.current?.handleRawPcmChunk(pcm16);
+      }
+    });
+
+    // Stream audio blobs to Whisper provider (Fallback only)
     const unsubscribeChunks = audioProviderRef.current.onAudioChunk((blob, mimeType) => {
-      transcriptionProviderRef.current?.handleAudioChunk(blob, mimeType);
+      if (transcriptionProviderType === "whisper") {
+        transcriptionProviderRef.current?.handleAudioChunk(blob, mimeType);
+      }
     });
 
     return () => {
+      unsubscribeRawPcm();
       unsubscribeChunks();
     };
-  }, [selectedSpeaker]);
+  }, [selectedSpeaker, transcriptionProviderType]);
 
   const startListening = useCallback(async () => {
     try {
@@ -811,7 +979,12 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       }
 
       await audioProviderRef.current.start();
-      await transcriptionProviderRef.current?.connect();
+
+      if (transcriptionProviderType === "assemblyai") {
+        await assemblyAiProviderRef.current?.connect();
+      } else {
+        await transcriptionProviderRef.current?.connect();
+      }
 
       // Refresh device labels now that permission has been granted
       BrowserMicrophoneAudioProvider.getAudioInputDevices().then((devs) => {
@@ -826,7 +999,11 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         mode: prev.mode === "TEST" ? "TEST" : "LIVE",
         startedAt: prev.startedAt || Date.now(),
       }));
-      toast.success("First Mate is listening to microphone");
+      toast.success(
+        transcriptionProviderType === "assemblyai"
+          ? "First Mate is listening (AssemblyAI Universal-3.5 Pro)"
+          : "First Mate is listening (Whisper Fallback)"
+      );
     } catch (err: any) {
       console.warn("[FirstMateContext] Failed to start microphone:", err?.message);
       setLastMicError(err?.message);
@@ -836,7 +1013,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         setAudioInputStatus("error");
       }
     }
-  }, []);
+  }, [selectedAudioDevice, transcriptionProviderType]);
 
   const pauseListening = useCallback(() => {
     if (isPopout) {
@@ -850,15 +1027,15 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     toast.info("Microphone paused");
   }, [isPopout]);
 
-  const resumeListening = useCallback(async () => {
+  const resumeListening = useCallback(() => {
     if (isPopout) {
       channelRef.current?.postMessage({ type: "CONTROL_ACTION", action: "RESUME_LISTENING" });
       setSession((prev) => ({ ...prev, status: "ACTIVE" }));
       toast.success("Microphone resumed");
       return;
     }
-    if (audioInputStatus !== "listening" && audioInputStatus !== "paused") {
-      await startListening();
+    if (audioInputStatus !== "listening") {
+      startListening();
       return;
     }
     audioProviderRef.current?.resume();
@@ -878,6 +1055,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     await audioProviderRef.current?.stop();
+    assemblyAiProviderRef.current?.disconnect();
     transcriptionProviderRef.current?.disconnect();
     setInterimTranscript("");
     setAudioInputLevel(0);
@@ -1167,6 +1345,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       audioProviderRef.current?.stop();
       transcriptionProviderRef.current?.disconnect();
       setInterimTranscript("");
+      setLastTranscriptText("");
       setAudioInputLevel(0);
     } else {
       channelRef.current?.postMessage({
@@ -1178,6 +1357,8 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     const clean = createCleanSession(newType || cur?.sessionType || "IEP_MEETING");
     sessionRef.current = clean;
     setSession(clean);
+    setInterimTranscript("");
+    setLastTranscriptText("");
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
       channelRef.current?.postMessage({ type: "SYNC_SESSION", session: clean });
@@ -1278,7 +1459,18 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
    * 2. Fast Assist: runs immediately to update Say This, Ask Next, and Current Issue
    * 3. Deep Assist: runs in background to enrich working memory, detections, threads, and conflicts
    */
-  const addTranscriptTurn = useCallback(
+  const turnDebounceBufferRef = useRef<{
+    speakerRole: SpeakerRole;
+    fragments: string[];
+    source: "simulator" | "live_audio" | "manual" | "microphone";
+    timer: any;
+    startTime?: number;
+  } | null>(null);
+
+  /**
+   * Core turn processing engine
+   */
+  const processCombinedTurn = useCallback(
     async (speakerRole: SpeakerRole, text: string, source: "simulator" | "live_audio" | "manual" | "microphone" = "simulator") => {
       const trimmed = text.trim();
       if (!trimmed) return;
@@ -1287,21 +1479,21 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       const currentTranscript = currentSession.transcript || [];
       const prevLength = currentTranscript.length;
 
-      // ── DEDUPLICATION & SILENCE HALLUCINATION REJECTION (Rules 7 & 8) ──
+      // ── DEDUPLICATION & SILENCE HALLUCINATION REJECTION ──
       const lowerClean = trimmed.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim();
       const lastTurn = currentTranscript[currentTranscript.length - 1];
 
-      // Detect immediate repetition from same speaker
+      // Only suppress identical short noise repetitions (< 6 chars within 3s)
       const isRepetition =
         lastTurn &&
         lastTurn.speakerRole === speakerRole &&
         lastTurn.text.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim() === lowerClean &&
-        Date.now() - lastTurn.timestamp < 12000;
+        lowerClean.length < 6 &&
+        Date.now() - lastTurn.timestamp < 3000;
 
-      // Detect multi-lingual Whisper silence hallucination artifacts (e.g. "ご視聴ありがとうございました", "Thank you for watching", etc.)
       const isWhisperSilence = isSilenceHallucination(trimmed, currentSession.language || language || "en");
 
-      if (isRepetition || isWhisperSilence || (lowerClean.length < 2 && audioInputLevel < 0.08)) {
+      if (isRepetition || isWhisperSilence || lowerClean.length < 2) {
         console.log("[FirstMateContext] Suppressing duplicate/silence hallucination turn:", trimmed);
         setDuplicatesSuppressed((prev) => prev + 1);
         return;
@@ -1332,7 +1524,14 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       setSessionTranscriptUpdated("YES");
       setTranscriptLengthAfter(updatedTranscript.length);
 
-      // ── SPEED 1: FAST ASSIST ──
+      // ── WAYPOINT MEANINGFUL-TURN RESPONSE GATE ──
+      const gateResult = evaluateMeaningfulTurn(newTurn, currentTranscript);
+      if (gateResult.decision === "IGNORE") {
+        console.log(`[FirstMate Response Gate] Turn ignored: "${trimmed}" (Reason: ${gateResult.reason})`);
+        return;
+      }
+
+      // ── SPEED 1: FAST ASSIST VIA OPENAI GPT-5.6 SOL ──
       setIsFastAnalyzing(true);
       try {
         const fastResult = await fastAssistMutation.mutateAsync({
@@ -1342,39 +1541,8 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         });
 
         setSession((prev) => {
-          const nextSession = {
-            ...prev,
-            liveAssist: {
-              ...prev.liveAssist,
-              currentIssue: fastResult.fastAssist.currentIssue.label,
-              currentIssuePriority: fastResult.fastAssist.currentIssue.priority || "High Priority",
-              currentIssueDescription: fastResult.fastAssist.currentIssue.description,
-              sayThis: fastResult.fastAssist.quickAssist.sayThis,
-              askNext: [
-                fastResult.fastAssist.quickAssist.askNext,
-                ...(prev.liveAssist?.askNext || []).slice(0, 2),
-              ].filter(Boolean),
-              confidence: fastResult.fastAssist.confidence,
-              provenanceMeta: {
-                provenance: fastResult.devLog.provenance || "AI: FALLBACK",
-                provider: fastResult.devLog.provider || "Local Fallback Heuristics",
-                model: fastResult.devLog.model || "offline-heuristics",
-                latencyMs: fastResult.devLog.latencyMs,
-                timestamp: fastResult.devLog.timestamp,
-                procedureName: "firstMate.fastAssist",
-                sessionId: prev.sessionId,
-                rawStructuredOutput: fastResult.fastAssist,
-              },
-            },
-            devLogs: [fastResult.devLog, ...(prev.devLogs || [])].slice(0, 30),
-          };
-          sessionRef.current = nextSession;
-          return nextSession;
-        });
-
-        setSession((prev) => {
           const newAlerts = [...(prev.alerts || [])];
-          if (fastResult.fastAssist.alert) {
+          if (fastResult.fastAssist?.alert) {
             newAlerts.unshift({
               id: `alert-${Date.now()}`,
               type: fastResult.fastAssist.alert.type,
@@ -1385,33 +1553,60 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
             });
           }
 
-          return {
+          let nextGuidanceFeed = [...(prev.guidanceFeed || [])];
+          if (fastResult.guidanceItem) {
+            const newItem = fastResult.guidanceItem;
+            const lastGuidance = nextGuidanceFeed[nextGuidanceFeed.length - 1];
+            const isContentDuplicate =
+              lastGuidance &&
+              lastGuidance.content &&
+              newItem.content &&
+              lastGuidance.content.trim().toLowerCase() === newItem.content.trim().toLowerCase() &&
+              Date.now() - lastGuidance.timestamp < 60000;
+
+            const isIdDup = nextGuidanceFeed.some((g) => g.id === newItem.id);
+            if (!isIdDup && !isContentDuplicate) {
+              nextGuidanceFeed.push(newItem);
+            }
+          }
+
+          const isNoResponse =
+            fastResult.fastAssist?.currentIssue?.label === "NO_RESPONSE" ||
+            fastResult.fastAssist?.quickAssist?.sayThis === "NO_RESPONSE" ||
+            !fastResult.guidanceItem;
+
+          const nextSession: FirstMateSession = {
             ...prev,
-            liveAssist: {
-              ...prev.liveAssist,
-              currentIssue: fastResult.fastAssist.currentIssue.label,
-              currentIssuePriority: fastResult.fastAssist.currentIssue.priority || "High Priority",
-              currentIssueDescription: fastResult.fastAssist.currentIssue.description,
-              sayThis: fastResult.fastAssist.quickAssist.sayThis,
-              askNext: [
-                fastResult.fastAssist.quickAssist.askNext,
-                ...(prev.liveAssist?.askNext || []).slice(0, 2),
-              ].filter(Boolean),
-              confidence: fastResult.fastAssist.confidence,
-              provenanceMeta: {
-                provenance: fastResult.devLog.provenance || "AI: FALLBACK",
-                provider: fastResult.devLog.provider || "Local Fallback Heuristics",
-                model: fastResult.devLog.model || "offline-heuristics",
-                latencyMs: fastResult.devLog.latencyMs,
-                timestamp: fastResult.devLog.timestamp,
-                procedureName: "firstMate.fastAssist",
-                sessionId: prev.sessionId,
-                rawStructuredOutput: fastResult.fastAssist,
-              },
-            },
+            guidanceFeed: nextGuidanceFeed,
+            liveAssist: isNoResponse
+              ? prev.liveAssist
+              : {
+                  ...prev.liveAssist,
+                  currentIssue: fastResult.fastAssist?.currentIssue?.label || prev.liveAssist?.currentIssue || "Active Discussion",
+                  currentIssuePriority: fastResult.fastAssist?.currentIssue?.priority || "High Priority",
+                  currentIssueDescription: fastResult.fastAssist?.currentIssue?.description || "",
+                  sayThis: fastResult.fastAssist?.quickAssist?.sayThis || prev.liveAssist?.sayThis || "",
+                  askNext: [
+                    fastResult.fastAssist?.quickAssist?.askNext,
+                    ...(prev.liveAssist?.askNext || []).slice(0, 2),
+                  ].filter(Boolean),
+                  confidence: fastResult.fastAssist?.confidence || "High",
+                  provenanceMeta: {
+                    provenance: fastResult.devLog?.provenance || "AI: OPENAI",
+                    provider: fastResult.devLog?.provider || "OpenAI",
+                    model: fastResult.devLog?.model || "gpt-5.6-sol",
+                    latencyMs: fastResult.devLog?.latencyMs || 0,
+                    timestamp: fastResult.devLog?.timestamp || Date.now(),
+                    procedureName: "firstMate.fastAssist",
+                    sessionId: prev.sessionId,
+                    rawStructuredOutput: fastResult.fastAssist,
+                  },
+                },
             alerts: newAlerts,
             devLogs: [fastResult.devLog, ...(prev.devLogs || [])].slice(0, 30),
           };
+          sessionRef.current = nextSession;
+          return nextSession;
         });
       } catch (err) {
         console.warn("[FirstMateContext] Fast Assist error:", err);
@@ -1423,7 +1618,7 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       setIsDeepAnalyzing(true);
       try {
         const deepResult = await deepAssistMutation.mutateAsync({
-          session,
+          session: sessionRef.current,
           transcript: updatedTranscript,
           newTurn,
         });
@@ -1520,7 +1715,81 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         setIsDeepAnalyzing(false);
       }
     },
-    [session, fastAssistMutation, deepAssistMutation]
+    [language, audioInputLevel, fastAssistMutation, deepAssistMutation]
+  );
+
+  /**
+   * TWO-SPEED PIPELINE EXECUTION WITH 1.5-2.0s TRANSCRIPT DEBOUNCING
+   */
+  const addTranscriptTurn = useCallback(
+    async (speakerRole: SpeakerRole, text: string, source: "simulator" | "live_audio" | "manual" | "microphone" = "simulator") => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      // Manual inputs bypass the debouncer buffer and execute immediately
+      if (source === "manual") {
+        if (turnDebounceBufferRef.current) {
+          clearTimeout(turnDebounceBufferRef.current.timer);
+          const buf = turnDebounceBufferRef.current;
+          turnDebounceBufferRef.current = null;
+          if (buf.fragments.length > 0) {
+            processCombinedTurn(buf.speakerRole, buf.fragments.join(" "), buf.source);
+          }
+        }
+        await processCombinedTurn(speakerRole, trimmed, source);
+        return;
+      }
+
+      const isLive = source === "microphone" || source === "live_audio";
+      const debounceMs = isLive ? 450 : 1200;
+      const maxWaitCapMs = isLive ? 800 : 2000;
+      const now = Date.now();
+
+      // Check if buffering with existing speaker turn
+      if (turnDebounceBufferRef.current && turnDebounceBufferRef.current.speakerRole === speakerRole) {
+        clearTimeout(turnDebounceBufferRef.current.timer);
+        turnDebounceBufferRef.current.fragments.push(trimmed);
+
+        const elapsed = now - (turnDebounceBufferRef.current.startTime || now);
+        if (elapsed >= maxWaitCapMs) {
+          const buf = turnDebounceBufferRef.current;
+          turnDebounceBufferRef.current = null;
+          const combinedText = buf.fragments.join(" ");
+          processCombinedTurn(buf.speakerRole, combinedText, buf.source);
+          return;
+        }
+      } else {
+        // Flush previous speaker buffer if speaker changed
+        if (turnDebounceBufferRef.current) {
+          clearTimeout(turnDebounceBufferRef.current.timer);
+          const buf = turnDebounceBufferRef.current;
+          turnDebounceBufferRef.current = null;
+          if (buf.fragments.length > 0) {
+            processCombinedTurn(buf.speakerRole, buf.fragments.join(" "), buf.source);
+          }
+        }
+        turnDebounceBufferRef.current = {
+          speakerRole,
+          fragments: [trimmed],
+          source,
+          timer: null,
+          startTime: now,
+        };
+      }
+
+      // Fast debouncer timer (450ms for live mic speech, 1200ms for simulated)
+      const currentBuf = turnDebounceBufferRef.current;
+      currentBuf.timer = setTimeout(() => {
+        if (turnDebounceBufferRef.current === currentBuf) {
+          turnDebounceBufferRef.current = null;
+          if (currentBuf.fragments.length > 0) {
+            const combinedText = currentBuf.fragments.join(" ");
+            processCombinedTurn(currentBuf.speakerRole, combinedText, currentBuf.source);
+          }
+        }
+      }, debounceMs);
+    },
+    [processCombinedTurn]
   );
 
   useEffect(() => {
@@ -1695,10 +1964,37 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
           model: res.model,
         };
 
+        const conf: "High" | "Medium" | "Low" =
+          res.confidence === "high" ? "High" : res.confidence === "low" ? "Low" : "Medium";
+        const expandedExp =
+          Array.isArray(res.distinctions) && res.distinctions.length > 0
+            ? res.distinctions.join("\n\n")
+            : (res.conditions
+                ? Array.isArray(res.conditions)
+                  ? res.conditions.join("\n\n")
+                  : String(res.conditions)
+                : undefined);
+
+        const askGuidanceItem: FirstMateGuidanceItem = {
+          id: `g-ask-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          sessionId: currentSession.sessionId,
+          timestamp: Date.now(),
+          source: "ask",
+          userQuestion: query.trim(),
+          topicLabel: res.relatedIssue || "Advocate Inquiry",
+          heading: query.trim(),
+          content: res.answer,
+          sources: (res as any).sources && (res as any).sources.length > 0 ? (res as any).sources : undefined,
+          suggestedClientWording: res.suggestedClientWording || undefined,
+          expandedExplanation: expandedExp,
+          confidence: conf,
+        };
+
         setSession((prev) => {
           const updated: FirstMateSession = {
             ...prev,
             askHistory: [...(prev.askHistory || []), historyEntry],
+            guidanceFeed: [...(prev.guidanceFeed || []), askGuidanceItem],
           };
           sessionRef.current = updated;
           try {
@@ -1750,6 +2046,87 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
       }
     },
     [askMutation]
+  );
+
+  const regenerateGuidance = useCallback(
+    async (guidanceId?: string) => {
+      const cur = sessionRef.current;
+      const feed = cur.guidanceFeed || [];
+      const targetItem = guidanceId ? feed.find((g) => g.id === guidanceId) : feed[feed.length - 1];
+
+      if (targetItem && targetItem.userQuestion) {
+        toast.info("Regenerating response with fresh AI analysis...");
+        await askQuestion(targetItem.userQuestion);
+        return;
+      }
+
+      const transcript = cur.transcript || [];
+      if (transcript.length === 0) {
+        toast.info("No transcript turns available to re-analyze yet.");
+        return;
+      }
+
+      toast.info("Re-analyzing conversation turn with fresh AI guidance...");
+      const lastTurn = transcript[transcript.length - 1];
+      try {
+        setIsFastAnalyzing(true);
+        const fastResult = await fastAssistMutation.mutateAsync({
+          session: cur,
+          transcript,
+          newTurn: lastTurn,
+        });
+
+        const guidanceItemSource = fastResult.guidanceItem || {
+          id: `guidance-${Date.now()}`,
+          sessionId: cur.sessionId,
+          timestamp: Date.now(),
+          source: "auto" as const,
+          topicLabel: fastResult.fastAssist?.currentIssue?.label || "Advocate Guidance",
+          heading: fastResult.fastAssist?.currentIssue?.description || fastResult.fastAssist?.currentIssue?.label || `${lastTurn.speakerRole}'s Statement`,
+          content: fastResult.fastAssist?.quickAssist?.sayThis || `Recommended response to ${lastTurn.speakerRole}: "${lastTurn.text}"`,
+          suggestedClientWording: fastResult.fastAssist?.quickAssist?.sayThis || undefined,
+          confidence: fastResult.fastAssist?.confidence || "High",
+        };
+
+        const freshItem = {
+          ...guidanceItemSource,
+          id: `guidance-regen-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp: Date.now(),
+        };
+
+        setSession((prev) => {
+          const nextFeed = [...(prev.guidanceFeed || [])];
+          if (guidanceId) {
+            const idx = nextFeed.findIndex((g) => g.id === guidanceId);
+            if (idx >= 0) nextFeed[idx] = freshItem;
+            else nextFeed.push(freshItem);
+          } else {
+            nextFeed.push(freshItem);
+          }
+          const updated = {
+            ...prev,
+            guidanceFeed: nextFeed,
+            liveAssist: {
+              ...prev.liveAssist,
+              sayThis: fastResult.fastAssist?.quickAssist?.sayThis || prev.liveAssist?.sayThis,
+              currentIssue: fastResult.fastAssist?.currentIssue?.label || prev.liveAssist?.currentIssue,
+            },
+          };
+          sessionRef.current = updated;
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            channelRef.current?.postMessage({ type: "SYNC_SESSION", session: updated });
+          } catch (e) {}
+          return updated;
+        });
+        toast.success("First Mate guidance refreshed");
+      } catch (err: any) {
+        toast.error("Failed to regenerate guidance: " + (err.message || "Unknown error"));
+      } finally {
+        setIsFastAnalyzing(false);
+      }
+    },
+    [askQuestion, fastAssistMutation]
   );
 
   const clearAskHistory = useCallback(() => {
@@ -1844,6 +2221,11 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
     <FirstMateContext.Provider
       value={{
         session,
+        guidanceFeed: session.guidanceFeed || [],
+        autoScroll,
+        setAutoScroll,
+        toggleGuidanceAction,
+        clearGuidanceFeed,
         isAnalyzing: isFastAnalyzing || isDeepAnalyzing,
         isFastAnalyzing,
         isDeepAnalyzing,
@@ -1868,12 +2250,15 @@ export function FirstMateProvider({ children }: { children: React.ReactNode }) {
         addNote,
         saveMoment,
         askQuestion,
+        regenerateGuidance,
         clearAskHistory,
         generateSummary,
         clearTranscript,
         lastAskMeta,
         audioInputStatus,
         transcriptionStatus,
+        transcriptionProviderType,
+        setTranscriptionProviderType,
         interimTranscript,
         selectedSpeaker,
         setSelectedSpeaker,
