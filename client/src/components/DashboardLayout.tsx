@@ -707,18 +707,18 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             {/* Live Module Search Bar */}
             {!isCollapsed && (
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-200/50 pointer-events-none" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-100/70 pointer-events-none" />
                 <Input
                   ref={searchInputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search modules... (⌘K)"
-                  className="h-8 pl-8 pr-7 bg-[#061833]/80 border border-[#0D4B84]/80 text-xs rounded-xl placeholder:text-blue-200/40 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white"
+                  className="h-8.5 pl-8 pr-7 bg-white/[0.08] hover:bg-white/[0.10] border border-white/20 text-xs rounded-xl placeholder:text-blue-100/60 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white shadow-sm backdrop-blur-md transition-colors"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-sidebar-foreground/40 hover:text-sidebar-foreground p-0.5 rounded-sm cursor-pointer"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-sidebar-foreground/60 hover:text-white p-0.5 rounded-sm cursor-pointer"
                     title="Clear search"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -757,12 +757,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                     <button
                       type="button"
                       onClick={() => toggleSection(group.groupLabel)}
-                      className="w-full flex items-center justify-between px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-200/60 hover:text-white transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
+                      className="w-full flex items-center justify-between px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/90 hover:text-white transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
                     >
-                      <span className={hasActiveItem ? "text-amber-400 font-extrabold" : ""}>
+                      <span className={hasActiveItem ? "text-amber-400 font-extrabold drop-shadow-[0_0_8px_rgba(245,181,68,0.4)]" : ""}>
                         {group.groupLabel}
                       </span>
-                      <span className="text-blue-200/40 group-hover/header:text-white transition-transform">
+                      <span className="text-sky-300/70 group-hover/header:text-white transition-transform">
                         {isCollapsedSection ? (
                           <ChevronRight className="h-3 w-3" />
                         ) : (
@@ -771,9 +771,11 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       </span>
                     </button>
 
-                    {/* Section Items Card */}
+                    {/* Section Items Card — Luminous Frosted Glass */}
                     {!isCollapsedSection && (
-                      <div className="rounded-xl bg-gradient-to-b from-[#0D4B84]/25 via-[#0A254D]/35 to-[#061833]/50 border border-[#0D4B84]/60 p-1 shadow-md animate-in fade-in duration-150">
+                      <div className="rounded-xl bg-white/[0.08] hover:bg-white/[0.10] border border-white/20 p-1 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur-md relative overflow-hidden transition-all duration-200 animate-in fade-in">
+                        {/* Top luminous specular highlight */}
+                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
                         <SidebarMenu className="gap-0.5">
                           {group.items.map((item) => {
                             const isActive = 
@@ -792,14 +794,14 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                                   isActive={isActive}
                                   onClick={() => setLocation(item.path)}
                                   tooltip={item.label}
-                                  className={`h-8 transition-all font-normal rounded-lg text-xs cursor-pointer
+                                  className={`h-8 transition-all rounded-lg text-xs cursor-pointer font-medium
                                     ${isActive
-                                      ? "bg-gradient-to-r from-[#F5B544]/25 via-[#F5B544]/15 to-transparent border border-[#F5B544]/80 text-[#F5B544] font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]"
-                                      : "text-blue-100/80 hover:text-white hover:bg-gradient-to-r hover:from-[#0D4B84]/50 hover:to-transparent border border-transparent"
+                                      ? "bg-gradient-to-r from-[#F5B544]/30 via-[#F5B544]/20 to-transparent border border-[#F5B544] text-[#F5B544] font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]"
+                                      : "text-slate-100 hover:text-white hover:bg-white/[0.12] border border-transparent"
                                     }`}
                                 >
                                   {item.icon && (
-                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-[#F5B544]" : "text-blue-300/70"}`} />
+                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-[#F5B544]" : "text-sky-300"}`} />
                                   )}
                                   <span className="truncate">{item.label}</span>
                                 </SidebarMenuButton>
@@ -816,7 +818,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarContent>
 
           {/* ── Footer: controls ── */}
-          <SidebarFooter className="bg-gradient-to-t from-[#061833] via-[#071C3C]/80 to-transparent border-t border-[#0D4B84]/60 p-2.5 space-y-1.5">
+          <SidebarFooter className="bg-gradient-to-t from-[#061833] via-[#071C3C]/80 to-transparent border-t border-white/15 p-2.5 space-y-1.5">
             {/* Side-by-side Quick Setup & Theme toggle */}
             <div className="flex items-center gap-1.5 w-full group-data-[collapsible=icon]:flex-col">
               {/* Quick Setup */}
@@ -835,7 +837,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={toggleTheme}
                 title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
-                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.08] border border-[#0D4B84]/50 bg-[#071C3C]/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-200/80 hover:text-white text-xs font-medium cursor-pointer shrink-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
+                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.14] border border-white/20 bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-100 hover:text-white text-xs font-medium cursor-pointer shrink-0 shadow-sm group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'navy'
@@ -851,23 +853,23 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             <div className="flex items-center justify-between gap-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-sidebar-accent transition-colors flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0">
-                    <Avatar className="h-8 w-8 border border-amber-400/30 shrink-0">
+                  <button className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 hover:border-white/30 transition-all flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0 shadow-sm cursor-pointer">
+                    <Avatar className="h-8 w-8 border border-amber-400/40 shrink-0">
                       <AvatarFallback className="text-xs font-semibold bg-amber-500/20 text-amber-300">
                         {user?.name?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                      <p className="text-sm font-medium truncate leading-none text-sidebar-foreground/90">
+                      <p className="text-sm font-semibold truncate leading-none text-white">
                         {user?.name || "-"}
                       </p>
-                      <p className="text-xs text-sidebar-foreground/50 truncate mt-1">
+                      <p className="text-xs text-blue-100/70 truncate mt-1">
                         {user?.email || "-"}
                       </p>
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-48 bg-[#071C3C] border border-white/20 text-white shadow-xl backdrop-blur-md">
                   <DropdownMenuItem
                     onClick={logout}
                     className="cursor-pointer text-destructive focus:text-destructive"
@@ -881,17 +883,17 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={() => setIssueReporterOpen(true)}
                 title="Report Issue / Linear Backlog (⌥+F)"
-                className="h-8 w-8 rounded-lg hover:bg-sidebar-accent transition-colors flex items-center justify-center text-sidebar-foreground/50 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer"
+                className="h-8 w-8 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] border border-white/20 hover:border-white/30 transition-colors flex items-center justify-center text-white/70 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer shadow-sm"
               >
-                <Bug className="h-4 w-4 text-rose-500" />
+                <Bug className="h-4 w-4 text-rose-400" />
               </button>
 
               <button
                 onClick={() => setGoToPageOpen(true)}
                 title="Go to Page"
-                className="h-8 w-8 rounded-lg hover:bg-sidebar-accent transition-colors flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                className="h-8 w-8 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] border border-white/20 hover:border-white/30 transition-colors flex items-center justify-center text-white/70 hover:text-amber-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
               >
-                <Compass className="h-4.5 w-4.5 text-amber-550 navy:text-amber-400" />
+                <Compass className="h-4.5 w-4.5 text-amber-400" />
               </button>
             </div>
           </SidebarFooter>

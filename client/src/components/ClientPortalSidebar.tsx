@@ -312,7 +312,7 @@ export function ClientPortalSidebar({
                           : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-sm"
                         : isLight
                           ? "border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-800"
-                          : "border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-white"
+                          : "border border-white/20 bg-white/[0.08] hover:bg-white/[0.12] text-white backdrop-blur-md shadow-sm"
                       }`}
                   >
                     <div className="w-full flex items-center gap-2.5">
