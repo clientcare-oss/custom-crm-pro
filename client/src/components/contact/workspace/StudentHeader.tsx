@@ -157,7 +157,7 @@ export function StudentHeader({
       </div>
 
       {/* Main Student Header Console — Exact Visual Reference Match */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-5 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="rounded-3xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-5 sm:p-6 shadow-2xl relative overflow-hidden">
         {/* Subtle radial glow background behind avatar */}
         <div className="absolute top-1/2 -left-10 -translate-y-1/2 w-64 h-64 bg-[#F5B544]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -232,9 +232,9 @@ export function StudentHeader({
           </div>
 
           {/* SECTION 2 (MIDDLE): Metadata Reference List (4 cols) */}
-          <div className="lg:col-span-4 lg:border-l lg:border-[#0E356A]/90 lg:pl-6 space-y-2 text-xs">
+          <div className="lg:col-span-4 lg:border-l lg:border-[#0E3E75]/80 lg:pl-6 space-y-2 text-xs">
             {/* Header row with Manual Edit button/link */}
-            <div className="flex items-center justify-between pb-1.5 border-b border-[#0E356A]/70">
+            <div className="flex items-center justify-between pb-1.5 border-b border-[#0E3E75]/60">
               <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Student Profile</span>
               <button
                 type="button"
@@ -314,7 +314,7 @@ export function StudentHeader({
             </div>
 
             {/* Medical Diagnoses (Value under label spanning all the way across column) */}
-            <div className="pt-1.5 border-t border-[#0E356A]/60 group min-w-0">
+            <div className="pt-1.5 border-t border-[#0E3E75]/60 group min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-2 text-slate-300 shrink-0">
                   <Activity className="h-4 w-4 text-[#38BDF8] shrink-0" />
@@ -323,7 +323,7 @@ export function StudentHeader({
                 <button
                   type="button"
                   onClick={onEditStudent}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#0E356A] text-slate-400 hover:text-sky-300 transition-opacity cursor-pointer shrink-0"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#0E3E75] text-slate-400 hover:text-sky-300 transition-opacity cursor-pointer shrink-0"
                   title="Manual edit details"
                 >
                   <Pencil className="h-2.5 w-2.5" />
@@ -338,7 +338,7 @@ export function StudentHeader({
           </div>
 
           {/* SECTION 3 (RIGHT): Quote + Gold Bar + Reference-Matched Status (3 cols) */}
-          <div className="lg:col-span-3 lg:border-l lg:border-[#0E356A]/90 lg:pl-6 flex flex-col justify-between h-full space-y-3.5 min-w-0">
+          <div className="lg:col-span-3 lg:border-l lg:border-[#0E3E75]/80 lg:pl-6 flex flex-col justify-between h-full space-y-3.5 min-w-0">
             <div>
               <blockquote className="font-serif italic text-lg sm:text-xl text-[#F5B544] leading-snug">
                 “Advocacy turns potential into possibility.”
