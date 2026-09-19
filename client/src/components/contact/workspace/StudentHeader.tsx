@@ -163,15 +163,15 @@ export function StudentHeader({
         <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center relative z-10">
-          {/* SECTION 1 (LEFT): Avatar + Names + Plan Badge (5 cols) */}
-          <div className="lg:col-span-5 flex items-center gap-4 sm:gap-5">
-            {/* Glowing Golden Ring Avatar */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#07162B] border-2 border-[#F5B544] shadow-[0_0_24px_rgba(245,181,68,0.35)] flex items-center justify-center text-xl sm:text-2xl font-bold font-serif text-white shrink-0">
+          {/* SECTION 1 (LEFT): Avatar Above Name + Identity Stack + Plan Badge (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col items-start gap-2.5">
+            {/* Glowing Golden Ring Avatar (Positioned Above Name) */}
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#07162B] border-2 border-[#F5B544] shadow-[0_0_22px_rgba(245,181,68,0.35)] flex items-center justify-center text-lg sm:text-xl font-bold font-serif text-white shrink-0">
               {initials}
             </div>
 
             {/* Student Identity Stack */}
-            <div className="space-y-1 min-w-0">
+            <div className="space-y-1 min-w-0 w-full">
               <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight leading-tight truncate" title={fullName}>
                 {fullName}
               </h2>
