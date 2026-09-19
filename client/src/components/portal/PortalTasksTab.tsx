@@ -255,7 +255,7 @@ export default function PortalTasksTab({
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 text-white animate-in fade-in duration-300">
       
       {/* ── Top Header Banner with PageIdBadge ── */}
-      <div className="bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 rounded-3xl border border-blue-900/40 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] p-6 rounded-3xl border border-[#0D4B84] shadow-2xl relative overflow-hidden">
         {/* Top subtle golden accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
 
@@ -265,7 +265,7 @@ export default function PortalTasksTab({
               <Badge className="bg-[#F5B544] text-[#07152B] font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 shadow-sm font-mono">
                 Parent Action Checklist
               </Badge>
-              <Badge variant="outline" className="text-xs font-mono border-blue-900/40 text-blue-200/90 bg-[#030C22]">
+              <Badge variant="outline" className="text-xs font-mono border-[#0D4B84] text-blue-200/90 bg-[#071C3C]/80">
                 Student: <strong className="text-white font-semibold ml-1">{studentName}</strong>
               </Badge>
             </div>
@@ -284,12 +284,12 @@ export default function PortalTasksTab({
           </div>
 
           {/* Progress widget */}
-          <div className="bg-[#030C22] border border-blue-900/40 p-3.5 rounded-2xl shrink-0 min-w-[170px] shadow-xl">
+          <div className="bg-[#071C3C]/80 border border-[#0D4B84]/70 p-3.5 rounded-2xl shrink-0 min-w-[170px] shadow-xl">
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="text-white/60 font-medium">Checklist Progress</span>
               <span className="font-bold text-amber-300 font-mono">{progressPercent}%</span>
             </div>
-            <div className="w-full bg-blue-950/60 h-2 rounded-full overflow-hidden border border-blue-900/40">
+            <div className="w-full bg-[#0A254D] h-2 rounded-full overflow-hidden border border-[#0D4B84]/60">
               <div 
                 className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500" 
                 style={{ width: `${progressPercent}%` }}
@@ -306,8 +306,11 @@ export default function PortalTasksTab({
       <div className="space-y-4">
         
         {/* Section: Pending Action Items */}
-        <div className="bg-[#06172F] border border-blue-900/40 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
-          <div className="flex items-center justify-between border-b border-blue-900/40 pb-3">
+        <div className="bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] rounded-3xl p-4 sm:p-5 shadow-2xl space-y-3 relative overflow-hidden">
+          {/* Top subtle golden accent line */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
+
+          <div className="flex items-center justify-between border-b border-[#0E3E75]/80 pb-3 relative z-10">
             <h2 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-amber-400" />
               To Do ({pendingTasks.length})
@@ -326,7 +329,7 @@ export default function PortalTasksTab({
 
           {/* Inline Add Personal Task Form */}
           {isAddingPersonalTask && (
-            <form onSubmit={handleAddPersonalTask} className="p-3 bg-[#030C22] border border-blue-900/40 rounded-2xl flex items-center gap-2">
+            <form onSubmit={handleAddPersonalTask} className="p-3 bg-[#071C3C]/85 border border-[#0D4B84]/70 rounded-2xl flex items-center gap-2 relative z-10 shadow-lg">
               <input
                 type="text"
                 autoFocus
@@ -335,7 +338,7 @@ export default function PortalTasksTab({
                 placeholder="Type a reminder (e.g. Call pediatrician for speech therapy notes)..."
                 className="flex-1 bg-transparent text-xs text-white placeholder:text-white/40 outline-none"
               />
-              <Button type="submit" size="sm" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs h-7 px-3 rounded-lg">
+              <Button type="submit" size="sm" className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-slate-950 font-bold text-xs h-7 px-3 rounded-lg">
                 Add
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddingPersonalTask(false)} className="text-white/60 hover:text-white text-xs h-7 px-2">
@@ -346,13 +349,13 @@ export default function PortalTasksTab({
 
           {/* Pending Tasks List */}
           {pendingTasks.length === 0 ? (
-            <div className="py-8 text-center text-xs text-blue-200/60 space-y-1">
+            <div className="py-8 text-center text-xs text-blue-200/60 space-y-1 relative z-10">
               <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto opacity-80" />
               <p className="font-bold text-white text-sm">You are all caught up!</p>
               <p>All advocacy action items for {studentName} have been completed.</p>
             </div>
           ) : (
-            <div className="divide-y divide-blue-900/30">
+            <div className="divide-y divide-[#0E3E75]/60 relative z-10">
               {pendingTasks.map((task) => {
                 const isExpanded = expandedTaskId === task.id;
 
@@ -367,10 +370,10 @@ export default function PortalTasksTab({
                         {/* Interactive Checkbox Circle */}
                         <button
                           onClick={() => toggleTask(task.id)}
-                          className="w-5 h-5 rounded-full border border-blue-600/70 hover:border-amber-400 bg-[#030C22] hover:bg-amber-400/10 flex items-center justify-center shrink-0 mt-0.5 transition-all cursor-pointer group-hover:scale-105"
+                          className="w-5 h-5 rounded-full border border-[#0D4B84] hover:border-[#F5B544] bg-[#071C3C] hover:bg-[#F5B544]/10 flex items-center justify-center shrink-0 mt-0.5 transition-all cursor-pointer group-hover:scale-105 shadow-sm"
                           title="Mark complete"
                         >
-                          <Check className="h-3 w-3 text-transparent group-hover:text-amber-400/50 transition-colors" />
+                          <Check className="h-3 w-3 text-transparent group-hover:text-[#F5B544] transition-colors" />
                         </button>
 
                         <div 
@@ -381,7 +384,7 @@ export default function PortalTasksTab({
                             <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-amber-200 transition-colors">
                               {task.title}
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/60 border border-blue-900/40 text-blue-300 font-mono">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#071C3C]/80 border border-[#0D4B84]/60 text-blue-300 font-mono">
                               {task.category}
                             </span>
                           </div>
@@ -401,7 +404,7 @@ export default function PortalTasksTab({
 
                         <button
                           onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
-                          className="p-1 rounded-lg hover:bg-blue-900/40 text-white/60 hover:text-white transition-colors cursor-pointer"
+                          className="p-1 rounded-lg hover:bg-[#071C3C] text-white/60 hover:text-white transition-colors cursor-pointer"
                         >
                           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         </button>
@@ -410,7 +413,7 @@ export default function PortalTasksTab({
 
                     {/* Expandable Action Helper (Clean & Compact) */}
                     {isExpanded && (
-                      <div className="ml-8 p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 text-xs space-y-3 animate-in fade-in-50 duration-200">
+                      <div className="ml-8 p-3.5 rounded-2xl bg-[#071C3C]/90 border border-[#0D4B84]/70 text-xs space-y-3 animate-in fade-in-50 duration-200 shadow-lg">
                         {task.subtitle && (
                           <p className="text-blue-200/80 leading-relaxed">
                             {task.subtitle}
@@ -443,7 +446,7 @@ export default function PortalTasksTab({
                                 value={meetingUrlInput}
                                 onChange={(e) => setMeetingUrlInput(e.target.value)}
                                 placeholder="Paste Google Meet or Zoom URL here..."
-                                className="flex-1 bg-[#06172F] border border-blue-900/40 focus:border-amber-400 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none"
+                                className="flex-1 bg-[#0A254D] border border-[#0D4B84] focus:border-amber-400 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none"
                               />
                               <Button
                                 size="sm"
@@ -459,7 +462,7 @@ export default function PortalTasksTab({
                         {/* Action: Email School */}
                         {task.type === "email" && (
                           <div className="space-y-2.5 pt-1">
-                            <div className="p-2.5 rounded-xl bg-[#06172F] border border-blue-900/40 text-[11px] font-mono space-y-1 text-white/80">
+                            <div className="p-2.5 rounded-xl bg-[#0A254D] border border-[#0D4B84] text-[11px] font-mono space-y-1 text-white/80">
                               <div className="text-amber-300 font-bold">Subject: {task.payload?.emailSubject}</div>
                               <div className="whitespace-pre-wrap text-white/70">{task.payload?.emailBody}</div>
                             </div>
@@ -469,7 +472,7 @@ export default function PortalTasksTab({
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleCopyEmail(task.id, task.payload?.emailSubject, task.payload?.emailBody)}
-                                className="border-blue-900/40 bg-[#06172F] hover:bg-blue-900/40 text-white text-xs h-8 rounded-xl gap-1.5"
+                                className="border-[#0D4B84] bg-[#0A254D] hover:bg-[#0B3767] text-white text-xs h-8 rounded-xl gap-1.5"
                               >
                                 <Copy className="h-3 w-3 text-amber-400" />
                                 <span>Copy Email Template</span>
@@ -510,13 +513,13 @@ export default function PortalTasksTab({
 
         {/* Section: Completed Items */}
         {completedTasks.length > 0 && (
-          <div className="bg-[#06172F]/60 border border-blue-900/30 rounded-3xl p-4 sm:p-5 shadow-lg space-y-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-white/50 font-mono flex items-center gap-2 border-b border-blue-900/30 pb-2">
+          <div className="bg-gradient-to-br from-[#0B3767]/80 via-[#0A254D]/80 to-[#071C3C]/80 border border-[#0D4B84]/70 rounded-3xl p-4 sm:p-5 shadow-xl space-y-2 relative overflow-hidden">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white/60 font-mono flex items-center gap-2 border-b border-[#0E3E75]/70 pb-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
               Completed ({completedTasks.length})
             </h2>
 
-            <div className="divide-y divide-blue-900/20">
+            <div className="divide-y divide-[#0E3E75]/40">
               {completedTasks.map((task) => (
                 <div 
                   key={task.id}
