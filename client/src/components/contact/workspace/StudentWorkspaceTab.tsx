@@ -321,6 +321,8 @@ export function StudentWorkspaceTab({
             toast.info(`Opening Discovery Call workflow for ${fullName}`);
           }
         }}
+        parentContact={parentContact}
+        onPreviewPortal={onPreviewPortal}
       />
 
       {/* 3. IEP / 504 PLAN ZONE — FULL WIDTH COMMAND CENTER */}

@@ -26,14 +26,8 @@ import {
   AlertTriangle,
   Pause,
   Clock,
-  Radio,
-  Settings,
 } from "lucide-react";
 import { parseStudentDiagnoses } from "@/lib/studentUtils";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { canGuideClientsLive } from "@/lib/guidancePermissions";
-import { GuideClientLiveModal } from "@/components/guidance/GuideClientLiveModal";
-import { ManagePortalAccessModal } from "@/components/guidance/ManagePortalAccessModal";
 
 interface StudentHeaderProps {
   contact: any;
@@ -58,11 +52,6 @@ export function StudentHeader({
   onUpdatePlanType,
   calculatedAge,
 }: StudentHeaderProps) {
-  const { user } = useAuth();
-  const canGuideLive = canGuideClientsLive(user);
-  const [showGuideLiveModal, setShowGuideLiveModal] = React.useState(false);
-  const [showManageAccessModal, setShowManageAccessModal] = React.useState(false);
-
   const [localPlanType, setLocalPlanType] = React.useState<string>(contact.planType || "No IEP/504 Yet");
 
   React.useEffect(() => {
@@ -138,33 +127,9 @@ export function StudentHeader({
             size="sm"
             onClick={onPreviewPortal}
             className="h-8 sm:h-9 px-3 text-xs font-semibold border-[#F5B544]/40 bg-[#0B2144]/80 text-[#F5B544] hover:bg-[#F5B544]/15 hover:text-[#F5B544] hover:border-[#F5B544] shadow-xs cursor-pointer transition-all"
-            title="Opens an independent staff preview of what the client can currently see"
           >
             <Eye className="h-3.5 w-3.5 mr-1.5" />
-            Open Client View
-          </Button>
-
-          {canGuideLive && (
-            <Button
-              size="sm"
-              onClick={() => setShowGuideLiveModal(true)}
-              className="h-8 sm:h-9 px-3 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_14px_rgba(16,185,129,0.3)] border border-emerald-400/40 cursor-pointer transition-all"
-              title="Connects to the client’s active portal session after client approval"
-            >
-              <Radio className="h-3.5 w-3.5 mr-1.5 animate-pulse" />
-              Guide Client Live
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowManageAccessModal(true)}
-            className="h-8 sm:h-9 px-3 text-xs font-semibold border-blue-700/60 bg-[#092248]/80 text-blue-200 hover:bg-blue-800/40 hover:text-white cursor-pointer transition-all"
-            title="Changes portal stage, unlocked tasks, and visibility settings"
-          >
-            <Settings className="h-3.5 w-3.5 mr-1.5" />
-            Manage Portal Access
+            Preview Parent Portal
           </Button>
 
           {isArchived ? (
@@ -421,55 +386,6 @@ export function StudentHeader({
                 </strong>
               </div>
 
-              {/* Dedicated Client Portal Controls (Organized as 3 Separate Functions) */}
-              <div className="pt-2 border-t border-[#0E356A]/60 space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Portal Controls</span>
-                <div className="flex flex-col gap-1.5">
-                  <button
-                    type="button"
-                    onClick={onPreviewPortal}
-                    className="inline-flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group"
-                    title="Opens an independent staff preview of what the client can currently see"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <Eye className="h-3.5 w-3.5 text-sky-400 group-hover:text-sky-300" />
-                      <span>Open Client View</span>
-                    </span>
-                    <ArrowRight className="h-3 w-3 text-slate-500 group-hover:text-white" />
-                  </button>
-
-                  {canGuideLive && (
-                    <button
-                      type="button"
-                      onClick={() => setShowGuideLiveModal(true)}
-                      className="inline-flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-950/80 to-teal-950/80 hover:from-emerald-900/90 hover:to-teal-900/90 border border-emerald-500/50 text-emerald-200 hover:text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.2)] cursor-pointer group"
-                      title="Connects to the client’s active portal session after client approval"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <Radio className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                        <span>Guide Client Live</span>
-                      </span>
-                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        Live
-                      </span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setShowManageAccessModal(true)}
-                    className="inline-flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group"
-                    title="Changes portal stage, unlocked tasks, and visibility settings"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <Settings className="h-3.5 w-3.5 text-[#F5B544] group-hover:text-amber-300" />
-                      <span>Manage Portal Access</span>
-                    </span>
-                    <ArrowRight className="h-3 w-3 text-slate-500 group-hover:text-white" />
-                  </button>
-                </div>
-              </div>
-
               {/* Large Operational Chips for Payment Attention and Services Paused */}
               {(operationalState === "Payment Attention" || contact.billingStatus === "Payment Failed") && (
                 <div className="pt-1.5">
@@ -492,22 +408,6 @@ export function StudentHeader({
           </div>
         </div>
       </div>
-
-      {/* Guide Client Live Co-Browsing Console */}
-      <GuideClientLiveModal
-        open={showGuideLiveModal}
-        onOpenChange={setShowGuideLiveModal}
-        contact={contact}
-        parentContact={parentContact}
-      />
-
-      {/* Manage Portal Access Dialog */}
-      <ManagePortalAccessModal
-        open={showManageAccessModal}
-        onOpenChange={setShowManageAccessModal}
-        contact={contact}
-        parentContact={parentContact}
-      />
     </div>
   );
 }

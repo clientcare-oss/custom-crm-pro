@@ -8,6 +8,11 @@ import {
   Wrench,
   ChevronDown,
   Clock,
+  Eye,
+  Radio,
+  Settings,
+  ArrowRight,
+  Compass,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -17,6 +22,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { canGuideClientsLive } from "@/lib/guidancePermissions";
+import { GuideClientLiveModal } from "@/components/guidance/GuideClientLiveModal";
+import { ManagePortalAccessModal } from "@/components/guidance/ManagePortalAccessModal";
 import { OnboardingChoiceModal } from "./dialogs/OnboardingChoiceModal";
 import { ReviewPauseModal } from "./dialogs/ReviewPauseModal";
 import { ResolvePaymentModal } from "./dialogs/ResolvePaymentModal";
@@ -42,6 +51,8 @@ interface ClientJourneyCardProps {
   onNavigateToTab?: (tab: string) => void;
   onOpenDiscoveryCall?: () => void;
   onStateChange?: (payload: any) => void;
+  parentContact?: any;
+  onPreviewPortal?: () => void;
 }
 
 export function ClientJourneyCard({
@@ -52,10 +63,17 @@ export function ClientJourneyCard({
   onNavigateToTab,
   onOpenDiscoveryCall,
   onStateChange,
+  parentContact,
+  onPreviewPortal,
 }: ClientJourneyCardProps) {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const updateJourney = trpc.contacts.updateJourneyState.useMutation();
+
+  const { user } = useAuth();
+  const canGuideLive = canGuideClientsLive(user);
+  const [showGuideLiveModal, setShowGuideLiveModal] = useState(false);
+  const [showManageAccessModal, setShowManageAccessModal] = useState(false);
 
   // Dialog open states
   const [showOnboardingChoice, setShowOnboardingChoice] = useState(false);
@@ -74,6 +92,16 @@ export function ClientJourneyCard({
   }, [contact?.lifecycleStage, contact?.operationalState]);
 
   const activeContact = { ...contact, ...(optimisticState || {}) };
+
+  const handleOpenClientView = () => {
+    if (onPreviewPortal) {
+      onPreviewPortal();
+    } else {
+      const parentId = parentContact?.id || activeContact?.parentContactId;
+      const url = `/portal?preview=true&contactId=${contactId}${parentId ? `&parentContactId=${parentId}` : ""}`;
+      window.open(url, "_blank");
+    }
+  };
 
   // Derive active states from activeContact
   const lifecycleStage = (activeContact?.lifecycleStage || "Active") as
@@ -715,6 +743,56 @@ export function ClientJourneyCard({
             <p className="text-xs text-slate-400 text-center">
               {primaryButtonHelper}
             </p>
+
+            {/* Dedicated Client Portal Controls (3 Separate Functions) */}
+            <div className="pt-2.5 border-t border-[#0E356A]/70 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                  Portal Controls
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium">3 Separate Functions</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* 1. Open Client View */}
+                <button
+                  type="button"
+                  onClick={handleOpenClientView}
+                  className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group shadow-sm"
+                  title="Opens an independent staff preview of what the client can currently see"
+                >
+                  <Eye className="h-3.5 w-3.5 text-sky-400 group-hover:text-sky-300 mb-1" />
+                  <span className="text-[11px] font-bold tracking-tight text-center leading-tight">Open Client View</span>
+                  <span className="text-[9.5px] text-slate-400 mt-0.5">Staff Preview</span>
+                </button>
+
+                {/* 2. Guide Client Live */}
+                {canGuideLive && (
+                  <button
+                    type="button"
+                    onClick={() => setShowGuideLiveModal(true)}
+                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-gradient-to-br from-emerald-950/90 to-teal-950/90 hover:from-emerald-900 hover:to-teal-900 border border-emerald-500/60 text-emerald-200 hover:text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-pointer group"
+                    title="Connects to the client’s active portal session after client approval"
+                  >
+                    <Radio className="h-3.5 w-3.5 text-emerald-400 animate-pulse mb-1" />
+                    <span className="text-[11px] font-extrabold tracking-tight text-emerald-200 group-hover:text-white text-center leading-tight">Guide Client Live</span>
+                    <span className="text-[9.5px] text-emerald-400/90 font-mono font-bold mt-0.5">Live Co-Browse</span>
+                  </button>
+                )}
+
+                {/* 3. Manage Portal Access */}
+                <button
+                  type="button"
+                  onClick={() => setShowManageAccessModal(true)}
+                  className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group shadow-sm"
+                  title="Changes portal stage, unlocked tasks, and visibility settings"
+                >
+                  <Settings className="h-3.5 w-3.5 text-[#F5B544] group-hover:text-amber-300 mb-1" />
+                  <span className="text-[11px] font-bold tracking-tight text-center leading-tight">Manage Access</span>
+                  <span className="text-[9.5px] text-slate-400 mt-0.5">Stage & Perms</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -785,6 +863,22 @@ export function ClientJourneyCard({
           utils.contacts.detail.invalidate({ id: contactId });
           utils.contacts.list.invalidate();
         }}
+      />
+
+      {/* Guide Client Live Co-Browsing Console */}
+      <GuideClientLiveModal
+        open={showGuideLiveModal}
+        onOpenChange={setShowGuideLiveModal}
+        contact={activeContact}
+        parentContact={parentContact}
+      />
+
+      {/* Manage Portal Access Dialog */}
+      <ManagePortalAccessModal
+        open={showManageAccessModal}
+        onOpenChange={setShowManageAccessModal}
+        contact={activeContact}
+        parentContact={parentContact}
       />
     </div>
   );
