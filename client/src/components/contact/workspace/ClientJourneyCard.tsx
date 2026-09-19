@@ -278,20 +278,23 @@ export function ClientJourneyCard({
       {/* ─────────────────────────────────────────────────────────
           PANEL 1: CLIENT JOURNEY (Timeline + Single Primary Action)
       ───────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] py-2 px-3.5 sm:py-2.5 sm:px-4.5 shadow-xl relative overflow-hidden">
+      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#092044] via-[#0D2D5C] to-[#092044] border-2 border-[#1E5296] p-4 sm:p-5 lg:p-5.5 shadow-2xl shadow-black/40 relative overflow-hidden">
+        {/* Top glowing tricolor accent stripe */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 via-[#F5B544] to-cyan-400 pointer-events-none opacity-90" />
+
         {/* Ambient Glows */}
         {isPaymentAttention && (
-          <div className="absolute -top-10 -right-10 w-80 h-80 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-10 -right-10 w-80 h-80 bg-rose-500/20 rounded-full blur-3xl pointer-events-none" />
         )}
         {isServicesPaused && (
-          <div className="absolute -top-10 -right-10 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-10 -right-10 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
         )}
         {!isPaymentAttention && !isServicesPaused && (
-          <div className="absolute -top-10 -right-10 w-80 h-80 bg-[#F5B544]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-10 -right-10 w-80 h-80 bg-[#F5B544]/15 rounded-full blur-3xl pointer-events-none" />
         )}
 
         {/* Header Bar: Title + Quick State Switcher */}
-        <div className="flex items-center justify-between mb-1.5 relative z-10 flex-wrap gap-2">
+        <div className="flex items-center justify-between mb-3 relative z-10 flex-wrap gap-2.5">
           <div className="flex items-center gap-2.5">
             <span className="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-slate-200">
               CLIENT JOURNEY
@@ -300,7 +303,7 @@ export function ClientJourneyCard({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 text-[11px] font-semibold text-[#38BDF8] hover:text-sky-300 bg-[#0A1D38] border border-[#0E356A] hover:border-[#38BDF8]/60 px-2.5 py-0.5 rounded-lg transition-all cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 text-[11px] font-semibold text-[#38BDF8] hover:text-sky-300 bg-[#061833] border border-[#1E5296] hover:border-[#38BDF8]/70 px-2.5 py-0.5 rounded-lg transition-all cursor-pointer shadow-xs"
                   title="Quick switch student journey & operational state"
                 >
                   <span>
@@ -382,7 +385,7 @@ export function ClientJourneyCard({
         {/* Main Grid: Left Timeline (7 cols) + Right Primary Action (5 cols) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start relative z-10">
           {/* LEFT 7 COLS: Timeline Stepper & Subtitle */}
-          <div className="lg:col-span-7 space-y-1.5">
+          <div className="lg:col-span-7 space-y-3">
             {/* 5-Stage Continuous Stepper with Seamless Connecting Line */}
             <div className="grid grid-cols-5 w-full relative">
               {/* 1. Continuous Background Track connecting all 5 dots from center of dot 1 (10%) to center of dot 5 (90%) */}
@@ -698,49 +701,50 @@ export function ClientJourneyCard({
             </div>
 
             {/* Subtitle Headline + Detail */}
-            <div className="space-y-0.5 pt-0.5">
+            <div className="space-y-0.5 pt-1">
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 {subtitleHeadline}
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-300">
                 {subtitleDetail}
               </p>
             </div>
           </div>
 
-          {/* RIGHT 5 COLS: Dynamic Single Primary Action (Tucked to top, ultra-compact) */}
-          <div className="lg:col-span-5 lg:border-l lg:border-[#0E356A]/80 lg:pl-5 flex flex-col justify-start space-y-1.5 -mt-0.5">
+          {/* RIGHT 5 COLS: Dynamic Single Primary Action */}
+          <div className="lg:col-span-5 lg:border-l-2 lg:border-[#1E5296]/80 lg:pl-6 flex flex-col justify-start space-y-2.5">
             {/* Top Row: Eyebrow on left + Helper text on right */}
             <div className="flex items-center justify-between gap-2 min-w-0">
-              <span className={`text-[10px] font-mono font-bold tracking-widest uppercase shrink-0 ${eyebrowColor}`}>
+              <span className={`text-[10.5px] font-mono font-extrabold tracking-widest uppercase shrink-0 ${eyebrowColor}`}>
                 {eyebrowLabel}
               </span>
-              <span className="text-[10.5px] text-slate-400 truncate text-right" title={primaryButtonHelper}>
+              <span className="text-[11px] text-slate-300 font-medium truncate text-right" title={primaryButtonHelper}>
                 {primaryButtonHelper}
               </span>
             </div>
 
-            {/* Primary Action Button (Moved all the way up) */}
+            {/* Primary Action Button */}
             <button
               type="button"
               onClick={onPrimaryActionClick}
-              className={`w-full py-2 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${primaryButtonBg}`}
+              className={`w-full py-2.5 px-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-lg hover:shadow-xl ${primaryButtonBg}`}
             >
               {primaryButtonIcon}
               <span className="truncate">{primaryButtonText}</span>
             </button>
 
-            {/* Dedicated Client Portal Controls (Sleek Single-Row Horizontal Action Strip) */}
-            <div className="pt-1 border-t border-[#0E356A]/70 grid grid-cols-3 gap-1.5">
+            {/* Dedicated Client Portal Controls (Square Keypad Style Tiles) */}
+            <div className="pt-2 border-t border-[#1E5296]/70 grid grid-cols-3 gap-2">
               {/* 1. Open Client View */}
               <button
                 type="button"
                 onClick={handleOpenClientView}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group shadow-xs"
+                className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl bg-[#061833] hover:bg-[#0A2650] border-2 border-sky-500/40 hover:border-sky-400 text-slate-100 hover:text-white transition-all cursor-pointer group shadow-sm hover:shadow-sky-500/20 text-center"
                 title="Opens an independent staff preview of what the client can currently see"
               >
-                <Eye className="h-3 w-3 text-sky-400 shrink-0" />
-                <span className="text-[11px] font-bold truncate">Client View</span>
+                <Eye className="h-4 w-4 text-sky-400 group-hover:text-sky-300 mb-1 shrink-0" />
+                <span className="text-xs font-bold text-white tracking-tight text-center leading-tight">Client View</span>
+                <span className="text-[10px] text-sky-300/80 font-medium mt-0.5">Preview</span>
               </button>
 
               {/* 2. Guide Client Live */}
@@ -748,11 +752,12 @@ export function ClientJourneyCard({
                 <button
                   type="button"
                   onClick={() => setShowGuideLiveModal(true)}
-                  className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-gradient-to-r from-emerald-950/90 to-teal-950/90 hover:from-emerald-900 hover:to-teal-900 border border-emerald-500/60 text-emerald-200 hover:text-white text-xs font-bold transition-all shadow-[0_0_8px_rgba(16,185,129,0.2)] cursor-pointer group"
+                  className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl bg-gradient-to-b from-emerald-950 to-[#041c14] hover:from-emerald-900 hover:to-[#06241a] border-2 border-emerald-500/70 hover:border-emerald-400 text-emerald-200 hover:text-white transition-all cursor-pointer group shadow-[0_0_14px_rgba(16,185,129,0.25)] text-center"
                   title="Connects to the client’s active portal session after client approval"
                 >
-                  <Radio className="h-3 w-3 text-emerald-400 animate-pulse shrink-0" />
-                  <span className="text-[11px] font-extrabold truncate">Guide Live</span>
+                  <Radio className="h-4 w-4 text-emerald-400 animate-pulse mb-1 shrink-0" />
+                  <span className="text-xs font-extrabold text-emerald-200 group-hover:text-white tracking-tight text-center leading-tight">Guide Live</span>
+                  <span className="text-[10px] text-emerald-400/90 font-mono font-bold mt-0.5">Point-Only</span>
                 </button>
               )}
 
@@ -760,11 +765,12 @@ export function ClientJourneyCard({
               <button
                 type="button"
                 onClick={() => setShowManageAccessModal(true)}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group shadow-xs"
+                className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl bg-[#061833] hover:bg-[#0A2650] border-2 border-amber-500/40 hover:border-amber-400 text-slate-100 hover:text-white transition-all cursor-pointer group shadow-sm hover:shadow-amber-500/20 text-center"
                 title="Changes portal stage, unlocked tasks, and visibility settings"
               >
-                <Settings className="h-3 w-3 text-[#F5B544] shrink-0" />
-                <span className="text-[11px] font-bold truncate">Manage</span>
+                <Settings className="h-4 w-4 text-[#F5B544] group-hover:text-amber-300 mb-1 shrink-0" />
+                <span className="text-xs font-bold text-white tracking-tight text-center leading-tight">Manage</span>
+                <span className="text-[10px] text-amber-300/80 font-medium mt-0.5">Access</span>
               </button>
             </div>
           </div>
