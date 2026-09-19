@@ -164,19 +164,19 @@ export function StudentHeader({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center relative z-10">
           {/* SECTION 1 (LEFT): Avatar Above Name + Identity Stack + Plan Badge (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col items-start gap-2.5">
+          <div className="lg:col-span-5 flex flex-col items-center text-center gap-2.5">
             {/* Glowing Golden Ring Avatar (Positioned Above Name) */}
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#07162B] border-2 border-[#F5B544] shadow-[0_0_22px_rgba(245,181,68,0.35)] flex items-center justify-center text-lg sm:text-xl font-bold font-serif text-white shrink-0">
               {initials}
             </div>
 
             {/* Student Identity Stack */}
-            <div className="space-y-1 min-w-0 w-full">
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight leading-tight truncate" title={fullName}>
+            <div className="space-y-1.5 min-w-0 w-full flex flex-col items-center text-center">
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight leading-tight truncate w-full text-center" title={fullName}>
                 {fullName}
               </h2>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center justify-center gap-2 flex-wrap text-center">
                 <p className="text-sm sm:text-base text-slate-300 font-medium truncate" title={parentFullName}>
                   {parentFullName}
                 </p>
@@ -194,7 +194,7 @@ export function StudentHeader({
               </div>
 
               {/* Gold Plan Pill Badge (Interactive Dropdown) */}
-              <div className="pt-0.5">
+              <div className="pt-0.5 flex justify-center w-full">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -205,7 +205,7 @@ export function StudentHeader({
                       <ChevronDown className="h-3 w-3 opacity-70" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl">
+                  <DropdownMenuContent align="center" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl">
                     <DropdownMenuItem onClick={() => handleSelectPlan("IEP")} className="gap-2 cursor-pointer text-xs font-semibold hover:bg-white/[0.08]">
                       <span className="w-2 h-2 rounded-full bg-indigo-400" />
                       <span>IEP PLAN</span>
@@ -223,7 +223,7 @@ export function StudentHeader({
               </div>
 
               {/* Grade · School line */}
-              <p className="text-xs text-slate-300/90 pt-0.5 truncate">
+              <p className="text-xs text-slate-300/90 pt-0.5 truncate w-full text-center">
                 {cleanGrade}
                 {" · "}
                 {contact.schoolName || contact.goingToSchool || contact.countyDistrict || "Lincoln Elementary"}
