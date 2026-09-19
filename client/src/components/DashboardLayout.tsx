@@ -670,7 +670,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           disableTransition={isResizing}
         >
           {/* ── Header: toggle + logo + search ── */}
-          <SidebarHeader className="px-3 pt-4 pb-2 bg-sidebar gap-2.5">
+          <SidebarHeader className="px-3 pt-4 pb-2 bg-transparent gap-2.5">
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleSidebar}
@@ -710,7 +710,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search modules... (⌘K)"
-                  className="h-8 pl-8 pr-7 bg-black/25 border-white/10 text-xs rounded-lg placeholder:text-sidebar-foreground/35 focus-visible:ring-1 focus-visible:ring-amber-400 text-sidebar-foreground"
+                  className="h-8 pl-8 pr-7 bg-[#071C3C]/70 border border-[#0D4B84]/60 text-xs rounded-lg placeholder:text-sidebar-foreground/50 focus-visible:ring-1 focus-visible:ring-amber-400 text-sidebar-foreground"
                 />
                 {searchQuery && (
                   <button
@@ -726,7 +726,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarHeader>
 
           {/* ── Nav items with Expandable/Collapsible Sections ── */}
-          <SidebarContent className="bg-sidebar px-2 py-1.5 overflow-y-auto space-y-1.5">
+          <SidebarContent className="bg-transparent px-2 py-1.5 overflow-y-auto space-y-1.5">
             {filteredMenuGroups.length === 0 && searchQuery ? (
               <div className="text-center py-8 px-3">
                 <Search className="h-6 w-6 mx-auto text-sidebar-foreground/30 mb-2" />
@@ -770,7 +770,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
                     {/* Section Items Card */}
                     {!isCollapsedSection && (
-                      <div className="rounded-xl bg-black/20 border border-white/5 p-1 shadow-inner animate-in fade-in duration-150">
+                      <div className="rounded-xl bg-[#071C3C]/60 border border-[#0D4B84]/40 p-1 shadow-inner animate-in fade-in duration-150">
                         <SidebarMenu className="gap-0.5">
                           {group.items.map((item) => {
                             const isActive = 
@@ -813,7 +813,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarContent>
 
           {/* ── Footer: controls ── */}
-          <SidebarFooter className="bg-sidebar p-2.5 space-y-1.5">
+          <SidebarFooter className="bg-transparent border-t border-[#0D4B84]/60 p-2.5 space-y-1.5">
             {/* Side-by-side Quick Setup & Theme toggle */}
             <div className="flex items-center gap-1.5 w-full group-data-[collapsible=icon]:flex-col">
               {/* Quick Setup */}

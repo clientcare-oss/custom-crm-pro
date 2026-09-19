@@ -184,12 +184,12 @@ export function ClientPortalSidebar({
 
   return (
     <div className={`flex flex-col h-full border-r transition-all duration-[300ms] ease-in-out
-      ${isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-white/10"}
+      ${isLight ? "bg-white border-slate-200" : "bg-gradient-to-b from-[#0B3767] via-[#0A254D] to-[#071C3C] border-[#0D4B84] shadow-2xl"}
       ${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64 shrink-0"}`}>
       
       {/* Header Logo */}
       <div className={`pt-5 pb-4 flex flex-col items-center border-b transition-colors duration-[3000ms] ease-in-out
-        ${isLight ? "border-slate-200" : "border-white/8"}
+        ${isLight ? "border-slate-200" : "border-[#0D4B84]/60"}
         ${isCollapsed && !mobile ? "px-2 gap-3" : "px-5"}`}>
         
         <div className={`flex w-full items-center ${isCollapsed && !mobile ? "justify-center" : "justify-between"}`}>
@@ -477,7 +477,7 @@ export function ClientPortalSidebar({
       </nav>
 
       {/* Footer Controls */}
-      <div className={`px-3 pb-4 pt-3 border-t space-y-2.5 ${isLight ? "border-slate-200" : "border-white/8"}`}>
+      <div className={`px-3 pb-4 pt-3 border-t space-y-2.5 ${isLight ? "border-slate-200" : "border-[#0D4B84]/60"}`}>
         
         {/* Permanent Portal Tour utility for active clients */}
         {!isOnboardingOrPreSale && onStartTour && (
