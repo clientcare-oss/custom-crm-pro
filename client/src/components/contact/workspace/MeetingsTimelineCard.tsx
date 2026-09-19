@@ -34,10 +34,10 @@ export function MeetingsTimelineCard({
   onOpenActivityTimeline,
 }: MeetingsTimelineCardProps) {
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-[#0A1A33] to-[#07162B] border border-[#0E274D] p-5 shadow-lg flex flex-col justify-between">
+    <div className="rounded-2xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-5 shadow-2xl flex flex-col justify-between">
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#0E274D] pb-3">
+        <div className="flex items-center justify-between border-b border-[#0E3E75]/80 pb-3">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-[#F5B544]" />
             <h3 className="text-base font-bold text-white font-serif tracking-wide">

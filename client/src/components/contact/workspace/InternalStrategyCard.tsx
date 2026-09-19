@@ -24,11 +24,11 @@ export function InternalStrategyCard({
   const latestNote = notes[0];
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-[#0A1A33] to-[#07162B] border border-[#0E274D] p-5 shadow-lg relative overflow-hidden">
+    <div className="rounded-2xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-5 shadow-2xl relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-0 right-0 w-80 h-40 bg-[#F5B544]/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-[#0E274D] pb-3 mb-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-[#0E3E75]/80 pb-3 mb-4">
         <div className="flex items-center gap-2.5 flex-wrap">
           <Lock className="h-4 w-4 text-[#F5B544]" />
           <h3 className="text-base font-bold text-white font-serif tracking-wide">

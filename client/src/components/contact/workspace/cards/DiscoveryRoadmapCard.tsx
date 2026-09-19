@@ -3,7 +3,7 @@ import { Calendar } from "lucide-react";
 
 export function DiscoveryRoadmapCard() {
   return (
-    <div className="rounded-3xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-5 sm:p-6 shadow-xl space-y-4">
+    <div className="rounded-3xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-5 sm:p-6 shadow-2xl space-y-4">
       <div className="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-slate-200">
         DISCOVERY CALL ROADMAP
       </div>

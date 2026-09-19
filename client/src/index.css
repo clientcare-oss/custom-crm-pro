@@ -87,19 +87,19 @@
   --sidebar-primary-foreground: #FFFFFF;
   --background: #000821;
   --foreground: #FFFFFF;
-  --card: #06172F;
+  --card: #0A254D;
   --card-foreground: #FFFFFF;
-  --popover: #06172F;
+  --popover: #0A254D;
   --popover-foreground: #FFFFFF;
-  --secondary: #081B36;
+  --secondary: #0B3767;
   --secondary-foreground: #FFFFFF;
-  --muted: #081B36;
+  --muted: #082148;
   --muted-foreground: rgba(255, 255, 255, 0.65);
-  --accent: #0B2553;
+  --accent: #0D4B84;
   --accent-foreground: #FFFFFF;
   --destructive: oklch(0.60 0.20 25);
   --destructive-foreground: #FFFFFF;
-  --border: rgba(30, 58, 138, 0.4);
+  --border: rgba(13, 75, 132, 0.7);
   --input: #030C22;
   --ring: #F5B544;
   --chart-1: #60A5FA;
@@ -107,11 +107,11 @@
   --chart-3: #2563EB;
   --chart-4: #1D4ED8;
   --chart-5: #1E40AF;
-  --sidebar: #06172F;
+  --sidebar: #071C3C;
   --sidebar-foreground: #FFFFFF;
   --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(30, 58, 138, 0.4);
+  --sidebar-border: rgba(13, 75, 132, 0.7);
   --sidebar-ring: #F5B544;
 }
 
@@ -152,7 +152,7 @@
   --sidebar-ring: oklch(0.52 0.22 255);
 }
 
-/* Navy theme — full rich nautical navy (exact #06172F cards on #000821 canvas) */
+/* Navy theme — full rich nautical navy (exact #0A254D cards on #000821 canvas) */
 .navy {
   --primary: #F5B544;
   --primary-foreground: #020617;
@@ -160,19 +160,19 @@
   --sidebar-primary-foreground: #FFFFFF;
   --background: #000821;
   --foreground: #FFFFFF;
-  --card: #06172F;
+  --card: #0A254D;
   --card-foreground: #FFFFFF;
-  --popover: #06172F;
+  --popover: #0A254D;
   --popover-foreground: #FFFFFF;
-  --secondary: #081B36;
+  --secondary: #0B3767;
   --secondary-foreground: #FFFFFF;
-  --muted: #081B36;
+  --muted: #082148;
   --muted-foreground: rgba(255, 255, 255, 0.65);
-  --accent: #0B2553;
+  --accent: #0D4B84;
   --accent-foreground: #FFFFFF;
   --destructive: oklch(0.60 0.20 25);
   --destructive-foreground: #FFFFFF;
-  --border: rgba(30, 58, 138, 0.4);
+  --border: rgba(13, 75, 132, 0.7);
   --input: #030C22;
   --ring: #F5B544;
   --chart-1: #60A5FA;
@@ -180,11 +180,11 @@
   --chart-3: #2563EB;
   --chart-4: #1D4ED8;
   --chart-5: #1E40AF;
-  --sidebar: #06172F;
+  --sidebar: #071C3C;
   --sidebar-foreground: #FFFFFF;
   --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(30, 58, 138, 0.4);
+  --sidebar-border: rgba(13, 75, 132, 0.7);
   --sidebar-ring: #F5B544;
 }
 

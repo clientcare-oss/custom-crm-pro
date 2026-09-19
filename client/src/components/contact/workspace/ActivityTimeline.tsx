@@ -298,7 +298,7 @@ export function ActivityTimeline({ contact, onSwitchTab }: ActivityTimelineProps
   return (
     <div className="space-y-5 text-white font-sans">
       {/* ── 1. STUDENT HEADER WITH LIGHTHOUSE & MOTTO STAR ── */}
-      <div className="rounded-2xl border border-blue-900/60 bg-[#061830] px-5 py-4 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-[#0D4B84] bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] px-5 py-4 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Left: Waypoint Lighthouse Brand & Student Specs */}
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2.5 shrink-0">
@@ -468,7 +468,7 @@ export function ActivityTimeline({ contact, onSwitchTab }: ActivityTimelineProps
         </div>
 
         {/* Right Column (5 cols): AI Summary */}
-        <div className="lg:col-span-5 rounded-2xl border border-blue-800/80 bg-gradient-to-br from-[#061830] via-[#071E3D] to-[#041021] p-5 shadow-2xl flex flex-col justify-between space-y-3">
+        <div className="lg:col-span-5 rounded-2xl border border-[#0D4B84] bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] p-5 shadow-2xl flex flex-col justify-between space-y-3">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

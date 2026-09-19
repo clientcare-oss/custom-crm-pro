@@ -278,7 +278,7 @@ export function ClientJourneyCard({
       {/* ─────────────────────────────────────────────────────────
           PANEL 1: CLIENT JOURNEY (Timeline + Single Primary Action)
       ───────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#092044] via-[#0D2D5C] to-[#092044] border-2 border-[#1E5296] p-4 sm:p-5 lg:p-5.5 shadow-2xl shadow-black/40 relative overflow-hidden">
+      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-4 sm:p-5 lg:p-5.5 shadow-2xl relative overflow-hidden">
         {/* Top glowing tricolor accent stripe */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 via-[#F5B544] to-cyan-400 pointer-events-none opacity-90" />
 

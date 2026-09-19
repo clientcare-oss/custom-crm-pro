@@ -58,9 +58,9 @@ export function IepZoneCard({
   const docTitle = latestFile?.fileName || latestFile?.name || `September 2026 ${planLabel}`;
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl bg-[#061833] border border-[#0D366B] p-4 sm:p-5 shadow-xl space-y-3.5 relative overflow-hidden">
+    <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-4 sm:p-5 shadow-2xl space-y-3.5 relative overflow-hidden">
       {/* Top Banner Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#0D366B]/80 pb-2.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#0E3E75]/80 pb-2.5">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-[#F5B544]/15 border border-[#F5B544]/30 flex items-center justify-center shrink-0">
             <FileText className="h-4 w-4 text-[#F5B544]" />

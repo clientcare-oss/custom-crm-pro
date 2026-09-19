@@ -76,9 +76,9 @@ export function JourneyStateSimulatorModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl sm:max-w-3xl bg-[#07162B] border border-[#0E356A] text-slate-100 shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl sm:max-w-3xl bg-[#0A254D] border border-[#0D4B84] text-slate-100 shadow-2xl p-0 overflow-hidden">
         {/* Header with Nautical Gradient */}
-        <div className="p-5 sm:p-6 bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border-b border-[#0E356A]">
+        <div className="p-5 sm:p-6 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-b border-[#0D4B84]">
           <DialogHeader className="space-y-1.5 text-left">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <DialogTitle className="text-lg sm:text-xl font-bold font-serif text-white flex items-center gap-2.5">

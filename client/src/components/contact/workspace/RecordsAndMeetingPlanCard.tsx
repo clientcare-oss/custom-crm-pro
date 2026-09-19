@@ -112,12 +112,12 @@ export function RecordsAndMeetingPlanCard({
   ];
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl bg-[#061833] border border-[#0D366B] p-5 sm:p-6 shadow-2xl space-y-5 relative overflow-hidden">
+    <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-5 sm:p-6 shadow-2xl space-y-5 relative overflow-hidden">
       {/* Background ambient glow */}
       <div className="absolute top-0 right-1/4 w-80 h-80 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#0D366B]/80 pb-3.5 relative z-10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#0E3E75]/80 pb-3.5 relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#F5B544]/15 border border-[#F5B544]/30 flex items-center justify-center shrink-0">
             <FileSearch className="h-5 w-5 text-[#F5B544]" />
