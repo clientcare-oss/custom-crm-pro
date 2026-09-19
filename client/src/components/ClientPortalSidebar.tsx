@@ -184,13 +184,16 @@ export function ClientPortalSidebar({
 
   return (
     <div className={`flex flex-col h-full border-r transition-all duration-[300ms] ease-in-out
-      ${isLight ? "bg-white border-slate-200" : "bg-[#06172F] border-white/10"}
+      ${isLight ? "bg-white border-slate-200" : "bg-gradient-to-b from-[#0D4B84] via-[#0A254D] to-[#061833] border-[#0D4B84] shadow-2xl"}
       ${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64 shrink-0"}`}>
       
       {/* Header Logo */}
-      <div className={`pt-5 pb-4 flex flex-col items-center border-b transition-colors duration-[3000ms] ease-in-out
-        ${isLight ? "border-slate-200" : "border-white/8"}
+      <div className={`pt-5 pb-4 flex flex-col items-center border-b transition-colors duration-[3000ms] ease-in-out relative
+        ${isLight ? "border-slate-200" : "bg-gradient-to-b from-[#0E4F8C]/30 to-transparent border-[#0D4B84]/60"}
         ${isCollapsed && !mobile ? "px-2 gap-3" : "px-5"}`}>
+        {!isLight && (
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
+        )}
         
         <div className={`flex w-full items-center ${isCollapsed && !mobile ? "justify-center" : "justify-between"}`}>
           <div className="flex items-center gap-3">
@@ -388,12 +391,12 @@ export function ClientPortalSidebar({
                     ${isActive
                       ? isLight
                         ? "border border-amber-500/50 text-amber-800 bg-amber-500/15 shadow-sm"
-                        : "border border-amber-400/70 text-amber-300 bg-amber-400/10 shadow-sm"
+                        : "border border-[#F5B544]/80 text-[#F5B544] bg-gradient-to-r from-[#F5B544]/25 via-[#F5B544]/15 to-transparent shadow-sm font-bold"
                       : isCompleted
                       ? "text-emerald-400 hover:bg-white/5"
                       : isLight
                         ? "text-slate-700 hover:bg-slate-100"
-                        : "text-white/80 hover:text-white hover:bg-white/5"
+                        : "text-blue-100/80 hover:text-white hover:bg-white/5"
                     }`}
                 >
                   <Icon className={`h-3.5 w-3.5 shrink-0 ${
@@ -445,10 +448,10 @@ export function ClientPortalSidebar({
                   ${isActive
                     ? isLight
                       ? "border border-amber-500/50 text-amber-700 bg-amber-500/10 shadow-sm"
-                      : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-lg shadow-amber-500/10"
+                      : "border border-[#F5B544]/80 text-[#F5B544] bg-gradient-to-r from-[#F5B544]/25 via-[#F5B544]/15 to-transparent shadow-lg shadow-amber-500/10 font-bold"
                     : isLight
                       ? "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                      : "border border-transparent text-white/60 hover:text-white hover:bg-white/5"
+                      : "border border-transparent text-blue-100/75 hover:text-white hover:bg-white/5"
                   }`}
               >
                 <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : isLight ? "text-slate-450" : "text-white/40"} ${id === "plan-transition" && isActive ? "animate-spin-slow" : ""}`} />
@@ -477,7 +480,7 @@ export function ClientPortalSidebar({
       </nav>
 
       {/* Footer Controls */}
-      <div className={`px-3 pb-4 pt-3 border-t space-y-2.5 ${isLight ? "border-slate-200" : "border-white/8"}`}>
+      <div className={`px-3 pb-4 pt-3 border-t space-y-2.5 ${isLight ? "border-slate-200" : "bg-gradient-to-t from-[#061833] via-[#071C3C]/80 to-transparent border-[#0D4B84]/60"}`}>
         
         {/* Permanent Portal Tour utility for active clients */}
         {!isOnboardingOrPreSale && onStartTour && (

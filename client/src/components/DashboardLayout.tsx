@@ -670,11 +670,14 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           disableTransition={isResizing}
         >
           {/* ── Header: toggle + logo + search ── */}
-          <SidebarHeader className="px-3 pt-4 pb-2 bg-sidebar gap-2.5">
+          <SidebarHeader className="px-3 pt-4 pb-2.5 bg-gradient-to-b from-[#0E4F8C]/40 to-transparent border-b border-[#0D4B84]/50 gap-2.5 relative">
+            {/* Top golden accent shimmer line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
+
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shrink-0 cursor-pointer"
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shrink-0 cursor-pointer"
                 aria-label="Toggle navigation"
               >
                 <PanelLeft className="h-4 w-4 text-sidebar-foreground/60" />
@@ -704,13 +707,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             {/* Live Module Search Bar */}
             {!isCollapsed && (
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/40 pointer-events-none" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-200/50 pointer-events-none" />
                 <Input
                   ref={searchInputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search modules... (⌘K)"
-                  className="h-8 pl-8 pr-7 bg-black/25 border-white/10 text-xs rounded-lg placeholder:text-sidebar-foreground/35 focus-visible:ring-1 focus-visible:ring-amber-400 text-sidebar-foreground"
+                  className="h-8 pl-8 pr-7 bg-[#061833]/80 border border-[#0D4B84]/80 text-xs rounded-xl placeholder:text-blue-200/40 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white"
                 />
                 {searchQuery && (
                   <button
@@ -726,7 +729,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarHeader>
 
           {/* ── Nav items with Expandable/Collapsible Sections ── */}
-          <SidebarContent className="bg-sidebar px-2 py-1.5 overflow-y-auto space-y-1.5">
+          <SidebarContent className="bg-transparent px-2 py-1.5 overflow-y-auto space-y-1.5">
             {filteredMenuGroups.length === 0 && searchQuery ? (
               <div className="text-center py-8 px-3">
                 <Search className="h-6 w-6 mx-auto text-sidebar-foreground/30 mb-2" />
@@ -754,12 +757,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                     <button
                       type="button"
                       onClick={() => toggleSection(group.groupLabel)}
-                      className="w-full flex items-center justify-between px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
+                      className="w-full flex items-center justify-between px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-200/60 hover:text-white transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
                     >
-                      <span className={hasActiveItem ? "text-amber-500/90 font-extrabold" : ""}>
+                      <span className={hasActiveItem ? "text-amber-400 font-extrabold" : ""}>
                         {group.groupLabel}
                       </span>
-                      <span className="text-sidebar-foreground/40 group-hover/header:text-sidebar-foreground transition-transform">
+                      <span className="text-blue-200/40 group-hover/header:text-white transition-transform">
                         {isCollapsedSection ? (
                           <ChevronRight className="h-3 w-3" />
                         ) : (
@@ -770,7 +773,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
                     {/* Section Items Card */}
                     {!isCollapsedSection && (
-                      <div className="rounded-xl bg-black/20 border border-white/5 p-1 shadow-inner animate-in fade-in duration-150">
+                      <div className="rounded-xl bg-gradient-to-b from-[#0D4B84]/25 via-[#0A254D]/35 to-[#061833]/50 border border-[#0D4B84]/60 p-1 shadow-md animate-in fade-in duration-150">
                         <SidebarMenu className="gap-0.5">
                           {group.items.map((item) => {
                             const isActive = 
@@ -791,12 +794,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                                   tooltip={item.label}
                                   className={`h-8 transition-all font-normal rounded-lg text-xs cursor-pointer
                                     ${isActive
-                                      ? "border border-amber-500/70 text-amber-600 navy:text-amber-300 bg-amber-500/10 hover:bg-amber-500/15 hover:text-amber-600 navy:hover:text-amber-300 font-semibold shadow-xs"
-                                      : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-transparent"
+                                      ? "bg-gradient-to-r from-[#F5B544]/25 via-[#F5B544]/15 to-transparent border border-[#F5B544]/80 text-[#F5B544] font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]"
+                                      : "text-blue-100/80 hover:text-white hover:bg-gradient-to-r hover:from-[#0D4B84]/50 hover:to-transparent border border-transparent"
                                     }`}
                                 >
                                   {item.icon && (
-                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-amber-600 navy:text-amber-400" : "text-sidebar-foreground/50"}`} />
+                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-[#F5B544]" : "text-blue-300/70"}`} />
                                   )}
                                   <span className="truncate">{item.label}</span>
                                 </SidebarMenuButton>
@@ -813,16 +816,16 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarContent>
 
           {/* ── Footer: controls ── */}
-          <SidebarFooter className="bg-sidebar p-2.5 space-y-1.5">
+          <SidebarFooter className="bg-gradient-to-t from-[#061833] via-[#071C3C]/80 to-transparent border-t border-[#0D4B84]/60 p-2.5 space-y-1.5">
             {/* Side-by-side Quick Setup & Theme toggle */}
             <div className="flex items-center gap-1.5 w-full group-data-[collapsible=icon]:flex-col">
               {/* Quick Setup */}
               <button
                 onClick={() => setQuickSetupOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 transition-all text-[#0d1b2a] font-bold text-xs shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 cursor-pointer min-w-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 bg-gradient-to-r from-[#F5B544] to-amber-400 hover:from-amber-400 hover:to-yellow-300 transition-all text-[#07162B] font-bold text-xs shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 cursor-pointer min-w-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
                 title="Quick Client Setup"
               >
-                <Zap className="h-3.5 w-3.5 text-[#0d1b2a] shrink-0" />
+                <Zap className="h-3.5 w-3.5 text-[#07162B] shrink-0" />
                 <span className="truncate group-data-[collapsible=icon]:hidden">
                   Quick Setup
                 </span>
@@ -832,7 +835,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={toggleTheme}
                 title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
-                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-sidebar-accent border border-white/5 bg-black/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-sidebar-foreground/75 hover:text-sidebar-foreground text-xs font-medium cursor-pointer shrink-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
+                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.08] border border-[#0D4B84]/50 bg-[#071C3C]/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-200/80 hover:text-white text-xs font-medium cursor-pointer shrink-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'navy'
