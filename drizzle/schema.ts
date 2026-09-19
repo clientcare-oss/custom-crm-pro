@@ -1971,5 +1971,51 @@ export const firstMateSessions = mysqlTable("first_mate_sessions", {
 export type FirstMateSessionRecord = typeof firstMateSessions.$inferSelect;
 export type InsertFirstMateSessionRecord = typeof firstMateSessions.$inferInsert;
 
+// ── Guide Client Live Co-Browsing Sessions (PG-030-GCL) ──────────────────────
+export const guidanceSessions = mysqlTable("guidance_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull().unique(),
+  studentContactId: int("studentContactId").notNull(),
+  parentContactId: int("parentContactId"),
+  employeeId: varchar("employeeId", { length: 128 }).notNull(),
+  employeeName: varchar("employeeName", { length: 255 }).notNull(),
+  status: varchar("status", { length: 32 }).default("pending").notNull(), // "pending" | "approved" | "active" | "declined" | "completed" | "disconnected" | "expired"
+  currentSection: varchar("currentSection", { length: 128 }).default("Overview"),
+  currentPath: varchar("currentPath", { length: 255 }).default("/portal"),
+  currentTab: varchar("currentTab", { length: 64 }).default("dashboard"),
+  isPaymentArea: boolean("isPaymentArea").default(false).notNull(),
+  pointerX: decimal("pointerX", { precision: 6, scale: 3 }), // percentage 0 - 100
+  pointerY: decimal("pointerY", { precision: 6, scale: 3 }), // percentage 0 - 100
+  highlightSelector: text("highlightSelector"),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  connectedAt: timestamp("connectedAt"),
+  endedAt: timestamp("endedAt"),
+  durationSeconds: int("durationSeconds").default(0).notNull(),
+  endReason: varchar("endReason", { length: 64 }), // "completed" | "declined" | "disconnected" | "expired" | "staff_ended" | "client_ended"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  sessionIdIdx: index("guidance_sessionId_idx").on(t.sessionId),
+  studentContactIdIdx: index("guidance_studentContactId_idx").on(t.studentContactId),
+  statusIdx: index("guidance_status_idx").on(t.status),
+}));
 
+export type GuidanceSession = typeof guidanceSessions.$inferSelect;
+export type InsertGuidanceSession = typeof guidanceSessions.$inferInsert;
 
+export const clientPresence = mysqlTable("client_presence", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("studentContactId").notNull(),
+  parentContactId: int("parentContactId"),
+  currentPath: varchar("currentPath", { length: 255 }).default("/portal"),
+  currentSection: varchar("currentSection", { length: 128 }).default("Overview"),
+  isPaymentArea: boolean("isPaymentArea").default(false).notNull(),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+  isOnline: boolean("isOnline").default(true).notNull(),
+}, (t) => ({
+  studentContactIdIdx: index("client_presence_studentContactId_idx").on(t.studentContactId),
+  lastSeenAtIdx: index("client_presence_lastSeenAt_idx").on(t.lastSeenAt),
+}));
+
+export type ClientPresence = typeof clientPresence.$inferSelect;
+export type InsertClientPresence = typeof clientPresence.$inferInsert;

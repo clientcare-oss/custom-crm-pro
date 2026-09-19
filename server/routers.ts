@@ -53,8 +53,10 @@ import { firstMateRouter } from "./routers/firstMate";
 import { quoRouter } from "./routers/quo";
 import { pipelineRouter } from "./routers/pipeline";
 import { caseActivityRouter } from "./routers/caseActivity";
+import { guidanceRouter } from "./routers/guidance";
 
 export const appRouter = router({
+  guidance: guidanceRouter,
   caseActivity: caseActivityRouter,
   pipeline: pipelineRouter,
   firstMate: firstMateRouter,

@@ -35,6 +35,8 @@ import {
   voyageLogs,
   parkingLotItems,
   firstMateSessions,
+  guidanceSessions,
+  clientPresence,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -95,6 +97,7 @@ export {
 
 export * from "./db/giving";
 export * from "./db/caseActivity";
+export * from "./db/guidance";
 
 // ============ CONTACTS ============
 // Contact functions are imported and re-exported from ./db/contacts

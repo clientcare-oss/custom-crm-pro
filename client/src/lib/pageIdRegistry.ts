@@ -79,6 +79,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   
   // Smart Files Suite
   "/smart-files":                     { id: "PG-033", name: "Smart Files Library", category: "Smart Files" },
+  "/guidance":                        { id: "PG-030-GCL", name: "Guide Client Live", category: "Advocacy", description: "Real-time Point Only co-browsing console" },
+  "/portal/guidance":                 { id: "PG-030-GCL", name: "Client Portal Guidance Session", category: "Portal", description: "Active Waypoint guidance co-browsing session" },
   
   // Settings & System
   "/settings":                        { id: "PG-024", name: "Settings & Practice Profile", category: "Settings" },
@@ -238,6 +240,7 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
   "upload-records":   { id: "PG-027-S09", name: "Document Upload", category: "Portal Stage" },
   "advocacy-intake":  { id: "PG-027-S10", name: "Advocacy Detailed Intake", category: "Portal Stage" },
   "explore-portal":   { id: "PG-027-S12", name: "Explore Portal Tour", category: "Portal Stage" },
+  "guidance":         { id: "PG-030-GCL", name: "Guide Client Live", category: "Advocacy" },
 };
 
 /**

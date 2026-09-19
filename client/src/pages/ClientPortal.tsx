@@ -65,6 +65,7 @@ import { resolvePortalTabId, broadcastPageId } from "@/lib/pageIdRegistry";
 import { openWaypointScan } from "@/lib/waypointScanEvents";
 import { PortalToolsContent } from "@/components/portal/PortalToolsContent";
 import PageIdBadge from "@/components/PageIdBadge";
+import { ClientPortalGuidanceOverlay } from "@/components/guidance/ClientPortalGuidanceOverlay";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -2428,6 +2429,16 @@ export default function ClientPortal() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Real-time Guide Client Live Co-Browsing Overlay */}
+      {effectiveStudentContactId && (
+        <ClientPortalGuidanceOverlay
+          studentContactId={effectiveStudentContactId}
+          parentContactId={effectiveStudent?.parentContactId || undefined}
+          currentSection={activeTab}
+          currentPath={typeof window !== "undefined" ? window.location.pathname + window.location.search : "/portal"}
+        />
+      )}
     </div>
   </div>
   );
