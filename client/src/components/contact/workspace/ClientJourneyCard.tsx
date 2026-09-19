@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   Pause,
   FileText,
-  Wrench,
   ChevronDown,
   Clock,
   Eye,
@@ -31,7 +30,6 @@ import { ReviewPauseModal } from "./dialogs/ReviewPauseModal";
 import { ResolvePaymentModal } from "./dialogs/ResolvePaymentModal";
 import { RenewalModal } from "./dialogs/RenewalModal";
 import { OffboardingModal } from "./dialogs/OffboardingModal";
-import { JourneyStateSimulatorModal } from "./dialogs/JourneyStateSimulatorModal";
 
 // Modular Lower Panel Cards
 import { PaymentAttentionCard } from "./cards/PaymentAttentionCard";
@@ -81,7 +79,6 @@ export function ClientJourneyCard({
   const [showResolvePayment, setShowResolvePayment] = useState(false);
   const [showRenewalModal, setShowRenewalModal] = useState(false);
   const [showOffboardingModal, setShowOffboardingModal] = useState(false);
-  const [showSimulator, setShowSimulator] = useState(false);
 
   // Optimistic state for 0ms instantaneous state switching
   const [optimisticState, setOptimisticState] = useState<any>(null);
@@ -167,7 +164,7 @@ export function ClientJourneyCard({
   let eyebrowLabel = "NEXT STEP";
   let eyebrowColor = "text-[#38BDF8]";
   let primaryButtonText = "Review Case Workspace";
-  let primaryButtonIcon = <FileText className="h-6 w-6 shrink-0" />;
+  let primaryButtonIcon = <FileText className="h-4.5 w-4.5 shrink-0" />;
   let primaryButtonBg = "bg-[#F5B544] hover:bg-[#F5B544]/90 text-[#07162B]";
   let primaryButtonHelper = "Open case documents and goals";
   let onPrimaryActionClick = () => onNavigateToTab?.("workspace");
@@ -176,23 +173,23 @@ export function ClientJourneyCard({
     eyebrowLabel = "NEEDS ATTENTION";
     eyebrowColor = "text-[#FF2D55]";
     primaryButtonText = "Resolve Payment Issue";
-    primaryButtonIcon = <AlertTriangle className="h-6 w-6 text-white shrink-0 fill-white/20" />;
-    primaryButtonBg = "bg-[#E11D48] hover:bg-[#F43F5E] text-white shadow-[0_0_24px_rgba(225,29,72,0.45)]";
+    primaryButtonIcon = <AlertTriangle className="h-4.5 w-4.5 text-white shrink-0 fill-white/20" />;
+    primaryButtonBg = "bg-[#E11D48] hover:bg-[#F43F5E] text-white shadow-[0_0_20px_rgba(225,29,72,0.4)]";
     primaryButtonHelper = "Review billing and contact the family";
     onPrimaryActionClick = () => setShowResolvePayment(true);
   } else if (isServicesPaused) {
     eyebrowLabel = "NEXT STEP";
     eyebrowColor = "text-[#38BDF8]";
     primaryButtonText = "Review Pause";
-    primaryButtonIcon = <Pause className="h-6 w-6 text-white shrink-0 fill-white/20" />;
-    primaryButtonBg = "bg-[#8B5CF6] hover:bg-[#9333EA] text-white shadow-[0_0_24px_rgba(139,92,246,0.45)]";
+    primaryButtonIcon = <Pause className="h-4.5 w-4.5 text-white shrink-0 fill-white/20" />;
+    primaryButtonBg = "bg-[#8B5CF6] hover:bg-[#9333EA] text-white shadow-[0_0_20px_rgba(139,92,246,0.4)]";
     primaryButtonHelper = "View terms, dates, and return plan";
     onPrimaryActionClick = () => setShowReviewPause(true);
   } else if (isRenewal) {
     eyebrowLabel = "NEXT STEP";
     eyebrowColor = "text-[#38BDF8]";
     primaryButtonText = "Start Renewal";
-    primaryButtonIcon = <FileText className="h-6 w-6 text-[#07162B] shrink-0" />;
+    primaryButtonIcon = <FileText className="h-4.5 w-4.5 text-[#07162B] shrink-0" />;
     primaryButtonBg = "bg-[#F5B544] hover:bg-[#F5B544]/90 text-[#07162B]";
     primaryButtonHelper = "Review plan and send renewal form";
     onPrimaryActionClick = () => setShowRenewalModal(true);
@@ -200,7 +197,7 @@ export function ClientJourneyCard({
     eyebrowLabel = "NEXT STEP";
     eyebrowColor = "text-[#38BDF8]";
     primaryButtonText = "Start Offboarding";
-    primaryButtonIcon = <FileText className="h-6 w-6 text-[#07162B] shrink-0" />;
+    primaryButtonIcon = <FileText className="h-4.5 w-4.5 text-[#07162B] shrink-0" />;
     primaryButtonBg = "bg-[#F5B544] hover:bg-[#F5B544]/90 text-[#07162B]";
     primaryButtonHelper = "Review reason and begin guided closeout";
     onPrimaryActionClick = () => setShowOffboardingModal(true);
@@ -208,7 +205,7 @@ export function ClientJourneyCard({
     eyebrowLabel = "NEXT STEP";
     eyebrowColor = "text-[#38BDF8]";
     primaryButtonText = "Start Discovery Call";
-    primaryButtonIcon = <FileText className="h-6 w-6 text-[#07162B] shrink-0" />;
+    primaryButtonIcon = <FileText className="h-4.5 w-4.5 text-[#07162B] shrink-0" />;
     primaryButtonBg = "bg-[#F5B544] hover:bg-[#F5B544]/90 text-[#07162B]";
     primaryButtonHelper = "Open the guided call checklist";
     onPrimaryActionClick = () => {
@@ -222,7 +219,7 @@ export function ClientJourneyCard({
     eyebrowLabel = "NEXT STEP";
     eyebrowColor = "text-[#38BDF8]";
     primaryButtonText = "Continue Onboarding";
-    primaryButtonIcon = <FileText className="h-6 w-6 text-[#07162B] shrink-0" />;
+    primaryButtonIcon = <FileText className="h-4.5 w-4.5 text-[#07162B] shrink-0" />;
     primaryButtonBg = "bg-[#F5B544] hover:bg-[#F5B544]/90 text-[#07162B]";
     primaryButtonHelper = "Collect educational records & notify school";
     onPrimaryActionClick = () => setShowOnboardingChoice(true);
@@ -281,7 +278,7 @@ export function ClientJourneyCard({
       {/* ─────────────────────────────────────────────────────────
           PANEL 1: CLIENT JOURNEY (Timeline + Single Primary Action)
       ───────────────────────────────────────────────────────── */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-5 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="rounded-2xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-4 sm:p-5 shadow-xl relative overflow-hidden">
         {/* Ambient Glows */}
         {isPaymentAttention && (
           <div className="absolute -top-10 -right-10 w-80 h-80 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -293,8 +290,8 @@ export function ClientJourneyCard({
           <div className="absolute -top-10 -right-10 w-80 h-80 bg-[#F5B544]/10 rounded-full blur-3xl pointer-events-none" />
         )}
 
-        {/* Header Bar: Title + Quick State Switcher + Simulator Button */}
-        <div className="flex items-center justify-between mb-5 relative z-10 flex-wrap gap-2.5">
+        {/* Header Bar: Title + Quick State Switcher */}
+        <div className="flex items-center justify-between mb-3.5 relative z-10 flex-wrap gap-2.5">
           <div className="flex items-center gap-2.5">
             <span className="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-slate-200">
               CLIENT JOURNEY
@@ -380,22 +377,12 @@ export function ClientJourneyCard({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setShowSimulator(true)}
-            className="flex items-center gap-1.5 text-[11px] font-medium text-slate-300 hover:text-white bg-[#0A1D38]/90 hover:bg-[#0E356A] border border-[#0E356A] px-3 py-1 rounded-lg transition-colors cursor-pointer shadow-xs"
-            title="Open manager simulator modal"
-          >
-            <Wrench className="h-3.5 w-3.5 text-[#F5B544]" />
-            <span>Simulator Modal</span>
-          </button>
         </div>
 
         {/* Main Grid: Left Timeline (7 cols) + Right Primary Action (5 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center relative z-10">
           {/* LEFT 7 COLS: Timeline Stepper & Subtitle */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-4">
             {/* 5-Stage Continuous Stepper with Seamless Connecting Line */}
             <div className="grid grid-cols-5 w-full relative">
               {/* 1. Continuous Background Track connecting all 5 dots from center of dot 1 (10%) to center of dot 5 (90%) */}
@@ -722,48 +709,47 @@ export function ClientJourneyCard({
           </div>
 
           {/* RIGHT 5 COLS: Dynamic Single Primary Action */}
-          <div className="lg:col-span-5 lg:border-l lg:border-[#0E356A]/80 lg:pl-6 flex flex-col justify-center space-y-2">
+          <div className="lg:col-span-5 lg:border-l lg:border-[#0E356A]/80 lg:pl-5 flex flex-col justify-center space-y-1.5">
             <div className="text-center sm:text-left">
-              <span className={`text-[11px] font-mono font-bold tracking-widest uppercase ${eyebrowColor}`}>
+              <span className={`text-[10px] font-mono font-bold tracking-widest uppercase ${eyebrowColor}`}>
                 {eyebrowLabel}
               </span>
             </div>
 
-            {/* Prominent Primary Action Button */}
+            {/* Primary Action Button (Compact & Sleek) */}
             <button
               type="button"
               onClick={onPrimaryActionClick}
-              className={`w-full py-3.5 px-6 rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center gap-3 transition-all cursor-pointer ${primaryButtonBg}`}
+              className={`w-full py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${primaryButtonBg}`}
             >
               {primaryButtonIcon}
-              <span>{primaryButtonText}</span>
+              <span className="truncate">{primaryButtonText}</span>
             </button>
 
             {/* Helper Text */}
-            <p className="text-xs text-slate-400 text-center">
+            <p className="text-[11px] text-slate-400 text-center leading-tight truncate px-1">
               {primaryButtonHelper}
             </p>
 
-            {/* Dedicated Client Portal Controls (3 Separate Functions) */}
-            <div className="pt-2.5 border-t border-[#0E356A]/70 space-y-2">
+            {/* Dedicated Client Portal Controls (Compact Low-Profile Row) */}
+            <div className="pt-2 border-t border-[#0E356A]/70 space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 font-mono">
                   Portal Controls
                 </span>
-                <span className="text-[10px] text-slate-500 font-medium">3 Separate Functions</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
                 {/* 1. Open Client View */}
                 <button
                   type="button"
                   onClick={handleOpenClientView}
-                  className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group shadow-sm"
+                  className="flex flex-col items-center justify-center py-1.5 px-1.5 rounded-lg bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white transition-all cursor-pointer group shadow-xs"
                   title="Opens an independent staff preview of what the client can currently see"
                 >
-                  <Eye className="h-3.5 w-3.5 text-sky-400 group-hover:text-sky-300 mb-1" />
-                  <span className="text-[11px] font-bold tracking-tight text-center leading-tight">Open Client View</span>
-                  <span className="text-[9.5px] text-slate-400 mt-0.5">Staff Preview</span>
+                  <Eye className="h-3 w-3 text-sky-400 group-hover:text-sky-300 mb-0.5" />
+                  <span className="text-[10.5px] font-bold tracking-tight text-center leading-tight">Client View</span>
+                  <span className="text-[9px] text-slate-400">Preview</span>
                 </button>
 
                 {/* 2. Guide Client Live */}
@@ -771,12 +757,12 @@ export function ClientJourneyCard({
                   <button
                     type="button"
                     onClick={() => setShowGuideLiveModal(true)}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-gradient-to-br from-emerald-950/90 to-teal-950/90 hover:from-emerald-900 hover:to-teal-900 border border-emerald-500/60 text-emerald-200 hover:text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-pointer group"
+                    className="flex flex-col items-center justify-center py-1.5 px-1.5 rounded-lg bg-gradient-to-br from-emerald-950/90 to-teal-950/90 hover:from-emerald-900 hover:to-teal-900 border border-emerald-500/60 text-emerald-200 hover:text-white transition-all shadow-[0_0_8px_rgba(16,185,129,0.2)] cursor-pointer group"
                     title="Connects to the client’s active portal session after client approval"
                   >
-                    <Radio className="h-3.5 w-3.5 text-emerald-400 animate-pulse mb-1" />
-                    <span className="text-[11px] font-extrabold tracking-tight text-emerald-200 group-hover:text-white text-center leading-tight">Guide Client Live</span>
-                    <span className="text-[9.5px] text-emerald-400/90 font-mono font-bold mt-0.5">Live Co-Browse</span>
+                    <Radio className="h-3 w-3 text-emerald-400 animate-pulse mb-0.5" />
+                    <span className="text-[10.5px] font-extrabold tracking-tight text-emerald-200 group-hover:text-white text-center leading-tight">Guide Live</span>
+                    <span className="text-[9px] text-emerald-400/90 font-mono font-bold">Point-Only</span>
                   </button>
                 )}
 
@@ -784,12 +770,12 @@ export function ClientJourneyCard({
                 <button
                   type="button"
                   onClick={() => setShowManageAccessModal(true)}
-                  className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer group shadow-sm"
+                  className="flex flex-col items-center justify-center py-1.5 px-1.5 rounded-lg bg-[#081E3D] hover:bg-[#0D2D59] border border-blue-900/60 text-slate-200 hover:text-white transition-all cursor-pointer group shadow-xs"
                   title="Changes portal stage, unlocked tasks, and visibility settings"
                 >
-                  <Settings className="h-3.5 w-3.5 text-[#F5B544] group-hover:text-amber-300 mb-1" />
-                  <span className="text-[11px] font-bold tracking-tight text-center leading-tight">Manage Access</span>
-                  <span className="text-[9.5px] text-slate-400 mt-0.5">Stage & Perms</span>
+                  <Settings className="h-3 w-3 text-[#F5B544] group-hover:text-amber-300 mb-0.5" />
+                  <span className="text-[10.5px] font-bold tracking-tight text-center leading-tight">Manage</span>
+                  <span className="text-[9px] text-slate-400">Access</span>
                 </button>
               </div>
             </div>
@@ -852,17 +838,6 @@ export function ClientJourneyCard({
         onOpenChange={setShowOffboardingModal}
         contactId={contactId}
         contact={activeContact}
-      />
-
-      <JourneyStateSimulatorModal
-        open={showSimulator}
-        onOpenChange={setShowSimulator}
-        contactId={contactId}
-        contact={activeContact}
-        onSuccess={() => {
-          utils.contacts.detail.invalidate({ id: contactId });
-          utils.contacts.list.invalidate();
-        }}
       />
 
       {/* Guide Client Live Co-Browsing Console */}
