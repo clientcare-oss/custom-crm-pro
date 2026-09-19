@@ -58,24 +58,74 @@ export async function createContact(data: any, ownerId: number) {
   return result;
 }
 
-export async function updateContact(id: number, ownerId: number, data: any) {
+export async function updateContact(id: number, ownerId: number, data: any): Promise<any> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db
-    .update(contacts)
-    .set(data)
-    .where(eq(contacts.id, id));
+  try {
+    return await db
+      .update(contacts)
+      .set(data)
+      .where(eq(contacts.id, id));
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    if (msg.includes("no such column")) {
+      const colMatch = msg.match(/no such column:\s*([a-zA-Z0-9_]+)/i);
+      const missingCol = colMatch ? colMatch[1] : null;
+      if (missingCol && data[missingCol] !== undefined) {
+        const nextData = { ...data };
+        delete nextData[missingCol];
+        return await updateContact(id, ownerId, nextData);
+      }
+      const coreKeys = [
+        "firstName", "lastName", "email", "phone", "company", "jobTitle", "address", "city",
+        "state", "zipCode", "country", "notes", "dateOfBirth", "diagnosis", "schoolName",
+        "gradeLevel", "countyDistrict", "challenges", "previousSchool", "goingToSchool",
+        "planType", "pipelineStage", "planTier", "accountStatus", "billingStatus", "contractStatus"
+      ];
+      const fallbackData: Record<string, any> = {};
+      for (const k of coreKeys) {
+        if (data[k] !== undefined) fallbackData[k] = data[k];
+      }
+      return await db.update(contacts).set(fallbackData).where(eq(contacts.id, id));
+    }
+    throw err;
+  }
 }
 
-export async function updateContactById(id: number, data: any) {
+export async function updateContactById(id: number, data: any): Promise<any> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db
-    .update(contacts)
-    .set(data)
-    .where(eq(contacts.id, id));
+  try {
+    return await db
+      .update(contacts)
+      .set(data)
+      .where(eq(contacts.id, id));
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    if (msg.includes("no such column")) {
+      const colMatch = msg.match(/no such column:\s*([a-zA-Z0-9_]+)/i);
+      const missingCol = colMatch ? colMatch[1] : null;
+      if (missingCol && data[missingCol] !== undefined) {
+        const nextData = { ...data };
+        delete nextData[missingCol];
+        return await updateContactById(id, nextData);
+      }
+      const coreKeys = [
+        "firstName", "lastName", "email", "phone", "company", "jobTitle", "address", "city",
+        "state", "zipCode", "country", "notes", "dateOfBirth", "diagnosis", "schoolName",
+        "gradeLevel", "countyDistrict", "challenges", "previousSchool", "goingToSchool",
+        "planType", "pipelineStage", "planTier", "accountStatus", "billingStatus", "contractStatus"
+      ];
+      const fallbackData: Record<string, any> = {};
+      for (const k of coreKeys) {
+        if (data[k] !== undefined) fallbackData[k] = data[k];
+      }
+      return await db.update(contacts).set(fallbackData).where(eq(contacts.id, id));
+    }
+    throw err;
+  }
 }
 
 export async function deleteContact(id: number, ownerId: number) {

@@ -7,6 +7,7 @@ import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import { recordCaseActivity } from "../services/caseActivityService";
 
 export const contactsRouter = router({
 
@@ -72,14 +73,169 @@ export const contactsRouter = router({
           previousSchool: z.string().optional(),
           goingToSchool: z.string().optional(),
           diagnosis: z.string().optional(),
+          iepEligibility: z.string().optional(),
+          medicalDiagnoses: z.string().optional(),
           countyDistrict: z.string().optional(),
           challenges: z.string().optional(),
           planType: z.string().optional(),
+          planTier: z.string().optional(),
+          accountStatus: z.string().optional(),
+          billingStatus: z.string().optional(),
+          contractStatus: z.string().optional(),
+          lifecycleStage: z.string().optional(),
+          operationalState: z.string().optional(),
+          serviceStatus: z.string().optional(),
+          portalLifecycleStatus: z.string().optional(),
+          currentPrimaryAction: z.string().optional(),
+          currentActionDestination: z.string().optional(),
+          currentActionDueDate: z.string().optional(),
+          currentActionHelperText: z.string().optional(),
+          journeyProgress: z.number().optional(),
+          journeyTotalSteps: z.number().optional(),
+          renewalDate: z.string().optional(),
+          renewalDaysRemaining: z.number().optional(),
+          serviceTermEndsAt: z.string().optional(),
+          pauseReason: z.string().optional(),
+          pauseStartDate: z.string().optional(),
+          pauseReviewDate: z.string().optional(),
+          pauseType: z.string().optional(),
+          contractTreatment: z.string().optional(),
+          pauseApprovedBy: z.string().optional(),
+          paymentFailureDate: z.string().optional(),
+          failedAttemptCount: z.number().optional(),
+          nextRetryDate: z.string().optional(),
+          gracePeriodExpiresAt: z.string().optional(),
+          amountDue: z.string().optional(),
+          paymentMethodSummary: z.string().optional(),
+          offboardingReason: z.string().optional(),
+          offboardingRequestedAt: z.string().optional(),
+          offboardingEffectiveDate: z.string().optional(),
+          closeoutCompletedBy: z.string().optional(),
+          managerApprovalStatus: z.string().optional(),
+          approvingManager: z.string().optional(),
+          scholarshipNotes: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
         return await db.updateContact(id, ctx.user.id, data);
+      }),
+
+    updateJourneyState: protectedProcedure
+      .input(
+        z.object({
+          id: z.number().optional(),
+          contactId: z.number().optional(),
+          lifecycleStage: z.string().optional(),
+          operationalState: z.string().optional(),
+          serviceStatus: z.string().optional(),
+          billingStatus: z.string().optional(),
+          planTier: z.string().optional(),
+          portalLifecycleStatus: z.string().optional(),
+          currentPrimaryAction: z.string().optional(),
+          currentActionDestination: z.string().optional(),
+          currentActionDueDate: z.string().optional(),
+          currentActionHelperText: z.string().optional(),
+          journeyProgress: z.union([z.string(), z.number()]).optional(),
+          journeyTotalSteps: z.number().optional(),
+          renewalDate: z.string().optional(),
+          renewalDaysRemaining: z.number().optional(),
+          serviceTermEndsAt: z.string().optional(),
+          pauseReason: z.string().optional(),
+          pauseStartDate: z.string().optional(),
+          pauseReviewDate: z.string().optional(),
+          pauseType: z.string().optional(),
+          contractTreatment: z.string().optional(),
+          pauseApprovedBy: z.string().optional(),
+          paymentFailureDate: z.string().optional(),
+          failedAttemptCount: z.number().optional(),
+          nextRetryDate: z.string().optional(),
+          gracePeriodExpiresAt: z.string().optional(),
+          amountDue: z.string().optional(),
+          paymentMethodSummary: z.string().optional(),
+          offboardingReason: z.string().optional(),
+          offboardingRequestedAt: z.string().optional(),
+          offboardingEffectiveDate: z.string().optional(),
+          closeoutCompletedBy: z.string().optional(),
+          managerApprovalStatus: z.string().optional(),
+          approvingManager: z.string().optional(),
+          approvalTimestamp: z.string().optional(),
+          scholarshipNotes: z.string().optional(),
+          reason: z.string().optional(),
+          activityEvent: z.object({
+            title: z.string(),
+            description: z.string(),
+            eventType: z.string().default("lifecycle_change"),
+            categoryColor: z.string().default("blue"),
+            whyReason: z.string().optional(),
+          }).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const targetId = input.id ?? input.contactId;
+        if (!targetId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Contact ID required" });
+        }
+
+        const isManager = ctx.user.role === "admin";
+        // Check permissions for manager-only sensitive operations
+        if (input.managerApprovalStatus === "Approved" && !isManager) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Manager authorization required to approve scholarships or billing changes.",
+          });
+        }
+
+        const { id, contactId, activityEvent, reason, ...rawJourneyData } = input;
+        
+        // Convert string journeyProgress to number or store in metadata/extra if needed
+        const dataToUpdate: any = { ...rawJourneyData };
+        if (typeof dataToUpdate.journeyProgress === "string") {
+          const parsed = parseInt(dataToUpdate.journeyProgress, 10);
+          dataToUpdate.journeyProgress = isNaN(parsed) ? 1 : parsed;
+        }
+
+        if (dataToUpdate.approvalTimestamp && typeof dataToUpdate.approvalTimestamp === "string") {
+          dataToUpdate.approvalTimestamp = new Date(dataToUpdate.approvalTimestamp);
+        }
+
+        const previous = await db.getContactById(targetId, ctx.user.id);
+        const result = await db.updateContact(targetId, ctx.user.id, dataToUpdate);
+        const updatedContact = await db.getContactById(targetId, ctx.user.id);
+
+        // Record Activity Timeline event
+        try {
+          const stageOrState = input.operationalState && input.operationalState !== "Normal"
+            ? input.operationalState
+            : input.lifecycleStage || "Journey Update";
+
+          const title = activityEvent?.title || `Client Journey: ${stageOrState}`;
+          const description =
+            activityEvent?.description ||
+            `Transitioned ${input.lifecycleStage ? `Lifecycle to ${input.lifecycleStage}` : ""}${
+              input.operationalState ? ` (Operational: ${input.operationalState})` : ""
+            }${input.currentPrimaryAction ? ` · Next: ${input.currentPrimaryAction}` : ""}`;
+
+          await recordCaseActivity({
+            studentContactId: targetId,
+            caseId: updatedContact?.caseId || previous?.caseId || "WP-2026-0001",
+            eventType: activityEvent?.eventType || "lifecycle_change",
+            title,
+            description,
+            whyReason: reason || activityEvent?.whyReason || "Workflow progression in Client Journey system",
+            ownerName: ctx.user.name || "Byron Clausen",
+            ownerRole: isManager ? "Manager" : "Advocate",
+            categoryColor: activityEvent?.categoryColor || (input.operationalState === "Payment Attention" ? "red" : input.operationalState === "Services Paused" ? "purple" : "blue"),
+            eventDate: new Date(),
+          });
+        } catch (e) {
+          console.warn("[updateJourneyState] Failed to record timeline activity:", e);
+        }
+
+        return {
+          success: true,
+          contact: updatedContact || { id: targetId, ...(previous || {}), ...dataToUpdate },
+        };
       }),
 
     delete: adminProcedure

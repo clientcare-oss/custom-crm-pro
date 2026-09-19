@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { StudentHeader } from "./StudentHeader";
+import { ClientJourneyCard } from "./ClientJourneyCard";
 import { IepZoneCard } from "./IepZoneCard";
 import { RecordsAndMeetingPlanCard } from "./RecordsAndMeetingPlanCard";
 import { KeyDocumentsCard, type CaseDocItem } from "./KeyDocumentsCard";
@@ -28,14 +29,16 @@ interface StudentWorkspaceTabProps {
   appointments: any[];
   files: any[];
   messages: any[];
-  compass: any;
-  compassHistory: any;
-  onSwitchTab: (tabKey: string) => void;
+  compass?: any;
+  compassHistory?: any[];
+  parentContact?: any;
+  portalStatus?: any;
+  onSwitchTab: (tab: string) => void;
   onEditStudent: () => void;
   onArchive: () => void;
   onUnarchive?: () => void;
   onPreviewPortal: () => void;
-  onUpdatePlanType: (newPlan: string) => void;
+  onUpdatePlanType: (newPlanType: string) => void;
   calculatedAge: number | null;
 }
 
@@ -61,6 +64,17 @@ export function StudentWorkspaceTab({
 }: StudentWorkspaceTabProps) {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+
+  // Instantaneous synchronized state across StudentHeader and ClientJourneyCard
+  const [managedContact, setManagedContact] = useState<any>(contact);
+
+  useEffect(() => {
+    setManagedContact(contact);
+  }, [contact]);
+
+  const handleJourneyStateChange = (payload: any) => {
+    setManagedContact((prev: any) => ({ ...prev, ...payload }));
+  };
 
   // Queries for live tasks, notes, parent contact, portal credentials
   const { data: parentContactData } = trpc.contacts.detail.useQuery(
@@ -281,7 +295,7 @@ export function StudentWorkspaceTab({
     <div className="space-y-6">
       {/* 1. TOP HEADER & STUDENT INFO CARD */}
       <StudentHeader
-        contact={contact}
+        contact={managedContact}
         parentContact={parentContact}
         portalStatus={portalStatus}
         onEditStudent={onEditStudent}
@@ -292,7 +306,24 @@ export function StudentWorkspaceTab({
         calculatedAge={calculatedAge}
       />
 
-      {/* 2. IEP / 504 PLAN ZONE — FULL WIDTH COMMAND CENTER */}
+      {/* 2. CLIENT JOURNEY — LIFECYCLE, OPERATIONAL STATE & CONTEXTUAL ROADMAP */}
+      <ClientJourneyCard
+        contact={managedContact}
+        contactId={contactId}
+        compass={compass}
+        nextAppointment={nextMeetingObj}
+        onNavigateToTab={onSwitchTab}
+        onStateChange={handleJourneyStateChange}
+        onOpenDiscoveryCall={() => {
+          if (contact.leadId) {
+            setLocation(`/leads/${contact.leadId}/discovery`);
+          } else {
+            toast.info(`Opening Discovery Call workflow for ${fullName}`);
+          }
+        }}
+      />
+
+      {/* 3. IEP / 504 PLAN ZONE — FULL WIDTH COMMAND CENTER */}
       <IepZoneCard
         contact={contact}
         compass={compass}

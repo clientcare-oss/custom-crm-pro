@@ -75,10 +75,12 @@ export const contacts = mysqlTable("contacts", {
   // Student-specific fields
   dateOfBirth: varchar("dateOfBirth", { length: 20 }),
   diagnosis: text("diagnosis"),
+  iepEligibility: varchar("iepEligibility", { length: 255 }),
+  medicalDiagnoses: text("medicalDiagnoses"),
   schoolName: varchar("schoolName", { length: 200 }),
   gradeLevel: varchar("gradeLevel", { length: 50 }),
   countyDistrict: varchar("countyDistrict", { length: 200 }),
-    challenges: text("challenges"),
+  challenges: text("challenges"),
   previousSchool: varchar("previousSchool", { length: 200 }),
   goingToSchool: varchar("goingToSchool", { length: 200 }),
   planType: varchar("planType", { length: 50 }).default("No IEP/504 Yet"),
@@ -92,6 +94,53 @@ export const contacts = mysqlTable("contacts", {
   activeWorkstreams: text("activeWorkstreams"), // JSON array of active workstream tags
   planMonthsRemaining: int("planMonthsRemaining").default(6), // remaining commitment months on active plan
   planExpiresAt: timestamp("planExpiresAt"), // date plan commitment ends
+
+  // Client Journey & Operational Lifecycle System (PG-030)
+  lifecycleStage: varchar("lifecycleStage", { length: 50 }).default("Active"), // "Discovery", "Onboarding", "Active", "Renewal", "Offboarding", "Closed"
+  operationalState: varchar("operationalState", { length: 50 }).default("Normal"), // "Normal", "Scholarship Pending", "Services Paused", "Payment Attention", "Grace Period", "Pending Closeout"
+  serviceStatus: varchar("serviceStatus", { length: 50 }).default("Active"), // "Not Started", "Active", "Paused", "Ending", "Closed"
+  portalLifecycleStatus: varchar("portalLifecycleStatus", { length: 50 }).default("Active"), // "Discovery", "Onboarding", "Active", "Limited", "Disabled"
+  
+  // Dynamic Primary Action & Roadmap
+  currentPrimaryAction: varchar("currentPrimaryAction", { length: 255 }),
+  currentActionDestination: varchar("currentActionDestination", { length: 255 }),
+  currentActionDueDate: varchar("currentActionDueDate", { length: 100 }),
+  currentActionHelperText: varchar("currentActionHelperText", { length: 255 }),
+  journeyProgress: int("journeyProgress").default(0),
+  journeyTotalSteps: int("journeyTotalSteps").default(6),
+  
+  // Renewal tracking
+  renewalDate: varchar("renewalDate", { length: 100 }),
+  renewalDaysRemaining: int("renewalDaysRemaining"),
+  serviceTermEndsAt: varchar("serviceTermEndsAt", { length: 100 }),
+  
+  // Pause tracking
+  pauseReason: varchar("pauseReason", { length: 255 }),
+  pauseStartDate: varchar("pauseStartDate", { length: 100 }),
+  pauseReviewDate: varchar("pauseReviewDate", { length: 100 }),
+  pauseType: varchar("pauseType", { length: 100 }), // "services_only", "services_and_billing"
+  contractTreatment: varchar("contractTreatment", { length: 150 }), // "Paid-in-full time preserved", "Extended service end date"
+  pauseApprovedBy: varchar("pauseApprovedBy", { length: 150 }),
+  
+  // Payment attention & grace period tracking
+  paymentFailureDate: varchar("paymentFailureDate", { length: 100 }),
+  failedAttemptCount: int("failedAttemptCount").default(0),
+  nextRetryDate: varchar("nextRetryDate", { length: 100 }),
+  gracePeriodExpiresAt: varchar("gracePeriodExpiresAt", { length: 100 }),
+  amountDue: varchar("amountDue", { length: 50 }),
+  paymentMethodSummary: varchar("paymentMethodSummary", { length: 150 }),
+  
+  // Offboarding tracking
+  offboardingReason: varchar("offboardingReason", { length: 255 }),
+  offboardingRequestedAt: varchar("offboardingRequestedAt", { length: 100 }),
+  offboardingEffectiveDate: varchar("offboardingEffectiveDate", { length: 100 }),
+  closeoutCompletedBy: varchar("closeoutCompletedBy", { length: 150 }),
+  
+  // Scholarship & Manager approval tracking
+  managerApprovalStatus: varchar("managerApprovalStatus", { length: 50 }), // "pending", "approved", "denied", "more_info_needed"
+  approvingManager: varchar("approvingManager", { length: 150 }),
+  approvalTimestamp: timestamp("approvalTimestamp"),
+  scholarshipNotes: text("scholarshipNotes"),
   // Attorney / Legal representation fields
   attorneyName: varchar("attorneyName", { length: 200 }),
   attorneyPhone: varchar("attorneyPhone", { length: 50 }),

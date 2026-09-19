@@ -21,7 +21,8 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap, Home, Milestone } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap, Home, Milestone, Award } from "lucide-react";
+import { parseStudentDiagnoses } from "@/lib/studentUtils";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
 import { NotesSection } from "@/components/NotesSection";
@@ -367,6 +368,8 @@ export default function ContactDetail() {
     goingToSchool: "",
     planType: "No IEP/504 Yet",
     diagnosis: "",
+    iepEligibility: "",
+    medicalDiagnoses: "",
     countyDistrict: "",
   });
 
@@ -400,6 +403,11 @@ export default function ContactDetail() {
   const updateContactMutation = trpc.contacts.update.useMutation();
 
   const handleSaveStudent = () => {
+    const combinedDiagnosis = [
+      studentForm.iepEligibility.trim() ? `IEP: ${studentForm.iepEligibility.trim()}` : null,
+      studentForm.medicalDiagnoses.trim() ? `Medical: ${studentForm.medicalDiagnoses.trim()}` : null,
+    ].filter(Boolean).join(" | ");
+
     updateContactMutation.mutate(
       {
         id: contactId,
@@ -411,7 +419,9 @@ export default function ContactDetail() {
         previousSchool: studentForm.previousSchool.trim() || undefined,
         goingToSchool: studentForm.goingToSchool.trim() || undefined,
         planType: studentForm.planType || "No IEP/504 Yet",
-        diagnosis: studentForm.diagnosis.trim() || undefined,
+        diagnosis: combinedDiagnosis || studentForm.medicalDiagnoses.trim() || studentForm.diagnosis.trim() || undefined,
+        iepEligibility: studentForm.iepEligibility.trim() || undefined,
+        medicalDiagnoses: studentForm.medicalDiagnoses.trim() || undefined,
         countyDistrict: studentForm.countyDistrict.trim() || undefined,
       },
       {
@@ -492,6 +502,7 @@ export default function ContactDetail() {
         attorneyEmail: data.contact.attorneyEmail || "",
         attorneyAddress: data.contact.attorneyAddress || "",
       });
+      const parsedDiagnoses = parseStudentDiagnoses(data.contact);
       setStudentForm({
         firstName: data.contact.firstName || "",
         lastName: data.contact.lastName || "",
@@ -502,6 +513,8 @@ export default function ContactDetail() {
         goingToSchool: (data.contact as any).goingToSchool || "",
         planType: (data.contact as any).planType || "No IEP/504 Yet",
         diagnosis: (data.contact as any).diagnosis || "",
+        iepEligibility: (data.contact as any).iepEligibility || parsedDiagnoses.iepEligibility,
+        medicalDiagnoses: (data.contact as any).medicalDiagnoses || parsedDiagnoses.medicalDiagnoses,
         countyDistrict: (data.contact as any).countyDistrict || "",
       });
     }
@@ -870,25 +883,50 @@ export default function ContactDetail() {
               </div>
             </div>
 
-            {/* County/District & Diagnosis */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-300">County / School District</Label>
-                <Input
-                  value={studentForm.countyDistrict}
-                  onChange={(e) => setStudentForm((prev) => ({ ...prev, countyDistrict: e.target.value }))}
-                  placeholder="e.g. Fulton County Schools"
-                  className="bg-[#0A1D38] border-[#0E274D] text-white"
-                />
+            {/* County/District */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-300">County / School District</Label>
+              <Input
+                value={studentForm.countyDistrict}
+                onChange={(e) => setStudentForm((prev) => ({ ...prev, countyDistrict: e.target.value }))}
+                placeholder="e.g. Fulton County Schools"
+                className="bg-[#0A1D38] border-[#0E274D] text-white"
+              />
+            </div>
+
+            {/* IEP Eligibility & Medical Diagnoses (Manual Override) */}
+            <div className="pt-2 border-t border-[#0E274D]/80">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Award className="h-3.5 w-3.5 text-[#38BDF8]" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#38BDF8]">
+                    Special Ed & Medical Details (Manual AI Override)
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-400">Correct if AI is wrong</span>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-300">Diagnosis / IEP Eligibility</Label>
-                <Input
-                  value={studentForm.diagnosis}
-                  onChange={(e) => setStudentForm((prev) => ({ ...prev, diagnosis: e.target.value }))}
-                  placeholder="e.g. Autism, ADHD, SLD, OHI"
-                  className="bg-[#0A1D38] border-[#0E274D] text-white"
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-300">IEP Eligibility</Label>
+                  <Input
+                    value={studentForm.iepEligibility}
+                    onChange={(e) => setStudentForm((prev) => ({ ...prev, iepEligibility: e.target.value }))}
+                    placeholder="e.g. Autism, OHI, SLD, Speech/Language"
+                    className="bg-[#0A1D38] border-[#0E274D] text-white"
+                  />
+                  <p className="text-[11px] text-slate-400">Primary special ed category</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-300">Medical Diagnoses</Label>
+                  <Input
+                    value={studentForm.medicalDiagnoses}
+                    onChange={(e) => setStudentForm((prev) => ({ ...prev, medicalDiagnoses: e.target.value }))}
+                    placeholder="e.g. ADHD, Anxiety, Sensory Processing"
+                    className="bg-[#0A1D38] border-[#0E274D] text-white"
+                  />
+                  <p className="text-[11px] text-slate-400">Clinical physician diagnoses</p>
+                </div>
               </div>
             </div>
           </div>
