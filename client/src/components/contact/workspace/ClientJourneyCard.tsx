@@ -278,7 +278,7 @@ export function ClientJourneyCard({
       {/* ─────────────────────────────────────────────────────────
           PANEL 1: CLIENT JOURNEY (Timeline + Single Primary Action)
       ───────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] p-4 sm:p-5 shadow-xl relative overflow-hidden">
+      <div className="rounded-2xl bg-gradient-to-r from-[#071A38] via-[#092248] to-[#071A38] border border-[#0E356A] py-2.5 px-4 sm:py-3 sm:px-5 shadow-xl relative overflow-hidden">
         {/* Ambient Glows */}
         {isPaymentAttention && (
           <div className="absolute -top-10 -right-10 w-80 h-80 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -291,7 +291,7 @@ export function ClientJourneyCard({
         )}
 
         {/* Header Bar: Title + Quick State Switcher */}
-        <div className="flex items-center justify-between mb-3.5 relative z-10 flex-wrap gap-2.5">
+        <div className="flex items-center justify-between mb-2 relative z-10 flex-wrap gap-2">
           <div className="flex items-center gap-2.5">
             <span className="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-slate-200">
               CLIENT JOURNEY
@@ -380,9 +380,9 @@ export function ClientJourneyCard({
         </div>
 
         {/* Main Grid: Left Timeline (7 cols) + Right Primary Action (5 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start relative z-10">
           {/* LEFT 7 COLS: Timeline Stepper & Subtitle */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-2">
             {/* 5-Stage Continuous Stepper with Seamless Connecting Line */}
             <div className="grid grid-cols-5 w-full relative">
               {/* 1. Continuous Background Track connecting all 5 dots from center of dot 1 (10%) to center of dot 5 (90%) */}
@@ -698,7 +698,7 @@ export function ClientJourneyCard({
             </div>
 
             {/* Subtitle Headline + Detail */}
-            <div className="space-y-0.5 pt-1">
+            <div className="space-y-0.5 pt-0.5">
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 {subtitleHeadline}
               </h3>
@@ -709,7 +709,7 @@ export function ClientJourneyCard({
           </div>
 
           {/* RIGHT 5 COLS: Dynamic Single Primary Action */}
-          <div className="lg:col-span-5 lg:border-l lg:border-[#0E356A]/80 lg:pl-5 flex flex-col justify-center space-y-1.5">
+          <div className="lg:col-span-5 lg:border-l lg:border-[#0E356A]/80 lg:pl-5 flex flex-col justify-start space-y-1">
             <div className="text-center sm:text-left">
               <span className={`text-[10px] font-mono font-bold tracking-widest uppercase ${eyebrowColor}`}>
                 {eyebrowLabel}
@@ -720,19 +720,19 @@ export function ClientJourneyCard({
             <button
               type="button"
               onClick={onPrimaryActionClick}
-              className={`w-full py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${primaryButtonBg}`}
+              className={`w-full py-2 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${primaryButtonBg}`}
             >
               {primaryButtonIcon}
               <span className="truncate">{primaryButtonText}</span>
             </button>
 
             {/* Helper Text */}
-            <p className="text-[11px] text-slate-400 text-center leading-tight truncate px-1">
+            <p className="text-[10.5px] text-slate-400 text-center leading-tight truncate px-1">
               {primaryButtonHelper}
             </p>
 
             {/* Dedicated Client Portal Controls (Compact Low-Profile Row) */}
-            <div className="pt-2 border-t border-[#0E356A]/70 space-y-1.5">
+            <div className="pt-1.5 border-t border-[#0E356A]/70 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 font-mono">
                   Portal Controls
