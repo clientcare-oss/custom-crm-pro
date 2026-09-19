@@ -577,7 +577,7 @@ export default function ContactDetail() {
       <Button
         variant="outline"
         onClick={() => setLocation(isParent ? "/contacts" : "/projects")}
-        className="inline-flex items-center gap-2 text-xs h-8 border-[#0E274D] bg-[#07162B] text-slate-300 hover:text-white hover:bg-white/[0.06]"
+        className="inline-flex items-center gap-2 text-xs h-8 border-[#0D4B84] bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] text-blue-200 hover:text-white hover:border-[#F5B544]/60 shadow-md"
       >
         <ArrowLeft className="h-3.5 w-3.5" /> {isParent ? "All Contacts" : "All Students"}
       </Button>
@@ -1013,13 +1013,15 @@ function ParentTabs({
   }, [students]);
 
   const parentTriggerClass =
-    "group flex-none h-9 px-3 py-1.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer text-slate-300 dark:text-slate-300 hover:text-white dark:hover:text-white hover:bg-white/[0.06] dark:hover:bg-white/[0.06] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/70 dark:data-[state=active]:border-[#F5B544]/70 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_rgba(245,181,68,0.14)]";
+    "group flex-none h-9 px-3 py-1.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer text-blue-200/80 hover:text-white hover:bg-white/[0.08] border border-transparent data-[state=active]:bg-[#071C3C] data-[state=active]:border-[#F5B544] data-[state=active]:text-[#F5B544] data-[state=active]:font-bold data-[state=active]:shadow-[0_2px_12px_rgba(245,181,68,0.22)]";
 
   return (
     <Tabs defaultValue="students" className="w-full">
-      <TabsList className="w-full h-auto flex items-center gap-1 sm:gap-1.5 bg-[#07162B] border border-[#0E274D] rounded-xl shadow-md p-1.5 sm:p-2 my-3 sm:my-3.5 overflow-x-auto no-scrollbar">
+      <TabsList className="w-full h-auto flex items-center gap-1 sm:gap-1.5 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] rounded-2xl shadow-2xl p-1.5 sm:p-2 my-3 sm:my-3.5 overflow-x-auto no-scrollbar relative overflow-hidden">
+        {/* Top subtle golden accent shimmer line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
         <TabsTrigger value="students" className={parentTriggerClass}>
-          <Users className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <Users className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>Students</span>
           {students.length > 0 && (
             <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
@@ -1028,7 +1030,7 @@ function ParentTabs({
           )}
         </TabsTrigger>
         <TabsTrigger value="financials" className={parentTriggerClass}>
-          <DollarSign className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <DollarSign className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>Billing</span>
           {invoices.length > 0 && (
             <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
@@ -1037,15 +1039,15 @@ function ParentTabs({
           )}
         </TabsTrigger>
         <TabsTrigger value="activity" className={parentTriggerClass}>
-          <MessageSquare className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <MessageSquare className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>Communication</span>
         </TabsTrigger>
         <TabsTrigger value="files" className={parentTriggerClass}>
-          <Folder className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <Folder className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>Files</span>
         </TabsTrigger>
         <TabsTrigger value="appointments" className={parentTriggerClass}>
-          <Calendar className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <Calendar className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>Appointments</span>
           {appointments.length > 0 && (
             <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
@@ -1054,11 +1056,11 @@ function ParentTabs({
           )}
         </TabsTrigger>
         <TabsTrigger value="cases" className={parentTriggerClass}>
-          <ScrollText className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <ScrollText className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>State Complaints</span>
         </TabsTrigger>
         <TabsTrigger value="details" className={parentTriggerClass}>
-          <Info className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <Info className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
           <span>Details</span>
         </TabsTrigger>
       </TabsList>
@@ -1435,19 +1437,22 @@ function StudentTabs({
   ];
 
   const triggerClass =
-    "group flex-1 min-w-max h-8 sm:h-9 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-[12px] md:text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer text-slate-300 dark:text-slate-300 hover:text-white dark:hover:text-white hover:bg-white/[0.06] dark:hover:bg-white/[0.06] border border-transparent data-[state=active]:bg-[#0B2144] dark:data-[state=active]:bg-[#0B2144] data-[state=active]:border-[#F5B544]/70 dark:data-[state=active]:border-[#F5B544]/70 data-[state=active]:text-[#F5B544] dark:data-[state=active]:text-[#F5B544] data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_rgba(245,181,68,0.14)] whitespace-nowrap";
+    "group flex-1 min-w-max h-8 sm:h-9 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-[12px] md:text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer text-blue-200/80 hover:text-white hover:bg-white/[0.08] border border-transparent data-[state=active]:bg-[#071C3C] data-[state=active]:border-[#F5B544] data-[state=active]:text-[#F5B544] data-[state=active]:font-bold data-[state=active]:shadow-[0_2px_12px_rgba(245,181,68,0.22)] whitespace-nowrap";
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       {/* Unified Command Center 2-Row Navigation Deck (No Horizontal Scrollbar) */}
-      <TabsList className="w-full h-auto flex flex-col p-1.5 sm:p-2 bg-[#07162B] border border-[#0E274D] rounded-xl shadow-md gap-1.5 my-3 sm:my-3.5">
+      <TabsList className="w-full h-auto flex flex-col p-1.5 sm:p-2 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] rounded-2xl shadow-2xl gap-1.5 my-3 sm:my-3.5 relative overflow-hidden">
+        {/* Top subtle golden accent shimmer line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
+
         {/* Row 1: Core Case Flow */}
-        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full">
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10">
           {row1Items.map((item) => {
             const Icon = item.icon;
             return (
               <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
-                <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+                <Icon className="h-3.5 w-3.5 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
                 <span className="whitespace-nowrap">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
@@ -1460,12 +1465,12 @@ function StudentTabs({
         </div>
 
         {/* Row 2: Tools, Complaints & Practice Operations */}
-        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#0E274D]/60">
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#0E3E75]/80 relative z-10">
           {row2Items.map((item) => {
             const Icon = item.icon;
             return (
               <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
-                <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-200 group-data-[state=active]:text-[#F5B544] transition-colors" />
+                <Icon className="h-3.5 w-3.5 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
                 <span className="whitespace-nowrap">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
