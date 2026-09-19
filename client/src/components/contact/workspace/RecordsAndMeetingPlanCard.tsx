@@ -160,39 +160,47 @@ export function RecordsAndMeetingPlanCard({
       {/* 2-Column Main Deck: Records Review (Left) vs Meeting Plan (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 relative z-10">
         {/* LEFT COLUMN: Records Review Hub (6 cols) */}
-        <div className="lg:col-span-6 rounded-2xl bg-[#071F42]/70 border border-[#0E3A73] p-4 sm:p-5 flex flex-col justify-between shadow-md space-y-4">
+        <div className="lg:col-span-6 rounded-2xl bg-gradient-to-b from-[#0B254E] to-[#061836] border-2 border-sky-500/40 p-4 sm:p-5 flex flex-col justify-between shadow-xl shadow-black/30 space-y-4 relative overflow-hidden group">
+          {/* Top cyan accent stripe */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 via-cyan-400 to-transparent" />
+
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <FileSearch className="h-4 w-4 text-sky-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-400/40 flex items-center justify-center shrink-0">
+                  <FileSearch className="h-4 w-4 text-sky-300" />
+                </div>
+                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
                   Case Records Review
                 </h3>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/50 text-emerald-400 text-[10.5px] font-bold">
-                <CheckCircle2 className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/60 text-emerald-300 text-xs font-bold shadow-[0_0_10px_rgba(16,185,129,0.25)]">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                 Analysis Complete
               </span>
             </div>
 
-            <div className="rounded-xl bg-[#06162E] border border-[#0D2F5E] p-3 text-xs text-slate-300 leading-relaxed space-y-2">
-              <p className="line-clamp-4 text-slate-200">
+            {/* Inner Content Panel (High-Contrast Solid Surface) */}
+            <div className="rounded-xl bg-[#030D1D] border border-sky-500/30 p-3.5 text-xs text-slate-200 leading-relaxed space-y-2.5 shadow-inner">
+              <p className="line-clamp-4 text-slate-100 font-normal">
                 {recordsSummary}
               </p>
-              <div className="pt-2 border-t border-[#0D2F5E]/60 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Evaluations, IEPs & Speech logs</span>
-                <span className="text-[#F5B544] font-semibold">{files.length > 0 ? `${files.length} documents on file` : "5 source files reviewed"}</span>
+              <div className="pt-2.5 border-t border-sky-900/50 flex items-center justify-between text-xs text-slate-300">
+                <span className="font-medium text-slate-300">Evaluations, IEPs & Speech logs</span>
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-400/40 text-amber-300 font-bold font-mono text-[11px]">
+                  {files.length > 0 ? `${files.length} documents on file` : "5 source files reviewed"}
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 pt-1">
+          <div className="flex items-center gap-2.5 pt-1 flex-wrap">
             <Button
               size="sm"
               onClick={() => onSwitchTab("files")}
-              className="h-8 px-3 text-xs font-semibold bg-[#0A2E60] hover:bg-[#0E3D7D] border border-[#144D96] text-white rounded-lg cursor-pointer"
+              className="h-9 px-4 text-xs font-bold bg-sky-500 hover:bg-sky-400 text-[#041122] shadow-md hover:shadow-sky-500/25 rounded-xl cursor-pointer transition-all flex items-center gap-2"
             >
-              <Eye className="h-3.5 w-3.5 mr-1.5 text-sky-400" />
+              <Eye className="h-3.5 w-3.5 text-[#041122]" />
               View Analyzed Records
             </Button>
             <Button
@@ -203,48 +211,56 @@ export function RecordsAndMeetingPlanCard({
                 setSelectedDocTemplate("records-review");
                 setShowCreateDocModal(true);
               }}
-              className="h-8 px-3 text-xs border-[#0E3A73] text-slate-300 hover:text-white hover:bg-[#0A2954] rounded-lg cursor-pointer"
+              className="h-9 px-3.5 text-xs font-semibold bg-[#0A264F] hover:bg-[#0E336A] border border-sky-400/40 text-sky-100 hover:text-white rounded-xl cursor-pointer transition-all flex items-center gap-2"
             >
-              <Download className="h-3.5 w-3.5 mr-1.5 text-[#F5B544]" />
+              <Download className="h-3.5 w-3.5 text-[#F5B544]" />
               Export Review Report
             </Button>
           </div>
         </div>
 
         {/* RIGHT COLUMN: Upcoming Meeting Strategy Plan (6 cols) */}
-        <div className="lg:col-span-6 rounded-2xl bg-[#071F42]/70 border border-[#0E3A73] p-4 sm:p-5 flex flex-col justify-between shadow-md space-y-4">
+        <div className="lg:col-span-6 rounded-2xl bg-gradient-to-b from-[#0E264C] to-[#061836] border-2 border-amber-500/40 p-4 sm:p-5 flex flex-col justify-between shadow-xl shadow-black/30 space-y-4 relative overflow-hidden group">
+          {/* Top amber accent stripe */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-transparent" />
+
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-[#F5B544]" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+                  <Target className="h-4 w-4 text-[#F5B544]" />
+                </div>
+                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
                   Upcoming Meeting Strategy
                 </h3>
               </div>
-              <span className="inline-flex items-center gap-1.5 text-xs text-slate-300 font-semibold">
-                <CalendarDays className="h-3.5 w-3.5 text-[#F5B544]" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/60 text-amber-200 text-xs font-bold shadow-[0_0_10px_rgba(245,181,68,0.2)]">
+                <CalendarDays className="h-3.5 w-3.5 text-amber-400" />
                 {meetingDateStr}
               </span>
             </div>
 
-            <div className="rounded-xl bg-[#06162E] border border-[#0D2F5E] p-3 text-xs text-slate-300 leading-relaxed space-y-2">
-              <div className="font-semibold text-white text-xs flex items-center justify-between">
+            {/* Inner Content Panel (High-Contrast Solid Surface) */}
+            <div className="rounded-xl bg-[#030D1D] border border-amber-500/30 p-3.5 text-xs text-slate-200 leading-relaxed space-y-2.5 shadow-inner">
+              <div className="font-bold text-white text-xs flex items-center justify-between gap-2">
                 <span className="truncate">{meetingTitle}</span>
-                <span className="text-[10px] text-amber-400 font-normal">Advocate Strategy</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-[#F5B544]/20 border border-[#F5B544]/50 text-[#F5B544] shrink-0">
+                  Advocate Strategy
+                </span>
               </div>
-              <div className="text-slate-200 whitespace-pre-line text-xs font-mono bg-[#071933]/90 p-2 rounded-lg border border-[#0E356A]/50 max-h-24 overflow-y-auto">
+              <div className="text-slate-100 whitespace-pre-line text-xs font-mono bg-[#051429] p-3 rounded-lg border border-amber-900/40 max-h-24 overflow-y-auto leading-relaxed">
                 {meetingGoals}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 pt-1">
+          <div className="flex items-center gap-2.5 pt-1 flex-wrap">
             <Button
               size="sm"
               onClick={() => onSwitchTab("appointments")}
-              className="h-8 px-3 text-xs font-semibold bg-[#0A2E60] hover:bg-[#0E3D7D] border border-[#144D96] text-white rounded-lg cursor-pointer"
+              className="h-9 px-4 text-xs font-bold bg-[#F5B544] hover:bg-[#F5B544]/90 text-[#07162B] shadow-md hover:shadow-amber-500/25 rounded-xl cursor-pointer transition-all flex items-center gap-2"
             >
-              <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-sky-400" />
+              <CalendarDays className="h-3.5 w-3.5 text-[#07162B]" />
               Prep Meeting Briefing
             </Button>
             <Button
@@ -255,9 +271,9 @@ export function RecordsAndMeetingPlanCard({
                 setSelectedDocTemplate("meeting-plan");
                 setShowCreateDocModal(true);
               }}
-              className="h-8 px-3 text-xs border-[#0E3A73] text-slate-300 hover:text-white hover:bg-[#0A2954] rounded-lg cursor-pointer"
+              className="h-9 px-3.5 text-xs font-semibold bg-[#0A264F] hover:bg-[#0E336A] border border-amber-400/40 text-amber-100 hover:text-white rounded-xl cursor-pointer transition-all flex items-center gap-2"
             >
-              <FileText className="h-3.5 w-3.5 mr-1.5 text-[#F5B544]" />
+              <FileText className="h-3.5 w-3.5 text-[#F5B544]" />
               Generate Meeting Brief
             </Button>
           </div>
@@ -288,7 +304,7 @@ export function RecordsAndMeetingPlanCard({
                   setDocTitle(`${template.title} — ${studentName}`);
                   setShowCreateDocModal(true);
                 }}
-                className="rounded-xl p-3 bg-[#071F42] hover:bg-[#0A2954] border border-[#0E3A73] hover:border-[#F5B544]/50 text-left transition-all cursor-pointer group shadow-xs flex flex-col justify-between space-y-2"
+                className="rounded-xl p-3 bg-[#071F42] hover:bg-[#0A2954] border border-[#13427E] hover:border-[#F5B544] text-left transition-all cursor-pointer group shadow-xs flex flex-col justify-between space-y-2"
               >
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-[#0F284F] flex items-center justify-center shrink-0 group-hover:bg-[#F5B544]/20 transition-colors">
