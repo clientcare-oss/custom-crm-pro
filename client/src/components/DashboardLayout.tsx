@@ -713,7 +713,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search modules... (⌘K)"
-                  className="h-8.5 pl-8 pr-7 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] text-xs rounded-xl placeholder:text-blue-200/50 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white shadow-md transition-colors font-medium"
+                  className="h-8.5 pl-8 pr-7 bg-[#082043] border border-[#0D4B84] text-xs rounded-xl placeholder:text-blue-200/50 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white shadow-md transition-colors font-medium"
                 />
                 {searchQuery && (
                   <button
@@ -771,9 +771,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       </span>
                     </button>
 
-                    {/* Section Items Card — Exact Rich Maritime Navy Gradient */}
+                    {/* Section Items Card — Solid Approved #082043 Navy */}
                     {!isCollapsedSection && (
-                      <div className="rounded-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-1 shadow-md relative overflow-hidden transition-all duration-200 animate-in fade-in">
+                      <div className="rounded-xl bg-[#082043] border border-[#0D4B84] p-1 shadow-md relative overflow-hidden transition-all duration-200 animate-in fade-in">
                         <SidebarMenu className="gap-0.5">
                           {group.items.map((item) => {
                             const isActive = 
@@ -835,7 +835,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={toggleTheme}
                 title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
-                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.14] border border-[#0D4B84] bg-gradient-to-br from-[#0B3767] to-[#071C3C] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-100 hover:text-white text-xs font-medium cursor-pointer shrink-0 shadow-sm group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
+                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.14] border border-[#0D4B84] bg-[#082043] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-100 hover:text-white text-xs font-medium cursor-pointer shrink-0 shadow-sm group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'navy'
@@ -851,7 +851,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             <div className="flex items-center justify-between gap-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] hover:border-sky-400/50 border border-[#0D4B84] transition-all flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0 shadow-md cursor-pointer">
+                  <button className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 bg-[#082043] hover:border-sky-400/50 border border-[#0D4B84] transition-all flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0 shadow-md cursor-pointer">
                     <Avatar className="h-8 w-8 border border-amber-400/40 shrink-0">
                       <AvatarFallback className="text-xs font-semibold bg-amber-500/20 text-amber-300">
                         {user?.name?.charAt(0).toUpperCase()}
@@ -867,7 +867,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-[#0A254D] border border-[#0D4B84] text-white shadow-xl backdrop-blur-md">
+                <DropdownMenuContent align="end" className="w-48 bg-[#082043] border border-[#0D4B84] text-white shadow-xl backdrop-blur-md">
                   <DropdownMenuItem
                     onClick={logout}
                     className="cursor-pointer text-destructive focus:text-destructive"
@@ -881,7 +881,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={() => setIssueReporterOpen(true)}
                 title="Report Issue / Linear Backlog (⌥+F)"
-                className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0B3767] to-[#071C3C] hover:border-sky-400/50 border border-[#0D4B84] transition-colors flex items-center justify-center text-white/70 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer shadow-sm"
+                className="h-8 w-8 rounded-lg bg-[#082043] hover:border-sky-400/50 border border-[#0D4B84] transition-colors flex items-center justify-center text-white/70 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer shadow-sm"
               >
                 <Bug className="h-4 w-4 text-rose-400" />
               </button>
@@ -889,7 +889,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={() => setGoToPageOpen(true)}
                 title="Go to Page"
-                className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0B3767] to-[#071C3C] hover:border-sky-400/50 border border-[#0D4B84] transition-colors flex items-center justify-center text-white/70 hover:text-amber-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
+                className="h-8 w-8 rounded-lg bg-[#082043] hover:border-sky-400/50 border border-[#0D4B84] transition-colors flex items-center justify-center text-white/70 hover:text-amber-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
               >
                 <Compass className="h-4.5 w-4.5 text-amber-400" />
               </button>
