@@ -312,7 +312,7 @@ export function ClientPortalSidebar({
                           : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-sm"
                         : isLight
                           ? "border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-800"
-                          : "border border-white/20 bg-white/[0.08] hover:bg-white/[0.12] text-white backdrop-blur-md shadow-sm"
+                          : "border border-[#0D4B84] bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] hover:border-sky-400/50 text-white shadow-md"
                       }`}
                   >
                     <div className="w-full flex items-center gap-2.5">
