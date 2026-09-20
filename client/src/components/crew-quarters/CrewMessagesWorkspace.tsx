@@ -179,59 +179,93 @@ export default function CrewMessagesWorkspace({
   };
 
   return (
-    <div className="flex h-[calc(100vh-14rem)] min-h-[640px] max-h-[920px] w-full rounded-3xl overflow-hidden border border-sky-500/25 bg-[#07162B] shadow-[0_20px_60px_rgba(0,10,35,0.7)]">
-      {/* ── Left Column: Conversations List ── */}
-      <ConversationListColumn
-        conversations={conversations}
-        activeConversationId={activeConv?.id || null}
-        onSelectConversation={(c) => setActiveConv(c)}
-        onNewMessage={() => {
-          setNewMessageType("dm");
-          setNewMessageModalOpen(true);
+    <div className="relative flex h-[calc(100vh-13rem)] min-h-[660px] max-h-[940px] w-full rounded-3xl overflow-hidden border border-sky-400/30 bg-[#040f24] shadow-[0_30px_90px_rgba(0,5,20,0.9),0_0_0_1px_rgba(56,189,248,0.25),inset_0_1px_2px_rgba(255,255,255,0.18)]">
+      {/* 3D Top Rim Light Specular Reflection */}
+      <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-300/80 to-transparent z-30 pointer-events-none" />
+
+      {/* Rich 3D Blue Background Bathymetric Mesh & Topography Texture */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.08] z-0"
+        style={{
+          backgroundImage: `
+            radial-gradient(circle at 50% 0%, #38bdf8 1.5px, transparent 1.5px),
+            radial-gradient(circle at 0% 50%, #0284c7 1.5px, transparent 1.5px),
+            linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: "32px 32px, 32px 32px, 64px 64px, 64px 64px",
         }}
-        onNewCaseThread={() => {
-          setNewMessageType("case");
-          setNewMessageModalOpen(true);
+      />
+      {/* Dynamic 3D Oceanic Radial Spotlights */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-60 z-0"
+        style={{
+          background: `
+            radial-gradient(ellipse 90% 50% at 50% -5%, rgba(14, 116, 244, 0.35), transparent 75%),
+            radial-gradient(ellipse 60% 40% at 20% 100%, rgba(2, 132, 199, 0.2), transparent 70%),
+            radial-gradient(ellipse 100% 60% at 50% 100%, rgba(0, 5, 20, 0.8), transparent 80%)
+          `,
         }}
       />
 
-      {/* ── Center Column: Active Conversation ── */}
-      {activeConv ? (
-        <ActiveConversationColumn
-          conversation={activeConv}
-          currentUserId={currentUserId}
-          isAdmin={isAdmin}
-          onToggleDetails={() => setIsDetailsOpen(!isDetailsOpen)}
-          isDetailsOpen={isDetailsOpen}
+      {/* ── Left Column: Conversations List (Sleek Compact Navigation) ── */}
+      <div className="relative z-10 flex h-full">
+        <ConversationListColumn
+          conversations={conversations}
+          activeConversationId={activeConv?.id || null}
+          onSelectConversation={(c) => setActiveConv(c)}
+          onNewMessage={() => {
+            setNewMessageType("dm");
+            setNewMessageModalOpen(true);
+          }}
+          onNewCaseThread={() => {
+            setNewMessageType("case");
+            setNewMessageModalOpen(true);
+          }}
         />
-      ) : (
-        <div className="flex-1 flex flex-col items-center justify-center bg-[#07162B] text-slate-400 p-8 space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shadow-inner">
-            <MessageSquare className="w-7 h-7" />
+      </div>
+
+      {/* ── Center Column: Active Conversation (Largest, Dominant Message Section) ── */}
+      <div className="relative z-10 flex-1 min-w-0 h-full flex flex-col">
+        {activeConv ? (
+          <ActiveConversationColumn
+            conversation={activeConv}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            onToggleDetails={() => setIsDetailsOpen(!isDetailsOpen)}
+            isDetailsOpen={isDetailsOpen}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-[#05152e] via-[#041124] to-[#020914] text-slate-400 p-8 space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-[#0e2c59] to-[#071933] border-t border-t-sky-400/40 border border-sky-500/30 flex items-center justify-center text-sky-300 shadow-[0_8px_25px_rgba(0,10,35,0.6),inset_0_1px_1px_rgba(255,255,255,0.2)]">
+              <MessageSquare className="w-8 h-8" />
+            </div>
+            <div className="text-center space-y-1.5 max-w-sm">
+              <h3 className="text-lg font-bold text-white tracking-wide">No Conversation Selected</h3>
+              <p className="text-xs text-blue-200/70 leading-relaxed">
+                Select an active channel, direct message, or student case thread from the left to start collaborating in your secure 3D advocacy workspace.
+              </p>
+            </div>
           </div>
-          <div className="text-center space-y-1">
-            <h3 className="text-base font-bold text-white">No Conversation Selected</h3>
-            <p className="text-xs text-blue-200/70 max-w-sm">
-              Select an active channel, direct message, or student case thread from the left to start collaborating.
-            </p>
-          </div>
+        )}
+      </div>
+
+      {/* ── Right Column: Linked Context (Collapsible 3D Context Sidebar) ── */}
+      {isDetailsOpen && activeConv && (
+        <div className="relative z-10 flex h-full">
+          <LinkedContextColumn
+            linkedContext={linkedContext}
+            activeConversation={activeConv}
+            onCollapse={() => setIsDetailsOpen(false)}
+            onAddTask={() => toast.info("Create Task opened in conversation composer")}
+            onAttachDocument={() => toast.info("Attach Document ready")}
+          />
         </div>
       )}
 
-      {/* ── Right Column: Linked Context (Collapsible) ── */}
-      {isDetailsOpen && activeConv && (
-        <LinkedContextColumn
-          linkedContext={linkedContext}
-          activeConversation={activeConv}
-          onCollapse={() => setIsDetailsOpen(false)}
-          onAddTask={() => toast.info("Create Task opened in conversation composer")}
-          onAttachDocument={() => toast.info("Attach Document ready")}
-        />
-      )}
-
-      {/* ── New Conversation Modal ── */}
+      {/* ── New Conversation Modal (Deep 3D Navy, Zero White) ── */}
       <Dialog open={newMessageModalOpen} onOpenChange={setNewMessageModalOpen}>
-        <DialogContent className="bg-[#001433] border border-sky-500/30 text-white rounded-2xl max-w-md shadow-2xl p-6">
+        <DialogContent className="bg-gradient-to-b from-[#061833] via-[#041126] to-[#020a17] border-t border-t-sky-400/40 border border-sky-500/30 text-white rounded-3xl max-w-md shadow-[0_30px_90px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.15)] p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-sky-400" />

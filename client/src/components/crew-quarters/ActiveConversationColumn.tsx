@@ -30,6 +30,7 @@ import {
   Loader2,
   Sparkles,
   BookOpen,
+  Reply,
 } from "lucide-react";
 import ActionRequestCard from "./ActionRequestCard";
 import ActionRequestModal from "./ActionRequestModal";
@@ -172,17 +173,42 @@ export default function ActiveConversationColumn({
     .toUpperCase();
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#07162B] relative overflow-hidden text-slate-100">
-      {/* ── Center Header ── */}
-      <div className="h-16 px-4 sm:px-6 border-b border-sky-500/20 bg-[#07162B]/95 backdrop-blur-md flex items-center justify-between z-10 shrink-0">
+    <div className="flex-1 flex flex-col h-full bg-gradient-to-b from-[#051631] via-[#041124] to-[#020a17] relative overflow-hidden text-slate-100 min-w-0">
+      {/* 3D Blue Background Bathymetric Mesh & Wave Texture */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.06] z-0"
+        style={{
+          backgroundImage: `
+            radial-gradient(circle at 50% 0%, #38bdf8 1.5px, transparent 1.5px),
+            radial-gradient(circle at 0% 50%, #0284c7 1.5px, transparent 1.5px),
+            linear-gradient(to right, rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(56, 189, 248, 0.07) 1px, transparent 1px)
+          `,
+          backgroundSize: "32px 32px, 32px 32px, 64px 64px, 64px 64px",
+        }}
+      />
+      {/* Dynamic 3D Oceanic Radial Depth Spotlights */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-50 z-0"
+        style={{
+          background: `
+            radial-gradient(ellipse 100% 50% at 50% 10%, rgba(14, 116, 244, 0.28), transparent 75%),
+            radial-gradient(ellipse 70% 35% at 50% 90%, rgba(2, 132, 199, 0.15), transparent 70%),
+            radial-gradient(ellipse 100% 70% at 50% 100%, rgba(0, 4, 16, 0.75), transparent 80%)
+          `,
+        }}
+      />
+
+      {/* ── Center Header (3D Sculpted Bar) ── */}
+      <div className="h-16 px-4 sm:px-6 border-b border-sky-500/25 bg-gradient-to-r from-[#071f42]/95 via-[#0a2957]/95 to-[#071f42]/95 backdrop-blur-md flex items-center justify-between z-10 shrink-0 shadow-[0_4px_20px_rgba(0,5,20,0.45),inset_0_1px_0_rgba(255,255,255,0.12)]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
-            <Avatar className="w-10 h-10 border-2 border-sky-500/40 bg-gradient-to-br from-[#0062E3] to-[#00388A] text-white shadow-md">
+            <Avatar className="w-10 h-10 border-2 border-sky-400/50 bg-gradient-to-br from-[#0062E3] to-[#00388A] text-white shadow-[0_4px_12px_rgba(0,80,220,0.4)]">
               <AvatarFallback className="font-bold text-xs bg-transparent">
                 {partnerInitials}
               </AvatarFallback>
             </Avatar>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#07162B]" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#071f42]" />
           </div>
 
           <div className="min-w-0">
@@ -194,20 +220,20 @@ export default function ActiveConversationColumn({
             <div className="flex items-center gap-2 text-xs text-blue-200/70">
               <span className="truncate">{partnerRole}</span>
               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Available
               </span>
             </div>
           </div>
         </div>
 
-        {/* Header Action Buttons (Matching Mockup Pills) */}
+        {/* Header Action Buttons (3D Sculpted Navy Pills) */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => toast.info("Search within this conversation active")}
-            className="h-8 px-3 rounded-xl bg-[#001433]/70 hover:bg-[#001E4D] border-sky-500/30 text-xs font-semibold text-slate-200 hover:text-white shadow-xs gap-1.5 cursor-pointer"
+            className="h-8.5 px-3 rounded-xl bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-xs font-semibold text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] gap-1.5 cursor-pointer transition-all hover:scale-[1.02]"
           >
             <Search className="w-3.5 h-3.5 text-sky-400" />
             <span className="hidden sm:inline">Search</span>
@@ -217,14 +243,14 @@ export default function ActiveConversationColumn({
             variant="outline"
             size="sm"
             onClick={onToggleDetails}
-            className={`h-8 px-3 rounded-xl border-sky-500/30 text-xs font-semibold shadow-xs gap-1.5 cursor-pointer transition-all ${
+            className={`h-8.5 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer transition-all hover:scale-[1.02] ${
               isDetailsOpen
-                ? "bg-sky-500/20 text-sky-300 border-sky-400/50"
-                : "bg-[#001433]/70 hover:bg-[#001E4D] text-slate-200 hover:text-white"
+                ? "bg-gradient-to-b from-[#0062E3] to-[#004BB5] text-white border-t border-t-sky-200/60 border border-sky-400 shadow-[0_4px_14px_rgba(0,98,227,0.45),inset_0_1px_1px_rgba(255,255,255,0.3)]"
+                : "bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)]"
             }`}
           >
-            <Info className="w-3.5 h-3.5 text-sky-400" />
-            <span className="hidden sm:inline">Conversation Details</span>
+            <Info className="w-3.5 h-3.5 text-sky-300" />
+            <span className="hidden sm:inline">Linked Context</span>
           </Button>
 
           <DropdownMenu>
@@ -232,30 +258,30 @@ export default function ActiveConversationColumn({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-xl bg-[#001433]/70 hover:bg-[#001E4D] border-sky-500/30 text-slate-300 hover:text-white cursor-pointer"
+                className="h-8.5 w-8.5 rounded-xl bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer"
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-[#001433] border-sky-500/30 text-white shadow-2xl">
+            <DropdownMenuContent align="end" className="w-56 bg-gradient-to-b from-[#061833] to-[#020a17] border-t border-t-sky-400/40 border border-sky-500/30 text-white shadow-2xl rounded-2xl p-1.5">
               <DropdownMenuItem
                 onClick={() => setShowActionModal(true)}
-                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium"
+                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium rounded-xl text-sky-100"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
                 Request Action / Approval
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleAttachDemoRecord}
-                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium"
+                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium rounded-xl text-sky-100"
               >
                 <FileText className="w-3.5 h-3.5 text-sky-400" />
                 Share Service Agreement Card
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-sky-500/20" />
+              <DropdownMenuSeparator className="bg-sky-500/20 my-1" />
               <DropdownMenuItem
                 onClick={() => toast.success("Conversation notifications muted for 8 hours")}
-                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2"
+                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 rounded-xl text-sky-100"
               >
                 Mute Notifications
               </DropdownMenuItem>
@@ -278,14 +304,16 @@ export default function ActiveConversationColumn({
         )}
 
         {messages.length === 0 && !isLoading && (
-          <div className="text-center py-20 max-w-sm mx-auto space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mx-auto text-sky-400 shadow-inner">
-              <Sparkles className="w-6 h-6" />
+          <div className="text-center py-20 max-w-sm mx-auto space-y-4">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-b from-[#0e2c59] to-[#071933] border-t border-t-sky-400/50 border border-sky-500/30 flex items-center justify-center mx-auto text-sky-300 shadow-[0_12px_30px_rgba(0,10,35,0.7),inset_0_1px_1px_rgba(255,255,255,0.2)]">
+              <Sparkles className="w-8 h-8" />
             </div>
-            <h4 className="text-sm font-bold text-white">Start of internal conversation</h4>
-            <p className="text-xs text-blue-200/70 leading-relaxed">
-              This is a private Waypoint employee workspace. Messages, attachments, and actions are secure and visible only to authorized team members.
-            </p>
+            <div className="space-y-1.5">
+              <h4 className="text-base font-bold text-white tracking-wide">Start of internal conversation</h4>
+              <p className="text-xs text-blue-200/70 leading-relaxed">
+                This is a private Waypoint employee workspace. Messages, attachments, and actions are secure and visible only to authorized team members.
+              </p>
+            </div>
           </div>
         )}
 
@@ -311,7 +339,7 @@ export default function ActiveConversationColumn({
               }`}
             >
               {/* Avatar */}
-              <Avatar className="w-8 h-8 shrink-0 mt-0.5 border border-sky-500/30 bg-gradient-to-br from-blue-700 to-indigo-800 text-white shadow-md">
+              <Avatar className="w-8 h-8 shrink-0 mt-0.5 border border-sky-400/40 bg-gradient-to-br from-blue-700 to-indigo-800 text-white shadow-md">
                 <AvatarFallback className="text-[11px] font-bold bg-transparent">
                   {senderInitial}
                 </AvatarFallback>
@@ -335,13 +363,13 @@ export default function ActiveConversationColumn({
                   </div>
                 )}
 
-                {/* Floating Message Bubble */}
+                {/* 3D Message Bubble */}
                 <div className="relative group/bubble">
                   <div
-                    className={`rounded-2xl p-3.5 text-sm leading-relaxed shadow-md transition-all ${
+                    className={`rounded-2xl p-4 text-sm leading-relaxed transition-all ${
                       isMe
-                        ? "bg-gradient-to-r from-[#0062E3] to-[#0051B8] text-white rounded-tr-xs shadow-[0_4px_15px_rgba(0,98,227,0.3)] border border-sky-400/30 text-left"
-                        : "bg-[#0E223D]/90 hover:bg-[#122A4C] border border-sky-500/20 text-slate-100 rounded-tl-xs shadow-[0_4px_15px_rgba(0,10,30,0.5)] backdrop-blur-md text-left"
+                        ? "bg-gradient-to-b from-[#0077FF] via-[#0062E3] to-[#004BB5] text-white rounded-tr-xs shadow-[0_8px_24px_rgba(0,85,225,0.4),0_2px_5px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.35)] border-t border-t-sky-200/50 border-x border-x-sky-400/30 border-b border-b-blue-950 text-left"
+                        : "bg-gradient-to-b from-[#102d54] via-[#0c2242] to-[#081830] text-slate-100 rounded-tl-xs shadow-[0_8px_24px_rgba(0,5,20,0.55),0_2px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] border-t border-t-sky-400/35 border-x border-x-sky-500/25 border-b border-b-black/70 backdrop-blur-md text-left hover:brightness-105"
                     }`}
                   >
                     {/* Plain or Multiline text */}
@@ -355,7 +383,7 @@ export default function ActiveConversationColumn({
                           return (
                             <div
                               key={link.id || idx}
-                              className="bg-[#001026]/90 border border-sky-400/30 rounded-xl p-3 shadow-md space-y-2.5"
+                              className="bg-[#020b18]/90 border border-sky-400/35 rounded-xl p-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)] space-y-2.5"
                             >
                               <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300">
@@ -379,9 +407,9 @@ export default function ActiveConversationColumn({
                                   size="sm"
                                   variant="outline"
                                   onClick={() => setSelectedMessageForTask(m)}
-                                  className="h-7 px-3 text-[11px] font-medium bg-transparent hover:bg-white/10 text-slate-200 border-sky-500/30 rounded-lg"
+                                  className="h-7 px-3 text-[11px] font-medium bg-transparent hover:bg-sky-500/20 text-sky-200 border-sky-500/30 rounded-lg"
                                 >
-                                  Create Task
+                                  Turn into Task
                                 </Button>
                               </div>
                             </div>
@@ -402,50 +430,58 @@ export default function ActiveConversationColumn({
                     )}
                   </div>
 
-                  {/* Hover Actions Toolbar */}
+                  {/* Quick Action Emoji Trigger on Hover */}
                   <div
-                    className={`absolute -top-3.5 flex items-center gap-0.5 bg-[#001433] border border-sky-500/30 rounded-full px-1.5 py-0.5 shadow-xl opacity-0 group-hover/bubble:opacity-100 transition-opacity z-20 ${
-                      isMe ? "left-0" : "right-0"
-                    }`}
+                    className={`absolute -top-3 ${
+                      isMe ? "left-0 -translate-x-full pr-2" : "right-0 translate-x-full pl-2"
+                    } opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 z-20`}
                   >
-                    {QUICK_EMOJIS.slice(0, 3).map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => handleAddReaction(m.id, emoji)}
-                        className="text-xs hover:scale-125 transition-transform p-1 cursor-pointer"
-                        title={`React ${emoji}`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-
+                    <button
+                      onClick={() => handleAddReaction(m.id, "👍")}
+                      className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
+                      title="React 👍"
+                    >
+                      👍
+                    </button>
+                    <button
+                      onClick={() => handleAddReaction(m.id, "❤️")}
+                      className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
+                      title="React ❤️"
+                    >
+                      ❤️
+                    </button>
+                    <button
+                      onClick={() => handleAddReaction(m.id, "🎯")}
+                      className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
+                      title="React 🎯"
+                    >
+                      🎯
+                    </button>
                     <button
                       onClick={() => setReplyToMessage(m)}
-                      className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      className="p-1.5 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
                       title="Reply"
                     >
-                      <AtSign className="w-3.5 h-3.5" />
+                      <Reply className="w-3 h-3" />
                     </button>
-
                     <button
                       onClick={() => setSelectedMessageForTask(m)}
-                      className="p-1 text-slate-400 hover:text-sky-400 transition-colors cursor-pointer"
-                      title="Create Task from Message"
+                      className="p-1.5 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
+                      title="Turn into Task"
                     >
-                      <CheckSquare className="w-3.5 h-3.5" />
+                      <CheckSquare className="w-3 h-3" />
                     </button>
-
-                    {conversation.linkedStudentId && (
+                    {isAdmin && conversation.linkedStudentId && (
                       <button
                         onClick={() =>
                           addToTimelineMutation.mutate({
                             messageId: m.id,
                             studentContactId: conversation.linkedStudentId,
-                            title: `Advocate Note: ${m.body.slice(0, 50)}...`,
+                            title: `Crew Insight: ${(m.body || "Advocate note").slice(0, 45)}`,
                             notes: m.body,
                           })
                         }
-                        className="p-1 text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-full bg-[#051733] border border-amber-400/50 text-amber-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
                         title="Add to Student Activity Timeline"
                       >
                         <BookOpen className="w-3.5 h-3.5" />
@@ -464,7 +500,7 @@ export default function ActiveConversationColumn({
                         className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
                           r.hasReacted
                             ? "bg-sky-500/25 border-sky-400/50 text-sky-200"
-                            : "bg-[#001026] border-sky-500/20 text-slate-300 hover:border-sky-400/40"
+                            : "bg-[#020b18] border-sky-500/25 text-slate-300 hover:border-sky-400/40"
                         }`}
                       >
                         <span>{r.emoji}</span>
@@ -498,11 +534,11 @@ export default function ActiveConversationColumn({
         </button>
       )}
 
-      {/* ── Fixed Floating Composer ── */}
-      <div className="p-4 border-t border-sky-500/20 bg-[#07162B]/95 backdrop-blur-md shrink-0 space-y-2">
+      {/* ── Fixed Floating Composer (3D Capsule) ── */}
+      <div className="p-4 border-t border-sky-500/25 bg-gradient-to-b from-[#061833]/95 to-[#020a17]/95 backdrop-blur-md shrink-0 space-y-2.5 shadow-[0_-10px_30px_rgba(0,5,20,0.5)]">
         {/* Replying indicator */}
         {replyToMessage && (
-          <div className="flex items-center justify-between px-3 py-1.5 bg-[#001026] border border-sky-500/30 rounded-xl text-xs text-sky-300">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-[#020b18] border border-sky-400/40 rounded-xl text-xs text-sky-300 shadow-inner">
             <span className="truncate">
               Replying to: <strong>{replyToMessage.senderName || "Advocate"}</strong> ("{replyToMessage.body.slice(0, 50)}...")
             </span>
@@ -515,12 +551,12 @@ export default function ActiveConversationColumn({
           </div>
         )}
 
-        <div className="flex items-center gap-2 bg-[#001026] border border-sky-500/30 focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-400 rounded-2xl p-2 shadow-inner transition-all">
+        <div className="flex items-center gap-2 bg-gradient-to-b from-[#081f42] to-[#030e21] border-t border-t-sky-400/50 border border-sky-500/35 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-400/30 rounded-2xl p-2.5 shadow-[0_12px_35px_rgba(0,5,20,0.7),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-all">
           {/* Action Toolbar Icons */}
           <div className="flex items-center gap-1 shrink-0 px-1">
             <button
               onClick={() => setShowActionModal(true)}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-sky-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-400 hover:text-white transition-colors cursor-pointer"
               title="Request Action / Approval"
             >
               <ShieldCheck className="w-4 h-4" />
@@ -528,7 +564,7 @@ export default function ActiveConversationColumn({
 
             <button
               onClick={handleAttachDemoRecord}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-300/70 hover:text-white transition-colors cursor-pointer"
               title="Attach Document or CRM Record"
             >
               <Paperclip className="w-4 h-4" />
@@ -536,7 +572,7 @@ export default function ActiveConversationColumn({
 
             <button
               onClick={() => setMessageText((prev) => prev + "@")}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-300/70 hover:text-white transition-colors cursor-pointer"
               title="Mention Colleague (@)"
             >
               <AtSign className="w-4 h-4" />
@@ -544,7 +580,7 @@ export default function ActiveConversationColumn({
 
             <button
               onClick={() => setMessageText((prev) => prev + " 👍")}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-300/70 hover:text-white transition-colors cursor-pointer"
               title="Add Emoji"
             >
               <Smile className="w-4 h-4" />
@@ -561,14 +597,14 @@ export default function ActiveConversationColumn({
             className="flex-1 bg-transparent border-none text-white text-xs placeholder:text-blue-200/40 resize-none focus:outline-none max-h-24 overflow-y-auto leading-relaxed py-1"
           />
 
-          {/* Send Button (Vibrant Blue Circle with Paper Airplane) */}
+          {/* Send Button (Tactile 3D Extruded Blue Button) */}
           <button
             onClick={handleSendMessage}
             disabled={!messageText.trim() || isSending}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 cursor-pointer shadow-md ${
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer shadow-lg ${
               messageText.trim() && !isSending
-                ? "bg-gradient-to-tr from-[#0062E3] to-[#00A3FF] hover:scale-105 text-white shadow-blue-500/40"
-                : "bg-blue-900/30 text-slate-500 cursor-not-allowed"
+                ? "bg-gradient-to-b from-[#0077FF] via-[#0062E3] to-[#004BB5] hover:from-[#0088FF] hover:to-[#0055CC] text-white shadow-[0_4px_16px_rgba(0,112,243,0.5),inset_0_1px_1px_rgba(255,255,255,0.35)] border-t border-t-sky-200/50 border border-sky-400/40 hover:scale-105"
+                : "bg-[#06162e] text-slate-500 border border-sky-950 cursor-not-allowed"
             }`}
             title="Send Message"
           >
