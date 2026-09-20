@@ -10,6 +10,10 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   // Core Admin & Advocacy Suite
   "/":                                { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
   "/crew-quarters":                   { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
+  "/crew-quarters/messages":          { id: "PG-038-MSG", name: "Crew Messages Workspace", category: "Communications", description: "Internal team communication, direct messaging, and case collaboration" },
+  "/crew-quarters/tasks":             { id: "PG-038-TSK", name: "Crew Task Queue", category: "Productivity", description: "Personal advocate action items, IEP reviews, and milestones" },
+  "/crew-quarters/schedule":          { id: "PG-038-SCH", name: "Team Schedule & Time Off", category: "Schedule", description: "Staff calendar, leave requests, and coverage scheduling" },
+  "/crew-quarters/resources":         { id: "PG-038-RES", name: "Employee Resources", category: "Content", description: "Staff directory, handbook, policy templates, and guidance" },
   "/company/dashboard":               { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
   "/company-dashboard":               { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
   "/dashboard":                       { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
@@ -246,6 +250,22 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
   "guidance":         { id: "PG-030-GCL", name: "Guide Client Live", category: "Advocacy" },
 };
 
+// ─── Crew Quarters Sub-ID Mappings ───────────────────────────────────────────
+export const CREW_QUARTERS_TAB_IDS: Record<string, PageIdInfo> = {
+  "overview":   { id: "PG-038-OVR", name: "Crew Quarters Overview", category: "Core", description: "Personal employee home base and operational station overview" },
+  "messages":   { id: "PG-038-MSG", name: "Crew Messages Workspace", category: "Communications", description: "Internal team communication, direct messaging, and case collaboration" },
+  "tasks":      { id: "PG-038-TSK", name: "Crew Task Queue", category: "Productivity", description: "Personal advocate action items, IEP reviews, and milestones" },
+  "schedule":   { id: "PG-038-SCH", name: "Team Schedule & Time Off", category: "Schedule", description: "Staff calendar, leave requests, and coverage scheduling" },
+  "resources":  { id: "PG-038-RES", name: "Employee Resources", category: "Content", description: "Staff directory, handbook, policy templates, and guidance" },
+};
+
+/**
+ * Resolves a Crew Quarters tab identifier (e.g. 'messages', 'tasks', 'schedule', 'resources') to its specific Sub-Page ID.
+ */
+export function resolveCrewQuartersTabId(tabId: string): PageIdInfo | null {
+  return CREW_QUARTERS_TAB_IDS[tabId] || null;
+}
+
 /**
  * Resolves a portal tab identifier (e.g. 'files', 'smart-docs', 'compass') to its specific Sub-Page ID.
  */
@@ -274,6 +294,15 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
     const tabParam = urlParams.get("tab");
     if (tabParam && PORTAL_TAB_IDS[tabParam]) {
       return PORTAL_TAB_IDS[tabParam];
+    }
+  }
+
+  // Check URL query search for sub-tabs if on crew quarters
+  if (cleanPath === "/crew-quarters" || cleanPath === "/") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab");
+    if (tabParam && CREW_QUARTERS_TAB_IDS[tabParam]) {
+      return CREW_QUARTERS_TAB_IDS[tabParam];
     }
   }
 

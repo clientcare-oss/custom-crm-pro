@@ -121,6 +121,11 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-036`: Sponsors & Partners (`/sponsors`)
   - `PG-037`: First Mate (`/first-mate`)
   - `PG-038`: Crew Quarters (`/crew-quarters`)
+  - `PG-038-OVR`: Crew Quarters Overview (`/crew-quarters?tab=overview`)
+  - `PG-038-MSG`: Crew Messages Workspace (`/crew-quarters?tab=messages`)
+  - `PG-038-TSK`: Crew Task Queue (`/crew-quarters?tab=tasks`)
+  - `PG-038-SCH`: Team Schedule & Time Off (`/crew-quarters?tab=schedule`)
+  - `PG-038-RES`: Employee Resources & Policies (`/crew-quarters?tab=resources`)
   - `PG-404`: Not Found (`/404`)
 
 ---

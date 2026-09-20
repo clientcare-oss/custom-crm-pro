@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import PageIdBadge from "@/components/PageIdBadge";
+import { resolveCrewQuartersTabId, broadcastPageId } from "@/lib/pageIdRegistry";
 import { LighthouseCottageIcon } from "@/components/ui/LighthouseCottageIcon";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import { Button } from "@/components/ui/button";
@@ -175,6 +176,16 @@ export default function CrewQuarters() {
     window.history.pushState(null, "", newUrl);
   };
 
+  // Broadcast specific sub-page ID whenever the tab switches (e.g. PG-038-MSG, PG-038-TSK)
+  useEffect(() => {
+    const tabInfo = resolveCrewQuartersTabId(currentTab);
+    if (tabInfo) {
+      broadcastPageId(tabInfo);
+    } else {
+      broadcastPageId({ id: "PG-038", name: "Crew Quarters" });
+    }
+  }, [currentTab]);
+
   // Time Off State with Local Persistence
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(() => {
     try {
@@ -297,7 +308,11 @@ export default function CrewQuarters() {
                 <LighthouseCottageIcon className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>Crew Quarters</span>
               </div>
-              <PageIdBadge id="PG-038" name="Crew Quarters" />
+              <PageIdBadge
+                id={resolveCrewQuartersTabId(currentTab)?.id || "PG-038"}
+                name={resolveCrewQuartersTabId(currentTab)?.name || "Crew Quarters"}
+                inline
+              />
               <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>On Duty</span>
@@ -1262,6 +1277,7 @@ export default function CrewQuarters() {
               <div className="flex items-center gap-2">
                 <CheckSquare className="w-5 h-5 text-emerald-400" />
                 <h2 className="text-xl font-bold text-white tracking-wide">My Personal Task Queue</h2>
+                <PageIdBadge id="PG-038-TSK" name="Crew Task Queue" inline />
               </div>
               <p className="text-xs text-blue-200/70">
                 Track personal advocacy milestones, IEP reviews, and action items across your caseload.
@@ -1399,6 +1415,7 @@ export default function CrewQuarters() {
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-sky-400" />
                 <h2 className="text-xl font-bold text-white tracking-wide">Team Schedule &amp; Coverage</h2>
+                <PageIdBadge id="PG-038-SCH" name="Team Schedule & Time Off" inline />
               </div>
               <p className="text-xs text-blue-200/70">
                 View upcoming meetings, IEP appointments, and staff availability.
@@ -1506,6 +1523,7 @@ export default function CrewQuarters() {
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-amber-400" />
                 <h2 className="text-xl font-bold text-white tracking-wide">Waypoint Knowledge &amp; Resources</h2>
+                <PageIdBadge id="PG-038-RES" name="Employee Resources" inline />
               </div>
               <p className="text-xs text-blue-200/70">
                 Master IEP Coach® internal field guides, standard operating procedures, and professional training.

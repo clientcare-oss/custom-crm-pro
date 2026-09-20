@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
+import PageIdBadge from "@/components/PageIdBadge";
 
 interface ConversationListColumnProps {
   conversations: {
@@ -78,6 +79,7 @@ export default function ConversationListColumn({
             <h2 className="text-xl font-bold text-white tracking-wide font-sans">
               Crew Messages
             </h2>
+            <PageIdBadge id="PG-038-MSG" name="Crew Messages Workspace" inline />
           </div>
           <span className="text-[10px] font-mono text-sky-400 bg-sky-950/80 px-2 py-0.5 rounded-full border border-sky-400/30">
             INTERNAL

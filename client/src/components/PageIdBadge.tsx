@@ -1,17 +1,34 @@
 import { Check, Copy, Hash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { resolvePageId, PAGE_IDS } from "@/lib/pageIdRegistry";
+import { resolvePageId, PAGE_IDS, broadcastPageId } from "@/lib/pageIdRegistry";
+import { cn } from "@/lib/utils";
+
+export interface PageIdBadgeProps {
+  id?: string;
+  name?: string;
+  inline?: boolean;
+  variant?: "floating" | "inline";
+  className?: string;
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
-export default function PageIdBadge({ id: explicitId, name: explicitName }: { id?: string; name?: string } = {}) {
+export default function PageIdBadge({
+  id: explicitId,
+  name: explicitName,
+  inline,
+  variant,
+  className,
+}: PageIdBadgeProps = {}) {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const autoCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Dynamic active page state (supports sub-tabs like PG-023-ACT, PG-023-VAULT, etc.)
+  const isInline = inline || variant === "inline" || (Boolean(explicitId) && variant !== "floating");
+
+  // Dynamic active page state (supports sub-tabs like PG-038-MSG, PG-023-ACT, PG-023-VAULT, etc.)
   const [activePage, setActivePage] = useState(() => {
     if (explicitId) {
       return { id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" };
@@ -22,7 +39,9 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
   // Re-resolve when location changes or explicit props change
   useEffect(() => {
     if (explicitId) {
-      setActivePage({ id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" });
+      const pageInfo = { id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" };
+      setActivePage(pageInfo);
+      broadcastPageId(pageInfo);
     } else {
       setActivePage(resolvePageId(location));
     }
@@ -30,11 +49,11 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
     setCopied(false);
   }, [location, explicitId, explicitName]);
 
-  // Listen for broadcasted page/tab sub-id changes (e.g. from ClientPortal tab switching)
+  // Listen for broadcasted page/tab sub-id changes (e.g. from ClientPortal or CrewQuarters tab switching)
   useEffect(() => {
     const handlePageIdChange = (e: Event) => {
       const customEvent = e as CustomEvent;
-      if (customEvent.detail?.id) {
+      if (customEvent.detail?.id && !explicitId) {
         setActivePage({
           id: customEvent.detail.id,
           name: customEvent.detail.name || "Waypoint View",
@@ -44,13 +63,17 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
 
     window.addEventListener("waypoint:page-id-change", handlePageIdChange);
     return () => window.removeEventListener("waypoint:page-id-change", handlePageIdChange);
-  }, []);
+  }, [explicitId]);
 
   const page = activePage;
 
   if (!page) return null;
 
-  const handleCopy = () => {
+  const handleCopy = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     const text = `${page.id} · ${page.name}`;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -63,8 +86,36 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
     });
   };
 
+  // ── Inline Badge Mode (Rendered inside headers, tool consoles, and sub-pages) ──
+  if (isInline) {
+    return (
+      <button
+        type="button"
+        onClick={handleCopy}
+        title={copied ? "Copied!" : `Copy Page ID (${page.id} · ${page.name})`}
+        className={cn(
+          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold tracking-wider uppercase border transition-all duration-200 cursor-pointer select-none",
+          copied
+            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+            : "bg-sky-950/80 text-sky-300 border-sky-400/30 hover:bg-sky-900/80 hover:border-sky-400/60 hover:text-white shadow-xs",
+          className
+        )}
+        aria-label={`Page ID ${page.id}`}
+      >
+        <Hash className="w-2.5 h-2.5 opacity-70 shrink-0" />
+        <span>{page.id}</span>
+        {copied ? (
+          <Check className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+        ) : (
+          <Copy className="w-2.5 h-2.5 opacity-40 hover:opacity-100 shrink-0" />
+        )}
+      </button>
+    );
+  }
+
+  // ── Floating Corner Mode (Persistent global badge in bottom-left) ──
   return (
-    <div className="fixed bottom-4 left-4 z-50 flex items-center justify-start">
+    <div className={cn("fixed bottom-4 left-4 z-50 flex items-center justify-start", className)}>
       {/* Trigger button — always visible, minimal in bottom-left */}
       <button
         onClick={() => setOpen(prev => !prev)}
@@ -123,3 +174,4 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
 }
 
 // Registry exports are in pageIdRegistry.ts to keep Fast Refresh happy
+
