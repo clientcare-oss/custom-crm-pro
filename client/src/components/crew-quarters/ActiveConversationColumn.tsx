@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { trpc } from "@/lib/trpc";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import type { EmojiClickData } from "emoji-picker-react";
+import { Theme, SuggestionMode } from "emoji-picker-react";
 import {
   Search,
   Info,
@@ -31,11 +38,14 @@ import {
   Sparkles,
   BookOpen,
   Reply,
+  Plus,
 } from "lucide-react";
 import ActionRequestCard from "./ActionRequestCard";
 import ActionRequestModal from "./ActionRequestModal";
 import MessageToTaskModal from "./MessageToTaskModal";
 import { toast } from "sonner";
+
+const EmojiPicker = lazy(() => import("emoji-picker-react"));
 
 interface ActiveConversationColumnProps {
   conversation: any;
@@ -60,7 +70,13 @@ export default function ActiveConversationColumn({
   const [selectedMessageForTask, setSelectedMessageForTask] = useState<any | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<any | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
+
+  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+    setMessageText((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
@@ -460,6 +476,65 @@ export default function ActiveConversationColumn({
                     >
                       🎯
                     </button>
+
+                    {/* Full Emoji Reaction Picker */}
+                    <Popover
+                      open={reactingToMessageId === m.id}
+                      onOpenChange={(open) => setReactingToMessageId(open ? m.id : null)}
+                    >
+                      <PopoverTrigger asChild>
+                        <button
+                          className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
+                          title="React with any emoji (Search & Recent)"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="top"
+                        align="center"
+                        sideOffset={8}
+                        className="w-auto p-0 border-t border-t-sky-300/50 border border-sky-500/35 bg-[#061833] rounded-2xl shadow-[0_20px_50px_rgba(0,5,20,0.85)] overflow-hidden z-50"
+                      >
+                        <Suspense
+                          fallback={
+                            <div className="w-[300px] h-[340px] flex items-center justify-center text-xs text-sky-300/70 bg-[#061833]">
+                              <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+                            </div>
+                          }
+                        >
+                          <div
+                            style={{
+                              "--epr-bg-color": "#061833",
+                              "--epr-category-label-bg-color": "#061833",
+                              "--epr-search-input-bg-color": "#020b18",
+                              "--epr-text-color": "#ffffff",
+                              "--epr-category-icon-active-color": "#38bdf8",
+                              "--epr-hover-bg-color": "rgba(56, 189, 248, 0.18)",
+                              "--epr-focus-bg-color": "rgba(56, 189, 248, 0.25)",
+                              "--epr-preview-text-color": "#bae6fd",
+                              "--epr-border-color": "rgba(56, 189, 248, 0.2)",
+                            } as React.CSSProperties}
+                          >
+                            <EmojiPicker
+                              theme={Theme.DARK}
+                              onEmojiClick={(emojiData) => {
+                                handleAddReaction(m.id, emojiData.emoji);
+                                setReactingToMessageId(null);
+                              }}
+                              autoFocusSearch={false}
+                              searchPlaceHolder="React with any emoji..."
+                              width={300}
+                              height={340}
+                              suggestedEmojisMode={SuggestionMode.RECENT}
+                              lazyLoadEmojis={true}
+                              previewConfig={{ showPreview: false }}
+                            />
+                          </div>
+                        </Suspense>
+                      </PopoverContent>
+                    </Popover>
+
                     <button
                       onClick={() => setReplyToMessage(m)}
                       className="p-1.5 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
@@ -581,13 +656,67 @@ export default function ActiveConversationColumn({
               <AtSign className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={() => setMessageText((prev) => prev + " 👍")}
-              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-300/70 hover:text-white transition-colors cursor-pointer"
-              title="Add Emoji"
-            >
-              <Smile className="w-4 h-4" />
-            </button>
+            {/* Full-Range Emoji Suite with Search & Recent */}
+            <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                    showEmojiPicker
+                      ? "bg-sky-500/25 text-sky-200 border border-sky-400/40 shadow-sm scale-105"
+                      : "hover:bg-sky-500/20 text-sky-300/70 hover:text-white"
+                  }`}
+                  title="Add Emoji (Full catalog with search & recent)"
+                >
+                  <Smile className="w-4 h-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                align="start"
+                sideOffset={14}
+                className="w-auto p-0 border-t border-t-sky-300/50 border border-sky-500/35 bg-[#061833] rounded-2xl shadow-[0_25px_60px_rgba(0,5,20,0.9),inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden z-50"
+              >
+                <Suspense
+                  fallback={
+                    <div className="w-[330px] h-[380px] flex flex-col items-center justify-center text-xs text-sky-300/70 gap-2 bg-[#061833]">
+                      <Loader2 className="w-5 h-5 animate-spin text-sky-400" />
+                      <span>Loading full emoji suite...</span>
+                    </div>
+                  }
+                >
+                  <div
+                    style={{
+                      "--epr-bg-color": "#061833",
+                      "--epr-category-label-bg-color": "#061833",
+                      "--epr-search-input-bg-color": "#020b18",
+                      "--epr-text-color": "#ffffff",
+                      "--epr-category-icon-active-color": "#38bdf8",
+                      "--epr-hover-bg-color": "rgba(56, 189, 248, 0.18)",
+                      "--epr-focus-bg-color": "rgba(56, 189, 248, 0.25)",
+                      "--epr-preview-text-color": "#bae6fd",
+                      "--epr-border-color": "rgba(56, 189, 248, 0.2)",
+                    } as React.CSSProperties}
+                  >
+                    <EmojiPicker
+                      theme={Theme.DARK}
+                      onEmojiClick={handleEmojiSelect}
+                      autoFocusSearch={false}
+                      searchPlaceHolder="Search all emojis..."
+                      width={330}
+                      height={380}
+                      suggestedEmojisMode={SuggestionMode.RECENT}
+                      lazyLoadEmojis={true}
+                      previewConfig={{
+                        showPreview: true,
+                        defaultEmoji: "👍",
+                        defaultCaption: "Pick an emoji to insert",
+                      }}
+                    />
+                  </div>
+                </Suspense>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Text Area */}
