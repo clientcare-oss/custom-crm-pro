@@ -91,47 +91,54 @@ export default function PageIdBadge({
     });
   };
 
-  // ── Global Floating Corner Mode (Discreet # launcher at bottom right) ──
+  // ── Global Floating Corner Mode (Discreet Frosted Glass Orb with White # at bottom right) ──
   return (
     <aside
       aria-label="Waypoint Page ID Utility"
       className={cn("fixed bottom-3 right-3 z-50 flex items-center flex-row-reverse select-none", className)}
     >
-      {/* Trigger button — always visible, sleek 3D oceanic # symbol at bottom right */}
+      {/* Trigger button — small frosted glass orb with white # thing */}
       <button
         type="button"
         onClick={() => setOpen(prev => !prev)}
         title={open ? "Hide Page ID" : `Page ID: ${page.id} · ${page.name} (Click to toggle)`}
         className={`
-          flex h-7.5 w-7.5 sm:h-8 sm:w-8 items-center justify-center rounded-full
-          border transition-all duration-200 cursor-pointer shadow-md
+          group relative flex h-7.5 w-7.5 items-center justify-center rounded-full
+          cursor-pointer select-none transition-all duration-300 backdrop-blur-md
           ${open
-            ? "border-sky-400 bg-gradient-to-b from-[#0e3b75] to-[#041d40] text-white shadow-[0_0_15px_rgba(56,189,248,0.5),inset_0_1px_1px_rgba(255,255,255,0.3)] scale-105"
-            : "border-sky-500/35 bg-gradient-to-b from-[#0a2347]/95 via-[#061730]/95 to-[#020b18]/95 text-sky-300 hover:text-white hover:border-sky-400 hover:scale-105 backdrop-blur-md shadow-[0_4px_12px_rgba(0,10,30,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]"
+            ? "bg-white/[0.22] border border-white/60 shadow-[0_0_16px_rgba(255,255,255,0.45),0_6px_20px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(255,255,255,0.7)] scale-105"
+            : "bg-white/[0.10] hover:bg-white/[0.20] border border-white/35 hover:border-white/60 shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_8px_rgba(255,255,255,0.18),inset_0_1px_2px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95"
           }
         `}
         aria-label="Toggle Page ID"
       >
-        <Hash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        {/* Top subtle glass specular reflection crescent */}
+        <span className="absolute top-0.5 inset-x-1.5 h-2 rounded-t-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
+
+        {/* Crisp luminous white # icon */}
+        <Hash className="h-3.5 w-3.5 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.85)] relative z-10 transition-transform duration-200 group-hover:scale-110" />
+
+        {/* Soft bottom ambient glow beneath glass orb */}
+        <span className="absolute -bottom-1 inset-x-1 h-1.5 bg-white/20 rounded-full blur-xs pointer-events-none" />
       </button>
 
-      {/* Expanded pill (slides smoothly to the left) */}
+      {/* Expanded pill (slides smoothly to the left, styled in frosted dark glass) */}
       <div
         className={`
-          flex items-center gap-2 rounded-full border border-sky-400/40
-          bg-gradient-to-r from-[#030e20]/95 via-[#061833]/95 to-[#020b18]/95 backdrop-blur-md
-          shadow-[0_8px_25px_rgba(0,10,30,0.85),inset_0_1px_1px_rgba(255,255,255,0.15)]
+          flex items-center gap-2 rounded-full border border-white/25
+          bg-slate-950/75 backdrop-blur-xl
+          shadow-[0_8px_32px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.3)]
           overflow-hidden transition-all duration-300 ease-in-out
           ${open ? "max-w-[360px] opacity-100 pl-3 pr-1.5 py-1 mr-2" : "max-w-0 opacity-0 p-0 border-0 mr-0 pointer-events-none"}
         `}
       >
-        {/* Page ID Code */}
-        <span className="text-[11px] font-mono font-bold text-sky-300 whitespace-nowrap tracking-wide bg-sky-950/90 px-2 py-0.5 rounded-full border border-sky-400/40 shadow-inner">
+        {/* Page ID Code in frosted glass capsule */}
+        <span className="text-[11px] font-mono font-bold text-white whitespace-nowrap tracking-wide bg-white/10 px-2 py-0.5 rounded-full border border-white/20 shadow-inner">
           {page.id}
         </span>
 
         {/* Page Name */}
-        <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap truncate max-w-[160px] sm:max-w-[200px]" title={page.name}>
+        <span className="text-[11px] font-medium text-slate-100/95 whitespace-nowrap truncate max-w-[160px] sm:max-w-[200px]" title={page.name}>
           {page.name}
         </span>
 
@@ -144,12 +151,12 @@ export default function PageIdBadge({
             flex h-6 w-6 shrink-0 items-center justify-center rounded-full
             transition-all duration-200 ml-0.5 cursor-pointer
             ${copied
-              ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-              : "bg-sky-500/15 text-sky-300 hover:text-white hover:bg-sky-500/30 border border-sky-400/30"
+              ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/50 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+              : "bg-white/10 text-white/80 hover:text-white hover:bg-white/25 border border-white/25 shadow-xs"
             }
           `}
         >
-          {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-3 w-3 text-emerald-300" /> : <Copy className="h-3 w-3" />}
         </button>
       </div>
     </aside>
