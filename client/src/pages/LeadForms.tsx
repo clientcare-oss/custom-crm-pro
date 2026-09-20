@@ -176,13 +176,6 @@ export default function LeadForms() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Page ID */}
-      <div className="fixed bottom-3 right-3 z-50">
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground/40 bg-background/60 border border-border/30 rounded px-1.5 py-0.5">
-          <Hash className="w-2.5 h-2.5" /> PG-012
-        </span>
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

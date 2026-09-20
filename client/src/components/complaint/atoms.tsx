@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { CheckCircle2, AlertTriangle, XCircle, Sparkles } from "lucide-react";
+import { broadcastPageId } from "@/lib/pageIdRegistry";
 
 export const ENGINE = {
   navy: "#07162B",
@@ -115,10 +116,11 @@ export const inputCls = "w-full rounded-md border border-[#22355499] bg-[#0B1F3A
 export const selectCls = inputCls + " appearance-none";
 
 export function PageIdBadge({ id }: { id: string }) {
-  return (
-    <div className="fixed bottom-2 right-2 z-50 rounded border border-[#22355499] bg-[#0B1F3A]/90 px-1.5 py-0.5 text-[10px] text-slate-500" title={`Page ID: ${id}`}>
-      {id}
-    </div>
-  );
+  useEffect(() => {
+    if (id) {
+      broadcastPageId({ id, name: "State Complaint Builder" });
+    }
+  }, [id]);
+  return null;
 }
 

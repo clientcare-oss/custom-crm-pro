@@ -33,7 +33,7 @@ export default function PageIdBadge({
     if (explicitId) {
       return { id: explicitId, name: explicitName || PAGE_IDS[location]?.name || "Waypoint View" };
     }
-    return resolvePageId(location);
+    return resolvePageId(location, typeof window !== "undefined" ? window.location.search : "");
   });
 
   // Re-resolve when location changes or explicit props change
@@ -43,7 +43,7 @@ export default function PageIdBadge({
       setActivePage(pageInfo);
       broadcastPageId(pageInfo);
     } else {
-      setActivePage(resolvePageId(location));
+      setActivePage(resolvePageId(location, typeof window !== "undefined" ? window.location.search : ""));
     }
     setOpen(false);
     setCopied(false);
@@ -65,8 +65,13 @@ export default function PageIdBadge({
     return () => window.removeEventListener("waypoint:page-id-change", handlePageIdChange);
   }, [explicitId]);
 
-  const page = activePage;
+  // If explicitId or inline is specified, this is a local declaration on a page/subpage.
+  // It registers/broadcasts the ID to the global widget at the bottom right and renders NOTHING in the header.
+  if (isInline || Boolean(explicitId)) {
+    return null;
+  }
 
+  const page = activePage;
   if (!page) return null;
 
   const handleCopy = (e?: React.MouseEvent) => {
@@ -86,90 +91,68 @@ export default function PageIdBadge({
     });
   };
 
-  // ── Inline Badge Mode (Rendered inside headers, tool consoles, and sub-pages) ──
-  if (isInline) {
-    return (
+  // ── Global Floating Corner Mode (Discreet # launcher at bottom right) ──
+  return (
+    <aside
+      aria-label="Waypoint Page ID Utility"
+      className={cn("fixed bottom-3 right-3 z-50 flex items-center flex-row-reverse select-none", className)}
+    >
+      {/* Trigger button — always visible, sleek 3D oceanic # symbol at bottom right */}
       <button
         type="button"
-        onClick={handleCopy}
-        title={copied ? "Copied!" : `Copy Page ID (${page.id} · ${page.name})`}
-        className={cn(
-          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold tracking-wider uppercase border transition-all duration-200 cursor-pointer select-none",
-          copied
-            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
-            : "bg-sky-950/80 text-sky-300 border-sky-400/30 hover:bg-sky-900/80 hover:border-sky-400/60 hover:text-white shadow-xs",
-          className
-        )}
-        aria-label={`Page ID ${page.id}`}
-      >
-        <Hash className="w-2.5 h-2.5 opacity-70 shrink-0" />
-        <span>{page.id}</span>
-        {copied ? (
-          <Check className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-        ) : (
-          <Copy className="w-2.5 h-2.5 opacity-40 hover:opacity-100 shrink-0" />
-        )}
-      </button>
-    );
-  }
-
-  // ── Floating Corner Mode (Persistent global badge in bottom-left) ──
-  return (
-    <div className={cn("fixed bottom-4 left-4 z-50 flex items-center justify-start", className)}>
-      {/* Trigger button — always visible, minimal in bottom-left */}
-      <button
         onClick={() => setOpen(prev => !prev)}
-        title={open ? "Hide page ID" : `Page ID: ${page.id}`}
+        title={open ? "Hide Page ID" : `Page ID: ${page.id} · ${page.name} (Click to toggle)`}
         className={`
-          flex h-7 w-7 items-center justify-center rounded-full
-          border transition-all duration-200 cursor-pointer
+          flex h-7.5 w-7.5 sm:h-8 sm:w-8 items-center justify-center rounded-full
+          border transition-all duration-200 cursor-pointer shadow-md
           ${open
-            ? "border-primary/40 bg-primary/10 text-primary shadow-sm"
-            : "border-border/50 bg-background/70 text-muted-foreground/50 hover:text-muted-foreground hover:border-border hover:bg-background/90 backdrop-blur-sm shadow-sm"
+            ? "border-sky-400 bg-gradient-to-b from-[#0e3b75] to-[#041d40] text-white shadow-[0_0_15px_rgba(56,189,248,0.5),inset_0_1px_1px_rgba(255,255,255,0.3)] scale-105"
+            : "border-sky-500/35 bg-gradient-to-b from-[#0a2347]/95 via-[#061730]/95 to-[#020b18]/95 text-sky-300 hover:text-white hover:border-sky-400 hover:scale-105 backdrop-blur-md shadow-[0_4px_12px_rgba(0,10,30,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]"
           }
         `}
-        aria-label="Show page ID"
+        aria-label="Toggle Page ID"
       >
-        <Hash className="h-3.5 w-3.5" />
+        <Hash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </button>
 
-      {/* Expanded pill */}
+      {/* Expanded pill (slides smoothly to the left) */}
       <div
         className={`
-          flex items-center gap-2 rounded-full border border-border/70
-          bg-background/95 backdrop-blur-sm shadow-md
+          flex items-center gap-2 rounded-full border border-sky-400/40
+          bg-gradient-to-r from-[#030e20]/95 via-[#061833]/95 to-[#020b18]/95 backdrop-blur-md
+          shadow-[0_8px_25px_rgba(0,10,30,0.85),inset_0_1px_1px_rgba(255,255,255,0.15)]
           overflow-hidden transition-all duration-300 ease-in-out
-          ${open ? "max-w-[280px] opacity-100 pl-3 pr-1.5 py-1.5 ml-2" : "max-w-0 opacity-0 p-0 border-0 ml-0"}
+          ${open ? "max-w-[360px] opacity-100 pl-3 pr-1.5 py-1 mr-2" : "max-w-0 opacity-0 p-0 border-0 mr-0 pointer-events-none"}
         `}
       >
-        {/* ID + name */}
-        <span className="text-[11px] font-mono font-bold text-foreground whitespace-nowrap tracking-wide">
+        {/* Page ID Code */}
+        <span className="text-[11px] font-mono font-bold text-sky-300 whitespace-nowrap tracking-wide bg-sky-950/90 px-2 py-0.5 rounded-full border border-sky-400/40 shadow-inner">
           {page.id}
         </span>
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-          · {page.name}
+
+        {/* Page Name */}
+        <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap truncate max-w-[160px] sm:max-w-[200px]" title={page.name}>
+          {page.name}
         </span>
 
-        {/* Copy button */}
+        {/* Copy Button */}
         <button
+          type="button"
           onClick={handleCopy}
-          title={copied ? "Copied!" : "Copy page ID"}
+          title={copied ? "Copied!" : `Copy "${page.id} · ${page.name}"`}
           className={`
             flex h-6 w-6 shrink-0 items-center justify-center rounded-full
             transition-all duration-200 ml-0.5 cursor-pointer
             ${copied
-              ? "bg-emerald-500/15 text-emerald-600"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+              : "bg-sky-500/15 text-sky-300 hover:text-white hover:bg-sky-500/30 border border-sky-400/30"
             }
           `}
         >
-          {copied
-            ? <Check className="h-3 w-3" />
-            : <Copy className="h-3 w-3" />
-          }
+          {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
         </button>
       </div>
-    </div>
+    </aside>
   );
 }
 
