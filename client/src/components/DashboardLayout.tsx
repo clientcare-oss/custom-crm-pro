@@ -43,7 +43,6 @@ import { Input } from "@/components/ui/input";
 import QuickSetupModal from './QuickSetupModal';
 import { IssueReporterModal } from "./IssueReporterModal";
 import ScopedErrorBoundary from "./ScopedErrorBoundary";
-import TimeTrackerFloatingWidget from "@/components/time-tracking/TimeTrackerFloatingWidget";
 
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -1058,7 +1057,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       )}
 
       <FirstMateGlobalLauncher />
-      <TimeTrackerFloatingWidget />
       <AIAssistant />
       <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
       <GoToPageModal open={goToPageOpen} onClose={() => setGoToPageOpen(false)} />

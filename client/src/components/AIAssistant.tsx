@@ -81,18 +81,20 @@ export function AIAssistant() {
       <button
         onClick={() => setOpen(o => !o)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200",
-          "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95",
-          open && "rotate-0"
+          "fixed bottom-14 right-3.5 z-40 w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer select-none",
+          "bg-slate-950/60 hover:bg-slate-900/90 text-amber-300 hover:text-amber-200 border border-amber-400/30 hover:border-amber-400/60 backdrop-blur-xl",
+          "shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_10px_rgba(251,191,36,0.15)] opacity-40 hover:opacity-100 hover:scale-105 active:scale-95",
+          open && "opacity-100 border-amber-400/70"
         )}
+        title={open ? "Close AI Assistant" : "Open Waypoint AI Assistant"}
         aria-label="Open AI Assistant"
       >
-        {open ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
+        {open ? <X className="w-4 h-4 text-white" /> : <Sparkles className="w-4 h-4 text-amber-300 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]" />}
       </button>
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        <div className="fixed bottom-24 right-3.5 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           style={{ height: "520px" }}>
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-primary/5">

@@ -45,7 +45,7 @@ export function FirstMateGlobalLauncher() {
   };
 
   return (
-    <div className="fixed bottom-24 right-6 z-40 flex flex-col items-end">
+    <div className="fixed bottom-25 right-3.5 z-40 flex flex-col items-end">
       {/* Quick context action menu when clicked during active session */}
       {menuOpen && (
         <div className="mb-2 bg-[#061222] border border-cyan-500/30 rounded-xl p-2.5 shadow-2xl shadow-cyan-950/80 text-xs w-64 backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150">
