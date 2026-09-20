@@ -72,8 +72,8 @@ export default function LinkedContextColumn({
   const messageCount = linkedContext?.messageCount || 24;
 
   return (
-    <aside className="w-56 md:w-60 lg:w-64 shrink-0 bg-gradient-to-b from-[#061833]/98 via-[#041228]/98 to-[#020b18]/98 border-l border-sky-500/25 flex flex-col justify-between overflow-y-auto relative text-slate-100 shadow-[inset_10px_0_20px_rgba(0,0,0,0.35)]">
-      <div className="p-3.5 space-y-4">
+    <aside className="w-48 sm:w-52 md:w-56 shrink-0 bg-gradient-to-b from-[#061833]/98 via-[#041228]/98 to-[#020b18]/98 border-l border-sky-500/25 flex flex-col justify-between overflow-y-auto relative text-slate-100 shadow-[inset_10px_0_20px_rgba(0,0,0,0.35)]">
+      <div className="p-2.5 space-y-3">
         {/* Top Header */}
         <div className="flex items-center justify-between pb-2 border-b border-sky-500/20">
           <h3 className="text-sm font-bold text-white tracking-wide flex items-center gap-2 font-sans">
