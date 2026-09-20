@@ -383,33 +383,36 @@ export default function ActiveConversationColumn({
                           return (
                             <div
                               key={link.id || idx}
-                              className="bg-[#020b18]/90 border border-sky-400/35 rounded-xl p-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)] space-y-2.5"
+                              className="w-full min-w-[280px] sm:min-w-[300px] bg-[#020b18]/95 border border-sky-400/35 rounded-xl p-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)] space-y-2.5"
                             >
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8.5 h-8.5 rounded-lg bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
                                   <FileText className="w-4 h-4" />
                                 </div>
-                                <div>
-                                  <h5 className="text-xs font-bold text-white">{meta.title || "Linked Document"}</h5>
+                                <div className="min-w-0">
+                                  <h5 className="text-xs font-bold text-white truncate">{meta.title || "Linked Document"}</h5>
                                   <p className="text-[10px] text-blue-200/70">{meta.subtitle || "PDF • Ready for Review"}</p>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 pt-1">
+                              {/* Perfectly Proportioned 2-Button Grid Row */}
+                              <div className="grid grid-cols-2 gap-2 pt-0.5 w-full">
                                 <Button
                                   size="sm"
                                   onClick={() => toast.success("Opening document in secure previewer...")}
-                                  className="h-7 px-3 text-[11px] font-bold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white rounded-lg shadow-sm"
+                                  className="h-8 px-2 text-[11px] font-bold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                                 >
-                                  Open Document
+                                  <FileText className="w-3 h-3" />
+                                  <span className="truncate">Open Document</span>
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => setSelectedMessageForTask(m)}
-                                  className="h-7 px-3 text-[11px] font-medium bg-transparent hover:bg-sky-500/20 text-sky-200 border-sky-500/30 rounded-lg"
+                                  className="h-8 px-2 text-[11px] font-medium bg-[#061833] hover:bg-sky-500/20 text-sky-200 hover:text-white border border-sky-500/35 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                                 >
-                                  Turn into Task
+                                  <CheckSquare className="w-3 h-3 text-sky-400" />
+                                  <span className="truncate">Turn into Task</span>
                                 </Button>
                               </div>
                             </div>
