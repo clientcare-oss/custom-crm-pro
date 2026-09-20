@@ -171,9 +171,15 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "bg-gradient-to-b from-[#0D4B84] via-[#0A254D] to-[#061833] text-sidebar-foreground border-r border-[#0D4B84] flex h-full w-(--sidebar-width) flex-col shadow-2xl",
+          "relative text-sidebar-foreground border-r border-[#0D4B84] flex h-full w-(--sidebar-width) flex-col shadow-2xl overflow-hidden",
           className
         )}
+        style={{
+          backgroundImage: "linear-gradient(to bottom, rgba(5, 19, 41, 0.78) 0%, rgba(6, 26, 54, 0.45) 50%, rgba(4, 16, 36, 0.82) 100%), url('/sidebar-lighthouse-bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center bottom",
+          backgroundRepeat: "no-repeat",
+        }}
         {...props}
       >
         {children}
@@ -188,10 +194,14 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-gradient-to-b from-[#0D4B84] via-[#0A254D] to-[#061833] text-sidebar-foreground border-r border-[#0D4B84] w-(--sidebar-width) p-0 [&>button]:hidden shadow-2xl"
+          className="text-sidebar-foreground border-r border-[#0D4B84] w-(--sidebar-width) p-0 [&>button]:hidden shadow-2xl overflow-hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              backgroundImage: "linear-gradient(to bottom, rgba(5, 19, 41, 0.78) 0%, rgba(6, 26, 54, 0.45) 50%, rgba(4, 16, 36, 0.82) 100%), url('/sidebar-lighthouse-bg.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center bottom",
+              backgroundRepeat: "no-repeat",
             } as React.CSSProperties
           }
           side={side}
@@ -251,7 +261,13 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-gradient-to-b from-[#0D4B84] via-[#0A254D] to-[#061833] border-r border-[#0D4B84] text-sidebar-foreground group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border shadow-2xl"
+          className="relative border-r border-[#0D4B84] text-sidebar-foreground group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border shadow-2xl overflow-hidden"
+          style={{
+            backgroundImage: "linear-gradient(to bottom, rgba(5, 19, 41, 0.78) 0%, rgba(6, 26, 54, 0.45) 50%, rgba(4, 16, 36, 0.82) 100%), url('/sidebar-lighthouse-bg.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center bottom",
+            backgroundRepeat: "no-repeat",
+          }}
         >
           {children}
         </div>

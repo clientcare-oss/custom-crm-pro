@@ -54,8 +54,10 @@ import { quoRouter } from "./routers/quo";
 import { pipelineRouter } from "./routers/pipeline";
 import { caseActivityRouter } from "./routers/caseActivity";
 import { guidanceRouter } from "./routers/guidance";
+import { supportOffersRouter } from "./routers/supportOffers";
 
 export const appRouter = router({
+  supportOffers: supportOffersRouter,
   guidance: guidanceRouter,
   caseActivity: caseActivityRouter,
   pipeline: pipelineRouter,

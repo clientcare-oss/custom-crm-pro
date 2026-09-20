@@ -2019,3 +2019,71 @@ export const clientPresence = mysqlTable("client_presence", {
 
 export type ClientPresence = typeof clientPresence.$inferSelect;
 export type InsertClientPresence = typeof clientPresence.$inferInsert;
+
+// ── Client Support Offers (Inline Student Workspace Support Offer Panel) ────────
+export const clientSupportOffers = mysqlTable("client_support_offers", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
+  familyId: int("family_id"),
+  studentId: int("student_id").notNull(),
+  parentContactId: int("parent_contact_id"),
+  sourceType: varchar("source_type", { length: 32 }).default("library").notNull(), // "library" | "custom"
+  sourceServiceId: int("source_service_id"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  price: int("price").default(0).notNull(), // in cents (USD)
+  currency: varchar("currency", { length: 10 }).default("usd").notNull(),
+  deliveryTime: varchar("delivery_time", { length: 64 }).default("3 business days").notNull(),
+  includedItems: text("included_items"), // JSON array of string checklist items
+  planEligibility: varchar("plan_eligibility", { length: 64 }).default("one-time add-on").notNull(),
+  personalNote: text("personal_note"),
+  allowDocumentUpload: boolean("allow_document_upload").default(false).notNull(),
+  requirePayment: boolean("require_payment").default(true).notNull(),
+  priorityEnabled: boolean("priority_enabled").default(false).notNull(),
+  priorityPrice: int("priority_price"), // in cents (USD)
+  priorityDeliveryTime: varchar("priority_delivery_time", { length: 64 }),
+  priorityDescription: text("priority_description"),
+  expiresAt: timestamp("expires_at"),
+  status: varchar("status", { length: 32 }).default("draft").notNull(), // "draft" | "sent" | "viewed" | "accepted" | "payment_pending" | "paid" | "payment_failed" | "in_progress" | "completed" | "declined" | "expired" | "canceled"
+  createdBy: varchar("created_by", { length: 255 }).notNull(),
+  sentBy: varchar("sent_by", { length: 255 }),
+  sentAt: timestamp("sent_at"),
+  viewedAt: timestamp("viewed_at"),
+  acceptedAt: timestamp("accepted_at"),
+  declinedAt: timestamp("declined_at"),
+  paidAt: timestamp("paid_at"),
+  completedAt: timestamp("completed_at"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  selectedPriority: boolean("selected_priority").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  studentIdx: index("cso_student_id_idx").on(t.studentId),
+  parentIdx: index("cso_parent_contact_id_idx").on(t.parentContactId),
+  statusIdx: index("cso_status_idx").on(t.status),
+  orgIdx: index("cso_org_id_idx").on(t.organizationId),
+}));
+
+export type ClientSupportOffer = typeof clientSupportOffers.$inferSelect;
+export type InsertClientSupportOffer = typeof clientSupportOffers.$inferInsert;
+
+export const clientSupportOfferEvents = mysqlTable("client_support_offer_events", {
+  id: int("id").autoincrement().primaryKey(),
+  offerId: int("offer_id").notNull(),
+  studentId: int("student_id").notNull(),
+  familyId: int("family_id"),
+  serviceId: int("service_id"),
+  eventType: varchar("event_type", { length: 64 }).notNull(), // "offer_created" | "draft_saved" | "offer_edited" | "offer_sent" | "parent_notified" | "offer_viewed" | "offer_accepted" | "payment_started" | "payment_completed" | "payment_failed" | "service_started" | "service_completed" | "offer_declined" | "offer_expired" | "offer_canceled"
+  actor: varchar("actor", { length: 255 }).notNull(),
+  previousStatus: varchar("previous_status", { length: 32 }),
+  newStatus: varchar("new_status", { length: 32 }),
+  metadata: text("metadata"), // JSON string
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+}, (t) => ({
+  offerIdx: index("csoe_offer_id_idx").on(t.offerId),
+  studentIdx: index("csoe_student_id_idx").on(t.studentId),
+}));
+
+export type ClientSupportOfferEvent = typeof clientSupportOfferEvents.$inferSelect;
+export type InsertClientSupportOfferEvent = typeof clientSupportOfferEvents.$inferInsert;
+

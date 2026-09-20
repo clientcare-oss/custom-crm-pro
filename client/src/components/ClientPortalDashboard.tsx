@@ -7,6 +7,7 @@ import {
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "./CaseCompassCard";
+import { ParentOfferCard } from "./portal/ParentOfferCard";
 
 interface ClientPortalDashboardProps {
   displayName: string;
@@ -318,6 +319,15 @@ export default function ClientPortalDashboard({
       isLight ? "text-slate-800" : "text-slate-100"
     }`}>
       
+      {/* ── RECOMMENDED SUPPORT OFFER (IF ACTIVE) ────────────────── */}
+      {student1?.id && (
+        <ParentOfferCard
+          studentId={student1.id}
+          studentName={student1.firstName || student1.name || "Liam"}
+          isLight={isLight}
+        />
+      )}
+
       {/* ── ADVOCACY JOURNEY & WHAT'S NEW ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         

@@ -54,8 +54,26 @@ import {
   updateFirstMateSessionFeedback,
   deleteFirstMateSessionRun,
 } from "./db/firstMateSessions";
+import {
+  listOffersForStudent,
+  getOfferById,
+  getActiveOfferForPortal,
+  saveDraftOffer,
+  sendOffer,
+  updateOfferStatus,
+  recordOfferEvent,
+  listOfferEvents,
+} from "./db/supportOffers";
 
 export {
+  listOffersForStudent,
+  getOfferById,
+  getActiveOfferForPortal,
+  saveDraftOffer,
+  sendOffer,
+  updateOfferStatus,
+  recordOfferEvent,
+  listOfferEvents,
   saveFirstMateSessionRun,
   listFirstMateSessionRuns,
   getFirstMateSessionRunBySessionId,

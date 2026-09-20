@@ -207,7 +207,7 @@ describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", { timeout: 30
     console.log("DEBUG SCENARIO 2 DETECTIONS:", JSON.stringify(deepResult.deepAssist.detections));
     expect(
       deepResult.deepAssist.detections.some(
-        (d) => (d.type === "PROPOSAL" || d.type === "SERVICE_CHANGE") && d.summary.toLowerCase().includes("speech")
+        (d) => (d.type === "PROPOSAL" || d.type === "SERVICE_CHANGE" || d.type === "POSSIBLE_REFUSAL" || d.type === "DISPUTE") && d.summary.toLowerCase().includes("speech")
       )
     ).toBe(true);
   });

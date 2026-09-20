@@ -183,13 +183,21 @@ export function ClientPortalSidebar({
   });
 
   return (
-    <div className={`flex flex-col h-full border-r transition-all duration-[300ms] ease-in-out
-      ${isLight ? "bg-white border-slate-200" : "bg-gradient-to-b from-[#0D4B84] via-[#0A254D] to-[#061833] border-[#0D4B84] shadow-2xl"}
-      ${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64 shrink-0"}`}>
+    <div 
+      className={`relative flex flex-col h-full border-r transition-all duration-[300ms] ease-in-out overflow-hidden
+        ${isLight ? "bg-white border-slate-200" : "border-[#0D4B84]/50 shadow-2xl"}
+        ${mobile ? "w-72" : isCollapsed ? "w-20" : "w-64 shrink-0"}`}
+      style={!isLight ? {
+        backgroundImage: "linear-gradient(to bottom, rgba(5, 19, 41, 0.78) 0%, rgba(6, 26, 54, 0.45) 50%, rgba(4, 16, 36, 0.82) 100%), url('/sidebar-lighthouse-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center bottom",
+        backgroundRepeat: "no-repeat",
+      } : undefined}
+    >
       
       {/* Header Logo */}
-      <div className={`pt-5 pb-4 flex flex-col items-center border-b transition-colors duration-[3000ms] ease-in-out relative
-        ${isLight ? "border-slate-200" : "bg-gradient-to-b from-[#0E4F8C]/30 to-transparent border-[#0D4B84]/60"}
+      <div className={`pt-5 pb-4 flex flex-col items-center border-b transition-colors duration-[300ms] ease-in-out relative
+        ${isLight ? "border-slate-200" : "bg-slate-950/40 backdrop-blur-md border-white/10"}
         ${isCollapsed && !mobile ? "px-2 gap-3" : "px-5"}`}>
         {!isLight && (
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
@@ -309,10 +317,10 @@ export function ClientPortalSidebar({
                       ${isActive
                         ? isLight
                           ? "border border-amber-500/50 text-amber-900 bg-amber-500/15 shadow-sm"
-                          : "border border-amber-400/80 text-amber-300 bg-amber-400/10 shadow-sm"
+                          : "border border-sky-400/50 text-white bg-[#143E6D]/85 backdrop-blur-md shadow-md"
                         : isLight
                           ? "border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-800"
-                          : "border border-[#0D4B84] bg-[#082043] hover:border-sky-400/50 text-white shadow-md"
+                          : "border border-sky-400/20 bg-[#082043]/65 backdrop-blur-md hover:border-sky-400/50 text-white shadow-md"
                       }`}
                   >
                     <div className="w-full flex items-center gap-2.5">
@@ -391,12 +399,12 @@ export function ClientPortalSidebar({
                     ${isActive
                       ? isLight
                         ? "border border-amber-500/50 text-amber-800 bg-amber-500/15 shadow-sm"
-                        : "border border-[#F5B544]/80 text-[#F5B544] bg-gradient-to-r from-[#F5B544]/25 via-[#F5B544]/15 to-transparent shadow-sm font-bold"
+                        : "border border-sky-400/50 text-white bg-[#143E6D]/85 backdrop-blur-md shadow-sm font-bold"
                       : isCompleted
-                      ? "text-emerald-400 hover:bg-white/5"
+                      ? "text-emerald-400 hover:bg-white/10 hover:backdrop-blur-xs"
                       : isLight
                         ? "text-slate-700 hover:bg-slate-100"
-                        : "text-blue-100/80 hover:text-white hover:bg-white/5"
+                        : "text-blue-100/90 hover:text-white hover:bg-white/10 hover:backdrop-blur-xs"
                     }`}
                 >
                   <Icon className={`h-3.5 w-3.5 shrink-0 ${
@@ -448,13 +456,13 @@ export function ClientPortalSidebar({
                   ${isActive
                     ? isLight
                       ? "border border-amber-500/50 text-amber-700 bg-amber-500/10 shadow-sm"
-                      : "border border-[#F5B544]/80 text-[#F5B544] bg-gradient-to-r from-[#F5B544]/25 via-[#F5B544]/15 to-transparent shadow-lg shadow-amber-500/10 font-bold"
+                      : "border border-sky-400/40 text-white bg-[#143E6D]/85 backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_12px_rgba(56,189,248,0.2)] font-bold"
                     : isLight
                       ? "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                      : "border border-transparent text-blue-100/75 hover:text-white hover:bg-white/5"
+                      : "border border-transparent text-slate-100/90 hover:text-white hover:bg-white/10 hover:backdrop-blur-xs"
                   }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : isLight ? "text-slate-450" : "text-white/40"} ${id === "plan-transition" && isActive ? "animate-spin-slow" : ""}`} />
+                <Icon className={`h-4.5 w-4.5 shrink-0 ${isActive ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" : isLight ? "text-slate-450" : "text-white/80"} ${id === "plan-transition" && isActive ? "animate-spin-slow" : ""}`} />
                 {(!isCollapsed || mobile) && (
                   <span className="truncate flex-1 flex items-center justify-between">
                     <span>{label === "Details" || label === "Student Workspace" ? "My Students" : label}</span>
@@ -480,7 +488,7 @@ export function ClientPortalSidebar({
       </nav>
 
       {/* Footer Controls */}
-      <div className={`px-3 pb-4 pt-3 border-t space-y-2.5 ${isLight ? "border-slate-200" : "bg-gradient-to-t from-[#061833] via-[#071C3C]/80 to-transparent border-[#0D4B84]/60"}`}>
+      <div className={`px-3 pb-4 pt-3 border-t space-y-2.5 ${isLight ? "border-slate-200" : "bg-slate-950/50 backdrop-blur-md border-white/10"}`}>
         
         {/* Permanent Portal Tour utility for active clients */}
         {!isOnboardingOrPreSale && onStartTour && (
@@ -503,7 +511,7 @@ export function ClientPortalSidebar({
             onClick={onToggleTheme}
             title={isLight ? "Dark mode" : "Light mode"}
             className={`flex items-center gap-1.5 rounded-lg transition-colors duration-[3000ms] ease-in-out text-xs overflow-hidden
-              ${isLight ? "text-slate-500 hover:text-slate-800 hover:bg-slate-100" : "text-white/40 hover:text-white/70"}
+              ${isLight ? "text-slate-500 hover:text-slate-800 hover:bg-slate-100" : "text-white/80 hover:text-white hover:bg-white/10"}
               ${isCollapsed && !mobile ? "p-2 justify-center" : "px-2.5 py-1.5"}`}
           >
             <div className="relative w-3.5 h-3.5 overflow-hidden shrink-0">
@@ -540,7 +548,7 @@ export function ClientPortalSidebar({
             onClick={onLogout}
             title="Logout"
             className={`flex items-center gap-1.5 rounded-lg transition-colors text-xs
-              ${isLight ? "text-slate-500 hover:text-slate-800 hover:bg-slate-100" : "text-white/40 hover:text-red-400"}
+              ${isLight ? "text-slate-500 hover:text-slate-800 hover:bg-slate-100" : "text-white/80 hover:text-red-300 hover:bg-white/10"}
               ${isCollapsed && !mobile ? "p-2 justify-center" : "px-2.5 py-1.5"}`}
           >
             <LogOut className={`h-3.5 w-3.5 ${isLight ? "text-red-500" : "text-red-400"}`} />

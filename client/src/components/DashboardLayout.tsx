@@ -670,7 +670,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           disableTransition={isResizing}
         >
           {/* ── Header: toggle + logo + search ── */}
-          <SidebarHeader className="px-3 pt-4 pb-2.5 bg-gradient-to-b from-[#0E4F8C]/40 to-transparent border-b border-[#0D4B84]/50 gap-2.5 relative">
+          <SidebarHeader className="px-3 pt-4 pb-2.5 bg-slate-950/40 backdrop-blur-md border-b border-white/10 gap-2.5 relative">
             {/* Top golden accent shimmer line */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
 
@@ -713,7 +713,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search modules... (⌘K)"
-                  className="h-8.5 pl-8 pr-7 bg-[#082043] border border-[#0D4B84] text-xs rounded-xl placeholder:text-blue-200/50 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white shadow-md transition-colors font-medium"
+                  className="h-8.5 pl-8 pr-7 bg-[#082043]/70 backdrop-blur-sm border border-sky-400/25 text-xs rounded-xl placeholder:text-blue-200/50 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white shadow-md transition-colors font-medium"
                 />
                 {searchQuery && (
                   <button
@@ -771,9 +771,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       </span>
                     </button>
 
-                    {/* Section Items Card — Solid Approved #082043 Navy */}
+                    {/* Section Items Card — Translucent Container Box Over Full Lighthouse Image */}
                     {!isCollapsedSection && (
-                      <div className="rounded-xl bg-[#082043] border border-[#0D4B84] p-1 shadow-md relative overflow-hidden transition-all duration-200 animate-in fade-in">
+                      <div className="rounded-xl bg-[#082043]/60 hover:bg-[#082043]/75 backdrop-blur-md border border-sky-400/20 hover:border-sky-400/35 p-1 shadow-lg relative overflow-hidden transition-all duration-200 animate-in fade-in">
                         <SidebarMenu className="gap-0.5">
                           {group.items.map((item) => {
                             const isActive = 
@@ -794,12 +794,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                                   tooltip={item.label}
                                   className={`h-8 transition-all rounded-lg text-xs cursor-pointer font-medium
                                     ${isActive
-                                      ? "bg-gradient-to-r from-[#F5B544]/30 via-[#F5B544]/20 to-transparent border border-[#F5B544] text-[#F5B544] font-bold shadow-[0_0_12px_rgba(245,181,68,0.25)]"
+                                      ? "bg-[#143E6D]/85 border border-sky-400/50 text-white font-bold shadow-[0_2px_10px_rgba(56,189,248,0.25)]"
                                       : "text-slate-100 hover:text-white hover:bg-white/[0.12] border border-transparent"
                                     }`}
                                 >
                                   {item.icon && (
-                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-[#F5B544]" : "text-sky-300"}`} />
+                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.4)]" : "text-sky-300"}`} />
                                   )}
                                   <span className="truncate">{item.label}</span>
                                 </SidebarMenuButton>
@@ -816,7 +816,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarContent>
 
           {/* ── Footer: controls ── */}
-          <SidebarFooter className="bg-gradient-to-t from-[#061833] via-[#071C3C]/80 to-transparent border-t border-[#0D4B84]/60 p-2.5 space-y-1.5">
+          <SidebarFooter className="bg-slate-950/50 backdrop-blur-md border-t border-white/10 p-2.5 space-y-1.5">
             {/* Side-by-side Quick Setup & Theme toggle */}
             <div className="flex items-center gap-1.5 w-full group-data-[collapsible=icon]:flex-col">
               {/* Quick Setup */}
@@ -835,7 +835,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={toggleTheme}
                 title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
-                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.14] border border-[#0D4B84] bg-[#082043] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-100 hover:text-white text-xs font-medium cursor-pointer shrink-0 shadow-sm group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
+                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.14] border border-sky-400/20 bg-[#082043]/70 backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-100 hover:text-white text-xs font-medium cursor-pointer shrink-0 shadow-sm group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'navy'
@@ -851,7 +851,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             <div className="flex items-center justify-between gap-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 bg-[#082043] hover:border-sky-400/50 border border-[#0D4B84] transition-all flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0 shadow-md cursor-pointer">
+                  <button className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 bg-[#082043]/75 backdrop-blur-sm hover:border-sky-400/50 border border-sky-400/20 transition-all flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0 shadow-md cursor-pointer">
                     <Avatar className="h-8 w-8 border border-amber-400/40 shrink-0">
                       <AvatarFallback className="text-xs font-semibold bg-amber-500/20 text-amber-300">
                         {user?.name?.charAt(0).toUpperCase()}
