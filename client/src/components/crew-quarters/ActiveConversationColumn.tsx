@@ -347,6 +347,8 @@ export default function ActiveConversationColumn({
             minute: "2-digit",
           });
 
+          const hasAttachedCards = Boolean((m.links && m.links.length > 0) || m.actionRequest);
+
           return (
             <div
               key={m.id}
@@ -362,7 +364,7 @@ export default function ActiveConversationColumn({
               </Avatar>
 
               {/* Bubble & Metadata */}
-              <div className={`space-y-1.5 max-w-[85%] sm:max-w-[70%] ${isMe ? "items-end text-right" : "items-start"}`}>
+              <div className={`flex flex-col space-y-1.5 max-w-[85%] sm:max-w-[70%] ${isMe ? "items-end text-right" : "items-start text-left"}`}>
                 {/* Sender Name & Timestamp */}
                 <div className="flex items-center gap-2 px-1 text-[11px] text-blue-200/60 font-medium">
                   <span className="font-semibold text-white/90">{m.senderName || "Advocate"}</span>
@@ -380,9 +382,11 @@ export default function ActiveConversationColumn({
                 )}
 
                 {/* 3D Message Bubble */}
-                <div className="relative group/bubble">
+                <div className={`relative group/bubble ${hasAttachedCards ? "w-full min-w-[280px] sm:min-w-[320px] max-w-full" : "w-fit max-w-full"}`}>
                   <div
                     className={`rounded-2xl p-4 text-sm leading-relaxed transition-all ${
+                      hasAttachedCards ? "w-full min-w-[280px] sm:min-w-[320px]" : "w-fit"
+                    } ${
                       isMe
                         ? "bg-gradient-to-b from-[#0077FF] via-[#0062E3] to-[#004BB5] text-white rounded-tr-xs shadow-[0_8px_24px_rgba(0,85,225,0.4),0_2px_5px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.35)] border-t border-t-sky-200/50 border-x border-x-sky-400/30 border-b border-b-blue-950 text-left"
                         : "bg-gradient-to-b from-[#102d54] via-[#0c2242] to-[#081830] text-slate-100 rounded-tl-xs shadow-[0_8px_24px_rgba(0,5,20,0.55),0_2px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] border-t border-t-sky-400/35 border-x border-x-sky-500/25 border-b border-b-black/70 backdrop-blur-md text-left hover:brightness-105"
@@ -393,13 +397,13 @@ export default function ActiveConversationColumn({
 
                     {/* Linked Record Card (e.g. Signed Service Agreement) */}
                     {m.links && m.links.length > 0 && (
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 space-y-2 w-full">
                         {m.links.map((link: any, idx: number) => {
                           const meta = link.parsedMetadata || {};
                           return (
                             <div
                               key={link.id || idx}
-                              className="w-full min-w-[280px] sm:min-w-[300px] bg-[#020b18]/95 border border-sky-400/35 rounded-xl p-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)] space-y-2.5"
+                              className="w-full max-w-full bg-[#020b18]/95 border border-sky-400/35 rounded-xl p-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)] space-y-2.5 overflow-hidden box-border"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="w-8.5 h-8.5 rounded-lg bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
@@ -416,18 +420,18 @@ export default function ActiveConversationColumn({
                                 <Button
                                   size="sm"
                                   onClick={() => toast.success("Opening document in secure previewer...")}
-                                  className="h-8 px-2 text-[11px] font-bold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                                  className="h-8 px-2 text-[11px] font-bold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 cursor-pointer min-w-0"
                                 >
-                                  <FileText className="w-3 h-3" />
+                                  <FileText className="w-3.5 h-3.5 shrink-0" />
                                   <span className="truncate">Open Document</span>
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => setSelectedMessageForTask(m)}
-                                  className="h-8 px-2 text-[11px] font-medium bg-[#061833] hover:bg-sky-500/20 text-sky-200 hover:text-white border border-sky-500/35 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                                  className="h-8 px-2 text-[11px] font-medium bg-[#061833] hover:bg-sky-500/20 text-sky-200 hover:text-white border border-sky-500/35 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-w-0"
                                 >
-                                  <CheckSquare className="w-3 h-3 text-sky-400" />
+                                  <CheckSquare className="w-3.5 h-3.5 shrink-0 text-sky-400" />
                                   <span className="truncate">Turn into Task</span>
                                 </Button>
                               </div>
@@ -439,7 +443,7 @@ export default function ActiveConversationColumn({
 
                     {/* Action Request Card */}
                     {m.actionRequest && (
-                      <div className="mt-3">
+                      <div className="mt-3 w-full">
                         <ActionRequestCard
                           actionRequest={m.actionRequest}
                           currentUserId={currentUserId}
