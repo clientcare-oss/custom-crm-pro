@@ -40,7 +40,7 @@ export function RadarReticleIcon({
     >
       <defs>
         <clipPath id={clipId}>
-          <circle cx="50" cy="50" r="46" />
+          <circle cx="50" cy="50" r="48.5" />
         </clipPath>
 
         <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
@@ -69,8 +69,8 @@ export function RadarReticleIcon({
             }
             @keyframes radar-pulse-wave-${reactId} {
               0% { r: 3; opacity: 0.85; stroke-width: 2; }
-              70% { r: 44; opacity: 0.18; stroke-width: 1; }
-              100% { r: 46; opacity: 0; stroke-width: 0.5; }
+              70% { r: 46; opacity: 0.18; stroke-width: 1; }
+              100% { r: 48.5; opacity: 0; stroke-width: 0.5; }
             }
             @keyframes radar-blip-1-${reactId} {
               0%, 7% { opacity: 0.05; transform: scale(0.7); }
@@ -89,7 +89,7 @@ export function RadarReticleIcon({
       </defs>
 
       {/* Scope Housing & Outer Glow */}
-      <circle cx="50" cy="50" r="46" fill={`url(#${glowId})`} stroke="#06b6d4" strokeWidth="2.5" />
+      <circle cx="50" cy="50" r="48" fill={`url(#${glowId})`} stroke="#06b6d4" strokeWidth="2.5" />
 
       {/* Animated Radar Sweep & Dynamic Radar Elements */}
       {animated && (
@@ -114,7 +114,7 @@ export function RadarReticleIcon({
           >
             {/* Trailing wedge / phosphor gradient sector (60° counter-clockwise from 12 o'clock) */}
             <path
-              d="M 50 50 L 50 4 A 46 46 0 0 0 10.16 27 Z"
+              d="M 50 50 L 50 2 A 48 48 0 0 0 8 26 Z"
               fill={`url(#${sweepId})`}
             />
             {/* Leading bright sweep line */}
@@ -122,7 +122,7 @@ export function RadarReticleIcon({
               x1="50"
               y1="50"
               x2="50"
-              y2="4"
+              y2="2"
               stroke="#67e8f9"
               strokeWidth="2"
               strokeLinecap="round"
@@ -159,14 +159,14 @@ export function RadarReticleIcon({
       )}
 
       {/* Scope Reticle Range Rings */}
-      <circle cx="50" cy="50" r="34" stroke="#0891b2" strokeWidth="1.75" strokeDasharray="3 3" opacity="0.8" />
-      <circle cx="50" cy="50" r="22" stroke="#22d3ee" strokeWidth="1.5" opacity="0.9" />
+      <circle cx="50" cy="50" r="35" stroke="#0891b2" strokeWidth="1.75" strokeDasharray="3 3" opacity="0.8" />
+      <circle cx="50" cy="50" r="23" stroke="#22d3ee" strokeWidth="1.5" opacity="0.9" />
 
       {/* Reticle Crosshairs */}
-      <line x1="50" y1="4" x2="50" y2="28" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-      <line x1="50" y1="72" x2="50" y2="96" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-      <line x1="4" y1="50" x2="28" y2="50" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-      <line x1="72" y1="50" x2="96" y2="50" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
+      <line x1="50" y1="2" x2="50" y2="28" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
+      <line x1="50" y1="72" x2="50" y2="98" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
+      <line x1="2" y1="50" x2="28" y2="50" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
+      <line x1="72" y1="50" x2="98" y2="50" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
 
       {/* 4 Diagonal Sub-Ticks on Outer Bezel */}
       <line x1="18.5" y1="18.5" x2="23.5" y2="23.5" stroke="#0891b2" strokeWidth="1.25" strokeLinecap="round" opacity="0.6" />

@@ -161,7 +161,7 @@ export default function CopilotUtilityCapsule() {
                     : "First Mate Copilot (Click to open)"
                 }
                 className={cn(
-                  "group/firstmate relative flex h-6.5 w-6.5 items-center justify-center rounded-full",
+                  "group/firstmate relative flex h-6.5 w-6.5 items-center justify-center rounded-full overflow-hidden",
                   "cursor-pointer select-none transition-all duration-300",
                   stateKey === "ALERT"
                     ? "bg-rose-950/40 border border-rose-400/70 shadow-[0_0_12px_rgba(244,63,94,0.5)] scale-105"
@@ -174,12 +174,12 @@ export default function CopilotUtilityCapsule() {
                 aria-label="First Mate Copilot"
               >
                 {/* Top 3D glass specular crescent reflection */}
-                <span className="absolute top-[2px] inset-x-1.5 h-2 rounded-t-full bg-gradient-to-b from-white/70 to-transparent pointer-events-none opacity-85" />
+                <span className="absolute top-[1px] inset-x-1 h-2 rounded-t-full bg-gradient-to-b from-white/70 to-transparent pointer-events-none opacity-85 z-20" />
 
-                {/* Crisp luminous Radar Reticle icon */}
+                {/* Crisp luminous Radar Reticle icon filling the entire bubble */}
                 <RadarReticleIcon
                   className={cn(
-                    "h-3.5 w-3.5 text-cyan-300 drop-shadow-[0_0_4px_rgba(34,211,238,0.9)] relative z-10 transition-transform duration-200 group-hover/firstmate:scale-110",
+                    "w-full h-full p-0 text-cyan-300 drop-shadow-[0_0_4px_rgba(34,211,238,0.9)] relative z-10 transition-transform duration-200 group-hover/firstmate:scale-105",
                     isLive && "animate-pulse"
                   )}
                   pulse={stateKey === "LIVE"}
@@ -190,22 +190,22 @@ export default function CopilotUtilityCapsule() {
                   <span className="absolute inset-0 rounded-full border border-cyan-400 animate-ping opacity-35 pointer-events-none" />
                 )}
 
-                {/* Status Dot */}
-                {stateKey === "ALERT" && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-1 ring-white/60 shadow-[0_0_6px_rgba(244,63,94,0.9)] animate-bounce" />
-                )}
-                {stateKey === "PAUSED" && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-500 rounded-full ring-1 ring-white/60 shadow-[0_0_6px_rgba(251,191,36,0.9)] flex items-center justify-center">
-                    <Pause className="w-1.5 h-1.5 text-black fill-black" />
-                  </span>
-                )}
-                {stateKey === "LIVE" && !hasActiveAlert && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-1 ring-white/60 shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
-                )}
-
                 {/* Soft internal cyan refraction glint */}
                 <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-400/10 via-transparent to-white/10 pointer-events-none" />
               </button>
+
+              {/* Status Dot (placed outside button so overflow-hidden doesn't clip it) */}
+              {stateKey === "ALERT" && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-1 ring-white/60 shadow-[0_0_6px_rgba(244,63,94,0.9)] animate-bounce z-30 pointer-events-none" />
+              )}
+              {stateKey === "PAUSED" && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-500 rounded-full ring-1 ring-white/60 shadow-[0_0_6px_rgba(251,191,36,0.9)] flex items-center justify-center z-30 pointer-events-none">
+                  <Pause className="w-1.5 h-1.5 text-black fill-black" />
+                </span>
+              )}
+              {stateKey === "LIVE" && !hasActiveAlert && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-1 ring-white/60 shadow-[0_0_6px_rgba(52,211,153,0.9)] z-30 pointer-events-none" />
+              )}
 
               {/* Ground Caustic Reflection Pool directly below orb */}
               <span className="absolute -bottom-1.5 inset-x-1 h-1.5 bg-cyan-400/25 rounded-full blur-[2px] pointer-events-none opacity-60 group-hover/copilot:opacity-100 transition-opacity" />
