@@ -263,20 +263,21 @@ export default function CrewMessagesWorkspace({
         </div>
       )}
 
-      {/* ── New Conversation Modal (Deep 3D Navy, Zero White) ── */}
+      {/* ── New Conversation Modal (Deep 3D Navy, Zero White, Compact) ── */}
       <Dialog open={newMessageModalOpen} onOpenChange={setNewMessageModalOpen}>
-        <DialogContent className="bg-gradient-to-b from-[#061833] via-[#041126] to-[#020a17] border-t border-t-sky-400/40 border border-sky-500/30 text-white rounded-3xl max-w-md shadow-[0_30px_90px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.15)] p-6">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-sky-400" />
+        <DialogContent className="bg-gradient-to-b from-[#061833] via-[#041126] to-[#020a17] border-t border-t-sky-300/50 border border-sky-500/30 text-white rounded-2xl max-w-md w-[94vw] sm:w-full max-h-[85vh] flex flex-col p-4 sm:p-5 shadow-[0_25px_70px_rgba(0,4,16,0.95),inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden">
+          <DialogHeader className="shrink-0 pb-2.5 border-b border-sky-500/20">
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-4.5 h-4.5 text-sky-400" />
               New Crew Message
             </DialogTitle>
-            <DialogDescription className="text-xs text-blue-200/70">
+            <DialogDescription className="text-[11px] text-blue-200/70">
               Start an internal private direct message, group discussion, or student case thread.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleStartConversation} className="space-y-4 py-2">
+          <form onSubmit={handleStartConversation} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto space-y-3 py-2.5 pr-1 text-xs">
             {/* Type selector */}
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -375,29 +376,32 @@ export default function CrewMessagesWorkspace({
                 />
               </div>
             )}
+          </div>
 
-            <div className="pt-3 border-t border-sky-500/15 flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setNewMessageModalOpen(false)}
-                className="text-xs text-slate-400 hover:text-white"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={directMutation.isPending || caseThreadMutation.isPending || groupMutation.isPending}
-                className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-bold rounded-xl px-5 text-xs shadow-md shadow-sky-900/40"
-              >
-                {(directMutation.isPending || caseThreadMutation.isPending || groupMutation.isPending) && (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                )}
-                Start Conversation
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
+          <div className="shrink-0 pt-2.5 border-t border-sky-500/20 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setNewMessageModalOpen(false)}
+              className="text-xs text-slate-400 hover:text-white h-8.5"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={directMutation.isPending || caseThreadMutation.isPending || groupMutation.isPending}
+              className="bg-gradient-to-b from-[#0077FF] via-[#0062E3] to-[#004BB5] hover:from-[#0088FF] hover:to-[#0055CC] text-white font-bold rounded-xl px-4 h-8.5 text-xs shadow-[0_4px_14px_rgba(0,102,255,0.4),inset_0_1px_1px_rgba(255,255,255,0.35)] border-t border-t-sky-200/50 border border-sky-400/40 cursor-pointer"
+            >
+              {(directMutation.isPending || caseThreadMutation.isPending || groupMutation.isPending) && (
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              )}
+              Start Conversation
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
       </Dialog>
     </div>
   );
