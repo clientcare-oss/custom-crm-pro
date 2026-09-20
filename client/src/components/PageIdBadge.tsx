@@ -91,54 +91,54 @@ export default function PageIdBadge({
     });
   };
 
-  // ── Global Floating Corner Mode (Discreet Frosted Glass Orb with White # at bottom right) ──
+  // ── Global Floating Corner Mode (Subtle Petite Frosted Glass Orb at bottom right) ──
   return (
     <aside
       aria-label="Waypoint Page ID Utility"
-      className={cn("fixed bottom-3 right-3 z-50 flex items-center flex-row-reverse select-none", className)}
+      className={cn("fixed bottom-2.5 right-2.5 z-50 flex items-center flex-row-reverse select-none", className)}
     >
-      {/* Trigger button — small frosted glass orb with white # thing */}
+      {/* Trigger button — petite translucent frosted glass orb with white # */}
       <button
         type="button"
         onClick={() => setOpen(prev => !prev)}
         title={open ? "Hide Page ID" : `Page ID: ${page.id} · ${page.name} (Click to toggle)`}
         className={`
-          group relative flex h-7.5 w-7.5 items-center justify-center rounded-full
+          group relative flex h-6 w-6 sm:h-6.5 sm:w-6.5 items-center justify-center rounded-full
           cursor-pointer select-none transition-all duration-300 backdrop-blur-md
           ${open
-            ? "bg-white/[0.22] border border-white/60 shadow-[0_0_16px_rgba(255,255,255,0.45),0_6px_20px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(255,255,255,0.7)] scale-105"
-            : "bg-white/[0.10] hover:bg-white/[0.20] border border-white/35 hover:border-white/60 shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_8px_rgba(255,255,255,0.18),inset_0_1px_2px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95"
+            ? "opacity-100 bg-white/[0.20] border border-white/60 shadow-[0_0_12px_rgba(255,255,255,0.35),0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.6)] scale-105"
+            : "opacity-35 hover:opacity-100 bg-white/[0.05] hover:bg-white/[0.16] border border-white/20 hover:border-white/50 shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95"
           }
         `}
         aria-label="Toggle Page ID"
       >
         {/* Top subtle glass specular reflection crescent */}
-        <span className="absolute top-0.5 inset-x-1.5 h-2 rounded-t-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
+        <span className="absolute top-0.5 inset-x-1 h-1.5 rounded-t-full bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
 
         {/* Crisp luminous white # icon */}
-        <Hash className="h-3.5 w-3.5 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.85)] relative z-10 transition-transform duration-200 group-hover:scale-110" />
+        <Hash className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white/70 group-hover:text-white drop-shadow-[0_0_2px_rgba(255,255,255,0.8)] relative z-10 transition-transform duration-200 group-hover:scale-110" />
 
-        {/* Soft bottom ambient glow beneath glass orb */}
-        <span className="absolute -bottom-1 inset-x-1 h-1.5 bg-white/20 rounded-full blur-xs pointer-events-none" />
+        {/* Soft bottom ambient glow */}
+        <span className="absolute -bottom-0.5 inset-x-1 h-1 bg-white/15 rounded-full blur-[1px] pointer-events-none" />
       </button>
 
-      {/* Expanded pill (slides smoothly to the left, styled in frosted dark glass) */}
+      {/* Expanded pill (slides smoothly to the left in refined frosted dark glass) */}
       <div
         className={`
-          flex items-center gap-2 rounded-full border border-white/25
-          bg-slate-950/75 backdrop-blur-xl
-          shadow-[0_8px_32px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.3)]
-          overflow-hidden transition-all duration-300 ease-in-out
-          ${open ? "max-w-[360px] opacity-100 pl-3 pr-1.5 py-1 mr-2" : "max-w-0 opacity-0 p-0 border-0 mr-0 pointer-events-none"}
+          flex items-center gap-1.5 rounded-full border border-white/20
+          bg-slate-950/70 backdrop-blur-xl
+          shadow-[0_6px_24px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)]
+          overflow-hidden transition-all duration-300 ease-in-out select-none
+          ${open ? "max-w-[340px] opacity-100 pl-2.5 pr-1 py-0.5 mr-1.5" : "max-w-0 opacity-0 p-0 border-0 mr-0 pointer-events-none"}
         `}
       >
         {/* Page ID Code in frosted glass capsule */}
-        <span className="text-[11px] font-mono font-bold text-white whitespace-nowrap tracking-wide bg-white/10 px-2 py-0.5 rounded-full border border-white/20 shadow-inner">
+        <span className="text-[10px] font-mono font-bold text-white whitespace-nowrap tracking-wide bg-white/10 px-1.5 py-0.5 rounded-full border border-white/20 shadow-inner">
           {page.id}
         </span>
 
         {/* Page Name */}
-        <span className="text-[11px] font-medium text-slate-100/95 whitespace-nowrap truncate max-w-[160px] sm:max-w-[200px]" title={page.name}>
+        <span className="text-[10.5px] font-medium text-slate-100/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-[180px]" title={page.name}>
           {page.name}
         </span>
 
@@ -148,15 +148,15 @@ export default function PageIdBadge({
           onClick={handleCopy}
           title={copied ? "Copied!" : `Copy "${page.id} · ${page.name}"`}
           className={`
-            flex h-6 w-6 shrink-0 items-center justify-center rounded-full
+            flex h-5 w-5 shrink-0 items-center justify-center rounded-full
             transition-all duration-200 ml-0.5 cursor-pointer
             ${copied
-              ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/50 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-              : "bg-white/10 text-white/80 hover:text-white hover:bg-white/25 border border-white/25 shadow-xs"
+              ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/50 shadow-[0_0_6px_rgba(16,185,129,0.4)]"
+              : "bg-white/10 text-white/70 hover:text-white hover:bg-white/25 border border-white/20 shadow-xs"
             }
           `}
         >
-          {copied ? <Check className="h-3 w-3 text-emerald-300" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-2.5 w-2.5 text-emerald-300" /> : <Copy className="h-2.5 w-2.5" />}
         </button>
       </div>
     </aside>
