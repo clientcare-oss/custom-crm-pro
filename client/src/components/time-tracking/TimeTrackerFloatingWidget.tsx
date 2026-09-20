@@ -180,45 +180,60 @@ export default function TimeTrackerFloatingWidget({
 
   return (
     <>
-      {/* Floating Tactical Pill */}
-      <div className="fixed bottom-6 right-24 z-40 flex items-center gap-2">
+      {/* Floating Tactical Orb (matching the petite frosted glass utility style) */}
+      <aside
+        aria-label="Advocate Time Tracker"
+        className="fixed bottom-2.5 right-10.5 sm:right-11 z-40 flex items-center select-none"
+      >
         {activeTimer ? (
-          <div className="flex items-center gap-2.5 bg-[#001433] border border-sky-400/50 px-3.5 py-2 rounded-2xl shadow-[0_10px_30px_rgba(0,120,255,0.3)] backdrop-blur-md animate-pulse">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <div className="text-left">
-              <div className="text-[11px] font-bold text-white tracking-wide flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-sky-400" />
-                <span>{formatElapsed(elapsedSeconds)}</span>
-              </div>
-              <div className="text-[10px] text-blue-200/70 truncate max-w-[140px]">
+          <div className="flex items-center gap-2 rounded-full border border-emerald-400/40 bg-slate-950/80 backdrop-blur-xl shadow-[0_6px_24px_rgba(0,0,0,0.5),0_0_12px_rgba(16,185,129,0.25)] pl-2.5 pr-1 py-0.5 select-none">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-1.5 text-left min-w-0 cursor-pointer"
+            >
+              <span className="text-[10.5px] font-mono font-bold text-emerald-300 whitespace-nowrap">
+                {formatElapsed(elapsedSeconds)}
+              </span>
+              <span className="text-[10px] text-white/70 truncate max-w-[100px] sm:max-w-[130px]" title={activeTimer.studentName || activeTimer.workType}>
                 {activeTimer.studentName || activeTimer.workType}
-              </div>
-            </div>
-
-            <Button
-              size="sm"
+              </span>
+            </button>
+            <button
+              type="button"
               onClick={() => stopTimerMutation.mutate({})}
               disabled={stopTimerMutation.isPending}
-              className="h-7 px-2.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-xs gap-1 cursor-pointer"
+              title="Stop timer"
+              className="h-5 px-2 text-[10px] font-bold bg-rose-500/30 hover:bg-rose-500 text-rose-200 hover:text-white border border-rose-400/40 rounded-full transition-all flex items-center gap-1 cursor-pointer shadow-xs"
             >
               {stopTimerMutation.isPending ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="w-2.5 h-2.5 animate-spin" />
               ) : (
-                <Square className="w-3 h-3 fill-current" />
+                <Square className="w-2.5 h-2.5 fill-current" />
               )}
               <span>Stop</span>
-            </Button>
+            </button>
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-[#0062E3] to-[#004BB5] hover:from-[#0070F3] hover:to-[#0055CC] text-white px-3.5 py-2.5 rounded-2xl shadow-[0_8px_25px_rgba(0,98,227,0.4)] border border-sky-400/30 text-xs font-bold transition-all hover:scale-105 cursor-pointer"
+            title="Track Time (Click to open advocate timer)"
+            className="group relative flex h-6 w-6 sm:h-6.5 sm:w-6.5 items-center justify-center rounded-full cursor-pointer select-none transition-all duration-300 backdrop-blur-md opacity-35 hover:opacity-100 bg-white/[0.05] hover:bg-white/[0.16] border border-white/20 hover:border-white/50 shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95"
+            aria-label="Track Time"
           >
-            <Clock className="w-4 h-4 text-sky-200" />
-            <span>Track Time</span>
+            {/* Top subtle glass specular reflection crescent */}
+            <span className="absolute top-0.5 inset-x-1 h-1.5 rounded-t-full bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
+
+            {/* Crisp luminous white Clock icon */}
+            <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white/70 group-hover:text-white drop-shadow-[0_0_2px_rgba(255,255,255,0.8)] relative z-10 transition-transform duration-200 group-hover:scale-110" />
+
+            {/* Soft bottom ambient glow */}
+            <span className="absolute -bottom-0.5 inset-x-1 h-1 bg-white/15 rounded-full blur-[1px] pointer-events-none" />
           </button>
         )}
-      </div>
+      </aside>
 
       {/* Modal Dialog for Starting or Logging Time */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
