@@ -40,15 +40,19 @@ export function ChooseSupportExperience({
   const { data: catalogData } = trpc.services.publicCatalog.useQuery();
   const catalogServices = catalogData?.services || [];
 
-  const getCatalogPrice = (pattern: string, fallback: number) => {
-    const found = catalogServices.find((s: any) => s.name.toLowerCase().includes(pattern.toLowerCase()));
-    return found?.price ? found.price / 100 : fallback;
+  const getCatalogService = (code: string) => {
+    return catalogServices.find((s: any) => s.serviceCode === code);
   };
 
-  const fullRepPrice = getCatalogPrice("full iep representation", 1850);
-  const reviewPrice = getCatalogPrice("document review", 750);
-  const retainerPrice = getCatalogPrice("annual advocacy retainer", 3200);
-  const complaintPrice = getCatalogPrice("state complaint", 1250);
+  const getPrice = (code: string, fallback: number) => {
+    const found = getCatalogService(code);
+    return found?.standardPrice ? found.standardPrice / 100 : (found?.price ? found.price / 100 : fallback);
+  };
+
+  const fullRepPrice = getPrice("iep_full_representation", 1850);
+  const reviewPrice = getPrice("iep_document_review", 750);
+  const retainerPrice = getPrice("annual_advocacy_retainer", 3200);
+  const complaintPrice = getPrice("state_complaint_support", 200);
 
   const tiers = [
     {
@@ -93,15 +97,15 @@ export function ChooseSupportExperience({
     },
     {
       id: "complaint",
-      name: "Single-Use State Complaint Builder",
+      name: "State Complaint Support",
       badge: "Legal Enforcement",
       price: complaintPrice,
-      description: "Formal Georgia IDEA State Complaint drafting, legal citation indexing, evidence exhibits, and agency filing support.",
+      description: "Preparation and drafting support for one state complaint with evidence timeline preparation and filing submission guidance.",
       features: [
-        "Complete IDEA / Section 504 citation index",
-        "Systemic violation facts narrative",
-        "Evidence exhibit bundle creation",
-        "Full GaDOE filing submission support"
+        "Review of relevant IEP, evaluation, and PWN records",
+        "Identification of GaDOE systemic or student-specific IDEA violations",
+        "Preparation and drafting of formal State Complaint document",
+        "Filing submission guidance and evidence indexing"
       ]
     }
   ];

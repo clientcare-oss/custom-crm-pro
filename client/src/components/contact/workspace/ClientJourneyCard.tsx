@@ -30,6 +30,7 @@ import { ReviewPauseModal } from "./dialogs/ReviewPauseModal";
 import { ResolvePaymentModal } from "./dialogs/ResolvePaymentModal";
 import { RenewalModal } from "./dialogs/RenewalModal";
 import { OffboardingModal } from "./dialogs/OffboardingModal";
+import SupportOfferPanel from "./SupportOfferPanel";
 
 // Modular Lower Panel Cards
 import { PaymentAttentionCard } from "./cards/PaymentAttentionCard";
@@ -51,6 +52,7 @@ interface ClientJourneyCardProps {
   onStateChange?: (payload: any) => void;
   parentContact?: any;
   onPreviewPortal?: () => void;
+  onTimelineRefresh?: () => void;
 }
 
 export function ClientJourneyCard({
@@ -63,6 +65,7 @@ export function ClientJourneyCard({
   onStateChange,
   parentContact,
   onPreviewPortal,
+  onTimelineRefresh,
 }: ClientJourneyCardProps) {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
@@ -776,6 +779,18 @@ export function ClientJourneyCard({
           </div>
         </div>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────
+          LAYER UNDER CLIENT JOURNEY BOX: INLINE EXPANDABLE SUPPORT OFFER PANEL
+      ───────────────────────────────────────────────────────── */}
+      <SupportOfferPanel
+        contact={activeContact}
+        parentContact={parentContact}
+        onTimelineRefresh={() => {
+          utils.caseActivity.list.invalidate();
+          onTimelineRefresh?.();
+        }}
+      />
 
       {/* ─────────────────────────────────────────────────────────
           PANEL 2: CONTEXTUAL LOWER CARD (Responsive Subcomponents)

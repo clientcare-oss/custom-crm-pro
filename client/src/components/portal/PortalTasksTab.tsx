@@ -66,7 +66,7 @@ export default function PortalTasksTab({
   isAdminView = false,
   studentName = "Liam Jenkins"
 }: PortalTasksTabProps) {
-  // HoneyBook / Monday style streamlined tasks
+  // referencehbptl / Monday style streamlined tasks
   const [taskList, setTaskList] = useState<ClientTaskItem[]>([
     {
       id: "t-1",
@@ -302,7 +302,7 @@ export default function PortalTasksTab({
         </div>
       </div>
 
-      {/* ── HoneyBook / Monday Streamlined Task Checklist Container ── */}
+      {/* ── referencehbptl / Monday Streamlined Task Checklist Container ── */}
       <div className="space-y-4">
         
         {/* Section: Pending Action Items */}

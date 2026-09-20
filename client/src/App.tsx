@@ -55,6 +55,7 @@ import GivingReportsPage from "./pages/giving/GivingReportsPage";
 import WebsiteToolsPage from "./pages/giving/WebsiteToolsPage";
 import PublicGivingPage from "./pages/giving/PublicGivingPage";
 import Services from "./pages/Services";
+import NationalCoverage from "./pages/NationalCoverage";
 import PageIdShowcase from "./pages/PageIdShowcase";
 import PortalBook from "./pages/PortalBook";
 import SmartFiles from "./pages/SmartFiles";
@@ -70,6 +71,7 @@ import FirstMate from "./pages/FirstMate";
 import FirstMatePopout from "./pages/FirstMatePopout";
 import { ActiveCallProvider } from "./contexts/ActiveCallContext";
 import CrewQuarters from "./pages/CrewQuarters";
+import Metrics from "./pages/Metrics";
 import AdvocacyPipeline from "./pages/AdvocacyPipeline";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
@@ -182,6 +184,7 @@ function Router() {
           <Route path="/smart-files/:id" component={SmartFileEditor} />
           <Route path="/appointments" component={Appointments} />
           <Route path="/calendar" component={Appointments} />
+          <Route path="/national-coverage" component={NationalCoverage} />
           <Route path="/scheduler" component={Scheduler} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/tech-tasks" component={TechTasks} />
@@ -206,6 +209,8 @@ function Router() {
           <Route path="/state-complaint-builder" component={() => { window.location.href = '/tools/state-complaint-builder' + window.location.search; return null; }} />
           <Route path="/brain-dump" component={BrainDump} />
           <Route path="/ai-connections" component={AiConnections} />
+          <Route path="/metrics" component={Metrics} />
+          <Route path="/company/metrics" component={Metrics} />
               <Route path="/services" component={Services} />
               <Route path="/giving" component={GivingOverview} />
               <Route path="/giving/overview" component={GivingOverview} />

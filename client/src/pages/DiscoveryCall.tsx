@@ -1076,8 +1076,8 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                         <div className="flex items-baseline gap-1.5">
                           <span className="text-2xl font-bold text-amber-300">
                             ${(() => {
-                              const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
-                              const p = s?.price ? s.price / 100 : 55;
+                              const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "advocacy_plan_55" || x.price === 5500);
+                              const p = s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 55);
                               return p * studentCount;
                             })()}
                           </span>
@@ -1085,8 +1085,8 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                           {studentCount > 1 && (
                             <span className="text-[11px] text-amber-400/70 ml-1">
                               (${(() => {
-                                const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
-                                return s?.price ? s.price / 100 : 55;
+                                const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "advocacy_plan_55" || x.price === 5500);
+                                return s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 55);
                               })()}/mo × {studentCount})
                             </span>
                           )}
@@ -1094,8 +1094,8 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                         <h4 className="text-sm font-bold text-white mt-1">Advocacy Only</h4>
                         <p className="text-xs text-amber-300/80 font-medium">
                           ${(() => {
-                            const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only"));
-                            const p = s?.price ? s.price / 100 : 55;
+                            const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "advocacy_plan_55" || x.price === 5500);
+                            const p = s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 55);
                             return p * studentCount;
                           })()} per month · Year-round representation
                         </p>
@@ -1129,8 +1129,8 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                         <div className="flex items-baseline gap-1.5">
                           <span className="text-2xl font-bold text-amber-300">
                             ${(() => {
-                              const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
-                              const p = s?.price ? s.price / 100 : 105;
+                              const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "advocacy_plan_105" || x.price === 10500);
+                              const p = s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 105);
                               return p * studentCount;
                             })()}
                           </span>
@@ -1138,8 +1138,8 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                           {studentCount > 1 && (
                             <span className="text-[11px] text-amber-400/70 ml-1">
                               (${(() => {
-                                const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
-                                return s?.price ? s.price / 100 : 105;
+                                const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "advocacy_plan_105" || x.price === 10500);
+                                return s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 105);
                               })()}/mo × {studentCount})
                             </span>
                           )}
@@ -1147,8 +1147,8 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                         <h4 className="text-sm font-bold text-white mt-1">Advocacy + State Complaints</h4>
                         <p className="text-xs text-amber-300/80 font-medium">
                           ${(() => {
-                            const s = (servicesCatalog as any[]).find((x: any) => x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership")));
-                            const p = s?.price ? s.price / 100 : 105;
+                            const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "advocacy_plan_105" || x.price === 10500);
+                            const p = s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 105);
                             return p * studentCount;
                           })()} per month · Full drafting included
                         </p>
@@ -1161,7 +1161,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                       </div>
                     </div>
 
-                    {/* Plan C: Single-Use State Complaint */}
+                    {/* Plan C: State Complaint Support ($200 one-time Authoritative) */}
                     <div
                       onClick={() => {
                         setSelectedPlan("single_complaint");
@@ -1182,21 +1182,21 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                         <div className="flex items-baseline gap-1.5">
                           <span className="text-2xl font-bold text-purple-300">
                             ${(() => {
-                              const s = (servicesCatalog as any[]).find((x: any) => x.name.toLowerCase().includes("single") || (x.name.toLowerCase().includes("complaint") && !x.name.toLowerCase().includes("membership")));
-                              const p = s?.price ? s.price / 100 : 1250;
+                              const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "state_complaint_support");
+                              const p = s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 200);
                               return p.toLocaleString();
                             })()}
                           </span>
                           <span className="text-xs text-white/60">flat rate</span>
                         </div>
-                        <h4 className="text-sm font-bold text-white mt-1">Single-Use State Complaint</h4>
-                        <p className="text-xs text-purple-300/80 font-medium">One-time standalone case builder & filing</p>
+                        <h4 className="text-sm font-bold text-white mt-1">State Complaint Support</h4>
+                        <p className="text-xs text-purple-300/80 font-medium">One-time authoritative drafting & evidence prep</p>
                         <p className="text-xs text-white/60 mt-2 leading-relaxed">
-                          Standalone Georgia IDEA State Complaint filing, systemic violation narrative, statutory legal citations, evidence exhibits, and formal agency submission.
+                          Authoritative assistance and drafting for filing a Georgia Department of Education IDEA state administrative complaint with document review and evidence timeline preparation.
                         </p>
                       </div>
                       <div className="pt-2 border-t border-white/5 text-[11px] text-white/50 flex items-center gap-1.5">
-                        <Scale className="w-3 h-3 text-purple-400 flex-shrink-0" /> Full GaDOE filing support included
+                        <Scale className="w-3 h-3 text-purple-400 flex-shrink-0" /> Full GaDOE filing support included ($200)
                       </div>
                     </div>
                   </div>
@@ -1257,20 +1257,21 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                               ? "Advocacy Only Plan"
                               : selectedPlan === "complaints_100"
                               ? "Advocacy + State Complaints Plan"
-                              : "Single-Use State Complaint"}
+                              : "State Complaint Support"}
                           </span>
                           <span className="text-xs font-mono font-bold text-amber-300">
                             {selectedPlan === "single_complaint" ? (
                               `$${(() => {
-                                const s = (servicesCatalog as any[]).find((x: any) => x.name.toLowerCase().includes("single") || (x.name.toLowerCase().includes("complaint") && !x.name.toLowerCase().includes("membership")));
-                                const p = s?.price ? s.price / 100 : 1250;
+                                const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === "state_complaint_support");
+                                const p = s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : 200);
                                 return p.toLocaleString();
                               })()} flat`
                             ) : (
                               `$${(() => {
                                 const is55 = selectedPlan === "advocacy_55";
-                                const s = (servicesCatalog as any[]).find((x: any) => is55 ? (x.name.includes("55") || x.price === 5500 || x.name.toLowerCase().includes("advocacy only")) : (x.name.includes("105") || x.name.includes("100") || x.price === 10500 || x.price === 10000 || (x.name.toLowerCase().includes("complaint") && x.name.toLowerCase().includes("membership"))));
-                                const p = s?.price ? s.price / 100 : (is55 ? 55 : 105);
+                                const code = is55 ? "advocacy_plan_55" : "advocacy_plan_105";
+                                const s = (servicesCatalog as any[]).find((x: any) => x.serviceCode === code || (is55 ? x.price === 5500 : x.price === 10500));
+                                const p = s?.standardPrice ? s.standardPrice / 100 : (s?.price ? s.price / 100 : (is55 ? 55 : 105));
                                 return p * studentCount;
                               })()}/mo`
                             )}

@@ -373,7 +373,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                           <ExternalLink className="w-4 h-4 shrink-0 text-purple-500" />
                           <div>
                             <p className="text-xs font-semibold">External Link</p>
-                            <p className="text-xs opacity-70">Calendly, HoneyBook, etc.</p>
+                            <p className="text-xs opacity-70">Calendly, external booking, etc.</p>
                           </div>
                         </button>
                       </div>
@@ -426,7 +426,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                           />
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Info className="w-3 h-3" />
-                            Paste your Calendly, HoneyBook, or any booking link here
+                            Paste your Calendly, scheduler, or any booking link here
                           </p>
                         </div>
                       </div>

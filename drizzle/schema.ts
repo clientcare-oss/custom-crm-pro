@@ -8,6 +8,7 @@ import {
   timestamp,
   varchar,
   decimal,
+  double,
   boolean,
   tinyint,
   datetime,
@@ -155,6 +156,27 @@ export const contacts = mysqlTable("contacts", {
   // Archive fields
   archivedAt: timestamp("archivedAt"),
   archiveReason: text("archiveReason"),
+  // Time Zone & Calling Intelligence fields (PG-041)
+  confirmedTimeZone: varchar("confirmedTimeZone", { length: 64 }),
+  timeZoneSource: varchar("timeZoneSource", { length: 50 }).default("Automatically detected"),
+  timeZoneConfirmedAt: timestamp("timeZoneConfirmedAt"),
+  preferredCallingStartTime: varchar("preferredCallingStartTime", { length: 10 }),
+  preferredCallingEndTime: varchar("preferredCallingEndTime", { length: 10 }),
+  preferredCallingDays: varchar("preferredCallingDays", { length: 50 }),
+  mayCallOutsidePreferredHours: boolean("mayCallOutsidePreferredHours").default(false),
+  preferredCommunicationMethod: varchar("preferredCommunicationMethod", { length: 50 }),
+  // Geocoding & Location Precision fields (PG-041)
+  latitude: varchar("latitude", { length: 50 }),
+  longitude: varchar("longitude", { length: 50 }),
+  locationAccuracy: varchar("locationAccuracy", { length: 50 }), // "Exact geocode, protected", "ZIP centroid", "City centroid", "County centroid", "State fallback", "Unavailable"
+  locationLastUpdated: timestamp("locationLastUpdated"),
+  mapLatitude: double("mapLatitude"),
+  mapLongitude: double("mapLongitude"),
+  mapLocationAccuracy: varchar("mapLocationAccuracy", { length: 50 }), // "zip_centroid" | "city_centroid" | "manual" | "state_centroid" | "unavailable"
+  mapLocationSource: varchar("mapLocationSource", { length: 50 }),
+  mapLocationUpdatedAt: varchar("mapLocationUpdatedAt", { length: 100 }),
+  mapLocationStatus: varchar("mapLocationStatus", { length: 50 }).default("needs_geocoding"), // "ready" | "needs_geocoding" | "needs_review" | "failed"
+  isDemoData: boolean("isDemoData").default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -412,6 +434,11 @@ export const appointments = mysqlTable("appointments", {
     .notNull(),
   meetingType: varchar("meetingType", { length: 100 }),
   clientMeetingLink: varchar("clientMeetingLink", { length: 1024 }),
+  // Time Zone Intelligence fields (PG-041)
+  originalTimeZone: varchar("originalTimeZone", { length: 64 }).default("America/New_York"),
+  clientTimeZone: varchar("clientTimeZone", { length: 64 }),
+  schoolTimeZone: varchar("schoolTimeZone", { length: 64 }),
+  assignedAdvocateName: varchar("assignedAdvocateName", { length: 150 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1516,32 +1543,123 @@ export type InsertSponsor = typeof sponsors.$inferInsert;
  */
 export const serviceFolders = mysqlTable("serviceFolders", {
   id: int("id").autoincrement().primaryKey(),
-  ownerId: int("ownerId").notNull(),
+  organizationId: int("organizationId").default(1).notNull(),
+  ownerId: int("ownerId").default(1).notNull(),
   name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 64 }).default("").notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 64 }).default("folder"),
   color: varchar("color", { length: 30 }).default("blue"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  isArchived: boolean("isArchived").default(false).notNull(),
+  createdBy: varchar("createdBy", { length: 255 }).default("System").notNull(),
+  updatedBy: varchar("updatedBy", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  orgIdx: index("sf_org_idx").on(t.organizationId),
+  slugIdx: index("sf_slug_idx").on(t.slug),
+  sortIdx: index("sf_sort_idx").on(t.sortOrder),
+}));
 export type ServiceFolder = typeof serviceFolders.$inferSelect;
 export type InsertServiceFolder = typeof serviceFolders.$inferInsert;
 
 /**
- * Services that clients can choose from.
+ * Services that clients can choose from (PG-035 Advocacy Services Catalog Master Library).
  */
 export const services = mysqlTable("services", {
   id: int("id").autoincrement().primaryKey(),
-  ownerId: int("ownerId").notNull(),
+  organizationId: int("organizationId").default(1).notNull(),
+  ownerId: int("ownerId").default(1).notNull(),
   folderId: int("folderId"), // null = unfiled
-  name: varchar("name", { length: 200 }).notNull(),
-  description: text("description"),
-  price: int("price"), // in cents
-  duration: int("duration"), // in minutes
-  isActive: boolean("isActive").default(true),
+  serviceCode: varchar("serviceCode", { length: 64 }).default("").notNull(),
+  internalName: varchar("internalName", { length: 255 }).default("").notNull(),
+  clientFacingTitle: varchar("clientFacingTitle", { length: 255 }).default("").notNull(),
+  name: varchar("name", { length: 200 }).notNull(), // backwards-compatible alias
+  shortDescription: text("shortDescription"),
+  fullDescription: text("fullDescription"),
+  description: text("description"), // backwards-compatible alias
+  internalInstructions: text("internalInstructions"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  icon: varchar("icon", { length: 64 }).default("briefcase"),
+  accentColor: varchar("accentColor", { length: 32 }).default("blue"),
+  price: int("price"), // in cents (backwards-compatible alias)
+  standardPrice: int("standardPrice").default(0).notNull(), // in cents
+  currency: varchar("currency", { length: 10 }).default("usd").notNull(),
+  billingType: varchar("billingType", { length: 32 }).default("one_time").notNull(), // "recurring" | "one_time" | "included" | "free" | "custom"
+  billingInterval: varchar("billingInterval", { length: 32 }), // "monthly" | "yearly" | null
+  customPriceAllowed: boolean("customPriceAllowed").default(true).notNull(),
+  duration: int("duration"), // in minutes (backwards-compatible alias)
+  sessionDurationMinutes: int("sessionDurationMinutes"),
+  deliveryTimeValue: int("deliveryTimeValue"),
+  deliveryTimeUnit: varchar("deliveryTimeUnit", { length: 32 }).default("business_days"), // "hours" | "business_days" | "calendar_days" | "custom"
+  deliveryTimeLabel: varchar("deliveryTimeLabel", { length: 64 }).default("3 business days"),
+  isActive: boolean("isActive").default(true).notNull(),
+  isArchived: boolean("isArchived").default(false).notNull(),
+  availableInDiscoveryCall: boolean("availableInDiscoveryCall").default(true).notNull(),
+  availableInParentPortal: boolean("availableInParentPortal").default(true).notNull(),
+  availableInSupportOfferPanel: boolean("availableInSupportOfferPanel").default(true).notNull(),
+  availableAsStandalone: boolean("availableAsStandalone").default(true).notNull(),
+  availableAsAddOn: boolean("availableAsAddOn").default(true).notNull(),
+  visibleToEmployees: boolean("visibleToEmployees").default(true).notNull(),
+  planEligibility: text("planEligibility"), // JSON string record of plan eligibility
+  includedItems: text("includedItems"), // JSON array of deliverable items
+  allowDocumentUpload: boolean("allowDocumentUpload").default(true).notNull(),
+  requireDocumentUpload: boolean("requireDocumentUpload").default(false).notNull(),
+  requireQuestionnaire: boolean("requireQuestionnaire").default(false).notNull(),
+  requireAgreement: boolean("requireAgreement").default(false).notNull(),
+  requirePayment: boolean("requirePayment").default(true).notNull(),
+  smartFileTemplateId: int("smartFileTemplateId"),
+  workflowTemplateId: int("workflowTemplateId"),
+  taskTemplateId: int("taskTemplateId"),
+  priorityEnabled: boolean("priorityEnabled").default(false).notNull(),
+  priorityPrice: int("priorityPrice"), // in cents
+  priorityDeliveryTimeValue: int("priorityDeliveryTimeValue"),
+  priorityDeliveryTimeUnit: varchar("priorityDeliveryTimeUnit", { length: 32 }),
+  priorityDeliveryTimeLabel: varchar("priorityDeliveryTimeLabel", { length: 64 }),
+  priorityDescription: text("priorityDescription"),
+  stripeProductId: varchar("stripeProductId", { length: 255 }),
+  stripePriceId: varchar("stripePriceId", { length: 255 }),
+  stripeRecurringPriceId: varchar("stripeRecurringPriceId", { length: 255 }),
+  stripePriorityPriceId: varchar("stripePriorityPriceId", { length: 255 }),
+  stripeSyncStatus: varchar("stripeSyncStatus", { length: 32 }).default("not_connected").notNull(), // "not_connected" | "synced" | "update_required" | "sync_failed"
+  stripeSyncedAt: timestamp("stripeSyncedAt"),
+  createdBy: varchar("createdBy", { length: 255 }).default("System").notNull(),
+  updatedBy: varchar("updatedBy", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  orgIdx: index("s_org_idx").on(t.organizationId),
+  codeIdx: index("s_code_idx").on(t.serviceCode),
+  folderIdx: index("s_folder_idx").on(t.folderId),
+  activeIdx: index("s_active_idx").on(t.isActive),
+  archivedIdx: index("s_archived_idx").on(t.isArchived),
+  sortIdx: index("s_sort_idx").on(t.sortOrder),
+}));
 export type Service = typeof services.$inferSelect;
 export type InsertService = typeof services.$inferInsert;
+
+/**
+ * Audit history for changes to the Advocacy Services Catalog.
+ */
+export const serviceCatalogEvents = mysqlTable("service_catalog_events", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").default(1).notNull(),
+  serviceId: int("serviceId"),
+  folderId: int("folderId"),
+  eventType: varchar("eventType", { length: 64 }).notNull(), // "service_created" | "service_edited" | "price_changed" | "service_duplicated" | "service_activated" | "service_deactivated" | "service_archived" | "service_restored" | "folder_created" | "folder_renamed" | "folder_archived" | "stripe_sync_attempted" | "stripe_sync_completed" | "stripe_sync_failed"
+  actor: varchar("actor", { length: 255 }).notNull(),
+  previousValues: text("previousValues"), // JSON string
+  newValues: text("newValues"), // JSON string
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+}, (t) => ({
+  orgIdx: index("sce_org_idx").on(t.organizationId),
+  serviceIdx: index("sce_service_idx").on(t.serviceId),
+  folderIdx: index("sce_folder_idx").on(t.folderId),
+}));
+export type ServiceCatalogEvent = typeof serviceCatalogEvents.$inferSelect;
+export type InsertServiceCatalogEvent = typeof serviceCatalogEvents.$inferInsert;
 
 
 // ============================================================
@@ -1806,8 +1924,8 @@ export const voyageLogs = mysqlTable("voyage_logs", {
 export type VoyageLog = typeof voyageLogs.$inferSelect;
 export type InsertVoyageLog = typeof voyageLogs.$inferInsert;
 
-// ── HoneyBook Trigger-based Automations Engine Tables ──────────────────────────────
-export const honeybookAutomations = mysqlTable("honeybook_automations", {
+// ── referencehbptl Trigger-based Automations Engine Tables ──────────────────────────────
+export const referencehbptlAutomations = mysqlTable("referencehbptl_automations", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
@@ -1818,10 +1936,10 @@ export const honeybookAutomations = mysqlTable("honeybook_automations", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
-export type HoneybookAutomation = typeof honeybookAutomations.$inferSelect;
-export type InsertHoneybookAutomation = typeof honeybookAutomations.$inferInsert;
+export type ReferencehbptlAutomation = typeof referencehbptlAutomations.$inferSelect;
+export type InsertReferencehbptlAutomation = typeof referencehbptlAutomations.$inferInsert;
 
-export const honeybookAutomationSteps = mysqlTable("honeybook_automation_steps", {
+export const referencehbptlAutomationSteps = mysqlTable("referencehbptl_automation_steps", {
   id: int("id").autoincrement().primaryKey(),
   automationId: int("automationId").notNull(),
   stepNumber: int("stepNumber").notNull(),
@@ -1834,10 +1952,10 @@ export const honeybookAutomationSteps = mysqlTable("honeybook_automation_steps",
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export type HoneybookAutomationStep = typeof honeybookAutomationSteps.$inferSelect;
-export type InsertHoneybookAutomationStep = typeof honeybookAutomationSteps.$inferInsert;
+export type ReferencehbptlAutomationStep = typeof referencehbptlAutomationSteps.$inferSelect;
+export type InsertReferencehbptlAutomationStep = typeof referencehbptlAutomationSteps.$inferInsert;
 
-export const honeybookAutomationRuns = mysqlTable("honeybook_automation_runs", {
+export const referencehbptlAutomationRuns = mysqlTable("referencehbptl_automation_runs", {
   id: int("id").autoincrement().primaryKey(),
   automationId: int("automationId").notNull(),
   contactId: int("contactId").notNull(), // target student contact
@@ -1846,8 +1964,8 @@ export const honeybookAutomationRuns = mysqlTable("honeybook_automation_runs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export type HoneybookAutomationRun = typeof honeybookAutomationRuns.$inferSelect;
-export type InsertHoneybookAutomationRun = typeof honeybookAutomationRuns.$inferInsert;
+export type ReferencehbptlAutomationRun = typeof referencehbptlAutomationRuns.$inferSelect;
+export type InsertReferencehbptlAutomationRun = typeof referencehbptlAutomationRuns.$inferInsert;
 
 // ── Parking Lot Items (PG-023-PRK) ───────────────────────────────────────────
 export const parkingLotItems = mysqlTable("parkingLotItems", {
@@ -2086,4 +2204,299 @@ export const clientSupportOfferEvents = mysqlTable("client_support_offer_events"
 
 export type ClientSupportOfferEvent = typeof clientSupportOfferEvents.$inferSelect;
 export type InsertClientSupportOfferEvent = typeof clientSupportOfferEvents.$inferInsert;
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CREW MESSAGES SUITE (PG-038)
+ * Waypoint Private Internal Employee Communication & Collaboration System
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+export const crewConversations = mysqlTable("crew_conversations", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  type: varchar("type", { length: 32 }).notNull(), // "direct" | "group" | "channel" | "case"
+  name: varchar("name", { length: 255 }),
+  description: text("description"),
+  linkedStudentId: int("linked_student_id"), // references contacts(id) for student case threads
+  createdBy: int("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  archivedAt: timestamp("archived_at"),
+}, (t) => ({
+  tenantIdx: index("crew_conv_tenant_idx").on(t.tenantId),
+  typeIdx: index("crew_conv_type_idx").on(t.type),
+  studentIdx: index("crew_conv_student_idx").on(t.linkedStudentId),
+  updatedIdx: index("crew_conv_updated_idx").on(t.updatedAt),
+}));
+
+export type CrewConversation = typeof crewConversations.$inferSelect;
+export type InsertCrewConversation = typeof crewConversations.$inferInsert;
+
+export const crewConversationMembers = mysqlTable("crew_conversation_members", {
+  id: int("id").autoincrement().primaryKey(),
+  conversationId: int("conversation_id").notNull(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  userId: int("user_id").notNull(),
+  role: varchar("role", { length: 50 }).default("member").notNull(), // "owner" | "admin" | "member"
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  lastReadMessageId: int("last_read_message_id"),
+  lastReadAt: timestamp("last_read_at"),
+  muted: boolean("muted").default(false),
+  followed: boolean("followed").default(true),
+}, (t) => ({
+  convUserIdx: index("crew_member_conv_user_idx").on(t.conversationId, t.userId),
+  userIdx: index("crew_member_user_idx").on(t.userId),
+}));
+
+export type CrewConversationMember = typeof crewConversationMembers.$inferSelect;
+export type InsertCrewConversationMember = typeof crewConversationMembers.$inferInsert;
+
+export const crewMessages = mysqlTable("crew_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  conversationId: int("conversation_id").notNull(),
+  senderUserId: int("sender_user_id").notNull(),
+  messageType: varchar("message_type", { length: 50 }).default("text").notNull(), // "text" | "attachment" | "linked_record" | "action_request" | "system"
+  body: text("body").notNull(),
+  replyToMessageId: int("reply_to_message_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  editedAt: timestamp("edited_at"),
+  deletedAt: timestamp("deleted_at"),
+}, (t) => ({
+  convCreatedIdx: index("crew_msg_conv_created_idx").on(t.conversationId, t.createdAt),
+  senderIdx: index("crew_msg_sender_idx").on(t.senderUserId),
+}));
+
+export type CrewMessage = typeof crewMessages.$inferSelect;
+export type InsertCrewMessage = typeof crewMessages.$inferInsert;
+
+export const crewMessageAttachments = mysqlTable("crew_message_attachments", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  messageId: int("message_id").notNull(),
+  documentId: int("document_id"),
+  r2Key: varchar("r2_key", { length: 500 }),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  fileSize: int("file_size").notNull(),
+  uploadedBy: int("uploaded_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  messageIdx: index("crew_attach_msg_idx").on(t.messageId),
+}));
+
+export type CrewMessageAttachment = typeof crewMessageAttachments.$inferSelect;
+export type InsertCrewMessageAttachment = typeof crewMessageAttachments.$inferInsert;
+
+export const crewMessageLinks = mysqlTable("crew_message_links", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  messageId: int("message_id").notNull(),
+  recordType: varchar("record_type", { length: 50 }).notNull(), // "student" | "task" | "document" | "meeting" | "case" | "timeline"
+  recordId: varchar("record_id", { length: 100 }).notNull(),
+  metadata: text("metadata"), // JSON string: { title, subtitle, badge, status, fileUrl, etc. }
+  createdBy: int("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  messageIdx: index("crew_link_msg_idx").on(t.messageId),
+  recordIdx: index("crew_link_record_idx").on(t.recordType, t.recordId),
+}));
+
+export type CrewMessageLink = typeof crewMessageLinks.$inferSelect;
+export type InsertCrewMessageLink = typeof crewMessageLinks.$inferInsert;
+
+export const crewMessageReactions = mysqlTable("crew_message_reactions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  messageId: int("message_id").notNull(),
+  userId: int("user_id").notNull(),
+  emoji: varchar("emoji", { length: 32 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  msgEmojiIdx: index("crew_reaction_msg_emoji_idx").on(t.messageId, t.userId, t.emoji),
+}));
+
+export type CrewMessageReaction = typeof crewMessageReactions.$inferSelect;
+export type InsertCrewMessageReaction = typeof crewMessageReactions.$inferInsert;
+
+export const crewActionRequests = mysqlTable("crew_action_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  conversationId: int("conversation_id").notNull(),
+  messageId: int("message_id").notNull(),
+  requestType: varchar("request_type", { length: 100 }).notNull(), // "Review Document" | "Approve Task Completion" | "Approve Case Stage Change" | "Confirm Meeting Preparation Complete" | "Request General Approval"
+  title: varchar("title", { length: 255 }).notNull(),
+  explanation: text("explanation"),
+  requestedBy: int("requested_by").notNull(),
+  assignedApproverId: int("assigned_approver_id").notNull(),
+  relatedRecordType: varchar("related_record_type", { length: 50 }), // "document" | "task" | "student" | "stage" | "meeting"
+  relatedRecordId: varchar("related_record_id", { length: 100 }),
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // "pending" | "approved" | "declined" | "changes_requested" | "cancelled"
+  dueAt: timestamp("due_at"),
+  decidedBy: int("decided_by"),
+  decidedAt: timestamp("decided_at"),
+  decisionNote: text("decision_note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  convIdx: index("crew_ar_conv_idx").on(t.conversationId),
+  msgIdx: index("crew_ar_msg_idx").on(t.messageId),
+  approverIdx: index("crew_ar_approver_status_idx").on(t.assignedApproverId, t.status),
+}));
+
+export type CrewActionRequest = typeof crewActionRequests.$inferSelect;
+export type InsertCrewActionRequest = typeof crewActionRequests.$inferInsert;
+
+/**
+ * CRM Lifecycle Events — raw immutable chronological log of every status change,
+ * stage progression, milestone, drop-off, non-conversion, and cancellation.
+ * Backs lead journey funnel, stage duration calculation, and retention analytics.
+ */
+export const crmLifecycleEvents = mysqlTable("crm_lifecycle_events", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(), // "lead" | "contact" | "case" | "student"
+  entityId: int("entity_id").notNull(),
+  eventType: varchar("event_type", { length: 50 }).notNull(), // "stage_transition" | "status_change" | "plan_change" | "non_conversion" | "cancellation" | "onboarding_step" | "advocacy_start"
+  fromStage: varchar("from_stage", { length: 100 }),
+  toStage: varchar("to_stage", { length: 100 }).notNull(),
+  stageDurationSeconds: int("stage_duration_seconds"),
+  reason: varchar("reason", { length: 255 }), // e.g. non-conversion: "Price", "Attorney needed", "Outside Waypoint's scope", etc.
+  note: text("note"),
+  performedBy: int("performed_by"), // users.id or null if system automation
+  metadata: text("metadata"), // JSON string with context (e.g. lead source, district, plan, fee)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  entityIdx: index("crm_event_entity_idx").on(t.entityType, t.entityId),
+  eventIdx: index("crm_event_type_idx").on(t.eventType),
+  toStageIdx: index("crm_event_to_stage_idx").on(t.toStage),
+  createdIdx: index("crm_event_created_idx").on(t.createdAt),
+}));
+
+export type CrmLifecycleEvent = typeof crmLifecycleEvents.$inferSelect;
+export type InsertCrmLifecycleEvent = typeof crmLifecycleEvents.$inferInsert;
+
+/**
+ * Advocate Time Entries — tracks all team time spent serving clients across the 12 work types.
+ * Supports live timer tracking, manual log entry, and automated meeting duration logging.
+ */
+export const advocateTimeEntries = mysqlTable("advocate_time_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  userId: int("user_id").notNull(), // advocate / employee
+  familyContactId: int("family_contact_id"), // parent contact
+  studentContactId: int("student_contact_id"), // student contact
+  workType: varchar("work_type", { length: 100 }).notNull(), // "Meeting preparation" | "IEP/504 meeting" | "Records review" | "Calls" | "SMS/messages" | "Email review" | "Email drafting" | "Complaint work" | "Research" | "Case strategy" | "Follow-up" | "Administrative work"
+  entryDate: varchar("entry_date", { length: 20 }).notNull(), // YYYY-MM-DD
+  startTime: varchar("start_time", { length: 30 }), // HH:MM or ISO
+  endTime: varchar("end_time", { length: 30 }),
+  durationMinutes: int("duration_minutes").notNull(),
+  relatedRecordType: varchar("related_record_type", { length: 50 }), // "task" | "appointment" | "call" | "complaint" | "document"
+  relatedRecordId: varchar("related_record_id", { length: 100 }),
+  planTierAtTime: varchar("plan_tier_at_time", { length: 50 }).default("$55"), // "$55", "$105", "Scholarship", "Pay Per Use"
+  notes: text("notes"),
+  isAutoGenerated: boolean("is_auto_generated").default(false).notNull(),
+  isTimerRunning: boolean("is_timer_running").default(false).notNull(),
+  timerStartedAt: timestamp("timer_started_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("time_entry_user_idx").on(t.userId),
+  studentIdx: index("time_entry_student_idx").on(t.studentContactId),
+  workTypeIdx: index("time_entry_work_type_idx").on(t.workType),
+  dateIdx: index("time_entry_date_idx").on(t.entryDate),
+}));
+
+export type AdvocateTimeEntry = typeof advocateTimeEntries.$inferSelect;
+export type InsertAdvocateTimeEntry = typeof advocateTimeEntries.$inferInsert;
+
+/**
+ * Advocacy Case Outcomes — multi-outcome tracking per student case.
+ * Records accommodations gained, service increases, evaluations, placement, and complaints.
+ */
+export const advocacyCaseOutcomes = mysqlTable("advocacy_case_outcomes", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  studentContactId: int("student_contact_id").notNull(),
+  goalDescription: varchar("goal_description", { length: 500 }),
+  goalStatus: varchar("goal_status", { length: 50 }).default("in_progress").notNull(), // "achieved" | "partially_achieved" | "in_progress" | "not_achieved"
+  outcomeType: varchar("outcome_type", { length: 100 }).notNull(), // "accommodations_added" | "services_increased" | "evaluations_approved" | "iep_504_created" | "iep_504_corrected" | "placement_change" | "transportation_resolution" | "discipline_resolution" | "state_complaint"
+  ideaRiskLevel: varchar("idea_risk_level", { length: 50 }).default("moderate").notNull(), // "low" | "moderate" | "high" | "critical"
+  escalated: boolean("escalated").default(false).notNull(),
+  complaintFiled: boolean("complaint_filed").default(false).notNull(),
+  complaintOutcome: varchar("complaint_outcome", { length: 100 }), // "Favorable Finding" | "Settlement / Mediation" | "Corrective Action Ordered" | "Pending Decision" | "Withdrawn"
+  timeToResolutionDays: int("time_to_resolution_days"),
+  details: text("details"),
+  recordedBy: int("recorded_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  studentIdx: index("outcome_student_idx").on(t.studentContactId),
+  typeIdx: index("outcome_type_idx").on(t.outcomeType),
+  statusIdx: index("outcome_status_idx").on(t.goalStatus),
+  riskIdx: index("outcome_risk_idx").on(t.ideaRiskLevel),
+}));
+
+export type AdvocacyCaseOutcome = typeof advocacyCaseOutcomes.$inferSelect;
+export type InsertAdvacyCaseOutcome = typeof advocacyCaseOutcomes.$inferInsert;
+
+/**
+ * Client Satisfaction Surveys — family feedback, confidence metrics, and NPS.
+ */
+export const clientSatisfactionSurveys = mysqlTable("client_satisfaction_surveys", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  familyContactId: int("family_contact_id").notNull(),
+  studentContactId: int("student_contact_id"),
+  advocateUserId: int("advocate_user_id"),
+  overallRating: int("overall_rating").notNull(), // 1 to 5
+  advocateRating: int("advocate_rating").notNull(), // 1 to 5
+  communicationRating: int("communication_rating").notNull(), // 1 to 5
+  meetingPrepRating: int("meeting_prep_rating").notNull(), // 1 to 5
+  portalRating: int("portal_rating").notNull(), // 1 to 5
+  confidenceGained: boolean("confidence_gained").default(true).notNull(),
+  goalsAchieved: boolean("goals_achieved").default(true).notNull(),
+  npsScore: int("nps_score").notNull(), // 0 to 10
+  surveyType: varchar("survey_type", { length: 50 }).default("post_meeting").notNull(), // "post_meeting" | "mid_term" | "annual_renewal"
+  testimonialText: text("testimonial_text"),
+  testimonialPermission: boolean("testimonial_permission").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  familyIdx: index("survey_family_idx").on(t.familyContactId),
+  advocateIdx: index("survey_advocate_idx").on(t.advocateUserId),
+  ratingIdx: index("survey_overall_rating_idx").on(t.overallRating),
+}));
+
+export type ClientSatisfactionSurvey = typeof clientSatisfactionSurveys.$inferSelect;
+export type InsertClientSatisfactionSurvey = typeof clientSatisfactionSurveys.$inferInsert;
+
+/**
+ * Membership Plan History — tracks client plan lifecycle: signups, renewals,
+ * upgrades, downgrades, pauses, and structured cancellations.
+ */
+export const membershipPlanHistory = mysqlTable("membership_plan_history", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).default("waypoint").notNull(),
+  contactId: int("contact_id").notNull(),
+  eventType: varchar("event_type", { length: 50 }).notNull(), // "new_signup" | "renewal" | "upgrade" | "downgrade" | "pause" | "resume" | "cancellation" | "payment_failure" | "payment_recovered"
+  fromPlan: varchar("from_plan", { length: 50 }),
+  toPlan: varchar("to_plan", { length: 50 }).notNull(),
+  billingCadence: varchar("billing_cadence", { length: 30 }).default("monthly").notNull(), // "monthly" | "paid_in_full"
+  monthlyAmount: decimal("monthly_amount", { precision: 10, scale: 2 }).default("55.00"),
+  collectedAmount: decimal("collected_amount", { precision: 10, scale: 2 }).default("55.00"),
+  cancellationReason: varchar("cancellation_reason", { length: 255 }), // "Price" | "Attorney needed" | "Outside Waypoint's scope" | "Not ready" | "Chose another provider" | "Unable to reach" | "No longer needs assistance" | "Other"
+  cancellationNote: text("cancellation_note"),
+  effectiveDate: varchar("effective_date", { length: 30 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  contactIdx: index("plan_hist_contact_idx").on(t.contactId),
+  eventIdx: index("plan_hist_event_idx").on(t.eventType),
+  toPlanIdx: index("plan_hist_to_plan_idx").on(t.toPlan),
+}));
+
+export type MembershipPlanHistory = typeof membershipPlanHistory.$inferSelect;
+export type InsertMembershipPlanHistory = typeof membershipPlanHistory.$inferInsert;
+
+
 

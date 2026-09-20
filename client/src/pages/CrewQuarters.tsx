@@ -58,8 +58,11 @@ import {
   GraduationCap,
   ExternalLink,
   Award,
+  LayoutDashboard,
 } from "lucide-react";
 import { toast } from "sonner";
+import CrewMessagesWorkspace from "@/components/crew-quarters/CrewMessagesWorkspace";
+import CrewMessagesOverviewWidget from "@/components/crew-quarters/CrewMessagesOverviewWidget";
 
 interface TimeOffRequest {
   id: string;
@@ -120,6 +123,57 @@ export default function CrewQuarters() {
   const { data: contacts = [] } = trpc.contacts.list.useQuery();
   const { data: callLogs = [] } = trpc.callLogs.listAll.useQuery();
   const { data: unreadMessages = [] } = trpc.messages.unread.useQuery(undefined, { enabled: !!user });
+  const { data: crewStats } = trpc.crewMessages.getOverviewStats.useQuery(undefined, { enabled: !!user });
+  const crewUnreadTotal = crewStats?.unreadTotal || 0;
+
+  // Internal navigation tabs (Overview · Crew Messages · My Tasks · Team Schedule · Resources)
+  const getInitialTab = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("tab") || "overview";
+    }
+    return "overview";
+  };
+
+  const getInitialConvId = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const c = params.get("conversationId");
+      return c ? Number(c) : null;
+    }
+    return null;
+  };
+
+  const [currentTab, setCurrentTab] = useState<string>(getInitialTab);
+  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(getInitialConvId);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setCurrentTab(params.get("tab") || "overview");
+      const c = params.get("conversationId");
+      setSelectedConversationId(c ? Number(c) : null);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const handleTabChange = (tab: string, convId?: number | null) => {
+    setCurrentTab(tab);
+    if (convId !== undefined) {
+      setSelectedConversationId(convId);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", tab);
+    if (convId) {
+      params.set("conversationId", String(convId));
+    } else {
+      params.delete("conversationId");
+    }
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState(null, "", newUrl);
+  };
 
   // Time Off State with Local Persistence
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(() => {
@@ -144,6 +198,7 @@ export default function CrewQuarters() {
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<"high" | "medium" | "low">("medium");
+  const [taskFilter, setTaskFilter] = useState<"all" | "pending" | "completed">("all");
 
   const createTaskMutation = trpc.internalTasks.create.useMutation({
     onSuccess: () => {
@@ -153,6 +208,13 @@ export default function CrewQuarters() {
       setNewTaskTitle("");
     },
     onError: (err) => toast.error("Failed to add task: " + err.message),
+  });
+
+  const updateTaskMutation = trpc.internalTasks.update.useMutation({
+    onSuccess: () => {
+      utils.internalTasks.list.invalidate();
+    },
+    onError: (err) => toast.error("Failed to update task: " + err.message),
   });
 
   const handleSaveTimeOff = (e: React.FormEvent) => {
@@ -298,105 +360,156 @@ export default function CrewQuarters() {
         </div>
       </div>
 
-      {/* ── Main Employee Summary Metrics (5 Metric Cards) ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
-        
-        {/* Card 1: Meetings Today */}
-        <div 
-          onClick={() => setLocation("/calendar")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white font-mono leading-none">
-                {todayAppointments.length || 2}
-              </div>
-              <div className="text-xs text-blue-200/80 font-medium mt-1">Meetings Today</div>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
-        </div>
-
-        {/* Card 2: Callbacks */}
-        <div 
-          onClick={() => setLocation("/call-logs")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-emerald-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(52,211,153,0.15)] flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
-              <Phone className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white font-mono leading-none">
-                {unassignedCalls.length || 3}
-              </div>
-              <div className="text-xs text-blue-200/80 font-medium mt-1">Callbacks</div>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-        </div>
-
-        {/* Card 3: Tasks Due */}
-        <div 
-          onClick={() => setLocation("/tasks")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
-              <CheckSquare className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white font-mono leading-none">
-                {openTasks.length || 4}
-              </div>
-              <div className="text-xs text-blue-200/80 font-medium mt-1">Tasks Due</div>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
-        </div>
-
-        {/* Card 4: New Messages */}
-        <div 
-          onClick={() => {
-            const el = document.getElementById("team-messages-card");
-            if (el) {
-              el.scrollIntoView({ behavior: "smooth", block: "center" });
-              el.classList.add("ring-2", "ring-sky-400", "transition-all");
-              setTimeout(() => el.classList.remove("ring-2", "ring-sky-400"), 2000);
-            }
-            toast.info(
-              newMessagesCount === 1
-                ? "You have 1 new message in your inbox"
-                : `You have ${newMessagesCount} new messages in your inbox`
+      {/* ── Internal Tab Navigation Bar (Overview · Crew Messages · My Tasks · Team Schedule · Resources) ── */}
+      <div className="flex items-center justify-between gap-3 border-b border-blue-900/40 pb-4 overflow-x-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#000d2b]/90 border border-blue-900/60 p-1.5 rounded-2xl shadow-inner backdrop-blur-md">
+          {[
+            { id: "overview", label: "Overview", icon: LayoutDashboard },
+            { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
+            { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
+            { id: "schedule", label: "Team Schedule", icon: Calendar },
+            { id: "resources", label: "Resources", icon: BookOpen },
+          ].map((tab) => {
+            const isActive = currentTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#0062E3] to-[#004BB5] text-white shadow-[0_4px_15px_rgba(0,98,227,0.4)] border border-sky-400/40"
+                    : "text-blue-200/80 hover:text-white hover:bg-white/[0.06] border border-transparent"
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-sky-400"}`} />
+                <span>{tab.label}</span>
+                {Boolean(tab.badge && tab.badge > 0) && (
+                  <span
+                    className={`ml-1 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight ${
+                      tab.id === "messages"
+                        ? "bg-sky-400 text-slate-950 shadow-xs animate-pulse"
+                        : "bg-blue-900/80 text-blue-200 border border-blue-700/60"
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
             );
-          }}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform relative">
-              <MessageSquare className="w-5 h-5" />
-              {newMessagesCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
-                </span>
-              )}
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white font-mono leading-none">
-                {newMessagesCount}
-              </div>
-              <div className="text-xs text-blue-200/80 font-medium mt-1">New Messages</div>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
+          })}
         </div>
 
-        {/* Card 5: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
-        <div className="col-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
+        {currentTab === "overview" && (
+          <Button
+            size="sm"
+            onClick={() => handleTabChange("messages")}
+            className="hidden md:flex items-center gap-1.5 bg-[#001433] hover:bg-[#001E4D] border border-sky-500/30 text-sky-300 hover:text-white text-xs font-semibold rounded-xl px-3.5 py-2 cursor-pointer shadow-sm transition-all"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
+            <span>Open Crew Messages</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
+
+      {/* ── TAB CONTENT 1: CREW MESSAGES WORKSPACE ── */}
+      {currentTab === "messages" && (
+        <div className="space-y-4">
+          <CrewMessagesWorkspace initialConversationId={selectedConversationId} />
+        </div>
+      )}
+
+      {/* ── TAB CONTENT 2: OVERVIEW DASHBOARD ── */}
+      {currentTab === "overview" && (
+        <div className="space-y-8">
+          {/* ── Main Employee Summary Metrics (5 Metric Cards) ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
+            
+            {/* Card 1: Meetings Today */}
+            <div 
+              onClick={() => setLocation("/calendar")}
+              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white font-mono leading-none">
+                    {todayAppointments.length || 2}
+                  </div>
+                  <div className="text-xs text-blue-200/80 font-medium mt-1">Meetings Today</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+
+            {/* Card 2: Callbacks */}
+            <div 
+              onClick={() => setLocation("/call-logs")}
+              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-emerald-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(52,211,153,0.15)] flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white font-mono leading-none">
+                    {unassignedCalls.length || 3}
+                  </div>
+                  <div className="text-xs text-blue-200/80 font-medium mt-1">Callbacks</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+
+            {/* Card 3: Tasks Due */}
+            <div 
+              onClick={() => handleTabChange("tasks")}
+              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
+                  <CheckSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white font-mono leading-none">
+                    {openTasks.length || 4}
+                  </div>
+                  <div className="text-xs text-blue-200/80 font-medium mt-1">Tasks Due</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+
+            {/* Card 4: New Messages (Switches to Crew Messages tab) */}
+            <div 
+              onClick={() => handleTabChange("messages")}
+              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform relative">
+                  <MessageSquare className="w-5 h-5" />
+                  {crewUnreadTotal > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white font-mono leading-none">
+                    {crewUnreadTotal > 0 ? crewUnreadTotal : (newMessagesCount || 0)}
+                  </div>
+                  <div className="text-xs text-blue-200/80 font-medium mt-1">Crew Messages</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+
+            {/* Card 5: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
+            <div className="col-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
           {/* Multi-Layered, Ultra-Fine Bathymetric Topographic Ocean Depth Contours */}
           <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
             <svg
@@ -793,62 +906,10 @@ export default function CrewQuarters() {
           </div>
         </Card>
 
-        {/* Card 3C: Team Messages */}
-        <Card id="team-messages-card" className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl flex flex-col justify-between h-full space-y-4 scroll-mt-6">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
-              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
-                <MessageSquare className="w-4 h-4 text-sky-400" />
-                <span>Team Messages</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toast.info("Opening team messages...")}
-                className="text-xs text-blue-300 hover:text-amber-300 hover:bg-blue-900/40 p-0 h-auto font-medium"
-              >
-                View All →
-              </Button>
-            </div>
-
-            <div className="space-y-2 pt-3">
-              {[
-                { initials: "BH", name: "Byron Honea", message: "Great work on yesterday's meeting!...", time: "9:12 AM", unread: 1, avatarBg: "bg-blue-900/80 border-blue-700/60 text-blue-200" },
-                { initials: "Team", name: "Team", message: "Office will be closed Friday, Sept 20...", time: "8:45 AM", unread: 0, avatarBg: "bg-indigo-900/80 border-indigo-700/60 text-indigo-200" },
-                { initials: "WS", name: "Wyatt Smith", message: "Shared documents: Johnson Case", time: "Yesterday", unread: 0, avatarBg: "bg-sky-900/80 border-sky-700/60 text-sky-200" },
-                { initials: "📣", name: "General", message: "New training module available!", time: "Yesterday", unread: 0, avatarBg: "bg-amber-900/80 border-amber-700/60 text-amber-200" },
-              ].map((msg, idx) => (
-                <div 
-                  key={idx}
-                  onClick={() => toast.info(`Message thread with ${msg.name}`)}
-                  className="flex items-center justify-between p-2 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs hover:border-blue-700 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                    <div className={`w-7 h-7 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0 ${msg.avatarBg}`}>
-                      {msg.initials}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-bold text-white truncate">{msg.name}</div>
-                      <div className="text-[11px] text-blue-300/70 truncate">{msg.message}</div>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                    <span className="text-[10px] font-mono text-blue-300/60">{msg.time}</span>
-                    {msg.unread > 0 && (
-                      <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
-                        {msg.unread}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-2 text-center text-[11px] text-blue-300/60">
-            Internal staff communication channel
-          </div>
-        </Card>
+        {/* Card 3C: Live Crew Messages Widget */}
+        <CrewMessagesOverviewWidget
+          onOpenCrewMessages={(convId) => handleTabChange("messages", convId)}
+        />
 
       </div>
 
@@ -1186,6 +1247,311 @@ export default function CrewQuarters() {
                 <span>Triage Inbound Calls &amp; Assign</span>
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+        </div>
+      )}
+
+      {/* ── TAB CONTENT 3: MY TASKS ── */}
+      {currentTab === "tasks" && (
+        <div className="space-y-6">
+          {/* Tasks Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#000d2b]/90 border border-blue-900/60 rounded-2xl p-5 shadow-lg">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-xl font-bold text-white tracking-wide">My Personal Task Queue</h2>
+              </div>
+              <p className="text-xs text-blue-200/70">
+                Track personal advocacy milestones, IEP reviews, and action items across your caseload.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setTaskModalOpen(true)}
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-md cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Task</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLocation("/tasks")}
+                className="border-blue-700/60 hover:bg-blue-900/40 text-blue-200 text-xs rounded-xl py-2 px-3 cursor-pointer"
+              >
+                <span>Full Tasks Board →</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Task Filter Pills */}
+          <div className="flex items-center gap-2">
+            {[
+              { id: "all", label: "All Tasks" },
+              { id: "pending", label: "Pending" },
+              { id: "completed", label: "Completed" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setTaskFilter(f.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                  taskFilter === f.id
+                    ? "bg-sky-500/25 border-sky-400 text-white"
+                    : "bg-[#001026] border-blue-900/60 text-slate-400 hover:text-white"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tasks List */}
+          <div className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 shadow-xl space-y-3">
+            {tasks.length === 0 ? (
+              <div className="text-center py-12 space-y-2">
+                <CheckSquare className="w-8 h-8 text-blue-400/40 mx-auto" />
+                <p className="text-sm font-semibold text-white">No tasks found</p>
+                <p className="text-xs text-blue-200/60">Your task queue is clear! Click "Add Task" to record an action item.</p>
+              </div>
+            ) : (
+              (tasks as any[])
+                .filter((t) => {
+                  if (taskFilter === "pending") return t.status !== "complete";
+                  if (taskFilter === "completed") return t.status === "complete";
+                  return true;
+                })
+                .map((task) => {
+                  const isDone = task.status === "complete";
+                  return (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between p-3 rounded-xl bg-blue-950/40 border border-blue-800/40 hover:border-blue-700 transition-all text-xs"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 pr-3">
+                        <input
+                          type="checkbox"
+                          checked={isDone}
+                          onChange={(e) => {
+                            updateTaskMutation.mutate({
+                              id: task.id,
+                              status: e.target.checked ? "complete" : "not_started",
+                            });
+                          }}
+                          className="rounded border-blue-700 bg-blue-950 text-emerald-400 focus:ring-emerald-400 h-4 w-4 cursor-pointer"
+                        />
+                        <div className="min-w-0">
+                          <span
+                            className={`font-semibold text-sm ${
+                              isDone ? "line-through text-slate-400" : "text-white"
+                            }`}
+                          >
+                            {task.title}
+                          </span>
+                          {task.description && (
+                            <p className="text-xs text-blue-200/70 truncate mt-0.5">
+                              {task.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {task.priority && (
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                              task.priority === "high"
+                                ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                                : task.priority === "medium"
+                                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                : "bg-sky-500/20 text-sky-300 border-sky-500/40"
+                            }`}
+                          >
+                            {task.priority.toUpperCase()}
+                          </span>
+                        )}
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            isDone
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                              : "bg-blue-900/40 text-blue-200 border border-blue-800/40"
+                          }`}
+                        >
+                          {isDone ? "Completed" : "In Progress"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB CONTENT 4: TEAM SCHEDULE & TIME OFF ── */}
+      {currentTab === "schedule" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#000d2b]/90 border border-blue-900/60 rounded-2xl p-5 shadow-lg">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-sky-400" />
+                <h2 className="text-xl font-bold text-white tracking-wide">Team Schedule &amp; Coverage</h2>
+              </div>
+              <p className="text-xs text-blue-200/70">
+                View upcoming meetings, IEP appointments, and staff availability.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setTimeOffModalOpen(true)}
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-md cursor-pointer"
+              >
+                <Plane className="w-4 h-4" />
+                <span>Request Time Off</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLocation("/calendar")}
+                className="border-blue-700/60 hover:bg-blue-900/40 text-blue-200 text-xs rounded-xl py-2 px-3 cursor-pointer"
+              >
+                <span>Full Calendar →</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Today's Schedule Card */}
+            <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+                <div className="flex items-center gap-2 text-white font-bold text-base">
+                  <Clock className="w-4 h-4 text-sky-400" />
+                  <span>Today's Sessions &amp; Meetings</span>
+                </div>
+                <span className="text-xs font-mono text-amber-400">
+                  {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {[
+                  { time: "9:00 AM", title: "Team Check-In", subtitle: "Virtual Meeting · Room A", dot: "bg-sky-400" },
+                  { time: "10:30 AM", title: "IEP Meeting — Jackson R.", subtitle: "Riverside School · Byron Honea", dot: "bg-amber-400" },
+                  { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
+                  { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case Workspace", dot: "bg-indigo-400" },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/40 hover:border-blue-700">
+                    <div className="w-20 text-right shrink-0 pt-0.5">
+                      <span className="text-xs font-mono font-bold text-blue-200">{item.time}</span>
+                    </div>
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <div className={`w-2.5 h-2.5 rounded-full ${item.dot} mt-1.5 shrink-0 shadow-sm`} />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-white truncate">{item.title}</div>
+                        <div className="text-[11px] text-blue-300/70 truncate">{item.subtitle}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Time Off Center Card */}
+            <Card className="rounded-2xl border border-blue-900/60 bg-[#000821] p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-blue-900/40">
+                <div className="flex items-center gap-2 text-white font-bold text-base">
+                  <Plane className="w-4 h-4 text-amber-400" />
+                  <span>Time Off &amp; Availability</span>
+                </div>
+                <span className="text-xs font-mono text-emerald-400">11 Days Remaining</span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-xs font-semibold text-blue-300/80 uppercase tracking-wider">
+                  Upcoming Approved Leave
+                </div>
+                {timeOffRequests.filter((r) => r.status === "Approved").map((r) => (
+                  <div key={r.id} className="p-3 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white">{r.type}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
+                        Approved
+                      </span>
+                    </div>
+                    <div className="text-blue-200/80">{r.startDate} – {r.endDate}</div>
+                    {r.returnDate && (
+                      <div className="text-[10px] text-amber-300/90 flex items-center gap-1">
+                        <CalendarCheck className="w-3 h-3 text-amber-400" />
+                        <span>First day back: <strong className="text-amber-200">{r.returnDate}</strong></span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB CONTENT 5: RESOURCES & KNOWLEDGE BASE ── */}
+      {currentTab === "resources" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#000d2b]/90 border border-blue-900/60 rounded-2xl p-5 shadow-lg">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-amber-400" />
+                <h2 className="text-xl font-bold text-white tracking-wide">Waypoint Knowledge &amp; Resources</h2>
+              </div>
+              <p className="text-xs text-blue-200/70">
+                Master IEP Coach® internal field guides, standard operating procedures, and professional training.
+              </p>
+            </div>
+
+            <Button
+              size="sm"
+              onClick={() => setLocation("/knowledge-base")}
+              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-md cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Full Knowledge Base</span>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { title: "Waypoint Field Guide", desc: "Step-by-step guidance for client representation and meeting preparation.", path: "/knowledge-base", icon: FileText },
+              { title: "Standard Operating Procedures", desc: "Official office processes, filing guidelines, and privacy workflows.", path: "/walkthroughs", icon: Shield },
+              { title: "Phone Scripts & Email Templates", desc: "Ready-to-use communication templates for schools and parents.", path: "/templates", icon: Phone },
+              { title: "IEP Meeting Best Practices", desc: "Video modules on dispute prevention and active team collaboration.", path: "/knowledge-base", icon: Video },
+              { title: "State Complaint Builder", desc: "Guided generator for formal state complaint filings.", path: "/tools/state-complaint-builder", icon: FileText },
+              { title: "IEP Goal Comparator", desc: "Compare previous vs proposed IEP accommodations and goals.", path: "/tools/iep-comparator", icon: Sparkles },
+            ].map((res, idx) => (
+              <div
+                key={idx}
+                onClick={() => setLocation(res.path)}
+                className="p-5 rounded-2xl bg-[#000821] border border-blue-900/60 hover:border-sky-400/60 transition-all cursor-pointer space-y-3 shadow-lg group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
+                    <res.icon className="w-5 h-5" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
+                    {res.title}
+                  </h4>
+                  <p className="text-xs text-blue-200/70 leading-relaxed mt-1">
+                    {res.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

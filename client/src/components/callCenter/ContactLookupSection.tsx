@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Search,
   UserPlus,
@@ -28,6 +28,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  getTimeInZone,
+  getTimeDifferenceHours,
+  formatTimeDifferenceText,
+  getCallingStatus,
+  detectTimeZoneFromLocation,
+  getFriendlyTimeZoneName,
+} from "@shared/timezones";
 
 export interface ContactItem {
   id: number;
@@ -42,6 +51,9 @@ export interface ContactItem {
   assignedAdvocate?: string | null;
   nextAppointment?: string | null;
   notes?: string | null;
+  timeZone?: string | null;
+  preferredCallingStartTime?: string | null;
+  preferredCallingEndTime?: string | null;
 }
 
 interface ContactLookupSectionProps {
@@ -65,18 +77,34 @@ export function ContactLookupSection({
 }: ContactLookupSectionProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedContact, setSelectedContact] = useState<ContactItem | null>(null);
+  const [sortByBestTime, setSortByBestTime] = useState(false);
 
-  const filteredContacts = contacts.filter((c) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(term) ||
-      (c.phone && c.phone.includes(term)) ||
-      (c.email && c.email.toLowerCase().includes(term)) ||
-      (c.city && c.city.toLowerCase().includes(term)) ||
-      (c.studentName && c.studentName.toLowerCase().includes(term))
-    );
-  });
+  const filteredContacts = useMemo(() => {
+    const list = contacts.filter((c) => {
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase();
+      return (
+        c.name.toLowerCase().includes(term) ||
+        (c.phone && c.phone.includes(term)) ||
+        (c.email && c.email.toLowerCase().includes(term)) ||
+        (c.city && c.city.toLowerCase().includes(term)) ||
+        (c.studentName && c.studentName.toLowerCase().includes(term))
+      );
+    });
+
+    if (sortByBestTime) {
+      list.sort((a, b) => {
+        const tzA = a.timeZone || detectTimeZoneFromLocation(a.city || undefined, a.state || undefined).timeZone;
+        const tzB = b.timeZone || detectTimeZoneFromLocation(b.city || undefined, b.state || undefined).timeZone;
+        const statusA = getCallingStatus(tzA, { preferredStart: a.preferredCallingStartTime, preferredEnd: a.preferredCallingEndTime });
+        const statusB = getCallingStatus(tzB, { preferredStart: b.preferredCallingStartTime, preferredEnd: b.preferredCallingEndTime });
+        const rank = (s: string) => (s === "green" ? 1 : s === "yellow" ? 2 : 3);
+        return rank(statusA.status) - rank(statusB.status);
+      });
+    }
+
+    return list;
+  }, [contacts, searchTerm, sortByBestTime]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -148,6 +176,22 @@ export function ContactLookupSection({
         >
           <Search className="h-4 w-4" />
           Search
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setSortByBestTime((prev) => !prev)}
+          className={cn(
+            "h-10 px-3.5 rounded-xl gap-1.5 text-xs font-semibold border transition-all cursor-pointer",
+            sortByBestTime
+              ? "bg-sky-600 border-sky-500 text-white shadow-md shadow-sky-600/30"
+              : "border-slate-800 bg-[#040D1A] text-slate-300 hover:text-white"
+          )}
+          title="Order contacts by safe calling window"
+        >
+          <Clock className="w-4 h-4 text-sky-400" />
+          <span className="hidden sm:inline">Best Time to Call</span>
         </Button>
       </div>
 
@@ -271,9 +315,35 @@ export function ContactLookupSection({
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-white truncate">{c.name}</span>
                   </div>
-                  <div className="text-xs text-slate-400 truncate flex items-center gap-1.5">
+                  <div className="text-xs text-slate-400 truncate flex items-center gap-1.5 flex-wrap mt-0.5">
                     <span className="font-mono text-slate-300">{c.phone || "No phone"}</span>
                     {c.city && <span>• {c.city}{c.state ? `, ${c.state}` : ""}</span>}
+                    {(() => {
+                      const detected = detectTimeZoneFromLocation(c.city || undefined, c.state || undefined).timeZone;
+                      const tz = c.timeZone || detected;
+                      const timeInfo = getTimeInZone(tz);
+                      const calling = getCallingStatus(tz, {
+                        preferredStart: c.preferredCallingStartTime,
+                        preferredEnd: c.preferredCallingEndTime,
+                      });
+                      return (
+                        <span className="inline-flex items-center gap-1 text-[11px] ml-1 bg-slate-900/90 px-1.5 py-0.5 rounded border border-slate-800">
+                          <Clock className="w-3 h-3 text-sky-400" />
+                          <span className="font-mono font-medium text-white">{timeInfo.timeString}</span>
+                          <span className="text-slate-400">({getFriendlyTimeZoneName(tz)})</span>
+                          <span
+                            className={cn(
+                              "w-1.5 h-1.5 rounded-full",
+                              calling.status === "green"
+                                ? "bg-emerald-400"
+                                : calling.status === "yellow"
+                                ? "bg-amber-400"
+                                : "bg-rose-400"
+                            )}
+                          />
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

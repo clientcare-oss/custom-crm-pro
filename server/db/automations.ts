@@ -1,8 +1,8 @@
 import { eq, and, asc, desc } from "drizzle-orm";
 import { 
-  honeybookAutomations, 
-  honeybookAutomationSteps, 
-  honeybookAutomationRuns,
+  referencehbptlAutomations, 
+  referencehbptlAutomationSteps, 
+  referencehbptlAutomationRuns,
   contacts,
   projects,
   projectTasks
@@ -13,15 +13,15 @@ export async function listAutomations() {
   const db = await getDb();
   if (!db) return [];
 
-  const list = await db.select().from(honeybookAutomations).orderBy(desc(honeybookAutomations.createdAt));
+  const list = await db.select().from(referencehbptlAutomations).orderBy(desc(referencehbptlAutomations.createdAt));
   const results: any[] = [];
   
   for (const item of list) {
     const steps = await db
       .select()
-      .from(honeybookAutomationSteps)
-      .where(eq(honeybookAutomationSteps.automationId, item.id))
-      .orderBy(asc(honeybookAutomationSteps.stepNumber));
+      .from(referencehbptlAutomationSteps)
+      .where(eq(referencehbptlAutomationSteps.automationId, item.id))
+      .orderBy(asc(referencehbptlAutomationSteps.stepNumber));
       
     results.push({
       ...item,
@@ -41,14 +41,14 @@ export async function getAutomationById(id: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const [item] = await db.select().from(honeybookAutomations).where(eq(honeybookAutomations.id, id)).limit(1);
+  const [item] = await db.select().from(referencehbptlAutomations).where(eq(referencehbptlAutomations.id, id)).limit(1);
   if (!item) return null;
 
   const steps = await db
     .select()
-    .from(honeybookAutomationSteps)
-    .where(eq(honeybookAutomationSteps.automationId, item.id))
-    .orderBy(asc(honeybookAutomationSteps.stepNumber));
+    .from(referencehbptlAutomationSteps)
+    .where(eq(referencehbptlAutomationSteps.automationId, item.id))
+    .orderBy(asc(referencehbptlAutomationSteps.stepNumber));
 
   return {
     ...item,
@@ -65,8 +65,8 @@ export async function deleteAutomation(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.delete(honeybookAutomationSteps).where(eq(honeybookAutomationSteps.automationId, id));
-  await db.delete(honeybookAutomations).where(eq(honeybookAutomations.id, id));
+  await db.delete(referencehbptlAutomationSteps).where(eq(referencehbptlAutomationSteps.automationId, id));
+  await db.delete(referencehbptlAutomations).where(eq(referencehbptlAutomations.id, id));
   return { success: true };
 }
 
@@ -87,7 +87,7 @@ export async function saveAutomation(data: {
   if (automationId) {
     // Update existing automation metadata
     await db
-      .update(honeybookAutomations)
+      .update(referencehbptlAutomations)
       .set({
         name: data.name,
         description: data.description || "",
@@ -96,13 +96,13 @@ export async function saveAutomation(data: {
         triggerConfig: data.triggerConfig ? JSON.stringify(data.triggerConfig) : null,
         updatedAt: new Date()
       })
-      .where(eq(honeybookAutomations.id, automationId));
+      .where(eq(referencehbptlAutomations.id, automationId));
 
     // Clear old steps for clean transaction update
-    await db.delete(honeybookAutomationSteps).where(eq(honeybookAutomationSteps.automationId, automationId));
+    await db.delete(referencehbptlAutomationSteps).where(eq(referencehbptlAutomationSteps.automationId, automationId));
   } else {
     // Insert new automation record
-    const result = await db.insert(honeybookAutomations).values({
+    const result = await db.insert(referencehbptlAutomations).values({
       name: data.name,
       description: data.description || "",
       triggerEvent: data.triggerEvent,
@@ -116,7 +116,7 @@ export async function saveAutomation(data: {
   if (data.steps && data.steps.length > 0) {
     for (let i = 0; i < data.steps.length; i++) {
       const step = data.steps[i];
-      await db.insert(honeybookAutomationSteps).values({
+      await db.insert(referencehbptlAutomationSteps).values({
         automationId: automationId,
         stepNumber: i + 1,
         type: step.type,
@@ -151,8 +151,8 @@ export async function triggerAutomationFlow(triggerEvent: string, contactId: num
   // Fetch active automations matching the triggerEvent
   const matchedAutomations = await db
     .select()
-    .from(honeybookAutomations)
-    .where(and(eq(honeybookAutomations.triggerEvent, triggerEvent), eq(honeybookAutomations.isActive, true)));
+    .from(referencehbptlAutomations)
+    .where(and(eq(referencehbptlAutomations.triggerEvent, triggerEvent), eq(referencehbptlAutomations.isActive, true)));
 
   if (matchedAutomations.length === 0) {
     logs.push(`⚠️ No active automations matching trigger "${triggerEvent}" configured.`);
@@ -166,9 +166,9 @@ export async function triggerAutomationFlow(triggerEvent: string, contactId: num
     // Fetch steps
     const steps = await db
       .select()
-      .from(honeybookAutomationSteps)
-      .where(eq(honeybookAutomationSteps.automationId, auto.id))
-      .orderBy(asc(honeybookAutomationSteps.stepNumber));
+      .from(referencehbptlAutomationSteps)
+      .where(eq(referencehbptlAutomationSteps.automationId, auto.id))
+      .orderBy(asc(referencehbptlAutomationSteps.stepNumber));
 
     let runStatus = "completed";
 
@@ -261,7 +261,7 @@ export async function triggerAutomationFlow(triggerEvent: string, contactId: num
 
     if (!dryRun) {
       // Record run execution log in database
-      await db.insert(honeybookAutomationRuns).values({
+      await db.insert(referencehbptlAutomationRuns).values({
         automationId: auto.id,
         contactId: contactId,
         status: runStatus,

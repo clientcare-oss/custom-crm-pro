@@ -55,8 +55,16 @@ import { pipelineRouter } from "./routers/pipeline";
 import { caseActivityRouter } from "./routers/caseActivity";
 import { guidanceRouter } from "./routers/guidance";
 import { supportOffersRouter } from "./routers/supportOffers";
+import { nationalCoverageRouter } from "./routers/nationalCoverage";
+import { crewMessagesRouter } from "./routers/crewMessages";
+import { metricsRouter } from "./routers/metrics";
+import { timeTrackingRouter } from "./routers/timeTracking";
 
 export const appRouter = router({
+  metrics: metricsRouter,
+  timeTracking: timeTrackingRouter,
+  crewMessages: crewMessagesRouter,
+  nationalCoverage: nationalCoverageRouter,
   supportOffers: supportOffersRouter,
   guidance: guidanceRouter,
   caseActivity: caseActivityRouter,

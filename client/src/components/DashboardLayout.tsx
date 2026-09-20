@@ -26,7 +26,7 @@ import { getLoginUrl } from "@/const";
 import { AIAssistant } from "@/components/AIAssistant";
 import { FirstMateGlobalLauncher } from "@/components/firstMate/FirstMateGlobalLauncher";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, type LucideIcon } from "lucide-react";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
@@ -43,6 +43,7 @@ import { Input } from "@/components/ui/input";
 import QuickSetupModal from './QuickSetupModal';
 import { IssueReporterModal } from "./IssueReporterModal";
 import ScopedErrorBoundary from "./ScopedErrorBoundary";
+import TimeTrackerFloatingWidget from "@/components/time-tracking/TimeTrackerFloatingWidget";
 
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -100,6 +101,12 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
+        {
+          icon: Globe2,
+          label: "National Coverage",
+          path: "/national-coverage",
+          keywords: ["national coverage", "map", "time zone", "clocks", "united states", "coverage", "pg-041"],
+        },
       ],
     },
     {
@@ -247,10 +254,40 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Company",
       items: [
         { 
-          icon: LayoutDashboard, 
-          label: "Dashboard", 
-          path: "/company/dashboard",
-          keywords: ["company dashboard", "dashboard", "operations", "overview", "business", "metrics", "pg-001"]
+          icon: LighthouseCottageIcon as any, 
+          label: "Crew Quarters", 
+          path: "/crew-quarters",
+          keywords: ["crew quarters", "employee", "team", "home", "pg-038"]
+        },
+        { 
+          icon: UserCheck, 
+          label: "My Team", 
+          path: "/team",
+          keywords: ["team", "my team", "staff", "employees", "pg-019"]
+        },
+        { 
+          icon: Layers, 
+          label: "Services", 
+          path: "/services",
+          keywords: ["services", "pricing", "plans", "catalog", "pg-035"]
+        },
+        { 
+          icon: HandHeart, 
+          label: "Giving & Impact", 
+          path: "/giving",
+          keywords: ["giving", "impact", "donations", "nonprofit", "501c3", "pg-040"]
+        },
+        { 
+          icon: Activity, 
+          label: "Metrics", 
+          path: "/metrics",
+          keywords: ["metrics", "kpi", "analytics", "lead journey", "revenue", "advocacy hours", "retention", "pg-042"]
+        },
+        { 
+          icon: Settings, 
+          label: "Settings", 
+          path: "/settings",
+          keywords: ["settings", "preferences", "config", "pg-024"]
         },
       ],
     },
@@ -363,6 +400,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const [isResizing, setIsResizing] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [goToPageOpen, setGoToPageOpen] = useState(false);
+
+  // Crew Messages global unread count
+  const { data: crewStats } = trpc.crewMessages.getOverviewStats.useQuery(undefined, {
+    enabled: !!user && user.role !== "client",
+    refetchInterval: 15000,
+  });
+  const crewUnreadCount = crewStats?.unreadTotal || 0;
 
   // ============ COLLAPSIBLE SECTIONS & SEARCH STATE ============
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
@@ -922,6 +966,22 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           {/* Floating Action Buttons (embedded directly in header on First Mate and Call Center) */}
           {!location.startsWith("/first-mate") && !location.startsWith("/call-center") && !location.startsWith("/call-logs") && (
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+              {user && user.role !== "client" && (
+                <Button
+                  onClick={() => setLocation("/crew-quarters?tab=messages")}
+                  className="h-8 px-2.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 hover:text-white border border-sky-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer relative"
+                  title="Crew Messages"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Crew Messages</span>
+                  {crewUnreadCount > 0 && (
+                    <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-xs">
+                      {crewUnreadCount}
+                    </span>
+                  )}
+                </Button>
+              )}
+
               <Button
                 onClick={() => setIssueReporterOpen(true)}
                 className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer"
@@ -998,6 +1058,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       )}
 
       <FirstMateGlobalLauncher />
+      <TimeTrackerFloatingWidget />
       <AIAssistant />
       <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
       <GoToPageModal open={goToPageOpen} onClose={() => setGoToPageOpen(false)} />

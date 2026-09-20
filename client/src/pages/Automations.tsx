@@ -600,7 +600,7 @@ export default function Automations() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
-                    HoneyBook Engine
+                    Automations Engine
                   </span>
                   <h1 className="text-2xl font-bold tracking-tight text-white font-serif">Workflow Automations</h1>
                 </div>
@@ -707,7 +707,7 @@ export default function Automations() {
           </div>
         )}
 
-        {/* ── VIEW 2: HONEYBOOK STYLE CANVAS EDITOR ── */}
+        {/* ── VIEW 2: referencehbptl STYLE CANVAS EDITOR ── */}
         {activeView === "edit" && selectedAutomation && (
           <div className="space-y-6">
             
@@ -823,7 +823,7 @@ export default function Automations() {
                   {/* Dotted Vertical Connector line */}
                   <div className="absolute left-1/2 top-14 bottom-14 w-0.5 border-l-2 border-dashed border-white/10 -translate-x-1/2 z-0" />
 
-                  {/* Trigger Node Card (HoneyBook style) */}
+                  {/* Trigger Node Card (referencehbptl style) */}
                   <div
                     onClick={() => {
                       setConfiguringTrigger(true);
@@ -886,7 +886,7 @@ export default function Automations() {
                       const hasCondition = step.config?.hasCondition;
                       return (
                         <React.Fragment key={step.id}>
-                          {/* Action Node Card (HoneyBook style) */}
+                          {/* Action Node Card (referencehbptl style) */}
                           <div
                             onClick={() => {
                               setActiveStepId(step.id);
@@ -982,7 +982,7 @@ export default function Automations() {
 
                 </div>
 
-                {/* Bottom-left zoom controls widget (HoneyBook style) */}
+                {/* Bottom-left zoom controls widget (referencehbptl style) */}
                 <div className="absolute bottom-4 left-4 bg-slate-950/80 border border-white/10 rounded-lg p-1 flex items-center gap-1.5 shadow-lg select-none">
                   <button
                     onClick={() => setZoomLevel(100)}

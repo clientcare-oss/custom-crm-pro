@@ -64,6 +64,7 @@ import {
   recordOfferEvent,
   listOfferEvents,
 } from "./db/supportOffers";
+export * from "./db/crewMessages";
 
 export {
   listOffersForStudent,
@@ -116,6 +117,7 @@ export {
 export * from "./db/giving";
 export * from "./db/caseActivity";
 export * from "./db/guidance";
+export * from "./db/services";
 
 // ============ CONTACTS ============
 // Contact functions are imported and re-exported from ./db/contacts
@@ -1415,3 +1417,8 @@ export async function deleteParkingLotItem(id: number) {
   if (!db) return null;
   return await db.delete(parkingLotItems).where(eq(parkingLotItems.id, id));
 }
+
+// ─── Waypoint Metrics & Time Tracking (PG-042) ─────────────────────────
+export * from "./db/metrics";
+export * from "./db/timeTracking";
+

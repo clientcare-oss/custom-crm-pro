@@ -4,7 +4,6 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { StudentHeader } from "./StudentHeader";
 import { ClientJourneyCard } from "./ClientJourneyCard";
-import SupportOfferPanel from "./SupportOfferPanel";
 import { IepZoneCard } from "./IepZoneCard";
 import { RecordsAndMeetingPlanCard } from "./RecordsAndMeetingPlanCard";
 import { KeyDocumentsCard, type CaseDocItem } from "./KeyDocumentsCard";
@@ -324,12 +323,6 @@ export function StudentWorkspaceTab({
         }}
         parentContact={parentContact}
         onPreviewPortal={onPreviewPortal}
-      />
-
-      {/* INLINE EXPANDABLE SUPPORT OFFER PANEL (PG-030 Layer Underneath Client Journey) */}
-      <SupportOfferPanel
-        contact={contact}
-        parentContact={parentContact}
         onTimelineRefresh={() => {
           utils.caseActivity.list.invalidate();
         }}

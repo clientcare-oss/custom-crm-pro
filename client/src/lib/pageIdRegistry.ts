@@ -13,6 +13,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/company/dashboard":               { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
   "/company-dashboard":               { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
   "/dashboard":                       { id: "PG-001", name: "Company Dashboard", category: "Company", description: "Waypoint Advocates operational overview & practice metrics" },
+  "/metrics":                         { id: "PG-042", name: "Waypoint Metrics", category: "Company", description: "Company practice metrics, lead journey funnel, revenue, team time, outcomes, and client retention" },
+  "/company/metrics":                 { id: "PG-042", name: "Waypoint Metrics", category: "Company", description: "Company practice metrics, lead journey funnel, revenue, team time, outcomes, and client retention" },
   "/contacts":                        { id: "PG-002", name: "Contacts", category: "CRM" },
   "/leads":                           { id: "PG-003", name: "Leads", category: "CRM" },
   "/students":                        { id: "PG-004", name: "Students", category: "CRM" },
@@ -21,6 +23,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/contracts":                       { id: "PG-006", name: "Agreements & Contracts", category: "Billing" },
   "/appointments":                    { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
   "/calendar":                        { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
+  "/national-coverage":               { id: "PG-041", name: "National Coverage", category: "Schedule", description: "Meetings and client time zones at a glance, nationwide map & calling guidance" },
   "/scheduler":                       { id: "PG-008", name: "Appointment Scheduler", category: "Schedule" },
   "/tasks":                           { id: "PG-009", name: "Tasks & Case To-Dos", category: "Productivity" },
   

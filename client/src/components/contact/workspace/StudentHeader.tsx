@@ -26,8 +26,16 @@ import {
   AlertTriangle,
   Pause,
   Clock,
+  Globe,
 } from "lucide-react";
 import { parseStudentDiagnoses } from "@/lib/studentUtils";
+import {
+  getTimeInZone,
+  getTimeDifferenceHours,
+  formatTimeDifferenceText,
+  getCallingStatus,
+  getFriendlyTimeZoneName,
+} from "@shared/timezones";
 
 interface StudentHeaderProps {
   contact: any;
@@ -107,6 +115,16 @@ export function StudentHeader({
     : isPaidInFull
     ? "Paid in Full"
     : (contact.planTier || contact.servicePlan || "$55");
+
+  // Time Zone Intelligence (PG-041)
+  const studentTz = contact.confirmedTimeZone || contact.timezone || "America/New_York";
+  const studentLocalTime = getTimeInZone(studentTz);
+  const diffHours = getTimeDifferenceHours(studentTz, "America/New_York");
+  const diffText = formatTimeDifferenceText(diffHours);
+  const callingStatus = getCallingStatus(studentTz, {
+    preferredStart: contact.preferredCallingStartTime,
+    preferredEnd: contact.preferredCallingEndTime,
+  });
 
   return (
     <div className="space-y-4">
@@ -332,6 +350,32 @@ export function StudentHeader({
               <div className="w-full pl-6">
                 <span className="font-bold text-white text-left block leading-snug break-words" title={displayMedicalDiagnoses}>
                   {displayMedicalDiagnoses}
+                </span>
+              </div>
+            </div>
+
+            {/* Client Time & Calling Intelligence (PG-041) */}
+            <div className="pt-2.5 mt-2 border-t border-[#0E3E75]/60 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-xs">
+                <Globe className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+                <span className="font-medium text-slate-300">Client Time:</span>
+                <span className="font-mono font-bold text-white">{studentLocalTime.timeString}</span>
+                <span className="text-[10px] text-slate-400">({getFriendlyTimeZoneName(studentTz)})</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-400 hidden sm:inline">{diffText}</span>
+                <span
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-semibold border flex items-center gap-1",
+                    callingStatus.status === "green"
+                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
+                      : callingStatus.status === "yellow"
+                      ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                      : "bg-rose-500/15 border-rose-500/30 text-rose-300"
+                  )}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  {callingStatus.label}
                 </span>
               </div>
             </div>

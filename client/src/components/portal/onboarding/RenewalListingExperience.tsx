@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { trpc } from "@/lib/trpc";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,14 @@ export function RenewalListingExperience({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRenewed, setIsRenewed] = useState(false);
 
+  // Fetch live pricing from catalog
+  const { data: catalogData } = trpc.services.publicCatalog.useQuery(undefined, { staleTime: 60_000 });
+  const plan55 = catalogData?.services?.find((s: any) => s.serviceCode === "advocacy_plan_55");
+  const plan105 = catalogData?.services?.find((s: any) => s.serviceCode === "advocacy_plan_105");
+
+  const price55 = plan55?.standardPrice ? plan55.standardPrice / 100 : (plan55?.price ? plan55.price / 100 : 55);
+  const price105 = plan105?.standardPrice ? plan105.standardPrice / 100 : (plan105?.price ? plan105.price / 100 : 105);
+
   // Exactly the 2 requested plans ($55/mo and $105/mo per student)
   const packages: RenewalPackage[] = [
     {
@@ -63,7 +72,7 @@ export function RenewalListingExperience({
       tagline: "Ongoing special education coaching, document review checks, and strategic parent guidance",
       badge: "Continuous Advisory",
       isPopular: false,
-      monthlyPrice: 55,
+      monthlyPrice: price55,
       description: "Continuous advocacy support designed to keep your child's IEP on track with document audits, goal progress checks, and on-demand coach guidance.",
       features: [
         "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
@@ -81,7 +90,7 @@ export function RenewalListingExperience({
       tagline: "Full-spectrum active representation with live advocate attendance at all school IEP/504 conferences",
       badge: "Most Popular Renewal",
       isPopular: true,
-      monthlyPrice: 105,
+      monthlyPrice: price105,
       description: "End-to-end direct advocacy coaching with live coach representation at every school conference table and active dispute defense.",
       features: [
         "Includes everything in the Essential Continuity Plan, plus:",

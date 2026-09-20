@@ -64,14 +64,31 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center justify-end">
+    <div className="fixed bottom-4 left-4 z-50 flex items-center justify-start">
+      {/* Trigger button — always visible, minimal in bottom-left */}
+      <button
+        onClick={() => setOpen(prev => !prev)}
+        title={open ? "Hide page ID" : `Page ID: ${page.id}`}
+        className={`
+          flex h-7 w-7 items-center justify-center rounded-full
+          border transition-all duration-200 cursor-pointer
+          ${open
+            ? "border-primary/40 bg-primary/10 text-primary shadow-sm"
+            : "border-border/50 bg-background/70 text-muted-foreground/50 hover:text-muted-foreground hover:border-border hover:bg-background/90 backdrop-blur-sm shadow-sm"
+          }
+        `}
+        aria-label="Show page ID"
+      >
+        <Hash className="h-3.5 w-3.5" />
+      </button>
+
       {/* Expanded pill */}
       <div
         className={`
           flex items-center gap-2 rounded-full border border-border/70
           bg-background/95 backdrop-blur-sm shadow-md
           overflow-hidden transition-all duration-300 ease-in-out
-          ${open ? "max-w-[280px] opacity-100 pl-3 pr-1.5 py-1.5 mr-2" : "max-w-0 opacity-0 p-0 border-0 mr-0"}
+          ${open ? "max-w-[280px] opacity-100 pl-3 pr-1.5 py-1.5 ml-2" : "max-w-0 opacity-0 p-0 border-0 ml-0"}
         `}
       >
         {/* ID + name */}
@@ -88,7 +105,7 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
           title={copied ? "Copied!" : "Copy page ID"}
           className={`
             flex h-6 w-6 shrink-0 items-center justify-center rounded-full
-            transition-all duration-200 ml-0.5
+            transition-all duration-200 ml-0.5 cursor-pointer
             ${copied
               ? "bg-emerald-500/15 text-emerald-600"
               : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -101,23 +118,6 @@ export default function PageIdBadge({ id: explicitId, name: explicitName }: { id
           }
         </button>
       </div>
-
-      {/* Trigger button — always visible, minimal */}
-      <button
-        onClick={() => setOpen(prev => !prev)}
-        title={open ? "Hide page ID" : `Page ID: ${page.id}`}
-        className={`
-          flex h-7 w-7 items-center justify-center rounded-full
-          border transition-all duration-200
-          ${open
-            ? "border-primary/40 bg-primary/10 text-primary shadow-sm"
-            : "border-border/50 bg-background/70 text-muted-foreground/50 hover:text-muted-foreground hover:border-border hover:bg-background/90 backdrop-blur-sm shadow-sm"
-          }
-        `}
-        aria-label="Show page ID"
-      >
-        <Hash className="h-3.5 w-3.5" />
-      </button>
     </div>
   );
 }

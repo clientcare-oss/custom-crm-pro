@@ -39,10 +39,13 @@ import {
 const FALLBACK_SERVICES = [
   {
     id: 101,
+    serviceCode: "iep_document_review",
     name: "IEP Document Review & Strategy Session",
+    clientFacingTitle: "IEP Document Review & Strategy Session",
     description:
       "Comprehensive analysis of your student's draft IEP, identification of missing accommodations, behavioral needs review, and a 60-minute strategy prep session with written recommendations.",
     price: 75000, // cents ($750)
+    standardPrice: 75000,
     deliveryTime: "3 business days",
     includedItems: [
       "Full IEP audit and accommodation review",
@@ -53,10 +56,13 @@ const FALLBACK_SERVICES = [
   },
   {
     id: 102,
+    serviceCode: "advocacy_plan_55",
     name: "Advocacy Only Membership ($55/mo)",
+    clientFacingTitle: "Advocacy Only",
     description:
       "Year-round special education IEP advocacy representation, IEP meeting strategy & attendance, document & evaluation review, and direct advocate communications.",
     price: 5500, // cents ($55/mo)
+    standardPrice: 5500,
     deliveryTime: "24 hours",
     includedItems: [
       "Live advocate attendance at all IEP/504 meetings",
@@ -67,10 +73,13 @@ const FALLBACK_SERVICES = [
   },
   {
     id: 103,
+    serviceCode: "bip_fba_audit",
     name: "BIP / FBA Deep-Dive Audit",
+    clientFacingTitle: "BIP & Functional Behavior Assessment Audit",
     description:
       "Targeted behavioral intervention plan analysis, function-of-behavior audit, crisis plan compliance check, and positive reinforcement protocol development.",
     price: 35000, // cents ($350)
+    standardPrice: 35000,
     deliveryTime: "3 business days",
     includedItems: [
       "Functional Behavior Assessment (FBA) validity review",
@@ -81,24 +90,30 @@ const FALLBACK_SERVICES = [
   },
   {
     id: 104,
-    name: "Single-Use State Complaint",
+    serviceCode: "state_complaint_support",
+    name: "State Complaint Support",
+    clientFacingTitle: "State Complaint Support",
     description:
-      "Standalone single-use Georgia IDEA State Complaint Builder, formal legal drafting, citation indexing, systemic violation narrative, evidence exhibit preparation, and filing support.",
-    price: 125000, // cents ($1,250)
-    deliveryTime: "7 business days",
+      "Preparation and drafting support for one state complaint with evidence timeline preparation and filing submission guidance.",
+    price: 20000, // cents ($200.00 Authoritative)
+    standardPrice: 20000,
+    deliveryTime: "5 business days",
     includedItems: [
-      "Full procedural violation audit",
-      "GaDOE State Complaint drafting & legal citations",
-      "Organized exhibit binder preparation",
-      "Filing guidance and state investigator prep",
+      "Review of relevant IEP, evaluation, and PWN records",
+      "Identification of GaDOE systemic or student-specific IDEA violations",
+      "Preparation and drafting of formal State Complaint document",
+      "Filing submission guidance and evidence indexing",
     ],
   },
   {
     id: 105,
+    serviceCode: "iep_full_representation",
     name: "Full IEP Representation Package",
+    clientFacingTitle: "Full IEP Representation Package",
     description:
       "End-to-end IEP coaching, record analysis, strategy agendas, and live advocate attendance at all school meetings.",
     price: 185000, // cents ($1,850)
+    standardPrice: 185000,
     deliveryTime: "5 business days",
     includedItems: [
       "All historical school records review",
@@ -188,18 +203,54 @@ export default function SupportOfferPanel({
 
   const availableServices = useMemo(() => {
     if (servicesData?.services && servicesData.services.length > 0) {
-      return servicesData.services.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        description: s.description || "",
-        price: s.price || 0,
-        deliveryTime: s.duration ? `${s.duration} min` : "3 business days",
-        includedItems: [
-          "Direct Master IEP Coach® representation",
-          "Written case analysis & action plan",
-          "Confidential documentation review",
-        ],
-      }));
+      return servicesData.services
+        .filter((s: any) => !s.isArchived && s.availableInSupportOfferPanel !== false)
+        .map((s: any) => {
+          let items: string[] = [];
+          try {
+            if (Array.isArray(s.includedItems)) {
+              items = s.includedItems
+                .map((it: any) => (typeof it === "string" ? it : it.text))
+                .filter(Boolean);
+            } else if (typeof s.includedItems === "string") {
+              const parsed = JSON.parse(s.includedItems);
+              if (Array.isArray(parsed)) {
+                items = parsed
+                  .map((it: any) => (typeof it === "string" ? it : it.text))
+                  .filter(Boolean);
+              }
+            }
+          } catch {
+            items = [];
+          }
+
+          if (items.length === 0) {
+            items = [
+              "Direct Master IEP Coach® representation",
+              "Written case analysis & action plan",
+              "Confidential documentation review",
+            ];
+          }
+
+          return {
+            id: s.id,
+            serviceCode: s.serviceCode,
+            name: s.clientFacingTitle || s.name,
+            clientFacingTitle: s.clientFacingTitle || s.name,
+            description: s.shortDescription || s.description || "",
+            price: s.standardPrice ?? s.price ?? 0,
+            standardPrice: s.standardPrice ?? s.price ?? 0,
+            deliveryTime: s.deliveryTimeLabel || (s.duration ? `${s.duration} min` : "3 business days"),
+            includedItems: items,
+            planEligibility: s.planEligibility,
+            allowDocumentUpload: s.allowDocumentUpload !== false,
+            requirePayment: s.requirePayment !== false,
+            priorityEnabled: s.priorityEnabled === true,
+            priorityPrice: s.priorityPrice,
+            priorityDeliveryTime: s.priorityDeliveryTimeLabel || "24 hours",
+            priorityDescription: s.priorityDescription,
+          };
+        });
     }
     return FALLBACK_SERVICES;
   }, [servicesData]);
@@ -254,23 +305,41 @@ export default function SupportOfferPanel({
 
   // Select a service from the library snapshot
   const handleSelectService = (service: any) => {
-    setTitle(service.name);
+    setTitle(service.clientFacingTitle || service.name);
     setDescription(service.description);
-    setPriceDollars((service.price / 100).toFixed(2));
-    setDeliveryTimePreset(service.deliveryTime);
+    const p = (service.standardPrice ?? service.price ?? 0) / 100;
+    setPriceDollars(p.toFixed(2));
+    setDeliveryTimePreset(service.deliveryTime || "3 business days");
     setCustomDeliveryTime("");
-    setIncludedItems(
-      service.includedItems || [
-        "Direct advocate support",
-        "Document review & strategy",
-      ]
-    );
+    setIncludedItems(service.includedItems || []);
     setSourceType("library");
     setSourceServiceId(service.id);
+
+    if (service.allowDocumentUpload !== undefined) {
+      setAllowDocumentUpload(service.allowDocumentUpload);
+    }
+    if (service.requirePayment !== undefined) {
+      setRequirePayment(service.requirePayment);
+    }
+    if (service.priorityEnabled) {
+      setPriorityEnabled(true);
+      if (service.priorityPrice) {
+        setPriorityPriceDollars((service.priorityPrice / 100).toFixed(2));
+      }
+      if (service.priorityDeliveryTime) {
+        setPriorityDeliveryTime(service.priorityDeliveryTime);
+      }
+      if (service.priorityDescription) {
+        setPriorityDescription(service.priorityDescription);
+      }
+    } else {
+      setPriorityEnabled(false);
+    }
+
     setIsServiceDropdownOpen(false);
     setSelectedServiceSearch("");
     markDirty();
-    toast.success(`Copied snapshot from ${service.name}`);
+    toast.success(`Copied snapshot from ${service.clientFacingTitle || service.name}`);
   };
 
   // Switch to Custom Offer
@@ -508,12 +577,12 @@ export default function SupportOfferPanel({
     <div className="relative w-full">
       {/* ── COLLAPSED TRIGGER TAB (Peeks from underneath Client Journey bottom-left) ── */}
       {!isExpanded && (
-        <div className="flex justify-start -mt-2.5 px-4 mb-3 z-10 relative">
+        <div className="flex justify-start -mt-4 px-6 mb-2 z-10 relative">
           <button
             type="button"
             onClick={handleTogglePanel}
             aria-expanded={false}
-            className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-b-lg border-t-0 border border-[#1e3a5f] bg-[#0B1D35] hover:bg-[#102744] text-slate-200 hover:text-white shadow-lg transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
+            className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-b-xl border-t-0 border-x border-b border-[#0D4B84] bg-[#071C3C] hover:bg-[#0A254D] text-slate-200 hover:text-white shadow-xl transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Offer Additional Support</span>
@@ -525,10 +594,10 @@ export default function SupportOfferPanel({
       {/* ── EXPANDABLE PANEL (Smooth vertical accordion slide-down) ── */}
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${
-          isExpanded ? "max-h-[3800px] opacity-100 my-4" : "max-h-0 opacity-0 my-0 pointer-events-none"
+          isExpanded ? "max-h-[3800px] opacity-100 my-2" : "max-h-0 opacity-0 my-0 pointer-events-none"
         }`}
       >
-        <div className="rounded-xl border border-[#1b3558] bg-[#0B1D35] shadow-2xl p-5 sm:p-7 space-y-7 text-slate-100">
+        <div className="rounded-2xl border border-[#0D4B84] bg-[#0B1D35] shadow-2xl p-5 sm:p-7 space-y-7 text-slate-100">
           {/* ── PANEL HEADER ── */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#18314f]">
             <div>
@@ -547,12 +616,22 @@ export default function SupportOfferPanel({
               </div>
             </div>
 
-            {/* Recipient Badge */}
-            <div className="flex items-center gap-2 self-start sm:self-auto bg-[#07162B] border border-[#1e3a5f] px-3.5 py-1.5 rounded-full text-xs">
-              <span className="text-slate-400">Recipient:</span>
-              <span className="font-semibold text-white">
-                {parentName} • {studentName}
-              </span>
+            {/* Recipient Badge & Collapse Button */}
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex items-center gap-2 bg-[#07162B] border border-[#1e3a5f] px-3.5 py-1.5 rounded-full text-xs">
+                <span className="text-slate-400">Recipient:</span>
+                <span className="font-semibold text-white">
+                  {parentName} • {studentName}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleTogglePanel}
+                className="p-1.5 rounded-lg border border-slate-700 bg-[#07162B] hover:bg-[#102744] text-slate-400 hover:text-white transition-colors cursor-pointer"
+                title="Collapse panel"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -1298,12 +1377,12 @@ export default function SupportOfferPanel({
         </div>
 
         {/* ── EXPANDED BOTTOM-LEFT TAB (Hide Additional Support) ── */}
-        <div className="flex justify-start px-4 -mt-px">
+        <div className="flex justify-start px-6 -mt-px">
           <button
             type="button"
             onClick={handleTogglePanel}
             aria-expanded={true}
-            className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-b-lg border-t-0 border border-[#1e3a5f] bg-[#0B1D35] hover:bg-[#102744] text-slate-200 hover:text-white shadow-lg transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
+            className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-b-xl border-t-0 border-x border-b border-[#0D4B84] bg-[#0B1D35] hover:bg-[#102744] text-slate-200 hover:text-white shadow-xl transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Hide Additional Support</span>
