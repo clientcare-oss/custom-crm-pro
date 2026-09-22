@@ -1,0 +1,499 @@
+import React, { useState } from "react";
+import { Sparkles, Map as MapIcon, Plus, Pencil, Trash2, Copy, Check, Eye, PlayCircle, Layers, ArrowUpDown, ChevronDown, ChevronRight, FileCheck, Shield, User, HelpCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import type { MeetingTarget } from "../types";
+import { ReorganizeMeetingModal } from "./ReorganizeMeetingModal";
+
+interface BlueprintViewProps {
+  studentName: string;
+  targets: MeetingTarget[];
+  detectedOrder: string[];
+  onUpdateTargets: (targets: MeetingTarget[]) => void;
+  onUpdateDetectedOrder: (order: string[]) => void;
+  onBuildBlueprint: () => Promise<void>;
+  onPreviewMeetingMode: () => void;
+  onMarkReady: () => void;
+  isLoading: boolean;
+}
+
+export function BlueprintView({
+  studentName,
+  targets,
+  detectedOrder,
+  onUpdateTargets,
+  onUpdateDetectedOrder,
+  onBuildBlueprint,
+  onPreviewMeetingMode,
+  onMarkReady,
+  isLoading,
+}: BlueprintViewProps) {
+  const [showReorganizeModal, setShowReorganizeModal] = useState(false);
+  const [editingTarget, setEditingTarget] = useState<MeetingTarget | null>(null);
+  const [isNewTargetModal, setIsNewTargetModal] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<Record<string, boolean>>({});
+
+  // Group targets by section
+  const sectionMap = new Map<string, MeetingTarget[]>();
+  
+  // First seed with detectedOrder to preserve sequence
+  detectedOrder.forEach((sec) => sectionMap.set(sec, []));
+  
+  // Place targets into buckets
+  targets.forEach((t) => {
+    const sec = t.iepSection || "General";
+    if (!sectionMap.has(sec)) {
+      sectionMap.set(sec, []);
+    }
+    sectionMap.get(sec)!.push(t);
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSection((prev) => ({
+      ...prev,
+      [section]: prev[section] === undefined ? false : !prev[section],
+    }));
+  };
+
+  const handleRemoveTarget = (id: string) => {
+    onUpdateTargets(targets.filter((t) => t.id !== id));
+  };
+
+  const handleDuplicateTarget = (target: MeetingTarget) => {
+    const copy: MeetingTarget = {
+      ...target,
+      id: `tgt-${Date.now()}`,
+      targetName: `${target.targetName} (Copy)`,
+      targetOrder: target.targetOrder + 1,
+      isCustom: true,
+    };
+    onUpdateTargets([...targets, copy]);
+  };
+
+  const handleSaveTargetEdit = () => {
+    if (!editingTarget) return;
+    if (isNewTargetModal) {
+      onUpdateTargets([...targets, editingTarget]);
+    } else {
+      onUpdateTargets(
+        targets.map((t) => (t.id === editingTarget.id ? editingTarget : t))
+      );
+    }
+    setEditingTarget(null);
+    setIsNewTargetModal(false);
+  };
+
+  const handleAddNewTarget = (defaultSection?: string) => {
+    const newTarget: MeetingTarget = {
+      id: `manual-tgt-${Date.now()}`,
+      targetName: "New Meeting Target",
+      iepSection: defaultSection || detectedOrder[0] || "Accommodations / Supports",
+      sectionOrder: 1,
+      targetOrder: targets.length + 1,
+      quickAdvocateSayThis: "We are requesting...",
+      fullAdvocateScript: "",
+      putItHereLocation: "IEP Section: Accommodations",
+      possibleIepWording: "",
+      whyWeWantIt: "",
+      supportingEvidence: "",
+      sources: ["Advocate Preparation"],
+      ifTeamDisagrees: "Document decision in Prior Written Notice.",
+      parentWhatWeWant: "",
+      parentWhyWeWantIt: "",
+      parentSupportingEvidence: "",
+      meetingStatus: "NOT_DISCUSSED",
+      requestRaised: false,
+      pwnNeeded: false,
+      addedToIep: false,
+      followUpNeeded: false,
+      isCustom: true,
+    };
+    setEditingTarget(newTarget);
+    setIsNewTargetModal(true);
+  };
+
+  const handleReorganizeSave = (reorderedSections: string[], reorderedTargets: MeetingTarget[]) => {
+    onUpdateDetectedOrder(reorderedSections);
+    onUpdateTargets(reorderedTargets);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Banner & Primary Actions */}
+      <div className="rounded-2xl bg-gradient-to-br from-[#0B3767] via-[#09254D] to-[#071C38] border border-[#144E8A] p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-amber-500/20 text-[#F5B544]">
+              <MapIcon className="h-4 w-4" />
+            </span>
+            <h2 className="text-lg font-bold text-white tracking-wide">
+              IEP Meeting Blueprint
+            </h2>
+          </div>
+          <p className="text-xs text-blue-200/70 max-w-2xl leading-relaxed">
+            The core advocacy strategy for {studentName}. Every target represents <strong className="text-white">One Request, One IEP Location, One Team Decision</strong>.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowReorganizeModal(true)}
+            className="text-xs font-bold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-white hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5 text-[#F5B544]" />
+            ↕ Reorganize Meeting
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={onBuildBlueprint}
+            disabled={isLoading}
+            className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg border border-blue-400/30 px-4 py-2 cursor-pointer inline-flex items-center gap-1.5"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Building Blueprint...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 text-[#F5B544]" />
+                {targets.length > 0 ? "Re-Build Blueprint" : "✨ Build IEP Blueprint"}
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPreviewMeetingMode}
+            disabled={targets.length === 0}
+            className="text-xs font-bold border-[#104375] bg-[#071F3D] text-emerald-300 hover:text-white hover:border-emerald-500/50 cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Preview Meeting Mode
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={onMarkReady}
+            disabled={targets.length === 0}
+            className="text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg border border-emerald-400/40 px-4 py-2 cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <Check className="h-3.5 w-3.5" />
+            ✓ Ready for Meeting
+          </Button>
+        </div>
+      </div>
+
+      {/* Targets List Grouped by Section */}
+      <div className="space-y-4">
+        {Array.from(sectionMap.entries()).map(([section, sectionTargets]) => {
+          if (sectionTargets.length === 0 && !detectedOrder.includes(section)) return null;
+
+          const isCollapsed = expandedSection[section] === false;
+
+          return (
+            <div
+              key={section}
+              className="rounded-2xl bg-[#071A33] border border-[#0F3D70] overflow-hidden shadow-lg"
+            >
+              {/* Section Header */}
+              <div
+                onClick={() => toggleSection(section)}
+                className="px-5 py-3.5 bg-gradient-to-r from-[#09254D] to-[#071A33] border-b border-[#0F3D70] flex items-center justify-between cursor-pointer hover:bg-[#0C2D5A] transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-blue-400">
+                    {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </span>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <span className="text-[#F5B544]">{section}</span>
+                    <span className="text-[11px] font-mono text-blue-300/60 font-normal">
+                      ({sectionTargets.length} target{sectionTargets.length !== 1 ? "s" : ""})
+                    </span>
+                  </h3>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddNewTarget(section);
+                  }}
+                  className="text-xs text-blue-300 hover:text-white hover:bg-white/10 h-7 px-2.5 inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5 text-[#F5B544]" />
+                  Add Target
+                </Button>
+              </div>
+
+              {/* Section Targets */}
+              {!isCollapsed && (
+                <div className="p-4 space-y-3">
+                  {sectionTargets.length === 0 ? (
+                    <p className="text-xs text-blue-300/50 italic py-2 text-center">
+                      No active targets in this section. Click "+ Add Target" to assign one.
+                    </p>
+                  ) : (
+                    sectionTargets.map((target) => (
+                      <div
+                        key={target.id}
+                        className="rounded-xl border border-[#13457A] bg-[#092244] p-4 space-y-3 hover:border-[#1E68B8] transition-all shadow-md"
+                      >
+                        {/* Target Header Row */}
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className="bg-[#0E427B] text-[#F5B544] border border-[#2368B2] text-xs font-bold px-2.5 py-0.5">
+                                🎯 {target.targetName}
+                              </Badge>
+                              <span className="text-[11px] text-blue-200/70 font-mono">
+                                ✍ {target.putItHereLocation}
+                              </span>
+                            </div>
+
+                            {/* Quick Say This */}
+                            <div className="pt-1">
+                              <p className="text-xs text-blue-300/70 uppercase tracking-wider font-semibold text-[10.5px]">
+                                Quick Advocate Say This (Live Script)
+                              </p>
+                              <p className="text-sm font-semibold text-white mt-0.5 leading-snug">
+                                "{target.quickAdvocateSayThis}"
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingTarget(target);
+                                setIsNewTargetModal(false);
+                              }}
+                              title="Edit full target details"
+                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <Pencil className="h-3.5 w-3.5 text-blue-400" />
+                              <span className="text-[11px]">Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDuplicateTarget(target)}
+                              title="Duplicate target"
+                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            >
+                              <Copy className="h-3.5 w-3.5 text-indigo-400" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTarget(target.id)}
+                              title="Remove target"
+                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Rationale & Evidence Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-[#113E70]/70 text-xs">
+                          <div className="rounded-lg bg-[#061830] p-2.5 border border-[#0E3560]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-300/70 mb-0.5">
+                              💡 Why We Want It
+                            </p>
+                            <p className="text-blue-100 text-[11.5px] leading-relaxed">
+                              {target.whyWeWantIt || "No rationale specified."}
+                            </p>
+                          </div>
+
+                          <div className="rounded-lg bg-[#061830] p-2.5 border border-[#0E3560]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-300/70 mb-0.5">
+                              📊 Supporting Evidence
+                            </p>
+                            <p className="text-blue-100 text-[11.5px] leading-relaxed">
+                              {target.supportingEvidence || "No evidence attached."}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Target Editor Dialog */}
+      {editingTarget && (
+        <Dialog open={Boolean(editingTarget)} onOpenChange={(open) => !open && setEditingTarget(null)}>
+          <DialogContent className="max-w-3xl bg-[#06172E] border border-[#144E8A] text-white shadow-2xl p-0 overflow-hidden">
+            <div className="p-6 border-b border-[#0F3D70] bg-gradient-to-r from-[#09254D] to-[#06172E]">
+              <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+                <span className="text-[#F5B544]">🎯</span>
+                <span>{isNewTargetModal ? "Create Meeting Target" : `Edit: ${editingTarget.targetName}`}</span>
+              </DialogTitle>
+              <p className="text-xs text-blue-200/70 mt-1">
+                One Target = One Request, One IEP Location, One Team Decision.
+              </p>
+            </div>
+
+            <div className="p-6 max-h-[65vh] overflow-y-auto space-y-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-blue-300 uppercase block mb-1">Target Name *</label>
+                  <Input
+                    value={editingTarget.targetName}
+                    onChange={(e) => setEditingTarget({ ...editingTarget, targetName: e.target.value })}
+                    className="h-8 text-xs bg-[#051426] border-[#124274] text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-blue-300 uppercase block mb-1">IEP Section</label>
+                  <Input
+                    value={editingTarget.iepSection}
+                    onChange={(e) => setEditingTarget({ ...editingTarget, iepSection: e.target.value })}
+                    className="h-8 text-xs bg-[#051426] border-[#124274] text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[#F5B544] uppercase block mb-1">
+                  Quick Advocate Say This (One concise sentence for live meeting) *
+                </label>
+                <Input
+                  value={editingTarget.quickAdvocateSayThis}
+                  onChange={(e) => setEditingTarget({ ...editingTarget, quickAdvocateSayThis: e.target.value })}
+                  placeholder="e.g. We are requesting a discrete help card..."
+                  className="h-8 text-xs bg-[#051426] border-[#124274] text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-blue-300 uppercase block mb-1">
+                  Put It Here / Exact IEP Location
+                </label>
+                <Input
+                  value={editingTarget.putItHereLocation}
+                  onChange={(e) => setEditingTarget({ ...editingTarget, putItHereLocation: e.target.value })}
+                  placeholder="e.g. IEP Page 8, Supplementary Aids & Services"
+                  className="h-8 text-xs bg-[#051426] border-[#124274] text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-blue-300 uppercase block mb-1">
+                  Proposed IEP Wording
+                </label>
+                <Textarea
+                  value={editingTarget.possibleIepWording}
+                  onChange={(e) => setEditingTarget({ ...editingTarget, possibleIepWording: e.target.value })}
+                  rows={2}
+                  className="text-xs bg-[#051426] border-[#124274] text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-blue-300 uppercase block mb-1">Why We Want It</label>
+                  <Textarea
+                    value={editingTarget.whyWeWantIt}
+                    onChange={(e) => setEditingTarget({ ...editingTarget, whyWeWantIt: e.target.value })}
+                    rows={2}
+                    className="text-xs bg-[#051426] border-[#124274] text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-blue-300 uppercase block mb-1">Supporting Evidence</label>
+                  <Textarea
+                    value={editingTarget.supportingEvidence}
+                    onChange={(e) => setEditingTarget({ ...editingTarget, supportingEvidence: e.target.value })}
+                    rows={2}
+                    className="text-xs bg-[#051426] border-[#124274] text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-rose-300 uppercase block mb-1">
+                  If Team Disagrees (Advocate Objection & PWN Strategy)
+                </label>
+                <Textarea
+                  value={editingTarget.ifTeamDisagrees}
+                  onChange={(e) => setEditingTarget({ ...editingTarget, ifTeamDisagrees: e.target.value })}
+                  rows={2}
+                  className="text-xs bg-[#051426] border-[#124274] text-white"
+                />
+              </div>
+
+              {/* Parent-Facing Section */}
+              <div className="rounded-xl bg-[#092244] border border-[#164D87] p-3.5 space-y-3">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase">
+                  <User className="h-4 w-4" />
+                  <span>Parent Ready Projections (Parent-Safe Rationale)</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="text-[10px] text-blue-200 block mb-0.5">What We Want</label>
+                    <Input
+                      value={editingTarget.parentWhatWeWant}
+                      onChange={(e) => setEditingTarget({ ...editingTarget, parentWhatWeWant: e.target.value })}
+                      className="h-7 text-xs bg-[#051426] border-[#124274] text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-blue-200 block mb-0.5">Why We Want It</label>
+                    <Input
+                      value={editingTarget.parentWhyWeWantIt}
+                      onChange={(e) => setEditingTarget({ ...editingTarget, parentWhyWeWantIt: e.target.value })}
+                      className="h-7 text-xs bg-[#051426] border-[#124274] text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-blue-200 block mb-0.5">Parent Evidence</label>
+                    <Input
+                      value={editingTarget.parentSupportingEvidence}
+                      onChange={(e) => setEditingTarget({ ...editingTarget, parentSupportingEvidence: e.target.value })}
+                      className="h-7 text-xs bg-[#051426] border-[#124274] text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="p-4 border-t border-[#0F3D70] bg-[#051426] flex items-center justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setEditingTarget(null)} className="text-xs text-blue-300">
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSaveTargetEdit} className="text-xs bg-[#F5B544] hover:bg-amber-400 text-slate-950 font-bold">
+                Save Target
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Reorganize Meeting Modal */}
+      <ReorganizeMeetingModal
+        open={showReorganizeModal}
+        onOpenChange={setShowReorganizeModal}
+        detectedOrder={detectedOrder}
+        targets={targets}
+        onSaveOrder={handleReorganizeSave}
+      />
+    </div>
+  );
+}

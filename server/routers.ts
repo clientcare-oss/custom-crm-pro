@@ -59,8 +59,10 @@ import { nationalCoverageRouter } from "./routers/nationalCoverage";
 import { crewMessagesRouter } from "./routers/crewMessages";
 import { metricsRouter } from "./routers/metrics";
 import { timeTrackingRouter } from "./routers/timeTracking";
+import { meetingWorkspaceRouter } from "./routers/meetingWorkspace";
 
 export const appRouter = router({
+  meetingWorkspace: meetingWorkspaceRouter,
   metrics: metricsRouter,
   timeTracking: timeTrackingRouter,
   crewMessages: crewMessagesRouter,

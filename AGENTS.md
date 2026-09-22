@@ -126,6 +126,11 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-038-TSK`: Crew Task Queue (`/crew-quarters?tab=tasks`)
   - `PG-038-SCH`: Team Schedule & Time Off (`/crew-quarters?tab=schedule`)
   - `PG-038-RES`: Employee Resources & Policies (`/crew-quarters?tab=resources`)
+  - `PG-039`: Advocacy Pipeline (`/advocacy-pipeline`, `/pipeline`)
+  - `PG-040`: Giving & Impact Overview (`/giving`, `/giving/overview`)
+  - `PG-041`: National Coverage (`/national-coverage`)
+  - `PG-042`: Waypoint Metrics (`/metrics`, `/company/metrics`)
+  - `PG-043`: Meeting Workspace (`/meeting-workspace`, `/meeting-workspace/:studentId`)
   - `PG-404`: Not Found (`/404`)
 
 ---

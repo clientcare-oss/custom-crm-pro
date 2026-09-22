@@ -1422,3 +1422,6 @@ export async function deleteParkingLotItem(id: number) {
 export * from "./db/metrics";
 export * from "./db/timeTracking";
 
+// ─── Meeting Workspace (PG-043) ─────────────────────────────────────────
+export * from "./db/meetingWorkspace";
+

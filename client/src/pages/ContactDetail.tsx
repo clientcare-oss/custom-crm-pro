@@ -1413,6 +1413,7 @@ function StudentTabs({
   calculatedAge: number | null;
 }) {
   const [activeTab, setActiveTab] = useState("workspace");
+  const [, setLocation] = useLocation();
 
   type TabItem = { value: string; label: string; icon: any; count?: number };
 
@@ -1437,12 +1438,25 @@ function StudentTabs({
   ];
 
   const triggerClass =
-    "group flex-1 min-w-max h-8 sm:h-9 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-[12px] md:text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer text-blue-200/80 hover:text-white hover:bg-white/[0.08] border border-transparent data-[state=active]:bg-[#071C3C] data-[state=active]:border-[#F5B544] data-[state=active]:text-[#F5B544] data-[state=active]:font-bold data-[state=active]:shadow-[0_2px_12px_rgba(245,181,68,0.22)] whitespace-nowrap";
+    "group flex-1 min-w-0 h-8 sm:h-8.5 md:h-9 px-1.5 sm:px-2 md:px-2.5 py-1 rounded-lg text-[10.5px] sm:text-[11.5px] md:text-[12px] font-medium flex items-center justify-center gap-1 sm:gap-1.5 transition-all duration-150 cursor-pointer text-blue-200/80 hover:text-white hover:bg-white/[0.08] border border-transparent data-[state=active]:bg-[#071C3C] data-[state=active]:border-[#F5B544] data-[state=active]:text-[#F5B544] data-[state=active]:font-bold data-[state=active]:shadow-[0_2px_12px_rgba(245,181,68,0.22)]";
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      {/* Unified Command Center 2-Row Navigation Deck (No Horizontal Scrollbar) */}
-      <TabsList className="w-full h-auto flex flex-col p-1.5 sm:p-2 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] rounded-2xl shadow-2xl gap-1.5 my-3 sm:my-3.5 relative overflow-hidden">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full gap-0">
+      {/* Tab perched on top of the 2-row navigation bars (Right Aligned, touching the box below) */}
+      <div className="flex items-center justify-end pr-3 sm:pr-4 relative z-20 -mb-[1px]">
+        <button
+          type="button"
+          onClick={() => setLocation(`/meeting-workspace?studentId=${contactId}`)}
+          title="Open ⚡ Meeting Workspace"
+          className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12.5px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
+        >
+          <span className="text-sm">⚡</span>
+          <span className="whitespace-nowrap font-bold">Meeting Workspace</span>
+        </button>
+      </div>
+
+      {/* Unified Command Center 2-Row Navigation Deck (No Horizontal Scrollbar, All Items Fit) */}
+      <TabsList className="w-full h-auto flex flex-col p-1.5 sm:p-2 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] rounded-2xl shadow-2xl gap-1.5 mb-3.5 mt-0 relative overflow-hidden">
         {/* Top subtle golden accent shimmer line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
 
@@ -1453,7 +1467,7 @@ function StudentTabs({
             return (
               <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
                 <Icon className="h-3.5 w-3.5 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
-                <span className="whitespace-nowrap">{item.label}</span>
+                <span className="truncate">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
                     {item.count}
@@ -1471,7 +1485,7 @@ function StudentTabs({
             return (
               <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
                 <Icon className="h-3.5 w-3.5 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
-                <span className="whitespace-nowrap">{item.label}</span>
+                <span className="truncate">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
                     {item.count}

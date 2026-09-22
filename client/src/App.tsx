@@ -73,6 +73,7 @@ import { ActiveCallProvider } from "./contexts/ActiveCallContext";
 import CrewQuarters from "./pages/CrewQuarters";
 import Metrics from "./pages/Metrics";
 import AdvocacyPipeline from "./pages/AdvocacyPipeline";
+import MeetingWorkspace from "./pages/MeetingWorkspace";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -229,6 +230,8 @@ function Router() {
           <Route path="/portal-management" component={PortalManagement} />
           <Route path="/manage-experiences" component={PortalManagement} />
           <Route path="/workspace" component={Workspace} />
+          <Route path="/meeting-workspace/:studentId" component={MeetingWorkspace} />
+          <Route path="/meeting-workspace" component={MeetingWorkspace} />
           <Route path="/tools/case-compass" component={CaseCompassAdmin} />
           <Route path="/case-compass" component={CaseCompassAdmin} />
           <Route path="/book" component={BookingPage} />

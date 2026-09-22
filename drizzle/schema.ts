@@ -2498,5 +2498,43 @@ export const membershipPlanHistory = mysqlTable("membership_plan_history", {
 export type MembershipPlanHistory = typeof membershipPlanHistory.$inferSelect;
 export type InsertMembershipPlanHistory = typeof membershipPlanHistory.$inferInsert;
 
+/**
+ * Meeting Workspaces — PG-043 ⚡ Meeting Workspace.
+ * Full lifecycle management from automated IEP & Parent Intel preparation
+ * to live low-cognitive-load Meeting Mode and synchronized Advocate/Parent Ready multi-views.
+ */
+export const meetingWorkspaces = mysqlTable("meeting_workspaces", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("student_contact_id").notNull(),
+  appointmentId: int("appointment_id"),
+  title: varchar("title", { length: 255 }).default("IEP Meeting Workspace").notNull(),
+  meetingDate: varchar("meeting_date", { length: 100 }),
+  meetingType: varchar("meeting_type", { length: 100 }).default("Annual IEP Meeting"),
+  status: varchar("status", { length: 50 }).default("PREPARING").notNull(), // "PREPARING" | "READY" | "LIVE" | "COMPLETED"
+  activeTab: varchar("active_tab", { length: 50 }).default("PREP").notNull(), // "PREP" | "BLUEPRINT" | "MEETING_MODE" | "ADVOCATE_READY" | "PARENT_READY"
+  prepStep: varchar("prep_step", { length: 50 }).default("iep_intel").notNull(), // "iep_intel" | "parent_intel" | "pcs" | "blueprint" | "ready"
+  detectedIepOrder: text("detected_iep_order"), // JSON string array
+  iepIntelFindings: text("iep_intel_findings"), // JSON array of findings
+  parentIntelConcerns: text("parent_intel_concerns"), // JSON array of parent concerns
+  parentConcernStatement: text("parent_concern_statement"), // text/markdown
+  pcsApproved: boolean("pcs_approved").default(false).notNull(),
+  pcsLastApprovedAt: timestamp("pcs_last_approved_at"),
+  meetingTargets: text("meeting_targets"), // JSON array of MeetingTarget (Single Source of Truth)
+  parkingLot: text("parking_lot"), // JSON array of ParkingLotItem
+  additionalItems: text("additional_items"), // JSON array of AdditionalItem
+  closeoutChecks: text("closeout_checks"), // JSON object
+  completedAt: timestamp("completed_at"),
+  completedSummary: text("completed_summary"), // JSON summary snapshot
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  studentIdx: index("meeting_workspace_student_idx").on(t.studentContactId),
+  statusIdx: index("meeting_workspace_status_idx").on(t.status),
+  appointmentIdx: index("meeting_workspace_appointment_idx").on(t.appointmentId),
+}));
+
+export type MeetingWorkspace = typeof meetingWorkspaces.$inferSelect;
+export type InsertMeetingWorkspace = typeof meetingWorkspaces.$inferInsert;
+
 
 

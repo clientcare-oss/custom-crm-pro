@@ -36,6 +36,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/tools/voyage-recorder":           { id: "PG-010-REC", name: "Voyage Meeting Recorder", category: "Tools" },
   "/tools/worksheet-builder":         { id: "PG-010-WS", name: "Worksheet Studio", category: "Tools" },
   "/tools/iep-comparator":            { id: "PG-010-IEP", name: "IEP Comparator", category: "Tools" },
+  "/meeting-workspace":               { id: "PG-043", name: "⚡ Meeting Workspace", category: "Advocacy", description: "Dedicated live meeting workspace for advocate IEP sessions" },
   
   // Templates & Marketing
   "/templates":                       { id: "PG-011", name: "Document & Email Templates", category: "Content" },
@@ -172,6 +173,14 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     id: "PG-033-EDT",
     name: "Smart File Editor",
     category: "Smart Files",
+  },
+
+  // Meeting Workspace
+  {
+    matcher: (path) => /^\/meeting-workspace(\/.*)?$/.test(path),
+    id: "PG-043",
+    name: "⚡ Meeting Workspace",
+    category: "Advocacy",
   },
 
   // Contact / Student Detail Pages
