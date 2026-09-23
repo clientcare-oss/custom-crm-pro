@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, Map as MapIcon, Plus, Pencil, Trash2, Copy, Check, Eye, PlayCircle, Layers, ArrowUpDown, ChevronDown, ChevronRight, FileCheck, Shield, User, HelpCircle, Loader2 } from "lucide-react";
+import { Sparkles, Map as MapIcon, Plus, Pencil, Trash2, Copy, Check, Eye, PlayCircle, Layers, ArrowUpDown, ChevronDown, ChevronRight, FileCheck, Shield, User, HelpCircle, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ interface BlueprintViewProps {
   onBuildBlueprint: () => Promise<void>;
   onPreviewMeetingMode: () => void;
   onMarkReady: () => void;
+  onOpenImportModal?: () => void;
   isLoading: boolean;
 }
 
@@ -30,6 +31,7 @@ export function BlueprintView({
   onBuildBlueprint,
   onPreviewMeetingMode,
   onMarkReady,
+  onOpenImportModal,
   isLoading,
 }: BlueprintViewProps) {
   const [showReorganizeModal, setShowReorganizeModal] = useState(false);
@@ -140,6 +142,19 @@ export function BlueprintView({
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          {onOpenImportModal && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenImportModal}
+              className="text-xs font-bold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+              title="Paste or drop an Advocate Ready document"
+            >
+              <Download className="h-3.5 w-3.5 text-[#F5B544]" />
+              📥 Import Advocate Ready
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -262,9 +277,23 @@ export function BlueprintView({
 
                             {/* Quick Say This */}
                             <div className="pt-1">
-                              <p className="text-xs text-blue-300/70 uppercase tracking-wider font-semibold text-[10.5px]">
-                                Quick Advocate Say This (Live Script)
-                              </p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs text-blue-300/70 uppercase tracking-wider font-semibold text-[10.5px]">
+                                  Quick Advocate Say This (Live Script)
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingTarget(target);
+                                    setIsNewTargetModal(false);
+                                  }}
+                                  className="text-[11px] text-[#F5B544] hover:text-amber-300 flex items-center gap-1 cursor-pointer font-medium"
+                                  title="Edit phrasing / what to ask for"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                  <span>Edit Phrasing</span>
+                                </button>
+                              </div>
                               <p className="text-sm font-semibold text-white mt-0.5 leading-snug">
                                 "{target.quickAdvocateSayThis}"
                               </p>
@@ -326,6 +355,19 @@ export function BlueprintView({
                             </p>
                           </div>
                         </div>
+
+                        {/* Advocate Notes (if populated) */}
+                        {target.notes && (
+                          <div className="rounded-lg bg-[#061830] p-2.5 border border-amber-500/40 text-xs">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#F5B544] mb-0.5 flex items-center gap-1">
+                              <span>📝</span>
+                              <span>Advocate Notes / Strategy</span>
+                            </p>
+                            <p className="text-amber-100 text-[11.5px] leading-relaxed whitespace-pre-wrap">
+                              {target.notes}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -436,6 +478,19 @@ export function BlueprintView({
                   onChange={(e) => setEditingTarget({ ...editingTarget, ifTeamDisagrees: e.target.value })}
                   rows={2}
                   className="text-xs bg-[#051426] border-[#124274] text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[#F5B544] uppercase block mb-1">
+                  📝 Advocate Notes / Meeting Strategy Notes
+                </label>
+                <Textarea
+                  value={editingTarget.notes || ""}
+                  onChange={(e) => setEditingTarget({ ...editingTarget, notes: e.target.value })}
+                  placeholder="Notes, team commitments, responses, or follow-up details..."
+                  rows={2}
+                  className="text-xs bg-[#051426] border-[#124274] text-white placeholder:text-slate-500"
                 />
               </div>
 

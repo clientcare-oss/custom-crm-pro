@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,8 @@ import {
   Pause,
   Clock,
   Globe,
+  Zap,
+  Download,
 } from "lucide-react";
 import { parseStudentDiagnoses } from "@/lib/studentUtils";
 import {
@@ -126,6 +129,8 @@ export function StudentHeader({
     preferredEnd: contact.preferredCallingEndTime,
   });
 
+  const [, setLocation] = useLocation();
+
   return (
     <div className="space-y-4">
       {/* Top Banner Row: Title + PG-030 Badge + Actions */}
@@ -143,8 +148,30 @@ export function StudentHeader({
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setLocation(`/meeting-workspace/${contact.id}?import=true`)}
+            className="h-8 sm:h-9 px-3 text-xs font-semibold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 shadow-xs cursor-pointer transition-all gap-1.5"
+            title="Import Advocate Ready document for this student"
+          >
+            <Download className="h-3.5 w-3.5 text-[#F5B544]" />
+            <span>📥 Import Advocate Ready</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation(`/meeting-workspace/${contact.id}`)}
+            className="h-8 sm:h-9 px-3 text-xs font-bold border-[#F5B544]/40 bg-[#0B2144]/80 text-[#F5B544] hover:bg-[#F5B544]/15 hover:text-[#F5B544] hover:border-[#F5B544] shadow-xs cursor-pointer transition-all gap-1.5"
+            title="Launch ⚡ Meeting Workspace for this student"
+          >
+            <Zap className="h-3.5 w-3.5 text-[#F5B544]" />
+            <span>⚡ Meeting Workspace</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onPreviewPortal}
-            className="h-8 sm:h-9 px-3 text-xs font-semibold border-[#F5B544]/40 bg-[#0B2144]/80 text-[#F5B544] hover:bg-[#F5B544]/15 hover:text-[#F5B544] hover:border-[#F5B544] shadow-xs cursor-pointer transition-all"
+            className="h-8 sm:h-9 px-3 text-xs font-semibold border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white shadow-xs cursor-pointer transition-all"
           >
             <Eye className="h-3.5 w-3.5 mr-1.5" />
             Preview Parent Portal

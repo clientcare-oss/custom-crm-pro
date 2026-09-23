@@ -141,6 +141,12 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           keywords: ["portal", "client portal", "manage experiences", "experiences", "journey", "stages", "parent portal"]
         },
         { 
+          icon: Zap, 
+          label: "Meeting Workspace", 
+          path: "/meeting-workspace",
+          keywords: ["meeting", "iep meeting", "meeting workspace", "pg-043", "blueprint", "advocate ready", "targets", "live meeting"]
+        },
+        { 
           icon: Compass, 
           label: "Case Compass", 
           path: "/case-compass",

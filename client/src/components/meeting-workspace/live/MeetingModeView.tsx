@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Check, CheckSquare, Square, ChevronRight, X, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw } from "lucide-react";
+import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,42 @@ export function MeetingModeView({
   const [quickTopic, setQuickTopic] = useState("");
   const [quickSayThis, setQuickSayThis] = useState("");
   const [quickSection, setQuickSection] = useState(detectedOrder[0] || "Accommodations / Supports");
+
+  // Perfect What to Ask For (Say This) editing modal
+  const [sayThisEditTarget, setSayThisEditTarget] = useState<MeetingTarget | null>(null);
+  const [editSayThisText, setEditSayThisText] = useState("");
+  const [editTargetName, setEditTargetName] = useState("");
+  const [editPutItHere, setEditPutItHere] = useState("");
+  const [editPossibleWording, setEditPossibleWording] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  const handleOpenSayThisEditor = (target: MeetingTarget) => {
+    setSayThisEditTarget(target);
+    setEditSayThisText(target.quickAdvocateSayThis || "");
+    setEditTargetName(target.targetName || "");
+    setEditPutItHere(target.putItHereLocation || "");
+    setEditPossibleWording(target.possibleIepWording || "");
+    setEditNotes(target.notes || "");
+  };
+
+  const handleSaveSayThis = () => {
+    if (!sayThisEditTarget) return;
+    onUpdateTargets(
+      targets.map((t) =>
+        t.id === sayThisEditTarget.id
+          ? {
+              ...t,
+              quickAdvocateSayThis: editSayThisText.trim(),
+              targetName: editTargetName.trim() || t.targetName,
+              putItHereLocation: editPutItHere.trim() || t.putItHereLocation,
+              possibleIepWording: editPossibleWording.trim() || t.possibleIepWording,
+              notes: editNotes.trim() || t.notes,
+            }
+          : t
+      )
+    );
+    setSayThisEditTarget(null);
+  };
 
   // Additional Things to Discuss input
   const [additionalInput, setAdditionalInput] = useState("");
@@ -304,6 +341,11 @@ export function MeetingModeView({
 
                       <div className="space-y-1 min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
+                          {target.externalTargetId && (
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold">
+                              {target.externalTargetId}
+                            </span>
+                          )}
                           <span
                             className={cn(
                               "text-xs sm:text-[13px] font-bold tracking-wide",
@@ -312,22 +354,46 @@ export function MeetingModeView({
                           >
                             {target.targetName}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenSayThisEditor(target)}
+                            className="text-blue-400/60 hover:text-[#F5B544] p-1 rounded hover:bg-[#0E3560] transition-colors cursor-pointer inline-flex items-center"
+                            title="Perfect what to ask for (Edit Say This & Phrasing)"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
                           {target.pwnNeeded && (
                             <span className="text-[10px] font-bold text-rose-300 bg-rose-950/70 border border-rose-500/40 px-1.5 py-0.2 rounded">
                               PWN Flagged
                             </span>
                           )}
+                          {target.notes && (
+                            <span className="text-[10px] font-bold text-amber-300 bg-amber-950/70 border border-amber-500/40 px-1.5 py-0.2 rounded flex items-center gap-1">
+                              <span>📝</span>
+                              <span className="truncate max-w-[160px]">{target.notes}</span>
+                            </span>
+                          )}
                         </div>
 
-                        {/* One-Sentence Advocate Say This */}
-                        <p className="text-xs sm:text-[12.5px] text-blue-200/90 leading-snug">
-                          <span className="text-blue-400 font-bold mr-1">🗣</span>
-                          "{target.quickAdvocateSayThis}"
-                        </p>
+                        {/* One-Sentence Advocate Say This (Clickable to Perfect Phrasing) */}
+                        <div className="flex items-start gap-1.5 group/say">
+                          <p className="text-xs sm:text-[12.5px] text-blue-200/90 leading-snug flex-1">
+                            <span className="text-blue-400 font-bold mr-1">🗣</span>
+                            "{target.quickAdvocateSayThis}"
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenSayThisEditor(target)}
+                            className="text-blue-400/50 hover:text-[#F5B544] p-0.5 rounded hover:bg-[#0E3560] transition-colors cursor-pointer shrink-0"
+                            title="Perfect what to ask for"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Right: Status Dropdown + Details Drawer Trigger */}
+                    {/* Right: Status Dropdown + Edit Ask (Pencil) + Details Drawer Trigger */}
                     <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
                       <select
                         value={target.meetingStatus}
@@ -343,6 +409,17 @@ export function MeetingModeView({
                         <option value="DENIED" className="bg-[#07162B] text-rose-300">DENIED</option>
                         <option value="FOLLOW_UP" className="bg-[#07162B] text-amber-300">FOLLOW-UP</option>
                       </select>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenSayThisEditor(target)}
+                        className="h-8 px-2 text-xs border-[#13497F] bg-[#0A2B52] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1 shadow-sm"
+                        title="Perfect what to ask for (Edit Say This & Phrasing)"
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-[#F5B544]" />
+                        <span className="hidden sm:inline">Edit Ask</span>
+                      </Button>
 
                       <Button
                         variant="outline"
@@ -439,9 +516,16 @@ export function MeetingModeView({
           {/* Drawer Header */}
           <div className="p-5 border-b border-[#0F3D70] bg-gradient-to-r from-[#09254D] to-[#06172E] flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[10.5px] font-bold text-[#F5B544] uppercase tracking-wider">
-                Target Details Drawer
-              </span>
+              <div className="flex items-center gap-2">
+                {selectedTarget.externalTargetId && (
+                  <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold">
+                    {selectedTarget.externalTargetId}
+                  </span>
+                )}
+                <span className="text-[10.5px] font-bold text-[#F5B544] uppercase tracking-wider">
+                  Target Details Drawer
+                </span>
+              </div>
               <h3 className="text-base font-bold text-white truncate max-w-[340px]">
                 🎯 {selectedTarget.targetName}
               </h3>
@@ -458,69 +542,132 @@ export function MeetingModeView({
 
           {/* Drawer Body */}
           <div className="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
-            {/* Live Status Controls */}
+            {/* Live Meeting Tracking: 6 Discrete Working Controls */}
             <div className="rounded-xl bg-[#092244] border border-[#144A7E] p-3.5 space-y-2.5">
-              <p className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider">
-                Meeting Status & Tracking Flags
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider">
+                  Meeting Tracking (6 Working Controls)
+                </p>
+                <Badge variant="outline" className={cn("text-[10px]", getStatusBadgeStyle(selectedTarget.meetingStatus))}>
+                  {selectedTarget.meetingStatus}
+                </Badge>
+              </div>
               
               <div className="grid grid-cols-2 gap-2">
+                {/* 1. Discussed */}
                 <button
                   type="button"
                   onClick={() => updateTargetFlag(selectedTarget.id, "requestRaised", !selectedTarget.requestRaised)}
                   className={cn(
-                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer",
-                    selectedTarget.requestRaised ? "bg-emerald-950/60 border-emerald-500/60 text-emerald-200" : "bg-[#051426] border-[#0E3560] text-slate-300"
+                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all",
+                    selectedTarget.requestRaised ? "bg-emerald-950/70 border-emerald-500/70 text-emerald-200 font-bold" : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-blue-400/50"
                   )}
                 >
-                  <CheckSquare className="h-4 w-4 shrink-0 text-emerald-400" />
-                  <span>Request Raised</span>
+                  <CheckSquare className={cn("h-4 w-4 shrink-0", selectedTarget.requestRaised ? "text-emerald-400" : "text-slate-500")} />
+                  <span>Discussed</span>
                 </button>
 
+                {/* 2. Agreed */}
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(selectedTarget.id, selectedTarget.meetingStatus === "AGREED" ? "NOT_DISCUSSED" : "AGREED")}
+                  className={cn(
+                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all",
+                    selectedTarget.meetingStatus === "AGREED" ? "bg-emerald-950/70 border-emerald-500/70 text-emerald-200 font-bold" : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-blue-400/50"
+                  )}
+                >
+                  <CheckCircle2 className={cn("h-4 w-4 shrink-0", selectedTarget.meetingStatus === "AGREED" ? "text-emerald-400" : "text-slate-500")} />
+                  <span>Agreed</span>
+                </button>
+
+                {/* 3. Added to IEP */}
                 <button
                   type="button"
                   onClick={() => updateTargetFlag(selectedTarget.id, "addedToIep", !selectedTarget.addedToIep)}
                   className={cn(
-                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer",
-                    selectedTarget.addedToIep ? "bg-emerald-950/60 border-emerald-500/60 text-emerald-200" : "bg-[#051426] border-[#0E3560] text-slate-300"
+                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all",
+                    selectedTarget.addedToIep ? "bg-emerald-950/70 border-emerald-500/70 text-emerald-200 font-bold" : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-blue-400/50"
                   )}
                 >
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                  <FileCheck className={cn("h-4 w-4 shrink-0", selectedTarget.addedToIep ? "text-emerald-400" : "text-slate-500")} />
                   <span>Added to IEP</span>
                 </button>
 
+                {/* 4. Denied */}
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(selectedTarget.id, selectedTarget.meetingStatus === "DENIED" ? "NOT_DISCUSSED" : "DENIED")}
+                  className={cn(
+                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all",
+                    selectedTarget.meetingStatus === "DENIED" ? "bg-rose-950/70 border-rose-500/70 text-rose-200 font-bold" : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-blue-400/50"
+                  )}
+                >
+                  <XCircle className={cn("h-4 w-4 shrink-0", selectedTarget.meetingStatus === "DENIED" ? "text-rose-400" : "text-slate-500")} />
+                  <span>Denied</span>
+                </button>
+
+                {/* 5. PWN Needed */}
                 <button
                   type="button"
                   onClick={() => updateTargetFlag(selectedTarget.id, "pwnNeeded", !selectedTarget.pwnNeeded)}
                   className={cn(
-                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer",
-                    selectedTarget.pwnNeeded ? "bg-rose-950/60 border-rose-500/60 text-rose-200" : "bg-[#051426] border-[#0E3560] text-slate-300"
+                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all",
+                    selectedTarget.pwnNeeded ? "bg-rose-950/70 border-rose-500/70 text-rose-200 font-bold" : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-blue-400/50"
                   )}
                 >
-                  <Flag className="h-4 w-4 shrink-0 text-rose-400" />
+                  <Flag className={cn("h-4 w-4 shrink-0", selectedTarget.pwnNeeded ? "text-rose-400" : "text-slate-500")} />
                   <span>PWN Needed</span>
                 </button>
 
+                {/* 6. Follow-Up */}
                 <button
                   type="button"
                   onClick={() => updateTargetFlag(selectedTarget.id, "followUpNeeded", !selectedTarget.followUpNeeded)}
                   className={cn(
-                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer",
-                    selectedTarget.followUpNeeded ? "bg-amber-950/60 border-amber-500/60 text-amber-200" : "bg-[#051426] border-[#0E3560] text-slate-300"
+                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all",
+                    selectedTarget.followUpNeeded ? "bg-amber-950/70 border-amber-500/70 text-amber-200 font-bold" : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-blue-400/50"
                   )}
                 >
-                  <ArrowRight className="h-4 w-4 shrink-0 text-[#F5B544]" />
+                  <ArrowRight className={cn("h-4 w-4 shrink-0", selectedTarget.followUpNeeded ? "text-[#F5B544]" : "text-slate-500")} />
                   <span>Follow-Up</span>
                 </button>
               </div>
             </div>
 
+            {/* 📝 My Notes on this Target (Live Advocate Notes) */}
+            <div className="space-y-1.5 bg-[#051426] p-3.5 rounded-2xl border border-[#144E8A] shadow-inner">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#F5B544] flex items-center gap-1.5">
+                  <span>📝</span>
+                  <span>My Notes on this Target</span>
+                </span>
+                <span className="text-[10px] text-blue-300/60 font-medium">Auto-saved to workspace</span>
+              </div>
+              <Textarea
+                value={selectedTarget.notes || ""}
+                onChange={(e) => updateTargetFlag(selectedTarget.id, "notes", e.target.value)}
+                placeholder="Type your notes, team commitments, who agreed, exact wording changes, or follow-up details here..."
+                className="text-xs bg-[#030D1A] border-[#0E3560] text-white placeholder:text-slate-500 min-h-[90px] focus:border-[#F5B544]/60 resize-y leading-relaxed rounded-xl p-3"
+              />
+            </div>
+
             {/* Advocate Say This */}
-            <div className="space-y-1">
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-blue-300">
-                🗣 Advocate Say This
-              </span>
-              <p className="text-sm font-semibold text-white bg-[#051426] p-3 rounded-xl border border-[#0E3560] leading-relaxed">
+            <div className="space-y-1.5 bg-[#051426] p-3.5 rounded-xl border border-[#0E3560]">
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
+                  <span>🗣</span>
+                  <span>Advocate Say This (What to Ask For)</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleOpenSayThisEditor(selectedTarget)}
+                  className="text-xs text-[#F5B544] hover:text-amber-300 font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <Pencil className="h-3 w-3" />
+                  <span>Edit Ask</span>
+                </button>
+              </div>
+              <p className="text-sm font-semibold text-white leading-relaxed">
                 "{selectedTarget.quickAdvocateSayThis}"
               </p>
             </div>
@@ -763,6 +910,127 @@ export function MeetingModeView({
                 className="text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-4 cursor-pointer shadow-lg"
               >
                 {isCompleting ? "Finalizing Session..." : "Complete Meeting"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ✏️ Perfect What to Ask For Modal */}
+      {sayThisEditTarget && (
+        <Dialog open={!!sayThisEditTarget} onOpenChange={(open) => !open && setSayThisEditTarget(null)}>
+          <DialogContent className="max-w-xl bg-[#06172E] border border-[#144E8A] text-white shadow-2xl p-0 overflow-hidden">
+            <div className="p-5 border-b border-[#0F3D70] bg-gradient-to-r from-[#09254D] to-[#06172E] flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  {sayThisEditTarget.externalTargetId && (
+                    <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold">
+                      {sayThisEditTarget.externalTargetId}
+                    </span>
+                  )}
+                  <span className="text-[10.5px] font-bold text-[#F5B544] uppercase tracking-wider">
+                    Target Phrasing & Ask
+                  </span>
+                </div>
+                <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+                  <Pencil className="h-4 w-4 text-[#F5B544]" />
+                  <span>Perfect What to Ask For</span>
+                </DialogTitle>
+              </div>
+            </div>
+
+            <div className="p-5 max-h-[70vh] overflow-y-auto space-y-4 text-xs">
+              {/* Main: 🗣 What to Ask For (Advocate Say This) */}
+              <div className="space-y-1.5 bg-[#051426] p-4 rounded-xl border border-[#144E8A] shadow-inner">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🗣</span>
+                    <span>Advocate Say This (What to Ask For) *</span>
+                  </label>
+                  <span className="text-[10px] text-blue-300/60 font-medium">Spoken during meeting</span>
+                </div>
+                <Textarea
+                  value={editSayThisText}
+                  onChange={(e) => setEditSayThisText(e.target.value)}
+                  placeholder="e.g. We are requesting sensory breaks built directly into his daily schedule..."
+                  rows={3}
+                  className="text-xs sm:text-sm font-medium bg-[#030D1A] border-[#0E3560] text-white placeholder:text-slate-500 focus:border-[#F5B544]/60 resize-y leading-relaxed rounded-xl p-3"
+                  autoFocus
+                />
+              </div>
+
+              {/* Target / Topic Name */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-blue-300 uppercase tracking-wider block">
+                  🎯 Target / Topic Name
+                </label>
+                <Input
+                  value={editTargetName}
+                  onChange={(e) => setEditTargetName(e.target.value)}
+                  placeholder="e.g. Sensory Break Routine"
+                  className="h-9 text-xs bg-[#051426] border-[#0E3560] text-white"
+                />
+              </div>
+
+              {/* Put It Here / Location & Proposed IEP Wording */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-blue-300 uppercase tracking-wider block">
+                    ✍ Put It Here / IEP Location
+                  </label>
+                  <Input
+                    value={editPutItHere}
+                    onChange={(e) => setEditPutItHere(e.target.value)}
+                    placeholder="e.g. Accommodations / Supports"
+                    className="h-9 text-xs font-mono bg-[#051426] border-[#0E3560] text-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-blue-300 uppercase tracking-wider block">
+                    💬 Proposed IEP Wording
+                  </label>
+                  <Input
+                    value={editPossibleWording}
+                    onChange={(e) => setEditPossibleWording(e.target.value)}
+                    placeholder="e.g. Provide 5-minute break as needed"
+                    className="h-9 text-xs bg-[#051426] border-[#0E3560] text-white"
+                  />
+                </div>
+              </div>
+
+              {/* 📝 Advocate Strategy Notes */}
+              <div className="space-y-1.5 bg-[#051426] p-3.5 rounded-xl border border-[#0E3560]">
+                <label className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📝</span>
+                  <span>My Notes & Strategy on this Ask</span>
+                </label>
+                <Textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Add context, backup requests, compromise positions, or notes..."
+                  rows={2}
+                  className="text-xs bg-[#030D1A] border-[#0E3560] text-white placeholder:text-slate-500 focus:border-[#F5B544]/60 resize-y rounded-lg p-2.5"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="p-4 border-t border-[#0F3D70] bg-[#051426] flex items-center justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSayThisEditTarget(null)}
+                className="text-xs text-blue-300 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveSayThis}
+                className="text-xs bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-4 cursor-pointer shadow-lg inline-flex items-center gap-1.5"
+              >
+                <Check className="h-3.5 w-3.5" />
+                <span>Save Phrasing</span>
               </Button>
             </DialogFooter>
           </DialogContent>

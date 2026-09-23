@@ -1,0 +1,1044 @@
+⚡ MEETING QUICK LIST
+
+## I. INDIVIDUALIZED EDUCATION PROGRAM (IEP)
+
+LABEL: Reevaluation Date
+ASK: Please verify and correct the most recent eligibility or reevaluation date listed on Jeremiah's IEP.
+EXPAND: TARGET-001
+
+## II. PRESENT LEVELS OF ACADEMIC ACHIEVEMENT AND FUNCTIONAL PERFORMANCE
+
+LABEL: Staffing Concern
+ASK: Please add the guardians' documented concern about one-to-one assistance to the parent-concerns section.
+EXPAND: TARGET-002
+
+LABEL: AAC Baseline
+ASK: Please document Jeremiah's current independent AAC use across school routines in his communication present levels.
+EXPAND: TARGET-003
+
+LABEL: Behavior Baseline
+ASK: Please update the behavior present levels with current frequency and duration data for throwing items.
+EXPAND: TARGET-004
+
+LABEL: Math Baseline
+ASK: Please document Jeremiah's current performance on the matching skill in his math present levels.
+EXPAND: TARGET-005
+
+LABEL: Reading Baseline
+ASK: Please document a current print-concepts baseline in Jeremiah's reading present levels.
+EXPAND: TARGET-006
+
+## III. CONSIDERATION OF SPECIAL FACTORS
+
+LABEL: Behavior Function
+ASK: Please identify the function or functions supported by the FBA for Jeremiah's item throwing in the BIP.
+EXPAND: TARGET-007
+
+LABEL: Behavior Tracking
+ASK: Please add a defined measurement and review schedule for item throwing to the BIP.
+EXPAND: TARGET-008
+
+LABEL: Crisis Response
+ASK: Please replace "use Mindset techniques" with a specific, clearly defined crisis response in the BIP.
+EXPAND: TARGET-009
+
+## IV. TRANSITION SERVICE PLAN
+
+LABEL: Transition Assessment
+ASK: Please obtain current age-appropriate transition assessment information for Jeremiah's next annual plan.
+EXPAND: TARGET-010
+
+LABEL: Living Outcome
+ASK: Please correct the independent-living outcome to reflect Jeremiah's confirmed postschool living plan.
+EXPAND: TARGET-011
+
+LABEL: Age-18 Decisions
+ASK: Please document Jeremiah's educational decision-making arrangement when he turns 18 on October 15.
+EXPAND: TARGET-012
+
+## V. MEASURABLE ANNUAL GOALS & SHORT TERM OBJECTIVE/BENCHMARKS
+
+LABEL: Communication Goal
+ASK: Please rewrite the annual communication goal as one measurable functional communication outcome.
+EXPAND: TARGET-013
+
+LABEL: Math Criterion
+ASK: Please correct the math participation objective so its mastery count and percentage agree.
+EXPAND: TARGET-014
+
+LABEL: Reading Goal
+ASK: Please align Jeremiah's reading goal with a measurable print-concepts skill supported by his current baseline.
+EXPAND: TARGET-015
+
+LABEL: Behavior Goal
+ASK: Please add a measurable reduction criterion for item throwing to the behavior goal.
+EXPAND: TARGET-016
+
+## VI. PARTICIPATION GUIDELINES FOR THE GAA 2.0
+
+LABEL: GAA Evidence
+ASK: Please update the GAA participation justification with current adaptive and instructional evidence.
+EXPAND: TARGET-017
+
+## IX. STUDENT SUPPORTS
+
+LABEL: AAC Backup
+ASK: Please make low-tech AAC available whenever Jeremiah's primary device cannot be used, including during behavioral distress.
+EXPAND: TARGET-018
+
+LABEL: Home-School AAC
+ASK: Please add a home-school AAC coordination procedure to Jeremiah's supplemental aids and services.
+EXPAND: TARGET-019
+
+LABEL: AAC Staff Training
+ASK: Please replace "training as needed" with a specific AAC staff-training plan.
+EXPAND: TARGET-020
+
+LABEL: Noise Headphones
+ASK: Please add access to noise-reducing headphones during identified high-noise routines to instructional accommodations.
+EXPAND: TARGET-021
+
+LABEL: Adult Support
+ASK: Please decide and document whether Jeremiah needs dedicated adult assistance during identified instructional routines.
+EXPAND: TARGET-022
+
+## X. EXTENDED SCHOOL YEAR
+
+LABEL: ESY Review
+ASK: Please make a new ESY decision using Jeremiah's current progress and behavior data.
+EXPAND: TARGET-023
+
+## XIII. SPECIAL EDUCATION SERVICES
+
+LABEL: OT Frequency
+ASK: Please decide whether one 15-minute OT session each semester addresses Jeremiah's documented classroom needs.
+EXPAND: TARGET-024
+
+LABEL: Peer Participation
+ASK: Please specify Jeremiah's opportunities to participate with nondisabled peers in nonacademic activities.
+EXPAND: TARGET-025
+
+🚦 ADDITIONAL THINGS TO DISCUSS BEFORE CLOSE-OUT
+
+☐ ______________________________
+
+☐ ______________________________
+
+☐ ______________________________
+
+☐ ______________________________
+
+----------------------------------------
+
+TARGET ID: TARGET-001
+TARGET LABEL: Reevaluation Date
+IEP SECTION: I. Individualized Education Program (IEP)
+
+ADVOCATE SAY THIS:
+Please verify and correct the most recent eligibility or reevaluation date listed on Jeremiah's IEP.
+
+PUT IT HERE:
+IEP identification page, Most Recent Eligibility or Reevaluation Date.
+
+POSSIBLE IEP WORDING:
+Most Recent Eligibility or Reevaluation Date: [date confirmed from the eligibility or reevaluation record].
+
+WHY:
+The identification page lists January 25, 2021, but the communication present levels refer to a May 2025 re-eligibility data review. The underlying record is needed to determine which date belongs in this field.
+
+EVIDENCE:
+• IEP page 1 lists January 25, 2021 as the most recent eligibility or reevaluation date.
+• IEP page 3 refers to a May 2025 re-eligibility data review.
+• The actual eligibility or reevaluation record was not provided with this IEP.
+
+IF TEAM DISAGREES:
+Which completed record supports the date on page 1, and can we review it before carrying this date into the new IEP?
+
+SOURCE:
+Current IEP, pages 1 and 3; underlying reevaluation record needs verification. The date conflict alone does not establish that a required reevaluation was missed.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-002
+TARGET LABEL: Staffing Concern
+IEP SECTION: II. Present Levels of Academic Achievement and Functional Performance
+
+ADVOCATE SAY THIS:
+Please add the guardians' documented concern about one-to-one assistance to the parent-concerns section.
+
+PUT IT HERE:
+Present Levels, subsection d, Parental concerns regarding their child's education.
+
+POSSIBLE IEP WORDING:
+Jeremiah's guardians ask the team to consider whether he needs one-to-one adult assistance during instruction, using current participation and behavior data.
+
+WHY:
+The April amendment notes record this question, while the parent-concerns field records only the request for consistent home and school communication devices.
+
+EVIDENCE:
+• IEP page 4 records the home-school communication concern in the parent-concerns field.
+• IEP page 21 records the guardians' question about possible one-to-one assistance and concerns about staff support.
+
+IF TEAM DISAGREES:
+Where will this documented guardian concern appear in the IEP so the team can respond to it?
+
+SOURCE:
+Current IEP, pages 4 and 21. These are guardian concerns recorded by the school; no updated guardian statement was supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-003
+TARGET LABEL: AAC Baseline
+IEP SECTION: II. Present Levels of Academic Achievement and Functional Performance
+
+ADVOCATE SAY THIS:
+Please document Jeremiah's current independent AAC use across school routines in his communication present levels.
+
+PUT IT HERE:
+Present Levels, Communication or Speech/Language, Language.
+
+POSSIBLE IEP WORDING:
+As of [date], Jeremiah independently uses [specified AAC method] to [specified communicative act] in [number] of [number] opportunities during [named school routines], with [defined support level].
+
+WHY:
+The existing narrative combines different observations, prompt levels, and percentages without a clear current baseline for independent use in everyday school settings.
+
+EVIDENCE:
+• IEP page 3 says a modeled turn request was at 20% and other opportunities needed hand-over-hand support.
+• IEP page 5 states 50% accuracy for expressing wants and needs and following two-step directions with maximum verbal cues, without separating those skills.
+• IEP page 16 provides a dynamic-display AAC app and low-tech picture pages.
+
+IF TEAM DISAGREES:
+What dated observation shows how often Jeremiah initiates a message without a prompt during class, transitions, and other routines?
+
+SOURCE:
+Current IEP, pages 3, 5, and 16. Current AAC usage logs and SLP records were not supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-004
+TARGET LABEL: Behavior Baseline
+IEP SECTION: II. Present Levels of Academic Achievement and Functional Performance
+
+ADVOCATE SAY THIS:
+Please update the behavior present levels with current frequency and duration data for throwing items.
+
+PUT IT HERE:
+Present Levels, Social/Emotional/Behavioral.
+
+POSSIBLE IEP WORDING:
+During [dated observation period], Jeremiah threw items [frequency] for [duration] under [recorded conditions]; data were collected by [staff role] across [settings].
+
+WHY:
+The behavior present levels repeat older assessment material, while the BIP contains a four-day behavior snapshot that does not establish his current pattern.
+
+EVIDENCE:
+• IEP page 4's behavioral present level repeats 2017 testing.
+• IEP pages 6-7 describe throwing items 4-5 times a day, lasting 5-12 minutes, over four school days.
+• The IEP does not include post-amendment behavior trend data.
+
+IF TEAM DISAGREES:
+Can we review the most recent incident and duration records before deciding whether the behavior plan is working?
+
+SOURCE:
+Current IEP, pages 4 and 6-7; current incident logs were not supplied. The four-day figure is historical IEP data, not a claim about today.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-005
+TARGET LABEL: Math Baseline
+IEP SECTION: II. Present Levels of Academic Achievement and Functional Performance
+
+ADVOCATE SAY THIS:
+Please document Jeremiah's current performance on the matching skill in his math present levels.
+
+PUT IT HERE:
+Present Levels, Math, Early Math Literacy.
+
+POSSIBLE IEP WORDING:
+On [date], Jeremiah matched [specified objects or pictures] in [number] of [number] trials using [defined prompt level] across [number] sessions.
+
+WHY:
+The math present level cites a 2024 source and repeats a target statement, rather than reporting what Jeremiah currently does independently or with identified support.
+
+EVIDENCE:
+• IEP page 3 cites TeachTown dated August 15, 2024, and describes matching in 4/5 opportunities as a future skill.
+• IEP page 10 repeats a matching target as the math annual goal.
+
+IF TEAM DISAGREES:
+What are his most recent matching trial results and prompt levels, and where are they recorded in the present levels?
+
+SOURCE:
+Current IEP, pages 3 and 10; current math work samples or progress data were not supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-006
+TARGET LABEL: Reading Baseline
+IEP SECTION: II. Present Levels of Academic Achievement and Functional Performance
+
+ADVOCATE SAY THIS:
+Please document a current print-concepts baseline in Jeremiah's reading present levels.
+
+PUT IT HERE:
+Present Levels, Reading, Print Concepts.
+
+POSSIBLE IEP WORDING:
+On [date], when shown [specified print materials], Jeremiah identified [specified print concept] in [number] of [number] opportunities using [response method and prompt level].
+
+WHY:
+The present level says he is a non-reader and traces letters with hand-over-hand support, but it does not give a current measurable baseline for a print-concepts goal.
+
+EVIDENCE:
+• IEP page 4 describes work samples dated October 7, 2025 and hand-over-hand letter tracing.
+• IEP page 5 mentions prompted identification of letters A-D by pointing or eye gaze.
+• IEP page 11 labels the goal Reading/Print Concepts but measures identification of a picture identity card.
+
+IF TEAM DISAGREES:
+Which dated measure tells us the print skill, response method, and prompt level to use for his next reading goal?
+
+SOURCE:
+Current IEP, pages 4-5 and 11; current print-concepts data were not supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-007
+TARGET LABEL: Behavior Function
+IEP SECTION: III. Consideration of Special Factors
+
+ADVOCATE SAY THIS:
+Please identify the function or functions supported by the FBA for Jeremiah's item throwing in the BIP.
+
+PUT IT HERE:
+Behavior Intervention Plan, behavior hypothesis/function.
+
+POSSIBLE IEP WORDING:
+Based on the FBA dated [verified date] and [supporting observation data], item throwing under [defined conditions] appears to serve [data-supported function or functions].
+
+WHY:
+The IEP variously names attention, sensory regulation, and escape from distress. These may coexist, but the plan does not show which function the FBA supports in which setting.
+
+EVIDENCE:
+• IEP page 6 lists an FBA date of January 23, 2026 and describes sensory regulation by way of attention.
+• IEP page 7 also describes escape from distress and sensory regulation when peers make noise, in crowds, or during routine tasks.
+• The full FBA report was not supplied.
+
+IF TEAM DISAGREES:
+Can we look at the FBA antecedent-behavior-consequence data and identify which hypothesis applies in each situation?
+
+SOURCE:
+Current IEP, pages 6-7; the underlying January 2026 FBA requires verification.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-008
+TARGET LABEL: Behavior Tracking
+IEP SECTION: III. Consideration of Special Factors
+
+ADVOCATE SAY THIS:
+Please add a defined measurement and review schedule for item throwing to the BIP.
+
+PUT IT HERE:
+Behavior Intervention Plan, monitoring/review procedure.
+
+POSSIBLE IEP WORDING:
+Staff will record the frequency, duration, and immediate context of item throwing on school days and review the data with [responsible staff and family] every [agreed interval].
+
+WHY:
+The BIP lists many prevention and response strategies but does not state who tracks the targeted behavior or when the team evaluates whether those strategies help.
+
+EVIDENCE:
+• IEP pages 6-7 provide a four-day snapshot and list BIP strategies.
+• IEP page 21 describes safety concerns and leaves a BIP follow-up meeting open if needed.
+• No post-amendment BIP data or review schedule was provided.
+
+IF TEAM DISAGREES:
+How will the team know whether item throwing is decreasing, and what would trigger a BIP review?
+
+SOURCE:
+Current IEP, pages 6-7 and 21; no separate BIP monitoring sheet was supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-009
+TARGET LABEL: Crisis Response
+IEP SECTION: III. Consideration of Special Factors
+
+ADVOCATE SAY THIS:
+Please replace "use Mindset techniques" with a specific, clearly defined crisis response in the BIP.
+
+PUT IT HERE:
+Behavior Intervention Plan, Managing Behavioral Incidents.
+
+POSSIBLE IEP WORDING:
+When [defined observable safety condition] occurs, [trained staff role] will use [specific approved response], document what occurred, and notify [designated person] under [agreed procedure].
+
+WHY:
+The phrase "Mindset techniques" does not tell the family or staff what response is authorized, when it applies, or how an incident will be documented.
+
+EVIDENCE:
+• IEP page 7 lists a crisis plan and ends the behavior-response sequence with "as a last resort, use Mindset techniques."
+• The IEP does not specify which technique or threshold is intended.
+
+IF TEAM DISAGREES:
+Which exact response does that phrase mean for Jeremiah, and under what conditions could it be used?
+
+SOURCE:
+Current IEP, page 7. This wording does not establish that any physical intervention occurred; the actual staff practice needs verification.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-010
+TARGET LABEL: Transition Assessment
+IEP SECTION: IV. Transition Service Plan
+
+ADVOCATE SAY THIS:
+Please obtain current age-appropriate transition assessment information for Jeremiah's next annual plan.
+
+PUT IT HERE:
+Transition Service Plan, Transition Assessment Sources and Dates.
+
+POSSIBLE IEP WORDING:
+The team reviewed [assessment method and date] and documented Jeremiah's [observed or communicated preferences] and current skills in [relevant transition area] for the upcoming annual plan.
+
+WHY:
+The transition assessments listed are from March and October 2025. Updated information can show whether this year's employment, training, and living goals still reflect Jeremiah's preferences and needs.
+
+EVIDENCE:
+• IEP page 8 lists a Checklist of Adaptive Living Skills dated March 25, 2025 and a preference inventory dated October 8, 2025.
+• IEP pages 8-9 contain the resulting postsecondary outcomes.
+• No newer transition assessment was supplied.
+
+IF TEAM DISAGREES:
+What current student-preference and functional-skills data support the next year's transition goals?
+
+SOURCE:
+Current IEP, pages 8-9. Georgia Department of Education transition guidance: https://sped.gadoe.org/spdbhelpweb/SecondaryTransitionIndicator13.html
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-011
+TARGET LABEL: Living Outcome
+IEP SECTION: IV. Transition Service Plan
+
+ADVOCATE SAY THIS:
+Please correct the independent-living outcome to reflect Jeremiah's confirmed postschool living plan.
+
+PUT IT HERE:
+Transition Service Plan, Postsecondary Outcome Independent Living.
+
+POSSIBLE IEP WORDING:
+After graduation, Jeremiah will live in [setting confirmed with Jeremiah and his guardians] with [confirmed level of family or community support].
+
+WHY:
+The transition description says Jeremiah lives with his grandparents, while the independent-living outcome says he will live with his parents after graduation. The actual future plan is not confirmed in the supplied IEP.
+
+EVIDENCE:
+• IEP page 8 states Jeremiah currently lives with his grandparents.
+• IEP page 9 states the postsecondary outcome is living at home with his parents.
+• IEP page 21 identifies grandparents/guardians at the April meeting.
+
+IF TEAM DISAGREES:
+Has the student and family confirmed a plan that explains the difference between the current home and postschool outcome?
+
+SOURCE:
+Current IEP, pages 8-9 and 21; postschool housing plan requires family verification.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-012
+TARGET LABEL: Age-18 Decisions
+IEP SECTION: IV. Transition Service Plan
+
+ADVOCATE SAY THIS:
+Please document Jeremiah's educational decision-making arrangement when he turns 18 on October 15.
+
+PUT IT HERE:
+Transition Service Plan, Transfer of Rights statement.
+
+POSSIBLE IEP WORDING:
+The team reviewed the transfer of educational decision-making rights effective October 15, 2026 and documented [verified decision maker, support arrangement, or court order, if any].
+
+WHY:
+The IEP records that he was informed of transfer of rights before turning 17, but it does not identify what arrangement will apply after his eighteenth birthday. Calling relatives "guardians" in meeting notes does not by itself establish their legal authority after age 18.
+
+EVIDENCE:
+• IEP page 1 lists a birth date of October 15, 2008.
+• IEP page 9 says Jeremiah was informed of transferring rights on October 6, 2025.
+• IEP page 21 lists relatives as grandparents/guardians; no adult decision-making document was supplied.
+
+IF TEAM DISAGREES:
+Who will provide consent for IEP actions after October 15, and which verified document supports that arrangement?
+
+SOURCE:
+Current IEP, pages 1, 9, and 21. Georgia Department of Education guidance: https://sped.gadoe.org/iephelpweb/Graduation.html
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-013
+TARGET LABEL: Communication Goal
+IEP SECTION: V. Measurable Annual Goals & Short Term Objective/Benchmarks
+
+ADVOCATE SAY THIS:
+Please rewrite the annual communication goal as one measurable functional communication outcome.
+
+PUT IT HERE:
+Measurable Annual Goals, Communication or Speech/Language, annual goal.
+
+POSSIBLE IEP WORDING:
+During a familiar activity and with access to AAC, Jeremiah will request a turn using [specified communication method] in [team-selected number] of [number] opportunities across [number] sessions at [prompt level based on current data].
+
+WHY:
+The annual goal states that Jeremiah will use multimodal communication "to achieve the following language objectives" but does not itself specify a measurable act or target. The existing observation about requesting a turn offers one candidate skill, subject to current data.
+
+EVIDENCE:
+• IEP page 3 describes modeled turn requests at 20% and hand-over-hand support for other opportunities.
+• IEP page 10 contains the broad communication annual goal and three different objectives.
+
+IF TEAM DISAGREES:
+Which single communication act, prompt level, denominator, and setting will the annual goal measure?
+
+SOURCE:
+Current IEP, pages 3 and 10. The proposed goal criterion is intentionally pending current baseline and team selection.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-014
+TARGET LABEL: Math Criterion
+IEP SECTION: V. Measurable Annual Goals & Short Term Objective/Benchmarks
+
+ADVOCATE SAY THIS:
+Please correct the math participation objective so its mastery count and percentage agree.
+
+PUT IT HERE:
+Measurable Annual Goals, Math, Objective 1.
+
+POSSIBLE IEP WORDING:
+Given a specified matching activity and [defined prompt level], Jeremiah will make a selection in 4 of 5 opportunities (80%) across four consecutive data-collection sessions.
+
+WHY:
+The same objective states 3 of 5 opportunities and 80% accuracy, while the mastery column also says 3 of 5 trials. Three of five is 60%, so the team must choose one consistent criterion.
+
+EVIDENCE:
+• IEP page 10, Math Objective 1, contains "3 out of 5 opportunities with 80% accuracy" and a 3/5 mastery criterion.
+
+IF TEAM DISAGREES:
+Is the intended criterion 3/5 or 80%, and how will the progress report count a successful opportunity?
+
+SOURCE:
+Current IEP, page 10. The 4/5 wording is a proposed way to express 80%, not an assertion that Jeremiah currently achieves it.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-015
+TARGET LABEL: Reading Goal
+IEP SECTION: V. Measurable Annual Goals & Short Term Objective/Benchmarks
+
+ADVOCATE SAY THIS:
+Please align Jeremiah's reading goal with a measurable print-concepts skill supported by his current baseline.
+
+PUT IT HERE:
+Measurable Annual Goals, Reading, Print Concepts, annual goal.
+
+POSSIBLE IEP WORDING:
+Given [specified print materials] and [defined prompt level], Jeremiah will demonstrate [one print-concepts skill selected from current data] in [number] of [number] opportunities across [number] sessions.
+
+WHY:
+The current Reading/Print Concepts goal asks him to point to a "picture identity card" in response to a question. That response may measure picture-based communication rather than the print-concepts skill named in the goal area.
+
+EVIDENCE:
+• IEP pages 4-5 describe supported letter tracing and prompted identification of some letters.
+• IEP page 11 labels the goal Print Concepts but describes picture identity cards, yes/no choices, and a restroom card.
+• IEP page 11 leaves the annual reading goal's completion date, evaluation method, and mastery cells blank.
+
+IF TEAM DISAGREES:
+What print-concepts skill does the current goal actually measure, and what current baseline supports it?
+
+SOURCE:
+Current IEP, pages 4-5 and 11. The precise next reading skill requires updated student data and a team decision.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-016
+TARGET LABEL: Behavior Goal
+IEP SECTION: V. Measurable Annual Goals & Short Term Objective/Benchmarks
+
+ADVOCATE SAY THIS:
+Please add a measurable reduction criterion for item throwing to the behavior goal.
+
+PUT IT HERE:
+Measurable Annual Goals, Social/Emotional/Behavioral, annual goal.
+
+POSSIBLE IEP WORDING:
+During [defined school routines], the frequency of item throwing will decrease from [verified current baseline] to [team-selected target] over [specified period], as recorded on [agreed data form].
+
+WHY:
+The goal measures use of a replacement behavior in 3/5 opportunities but does not give a measurable target for the item throwing that the BIP identifies as the concern.
+
+EVIDENCE:
+• IEP pages 6-7 identify throwing items and give a four-day snapshot.
+• IEP page 11 measures use of a replacement behavior with prompting, without an explicit item-throwing reduction criterion.
+
+IF TEAM DISAGREES:
+How will the team determine whether the targeted behavior itself has improved as replacement communication is taught?
+
+SOURCE:
+Current IEP, pages 6-7 and 11; a current item-throwing baseline was not supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-017
+TARGET LABEL: GAA Evidence
+IEP SECTION: VI. Participation Guidelines for the GAA 2.0
+
+ADVOCATE SAY THIS:
+Please update the GAA participation justification with current adaptive and instructional evidence.
+
+PUT IT HERE:
+Participation Guidelines for the GAA 2.0, evidence and justifications for participation criteria.
+
+POSSIBLE IEP WORDING:
+The team considered [dated current adaptive evidence], [current instructional performance], and [other relevant data] when determining Jeremiah's participation in the GAA 2.0 for [school year].
+
+WHY:
+The participation justifications rely heavily on 2017 cognitive results and brief statements about modified curriculum. The request is to support the team's decision with current evidence, not to assume the decision is incorrect.
+
+EVIDENCE:
+• IEP pages 12-13 cite April 2017 CTONI-2 results in participation justifications.
+• IEP page 2 includes 2025 GAA 2.0 results, and pages 3-5 contain more recent functional information.
+
+IF TEAM DISAGREES:
+What recent adaptive and instructional data does the team rely on for each participation criterion?
+
+SOURCE:
+Current IEP, pages 2-5 and 12-13; current adaptive records beyond this IEP were not supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-018
+TARGET LABEL: AAC Backup
+IEP SECTION: IX. Student Supports
+
+ADVOCATE SAY THIS:
+Please make low-tech AAC available whenever Jeremiah's primary device cannot be used, including during behavioral distress.
+
+PUT IT HERE:
+Student Supports, Instructional Accommodations.
+
+POSSIBLE IEP WORDING:
+Jeremiah will have access to his AAC application and a functionally matched low-tech backup throughout school routines; staff will offer the backup whenever the primary device is unavailable or cannot be used, including during dysregulation.
+
+WHY:
+The IEP already provides an AAC app and low-tech pages, but one accommodation describes the backup only when tablet use is not feasible because of a behavior outburst. Consistent access should be clear in the operative accommodation.
+
+EVIDENCE:
+• IEP page 3 describes a lack of a functional system for expressing basic wants and needs.
+• IEP page 16 includes an AAC app and low-tech backup page sets, while the instructional accommodation names behavior outbursts as the fallback condition.
+
+IF TEAM DISAGREES:
+How can Jeremiah communicate when the tablet is unavailable for another reason, or while he is distressed?
+
+SOURCE:
+Current IEP, pages 3 and 16. No AAC availability log was supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-019
+TARGET LABEL: Home-School AAC
+IEP SECTION: IX. Student Supports
+
+ADVOCATE SAY THIS:
+Please add a home-school AAC coordination procedure to Jeremiah's supplemental aids and services.
+
+PUT IT HERE:
+Student Supports, Supplemental Aids and Services.
+
+POSSIBLE IEP WORDING:
+The assigned SLP will exchange Jeremiah's current AAC vocabulary and modeled phrases with his guardians every [agreed interval] so school and home can use consistent communication cues.
+
+WHY:
+The parent-concerns section requests consistency between home and school, and the April meeting notes mention using the same communication terms. The student-supports section does not assign a routine for carrying this out.
+
+EVIDENCE:
+• IEP page 4 records the guardians' home-school communication concern.
+• IEP page 21 says staff discussed similar communication terms across settings.
+• IEP page 16 lists AAC aids without a home-school coordination procedure.
+
+IF TEAM DISAGREES:
+What existing routine ensures the family knows the vocabulary modeled at school, and where is that routine documented?
+
+SOURCE:
+Current IEP, pages 4, 16, and 21. This request does not assume a school-purchased device must go home; home-device access is a separate team determination.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-020
+TARGET LABEL: AAC Staff Training
+IEP SECTION: IX. Student Supports
+
+ADVOCATE SAY THIS:
+Please replace "training as needed" with a specific AAC staff-training plan.
+
+PUT IT HERE:
+Student Supports, Support for School Personnel.
+
+POSSIBLE IEP WORDING:
+The assigned SLP will train staff working with Jeremiah on operating, modeling, and responding to his AAC application and low-tech backup by [agreed date] and when the system changes; completion will be documented.
+
+WHY:
+"As needed" leaves the timing, staff, and content of training undefined even though AAC is a named support and communication need.
+
+EVIDENCE:
+• IEP page 6 identifies both AT devices and AT services as needed.
+• IEP page 16 states that AAC application training will be provided "as needed" for staff working with Jeremiah.
+
+IF TEAM DISAGREES:
+Which staff have already been trained to model and respond to his system, when, and by whom?
+
+SOURCE:
+Current IEP, pages 6 and 16; staff training records were not supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-021
+TARGET LABEL: Noise Headphones
+IEP SECTION: IX. Student Supports
+
+ADVOCATE SAY THIS:
+Please add access to noise-reducing headphones during identified high-noise routines to instructional accommodations.
+
+PUT IT HERE:
+Student Supports, Instructional Accommodations.
+
+POSSIBLE IEP WORDING:
+Jeremiah will have access to noise-reducing headphones during [team-identified high-noise routines], while staff ensure he can access needed instructions and communication.
+
+WHY:
+The BIP names noise as a trigger and lists headphones as prevention, but the instructional accommodations do not specify when this support is available.
+
+EVIDENCE:
+• IEP pages 6-7 identify peer noise and crowds as triggers and list headphones or discreet earbuds among proactive supports.
+• IEP page 16 does not list a noise-reduction accommodation.
+
+IF TEAM DISAGREES:
+How is access to this existing BIP strategy communicated to staff across classrooms and activities?
+
+SOURCE:
+Current IEP, pages 6-7 and 16; current observations about which routines need this support were not supplied.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-022
+TARGET LABEL: Adult Support
+IEP SECTION: IX. Student Supports
+
+ADVOCATE SAY THIS:
+Please decide and document whether Jeremiah needs dedicated adult assistance during identified instructional routines.
+
+PUT IT HERE:
+Student Supports, Supplemental Aids and Services.
+
+POSSIBLE IEP WORDING:
+If current data support the need: During [identified instructional routine], a designated trained adult will provide [defined assistance] for [team-selected duration and frequency].
+
+WHY:
+The IEP describes one-to-one and hand-over-hand assistance for academic work, and the guardians raised a possible one-to-one support need at the amendment meeting. It does not state whether dedicated assistance is required, or for which routines.
+
+EVIDENCE:
+• IEP page 4 says Jeremiah completes academic work with one-to-one and hand-over-hand assistance.
+• IEP page 21 records the guardians' question about possible one-to-one assistance and their staffing concerns.
+• IEP page 16 lists supplemental aids but no defined adult-assistance schedule.
+
+IF TEAM DISAGREES:
+Which current participation and safety data show what staff support he needs during each routine?
+
+SOURCE:
+Current IEP, pages 4, 16, and 21. This Target requests a documented team decision; it does not assert that one-to-one staffing is already required.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-023
+TARGET LABEL: ESY Review
+IEP SECTION: X. Extended School Year
+
+ADVOCATE SAY THIS:
+Please make a new ESY decision using Jeremiah's current progress and behavior data.
+
+PUT IT HERE:
+Extended School Year, individualized decision and reasons.
+
+POSSIBLE IEP WORDING:
+The team reviewed [dated progress, behavior, and break-related information] and determined [ESY needed or not needed] for [identified skill or service], because [student-specific reason].
+
+WHY:
+The current IEP says none of the listed factors apply, but the updated BIP and annual review warrant a fresh individualized decision using current information. The supplied IEP alone does not establish ESY eligibility.
+
+EVIDENCE:
+• IEP page 17 states that no ESY factors apply and ESY is not needed.
+• IEP pages 6-7 and 11 identify a behavior concern and communication or replacement-skill goals.
+• No break-related regression or recoupment records were supplied.
+
+IF TEAM DISAGREES:
+Which current data support the ESY decision for Jeremiah's critical skills, and can the team record that reasoning?
+
+SOURCE:
+Current IEP, pages 6-7, 11, and 17. IDEA ESY regulation: https://sites.ed.gov/idea/regs/b/b/300.106
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-024
+TARGET LABEL: OT Frequency
+IEP SECTION: XIII. Special Education Services
+
+ADVOCATE SAY THIS:
+Please decide whether one 15-minute OT session each semester addresses Jeremiah's documented classroom needs.
+
+PUT IT HERE:
+Special Education Services, Related Services, Occupational Therapy frequency and duration.
+
+POSSIBLE IEP WORDING:
+Based on [current OT assessment and progress data], occupational therapy will be provided for [team-selected duration] at [team-selected frequency] to address [specified educational access need].
+
+WHY:
+The present levels say OT-related functional performance limits classroom participation, but the service grid provides 15 minutes semiannually. Current OT data are needed to decide whether that amount is appropriate.
+
+EVIDENCE:
+• IEP page 5 says Jeremiah's functional performance limits his participation in classroom activities in OT.
+• IEP page 20 provides one 15-minute OT session semiannually.
+• A current OT report and service logs were not supplied.
+
+IF TEAM DISAGREES:
+What current OT data show that two 15-minute sessions per year address the classroom limitations identified in the IEP?
+
+SOURCE:
+Current IEP, pages 5 and 20. The IEP alone does not establish the correct OT service amount.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------
+
+TARGET ID: TARGET-025
+TARGET LABEL: Peer Participation
+IEP SECTION: XIII. Special Education Services
+
+ADVOCATE SAY THIS:
+Please specify Jeremiah's opportunities to participate with nondisabled peers in nonacademic activities.
+
+PUT IT HERE:
+Special Education Services, explanation of removal from general education and nonacademic participation.
+
+POSSIBLE IEP WORDING:
+Jeremiah will participate with nondisabled peers in [team-identified nonacademic activity] at [frequency] with [specified communication, sensory, and staff supports].
+
+WHY:
+The placement explanation says he will not participate with nondisabled peers in all academic and nonacademic activities, but does not identify the actual opportunities considered or the supports that could make participation possible.
+
+EVIDENCE:
+• IEP page 20 describes removal due to behavior, communication, sensory-motor, social, functional academic, and adaptive needs.
+• No schedule of nonacademic peer participation was supplied.
+
+IF TEAM DISAGREES:
+Which nonacademic activities were considered, what supports were considered for each, and what student-specific data support the decision?
+
+SOURCE:
+Current IEP, page 20. The IEP does not establish whether Jeremiah currently participates with nondisabled peers in any specific activity.
+
+MEETING TRACKING:
+☐ Discussed
+☐ Agreed
+☐ Added to IEP
+☐ Denied
+☐ PWN Needed
+☐ Follow-Up
+
+----------------------------------------

@@ -3,6 +3,7 @@ import { MeetingTarget } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Printer,
   ArrowUp,
@@ -324,6 +325,23 @@ export function AdvocateReadyView({
                       <span className="text-teal-300">Follow-up</span>
                     </label>
                   </div>
+                </div>
+
+                {/* 📝 My Notes on this Target */}
+                <div className="mt-4 p-4 rounded-2xl bg-[#071C3C]/90 border border-[#103E70] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-[#F5B544] flex items-center gap-1.5">
+                      <span>📝</span>
+                      <span>My Notes / Team Commitments</span>
+                    </div>
+                    <span className="text-[10px] text-blue-300/60 font-medium print:hidden">Auto-saved to workspace</span>
+                  </div>
+                  <Textarea
+                    value={target.notes || ""}
+                    onChange={(e) => onUpdateTarget(target.id, { notes: e.target.value })}
+                    placeholder="Enter notes, team commitments, who spoke, or specific follow-up actions..."
+                    className="text-xs bg-[#051426] border-[#144A7E] text-white placeholder:text-blue-300/40 min-h-[85px] leading-relaxed rounded-xl p-3 focus:border-[#F5B544]/60 resize-y"
+                  />
                 </div>
               </div>
 

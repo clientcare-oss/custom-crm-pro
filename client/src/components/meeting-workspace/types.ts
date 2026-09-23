@@ -29,6 +29,7 @@ export type TargetMeetingStatus = "NOT_DISCUSSED" | "DISCUSSED" | "AGREED" | "DE
 
 export interface MeetingTarget {
   id: string;
+  externalTargetId?: string; // e.g. "TARGET-001"
   targetName: string; // e.g. "Noise Support"
   iepSection: string; // e.g. "Accommodations / Supports"
   sectionOrder: number;

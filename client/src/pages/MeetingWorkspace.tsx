@@ -5,6 +5,8 @@ import {
   ChevronDown,
   Loader2,
   Save,
+  Download,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,9 +61,23 @@ export default function MeetingWorkspace() {
     if (parsedStudentId) {
       setSelectedStudentId(parsedStudentId);
     } else if (contacts && contacts.length > 0 && !selectedStudentId) {
-      setSelectedStudentId(contacts[0].id);
+      const jeremiah = contacts.find(
+        (c) =>
+          c.firstName?.trim().toLowerCase() === "jeremiah" &&
+          c.lastName?.trim().toLowerCase() === "mitchell"
+      );
+      setSelectedStudentId(jeremiah ? jeremiah.id : contacts[0].id);
     }
   }, [parsedStudentId, contacts, selectedStudentId]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const search = new URLSearchParams(window.location.search);
+      if (search.get("import") === "true" || search.get("import") === "open" || search.get("tab") === "import") {
+        setIsImportModalOpen(true);
+      }
+    }
+  }, []);
 
   const activeStudent = contacts?.find((c) => c.id === selectedStudentId) || null;
   const studentName = activeStudent
@@ -367,7 +383,18 @@ export default function MeetingWorkspace() {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsImportModalOpen(true)}
+              className="text-xs h-8 border-[#144A7E] bg-[#071C3C] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 gap-1.5 cursor-pointer shadow-sm font-semibold"
+              title="Paste or drop an Advocate Ready document to import targets"
+            >
+              <Download className="w-3.5 h-3.5 text-[#F5B544]" />
+              <span>📥 Import Advocate Ready</span>
+            </Button>
             <Button
               onClick={() => saveCurrentState()}
               variant="outline"
@@ -537,6 +564,7 @@ export default function MeetingWorkspace() {
                       saveCurrentState({ status: "READY" });
                       toast.success("Ready for Meeting! Meeting Mode prepared.");
                     }}
+                    onOpenImportModal={() => setIsImportModalOpen(true)}
                     isLoading={buildBlueprintMutation.isPending}
                   />
                 )}
@@ -611,6 +639,7 @@ export default function MeetingWorkspace() {
                   saveCurrentState({ status: "READY" });
                   toast.success("Ready for Meeting! Meeting Mode prepared.");
                 }}
+                onOpenImportModal={() => setIsImportModalOpen(true)}
                 isLoading={buildBlueprintMutation.isPending}
               />
             )}

@@ -5,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,12 +21,15 @@ import {
   XCircle,
   Pencil,
   Plus,
-  ArrowRight,
   Loader2,
   Trash2,
-  Layers,
-  HelpCircle,
   Check,
+  Save,
+  Info,
+  Calendar,
+  User,
+  Layers,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -67,6 +69,23 @@ export function ImportAdvocateReadyModal({
   const [parseStage, setParseStage] = useState<"input" | "preview" | "conflict">("input");
   const [parsedTargets, setParsedTargets] = useState<AdvocateReadyImportItem[]>([]);
   const [importedOrder, setImportedOrder] = useState<string[]>([]);
+  const [parsedAdditionalNotes, setParsedAdditionalNotes] = useState<string[]>([]);
+  const [parseMeta, setParseMeta] = useState<{
+    studentName: string;
+    meetingTitle: string;
+    isUnassignedDraft: boolean;
+    isDuplicate: boolean;
+    existingDraftCount: number;
+    validationErrors: string[];
+  }>({
+    studentName: studentName || "Jeremiah Mitchell",
+    meetingTitle: "Unassigned Draft",
+    isUnassignedDraft: true,
+    isDuplicate: false,
+    existingDraftCount: existingTargetsCount,
+    validationErrors: [],
+  });
+
   const [orderChoice, setOrderChoice] = useState<"current_iep" | "imported">(
     currentDetectedOrder.length > 0 ? "current_iep" : "imported"
   );
@@ -75,22 +94,58 @@ export function ImportAdvocateReadyModal({
   const [editingTargetId, setEditingTargetId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdvocateReadyImportItem>>({});
 
+  const utils = trpc.useUtils();
+
   const parseMutation = trpc.meetingWorkspace.parseAdvocateReadyImport.useMutation({
     onSuccess: (data) => {
       setParsedTargets(data.targets as AdvocateReadyImportItem[]);
       if (data.detectedOrder && data.detectedOrder.length > 0) {
         setImportedOrder(data.detectedOrder);
       }
+      if (data.additionalItems) {
+        setParsedAdditionalNotes(data.additionalItems);
+      }
+      setParseMeta({
+        studentName: data.studentName,
+        meetingTitle: data.meetingTitle,
+        isUnassignedDraft: data.isUnassignedDraft,
+        isDuplicate: data.isDuplicate,
+        existingDraftCount: data.existingDraftCount,
+        validationErrors: data.validationErrors || [],
+      });
       setParseStage("preview");
-      const reviewCount = data.targets.filter((t: any) => t.needsReview).length;
-      if (reviewCount > 0) {
-        toast.info(`Parsed ${data.targets.length} targets · ${reviewCount} need review`);
+
+      if (data.validationErrors && data.validationErrors.length > 0) {
+        toast.warning(`Parsed ${data.targets.length} targets with ${data.validationErrors.length} validation notes`);
+      } else if (data.isDuplicate) {
+        toast.info(`Parsed ${data.targets.length} targets · Matching existing draft detected`);
       } else {
-        toast.success(`Parsed ${data.targets.length} targets successfully`);
+        toast.success(`Parsed ${data.targets.length} targets successfully for ${data.studentName}`);
       }
     },
     onError: (err) => {
       toast.error(`Parse failed: ${err.message}`);
+    },
+  });
+
+  const saveDraftMutation = trpc.meetingWorkspace.saveAdvocateReadyDraft.useMutation({
+    onSuccess: (res) => {
+      toast.success(
+        res.isUnassignedDraft
+          ? `Saved ${res.savedTargetsCount} Targets as Unassigned Draft for ${res.studentName}`
+          : `Saved ${res.savedTargetsCount} Targets for ${res.studentName}`
+      );
+      utils.meetingWorkspace.getOrCreate.invalidate();
+      onImportTargets(
+        parsedTargets.filter((t) => t.included),
+        "replace",
+        orderChoice === "imported" && importedOrder.length > 0 ? importedOrder : currentDetectedOrder
+      );
+      onClose();
+      resetModal();
+    },
+    onError: (err) => {
+      toast.error(`Save draft failed: ${err.message}`);
     },
   });
 
@@ -163,6 +218,7 @@ export function ImportAdvocateReadyModal({
     const newId = `imp-${Date.now()}-${parsedTargets.length + 1}`;
     const newTarget: AdvocateReadyImportItem = {
       id: newId,
+      externalTargetId: `TARGET-${String(parsedTargets.length + 1).padStart(3, "0")}`,
       targetName: "New Meeting Target",
       iepSection: currentDetectedOrder[0] || "Accommodations / Supports",
       sectionOrder: parsedTargets.length + 1,
@@ -190,6 +246,30 @@ export function ImportAdvocateReadyModal({
     handleStartEdit(newTarget);
   };
 
+  const handleSaveDraft = (mode: "draft" | "replace" | "append" = "replace") => {
+    const includedTargets = parsedTargets.filter((t) => t.included);
+    if (includedTargets.length === 0) {
+      toast.error("No targets selected to import");
+      return;
+    }
+
+    const finalOrder =
+      orderChoice === "imported" && importedOrder.length > 0
+        ? importedOrder
+        : currentDetectedOrder.length > 0
+        ? currentDetectedOrder
+        : importedOrder;
+
+    saveDraftMutation.mutate({
+      studentContactId,
+      meetingId: null,
+      targets: includedTargets,
+      detectedOrder: finalOrder,
+      additionalItems: parsedAdditionalNotes,
+      mode,
+    });
+  };
+
   const handleConfirmImport = (mode: "append" | "replace" = "append") => {
     const includedTargets = parsedTargets.filter((t) => t.included);
     if (includedTargets.length === 0) {
@@ -204,9 +284,15 @@ export function ImportAdvocateReadyModal({
         ? currentDetectedOrder
         : importedOrder;
 
-    onImportTargets(includedTargets, mode, finalOrder);
-    onClose();
-    resetModal();
+    // Save to DB and update client state
+    saveDraftMutation.mutate({
+      studentContactId,
+      meetingId: null,
+      targets: includedTargets,
+      detectedOrder: finalOrder,
+      additionalItems: parsedAdditionalNotes,
+      mode,
+    });
   };
 
   const handleProceedClick = () => {
@@ -222,6 +308,7 @@ export function ImportAdvocateReadyModal({
     setUploadedFileName(null);
     setParseStage("input");
     setParsedTargets([]);
+    setParsedAdditionalNotes([]);
     setEditingTargetId(null);
   };
 
@@ -247,15 +334,15 @@ export function ImportAdvocateReadyModal({
                 <Download className="h-4 w-4" />
               </span>
               <Badge variant="outline" className="border-[#F5B544]/40 text-[#F5B544] bg-[#071C3C] text-[11px]">
-                Optional Fast Track
+                Advocate Ready Import
               </Badge>
-              <span className="text-xs text-blue-300/70">Manual Advocate Ready Import</span>
+              <span className="text-xs text-blue-300/70">PG-043 Workspace Fast Track</span>
             </div>
             <DialogTitle className="text-xl font-bold text-white tracking-wide">
-              📥 Import Advocate Ready
+              📥 Import Advocate Ready Document
             </DialogTitle>
             <DialogDescription className="text-xs text-blue-200/80 leading-relaxed">
-              Paste or drop an existing Advocate Ready document and Waypoint will convert it into editable meeting targets for <strong className="text-white">{studentName}</strong>.
+              Paste or drop an Advocate Ready document and Waypoint will parse each item into discrete meeting targets for <strong className="text-white">{parseMeta.studentName || studentName}</strong>.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -291,7 +378,7 @@ export function ImportAdvocateReadyModal({
                   )}
                 >
                   <UploadCloud className="h-3.5 w-3.5" />
-                  Drop File
+                  Drop File (.txt)
                 </button>
               </div>
 
@@ -301,19 +388,12 @@ export function ImportAdvocateReadyModal({
                   <Textarea
                     value={pastedText}
                     onChange={(e) => setPastedText(e.target.value)}
-                    placeholder="Paste Advocate Ready content here (from ChatGPT, Word, Google Docs, or meeting strategy notes)...
-
-Example:
-TARGET: Noise Support
-IEP Section: Accommodations
-Say This: We're requesting access to noise-canceling headphones during assemblies and loud transitions.
-Put It Here: Classroom Accommodations
-Why: Sensory regulation in Least Restrictive Environment."
+                    placeholder="Paste Advocate Ready content here (e.g. starting with ⚡ MEETING QUICK LIST)..."
                     rows={12}
                     className="w-full bg-[#051429] border border-[#144E8A] text-blue-100 placeholder:text-blue-300/40 text-xs font-mono rounded-xl p-4 focus:ring-1 focus:ring-[#F5B544] focus:border-[#F5B544] leading-relaxed resize-y"
                   />
                   <div className="flex items-center justify-between text-[11px] text-blue-300/60">
-                    <span>Waypoint AI will convert each request into a structured target.</span>
+                    <span>Both paste and drop inputs route through the same unified parser.</span>
                     <span>{pastedText.length} characters</span>
                   </div>
                 </div>
@@ -340,7 +420,7 @@ Why: Sensory regulation in Least Restrictive Environment."
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".txt,.md,.doc,.docx,.pdf"
+                      accept=".txt,.md,.text"
                       className="hidden"
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
@@ -353,10 +433,10 @@ Why: Sensory regulation in Least Restrictive Environment."
                     </div>
                     <div>
                       <p className="text-sm font-bold text-white">
-                        {uploadedFileName ? uploadedFileName : "Drop Advocate Ready document here"}
+                        {uploadedFileName ? uploadedFileName : "Drop Advocate Ready .txt file here"}
                       </p>
                       <p className="text-xs text-blue-300/70 mt-1">
-                        Supports text, markdown, or export files · Click to browse files
+                        Drag and drop your file or click to browse
                       </p>
                     </div>
                     <Button
@@ -373,7 +453,7 @@ Why: Sensory regulation in Least Restrictive Environment."
                     <div className="p-3 rounded-xl bg-[#06172E] border border-[#144E8A] text-xs text-blue-200/80 max-h-32 overflow-y-auto font-mono">
                       <div className="font-bold text-emerald-400 mb-1 flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        Ready to parse: {uploadedFileName}
+                        Loaded file: {uploadedFileName} ({pastedText.length} chars)
                       </div>
                       <p className="line-clamp-3">{pastedText.slice(0, 300)}...</p>
                     </div>
@@ -386,23 +466,30 @@ Why: Sensory regulation in Least Restrictive Environment."
           {/* STAGE 2: PREVIEW & REVIEW */}
           {parseStage === "preview" && (
             <div className="space-y-5">
-              {/* Summary Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#061B35] border border-[#103E70]">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-[#0E427B] text-[#F5B544] border border-[#2368B2] text-xs font-bold">
-                    {includedCount} targets selected
-                  </Badge>
-                  {reviewCount > 0 ? (
-                    <Badge variant="outline" className="border-amber-500/50 bg-amber-950/40 text-amber-300 text-xs gap-1">
-                      <AlertTriangle className="h-3 w-3 text-amber-400" />
-                      {reviewCount} need review
+              {/* Destination & Meta Context Bar */}
+              <div className="p-3.5 rounded-xl bg-[#061B35] border border-[#103E70] flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-1.5 text-blue-200">
+                    <User className="h-4 w-4 text-[#F5B544]" />
+                    <span>Student: <strong className="text-white">{parseMeta.studentName}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 text-blue-400" />
+                    <Badge variant="outline" className={cn(
+                      "text-[11px]",
+                      parseMeta.isUnassignedDraft
+                        ? "border-amber-500/50 bg-amber-950/40 text-amber-300 font-semibold"
+                        : "border-blue-500/50 bg-blue-950/40 text-blue-300"
+                    )}>
+                      {parseMeta.meetingTitle}
                     </Badge>
-                  ) : (
-                    <span className="text-xs text-emerald-300 flex items-center gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      All targets structured
-                    </span>
-                  )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Layers className="h-4 w-4 text-emerald-400" />
+                    <Badge className="bg-[#0E427B] text-[#F5B544] border border-[#2368B2] text-[11px] font-bold">
+                      {includedCount} targets parsed
+                    </Badge>
+                  </div>
                 </div>
 
                 <Button
@@ -417,9 +504,37 @@ Why: Sensory regulation in Least Restrictive Environment."
                 </Button>
               </div>
 
+              {/* Duplicate Warning Alert */}
+              {parseMeta.isDuplicate && (
+                <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/50 text-xs text-amber-200 flex items-start gap-2.5">
+                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-amber-300 block font-bold">Matching Targets Already Exist</strong>
+                    <span>
+                      {parseMeta.studentName}'s workspace already has {parseMeta.existingDraftCount} targets with matching IDs. Saving as draft will update the existing draft without creating duplicate student records or fake meetings.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Validation Errors / Alerts */}
+              {parseMeta.validationErrors.length > 0 && (
+                <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/50 text-xs text-rose-200 space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-rose-300">
+                    <AlertTriangle className="h-4 w-4 text-rose-400" />
+                    <span>Validation Warnings ({parseMeta.validationErrors.length})</span>
+                  </div>
+                  <ul className="list-disc list-inside space-y-0.5 text-rose-100 text-[11px]">
+                    {parseMeta.validationErrors.map((err, i) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Order Selection Choice */}
               {currentDetectedOrder.length > 0 && importedOrder.length > 0 && (
-                <div className="p-3.5 rounded-xl bg-[#06172E] border border-[#103E70] text-xs space-y-2">
+                <div className="p-3 rounded-xl bg-[#06172E] border border-[#103E70] text-xs space-y-2">
                   <span className="font-semibold text-blue-200 uppercase tracking-wider text-[11px] block">
                     Order Using:
                   </span>
@@ -444,14 +559,14 @@ Why: Sensory regulation in Least Restrictive Environment."
                         onChange={() => setOrderChoice("imported")}
                         className="text-amber-400 focus:ring-amber-400"
                       />
-                      <span>Imported Document Order</span>
+                      <span>Imported Document Order ({importedOrder.length} sections)</span>
                     </label>
                   </div>
                 </div>
               )}
 
               {/* Parsed Targets List */}
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                 {parsedTargets.map((target, idx) => {
                   const isEditing = editingTargetId === target.id;
 
@@ -472,7 +587,7 @@ Why: Sensory regulation in Least Restrictive Environment."
                         <div className="space-y-3">
                           <div className="flex items-center justify-between gap-2 border-b border-[#144E8A] pb-2">
                             <span className="text-xs font-bold text-[#F5B544]">
-                              Edit Target #{idx + 1}
+                              Edit Target #{idx + 1} ({target.externalTargetId || target.id})
                             </span>
                             <div className="flex items-center gap-2">
                               <Button
@@ -579,6 +694,11 @@ Why: Sensory regulation in Least Restrictive Environment."
                               />
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 flex-wrap">
+                                  {target.externalTargetId && (
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold">
+                                      {target.externalTargetId}
+                                    </span>
+                                  )}
                                   <span className="text-xs font-bold text-white tracking-wide">
                                     {target.targetName}
                                   </span>
@@ -638,6 +758,26 @@ Why: Sensory regulation in Least Restrictive Environment."
                   );
                 })}
               </div>
+
+              {/* Extracted Additional Notes (Before We Close) */}
+              {parsedAdditionalNotes.length > 0 && (
+                <div className="p-3 rounded-xl bg-[#06172E] border border-[#103E70] text-xs space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[#F5B544] font-bold">
+                    <span>🚦 Before We Close Notes</span>
+                    <Badge variant="outline" className="text-[10px] text-blue-300 border-[#144E8A]">
+                      Meeting Note Area ({parsedAdditionalNotes.length} notes)
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-blue-200/70">
+                    Extracted as meeting notes (not parsed as target records):
+                  </p>
+                  <ul className="list-disc list-inside text-[11px] text-blue-100 space-y-0.5">
+                    {parsedAdditionalNotes.map((note, i) => (
+                      <li key={i}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -659,16 +799,18 @@ Why: Sensory regulation in Least Restrictive Environment."
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <Button
                   onClick={() => handleConfirmImport("append")}
+                  disabled={saveDraftMutation.isPending}
                   className="bg-[#0E427B] hover:bg-[#13599E] text-white text-xs font-bold border border-[#2368B2] h-10 cursor-pointer"
                 >
                   Append New Targets
                 </Button>
                 <Button
                   onClick={() => handleConfirmImport("replace")}
+                  disabled={saveDraftMutation.isPending}
                   variant="outline"
                   className="border-rose-500/50 text-rose-300 hover:bg-rose-950/50 text-xs font-semibold h-10 cursor-pointer"
                 >
-                  Replace Existing Blueprint
+                  Replace Existing Draft
                 </Button>
               </div>
 
@@ -729,15 +871,31 @@ Why: Sensory regulation in Least Restrictive Environment."
               >
                 ← Re-enter Text
               </Button>
-              <Button
-                type="button"
-                onClick={handleProceedClick}
-                disabled={includedCount === 0}
-                className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-slate-950 font-bold text-xs gap-1.5 cursor-pointer shadow-lg"
-              >
-                <Check className="h-3.5 w-3.5 font-bold" />
-                ✓ Add {includedCount} Targets to Blueprint
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleSaveDraft("replace")}
+                  disabled={saveDraftMutation.isPending || includedCount === 0}
+                  className="border-[#144E8A] bg-[#0A2B52] hover:bg-[#0E3D75] text-blue-200 hover:text-white text-xs font-bold gap-1.5 cursor-pointer"
+                >
+                  {saveDraftMutation.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5 text-[#F5B544]" />
+                  )}
+                  Save as Draft
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleProceedClick}
+                  disabled={saveDraftMutation.isPending || includedCount === 0}
+                  className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-slate-950 font-bold text-xs gap-1.5 cursor-pointer shadow-lg"
+                >
+                  <Check className="h-3.5 w-3.5 font-bold" />
+                  ✓ Add {includedCount} Targets to Blueprint
+                </Button>
+              </div>
             </>
           )}
 
