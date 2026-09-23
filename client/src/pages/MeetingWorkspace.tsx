@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import {
   Users,
@@ -295,15 +295,18 @@ export default function MeetingWorkspace() {
     },
   });
 
+  // Auto-save debouncing ref
+  const saveTimeoutRef = useRef<any>(null);
+
   // Helper to persist current state
-  const saveCurrentState = (partialUpdates?: any) => {
+  const saveCurrentState = (partialUpdates?: any, isDebounced = false) => {
     const updatedTargets = partialUpdates?.meetingTargets ?? targets;
     const updatedOrder = partialUpdates?.detectedIepOrder ?? detectedIepOrder;
     const updatedParking = partialUpdates?.parkingLot ?? parkingLot;
     const updatedAdditional = partialUpdates?.additionalItems ?? additionalItems;
     const updatedChecks = partialUpdates?.closeoutChecks ?? closeoutChecks;
 
-    // Instant local backup
+    // Instant local backup so data is never lost even if network drops
     if (selectedStudentId && updatedTargets) {
       try {
         localStorage.setItem(`mw_backup_${selectedStudentId}`, JSON.stringify(updatedTargets));
@@ -312,21 +315,42 @@ export default function MeetingWorkspace() {
 
     if (!workspace?.id) return;
 
-    saveMutation.mutate({
-      id: workspace.id,
-      status: partialUpdates?.status ?? meetingStatus,
-      meetingTitle: meetingType,
-      meetingDate: meetingDate,
-      detectedIepOrder: updatedOrder,
-      iepIntelFindings: partialUpdates?.iepIntelFindings ?? iepFindings,
-      parentIntelConcerns: partialUpdates?.parentIntelConcerns ?? parentConcerns,
-      parentConcernStatement: partialUpdates?.parentConcernStatement ?? pcsText,
-      pcsApproved: partialUpdates?.pcsApproved ?? pcsApproved,
-      meetingTargets: updatedTargets,
-      parkingLot: updatedParking,
-      additionalItems: updatedAdditional,
-      closeoutChecks: updatedChecks as any,
-    });
+    const serialize = (val: any) => {
+      if (val === undefined || val === null) return undefined;
+      return typeof val === "string" ? val : JSON.stringify(val);
+    };
+
+    const performSave = () => {
+      saveMutation.mutate({
+        id: workspace.id,
+        status: partialUpdates?.status ?? meetingStatus,
+        meetingTitle: meetingType,
+        meetingDate: meetingDate,
+        detectedIepOrder: serialize(updatedOrder),
+        iepIntelFindings: serialize(partialUpdates?.iepIntelFindings ?? iepFindings),
+        parentIntelConcerns: serialize(partialUpdates?.parentIntelConcerns ?? parentConcerns),
+        parentConcernStatement: partialUpdates?.parentConcernStatement ?? pcsText,
+        pcsApproved: partialUpdates?.pcsApproved ?? pcsApproved,
+        meetingTargets: serialize(updatedTargets),
+        parkingLot: serialize(updatedParking),
+        additionalItems: serialize(updatedAdditional),
+        closeoutChecks: serialize(updatedChecks),
+      });
+    };
+
+    if (isDebounced) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        performSave();
+      }, 400);
+    } else {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      performSave();
+    }
   };
 
   const handleBack = () => {

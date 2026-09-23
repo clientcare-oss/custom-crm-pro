@@ -119,31 +119,46 @@ export const meetingWorkspaceRouter = router({
         status: z.string().optional(),
         activeTab: z.string().optional(),
         prepStep: z.string().optional(),
-        detectedIepOrder: z.union([z.string(), z.array(z.any())]).optional(),
-        iepIntelFindings: z.union([z.string(), z.array(z.any())]).optional(),
-        parentIntelConcerns: z.union([z.string(), z.array(z.any())]).optional(),
+        detectedIepOrder: z.union([z.string(), z.array(z.any()), z.any()]).optional(),
+        iepIntelFindings: z.union([z.string(), z.array(z.any()), z.any()]).optional(),
+        parentIntelConcerns: z.union([z.string(), z.array(z.any()), z.any()]).optional(),
         parentConcernStatement: z.string().optional(),
         pcsApproved: z.boolean().optional(),
-        pcsLastApprovedAt: z.date().optional().nullable(),
-        meetingTargets: z.union([z.string(), z.array(z.any())]).optional(),
-        parkingLot: z.union([z.string(), z.array(z.any())]).optional(),
-        additionalItems: z.union([z.string(), z.array(z.any())]).optional(),
-        closeoutChecks: z.union([z.string(), z.record(z.string(), z.any())]).optional(),
+        pcsLastApprovedAt: z.union([z.date(), z.string()]).optional().nullable(),
+        meetingTargets: z.union([z.string(), z.array(z.any()), z.any()]).optional(),
+        parkingLot: z.union([z.string(), z.array(z.any()), z.any()]).optional(),
+        additionalItems: z.union([z.string(), z.array(z.any()), z.any()]).optional(),
+        closeoutChecks: z.union([z.string(), z.record(z.string(), z.any()), z.any()]).optional(),
       })
     )
     .mutation(async ({ input }) => {
       const { id, meetingTitle, ...data } = input;
+      const serialize = (val: any) => {
+        if (val === undefined) return undefined;
+        if (val === null) return null;
+        if (typeof val === "string") return val;
+        try {
+          return JSON.stringify(val);
+        } catch {
+          return "[]";
+        }
+      };
+
       const payload: any = {
         ...data,
         title: data.title || meetingTitle,
-        detectedIepOrder: typeof data.detectedIepOrder === "object" ? JSON.stringify(data.detectedIepOrder) : data.detectedIepOrder,
-        iepIntelFindings: typeof data.iepIntelFindings === "object" ? JSON.stringify(data.iepIntelFindings) : data.iepIntelFindings,
-        parentIntelConcerns: typeof data.parentIntelConcerns === "object" ? JSON.stringify(data.parentIntelConcerns) : data.parentIntelConcerns,
-        meetingTargets: typeof data.meetingTargets === "object" ? JSON.stringify(data.meetingTargets) : data.meetingTargets,
-        parkingLot: typeof data.parkingLot === "object" ? JSON.stringify(data.parkingLot) : data.parkingLot,
-        additionalItems: typeof data.additionalItems === "object" ? JSON.stringify(data.additionalItems) : data.additionalItems,
-        closeoutChecks: typeof data.closeoutChecks === "object" ? JSON.stringify(data.closeoutChecks) : data.closeoutChecks,
+        detectedIepOrder: serialize(data.detectedIepOrder),
+        iepIntelFindings: serialize(data.iepIntelFindings),
+        parentIntelConcerns: serialize(data.parentIntelConcerns),
+        meetingTargets: serialize(data.meetingTargets),
+        parkingLot: serialize(data.parkingLot),
+        additionalItems: serialize(data.additionalItems),
+        closeoutChecks: serialize(data.closeoutChecks),
       };
+
+      if (data.pcsLastApprovedAt) {
+        payload.pcsLastApprovedAt = new Date(data.pcsLastApprovedAt);
+      }
 
       const updated = await db.updateWorkspace(id, payload);
       if (!updated) {
