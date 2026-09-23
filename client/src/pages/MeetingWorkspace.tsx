@@ -39,6 +39,7 @@ import { BlueprintView } from "../components/meeting-workspace/blueprint/Bluepri
 import { MeetingModeView } from "../components/meeting-workspace/live/MeetingModeView";
 import { AdvocateReadyView } from "../components/meeting-workspace/views/AdvocateReadyView";
 import { ParentReadyView } from "../components/meeting-workspace/views/ParentReadyView";
+import { ImportAdvocateReadyModal } from "../components/meeting-workspace/prep/ImportAdvocateReadyModal";
 
 export default function MeetingWorkspace() {
   const params = useParams<{ studentId?: string }>();
@@ -110,18 +111,22 @@ export default function MeetingWorkspace() {
     nextMeetingDiscussed: false,
   });
 
-function safeParseJson<T>(val: any, fallback: T): T {
-  if (!val) return fallback;
-  if (typeof val === "object") return val as T;
-  if (typeof val === "string") {
-    try {
-      return JSON.parse(val) as T;
-    } catch {
-      return fallback;
+  // Manual import modal & status
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isManualImport, setIsManualImport] = useState(false);
+
+  function safeParseJson<T>(val: any, fallback: T): T {
+    if (!val) return fallback;
+    if (typeof val === "object") return val as T;
+    if (typeof val === "string") {
+      try {
+        return JSON.parse(val) as T;
+      } catch {
+        return fallback;
+      }
     }
+    return fallback;
   }
-  return fallback;
-}
 
   // Sync loaded DB data into local state
   useEffect(() => {
@@ -146,7 +151,11 @@ function safeParseJson<T>(val: any, fallback: T): T {
         setPcsApproved(workspace.pcsApproved);
       }
       if (workspace.meetingTargets) {
-        setTargets(safeParseJson<MeetingTarget[]>(workspace.meetingTargets, []));
+        const loadedTargets = safeParseJson<MeetingTarget[]>(workspace.meetingTargets, []);
+        setTargets(loadedTargets);
+        if (loadedTargets.some((t) => t.sources?.some((s) => s.toLowerCase().includes("import")))) {
+          setIsManualImport(true);
+        }
       }
       if (workspace.parkingLot) {
         setParkingLot(safeParseJson<ParkingLotItem[]>(workspace.parkingLot, []));
@@ -283,6 +292,37 @@ function safeParseJson<T>(val: any, fallback: T): T {
     setLocation(`/meeting-workspace/${studentId}`);
   };
 
+  const handleImportTargets = (
+    importedTargets: MeetingTarget[],
+    mode: "append" | "replace",
+    newOrder?: string[]
+  ) => {
+    let merged: MeetingTarget[];
+    if (mode === "replace") {
+      merged = importedTargets;
+    } else {
+      const existingIds = new Set(targets.map((t) => t.id));
+      const filteredNew = importedTargets.map((t, idx) => ({
+        ...t,
+        id: existingIds.has(t.id) ? `imp-${Date.now()}-${idx + 1}` : t.id,
+      }));
+      merged = [...targets, ...filteredNew];
+    }
+    setTargets(merged);
+    setIsManualImport(true);
+    if (newOrder && newOrder.length > 0) {
+      setDetectedIepOrder(newOrder);
+    }
+    saveCurrentState({
+      meetingTargets: merged,
+      detectedIepOrder: newOrder || detectedIepOrder,
+      prepStep: "blueprint",
+    });
+    setPrepStep("blueprint");
+    setActiveTab("BLUEPRINT");
+    toast.success(`Added ${importedTargets.length} imported targets to Blueprint`);
+  };
+
   // Pipeline step completions
   const hasIepIntel = iepFindings.some((f) => f.status === "keep" || f.status === "important");
   const hasParentIntel = parentConcerns.some((c) => c.status === "keep");
@@ -373,7 +413,7 @@ function safeParseJson<T>(val: any, fallback: T): T {
             {/* TAB: PREP */}
             {activeTab === "PREP" && (
               <div className="space-y-6">
-                {/* 5-Step Pipeline Indicator */}
+                {/* 5-Step Pipeline Indicator + Optional Manual Import */}
                 <PrepPipeline
                   currentStep={prepStep}
                   onSelectStep={(step) => {
@@ -384,6 +424,8 @@ function safeParseJson<T>(val: any, fallback: T): T {
                   pcsApproved={pcsApproved}
                   hasBlueprint={hasBlueprint}
                   isReady={isReady}
+                  onOpenImportModal={() => setIsImportModalOpen(true)}
+                  isManualImport={isManualImport}
                 />
 
                 {/* Step 1: IEP Intel */}
@@ -636,6 +678,17 @@ function safeParseJson<T>(val: any, fallback: T): T {
             )}
           </div>
         )}
+
+        {/* Modal: Optional Manual Import for Testing */}
+        <ImportAdvocateReadyModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          studentContactId={selectedStudentId || 0}
+          studentName={studentName}
+          currentDetectedOrder={detectedIepOrder}
+          existingTargetsCount={targets.length}
+          onImportTargets={handleImportTargets}
+        />
       </div>
     </ScopedErrorBoundary>
   );

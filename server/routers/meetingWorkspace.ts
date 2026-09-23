@@ -767,4 +767,259 @@ Build 5-8 distinct meeting targets.`;
 
       return { success: true };
     }),
+
+  /**
+   * Manual Import: Parse externally created Advocate Ready document into structured Targets
+   */
+  parseAdvocateReadyImport: protectedProcedure
+    .input(
+      z.object({
+        studentContactId: z.number(),
+        rawContent: z.string().min(5, "Pasted content is too short"),
+        fileName: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { studentContactId, rawContent, fileName } = input;
+
+      const contact = await db.getContactById(studentContactId);
+      const studentName = contact ? `${contact.firstName} ${contact.lastName}` : "Student";
+
+      const systemPrompt = `You are Waypoint Advocates' Lead Advocate Ready Document Parser.
+Your task is to convert externally created Advocate Ready documents, meeting notes, or ChatGPT outputs into structured IEP Meeting Targets.
+
+HARD RULES:
+1. ONE TARGET = ONE REQUEST, ONE IEP LOCATION, ONE TEAM DECISION.
+2. If a section in the document bundles multiple distinct requests (e.g. asking for noise headphones AND a 1-on-1 aide in one target), flag it with:
+   "needsReview": true
+   "reviewReason": "Possible multiple requests detected in single target. Review and consider splitting."
+3. Every target must contain:
+   - id: string (unique, e.g. "tgt-imp-1")
+   - targetName: string (clean, concise title e.g. "Noise Support", "Help Signal", "Writing Baseline")
+   - iepSection: string (mapped IEP section e.g. "Accommodations / Supports", "Present Levels / Academics", "Annual Goals", "Related Services / AAC", "Special Factors / Behavior", "Placement / LRE")
+   - sectionOrder: number
+   - targetOrder: number
+   - quickAdvocateSayThis: string (exactly ONE punchy sentence the advocate can speak aloud live)
+   - fullAdvocateScript: string (full advocacy script)
+   - putItHereLocation: string (exact IEP page / box / section where this belongs)
+   - possibleIepWording: string (concrete proposed IEP contractual language)
+   - whyWeWantIt: string (educational/developmental rationale)
+   - supportingEvidence: string (data, evaluations, parent observations)
+   - sources: string[] (citations e.g. ["Imported Advocate Ready", "OT Eval"])
+   - ifTeamDisagrees: string (firm advocacy pushback or PWN reminder)
+   - parentWhatWeWant: string (plain-language summary for family)
+   - parentWhyWeWantIt: string (plain-language reason for family)
+   - parentSupportingEvidence: string (plain-language evidence for family)
+   - meetingStatus: "NOT_DISCUSSED"
+   - requestRaised: false
+   - pwnNeeded: false
+   - addedToIep: false
+   - followUpNeeded: false
+   - included: true
+   - needsReview: boolean
+   - reviewReason: string | null
+
+Output JSON format:
+{
+  "detectedOrder": ["Parent Concerns", "Present Levels / Academics", "Special Factors", "Annual Goals", "Accommodations / Supports", "Related Services / AAC", "Placement / LRE"],
+  "targets": [ ... ]
+}`;
+
+      const userPrompt = `Student Name: ${studentName}
+Source Document Name: ${fileName || "Pasted Advocate Ready Content"}
+
+Document Content:
+${rawContent.slice(0, 15000)}
+
+Extract and structure all meeting targets adhering strictly to the JSON schema.`;
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          model: CF_MODELS.DEEP,
+          responseFormat: { type: "json_object" },
+        });
+
+        const raw = extractLLMText(response);
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.targets) && parsed.targets.length > 0) {
+          const sanitizedTargets = parsed.targets.map((t: any, idx: number) => ({
+            id: t.id || `imp-${Date.now()}-${idx + 1}`,
+            targetName: t.targetName || `Target ${idx + 1}`,
+            iepSection: t.iepSection || "Accommodations / Supports",
+            sectionOrder: t.sectionOrder ?? (idx + 1),
+            targetOrder: t.targetOrder ?? (idx + 1),
+            quickAdvocateSayThis: t.quickAdvocateSayThis || t.advocateSayThis || "We are requesting this support to ensure appropriate classroom access.",
+            fullAdvocateScript: t.fullAdvocateScript || t.fullScript || t.quickAdvocateSayThis || "",
+            putItHereLocation: t.putItHereLocation || t.iepLocation || t.iepSection || "IEP Accommodations",
+            possibleIepWording: t.possibleIepWording || t.quickAdvocateSayThis || "",
+            whyWeWantIt: t.whyWeWantIt || t.why || "To support educational progress.",
+            supportingEvidence: t.supportingEvidence || t.evidence || "Documented baseline observations.",
+            sources: Array.isArray(t.sources) && t.sources.length > 0 ? t.sources : [fileName || "Imported Advocate Ready"],
+            ifTeamDisagrees: t.ifTeamDisagrees || "What objective data is the team relying on? If refused, please document in Prior Written Notice.",
+            parentWhatWeWant: t.parentWhatWeWant || t.quickAdvocateSayThis || t.targetName,
+            parentWhyWeWantIt: t.parentWhyWeWantIt || t.whyWeWantIt || "To help the student succeed in school.",
+            parentSupportingEvidence: t.parentSupportingEvidence || t.supportingEvidence || "Evaluations and observations.",
+            meetingStatus: "NOT_DISCUSSED" as const,
+            requestRaised: false,
+            pwnNeeded: false,
+            addedToIep: false,
+            followUpNeeded: false,
+            included: t.included !== false,
+            needsReview: !!t.needsReview,
+            reviewReason: t.reviewReason || (t.needsReview ? "Possible multiple requests detected" : undefined),
+          }));
+
+          return {
+            detectedOrder: Array.isArray(parsed.detectedOrder) && parsed.detectedOrder.length > 0
+              ? parsed.detectedOrder
+              : [
+                  "Parent Concerns",
+                  "Present Levels / Academics",
+                  "Special Factors",
+                  "Annual Goals",
+                  "Accommodations / Supports",
+                  "Related Services / AAC",
+                  "Placement / LRE",
+                ],
+            targets: sanitizedTargets,
+          };
+        }
+      } catch (err) {
+        console.warn("[meetingWorkspace] LLM fallback for Advocate Ready import:", err);
+      }
+
+      // High-quality Deterministic Heuristic Fallback Parser
+      const lines = rawContent.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      const extractedTargets: any[] = [];
+      let currentSection = "Accommodations / Supports";
+      let currentTarget: any = null;
+
+      for (const line of lines) {
+        // Section detection
+        if (/^(parent concerns|present levels|goals|accommodations|services|special factors|placement|esy)/i.test(line)) {
+          currentSection = line.replace(/^[#*-.\s]+/, "").trim();
+          continue;
+        }
+
+        // Target boundary detection
+        if (/^(target\s*\d*|item\s*\d*|#+\s+|[0-9]+\.\s+)/i.test(line) && line.length < 80 && !line.includes("Say This")) {
+          if (currentTarget) {
+            extractedTargets.push(currentTarget);
+          }
+          const cleanName = line.replace(/^(target\s*\d*[:.-]*|item\s*\d*[:.-]*|#+\s*|[0-9]+\.\s*)/i, "").trim();
+          currentTarget = {
+            id: `imp-${Date.now()}-${extractedTargets.length + 1}`,
+            targetName: cleanName || `Target ${extractedTargets.length + 1}`,
+            iepSection: currentSection,
+            sectionOrder: extractedTargets.length + 1,
+            targetOrder: extractedTargets.length + 1,
+            quickAdvocateSayThis: "",
+            fullAdvocateScript: "",
+            putItHereLocation: `${currentSection}`,
+            possibleIepWording: "",
+            whyWeWantIt: "To address documented deficit and support classroom access.",
+            supportingEvidence: "Documented student observations and baseline records.",
+            sources: [fileName || "Imported Advocate Ready"],
+            ifTeamDisagrees: "If refused, we request that the team document the objective data and refusal rationale in Prior Written Notice.",
+            parentWhatWeWant: cleanName || "Classroom accommodation support.",
+            parentWhyWeWantIt: "To ensure proper support throughout the school day.",
+            parentSupportingEvidence: "School records and parent feedback.",
+            meetingStatus: "NOT_DISCUSSED",
+            requestRaised: false,
+            pwnNeeded: false,
+            addedToIep: false,
+            followUpNeeded: false,
+            included: true,
+            needsReview: false,
+            reviewReason: undefined,
+          };
+          continue;
+        }
+
+        if (currentTarget) {
+          if (/say this[:\s]/i.test(line)) {
+            const val = line.replace(/^.*say this[:\s]*/i, "").replace(/^["']|["']$/g, "").trim();
+            currentTarget.quickAdvocateSayThis = val;
+            currentTarget.fullAdvocateScript = val;
+          } else if (/put it here[:\s]|location[:\s]/i.test(line)) {
+            currentTarget.putItHereLocation = line.replace(/^.*(put it here|location)[:\s]*/i, "").trim();
+          } else if (/wording[:\s]|language[:\s]/i.test(line)) {
+            currentTarget.possibleIepWording = line.replace(/^.*(wording|language)[:\s]*/i, "").trim();
+          } else if (/why[:\s]/i.test(line)) {
+            currentTarget.whyWeWantIt = line.replace(/^.*why[:\s]*/i, "").trim();
+            currentTarget.parentWhyWeWantIt = currentTarget.whyWeWantIt;
+          } else if (/evidence[:\s]|data[:\s]/i.test(line)) {
+            currentTarget.supportingEvidence = line.replace(/^.*(evidence|data)[:\s]*/i, "").trim();
+            currentTarget.parentSupportingEvidence = currentTarget.supportingEvidence;
+          } else if (/disagrees[:\s]|pushback[:\s]/i.test(line)) {
+            currentTarget.ifTeamDisagrees = line.replace(/^.*(disagrees|pushback)[:\s]*/i, "").trim();
+          } else if (!currentTarget.quickAdvocateSayThis && line.length > 20) {
+            currentTarget.quickAdvocateSayThis = line.replace(/^["']|["']$/g, "");
+            currentTarget.fullAdvocateScript = line;
+          }
+        }
+      }
+
+      if (currentTarget) {
+        extractedTargets.push(currentTarget);
+      }
+
+      // If text was unstructured, create at least fallback targets
+      if (extractedTargets.length === 0) {
+        extractedTargets.push({
+          id: `imp-${Date.now()}-1`,
+          targetName: "Imported Meeting Request",
+          iepSection: "Accommodations / Supports",
+          sectionOrder: 1,
+          targetOrder: 1,
+          quickAdvocateSayThis: rawContent.slice(0, 160).trim(),
+          fullAdvocateScript: rawContent.slice(0, 500).trim(),
+          putItHereLocation: "IEP Accommodations",
+          possibleIepWording: rawContent.slice(0, 200).trim(),
+          whyWeWantIt: "Imported from external advocate document.",
+          supportingEvidence: "Case records.",
+          sources: [fileName || "Imported Advocate Ready"],
+          ifTeamDisagrees: "Request Prior Written Notice documenting specific refusal rationale.",
+          parentWhatWeWant: "Support as outlined in imported document.",
+          parentWhyWeWantIt: "To support student's educational needs.",
+          parentSupportingEvidence: "Documented records.",
+          meetingStatus: "NOT_DISCUSSED",
+          requestRaised: false,
+          pwnNeeded: false,
+          addedToIep: false,
+          followUpNeeded: false,
+          included: true,
+          needsReview: true,
+          reviewReason: "Unstructured text parsed as single target. Please review and split if needed.",
+        });
+      }
+
+      // Detect if any target has multiple sentences / requests
+      for (const t of extractedTargets) {
+        if (!t.quickAdvocateSayThis) {
+          t.quickAdvocateSayThis = `We are requesting ${t.targetName.toLowerCase()} to support educational access.`;
+        }
+        if (t.quickAdvocateSayThis.length > 250 || (t.quickAdvocateSayThis.match(/\band\b/gi) || []).length >= 3) {
+          t.needsReview = true;
+          t.reviewReason = "Multiple requests or complex sentence detected. Review to ensure One Target / One Request.";
+        }
+      }
+
+      return {
+        detectedOrder: [
+          "Parent Concerns",
+          "Present Levels / Academics",
+          "Special Factors",
+          "Annual Goals",
+          "Accommodations / Supports",
+          "Related Services / AAC",
+          "Placement / LRE",
+        ],
+        targets: extractedTargets,
+      };
+    }),
 });

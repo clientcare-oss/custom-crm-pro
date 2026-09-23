@@ -60,6 +60,18 @@ export interface MeetingTarget {
   isCustom?: boolean;
 }
 
+export interface AdvocateReadyImportItem extends MeetingTarget {
+  included: boolean;
+  needsReview?: boolean;
+  reviewReason?: string;
+}
+
+export interface AdvocateReadyParseResult {
+  detectedOrder: string[];
+  targets: AdvocateReadyImportItem[];
+  rawSummary?: string;
+}
+
 export interface ParkingLotItem {
   id: string;
   note: string;
