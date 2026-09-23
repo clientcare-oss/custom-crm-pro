@@ -267,9 +267,23 @@ export function BlueprintView({
                         <div className="flex items-start justify-between gap-3 flex-wrap">
                           <div className="space-y-1 flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className="bg-[#0E427B] text-[#F5B544] border border-[#2368B2] text-xs font-bold px-2.5 py-0.5">
-                                🎯 {target.targetName}
-                              </Badge>
+                              {target.externalTargetId && (
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#071C3C] border border-[#175294] text-[#F5B544] font-bold">
+                                  {target.externalTargetId}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingTarget(target);
+                                  setIsNewTargetModal(false);
+                                }}
+                                className="inline-flex items-center gap-1.5 bg-[#0E427B] hover:bg-[#135398] text-[#F5B544] border border-[#2368B2] hover:border-[#F5B544] text-xs font-bold px-2.5 py-0.5 rounded-full cursor-pointer transition-colors"
+                                title="Click to edit topic title & details"
+                              >
+                                <span>🎯 {target.targetName}</span>
+                                <Pencil className="h-3 w-3 text-amber-300" />
+                              </button>
                               <span className="text-[11px] text-blue-200/70 font-mono">
                                 ✍ {target.putItHereLocation}
                               </span>

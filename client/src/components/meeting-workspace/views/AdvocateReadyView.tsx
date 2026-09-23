@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { MeetingTarget } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Printer,
@@ -15,6 +16,9 @@ import {
   FileBarChart2,
   ShieldAlert,
   Database,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 
 interface AdvocateReadyViewProps {
@@ -33,6 +37,21 @@ export function AdvocateReadyView({
   meetingDate = "Upcoming",
 }: AdvocateReadyViewProps) {
   const approvedTargets = targets;
+
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState("");
+
+  const handleStartEditingTitle = (target: MeetingTarget) => {
+    setEditingTitleId(target.id);
+    setEditingTitleValue(target.targetName || "");
+  };
+
+  const handleSaveTitle = (targetId: string) => {
+    if (editingTitleValue.trim()) {
+      onUpdateTarget(targetId, { targetName: editingTitleValue.trim() });
+    }
+    setEditingTitleId(null);
+  };
 
   const scrollToTarget = (id: string) => {
     const el = document.getElementById(`target-card-${id}`);
@@ -150,12 +169,65 @@ export function AdvocateReadyView({
 
               {/* Target Header */}
               <div className="flex items-start justify-between gap-4 mb-6">
-                <div>
+                <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold tracking-wider uppercase text-[#F5B544] mb-1 flex items-center gap-1.5">
                     <Target className="w-4 h-4 text-[#F5B544]" />
                     <span>TARGET {index + 1}</span>
+                    {target.externalTargetId && (
+                      <span className="font-mono text-[10.5px] px-1.5 py-0.2 rounded bg-[#071C3C] border border-[#144A7E] text-blue-200">
+                        {target.externalTargetId}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="text-2xl font-bold text-white">{target.targetName}</h3>
+
+                  {editingTitleId === target.id ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        value={editingTitleValue}
+                        onChange={(e) => setEditingTitleValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveTitle(target.id);
+                          if (e.key === "Escape") setEditingTitleId(null);
+                        }}
+                        className="h-9 text-lg font-bold bg-[#030D1A] border-[#F5B544] text-white px-3 rounded-lg"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveTitle(target.id)}
+                        className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                        title="Save title"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingTitleId(null)}
+                        className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 cursor-pointer"
+                        title="Cancel"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group/cardtitle">
+                      <h3
+                        onClick={() => handleStartEditingTitle(target)}
+                        className="text-2xl font-bold text-white cursor-pointer hover:text-[#F5B544] transition-colors"
+                        title="Click to edit topic title"
+                      >
+                        {target.targetName}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditingTitle(target)}
+                        className="text-blue-400/50 hover:text-[#F5B544] p-1.5 rounded-lg hover:bg-[#0E3E75] transition-colors cursor-pointer"
+                        title="Edit topic title"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <Badge className="bg-[#071C3C] text-blue-200 border border-[#144A7E] text-xs uppercase">

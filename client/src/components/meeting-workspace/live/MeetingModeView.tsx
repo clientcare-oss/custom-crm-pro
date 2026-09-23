@@ -55,6 +55,26 @@ export function MeetingModeView({
   const [editPossibleWording, setEditPossibleWording] = useState("");
   const [editNotes, setEditNotes] = useState("");
 
+  // Inline Topic Title editing
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState("");
+
+  const handleStartEditingTitle = (target: MeetingTarget) => {
+    setEditingTitleId(target.id);
+    setEditingTitleValue(target.targetName || "");
+  };
+
+  const handleSaveInlineTitle = (id: string) => {
+    if (editingTitleValue.trim()) {
+      onUpdateTargets(
+        targets.map((t) =>
+          t.id === id ? { ...t, targetName: editingTitleValue.trim() } : t
+        )
+      );
+    }
+    setEditingTitleId(null);
+  };
+
   const handleOpenSayThisEditor = (target: MeetingTarget) => {
     setSayThisEditTarget(target);
     setEditSayThisText(target.quickAdvocateSayThis || "");
@@ -342,33 +362,70 @@ export function MeetingModeView({
                       <div className="space-y-1 min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           {target.externalTargetId && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold">
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold shrink-0">
                               {target.externalTargetId}
                             </span>
                           )}
-                          <span
-                            className={cn(
-                              "text-xs sm:text-[13px] font-bold tracking-wide",
-                              target.requestRaised ? "text-blue-100" : "text-white"
-                            )}
-                          >
-                            {target.targetName}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenSayThisEditor(target)}
-                            className="text-blue-400/60 hover:text-[#F5B544] p-1 rounded hover:bg-[#0E3560] transition-colors cursor-pointer inline-flex items-center"
-                            title="Perfect what to ask for (Edit Say This & Phrasing)"
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </button>
+
+                          {editingTitleId === target.id ? (
+                            <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                              <Input
+                                value={editingTitleValue}
+                                onChange={(e) => setEditingTitleValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveInlineTitle(target.id);
+                                  if (e.key === "Escape") setEditingTitleId(null);
+                                }}
+                                className="h-7 text-xs bg-[#030D1A] border-[#F5B544] text-white px-2 rounded font-bold"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSaveInlineTitle(target.id)}
+                                className="p-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                                title="Save topic title"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingTitleId(null)}
+                                className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 cursor-pointer"
+                                title="Cancel"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 group/title">
+                              <span
+                                onClick={() => handleStartEditingTitle(target)}
+                                className={cn(
+                                  "text-xs sm:text-[13px] font-bold tracking-wide cursor-pointer hover:text-[#F5B544] transition-colors",
+                                  target.requestRaised ? "text-blue-100" : "text-white"
+                                )}
+                                title="Click to edit topic title"
+                              >
+                                {target.targetName}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditingTitle(target)}
+                                className="text-blue-400/60 hover:text-[#F5B544] p-1 rounded hover:bg-[#0E3560] transition-colors cursor-pointer inline-flex items-center"
+                                title="Edit topic title"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            </div>
+                          )}
+
                           {target.pwnNeeded && (
-                            <span className="text-[10px] font-bold text-rose-300 bg-rose-950/70 border border-rose-500/40 px-1.5 py-0.2 rounded">
+                            <span className="text-[10px] font-bold text-rose-300 bg-rose-950/70 border border-rose-500/40 px-1.5 py-0.2 rounded shrink-0">
                               PWN Flagged
                             </span>
                           )}
                           {target.notes && (
-                            <span className="text-[10px] font-bold text-amber-300 bg-amber-950/70 border border-amber-500/40 px-1.5 py-0.2 rounded flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-amber-300 bg-amber-950/70 border border-amber-500/40 px-1.5 py-0.2 rounded flex items-center gap-1 shrink-0">
                               <span>📝</span>
                               <span className="truncate max-w-[160px]">{target.notes}</span>
                             </span>
@@ -515,10 +572,10 @@ export function MeetingModeView({
         <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-[#06172E] border-l border-[#144E8A] shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
           {/* Drawer Header */}
           <div className="p-5 border-b border-[#0F3D70] bg-gradient-to-r from-[#09254D] to-[#06172E] flex items-center justify-between">
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 flex-1 min-w-0 pr-3">
               <div className="flex items-center gap-2">
                 {selectedTarget.externalTargetId && (
-                  <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold">
+                  <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-[#092244] border border-[#175294] text-[#F5B544] font-bold shrink-0">
                     {selectedTarget.externalTargetId}
                   </span>
                 )}
@@ -526,9 +583,54 @@ export function MeetingModeView({
                   Target Details Drawer
                 </span>
               </div>
-              <h3 className="text-base font-bold text-white truncate max-w-[340px]">
-                🎯 {selectedTarget.targetName}
-              </h3>
+              {editingTitleId === selectedTarget.id ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Input
+                    value={editingTitleValue}
+                    onChange={(e) => setEditingTitleValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveInlineTitle(selectedTarget.id);
+                      if (e.key === "Escape") setEditingTitleId(null);
+                    }}
+                    className="h-8 text-sm bg-[#030D1A] border-[#F5B544] text-white px-2.5 rounded font-bold"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSaveInlineTitle(selectedTarget.id)}
+                    className="p-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                    title="Save title"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingTitleId(null)}
+                    className="p-1.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 cursor-pointer"
+                    title="Cancel"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 mt-0.5 group/dtitle">
+                  <h3
+                    onClick={() => handleStartEditingTitle(selectedTarget)}
+                    className="text-base font-bold text-white truncate max-w-[320px] cursor-pointer hover:text-[#F5B544] transition-colors"
+                    title="Click to edit topic title"
+                  >
+                    🎯 {selectedTarget.targetName}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => handleStartEditingTitle(selectedTarget)}
+                    className="text-blue-400/60 hover:text-[#F5B544] p-1 rounded hover:bg-[#0E3560] transition-colors cursor-pointer"
+                    title="Edit topic title"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <button
