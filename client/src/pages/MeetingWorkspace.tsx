@@ -168,7 +168,26 @@ export default function MeetingWorkspace() {
       }
       if (workspace.meetingTargets) {
         const loadedTargets = safeParseJson<MeetingTarget[]>(workspace.meetingTargets, []);
-        setTargets(loadedTargets);
+        if (loadedTargets.length > 0) {
+          setTargets(loadedTargets);
+          try {
+            if (selectedStudentId) {
+              localStorage.setItem(`mw_backup_${selectedStudentId}`, JSON.stringify(loadedTargets));
+            }
+          } catch (e) {}
+        } else if (selectedStudentId) {
+          // Check local storage backup
+          try {
+            const cached = localStorage.getItem(`mw_backup_${selectedStudentId}`);
+            if (cached) {
+              const parsedCache = JSON.parse(cached);
+              if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+                setTargets(parsedCache);
+                saveCurrentState({ meetingTargets: parsedCache });
+              }
+            }
+          } catch (e) {}
+        }
         if (loadedTargets.some((t) => t.sources?.some((s) => s.toLowerCase().includes("import")))) {
           setIsManualImport(true);
         }
@@ -274,22 +293,35 @@ export default function MeetingWorkspace() {
 
   // Helper to persist current state
   const saveCurrentState = (partialUpdates?: any) => {
+    const updatedTargets = partialUpdates?.meetingTargets ?? targets;
+    const updatedOrder = partialUpdates?.detectedIepOrder ?? detectedIepOrder;
+    const updatedParking = partialUpdates?.parkingLot ?? parkingLot;
+    const updatedAdditional = partialUpdates?.additionalItems ?? additionalItems;
+    const updatedChecks = partialUpdates?.closeoutChecks ?? closeoutChecks;
+
+    // Instant local backup
+    if (selectedStudentId && updatedTargets) {
+      try {
+        localStorage.setItem(`mw_backup_${selectedStudentId}`, JSON.stringify(updatedTargets));
+      } catch (e) {}
+    }
+
     if (!workspace?.id) return;
+
     saveMutation.mutate({
       id: workspace.id,
-      status: meetingStatus,
+      status: partialUpdates?.status ?? meetingStatus,
       meetingTitle: meetingType,
       meetingDate: meetingDate,
-      detectedIepOrder: detectedIepOrder,
-      iepIntelFindings: iepFindings,
-      parentIntelConcerns: parentConcerns,
-      parentConcernStatement: pcsText,
-      pcsApproved: pcsApproved,
-      meetingTargets: targets,
-      parkingLot: parkingLot,
-      additionalItems: additionalItems,
-      closeoutChecks: closeoutChecks as any,
-      ...partialUpdates,
+      detectedIepOrder: updatedOrder,
+      iepIntelFindings: partialUpdates?.iepIntelFindings ?? iepFindings,
+      parentIntelConcerns: partialUpdates?.parentIntelConcerns ?? parentConcerns,
+      parentConcernStatement: partialUpdates?.parentConcernStatement ?? pcsText,
+      pcsApproved: partialUpdates?.pcsApproved ?? pcsApproved,
+      meetingTargets: updatedTargets,
+      parkingLot: updatedParking,
+      additionalItems: updatedAdditional,
+      closeoutChecks: updatedChecks as any,
     });
   };
 

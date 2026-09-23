@@ -113,26 +113,39 @@ export const meetingWorkspaceRouter = router({
       z.object({
         id: z.number(),
         title: z.string().optional(),
+        meetingTitle: z.string().optional(),
         meetingDate: z.string().optional(),
         meetingType: z.string().optional(),
         status: z.string().optional(),
         activeTab: z.string().optional(),
         prepStep: z.string().optional(),
-        detectedIepOrder: z.string().optional(),
-        iepIntelFindings: z.string().optional(),
-        parentIntelConcerns: z.string().optional(),
+        detectedIepOrder: z.union([z.string(), z.array(z.any())]).optional(),
+        iepIntelFindings: z.union([z.string(), z.array(z.any())]).optional(),
+        parentIntelConcerns: z.union([z.string(), z.array(z.any())]).optional(),
         parentConcernStatement: z.string().optional(),
         pcsApproved: z.boolean().optional(),
         pcsLastApprovedAt: z.date().optional().nullable(),
-        meetingTargets: z.string().optional(),
-        parkingLot: z.string().optional(),
-        additionalItems: z.string().optional(),
-        closeoutChecks: z.string().optional(),
+        meetingTargets: z.union([z.string(), z.array(z.any())]).optional(),
+        parkingLot: z.union([z.string(), z.array(z.any())]).optional(),
+        additionalItems: z.union([z.string(), z.array(z.any())]).optional(),
+        closeoutChecks: z.union([z.string(), z.record(z.string(), z.any())]).optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const { id, ...data } = input;
-      const updated = await db.updateWorkspace(id, data);
+      const { id, meetingTitle, ...data } = input;
+      const payload: any = {
+        ...data,
+        title: data.title || meetingTitle,
+        detectedIepOrder: typeof data.detectedIepOrder === "object" ? JSON.stringify(data.detectedIepOrder) : data.detectedIepOrder,
+        iepIntelFindings: typeof data.iepIntelFindings === "object" ? JSON.stringify(data.iepIntelFindings) : data.iepIntelFindings,
+        parentIntelConcerns: typeof data.parentIntelConcerns === "object" ? JSON.stringify(data.parentIntelConcerns) : data.parentIntelConcerns,
+        meetingTargets: typeof data.meetingTargets === "object" ? JSON.stringify(data.meetingTargets) : data.meetingTargets,
+        parkingLot: typeof data.parkingLot === "object" ? JSON.stringify(data.parkingLot) : data.parkingLot,
+        additionalItems: typeof data.additionalItems === "object" ? JSON.stringify(data.additionalItems) : data.additionalItems,
+        closeoutChecks: typeof data.closeoutChecks === "object" ? JSON.stringify(data.closeoutChecks) : data.closeoutChecks,
+      };
+
+      const updated = await db.updateWorkspace(id, payload);
       if (!updated) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update workspace" });
       }
