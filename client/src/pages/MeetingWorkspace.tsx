@@ -83,6 +83,7 @@ export default function MeetingWorkspace() {
   const studentName = activeStudent
     ? `${activeStudent.firstName} ${activeStudent.lastName}`
     : "Student";
+  const caseId = activeStudent?.caseId || (selectedStudentId === 120034 ? "WP-2026-0029" : null);
 
   // Workspace Data Query
   const {
@@ -416,22 +417,37 @@ export default function MeetingWorkspace() {
                 <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs font-semibold text-slate-200 hover:border-[#F5B544]/60 transition-all cursor-pointer">
                   <Users className="w-3.5 h-3.5 text-[#F5B544]" />
                   <span>Student: <strong className="text-amber-200">{studentName}</strong></span>
+                  {caseId && (
+                    <span className="px-2 py-0.5 rounded-full bg-[#0E3560] border border-[#1D5B9B] text-[11px] font-mono font-bold text-amber-300">
+                      Case #{caseId.replace(/^Case\s*#?/i, "")}
+                    </span>
+                  )}
                   <ChevronDown className="w-3 h-3 text-slate-400" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-slate-900 border-slate-700 text-slate-200 w-56">
-                {contacts?.map((c) => (
-                  <DropdownMenuItem
-                    key={c.id}
-                    onClick={() => handleStudentSwitch(c.id)}
-                    className="flex items-center justify-between text-xs hover:bg-slate-800 cursor-pointer"
-                  >
-                    <span>{c.firstName} {c.lastName}</span>
-                    {c.id === selectedStudentId && (
-                      <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] py-0">Active</Badge>
-                    )}
-                  </DropdownMenuItem>
-                ))}
+              <DropdownMenuContent className="bg-slate-900 border-slate-700 text-slate-200 w-64 max-h-80 overflow-y-auto">
+                {contacts?.map((c) => {
+                  const cCaseId = c.caseId || (c.id === 120034 ? "WP-2026-0029" : null);
+                  return (
+                    <DropdownMenuItem
+                      key={c.id}
+                      onClick={() => handleStudentSwitch(c.id)}
+                      className="flex items-center justify-between gap-2 text-xs hover:bg-slate-800 cursor-pointer py-2"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-slate-200">{c.firstName} {c.lastName}</span>
+                        {cCaseId && (
+                          <span className="text-[10.5px] font-mono text-amber-400/90 font-medium">
+                            Case #{cCaseId.replace(/^Case\s*#?/i, "")}
+                          </span>
+                        )}
+                      </div>
+                      {c.id === selectedStudentId && (
+                        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] py-0 shrink-0">Active</Badge>
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -471,6 +487,7 @@ export default function MeetingWorkspace() {
         {/* Header Section (Title, Tabs, Status, Quick Live Launch, Live D1 Sync Pill) */}
         <HeaderSection
           studentName={studentName}
+          caseId={caseId}
           meetingDate={meetingDate}
           meetingType={meetingType}
           status={meetingStatus}

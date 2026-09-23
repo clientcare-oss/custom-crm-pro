@@ -6,6 +6,7 @@ import type { MeetingWorkspaceStatus, WorkspaceTab } from "./types";
 
 interface HeaderSectionProps {
   studentName: string;
+  caseId?: string | null;
   meetingDate: string;
   meetingType: string;
   status: MeetingWorkspaceStatus;
@@ -20,6 +21,7 @@ interface HeaderSectionProps {
 
 export function HeaderSection({
   studentName,
+  caseId,
   meetingDate,
   meetingType,
   status,
@@ -88,9 +90,14 @@ export function HeaderSection({
           </Button>
 
           {/* Student chip */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-[#092244]/90 border border-[#144A7E] text-xs shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-[#092244]/90 border border-[#144A7E] text-xs shrink-0 flex-wrap">
             <span className="text-blue-300/70">Student:</span>
             <span className="font-bold text-white tracking-wide">{studentName}</span>
+            {caseId && (
+              <span className="px-1.5 py-0.5 rounded bg-[#071C3C] border border-amber-500/40 text-[11px] font-mono font-bold text-amber-300 shadow-sm">
+                Case #{caseId.replace(/^Case\s*#?/i, "")}
+              </span>
+            )}
             <span className="text-blue-400/40">·</span>
             <span className="text-blue-200">{meetingType}</span>
             <span className="text-blue-400/40">·</span>
