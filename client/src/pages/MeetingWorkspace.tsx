@@ -216,9 +216,13 @@ export default function MeetingWorkspace() {
     }
   }, [workspace]);
 
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(new Date());
+
   // Mutations
   const saveMutation = trpc.meetingWorkspace.save.useMutation({
-    onSuccess: () => {},
+    onSuccess: () => {
+      setLastSavedAt(new Date());
+    },
     onError: (err) => {
       toast.error(`Error saving workspace: ${err.message}`);
     },
@@ -440,7 +444,7 @@ export default function MeetingWorkspace() {
           </div>
         </div>
 
-        {/* Header Section (Title, Tabs, Status, Quick Live Launch) */}
+        {/* Header Section (Title, Tabs, Status, Quick Live Launch, Live D1 Sync Pill) */}
         <HeaderSection
           studentName={studentName}
           meetingDate={meetingDate}
@@ -455,6 +459,12 @@ export default function MeetingWorkspace() {
             setMeetingStatus("LIVE");
             setActiveTab("MEETING_MODE");
             saveCurrentState({ status: "LIVE" });
+          }}
+          isSaving={saveMutation.isPending}
+          lastSavedAt={lastSavedAt}
+          onSave={() => {
+            saveCurrentState();
+            toast.success("Workspace saved to Cloudflare D1 & local storage");
           }}
         />
 

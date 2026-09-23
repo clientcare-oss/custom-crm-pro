@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Sparkles, Shield, User, FileCheck, CheckCircle2, PlayCircle } from "lucide-react";
+import { ArrowLeft, Sparkles, Shield, User, FileCheck, CheckCircle2, PlayCircle, Save, Loader2, Database, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MeetingWorkspaceStatus, WorkspaceTab } from "./types";
@@ -13,6 +13,9 @@ interface HeaderSectionProps {
   onSelectTab: (tab: WorkspaceTab) => void;
   onBack: () => void;
   onStartLiveMeeting: () => void;
+  isSaving?: boolean;
+  lastSavedAt?: Date | null;
+  onSave?: () => void;
 }
 
 export function HeaderSection({
@@ -24,6 +27,9 @@ export function HeaderSection({
   onSelectTab,
   onBack,
   onStartLiveMeeting,
+  isSaving,
+  lastSavedAt,
+  onSave,
 }: HeaderSectionProps) {
   const tabs: { key: WorkspaceTab; label: string; icon: any; highlight?: boolean }[] = [
     { key: "PREP", label: "PREP", icon: Sparkles },
@@ -92,8 +98,48 @@ export function HeaderSection({
           </div>
         </div>
 
-        {/* Meeting Status & Quick Action */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Live Sync Status & Actions */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap">
+          {/* Cloudflare D1 Live Sync Pill */}
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#05162D] border border-[#144E8A] text-xs shadow-inner">
+            {isSaving ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
+                <span className="text-amber-200 font-medium flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
+                  Syncing to D1...
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="text-emerald-300 font-medium flex items-center gap-1">
+                  <Database className="h-3 w-3 text-emerald-400" />
+                  <span>Saved to Cloudflare D1</span>
+                  {lastSavedAt && (
+                    <span className="text-blue-300/60 font-mono text-[11px] ml-1">
+                      ({lastSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })})
+                    </span>
+                  )}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Explicit Manual Save Button */}
+          {onSave && (
+            <Button
+              size="sm"
+              onClick={onSave}
+              disabled={isSaving}
+              className="h-8 text-xs font-bold bg-[#0D4B84] hover:bg-[#145D9F] text-white border border-[#206BBC] px-3 cursor-pointer shadow-md inline-flex items-center gap-1.5"
+              title="Save all targets, notes, and strategy to Cloudflare D1 immediately"
+            >
+              <Save className="h-3.5 w-3.5 text-[#F5B544]" />
+              <span>Save</span>
+            </Button>
+          )}
+
           {getStatusBadge()}
           {status !== "LIVE" && status !== "COMPLETED" && (
             <Button
