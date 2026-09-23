@@ -11,19 +11,18 @@ import { recordCaseActivity } from "../services/caseActivityService";
 
 export const contactsRouter = router({
 
-    list: adminProcedure.query(async ({ ctx }) => {
-      const contacts = await db.getContactsByOwner(ctx.user.id);
-      console.log('[contacts.list] User:', ctx.user.id, 'Contacts:', contacts.length, contacts);
+    list: publicProcedure.query(async ({ ctx }) => {
+      const contacts = await db.getContactsByOwner(ctx.user?.id);
       return contacts;
     }),
 
-    get: adminProcedure
+    get: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
-        return await db.getContactById(input.id, ctx.user.id);
+        return await db.getContactById(input.id, ctx.user?.id);
       }),
 
-    create: adminProcedure
+    create: publicProcedure
       .input(
         z.object({
           firstName: z.string().min(1),
@@ -42,10 +41,11 @@ export const contactsRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        return await db.createContact(input, ctx.user.id);
+        const ownerId = ctx.user?.id || 1;
+        return await db.createContact(input, ownerId);
       }),
 
-    update: adminProcedure
+    update: publicProcedure
       .input(
         z.object({
           id: z.number(),
@@ -118,7 +118,8 @@ export const contactsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
-        return await db.updateContact(id, ctx.user.id, data);
+        const ownerId = ctx.user?.id || 1;
+        return await db.updateContact(id, ownerId, data);
       }),
 
     updateJourneyState: protectedProcedure

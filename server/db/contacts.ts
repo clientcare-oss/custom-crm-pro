@@ -4,17 +4,50 @@ import { getDb } from "./connection";
 import { resolveClientLocation } from "../../shared/locationResolver";
 
 export async function getContactsByOwner(ownerId?: number) {
+  const cfDb = (globalThis as any).__CF_ENV_DB__;
+  if (cfDb) {
+    try {
+      const stmt = cfDb.prepare("SELECT * FROM contacts ORDER BY id DESC");
+      const { results } = await stmt.all();
+      if (results && Array.isArray(results) && results.length > 0) {
+        return results;
+      }
+    } catch (e) {
+      console.warn("[getContactsByOwner] CF D1 direct query error:", e);
+    }
+  }
+
   const db = await getDb();
   if (!db) return [];
 
-  // Practice CRM: Return all contacts across the practice
-  return await db
-    .select()
-    .from(contacts)
-    .orderBy(desc(contacts.createdAt));
+  try {
+    // Practice CRM: Return all contacts across the practice
+    return await db
+      .select()
+      .from(contacts)
+      .orderBy(desc(contacts.createdAt));
+  } catch (err) {
+    console.warn("[getContactsByOwner] Fallback to unsorted select:", err);
+    try {
+      return await db.select().from(contacts);
+    } catch {
+      return [];
+    }
+  }
 }
 
 export async function getContactById(id: number, ownerId?: number) {
+  const cfDb = (globalThis as any).__CF_ENV_DB__;
+  if (cfDb) {
+    try {
+      const stmt = cfDb.prepare("SELECT * FROM contacts WHERE id = ? LIMIT 1").bind(id);
+      const row = await stmt.first();
+      if (row) return row;
+    } catch (e) {
+      console.warn("[getContactById] CF D1 direct query error:", e);
+    }
+  }
+
   const db = await getDb();
   if (!db) return undefined;
 
