@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import {
   Copy,
   Sparkles,
   X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -39,6 +40,7 @@ import {
   PRIORITY_CONFIG,
   KANBAN_COLUMNS,
 } from "@/components/braindump/types";
+import { uploadImageFile } from "@/components/braindump/uploadImage";
 import BrainDumpListRow from "@/components/braindump/BrainDumpListRow";
 import BrainDumpGridCard from "@/components/braindump/BrainDumpGridCard";
 import BrainDumpKanbanCard from "@/components/braindump/BrainDumpKanbanCard";
@@ -148,12 +150,22 @@ export default function BrainDump() {
   const { data: dbCategories = [] } = trpc.brainDump.categories.useQuery();
   const allCategories = Array.from(new Set([...DEFAULT_CATEGORIES, ...dbCategories]));
 
+  const captureFileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingCaptureImage, setIsUploadingCaptureImage] = useState(false);
+
   const createMutation = trpc.brainDump.create.useMutation({
     onSuccess: () => {
       utils.brainDump.list.invalidate();
       utils.brainDump.categories.invalidate();
     },
     onError: (e) => toast.error(e.message),
+  });
+
+  const uploadImageMutation = trpc.brainDumpImages.upload.useMutation({
+    onSuccess: () => {
+      utils.brainDump.list.invalidate();
+    },
+    onError: (e) => toast.error(`Failed to attach image: ${e.message}`),
   });
 
   const updateMutation = trpc.brainDump.update.useMutation({
@@ -184,13 +196,84 @@ export default function BrainDump() {
     onSettled: () => utils.brainDump.list.invalidate(),
   });
 
-  const handleCapture = useCallback(() => {
+  const handleCaptureImageFiles = useCallback(
+    async (files: FileList | File[]) => {
+      const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+      if (!imageFiles.length) return;
+      setIsUploadingCaptureImage(true);
+      const toastId = toast.loading("Capturing image into BrainDump...");
+      try {
+        const formattedTime = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        const title =
+          captureText.trim() ||
+          `Screenshot — ${new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" })} at ${formattedTime}`;
+
+        const res = await createMutation.mutateAsync({
+          title,
+          category: captureCategory,
+          priority: capturePriority,
+        });
+
+        setCaptureText("");
+        const newItemId = res?.id;
+        if (newItemId) {
+          for (const file of imageFiles) {
+            const url = await uploadImageFile(file);
+            await uploadImageMutation.mutateAsync({
+              brainDumpItemId: newItemId,
+              imageUrl: url,
+            });
+          }
+          await utils.brainDump.list.invalidate();
+          toast.success("Image saved to BrainDump! 🧠", { id: toastId });
+        } else {
+          toast.success("Idea captured! 🧠", { id: toastId });
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Failed to capture image", { id: toastId });
+      } finally {
+        setIsUploadingCaptureImage(false);
+      }
+    },
+    [captureText, captureCategory, capturePriority, createMutation, uploadImageMutation, utils]
+  );
+
+  const handlePagePaste = useCallback(
+    (e: React.ClipboardEvent | ClipboardEvent) => {
+      if (editOpen || convertOpen) return;
+
+      const clipboard = (e as ClipboardEvent).clipboardData || (e as React.ClipboardEvent).clipboardData;
+      const files = clipboard?.files;
+      if (files && files.length > 0) {
+        const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+        if (imageFiles.length > 0) {
+          e.preventDefault();
+          handleCaptureImageFiles(imageFiles);
+        }
+      }
+    },
+    [editOpen, convertOpen, handleCaptureImageFiles]
+  );
+
+  useEffect(() => {
+    const onWindowPaste = (e: ClipboardEvent) => {
+      handlePagePaste(e);
+    };
+    window.addEventListener("paste", onWindowPaste);
+    return () => window.removeEventListener("paste", onWindowPaste);
+  }, [handlePagePaste]);
+
+  const handleCapture = useCallback(async () => {
     const text = captureText.trim();
     if (!text) return;
-    createMutation.mutate({ title: text, category: captureCategory, priority: capturePriority });
-    setCaptureText("");
-    captureRef.current?.focus();
-    toast.success("Idea captured! 🧠");
+    try {
+      await createMutation.mutateAsync({ title: text, category: captureCategory, priority: capturePriority });
+      setCaptureText("");
+      captureRef.current?.focus();
+      toast.success("Idea captured! 🧠");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to capture idea");
+    }
   }, [captureText, captureCategory, capturePriority, createMutation]);
 
   const handleTogglePin = (item: BrainItem) => {
@@ -340,9 +423,37 @@ export default function BrainDump() {
               value={captureText}
               onChange={(e) => setCaptureText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCapture()}
-              placeholder="Quick capture — type an idea and hit Enter (or record audio)..."
+              onPaste={handlePagePaste}
+              placeholder="Quick capture — type an idea, record audio, or paste image (Ctrl+V)..."
               className="flex-1 bg-transparent text-xs sm:text-sm outline-none placeholder:text-muted-foreground/60 text-foreground"
             />
+            {/* Hidden file input for manual image upload */}
+            <input
+              type="file"
+              ref={captureFileInputRef}
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleCaptureImageFiles(e.target.files);
+                }
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => captureFileInputRef.current?.click()}
+              disabled={isUploadingCaptureImage}
+              className="flex-shrink-0 p-1.5 rounded-full text-violet-500 hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-all"
+              title="Attach image or screenshot (or paste with Ctrl+V)"
+            >
+              {isUploadingCaptureImage ? (
+                <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -435,7 +546,7 @@ export default function BrainDump() {
             </span>
           </div>
           <span className="hidden md:inline text-muted-foreground/80">
-            Tip: Press <kbd className="px-1 py-0.5 bg-muted rounded border text-[10px]">Enter</kbd> to save immediately
+            Tip: Press <kbd className="px-1 py-0.5 bg-muted rounded border text-[10px]">Enter</kbd> to save • Paste <kbd className="px-1 py-0.5 bg-muted rounded border text-[10px]">Ctrl+V</kbd> to save screenshot
           </span>
         </div>
       </div>

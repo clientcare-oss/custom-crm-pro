@@ -12,7 +12,7 @@ export const brainDumpImagesRouter = router({
         }))
         .mutation(async ({ ctx, input }) => {
           const { brainDumpItems: bdi, brainDumpImages: bimg } = await import("../../drizzle/schema");
-          const { eq: beq } = await import("drizzle-orm");
+          const { eq: beq, desc: bdesc } = await import("drizzle-orm");
           const dbConn = await db.getDb();
           if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
           const [item] = await dbConn.select().from(bdi).where(beq(bdi.id, input.brainDumpItemId)).limit(1);
@@ -20,10 +20,11 @@ export const brainDumpImagesRouter = router({
           await dbConn.insert(bimg).values({
             brainDumpItemId: input.brainDumpItemId,
             imageUrl: input.imageUrl,
+            uploadedAt: new Date(),
           });
           const [inserted] = await dbConn.select().from(bimg)
             .where(beq(bimg.brainDumpItemId, input.brainDumpItemId))
-            .orderBy(bimg.id)
+            .orderBy(bdesc(bimg.id))
             .limit(1);
           return inserted;
         }),

@@ -80,6 +80,7 @@ export const brainDumpRouter = router({
         const { brainDumpItems: bdi } = await import("../../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const now = new Date();
         const result = await dbConn.insert(bdi).values({
           ownerId: ctx.user.id,
           title: input.title,
@@ -91,8 +92,11 @@ export const brainDumpRouter = router({
           pinned: input.pinned,
           tags: JSON.stringify(input.tags),
           sortOrder: 0,
+          createdAt: now,
+          updatedAt: now,
         });
-        return { id: Number((result as any).lastInsertRowid) };
+        const id = Number((result as any)?.lastInsertRowid || (result as any)?.meta?.last_row_id || (result as any)?.insertId || 0);
+        return { id };
       }),
 
     update: protectedProcedure
@@ -113,7 +117,7 @@ export const brainDumpRouter = router({
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         const { id, tags, ...rest } = input;
-        const updateData: Record<string, any> = { ...rest };
+        const updateData: Record<string, any> = { ...rest, updatedAt: new Date() };
         if (tags !== undefined) updateData.tags = JSON.stringify(tags);
         if (Object.keys(updateData).length === 0) return { ok: true };
         await dbConn.update(bdi).set(updateData).where(band(beq(bdi.id, id), beq(bdi.ownerId, ctx.user.id)));

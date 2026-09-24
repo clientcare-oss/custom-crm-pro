@@ -28,15 +28,7 @@ import {
 } from "lucide-react";
 import BrainDumpImageStrip from "./BrainDumpImageStrip";
 import { BrainItem, Status, Priority, STATUS_CONFIG, PRIORITY_CONFIG, DEFAULT_CATEGORIES } from "./types";
-
-async function uploadImageFile(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("image", file);
-  const res = await fetch("/api/images/upload", { method: "POST", body: formData });
-  if (!res.ok) throw new Error("Image upload failed");
-  const { url } = await res.json();
-  return url as string;
-}
+import { uploadImageFile } from "./uploadImage";
 
 export default function BrainDumpEditDialog({
   item,

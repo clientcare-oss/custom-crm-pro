@@ -6,6 +6,8 @@ import * as db from "./db";
 import { users } from "../drizzle/schema";
 import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { storagePut } from "./storage";
+import { getR2SignedDownloadUrl } from "./_core/r2Client";
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
@@ -120,7 +122,59 @@ export default {
       }
     }
 
-    // 4. Handle favicon requests gracefully
+    // 4. Handle image uploads for BrainDump & Tasks
+    if (url.pathname === "/api/images/upload" && request.method === "POST") {
+      try {
+        const formData = await request.formData();
+        const file = formData.get("image") as File | null;
+        if (!file) {
+          return new Response(JSON.stringify({ error: "No image file provided" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        const arrayBuf = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuf);
+        const ext = file.name?.split(".").pop() || "png";
+        const key = `braindump-images/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        try {
+          const { url: storageUrl } = await storagePut(key, buffer, file.type || "image/png");
+          return new Response(JSON.stringify({ url: storageUrl }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          });
+        } catch (r2Err: any) {
+          console.warn("[Worker ImageUpload] R2 storagePut failed, falling back to base64 Data URL:", r2Err);
+          const base64 = buffer.toString("base64");
+          const mimeType = file.type || "image/png";
+          const dataUrl = `data:${mimeType};base64,${base64}`;
+          return new Response(JSON.stringify({ url: dataUrl }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      } catch (err: any) {
+        console.error("[Worker ImageUpload Error]", err);
+        return new Response(JSON.stringify({ error: "Failed to process image upload", details: err?.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // 5. Handle Storage proxy requests
+    if (url.pathname.startsWith("/storage/")) {
+      try {
+        const key = url.pathname.replace(/^\/storage\//, "");
+        const signedUrl = await getR2SignedDownloadUrl(key);
+        return Response.redirect(signedUrl, 307);
+      } catch (err: any) {
+        console.error("[Worker Storage Error]", err);
+        return new Response("Storage error", { status: 500 });
+      }
+    }
+
+    // 6. Handle favicon requests gracefully
     if (url.pathname === "/favicon.ico") {
       return new Response(null, { status: 204 });
     }

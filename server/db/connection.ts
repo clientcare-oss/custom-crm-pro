@@ -3,11 +3,55 @@ import { drizzle as drizzleD1 } from "drizzle-orm/d1";
 import { queryCloudflareD1 } from "../_core/d1Client";
 
 let _db: any = null;
+let _cfD1Db: any = null;
+let _lastCfDb: any = null;
+
+function wrapD1WithSanitizer(cfDb: any) {
+  if (!cfDb || cfDb.__isSanitized) return cfDb;
+
+  const sanitize = (query: string) => {
+    if (typeof query !== "string") return query;
+    return query
+      .replace(/\(now\(\)\)/gi, 'CURRENT_TIMESTAMP')
+      .replace(/\bnow\(\)/gi, 'CURRENT_TIMESTAMP')
+      .replace(/on duplicate key update/gi, 'ON CONFLICT DO UPDATE SET');
+  };
+
+  return new Proxy(cfDb, {
+    get(target, prop, receiver) {
+      if (prop === '__isSanitized') return true;
+      if (prop === 'prepare') {
+        return (query: string) => {
+          return target.prepare(sanitize(query));
+        };
+      }
+      if (prop === 'batch') {
+        return (statements: any[]) => {
+          return target.batch(statements);
+        };
+      }
+      if (prop === 'exec') {
+        return (query: string) => {
+          return target.exec(sanitize(query));
+        };
+      }
+      const val = Reflect.get(target, prop, receiver);
+      if (typeof val === 'function') {
+        return val.bind(target);
+      }
+      return val;
+    }
+  });
+}
 
 export async function getDb() {
   const cfDb = (globalThis as any).__CF_ENV_DB__;
   if (cfDb) {
-    return drizzleD1(cfDb);
+    if (!_cfD1Db || _lastCfDb !== cfDb) {
+      _lastCfDb = cfDb;
+      _cfD1Db = drizzleD1(wrapD1WithSanitizer(cfDb));
+    }
+    return _cfD1Db;
   }
 
   // In test mode, use isolated mock proxy to never query or mutate live production D1
