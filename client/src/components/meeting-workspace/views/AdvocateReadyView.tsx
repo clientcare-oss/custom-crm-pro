@@ -330,7 +330,7 @@ export function AdvocateReadyView({
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-blue-300/80 mb-3">
                     Meeting Decision & Outcome Checklist
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 text-xs">
                     <label className="flex items-center gap-2 p-2 rounded-xl bg-[#092244] border border-[#144A7E] hover:border-[#F5B544]/50 cursor-pointer">
                       <Checkbox
                         checked={target.meetingStatus === "DISCUSSED" || target.meetingStatus === "AGREED"}
@@ -375,6 +375,19 @@ export function AdvocateReadyView({
                         }}
                       />
                       <span className="text-rose-300">Denied</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 p-2 rounded-xl bg-[#092244] border border-[#144A7E] hover:border-[#F5B544]/50 cursor-pointer">
+                      <Checkbox
+                        checked={target.meetingStatus === "DEFERRED"}
+                        onCheckedChange={(checked) => {
+                          onUpdateTarget(target.id, {
+                            meetingStatus: checked ? "DEFERRED" : "NOT_DISCUSSED",
+                            requestRaised: true,
+                          });
+                        }}
+                      />
+                      <span className="text-purple-300">Deferred</span>
                     </label>
 
                     <label className="flex items-center gap-2 p-2 rounded-xl bg-[#092244] border border-[#144A7E] hover:border-[#F5B544]/50 cursor-pointer">

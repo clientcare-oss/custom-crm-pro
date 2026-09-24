@@ -29,7 +29,7 @@ export interface ParsedAdvocateTarget {
   parentWhatWeWant: string;
   parentWhyWeWantIt: string;
   parentSupportingEvidence: string;
-  meetingStatus: "NOT_DISCUSSED" | "DISCUSSED" | "AGREED" | "DENIED" | "FOLLOW_UP";
+  meetingStatus: "NOT_DISCUSSED" | "DISCUSSED" | "AGREED" | "DENIED" | "DEFERRED" | "FOLLOW_UP";
   requestRaised: boolean;
   pwnNeeded: boolean;
   addedToIep: boolean;

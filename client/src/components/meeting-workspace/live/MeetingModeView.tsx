@@ -207,6 +207,7 @@ export function MeetingModeView({
         raisedTargets: targets.filter((t) => t.requestRaised).length,
         agreedTargets: targets.filter((t) => t.meetingStatus === "AGREED" || t.addedToIep).map((t) => t.targetName),
         deniedTargets: targets.filter((t) => t.meetingStatus === "DENIED").map((t) => t.targetName),
+        deferredTargets: targets.filter((t) => t.meetingStatus === "DEFERRED").map((t) => t.targetName),
         pwnTargets: targets.filter((t) => t.pwnNeeded || t.meetingStatus === "DENIED").map((t) => t.targetName),
         parkingLotItems: parkingLot.map((p) => p.note),
         followUpItems: targets
@@ -244,6 +245,8 @@ export function MeetingModeView({
         return "bg-emerald-950/80 border-emerald-500/60 text-emerald-300 font-bold";
       case "DENIED":
         return "bg-rose-950/80 border-rose-500/60 text-rose-300 font-bold";
+      case "DEFERRED":
+        return "bg-purple-950/80 border-purple-500/60 text-purple-300 font-bold";
       case "FOLLOW_UP":
         return "bg-amber-950/80 border-amber-500/60 text-[#F5B544] font-bold";
       case "DISCUSSED":
@@ -464,6 +467,7 @@ export function MeetingModeView({
                         <option value="DISCUSSED" className="bg-[#07162B] text-blue-300">DISCUSSED</option>
                         <option value="AGREED" className="bg-[#07162B] text-emerald-300">AGREED</option>
                         <option value="DENIED" className="bg-[#07162B] text-rose-300">DENIED</option>
+                        <option value="DEFERRED" className="bg-[#07162B] text-purple-300">DEFERRED</option>
                         <option value="FOLLOW_UP" className="bg-[#07162B] text-amber-300">FOLLOW-UP</option>
                       </select>
 
@@ -732,6 +736,19 @@ export function MeetingModeView({
                 >
                   <ArrowRight className={cn("h-4 w-4 shrink-0", selectedTarget.followUpNeeded ? "text-[#F5B544]" : "text-slate-500")} />
                   <span>Follow-Up</span>
+                </button>
+
+                {/* 7. Deferred */}
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(selectedTarget.id, selectedTarget.meetingStatus === "DEFERRED" ? "NOT_DISCUSSED" : "DEFERRED")}
+                  className={cn(
+                    "p-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all col-span-2 sm:col-span-1",
+                    selectedTarget.meetingStatus === "DEFERRED" ? "bg-purple-950/70 border-purple-500/70 text-purple-200 font-bold" : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-blue-400/50"
+                  )}
+                >
+                  <RotateCcw className={cn("h-4 w-4 shrink-0", selectedTarget.meetingStatus === "DEFERRED" ? "text-purple-400" : "text-slate-500")} />
+                  <span>Deferred</span>
                 </button>
               </div>
             </div>

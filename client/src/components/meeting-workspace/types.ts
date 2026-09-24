@@ -25,7 +25,7 @@ export interface ParentIntelConcern {
   isCustom?: boolean;
 }
 
-export type TargetMeetingStatus = "NOT_DISCUSSED" | "DISCUSSED" | "AGREED" | "DENIED" | "FOLLOW_UP";
+export type TargetMeetingStatus = "NOT_DISCUSSED" | "DISCUSSED" | "AGREED" | "DENIED" | "DEFERRED" | "FOLLOW_UP";
 
 export interface MeetingTarget {
   id: string;
