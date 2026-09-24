@@ -14,8 +14,9 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { BrainItem, Status, PRIORITY_CONFIG, STATUS_CONFIG } from "./types";
-import { StatusBadge, PriorityDot, CategoryPill, SmallThumbnailStrip } from "./BrainDumpBadges";
+import { PriorityDot, CategoryPill, SmallThumbnailStrip } from "./BrainDumpBadges";
 
 export default function BrainDumpListRow({
   item,
@@ -32,6 +33,8 @@ export default function BrainDumpListRow({
   onStatusChange: (id: number, status: Status) => void;
   onConvertToTask: (item: BrainItem) => void;
 }) {
+  const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.not_started;
+
   return (
     <div
       className={`group flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2 border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer w-full ${
@@ -77,13 +80,24 @@ export default function BrainDumpListRow({
       {/* Status — Centered under Status column */}
       <div className="flex flex-shrink-0 w-28 justify-center items-center" onClick={(e) => e.stopPropagation()}>
         <Select value={item.status} onValueChange={(v) => onStatusChange(item.id, v as Status)}>
-          <SelectTrigger className="h-7 text-xs border-none bg-transparent hover:bg-muted/50 p-1 focus:ring-0 w-auto justify-center gap-1">
-            <StatusBadge status={item.status} />
+          <SelectTrigger
+            size="sm"
+            className={cn(
+              "h-6 text-[11px] font-semibold px-2 py-0 rounded-md border gap-1.5 transition-all shadow-none cursor-pointer w-auto justify-center",
+              "dark:bg-transparent [&_svg]:size-3 [&_svg]:opacity-60",
+              statusCfg.color
+            )}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
+            <span>{statusCfg.label}</span>
           </SelectTrigger>
-          <SelectContent align="center">
+          <SelectContent align="center" className="min-w-[130px]">
             {(["not_started", "in_progress", "done", "archived"] as Status[]).map((s) => (
-              <SelectItem key={s} value={s} className="text-xs">
-                {STATUS_CONFIG[s].label}
+              <SelectItem key={s} value={s} className="text-xs cursor-pointer">
+                <span className="flex items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${STATUS_CONFIG[s].dot}`} />
+                  <span>{STATUS_CONFIG[s].label}</span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>

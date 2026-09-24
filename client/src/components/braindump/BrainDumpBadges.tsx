@@ -4,13 +4,11 @@ import { Status, Priority, STATUS_CONFIG, PRIORITY_CONFIG } from "./types";
 
 export function StatusBadge({ status }: { status: Status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.not_started;
-  const Icon = cfg.icon;
   return (
     <span
-      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border ${cfg.color}`}
+      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md border shadow-2xs ${cfg.color}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-      <Icon className="h-2.5 w-2.5 opacity-70" />
+      <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
       <span>{cfg.label}</span>
     </span>
   );
