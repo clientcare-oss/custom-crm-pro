@@ -25,6 +25,7 @@ import {
   Copy,
   Sparkles,
   X,
+  Filter,
   FilterX,
   Image as ImageIcon,
 } from "lucide-react";
@@ -54,6 +55,7 @@ export default function BrainDump() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [editItem, setEditItem] = useState<BrainItem | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -143,8 +145,8 @@ export default function BrainDump() {
     }
   }, []);
 
-  const { data: items = [], isLoading } = trpc.brainDump.list.useQuery(
-    { search: search || undefined, category: activeCategory !== "All" ? activeCategory : undefined },
+  const { data: allItems = [], isLoading } = trpc.brainDump.list.useQuery(
+    undefined,
     { refetchOnWindowFocus: false }
   );
 
@@ -157,29 +159,26 @@ export default function BrainDump() {
   const createMutation = trpc.brainDump.create.useMutation({
     onSuccess: (data, vars) => {
       // Optimistically insert to cache so the new item shows immediately at the top
-      utils.brainDump.list.setData(
-        { search: search || undefined, category: activeCategory !== "All" ? activeCategory : undefined },
-        (old: any) => {
-          if (!old) return old;
-          const newItem: BrainItem = {
-            id: data?.id || Date.now(),
-            title: vars.title,
-            body: vars.body ?? null,
-            category: vars.category ?? "General",
-            status: vars.status ?? "not_started",
-            priority: vars.priority ?? "medium",
-            nextStep: vars.nextStep ?? null,
-            pinned: vars.pinned ?? false,
-            tags: vars.tags ?? [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          if (newItem.pinned) return [newItem, ...old];
-          const pinned = old.filter((i: any) => i.pinned);
-          const unpinned = old.filter((i: any) => !i.pinned);
-          return [...pinned, newItem, ...unpinned];
-        }
-      );
+      utils.brainDump.list.setData(undefined, (old: any) => {
+        if (!old) return old;
+        const newItem: BrainItem = {
+          id: data?.id || Date.now(),
+          title: vars.title,
+          body: vars.body ?? null,
+          category: vars.category ?? "General",
+          status: vars.status ?? "not_started",
+          priority: vars.priority ?? "medium",
+          nextStep: vars.nextStep ?? null,
+          pinned: vars.pinned ?? false,
+          tags: vars.tags ?? [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        if (newItem.pinned) return [newItem, ...old];
+        const pinned = old.filter((i: any) => i.pinned);
+        const unpinned = old.filter((i: any) => !i.pinned);
+        return [...pinned, newItem, ...unpinned];
+      });
       utils.brainDump.list.invalidate();
       utils.brainDump.categories.invalidate();
     },
@@ -240,9 +239,12 @@ export default function BrainDump() {
         });
 
         setCaptureText("");
-        // Ensure new item is visible if currently filtering by another category
+        // Ensure new item is visible if currently filtering by another category or status
         if (activeCategory !== "All" && activeCategory !== captureCategory) {
           setActiveCategory("All");
+        }
+        if (statusFilter !== "all") {
+          setStatusFilter("all");
         }
         const newItemId = res?.id;
         if (newItemId) {
@@ -264,7 +266,7 @@ export default function BrainDump() {
         setIsUploadingCaptureImage(false);
       }
     },
-    [captureText, captureCategory, capturePriority, activeCategory, createMutation, uploadImageMutation, utils]
+    [captureText, captureCategory, capturePriority, activeCategory, statusFilter, createMutation, uploadImageMutation, utils]
   );
 
   const handlePagePaste = useCallback(
@@ -303,11 +305,14 @@ export default function BrainDump() {
       if (activeCategory !== "All" && activeCategory !== captureCategory) {
         setActiveCategory("All");
       }
+      if (statusFilter !== "all") {
+        setStatusFilter("all");
+      }
       toast.success("Idea captured! 🧠");
     } catch (err: any) {
       toast.error(err?.message || "Failed to capture idea");
     }
-  }, [captureText, captureCategory, capturePriority, activeCategory, createMutation]);
+  }, [captureText, captureCategory, capturePriority, activeCategory, statusFilter, createMutation]);
 
   const handleTogglePin = (item: BrainItem) => {
     updateMutation.mutate({ id: item.id, pinned: !item.pinned });
@@ -332,20 +337,46 @@ export default function BrainDump() {
     setConvertOpen(true);
   };
 
-  // Strictly sort items: pinned items first, then newest auto-increment ID first so new ideas are ALWAYS at top
+  const hasActiveFilters = activeCategory !== "All" || search.trim() !== "" || statusFilter !== "all";
+  const activeFilterCount = (activeCategory !== "All" ? 1 : 0) + (search.trim() ? 1 : 0) + (statusFilter !== "all" ? 1 : 0);
+
+  const handleClearFilters = useCallback(() => {
+    setActiveCategory("All");
+    setSearch("");
+    setStatusFilter("all");
+  }, []);
+
+  // Strictly filter & sort items: pinned items first, then newest auto-increment ID first so new ideas are ALWAYS at top
   const sortedItems = useMemo(() => {
-    return [...(items as BrainItem[])].sort((a, b) => {
+    let result = [...(allItems as BrainItem[])];
+    if (activeCategory !== "All") {
+      result = result.filter((i) => i.category === activeCategory);
+    }
+    if (statusFilter !== "all") {
+      result = result.filter((i) => i.status === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(
+        (i) =>
+          i.title.toLowerCase().includes(q) ||
+          (i.body ?? "").toLowerCase().includes(q) ||
+          (i.nextStep ?? "").toLowerCase().includes(q) ||
+          (i.tags ?? []).some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return result.sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       return b.id - a.id;
     });
-  }, [items]);
+  }, [allItems, activeCategory, statusFilter, search]);
 
   const pinnedItems = useMemo(() => sortedItems.filter((i) => i.pinned), [sortedItems]);
   const unpinnedItems = useMemo(() => sortedItems.filter((i) => !i.pinned), [sortedItems]);
   const categoryTabs = ["All", ...allCategories];
 
-  const doneCount = sortedItems.filter((i) => i.status === "done").length;
-  const inProgressCount = sortedItems.filter((i) => i.status === "in_progress").length;
+  const doneCount = (allItems as BrainItem[]).filter((i) => i.status === "done").length;
+  const inProgressCount = (allItems as BrainItem[]).filter((i) => i.status === "in_progress").length;
 
   return (
     <div className="w-full space-y-3.5 pb-12">
@@ -569,9 +600,14 @@ export default function BrainDump() {
 
         {/* Quick Stats & Tips Bar */}
         <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-2 pt-2 border-t border-border/40 flex-wrap gap-2">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span>
-              Total: <strong className="text-foreground">{sortedItems.length}</strong>
+              Total: <strong className="text-foreground">{(allItems as BrainItem[]).length}</strong>
+              {hasActiveFilters && (
+                <span className="text-violet-600 dark:text-violet-400 font-semibold ml-1">
+                  (Showing {sortedItems.length})
+                </span>
+              )}
             </span>
             <span>•</span>
             <span>
@@ -592,78 +628,122 @@ export default function BrainDump() {
         </div>
       </div>
 
-      {/* ── Search & Category Filter Strip ─────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        {/* Search input */}
-        <div className="relative flex-shrink-0 sm:w-60">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search ideas, tags or notes…"
-            className="w-full pl-8 pr-7 py-1.5 text-xs bg-background border border-input rounded-lg outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-500 transition-all placeholder:text-muted-foreground/70"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
-              title="Clear search query"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
+      {/* ── Search & Filter Controls Card (PG-021: 100% visible, no run-off) ─── */}
+      <div className="rounded-xl border border-border/80 bg-card p-3 shadow-2xs space-y-2.5">
+        {/* Top Controls Row: Search Input, Status Filter, Remove Filters, and Item Count */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 flex-1">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search ideas, notes, or tags…"
+                className="w-full pl-8 pr-7 py-1.5 text-xs bg-background border border-input rounded-lg outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-500 transition-all placeholder:text-muted-foreground/70"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
+                  title="Clear search query"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Status Quick Filter */}
+            <div className="w-36 flex-shrink-0">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="text-xs h-8">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">
+                    All Statuses ({(allItems as BrainItem[]).length})
+                  </SelectItem>
+                  {(["not_started", "in_progress", "done", "archived"] as Status[]).map((st) => (
+                    <SelectItem key={st} value={st} className="text-xs">
+                      {STATUS_CONFIG[st].label} ({(allItems as BrainItem[]).filter((i) => i.status === st).length})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Remove Filters Button (visible when any filter is active) */}
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-8 px-2.5 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-500/10 border-rose-500/30 gap-1.5 flex-shrink-0 font-semibold transition-all shadow-2xs cursor-pointer"
+                title="Remove all active filters"
+              >
+                <FilterX className="h-3.5 w-3.5" />
+                <span>Remove Filters</span>
+                <span className="flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-bold">
+                  {activeFilterCount}
+                </span>
+              </Button>
+            )}
+          </div>
+
+          {/* Results Summary & Filter Tags */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0 self-end md:self-auto">
+            <span>
+              Showing <strong className="text-foreground">{sortedItems.length}</strong> of{" "}
+              <strong className="text-foreground">{(allItems as BrainItem[]).length}</strong> ideas
+            </span>
+            {hasActiveFilters && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[11px] font-medium border border-violet-500/20">
+                {activeCategory !== "All" && <span>{activeCategory}</span>}
+                {activeCategory !== "All" && (statusFilter !== "all" || search.trim()) && <span>•</span>}
+                {statusFilter !== "all" && <span>{STATUS_CONFIG[statusFilter as Status]?.label}</span>}
+                {statusFilter !== "all" && search.trim() && <span>•</span>}
+                {search.trim() && <span>"{search.trim()}"</span>}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Remove Filters Button */}
-        {(activeCategory !== "All" || search.trim() !== "") && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setActiveCategory("All");
-              setSearch("");
-            }}
-            className="h-8 px-2.5 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-500/10 border-rose-500/30 gap-1.5 flex-shrink-0 font-semibold transition-all shadow-2xs cursor-pointer"
-            title="Remove all filters and show all ideas"
-          >
-            <FilterX className="h-3.5 w-3.5" />
-            <span>Remove Filters</span>
-            <span className="flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-bold">
-              {(activeCategory !== "All" ? 1 : 0) + (search.trim() ? 1 : 0)}
+        {/* Category Filter Chips: WRAPS naturally so NO chips ever run off the page */}
+        <div className="pt-2 border-t border-border/40">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1 mr-1">
+              <Filter className="h-3 w-3" />
+              Category:
             </span>
-          </Button>
-        )}
-
-        {/* Category Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none flex-1">
-          {categoryTabs.map((cat) => {
-            const count =
-              cat === "All"
-                ? sortedItems.length
-                : sortedItems.filter((i) => i.category === cat).length;
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeCategory === cat
-                    ? "bg-violet-600 text-white shadow-2xs font-bold"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/40"
-                }`}
-              >
-                <span>{cat}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+            {categoryTabs.map((cat) => {
+              const count =
+                cat === "All"
+                  ? (allItems as BrainItem[]).length
+                  : (allItems as BrainItem[]).filter((i) => i.category === cat).length;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                     activeCategory === cat
-                      ? "bg-white/20 text-white"
-                      : "bg-muted text-muted-foreground/80"
+                      ? "bg-violet-600 text-white shadow-2xs font-bold"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/40"
                   }`}
                 >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+                  <span>{cat}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      activeCategory === cat
+                        ? "bg-white/20 text-white"
+                        : "bg-muted text-muted-foreground/80"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -682,19 +762,16 @@ export default function BrainDump() {
             <div>
               <h3 className="text-sm font-semibold text-foreground">No ideas found</h3>
               <p className="text-xs text-muted-foreground max-w-sm mt-1">
-                {search || activeCategory !== "All"
+                {hasActiveFilters
                   ? "No ideas match your active filter criteria."
                   : "Use the Quick Capture bar above to record notes, IEP strategies, or action items."}
               </p>
             </div>
-            {(search || activeCategory !== "All") && (
+            {hasActiveFilters && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setActiveCategory("All");
-                  setSearch("");
-                }}
+                onClick={handleClearFilters}
                 className="mt-1 text-xs gap-1.5 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/10 cursor-pointer"
               >
                 <FilterX className="h-3.5 w-3.5" />
