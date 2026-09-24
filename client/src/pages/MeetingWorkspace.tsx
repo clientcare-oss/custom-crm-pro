@@ -371,7 +371,7 @@ export default function MeetingWorkspace() {
 
   return (
     <ScopedErrorBoundary>
-      <div className="min-h-screen bg-[#07162B] text-slate-100 p-4 sm:p-6 lg:p-8 flex flex-col space-y-6">
+      <div className="min-h-screen bg-[#000820] text-slate-100 p-4 sm:p-6 lg:p-8 flex flex-col space-y-6">
         {/* Top Student Switcher Bar */}
         <div className="flex items-center justify-between gap-4 flex-wrap pb-2 border-b border-slate-800/80">
           <div className="flex items-center gap-3">

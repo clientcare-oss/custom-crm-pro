@@ -42,6 +42,7 @@ import { Input } from "@/components/ui/input";
 import QuickSetupModal from './QuickSetupModal';
 import { IssueReporterModal } from "./IssueReporterModal";
 import ScopedErrorBoundary from "./ScopedErrorBoundary";
+import { cn } from "@/lib/utils";
 
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -953,7 +954,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         />
       </div>
 
-      <SidebarInset>
+      <SidebarInset className={cn(location.startsWith("/meeting-workspace") && "bg-[#000820]")}>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
@@ -962,7 +963,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
         )}
-        <main className="flex-1 p-4 relative">
+        <main className={cn("flex-1 p-4 relative", location.startsWith("/meeting-workspace") && "p-0 bg-[#000820]")}>
           <ScopedErrorBoundary moduleName={activeMenuItem?.label ?? "Page"}>
             {children}
           </ScopedErrorBoundary>
