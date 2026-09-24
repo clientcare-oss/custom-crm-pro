@@ -181,7 +181,12 @@ export default {
 
     // 4. Fall back to asset handling / single-page application routing
     try {
-      return await env.ASSETS.fetch(request);
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (assetResponse.status === 404 && !url.pathname.includes(".")) {
+        // SPA fallback: serve index.html for client-side routes
+        return await env.ASSETS.fetch(new Request(new URL("/", request.url), request));
+      }
+      return assetResponse;
     } catch (err) {
       return new Response(null, { status: 404 });
     }
