@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare } from "lucide-react";
+import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { cn } from "@/lib/utils";
 import type { MeetingTarget, TargetMeetingStatus, ParkingLotItem, AdditionalItem, CloseoutChecks } from "../types";
 import { TargetTagsControl, isTargetStruckThrough } from "../tags/TargetTagsControl";
+import { DeleteTargetModal } from "../DeleteTargetModal";
+import { toast } from "sonner";
 
 interface MeetingModeViewProps {
   studentName: string;
@@ -47,6 +49,16 @@ export function MeetingModeView({
   const [quickTopic, setQuickTopic] = useState("");
   const [quickSayThis, setQuickSayThis] = useState("");
   const [quickSection, setQuickSection] = useState(detectedOrder[0] || "Accommodations / Supports");
+
+  // Delete Target Confirmation State
+  const [targetToDelete, setTargetToDelete] = useState<MeetingTarget | null>(null);
+
+  const handleConfirmDeleteTarget = (id: string) => {
+    onUpdateTargets(targets.filter((t) => t.id !== id));
+    if (selectedTargetId === id) setSelectedTargetId(null);
+    if (sayThisEditTarget?.id === id) setSayThisEditTarget(null);
+    toast.success("Target deleted");
+  };
 
   // Perfect What to Ask For (Say This) editing modal
   const [sayThisEditTarget, setSayThisEditTarget] = useState<MeetingTarget | null>(null);
@@ -424,6 +436,14 @@ export function MeetingModeView({
                               >
                                 <Pencil className="h-3 w-3" />
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => setTargetToDelete(target)}
+                                className="text-slate-400/60 hover:text-rose-400 p-1 rounded hover:bg-rose-950/30 transition-colors cursor-pointer inline-flex items-center"
+                                title="Delete target (Trash)"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
                             </div>
                           )}
 
@@ -512,6 +532,16 @@ export function MeetingModeView({
                       >
                         <span>Details</span>
                         <ChevronRight className="h-3.5 w-3.5 text-[#F5B544]" />
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTargetToDelete(target)}
+                        className="h-8 w-8 p-0 text-xs border-[#13497F] bg-[#0A2B52] text-slate-400 hover:text-rose-400 hover:border-rose-500/60 hover:bg-rose-950/40 cursor-pointer inline-flex items-center justify-center shadow-sm"
+                        title="Delete target"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -865,7 +895,19 @@ export function MeetingModeView({
           </div>
 
           {/* Drawer Footer */}
-          <div className="p-4 border-t border-[#0F3D70] bg-[#051426] flex justify-end">
+          <div className="p-4 border-t border-[#0F3D70] bg-[#051426] flex items-center justify-between gap-3 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const tgt = targets.find((t) => t.id === selectedTargetId);
+                if (tgt) setTargetToDelete(tgt);
+              }}
+              className="text-xs border-rose-500/40 text-rose-300 hover:bg-rose-950/40 hover:text-white cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Target</span>
+            </Button>
             <Button
               size="sm"
               onClick={() => setSelectedTargetId(null)}
@@ -1177,6 +1219,13 @@ export function MeetingModeView({
           </DialogContent>
         </Dialog>
       )}
+      {/* Delete Target Confirmation Modal */}
+      <DeleteTargetModal
+        isOpen={!!targetToDelete}
+        onClose={() => setTargetToDelete(null)}
+        target={targetToDelete}
+        onConfirmDelete={handleConfirmDeleteTarget}
+      />
     </div>
   );
 }

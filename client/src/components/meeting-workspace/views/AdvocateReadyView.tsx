@@ -19,13 +19,16 @@ import {
   Pencil,
   Check,
   X,
+  Trash2,
 } from "lucide-react";
 import { TargetTagsControl, isTargetStruckThrough } from "../tags/TargetTagsControl";
+import { DeleteTargetModal } from "../DeleteTargetModal";
 import { cn } from "@/lib/utils";
 
 interface AdvocateReadyViewProps {
   targets: MeetingTarget[];
   onUpdateTarget: (targetId: string, updates: Partial<MeetingTarget>) => void;
+  onDeleteTarget?: (targetId: string) => void;
   studentName?: string;
   meetingTitle?: string;
   meetingDate?: string;
@@ -34,6 +37,7 @@ interface AdvocateReadyViewProps {
 export function AdvocateReadyView({
   targets,
   onUpdateTarget,
+  onDeleteTarget,
   studentName = "Student",
   meetingTitle = "Annual IEP Meeting",
   meetingDate = "Upcoming",
@@ -42,6 +46,7 @@ export function AdvocateReadyView({
 
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState("");
+  const [targetToDelete, setTargetToDelete] = useState<MeetingTarget | null>(null);
 
   const handleStartEditingTitle = (target: MeetingTarget) => {
     setEditingTitleId(target.id);
@@ -169,15 +174,27 @@ export function AdvocateReadyView({
                   </Badge>
                   <span className="text-xs text-blue-200/80">Section: <strong className="text-white">{target.iepSection}</strong></span>
                 </div>
-                <Button
-                  onClick={scrollToTop}
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-blue-300 hover:text-white hover:bg-white/[0.06] gap-1 h-7 cursor-pointer"
-                >
-                  <ArrowUp className="w-3.5 h-3.5" />
-                  Back to Quick List
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setTargetToDelete(target)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 gap-1 h-7 cursor-pointer"
+                    title="Delete target from workspace"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400/80" />
+                    <span className="hidden sm:inline">Delete</span>
+                  </Button>
+                  <Button
+                    onClick={scrollToTop}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-blue-300 hover:text-white hover:bg-white/[0.06] gap-1 h-7 cursor-pointer"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                    Back to Quick List
+                  </Button>
+                </div>
               </div>
 
               {/* Target Header */}
@@ -243,6 +260,14 @@ export function AdvocateReadyView({
                         title="Edit topic title"
                       >
                         <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTargetToDelete(target)}
+                        className="text-slate-400/60 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-950/30 transition-colors cursor-pointer inline-flex items-center"
+                        title="Delete target (Trash)"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
 
                       {/* ── TARGET TAGS CONTROL (Tag icon next to pencil + active colored pill boxes) ── */}
@@ -484,6 +509,15 @@ export function AdvocateReadyView({
           );
         })}
       </div>
+      {/* Delete Target Confirmation Modal */}
+      <DeleteTargetModal
+        isOpen={!!targetToDelete}
+        onClose={() => setTargetToDelete(null)}
+        target={targetToDelete}
+        onConfirmDelete={(id) => {
+          if (onDeleteTarget) onDeleteTarget(id);
+        }}
+      />
     </div>
   );
 }

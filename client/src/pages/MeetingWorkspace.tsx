@@ -736,6 +736,12 @@ export default function MeetingWorkspace() {
                   setTargets(next);
                   saveCurrentState({ meetingTargets: next });
                 }}
+                onDeleteTarget={(targetId) => {
+                  const next = targets.filter((t) => t.id !== targetId);
+                  setTargets(next);
+                  saveCurrentState({ meetingTargets: next });
+                  toast.success("Target deleted from workspace");
+                }}
                 studentName={studentName}
                 meetingTitle={meetingType}
                 meetingDate={meetingDate}

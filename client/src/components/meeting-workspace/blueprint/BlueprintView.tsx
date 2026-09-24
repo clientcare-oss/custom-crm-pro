@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { cn } from "@/lib/utils";
 import type { MeetingTarget } from "../types";
 import { ReorganizeMeetingModal } from "./ReorganizeMeetingModal";
+import { DeleteTargetModal } from "../DeleteTargetModal";
+import { toast } from "sonner";
 
 interface BlueprintViewProps {
   studentName: string;
@@ -37,6 +39,7 @@ export function BlueprintView({
   const [showReorganizeModal, setShowReorganizeModal] = useState(false);
   const [editingTarget, setEditingTarget] = useState<MeetingTarget | null>(null);
   const [isNewTargetModal, setIsNewTargetModal] = useState(false);
+  const [targetToDelete, setTargetToDelete] = useState<MeetingTarget | null>(null);
   const [expandedSection, setExpandedSection] = useState<Record<string, boolean>>({});
 
   // Group targets by section
@@ -61,8 +64,9 @@ export function BlueprintView({
     }));
   };
 
-  const handleRemoveTarget = (id: string) => {
+  const handleConfirmDelete = (id: string) => {
     onUpdateTargets(targets.filter((t) => t.id !== id));
+    toast.success("Target deleted");
   };
 
   const handleDuplicateTarget = (target: MeetingTarget) => {
@@ -340,9 +344,9 @@ export function BlueprintView({
 
                             <button
                               type="button"
-                              onClick={() => handleRemoveTarget(target.id)}
-                              title="Remove target"
-                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+                              onClick={() => setTargetToDelete(target)}
+                              title="Delete target"
+                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -562,6 +566,14 @@ export function BlueprintView({
         detectedOrder={detectedOrder}
         targets={targets}
         onSaveOrder={handleReorganizeSave}
+      />
+
+      {/* Delete Target Confirmation Modal */}
+      <DeleteTargetModal
+        isOpen={!!targetToDelete}
+        onClose={() => setTargetToDelete(null)}
+        target={targetToDelete}
+        onConfirmDelete={handleConfirmDelete}
       />
     </div>
   );
