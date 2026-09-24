@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { MeetingTarget, TargetMeetingStatus, ParkingLotItem, AdditionalItem, CloseoutChecks } from "../types";
+import { TargetTagsControl, isTargetStruckThrough } from "../tags/TargetTagsControl";
 
 interface MeetingModeViewProps {
   studentName: string;
@@ -342,6 +343,8 @@ export function MeetingModeView({
                     key={target.id}
                     className={cn(
                       "p-3.5 sm:p-4 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3",
+                      target.tags?.includes("ADVOCATE_REPAIR") && "border-l-4 border-l-rose-500 bg-rose-950/15",
+                      target.tags?.includes("IMPORTANT") && !target.tags?.includes("ADVOCATE_REPAIR") && "border-l-4 border-l-amber-500",
                       target.requestRaised
                         ? "bg-[#092244]/40"
                         : "bg-[#07182E] hover:bg-[#0A2548]"
@@ -405,7 +408,9 @@ export function MeetingModeView({
                                 onClick={() => handleStartEditingTitle(target)}
                                 className={cn(
                                   "text-xs sm:text-[13px] font-bold tracking-wide cursor-pointer hover:text-[#F5B544] transition-colors",
-                                  target.requestRaised ? "text-blue-100" : "text-white"
+                                  isTargetStruckThrough(target)
+                                    ? "line-through opacity-60 text-slate-400"
+                                    : target.requestRaised ? "text-blue-100" : "text-white"
                                 )}
                                 title="Click to edit topic title"
                               >
@@ -422,6 +427,16 @@ export function MeetingModeView({
                             </div>
                           )}
 
+                          {/* ── TARGET TAGS CONTROL (Tag icon trigger & active colored pill boxes) ── */}
+                          <TargetTagsControl
+                            target={target}
+                            onUpdateTarget={(id, updates) => {
+                              onUpdateTargets(
+                                targets.map((t) => (t.id === id ? { ...t, ...updates } : t))
+                              );
+                            }}
+                          />
+
                           {target.pwnNeeded && (
                             <span className="text-[10px] font-bold text-rose-300 bg-rose-950/70 border border-rose-500/40 px-1.5 py-0.2 rounded shrink-0">
                               PWN Flagged
@@ -437,7 +452,14 @@ export function MeetingModeView({
 
                         {/* One-Sentence Advocate Say This (Clickable to Perfect Phrasing) */}
                         <div className="flex items-start gap-1.5 group/say">
-                          <p className="text-xs sm:text-[12.5px] text-blue-200/90 leading-snug flex-1">
+                          <p
+                            className={cn(
+                              "text-xs sm:text-[12.5px] leading-snug flex-1",
+                              isTargetStruckThrough(target)
+                                ? "line-through opacity-60 text-slate-400"
+                                : "text-blue-200/90"
+                            )}
+                          >
                             <span className="text-blue-400 font-bold mr-1">🗣</span>
                             "{target.quickAdvocateSayThis}"
                           </p>

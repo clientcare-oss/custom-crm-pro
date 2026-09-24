@@ -27,6 +27,14 @@ export interface ParentIntelConcern {
 
 export type TargetMeetingStatus = "NOT_DISCUSSED" | "DISCUSSED" | "AGREED" | "DENIED" | "DEFERRED" | "FOLLOW_UP";
 
+export type TargetTagType = "ADVOCATE_REPAIR" | "IMPORTANT" | "PARENT_DOESNT_WANT" | "SKIP";
+
+export interface TargetRepairDetails {
+  reasons: string[];
+  note?: string;
+  updatedAt?: string;
+}
+
 export interface MeetingTarget {
   id: string;
   externalTargetId?: string; // e.g. "TARGET-001"
@@ -49,6 +57,10 @@ export interface MeetingTarget {
   parentWhatWeWant: string;
   parentWhyWeWantIt: string;
   parentSupportingEvidence: string;
+
+  // Tags & Repair Tracking
+  tags?: TargetTagType[];
+  repairDetails?: TargetRepairDetails;
 
   // Live Meeting Mode State
   requestRaised: boolean; // Checkbox (means request was raised to the team)

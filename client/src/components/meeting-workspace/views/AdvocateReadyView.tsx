@@ -20,6 +20,8 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { TargetTagsControl, isTargetStruckThrough } from "../tags/TargetTagsControl";
+import { cn } from "@/lib/utils";
 
 interface AdvocateReadyViewProps {
   targets: MeetingTarget[];
@@ -141,11 +143,22 @@ export function AdvocateReadyView({
       {/* Target Breakdown Cards (One Target per Page Block) */}
       <div className="space-y-8 print:space-y-12">
         {approvedTargets.map((target, index) => {
+          const isStruck = isTargetStruckThrough(target);
+          const hasRepair = target.tags?.includes("ADVOCATE_REPAIR");
+          const isImportant = target.tags?.includes("IMPORTANT");
+
           return (
             <div
               id={`target-card-${target.id}`}
               key={target.id}
-              className="bg-[#0B1E36] border border-[#103E70] rounded-2xl p-6 sm:p-8 shadow-2xl relative target-print-page print:border-none print:shadow-none print:p-0"
+              className={cn(
+                "bg-[#0B1E36] border rounded-2xl p-6 sm:p-8 shadow-2xl relative target-print-page print:border-none print:shadow-none print:p-0 transition-all",
+                hasRepair
+                  ? "border-rose-500/60 shadow-rose-950/20"
+                  : isImportant
+                  ? "border-amber-500/60 shadow-amber-950/20"
+                  : "border-[#103E70]"
+              )}
               style={{ breakAfter: "page", pageBreakAfter: "always" }}
             >
               {/* Back to Quick List - Top (hidden on print) */}
@@ -210,10 +223,15 @@ export function AdvocateReadyView({
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 group/cardtitle">
+                    <div className="flex items-center gap-2 flex-wrap group/cardtitle">
                       <h3
                         onClick={() => handleStartEditingTitle(target)}
-                        className="text-2xl font-bold text-white cursor-pointer hover:text-[#F5B544] transition-colors"
+                        className={cn(
+                          "text-2xl font-bold transition-colors cursor-pointer hover:text-[#F5B544]",
+                          isStruck
+                            ? "line-through opacity-60 text-slate-400"
+                            : "text-white"
+                        )}
                         title="Click to edit topic title"
                       >
                         {target.targetName}
@@ -221,15 +239,21 @@ export function AdvocateReadyView({
                       <button
                         type="button"
                         onClick={() => handleStartEditingTitle(target)}
-                        className="text-blue-400/50 hover:text-[#F5B544] p-1.5 rounded-lg hover:bg-[#0E3E75] transition-colors cursor-pointer"
+                        className="text-blue-400/50 hover:text-[#F5B544] p-1.5 rounded-lg hover:bg-[#0E3E75] transition-colors cursor-pointer inline-flex items-center"
                         title="Edit topic title"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
+
+                      {/* ── TARGET TAGS CONTROL (Tag icon next to pencil + active colored pill boxes) ── */}
+                      <TargetTagsControl
+                        target={target}
+                        onUpdateTarget={onUpdateTarget}
+                      />
                     </div>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <Badge className="bg-[#071C3C] text-blue-200 border border-[#144A7E] text-xs uppercase">
                     {target.meetingStatus?.replace("_", " ") || "Pending Discussion"}
                   </Badge>
@@ -245,11 +269,25 @@ export function AdvocateReadyView({
                     <span>1. 🗣 Advocate Say This (Verbal Script)</span>
                   </div>
                   <div className="space-y-3">
-                    <div className="p-3.5 bg-[#071C3C]/90 border border-[#F5B544]/40 rounded-xl text-amber-100 font-medium text-sm leading-relaxed">
+                    <div
+                      className={cn(
+                        "p-3.5 bg-[#071C3C]/90 border border-[#F5B544]/40 rounded-xl font-medium text-sm leading-relaxed",
+                        isStruck
+                          ? "line-through opacity-60 text-slate-400"
+                          : "text-amber-100"
+                      )}
+                    >
                       "{target.quickAdvocateSayThis}"
                     </div>
                     {target.fullAdvocateScript && target.fullAdvocateScript !== target.quickAdvocateSayThis && (
-                      <div className="text-xs text-blue-200 leading-relaxed pl-1 pt-1 border-t border-[#0E3E75]">
+                      <div
+                        className={cn(
+                          "text-xs leading-relaxed pl-1 pt-1 border-t border-[#0E3E75]",
+                          isStruck
+                            ? "line-through opacity-60 text-slate-400"
+                            : "text-blue-200"
+                        )}
+                      >
                         <span className="text-blue-300/70 font-semibold block mb-1">Extended Script:</span>
                         {target.fullAdvocateScript}
                       </div>
