@@ -42,6 +42,8 @@ import { MeetingModeView } from "../components/meeting-workspace/live/MeetingMod
 import { AdvocateReadyView } from "../components/meeting-workspace/views/AdvocateReadyView";
 import { ParentReadyView } from "../components/meeting-workspace/views/ParentReadyView";
 import { ImportAdvocateReadyModal } from "../components/meeting-workspace/prep/ImportAdvocateReadyModal";
+import { ParentConcernStatementWorkspace } from "../components/meeting-workspace/pcs/ParentConcernStatementWorkspace";
+import type { PcsMetadata } from "../components/meeting-workspace/pcs/types";
 
 export default function MeetingWorkspace() {
   const params = useParams<{ studentId?: string }>();
@@ -148,36 +150,21 @@ export default function MeetingWorkspace() {
   // Sync loaded DB data into local state
   useEffect(() => {
     if (workspace) {
-      if (workspace.status) {
-        setMeetingStatus(workspace.status as MeetingWorkspaceStatus);
-      }
+      if (workspace.status) setMeetingStatus(workspace.status as MeetingWorkspaceStatus);
       if (workspace.detectedIepOrder) {
         const order = safeParseJson<string[]>(workspace.detectedIepOrder, []);
         if (order.length > 0) setDetectedIepOrder(order);
       }
-      if (workspace.iepIntelFindings) {
-        setIepFindings(safeParseJson<IepIntelFinding[]>(workspace.iepIntelFindings, []));
-      }
-      if (workspace.parentIntelConcerns) {
-        setParentConcerns(safeParseJson<ParentIntelConcern[]>(workspace.parentIntelConcerns, []));
-      }
-      if (workspace.parentConcernStatement) {
-        setPcsText(workspace.parentConcernStatement);
-      }
-      if (typeof workspace.pcsApproved === "boolean") {
-        setPcsApproved(workspace.pcsApproved);
-      }
+      if (workspace.iepIntelFindings) setIepFindings(safeParseJson<IepIntelFinding[]>(workspace.iepIntelFindings, []));
+      if (workspace.parentIntelConcerns) setParentConcerns(safeParseJson<ParentIntelConcern[]>(workspace.parentIntelConcerns, []));
+      if (workspace.parentConcernStatement) setPcsText(workspace.parentConcernStatement);
+      if (typeof workspace.pcsApproved === "boolean") setPcsApproved(workspace.pcsApproved);
       if (workspace.meetingTargets) {
         const loadedTargets = safeParseJson<MeetingTarget[]>(workspace.meetingTargets, []);
         if (loadedTargets.length > 0) {
           setTargets(loadedTargets);
-          try {
-            if (selectedStudentId) {
-              localStorage.setItem(`mw_backup_${selectedStudentId}`, JSON.stringify(loadedTargets));
-            }
-          } catch (e) {}
+          try { if (selectedStudentId) localStorage.setItem(`mw_backup_${selectedStudentId}`, JSON.stringify(loadedTargets)); } catch {}
         } else if (selectedStudentId) {
-          // Check local storage backup
           try {
             const cached = localStorage.getItem(`mw_backup_${selectedStudentId}`);
             if (cached) {
@@ -187,33 +174,20 @@ export default function MeetingWorkspace() {
                 saveCurrentState({ meetingTargets: parsedCache });
               }
             }
-          } catch (e) {}
+          } catch {}
         }
-        if (loadedTargets.some((t) => t.sources?.some((s) => s.toLowerCase().includes("import")))) {
-          setIsManualImport(true);
-        }
+        if (loadedTargets.some((t) => t.sources?.some((s) => s.toLowerCase().includes("import")))) setIsManualImport(true);
       }
-      if (workspace.parkingLot) {
-        setParkingLot(safeParseJson<ParkingLotItem[]>(workspace.parkingLot, []));
-      }
-      if (workspace.additionalItems) {
-        setAdditionalItems(safeParseJson<AdditionalItem[]>(workspace.additionalItems, []));
-      }
+      if (workspace.parkingLot) setParkingLot(safeParseJson<ParkingLotItem[]>(workspace.parkingLot, []));
+      if (workspace.additionalItems) setAdditionalItems(safeParseJson<AdditionalItem[]>(workspace.additionalItems, []));
       if (workspace.closeoutChecks) {
         setCloseoutChecks(
-          safeParseJson<CloseoutChecks>(workspace.closeoutChecks, {
-            allRequestsRaised: false,
-            pwnIdentified: false,
-            agreedLocationsClear: false,
-            followUpAssigned: false,
-            nextMeetingDiscussed: false,
+          safeParseJson<any>(workspace.closeoutChecks, {
+            allRequestsRaised: false, pwnIdentified: false, agreedLocationsClear: false, followUpAssigned: false, nextMeetingDiscussed: false,
           })
         );
       }
-
-      if (workspace.status === "LIVE") {
-        setActiveTab("MEETING_MODE");
-      }
+      if (workspace.status === "LIVE") setActiveTab("MEETING_MODE");
     }
   }, [workspace]);
 
@@ -221,29 +195,18 @@ export default function MeetingWorkspace() {
 
   // Mutations
   const saveMutation = trpc.meetingWorkspace.save.useMutation({
-    onSuccess: () => {
-      setLastSavedAt(new Date());
-    },
-    onError: (err) => {
-      toast.error(`Error saving workspace: ${err.message}`);
-    },
+    onSuccess: () => setLastSavedAt(new Date()),
+    onError: (err) => toast.error(`Error saving workspace: ${err.message}`),
   });
 
   const runIepIntelMutation = trpc.meetingWorkspace.runIepIntel.useMutation({
     onSuccess: (data) => {
       setIepFindings(data.findings as IepIntelFinding[]);
-      if (data.detectedOrder && data.detectedOrder.length > 0) {
-        setDetectedIepOrder(data.detectedOrder);
-      }
+      if (data.detectedOrder?.length) setDetectedIepOrder(data.detectedOrder);
       toast.success("IEP Intel analysis complete");
-      saveCurrentState({
-        iepIntelFindings: data.findings,
-        detectedIepOrder: data.detectedOrder,
-      });
+      saveCurrentState({ iepIntelFindings: data.findings, detectedIepOrder: data.detectedOrder });
     },
-    onError: (err) => {
-      toast.error(`IEP Intel error: ${err.message}`);
-    },
+    onError: (err) => toast.error(`IEP Intel error: ${err.message}`),
   });
 
   const runParentIntelMutation = trpc.meetingWorkspace.runParentIntel.useMutation({
@@ -252,9 +215,7 @@ export default function MeetingWorkspace() {
       toast.success("Parent Intel extracted from authorized case records");
       saveCurrentState({ parentIntelConcerns: data.concerns });
     },
-    onError: (err) => {
-      toast.error(`Parent Intel error: ${err.message}`);
-    },
+    onError: (err) => toast.error(`Parent Intel error: ${err.message}`),
   });
 
   const generatePcsMutation = trpc.meetingWorkspace.generatePcsDraft.useMutation({
@@ -263,26 +224,17 @@ export default function MeetingWorkspace() {
       toast.success("Parent Concern Statement draft generated");
       saveCurrentState({ parentConcernStatement: data.pcsDraft });
     },
-    onError: (err) => {
-      toast.error(`PCS generation error: ${err.message}`);
-    },
+    onError: (err) => toast.error(`PCS generation error: ${err.message}`),
   });
 
   const buildBlueprintMutation = trpc.meetingWorkspace.buildBlueprint.useMutation({
     onSuccess: (data) => {
       setTargets(data.targets as MeetingTarget[]);
-      if (data.detectedOrder && data.detectedOrder.length > 0) {
-        setDetectedIepOrder(data.detectedOrder);
-      }
+      if (data.detectedOrder?.length) setDetectedIepOrder(data.detectedOrder);
       toast.success(`IEP Blueprint constructed with ${data.targets.length} meeting targets`);
-      saveCurrentState({
-        meetingTargets: data.targets,
-        detectedIepOrder: data.detectedOrder,
-      });
+      saveCurrentState({ meetingTargets: data.targets, detectedIepOrder: data.detectedOrder });
     },
-    onError: (err) => {
-      toast.error(`Blueprint build error: ${err.message}`);
-    },
+    onError: (err) => toast.error(`Blueprint build error: ${err.message}`),
   });
 
   const completeMeetingMutation = trpc.meetingWorkspace.completeMeeting.useMutation({
@@ -291,9 +243,7 @@ export default function MeetingWorkspace() {
       toast.success("IEP Meeting completed and synchronized to case records");
       refetchWorkspace();
     },
-    onError: (err) => {
-      toast.error(`Meeting complete error: ${err.message}`);
-    },
+    onError: (err) => toast.error(`Meeting complete error: ${err.message}`),
   });
 
   // Auto-save debouncing ref
@@ -352,6 +302,19 @@ export default function MeetingWorkspace() {
       }
       performSave();
     }
+  };
+
+  const handleSavePcsFromWorkspace = async (newText: string, updatedMetadata: PcsMetadata) => {
+    setPcsText(newText);
+    const updatedChecks = {
+      ...closeoutChecks,
+      pcsMetadata: updatedMetadata,
+    };
+    setCloseoutChecks(updatedChecks);
+    saveCurrentState({
+      parentConcernStatement: newText,
+      closeoutChecks: updatedChecks,
+    });
   };
 
   const handleBack = () => {
@@ -788,6 +751,18 @@ export default function MeetingWorkspace() {
                 meetingDate={meetingDate}
               />
             )}
+
+            {/* ── MANDATORY BOTTOM BLOCK: PARENT CONCERN STATEMENT WORKSPACE (PG-043) ── */}
+            <ParentConcernStatementWorkspace
+              studentName={studentName}
+              studentContactId={selectedStudentId}
+              parentEmail={activeStudent?.email || undefined}
+              pcsText={pcsText}
+              parentConcerns={parentConcerns}
+              iepFindings={iepFindings}
+              rawPcsMetadata={(closeoutChecks as any)?.pcsMetadata}
+              onSavePcs={handleSavePcsFromWorkspace}
+            />
           </div>
         )}
 
