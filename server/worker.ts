@@ -184,7 +184,7 @@ export default {
       const assetResponse = await env.ASSETS.fetch(request);
       if (assetResponse.status === 404 && !url.pathname.includes(".")) {
         // SPA fallback: serve index.html for client-side routes
-        return await env.ASSETS.fetch(new Request(new URL("/", request.url), request));
+        return await env.ASSETS.fetch(new Request(new URL("/index.html", request.url), request));
       }
       return assetResponse;
     } catch (err) {
