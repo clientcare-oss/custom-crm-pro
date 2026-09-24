@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import {
   Copy,
   Sparkles,
   X,
+  FilterX,
   Image as ImageIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -154,7 +155,31 @@ export default function BrainDump() {
   const [isUploadingCaptureImage, setIsUploadingCaptureImage] = useState(false);
 
   const createMutation = trpc.brainDump.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data, vars) => {
+      // Optimistically insert to cache so the new item shows immediately at the top
+      utils.brainDump.list.setData(
+        { search: search || undefined, category: activeCategory !== "All" ? activeCategory : undefined },
+        (old: any) => {
+          if (!old) return old;
+          const newItem: BrainItem = {
+            id: data?.id || Date.now(),
+            title: vars.title,
+            body: vars.body ?? null,
+            category: vars.category ?? "General",
+            status: vars.status ?? "not_started",
+            priority: vars.priority ?? "medium",
+            nextStep: vars.nextStep ?? null,
+            pinned: vars.pinned ?? false,
+            tags: vars.tags ?? [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          if (newItem.pinned) return [newItem, ...old];
+          const pinned = old.filter((i: any) => i.pinned);
+          const unpinned = old.filter((i: any) => !i.pinned);
+          return [...pinned, newItem, ...unpinned];
+        }
+      );
       utils.brainDump.list.invalidate();
       utils.brainDump.categories.invalidate();
     },
@@ -215,6 +240,10 @@ export default function BrainDump() {
         });
 
         setCaptureText("");
+        // Ensure new item is visible if currently filtering by another category
+        if (activeCategory !== "All" && activeCategory !== captureCategory) {
+          setActiveCategory("All");
+        }
         const newItemId = res?.id;
         if (newItemId) {
           for (const file of imageFiles) {
@@ -235,7 +264,7 @@ export default function BrainDump() {
         setIsUploadingCaptureImage(false);
       }
     },
-    [captureText, captureCategory, capturePriority, createMutation, uploadImageMutation, utils]
+    [captureText, captureCategory, capturePriority, activeCategory, createMutation, uploadImageMutation, utils]
   );
 
   const handlePagePaste = useCallback(
@@ -270,11 +299,15 @@ export default function BrainDump() {
       await createMutation.mutateAsync({ title: text, category: captureCategory, priority: capturePriority });
       setCaptureText("");
       captureRef.current?.focus();
+      // Ensure we switch to "All" (or to the category) so the new item is directly visible at the top!
+      if (activeCategory !== "All" && activeCategory !== captureCategory) {
+        setActiveCategory("All");
+      }
       toast.success("Idea captured! 🧠");
     } catch (err: any) {
       toast.error(err?.message || "Failed to capture idea");
     }
-  }, [captureText, captureCategory, capturePriority, createMutation]);
+  }, [captureText, captureCategory, capturePriority, activeCategory, createMutation]);
 
   const handleTogglePin = (item: BrainItem) => {
     updateMutation.mutate({ id: item.id, pinned: !item.pinned });
@@ -299,24 +332,32 @@ export default function BrainDump() {
     setConvertOpen(true);
   };
 
-  const pinnedItems = (items as BrainItem[]).filter((i) => i.pinned);
-  const unpinnedItems = (items as BrainItem[]).filter((i) => !i.pinned);
+  // Strictly sort items: pinned items first, then newest auto-increment ID first so new ideas are ALWAYS at top
+  const sortedItems = useMemo(() => {
+    return [...(items as BrainItem[])].sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.id - a.id;
+    });
+  }, [items]);
+
+  const pinnedItems = useMemo(() => sortedItems.filter((i) => i.pinned), [sortedItems]);
+  const unpinnedItems = useMemo(() => sortedItems.filter((i) => !i.pinned), [sortedItems]);
   const categoryTabs = ["All", ...allCategories];
 
-  const doneCount = (items as BrainItem[]).filter((i) => i.status === "done").length;
-  const inProgressCount = (items as BrainItem[]).filter((i) => i.status === "in_progress").length;
+  const doneCount = sortedItems.filter((i) => i.status === "done").length;
+  const inProgressCount = sortedItems.filter((i) => i.status === "in_progress").length;
 
   return (
     <div className="w-full space-y-3.5 pb-12">
       {/* ── Page Header ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-2 border-b border-border/50">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-2 border-b border-border/50 pr-0 xl:pr-64">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 shadow-2xs">
-            <Brain className="h-6 w-6" />
+          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 shadow-2xs">
+            <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Advocate BrainDump</h1>
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Advocate BrainDump</h1>
               <PageIdBadge id="PG-021" name="Advocate BrainDump" />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -325,13 +366,13 @@ export default function BrainDump() {
           </div>
         </div>
 
-        {/* Header Action Tools — with clearance for floating dev buttons */}
-        <div className="flex items-center gap-2 flex-wrap lg:mr-64">
+        {/* Header Action Tools */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              const text = items
+              const text = sortedItems
                 .map((item) => {
                   let line = `${item.title}`;
                   if (item.body) line += `\n${item.body}`;
@@ -349,14 +390,14 @@ export default function BrainDump() {
             title="Copy all ideas to clipboard"
           >
             <Copy className="h-3.5 w-3.5" />
-            Copy All
+            <span className="hidden sm:inline">Copy All</span>
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              const text = items
+              const text = sortedItems
                 .map((item) => {
                   let line = `${item.title}`;
                   if (item.body) line += `\n${item.body}`;
@@ -382,7 +423,7 @@ export default function BrainDump() {
             title="Print ideas list"
           >
             <Printer className="h-3.5 w-3.5" />
-            Print
+            <span className="hidden sm:inline">Print</span>
           </Button>
 
           {/* View Mode Toggle */}
@@ -397,7 +438,7 @@ export default function BrainDump() {
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
                   viewMode === mode
                     ? "bg-background shadow-xs text-foreground font-semibold"
                     : "text-muted-foreground hover:text-foreground"
@@ -413,10 +454,10 @@ export default function BrainDump() {
       </div>
 
       {/* ── Quick Capture Bar ──────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-card p-3 shadow-xs">
+      <div className="rounded-xl border border-border bg-card p-2.5 sm:p-3 shadow-xs">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Main Input with Mic */}
-          <div className="flex-1 flex items-center gap-2 bg-muted/40 border border-input rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-violet-400/40 focus-within:border-violet-500 transition-all">
+          <div className="flex-1 flex items-center gap-2 bg-muted/40 border border-input rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-violet-400/40 focus-within:border-violet-500 transition-all min-w-[200px]">
             <Zap className="h-4 w-4 text-violet-500 flex-shrink-0" />
             <input
               ref={captureRef}
@@ -445,7 +486,7 @@ export default function BrainDump() {
               type="button"
               onClick={() => captureFileInputRef.current?.click()}
               disabled={isUploadingCaptureImage}
-              className="flex-shrink-0 p-1.5 rounded-full text-violet-500 hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-all"
+              className="flex-shrink-0 p-1.5 rounded-full text-violet-500 hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-all cursor-pointer"
               title="Attach image or screenshot (or paste with Ctrl+V)"
             >
               {isUploadingCaptureImage ? (
@@ -464,7 +505,7 @@ export default function BrainDump() {
                 }
               }}
               disabled={captureVoiceState === "uploading"}
-              className={`flex-shrink-0 p-1.5 rounded-full transition-all ${
+              className={`flex-shrink-0 p-1.5 rounded-full transition-all cursor-pointer ${
                 captureVoiceState === "recording"
                   ? "bg-rose-500 text-white animate-pulse"
                   : captureVoiceState === "uploading"
@@ -484,7 +525,7 @@ export default function BrainDump() {
           </div>
 
           {/* Category Select */}
-          <div className="w-full sm:w-36 flex-shrink-0">
+          <div className="w-full sm:w-32 flex-shrink-0">
             <Select value={captureCategory} onValueChange={setCaptureCategory}>
               <SelectTrigger className="text-xs h-9">
                 <SelectValue />
@@ -500,7 +541,7 @@ export default function BrainDump() {
           </div>
 
           {/* Priority Select */}
-          <div className="w-full sm:w-32 flex-shrink-0">
+          <div className="w-full sm:w-28 flex-shrink-0">
             <Select value={capturePriority} onValueChange={(v) => setCapturePriority(v as Priority)}>
               <SelectTrigger className="text-xs h-9">
                 <SelectValue />
@@ -520,7 +561,7 @@ export default function BrainDump() {
             onClick={handleCapture}
             disabled={!captureText.trim()}
             size="sm"
-            className="h-9 px-4 bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex-shrink-0 shadow-xs"
+            className="h-9 px-3.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex-shrink-0 shadow-xs cursor-pointer"
           >
             <Plus className="h-4 w-4 mr-1" /> Capture
           </Button>
@@ -530,7 +571,7 @@ export default function BrainDump() {
         <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-2 pt-2 border-t border-border/40 flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <span>
-              Total: <strong className="text-foreground">{items.length}</strong>
+              Total: <strong className="text-foreground">{sortedItems.length}</strong>
             </span>
             <span>•</span>
             <span>
@@ -552,38 +593,59 @@ export default function BrainDump() {
       </div>
 
       {/* ── Search & Category Filter Strip ─────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         {/* Search input */}
-        <div className="relative flex-shrink-0 sm:w-64">
+        <div className="relative flex-shrink-0 sm:w-60">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search ideas, tags or notes…"
-            className="w-full pl-8 pr-8 py-1.5 text-xs bg-background border border-input rounded-lg outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-500 transition-all placeholder:text-muted-foreground/70"
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-background border border-input rounded-lg outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-500 transition-all placeholder:text-muted-foreground/70"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
+              title="Clear search query"
             >
               <X className="h-3 w-3" />
             </button>
           )}
         </div>
 
+        {/* Remove Filters Button */}
+        {(activeCategory !== "All" || search.trim() !== "") && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setActiveCategory("All");
+              setSearch("");
+            }}
+            className="h-8 px-2.5 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-500/10 border-rose-500/30 gap-1.5 flex-shrink-0 font-semibold transition-all shadow-2xs cursor-pointer"
+            title="Remove all filters and show all ideas"
+          >
+            <FilterX className="h-3.5 w-3.5" />
+            <span>Remove Filters</span>
+            <span className="flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-bold">
+              {(activeCategory !== "All" ? 1 : 0) + (search.trim() ? 1 : 0)}
+            </span>
+          </Button>
+        )}
+
         {/* Category Filter Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none flex-1">
           {categoryTabs.map((cat) => {
             const count =
               cat === "All"
-                ? items.length
-                : (items as BrainItem[]).filter((i) => i.category === cat).length;
+                ? sortedItems.length
+                : sortedItems.filter((i) => i.category === cat).length;
             return (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                   activeCategory === cat
                     ? "bg-violet-600 text-white shadow-2xs font-bold"
                     : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/40"
@@ -612,7 +674,7 @@ export default function BrainDump() {
             <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
             <p className="text-xs">Loading advocate ideas…</p>
           </div>
-        ) : items.length === 0 ? (
+        ) : sortedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground text-center px-4">
             <div className="p-3 rounded-2xl bg-violet-100 dark:bg-violet-950/40 text-violet-500">
               <Brain className="h-8 w-8" />
@@ -621,15 +683,29 @@ export default function BrainDump() {
               <h3 className="text-sm font-semibold text-foreground">No ideas found</h3>
               <p className="text-xs text-muted-foreground max-w-sm mt-1">
                 {search || activeCategory !== "All"
-                  ? "Try adjusting your search query or category filter."
+                  ? "No ideas match your active filter criteria."
                   : "Use the Quick Capture bar above to record notes, IEP strategies, or action items."}
               </p>
             </div>
+            {(search || activeCategory !== "All") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setActiveCategory("All");
+                  setSearch("");
+                }}
+                className="mt-1 text-xs gap-1.5 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/10 cursor-pointer"
+              >
+                <FilterX className="h-3.5 w-3.5" />
+                Remove Filters & Show All
+              </Button>
+            )}
           </div>
         ) : viewMode === "list" ? (
           <div>
             {/* List Header Bar */}
-            <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-full">
+            <div className="hidden sm:flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-1.5 bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-full">
               <div className="w-1 flex-shrink-0" />
               <div className="flex-1 min-w-0">Idea / Title</div>
               <div className="w-28 flex-shrink-0 text-center">Category</div>
@@ -642,7 +718,7 @@ export default function BrainDump() {
             {/* Pinned Section */}
             {pinnedItems.length > 0 && (
               <div className="border-b border-border/80">
-                <div className="px-4 py-1.5 bg-amber-500/10 border-b border-border/50 flex items-center gap-1.5">
+                <div className="px-3 sm:px-4 py-1.5 bg-amber-500/10 border-b border-border/50 flex items-center gap-1.5">
                   <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                   <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                     Pinned Ideas ({pinnedItems.length})
@@ -685,7 +761,7 @@ export default function BrainDump() {
           <div className="p-4 overflow-x-auto">
             <div className="flex gap-4 min-w-[900px]">
               {KANBAN_COLUMNS.map((col) => {
-                const colItems = (items as BrainItem[]).filter((i) => i.status === col);
+                const colItems = sortedItems.filter((i) => i.status === col);
                 const cfg = STATUS_CONFIG[col];
                 return (
                   <div key={col} className="flex-1 min-w-[220px] bg-muted/20 rounded-xl p-3 border border-border/60">
@@ -726,7 +802,7 @@ export default function BrainDump() {
           </div>
         ) : (
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-            {(items as BrainItem[]).map((item) => (
+            {sortedItems.map((item) => (
               <BrainDumpGridCard
                 key={item.id}
                 item={item}

@@ -25,16 +25,16 @@ export const brainDumpRouter = router({
         if (!dbConn) return [];
         let rows = await dbConn.select().from(bdi)
           .where(ctx.user.role === "admin" ? undefined : beq(bdi.ownerId, ctx.user.id))
-          .orderBy(bdesc(bdi.pinned), basc(bdi.sortOrder), bdesc(bdi.createdAt));
+          .orderBy(bdesc(bdi.pinned), bdesc(bdi.id));
         if (rows.length === 0) {
           rows = await dbConn.select().from(bdi)
-            .orderBy(bdesc(bdi.pinned), basc(bdi.sortOrder), bdesc(bdi.createdAt));
+            .orderBy(bdesc(bdi.pinned), bdesc(bdi.id));
         }
         let items = rows.map((r) => ({
           ...r,
           pinned: Boolean(r.pinned),
           tags: r.tags ? JSON.parse(r.tags) : [],
-        }));
+        })).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.id - a.id);
         if (input?.search) {
           const q = input.search.toLowerCase();
           items = items.filter((i) =>

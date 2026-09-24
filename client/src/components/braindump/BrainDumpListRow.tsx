@@ -34,26 +34,26 @@ export default function BrainDumpListRow({
 }) {
   return (
     <div
-      className={`group flex items-center gap-3 px-4 py-2.5 border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer w-full ${
+      className={`group flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2 border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer w-full ${
         item.pinned ? "bg-amber-500/5 dark:bg-amber-500/10" : ""
       }`}
     >
       {/* Priority accent bar */}
       <div
-        className={`w-1 self-stretch rounded-full flex-shrink-0 min-h-[26px] ${
+        className={`w-1 self-stretch rounded-full flex-shrink-0 min-h-[22px] ${
           PRIORITY_CONFIG[item.priority]?.bar || "bg-muted-foreground/30"
         }`}
       />
 
       {/* Main Title — Expands across the horizontal space */}
-      <div className="flex-1 min-w-0 flex items-center gap-2.5 overflow-hidden" onClick={() => onEdit(item)}>
+      <div className="flex-1 min-w-0 flex items-center gap-2 overflow-hidden" onClick={() => onEdit(item)}>
         {item.pinned && (
-          <Star className="h-4 w-4 text-amber-500 fill-amber-500 flex-shrink-0" />
+          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
         )}
         
         {/* Title text */}
         <span
-          className={`text-base font-semibold tracking-tight text-foreground group-hover:text-violet-600 dark:group-hover:text-violet-400 truncate flex-1 min-w-0 ${
+          className={`text-sm font-semibold tracking-tight text-foreground group-hover:text-violet-600 dark:group-hover:text-violet-400 truncate flex-1 min-w-0 ${
             item.status === "done" ? "line-through text-muted-foreground" : ""
           }`}
           title={item.title}
@@ -62,7 +62,7 @@ export default function BrainDumpListRow({
         </span>
 
         {/* Small thumbnail preview */}
-        <div className="hidden 2xl:flex items-center flex-shrink-0">
+        <div className="hidden xl:flex items-center flex-shrink-0">
           <SmallThumbnailStrip itemId={item.id} />
         </div>
       </div>
