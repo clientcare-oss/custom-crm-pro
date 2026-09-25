@@ -39,8 +39,6 @@ import { Step2ParentIntel } from "../components/meeting-workspace/prep/Step2Pare
 import { Step3PcsEditor } from "../components/meeting-workspace/prep/Step3PcsEditor";
 import { BlueprintView } from "../components/meeting-workspace/blueprint/BlueprintView";
 import { MeetingModeView } from "../components/meeting-workspace/live/MeetingModeView";
-import { AdvocateReadyView } from "../components/meeting-workspace/views/AdvocateReadyView";
-import { ParentReadyView } from "../components/meeting-workspace/views/ParentReadyView";
 import { ImportAdvocateReadyModal } from "../components/meeting-workspace/prep/ImportAdvocateReadyModal";
 import { ParentConcernStatementWorkspace } from "../components/meeting-workspace/pcs/ParentConcernStatementWorkspace";
 import type { PcsMetadata } from "../components/meeting-workspace/pcs/types";
@@ -98,7 +96,7 @@ export default function MeetingWorkspace() {
   );
 
   // Local State synchronized with Workspace
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("PREP");
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>("ASSEMBLY");
   const [prepStep, setPrepStep] = useState<PrepStep>("iep_intel");
   const [meetingStatus, setMeetingStatus] = useState<MeetingWorkspaceStatus>("PREPARING");
   const [meetingType] = useState<string>("Annual IEP Meeting");
@@ -483,8 +481,8 @@ export default function MeetingWorkspace() {
         {/* Main Workspace Body */}
         {!workspaceLoading && (
           <div className="flex-1">
-            {/* TAB: PREP */}
-            {activeTab === "PREP" && (
+            {/* TAB: ASSEMBLY (Build the Case) */}
+            {(activeTab === "ASSEMBLY" || activeTab === "PREP") && (
               <div className="space-y-6">
                 {/* 5-Step Pipeline Indicator + Optional Manual Import */}
                 <PrepPipeline
@@ -578,10 +576,13 @@ export default function MeetingWorkspace() {
                   />
                 )}
 
-                {/* Step 4: IEP Blueprint within Prep */}
+                {/* Step 4: IEP Blueprint within Assembly */}
                 {prepStep === "blueprint" && (
                   <BlueprintView
                     studentName={studentName}
+                    meetingType={meetingType}
+                    meetingDate={meetingDate}
+                    clientEmail={activeStudent?.email || undefined}
                     targets={targets}
                     detectedOrder={detectedIepOrder}
                     onUpdateTargets={(newTargets) => {
@@ -654,10 +655,13 @@ export default function MeetingWorkspace() {
               </div>
             )}
 
-            {/* TAB: BLUEPRINT */}
-            {activeTab === "BLUEPRINT" && (
+            {/* TAB: BLUEPRINT (Know the Plan) */}
+            {(activeTab === "BLUEPRINT" || activeTab === "PARENT_READY") && (
               <BlueprintView
                 studentName={studentName}
+                meetingType={meetingType}
+                meetingDate={meetingDate}
+                clientEmail={activeStudent?.email || undefined}
                 targets={targets}
                 detectedOrder={detectedIepOrder}
                 onUpdateTargets={(newTargets) => {
@@ -690,10 +694,12 @@ export default function MeetingWorkspace() {
               />
             )}
 
-            {/* TAB: MEETING MODE */}
-            {activeTab === "MEETING_MODE" && (
+            {/* TAB: MEETING MODE (Run the Meeting — Top Priority Destination) */}
+            {(activeTab === "MEETING_MODE" || activeTab === "ADVOCATE_READY") && (
               <MeetingModeView
                 studentName={studentName}
+                meetingType={meetingType}
+                meetingDate={meetingDate}
                 targets={targets}
                 detectedOrder={detectedIepOrder}
                 parkingLot={parkingLot}
@@ -724,37 +730,6 @@ export default function MeetingWorkspace() {
                     });
                   }
                 }}
-              />
-            )}
-
-            {/* TAB: ADVOCATE READY */}
-            {activeTab === "ADVOCATE_READY" && (
-              <AdvocateReadyView
-                targets={targets}
-                onUpdateTarget={(targetId, updates) => {
-                  const next = targets.map((t) => (t.id === targetId ? { ...t, ...updates } : t));
-                  setTargets(next);
-                  saveCurrentState({ meetingTargets: next });
-                }}
-                onDeleteTarget={(targetId) => {
-                  const next = targets.filter((t) => t.id !== targetId);
-                  setTargets(next);
-                  saveCurrentState({ meetingTargets: next });
-                  toast.success("Target deleted from workspace");
-                }}
-                studentName={studentName}
-                meetingTitle={meetingType}
-                meetingDate={meetingDate}
-              />
-            )}
-
-            {/* TAB: PARENT READY */}
-            {activeTab === "PARENT_READY" && (
-              <ParentReadyView
-                targets={targets}
-                studentName={studentName}
-                meetingTitle={meetingType}
-                meetingDate={meetingDate}
               />
             )}
 

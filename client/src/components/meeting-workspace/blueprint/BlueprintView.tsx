@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, Map as MapIcon, Plus, Pencil, Trash2, Copy, Check, Eye, PlayCircle, Layers, ArrowUpDown, ChevronDown, ChevronRight, FileCheck, Shield, User, HelpCircle, Loader2, Download } from "lucide-react";
+import { Sparkles, Map as MapIcon, Plus, Pencil, Trash2, Copy, Check, Eye, PlayCircle, Layers, ArrowUpDown, ChevronDown, ChevronRight, FileCheck, Shield, User, HelpCircle, Loader2, Download, HeartHandshake, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,10 +9,15 @@ import { cn } from "@/lib/utils";
 import type { MeetingTarget } from "../types";
 import { ReorganizeMeetingModal } from "./ReorganizeMeetingModal";
 import { DeleteTargetModal } from "../DeleteTargetModal";
+import { ParentFriendlyPreviewModal } from "./ParentFriendlyPreviewModal";
+import { openPrintDialog } from "../print/PrintableMeetingDocument";
 import { toast } from "sonner";
 
 interface BlueprintViewProps {
   studentName: string;
+  meetingType?: string;
+  meetingDate?: string;
+  clientEmail?: string;
   targets: MeetingTarget[];
   detectedOrder: string[];
   onUpdateTargets: (targets: MeetingTarget[]) => void;
@@ -26,6 +31,9 @@ interface BlueprintViewProps {
 
 export function BlueprintView({
   studentName,
+  meetingType = "Annual IEP Meeting",
+  meetingDate = "Upcoming",
+  clientEmail = "",
   targets,
   detectedOrder,
   onUpdateTargets,
@@ -37,6 +45,7 @@ export function BlueprintView({
   isLoading,
 }: BlueprintViewProps) {
   const [showReorganizeModal, setShowReorganizeModal] = useState(false);
+  const [showParentPreviewModal, setShowParentPreviewModal] = useState(false);
   const [editingTarget, setEditingTarget] = useState<MeetingTarget | null>(null);
   const [isNewTargetModal, setIsNewTargetModal] = useState(false);
   const [targetToDelete, setTargetToDelete] = useState<MeetingTarget | null>(null);
@@ -145,7 +154,31 @@ export function BlueprintView({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowParentPreviewModal(true)}
+            disabled={targets.length === 0}
+            className="text-xs font-bold border-emerald-500/50 bg-[#07241A] text-emerald-300 hover:text-white hover:bg-emerald-900/60 hover:border-emerald-400 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+            title="Open parent-facing preview with plain-language requests and evidence"
+          >
+            <HeartHandshake className="h-3.5 w-3.5 text-emerald-400" />
+            <span>👨‍👩‍👧 Parent-Friendly Preview</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openPrintDialog("PARENT_BLUEPRINT", studentName, meetingType, meetingDate, targets)}
+            disabled={targets.length === 0}
+            className="text-xs font-bold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-white hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+            title="Generate a compact, multi-target printer-friendly document / PDF"
+          >
+            <Printer className="h-3.5 w-3.5 text-[#F5B544]" />
+            <span>🖨️ Printer-Friendly Version</span>
+          </Button>
+
           {onOpenImportModal && (
             <Button
               variant="outline"
@@ -173,7 +206,7 @@ export function BlueprintView({
             size="sm"
             onClick={onBuildBlueprint}
             disabled={isLoading}
-            className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg border border-blue-400/30 px-4 py-2 cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg border border-blue-400/30 px-3 py-2 cursor-pointer inline-flex items-center gap-1.5"
           >
             {isLoading ? (
               <>
@@ -193,17 +226,17 @@ export function BlueprintView({
             size="sm"
             onClick={onPreviewMeetingMode}
             disabled={targets.length === 0}
-            className="text-xs font-bold border-[#104375] bg-[#071F3D] text-emerald-300 hover:text-white hover:border-emerald-500/50 cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-bold border-[#104375] bg-[#071F3D] text-amber-300 hover:text-white hover:border-amber-400/60 cursor-pointer inline-flex items-center gap-1.5"
           >
             <Eye className="h-3.5 w-3.5" />
-            Preview Meeting Mode
+            Enter Meeting Mode
           </Button>
 
           <Button
             size="sm"
             onClick={onMarkReady}
             disabled={targets.length === 0}
-            className="text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg border border-emerald-400/40 px-4 py-2 cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg border border-emerald-400/40 px-3 py-2 cursor-pointer inline-flex items-center gap-1.5"
           >
             <Check className="h-3.5 w-3.5" />
             ✓ Ready for Meeting
@@ -574,6 +607,17 @@ export function BlueprintView({
         onClose={() => setTargetToDelete(null)}
         target={targetToDelete}
         onConfirmDelete={handleConfirmDelete}
+      />
+
+      {/* Parent-Friendly Preview Modal */}
+      <ParentFriendlyPreviewModal
+        isOpen={showParentPreviewModal}
+        onClose={() => setShowParentPreviewModal(false)}
+        studentName={studentName}
+        meetingType={meetingType}
+        meetingDate={meetingDate}
+        targets={targets}
+        clientEmail={clientEmail}
       />
     </div>
   );

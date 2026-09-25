@@ -1,6 +1,6 @@
 export type MeetingWorkspaceStatus = "PREPARING" | "READY" | "LIVE" | "COMPLETED";
 
-export type WorkspaceTab = "PREP" | "BLUEPRINT" | "MEETING_MODE" | "ADVOCATE_READY" | "PARENT_READY";
+export type WorkspaceTab = "ASSEMBLY" | "BLUEPRINT" | "MEETING_MODE" | "PREP" | "ADVOCATE_READY" | "PARENT_READY";
 
 export type PrepStep = "iep_intel" | "parent_intel" | "pcs" | "blueprint" | "ready";
 
