@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare, Trash2, Printer, Compass } from "lucide-react";
+import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare, Trash2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -648,45 +648,6 @@ export function MeetingModeView({
         )}
       </div>
 
-      {/* 🧭 END-OF-MEETING REMINDER (Advocate-Facing with Smart Dynamic Prominence) */}
-      <div
-        className={cn(
-          "rounded-2xl p-4 sm:p-5 transition-all space-y-2.5 border",
-          unresolvedCount > 0
-            ? "bg-gradient-to-br from-[#092244] via-[#09254D] to-[#071C38] border-amber-500/50 shadow-[0_0_20px_rgba(245,181,68,0.12)]"
-            : "bg-[#061B35] border-[#0F3C6D] text-blue-200/80"
-        )}
-      >
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="p-1 rounded-md bg-amber-500/20 text-[#F5B544]">
-              <Compass className="h-4 w-4" />
-            </span>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <span>🧭 MEETING REMINDER</span>
-            </h3>
-          </div>
-          {unresolvedCount > 0 && (
-            <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-              {unresolvedCount} Unresolved / Pending {unresolvedCount === 1 ? "Target" : "Targets"}
-            </span>
-          )}
-        </div>
-
-        <p className="text-xs text-blue-100/90 leading-relaxed">
-          Every meeting is different. Depending on the discussion, time available, and decisions that need to be made, not every Target may be addressed in one meeting.
-        </p>
-        <p className="text-xs text-blue-200/80 leading-relaxed">
-          It may be necessary to let the client know that some items will need to be continued at a reconvened meeting or addressed as the case progresses.
-        </p>
-
-        {unresolvedCount > 0 && (
-          <div className="pt-1 text-[11.5px] text-[#F5B544] font-semibold flex items-center gap-1.5">
-            <span>💡</span>
-            <span>Advocate action: Set clear expectations with the client before adjourning regarding items carried over to reconvene.</span>
-          </div>
-        )}
-      </div>
 
       {/* Slide-over Target Details Drawer (Preserves Scroll Position) */}
       {selectedTarget && (

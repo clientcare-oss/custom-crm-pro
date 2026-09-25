@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, Map as MapIcon, Plus, Pencil, Trash2, Copy, Check, Eye, PlayCircle, Layers, ArrowUpDown, ChevronDown, ChevronRight, FileCheck, Shield, User, HelpCircle, Loader2, Download, HeartHandshake, Printer } from "lucide-react";
+import { Sparkles, Map as MapIcon, Plus, Pencil, Trash2, Copy, Check, Eye, PlayCircle, Layers, ArrowUpDown, ChevronDown, ChevronRight, FileCheck, Shield, User, HelpCircle, Loader2, Download, HeartHandshake, Printer, Mail, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import type { MeetingTarget } from "../types";
 import { ReorganizeMeetingModal } from "./ReorganizeMeetingModal";
 import { DeleteTargetModal } from "../DeleteTargetModal";
 import { ParentFriendlyPreviewModal } from "./ParentFriendlyPreviewModal";
+import { EmailBlueprintModal } from "./EmailBlueprintModal";
 import { openPrintDialog } from "../print/PrintableMeetingDocument";
 import { toast } from "sonner";
 
@@ -46,6 +47,7 @@ export function BlueprintView({
 }: BlueprintViewProps) {
   const [showReorganizeModal, setShowReorganizeModal] = useState(false);
   const [showParentPreviewModal, setShowParentPreviewModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [editingTarget, setEditingTarget] = useState<MeetingTarget | null>(null);
   const [isNewTargetModal, setIsNewTargetModal] = useState(false);
   const [targetToDelete, setTargetToDelete] = useState<MeetingTarget | null>(null);
@@ -175,6 +177,18 @@ export function BlueprintView({
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setShowEmailModal(true)}
+            disabled={targets.length === 0}
+            className="h-8 text-xs font-semibold border-teal-500/50 bg-[#07252A] text-teal-300 hover:text-white hover:bg-teal-900/60 hover:border-teal-400 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+            title="Email the parent-friendly Meeting Blueprint directly to the family"
+          >
+            <Mail className="h-3.5 w-3.5 text-teal-400" />
+            <span>Email to Parent</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => openPrintDialog("PARENT_BLUEPRINT", studentName, meetingType, meetingDate, targets)}
             disabled={targets.length === 0}
             className="h-8 text-xs font-semibold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-white hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
@@ -216,6 +230,21 @@ export function BlueprintView({
             <PlayCircle className="h-3.5 w-3.5 text-slate-950" />
             <span>Enter Meeting Mode</span>
           </Button>
+        </div>
+      </div>
+
+      {/* 🧭 MEETING REMINDER (Advocate-Facing, Compact Small Box) */}
+      <div className="rounded-xl bg-[#081F3B] border border-[#144A7E] p-2.5 sm:p-3 shadow-sm flex items-start gap-2.5">
+        <span className="p-1 rounded-md bg-amber-500/20 text-[#F5B544] shrink-0 mt-0.5">
+          <Compass className="h-3.5 w-3.5" />
+        </span>
+        <div className="space-y-0.5 text-xs flex-1 min-w-0">
+          <span className="font-bold text-[#F5B544] uppercase tracking-wider text-[11px] block">
+            🧭 Meeting Reminder
+          </span>
+          <p className="text-blue-100/90 leading-relaxed text-[11.5px]">
+            Every meeting is different. Depending on the discussion, time available, and decisions that need to be made, not every Target may be addressed in one meeting. It may be necessary to let the client know that some items will need to be continued at a reconvened meeting or addressed as the case progresses.
+          </p>
         </div>
       </div>
 
@@ -588,6 +617,17 @@ export function BlueprintView({
       <ParentFriendlyPreviewModal
         isOpen={showParentPreviewModal}
         onClose={() => setShowParentPreviewModal(false)}
+        studentName={studentName}
+        meetingType={meetingType}
+        meetingDate={meetingDate}
+        targets={targets}
+        clientEmail={clientEmail}
+      />
+
+      {/* Email Blueprint to Parent Modal */}
+      <EmailBlueprintModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
         studentName={studentName}
         meetingType={meetingType}
         meetingDate={meetingDate}
