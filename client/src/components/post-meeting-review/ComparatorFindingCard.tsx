@@ -6,9 +6,7 @@ import {
   Pause,
   Anchor,
   Sparkles,
-  ExternalLink,
-  Star,
-  CheckCircle2,
+  Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -95,10 +93,10 @@ export function ComparatorFindingCard({
             <div className="px-3 py-1.5 rounded-xl bg-rose-950/80 border border-rose-500/50 flex items-center gap-2">
               <span className="text-rose-400 font-bold text-sm">!</span>
               <div>
-                <span className="text-xs font-bold text-rose-300 block leading-none">
+                <span className="text-xs font-bold text-rose-300 block leading-none font-sans">
                   REVIEW FIRST
                 </span>
-                <span className="text-xs text-rose-200/80 block mt-0.5">
+                <span className="text-xs text-rose-200/80 block mt-0.5 font-sans">
                   This item may impact the student&apos;s program.
                 </span>
               </div>
@@ -107,10 +105,10 @@ export function ComparatorFindingCard({
             <div className="px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/50 flex items-center gap-2">
               <span className="text-[#F5B544] font-bold text-sm">!</span>
               <div>
-                <span className="text-xs font-bold text-[#F5B544] block leading-none">
+                <span className="text-xs font-bold text-[#F5B544] block leading-none font-sans">
                   CHECK
                 </span>
-                <span className="text-xs text-amber-200/80 block mt-0.5">
+                <span className="text-xs text-amber-200/80 block mt-0.5 font-sans">
                   Wording or model change requires verification.
                 </span>
               </div>
@@ -120,118 +118,151 @@ export function ComparatorFindingCard({
       </div>
 
       {/* ============================================================== */}
-      {/* COMPARATOR CIRCUIT FLOW VIEW (Matching Reference Screenshot 1) */}
+      {/* COMPARATOR CIRCUIT VISUAL BOARD (Restored Image 2 Structure + Animated Moving Circuit) */}
       {/* ============================================================== */}
-      <div className="relative">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-stretch relative">
-          {/* ===================== LEFT CARD (Updated IEP) ===================== */}
-          <div className="rounded-2xl bg-[#030e20] border border-[#0e2c56] p-4 sm:p-5 flex flex-col justify-between shadow-xl relative transition-all hover:border-[#16447e]">
-            {/* Top Chip Bar */}
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-1 rounded-full bg-[#05162d] border border-[#0d3460] text-xs font-medium text-blue-200">
-                  {String(currentIndex).padStart(2, "0")} · {finding.category}
-                </span>
-
-                <span className="px-3 py-1 rounded-full bg-[#1e1503] border border-[#f5b544]/60 text-xs font-bold text-[#f5b544]">
-                  {metricLabel}: {prevVal} → {updatedVal}
-                </span>
-              </div>
-
-              <span className="px-3 py-0.5 rounded-full bg-[#1e1503] border border-[#f5b544]/70 text-xs font-bold text-[#f5b544] uppercase tracking-wider">
-                {changeLabel}
-              </span>
-            </div>
-
-            {/* Card Heading */}
-            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-sans mb-3">
-              {finding.title}
-            </h3>
-
-            {/* Dark Inner Narrative Box with Normal Readable Text */}
-            <div className="rounded-xl bg-[#061834] border border-[#0e2d57] p-3.5 sm:p-4 text-slate-100 text-sm leading-relaxed font-sans shadow-inner">
-              <p className="font-normal text-slate-200">
-                {finding.updatedIep.details}
-              </p>
-            </div>
-
-            {/* Card Footer */}
-            <div className="flex items-center justify-between pt-3.5 text-xs border-t border-[#0a2347] mt-3">
-              <span className="text-slate-400 font-normal">
-                Page {finding.updatedIep.page} · {finding.updatedIep.section}
-              </span>
-
-              <button
-                type="button"
-                className="text-xs font-semibold text-blue-400 hover:text-blue-200 cursor-pointer inline-flex items-center gap-1 transition-colors"
-              >
-                <span>Inspect</span>
-                <span>→</span>
-              </button>
-            </div>
-
-            {/* Circuit Connector Node on Right Border (Desktop) */}
-            <div className="hidden lg:flex absolute -right-[7px] top-1/2 -translate-y-1/2 z-20">
-              <div className="w-3.5 h-3.5 rounded-full bg-[#F5B544] border-2 border-[#000820] shadow-[0_0_10px_rgba(245,181,68,0.9)]" />
-            </div>
+      <div className="rounded-2xl bg-[#041224] border border-[#113C6E] p-4 sm:p-5 shadow-xl space-y-4">
+        {/* Top Circuit Sub-Header */}
+        <div className="flex items-center justify-between text-xs border-b border-[#0F355E] pb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-bold tracking-wider text-cyan-300 uppercase font-sans">
+              IEP Comparator Circuit
+            </span>
+            <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-500/20 text-[#F5B544] border border-amber-500/40 uppercase font-sans">
+              {changeLabel}
+            </span>
           </div>
 
-          {/* ===================== CENTRAL CIRCUIT CONNECTION ===================== */}
-          {/* Desktop Circuit Bridge with Gold Dashed Line & Glowing Diamond */}
-          <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center pointer-events-none z-10 w-14">
-            {/* Left Dashed Line */}
-            <div className="w-4 h-[2px] border-t-2 border-dashed border-[#F5B544]/80" />
-
-            {/* Center Glowing Diamond Node */}
-            <div className="w-4 h-4 rotate-45 border-2 border-[#F5B544] bg-[#000820] shadow-[0_0_12px_rgba(245,181,68,0.9)] flex items-center justify-center shrink-0">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F5B544]" />
-            </div>
-
-            {/* Right Dashed Line */}
-            <div className="w-4 h-[2px] border-t-2 border-dashed border-[#F5B544]/80" />
+          <div className="text-xs font-medium text-cyan-200 flex items-center gap-2 font-sans">
+            <span>{metricLabel}:</span>
+            <span className="text-rose-300 line-through font-semibold">{prevVal}</span>
+            <span className="text-blue-400">→</span>
+            <span className="text-emerald-300 font-bold">{updatedVal}</span>
           </div>
+        </div>
 
-          {/* ===================== RIGHT CARD (Previous IEP / Old Baseline) ===================== */}
-          <div className="rounded-2xl bg-[#030e20] border border-[#0e2c56] p-4 sm:p-5 flex flex-col justify-between shadow-xl relative transition-all hover:border-[#16447e]">
-            {/* Circuit Connector Node on Left Border (Desktop) */}
-            <div className="hidden lg:flex absolute -left-[7px] top-1/2 -translate-y-1/2 z-20">
-              <div className="w-3.5 h-3.5 rounded-full bg-[#F5B544] border-2 border-[#000820] shadow-[0_0_10px_rgba(245,181,68,0.9)]" />
-            </div>
+        {/* 2-Card Flow with Real Animated Moving Circuit Connection */}
+        <div className="grid grid-cols-1 lg:grid-cols-11 gap-3 sm:gap-4 items-stretch relative">
+          {/* Card 1: Previous IEP (5 cols) */}
+          <div className="lg:col-span-5 rounded-2xl bg-[#05172C] border border-[#14477D] p-4 space-y-3 flex flex-col justify-between shadow-md">
+            <div>
+              <div className="flex items-center justify-between text-xs text-blue-300 border-b border-[#103A68] pb-2 mb-2 font-sans">
+                <span className="font-bold tracking-wider uppercase text-cyan-300">
+                  Previous IEP
+                </span>
+                <span className="text-slate-400 font-medium">Page {finding.previousIep.page}</span>
+              </div>
 
-            {/* Top Chip Bar */}
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="px-2.5 py-1 rounded-full bg-[#05162d] border border-[#0d3460] text-xs font-medium text-blue-200">
-                Old Baseline · {finding.category}
+              <span className="text-xs text-cyan-300/90 block mb-2 font-sans font-medium">
+                {finding.previousIep.section}
               </span>
 
-              <span className="text-xs text-blue-300/70 font-medium">
-                Prior Language
-              </span>
-            </div>
-
-            {/* Card Heading */}
-            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-sans mb-3">
-              {finding.title}
-            </h3>
-
-            {/* Dark Inner Narrative Box with Normal Readable Text */}
-            <div className="rounded-xl bg-[#061834] border border-[#0e2d57] p-3.5 sm:p-4 text-slate-100 text-sm leading-relaxed font-sans shadow-inner">
-              <p className="font-normal text-slate-200">
-                {finding.previousIep.details}
-              </p>
-            </div>
-
-            {/* Card Footer */}
-            <div className="flex items-center justify-between pt-3.5 text-xs border-t border-[#0a2347] mt-3">
-              <span className="text-slate-400 font-normal">
-                Page {finding.previousIep.page} · {finding.previousIep.section}
-              </span>
-
-              <div className="flex items-center gap-2 text-blue-300/60">
-                <Star className="h-3.5 w-3.5" />
-                <CheckCircle2 className="h-3.5 w-3.5" />
+              {/* Value Box */}
+              <div className="text-sm font-bold text-white bg-[#071D38] p-3 rounded-xl border border-[#185394] font-sans">
+                {finding.previousIep.value}
               </div>
             </div>
+
+            {/* Normal Readable Description */}
+            <p className="text-xs sm:text-[13px] text-slate-200 leading-relaxed pt-2 font-sans font-normal">
+              {finding.previousIep.details}
+            </p>
+          </div>
+
+          {/* Central Moving Circuit Column (1 col on lg) */}
+          <div className="lg:col-span-1 flex flex-col items-center justify-center py-3 lg:py-0 relative select-none">
+            {/* Animated Flowing SVG Circuit Wire with Traveling Electron Pulses */}
+            <div className="w-full flex items-center justify-center relative">
+              <svg className="w-full h-16 overflow-visible" viewBox="0 0 80 60" fill="none">
+                {/* Background dashed guide line */}
+                <line
+                  x1="0"
+                  y1="30"
+                  x2="80"
+                  y2="30"
+                  stroke="#103D6D"
+                  strokeWidth="2.5"
+                  strokeDasharray="4 4"
+                />
+
+                {/* Moving Flowing Energy Stream (left to right) */}
+                <line
+                  x1="0"
+                  y1="30"
+                  x2="80"
+                  y2="30"
+                  stroke="#22D3EE"
+                  strokeWidth="2.5"
+                  strokeDasharray="6 6"
+                  strokeLinecap="round"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from="24"
+                    to="0"
+                    dur="1.2s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+
+                {/* Particle 1: Traveling glowing electron node from Left -> Right */}
+                <circle r="3.5" fill="#38BDF8" className="filter drop-shadow-[0_0_6px_#38BDF8]">
+                  <animateMotion
+                    path="M 0 30 L 80 30"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+
+                {/* Particle 2: Second staggered electron node */}
+                <circle r="2.5" fill="#F5B544" className="filter drop-shadow-[0_0_5px_#F5B544]">
+                  <animateMotion
+                    path="M 0 30 L 80 30"
+                    begin="0.9s"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              </svg>
+
+              {/* Central Glowing Diff Node */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                <div className="w-9 h-9 rounded-full bg-[#042036] border-2 border-teal-400 flex items-center justify-center shadow-[0_0_16px_rgba(20,184,166,0.6)]">
+                  <div className="w-3 h-3 rounded-full bg-teal-400 animate-ping" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-white absolute" />
+                </div>
+              </div>
+            </div>
+
+            {/* DIFF Label */}
+            <span className="text-[11px] font-bold tracking-wider uppercase text-teal-300 mt-2 font-sans">
+              Diff
+            </span>
+          </div>
+
+          {/* Card 2: Updated IEP (5 cols) */}
+          <div className="lg:col-span-5 rounded-2xl bg-[#07182E] border border-rose-500/50 p-4 space-y-3 flex flex-col justify-between shadow-md">
+            <div>
+              <div className="flex items-center justify-between text-xs text-rose-300 border-b border-rose-500/30 pb-2 mb-2 font-sans">
+                <span className="font-bold tracking-wider uppercase text-rose-300">
+                  Updated IEP
+                </span>
+                <span className="text-slate-400 font-medium">Page {finding.updatedIep.page}</span>
+              </div>
+
+              <span className="text-xs text-blue-200/90 block mb-2 font-sans font-medium">
+                {finding.updatedIep.section}
+              </span>
+
+              {/* Value Box */}
+              <div className="text-sm font-bold text-white bg-[#0A1F3B] p-3 rounded-xl border border-rose-500/40 font-sans">
+                {finding.updatedIep.value}
+              </div>
+            </div>
+
+            {/* Normal Readable Description */}
+            <p className="text-xs sm:text-[13px] text-rose-100/90 leading-relaxed pt-2 font-sans font-normal">
+              {finding.updatedIep.details}
+            </p>
           </div>
         </div>
       </div>
@@ -242,11 +273,11 @@ export function ComparatorFindingCard({
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 text-teal-300">
               <Anchor className="h-4 w-4 text-[#F5B544]" />
-              <span className="text-xs sm:text-sm font-bold tracking-wide">
+              <span className="text-xs sm:text-sm font-bold tracking-wide font-sans">
                 Meeting Evidence: Conflict with District Commitment
               </span>
             </div>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-950 border border-teal-500/40 text-teal-300 font-medium font-mono">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-950 border border-teal-500/40 text-teal-300 font-semibold font-sans">
               Timestamp {finding.meetingRecord.evidence.timestamp}
             </span>
           </div>
@@ -269,7 +300,7 @@ export function ComparatorFindingCard({
               variant="outline"
               size="sm"
               onClick={handlePlayClip}
-              className="h-8 px-3 text-xs font-semibold bg-[#0A3052] border-teal-400/40 text-teal-100 hover:text-white hover:bg-teal-900/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+              className="h-8 px-3 text-xs font-semibold bg-[#0A3052] border-teal-400/40 text-teal-100 hover:text-white hover:bg-teal-900/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm font-sans"
             >
               {isPlayingAudio ? (
                 <>
@@ -283,7 +314,7 @@ export function ComparatorFindingCard({
                 </>
               )}
             </Button>
-            <span className="text-xs text-blue-300/70">
+            <span className="text-xs text-blue-300/70 font-sans">
               Verified directly from meeting audio transcript
             </span>
           </div>
