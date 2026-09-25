@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Printer, Mail, HeartHandshake, Target, Lightbulb, FileBarChart2, X, Check, Copy } from "lucide-react";
+import { Printer, Mail, HeartHandshake, Target, Lightbulb, FileBarChart2, X, Check, Copy, Bookmark } from "lucide-react";
 import type { MeetingTarget } from "../types";
 import { openPrintDialog } from "../print/PrintableMeetingDocument";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ export function ParentFriendlyPreviewModal({
 }: ParentFriendlyPreviewModalProps) {
   const [showEmailConfirm, setShowEmailConfirm] = useState(false);
   const [emailTo, setEmailTo] = useState(clientEmail);
-  const [emailSubject, setEmailSubject] = useState(`${studentName}'s Upcoming ${meetingType} — Meeting Blueprint & Strategy`);
+  const [emailSubject, setEmailSubject] = useState(`${studentName}'s Upcoming ${meetingType} — Meeting Blueprint`);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const handlePrint = () => {
@@ -55,31 +55,26 @@ export function ParentFriendlyPreviewModal({
     toast.success(`Meeting Blueprint sent successfully to ${emailTo}`);
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success("Link copied to clipboard");
-  };
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] bg-[#07172C] border border-[#144E8A] text-white p-0 overflow-hidden flex flex-col shadow-2xl">
-          {/* Header */}
-          <div className="p-5 border-b border-[#0E3E75] bg-gradient-to-r from-[#0B3767] via-[#0A254D] to-[#071C3C] flex items-center justify-between gap-4">
-            <div className="space-y-1">
+        <DialogContent className="!w-[94vw] !max-w-4xl max-h-[90vh] bg-[#07172C] border border-[#144E8A] text-white p-0 overflow-hidden flex flex-col shadow-2xl rounded-2xl">
+          {/* Header Deck */}
+          <div className="px-6 py-4 border-b border-[#0E3E75] bg-gradient-to-r from-[#0B3767] via-[#0A254D] to-[#071C3C] flex items-center justify-between gap-4 flex-wrap">
+            <div className="space-y-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="p-1 rounded-md bg-emerald-500/20 text-emerald-400">
                   <HeartHandshake className="h-4 w-4" />
                 </span>
-                <DialogTitle className="text-lg font-bold text-white tracking-wide">
+                <DialogTitle className="text-base sm:text-lg font-bold text-white tracking-wide truncate">
                   Parent-Friendly Preview · Meeting Blueprint
                 </DialogTitle>
-                <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-950/50 text-[10px] uppercase font-bold">
+                <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-950/50 text-[10px] uppercase font-bold shrink-0">
                   Client-Safe View
                 </Badge>
               </div>
-              <p className="text-xs text-blue-200/80">
-                {studentName} · {meetingType} · {meetingDate} · {targets.length} Prepared Requests (Internal strategies, flags, and notes omitted)
+              <p className="text-xs text-blue-200/80 truncate">
+                {studentName} · {meetingType} · {meetingDate} · {targets.length} Prepared Requests
               </p>
             </div>
 
@@ -91,7 +86,7 @@ export function ParentFriendlyPreviewModal({
                 className="h-8 text-xs font-bold bg-[#0D4B84] hover:bg-[#155C9E] text-white border border-[#206BBC] px-3 cursor-pointer shadow-md inline-flex items-center gap-1.5"
               >
                 <Printer className="h-3.5 w-3.5 text-emerald-400" />
-                <span>🖨️ Printer-Friendly Version</span>
+                <span>Printer-Friendly Version</span>
               </Button>
 
               <Button
@@ -100,17 +95,17 @@ export function ParentFriendlyPreviewModal({
                 className="h-8 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/40 px-3 cursor-pointer shadow-md inline-flex items-center gap-1.5"
               >
                 <Mail className="h-3.5 w-3.5" />
-                <span>✉️ Email to Client</span>
+                <span>Email to Client</span>
               </Button>
             </div>
           </div>
 
           {/* Scrollable Parent Content */}
-          <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-[#000820]">
+          <div className="p-6 overflow-y-auto flex-1 space-y-5 bg-[#000820]">
             {/* Explanatory Banner */}
             <div className="p-4 rounded-xl bg-[#092244]/80 border border-[#144A7E] text-xs text-blue-200 leading-relaxed">
               <span className="font-bold text-white block mb-1">Parent & Family Roadmap</span>
-              This preview reflects what the family sees: a clear, empowering breakdown of each request, the student need behind it, and supporting evidence in plain language. Internal advocate notes and dispute strategies are omitted.
+              This preview reflects what the family sees: a clear, empowering breakdown of each request, the student need behind it, and supporting evidence in plain language. Internal advocate notes, negotiation strategies, and internal CRM flags are omitted.
             </div>
 
             {/* Target Items List */}
@@ -127,21 +122,22 @@ export function ParentFriendlyPreviewModal({
                   >
                     <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-[#0E3E75]">
                       <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center justify-center">
+                        <span className="w-6 h-6 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
                         <h3 className="text-base font-bold text-white">{target.targetName}</h3>
                       </div>
-                      <Badge variant="outline" className="border-[#144A7E] text-blue-300 bg-[#071C3C] text-[10.5px]">
+                      <Badge variant="outline" className="border-[#144A7E] text-blue-300 bg-[#071C3C] text-[10.5px] shrink-0 gap-1">
+                        <Bookmark className="w-3 h-3 text-blue-400" />
                         {target.iepSection || "Accommodations"}
                       </Badge>
                     </div>
 
-                    {/* 🎯 WHAT WE WANT */}
+                    {/* WHAT WE ARE REQUESTING */}
                     <div className="bg-[#092244] border border-emerald-500/30 rounded-lg p-3.5">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
-                        <Target className="w-3.5 h-3.5" />
-                        <span>🎯 WHAT WE ARE REQUESTING</span>
+                        <Target className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>WHAT WE ARE REQUESTING</span>
                       </div>
                       <p className="text-xs font-semibold text-white leading-relaxed">
                         {whatWeWant}
@@ -149,22 +145,22 @@ export function ParentFriendlyPreviewModal({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* 💡 WHY WE WANT IT */}
-                      <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3">
+                      {/* WHY WE WANT IT */}
+                      <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3.5">
                         <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-[#F5B544] uppercase tracking-wider mb-1">
-                          <Lightbulb className="w-3.5 h-3.5" />
-                          <span>💡 WHY WE WANT IT</span>
+                          <Lightbulb className="w-3.5 h-3.5 text-[#F5B544]" />
+                          <span>WHY WE WANT IT</span>
                         </div>
                         <p className="text-xs text-blue-200 leading-relaxed">
                           {whyWeWantIt}
                         </p>
                       </div>
 
-                      {/* 📊 WHAT SUPPORTS IT */}
-                      <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3">
+                      {/* WHAT SUPPORTS IT */}
+                      <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3.5">
                         <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-blue-300 uppercase tracking-wider mb-1">
-                          <FileBarChart2 className="w-3.5 h-3.5" />
-                          <span>📊 WHAT SUPPORTS IT</span>
+                          <FileBarChart2 className="w-3.5 h-3.5 text-blue-300" />
+                          <span>WHAT SUPPORTS IT</span>
                         </div>
                         <p className="text-xs text-blue-200 leading-relaxed">
                           {evidence}
@@ -178,7 +174,7 @@ export function ParentFriendlyPreviewModal({
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-[#0E3E75] bg-[#071C3C] flex items-center justify-between">
+          <div className="px-6 py-3.5 border-t border-[#0E3E75] bg-[#071C3C] flex items-center justify-between gap-4">
             <div className="text-xs text-blue-300/70">
               Parent-friendly output is optional and only shared upon intentional advocate action.
             </div>
@@ -197,7 +193,7 @@ export function ParentFriendlyPreviewModal({
 
       {/* Email to Client Intentional Confirmation Modal */}
       <Dialog open={showEmailConfirm} onOpenChange={(open) => !open && setShowEmailConfirm(false)}>
-        <DialogContent className="max-w-md bg-[#07172C] border border-[#144E8A] text-white p-5 shadow-2xl space-y-4">
+        <DialogContent className="!w-[90vw] !max-w-md bg-[#07172C] border border-[#144E8A] text-white p-5 shadow-2xl space-y-4 rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
               <Mail className="h-4 w-4 text-emerald-400" />

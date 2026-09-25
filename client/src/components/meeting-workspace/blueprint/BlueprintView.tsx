@@ -164,7 +164,7 @@ export function BlueprintView({
             title="Open parent-facing preview with plain-language requests and evidence"
           >
             <HeartHandshake className="h-3.5 w-3.5 text-emerald-400" />
-            <span>👨‍👩‍👧 Parent-Friendly Preview</span>
+            <span>Parent-Friendly Preview</span>
           </Button>
 
           <Button
@@ -176,7 +176,7 @@ export function BlueprintView({
             title="Generate a compact, multi-target printer-friendly document / PDF"
           >
             <Printer className="h-3.5 w-3.5 text-[#F5B544]" />
-            <span>🖨️ Printer-Friendly Version</span>
+            <span>Printer-Friendly Version</span>
           </Button>
 
           {onOpenImportModal && (
@@ -188,7 +188,7 @@ export function BlueprintView({
               title="Paste or drop an Advocate Ready document"
             >
               <Download className="h-3.5 w-3.5 text-[#F5B544]" />
-              📥 Import Advocate Ready
+              <span>Import Advocate Ready</span>
             </Button>
           )}
 
@@ -199,7 +199,7 @@ export function BlueprintView({
             className="text-xs font-bold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-white hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
           >
             <ArrowUpDown className="h-3.5 w-3.5 text-[#F5B544]" />
-            ↕ Reorganize Meeting
+            <span>Reorganize Meeting</span>
           </Button>
 
           <Button

@@ -309,7 +309,7 @@ export function MeetingModeView({
             title="Generate the expanded Advocate Ready strategy document / PDF"
           >
             <Printer className="h-3.5 w-3.5 text-[#F5B544]" />
-            <span>🖨️ Advocate Printer-Friendly Version</span>
+            <span>Advocate Printer-Friendly Version</span>
           </Button>
 
           <Button
