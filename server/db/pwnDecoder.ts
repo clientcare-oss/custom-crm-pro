@@ -75,6 +75,7 @@ export async function createPwnReview(data: InsertPwnReview): Promise<PwnReview>
     potentialProblemsCount: data.potentialProblemsCount || 0,
     advocateNotes: data.advocateNotes || null,
     createdAt: new Date(),
+    updatedAt: new Date(),
     completedAt: null,
   };
 }
@@ -168,6 +169,7 @@ export async function getPwnReviewsByStudent(studentContactId: number): Promise<
         potentialProblemsCount: 2,
         advocateNotes: "Finalized review ready for IEP resolution conference.",
         createdAt: new Date(),
+        updatedAt: new Date(),
         completedAt: new Date(),
       },
     ];
@@ -216,6 +218,7 @@ export async function updatePwnReview(
     potentialProblemsCount: 2,
     advocateNotes: updates.advocateNotes || null,
     createdAt: new Date(),
+    updatedAt: new Date(),
     completedAt: updates.status === "COMPLETED" ? new Date() : null,
   };
 }
@@ -298,6 +301,7 @@ export async function savePwnReviewFull(params: {
     potentialProblemsCount: concerns?.length || 0,
     advocateNotes: updates.advocateNotes || null,
     createdAt: new Date(),
+    updatedAt: new Date(),
     completedAt: null,
     student: {
       id: 1,

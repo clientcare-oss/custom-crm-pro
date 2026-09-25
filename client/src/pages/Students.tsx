@@ -1,8 +1,8 @@
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight, ChevronLeft, ArrowUpDown, User, Compass, Eye, Zap, Search } from "lucide-react";
-import { useState, useRef } from "react";
+import { Plus, ChevronRight, ChevronLeft, ArrowUpDown, User, Search } from "lucide-react";
+import { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -17,23 +17,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PhoneInput } from "@/components/PhoneInput";
 import { validatePhone, formatPhone } from "@/lib/phone";
 import PageIdBadge from "@/components/PageIdBadge";
+import { cn } from "@/lib/utils";
 
-const PLACEHOLDER_STAGES = [
-  { label: "Intake", count: 0 },
-  { label: "Discovery", count: 0 },
-  { label: "Records Review", count: 0 },
-  { label: "School Contact", count: 0 },
-  { label: "1st IEP Scheduled", count: 0 },
-  { label: "IEP Active", count: 0 },
-  { label: "Monitoring", count: 0 },
-  { label: "Closed", count: 0 },
+interface PipelineStageDef {
+  label: string;
+  aliases: string[];
+}
+
+const PIPELINE_STAGES: PipelineStageDef[] = [
+  { label: "Intake", aliases: ["intake", "onboarding", "intake / onboarding"] },
+  { label: "Discovery", aliases: ["discovery"] },
+  { label: "Records Review", aliases: ["records", "records review", "review"] },
+  { label: "School Contact", aliases: ["school contact", "school outreach", "contact"] },
+  { label: "1st IEP Scheduled", aliases: ["1st iep scheduled", "meeting scheduled", "scheduled", "1st iep"] },
+  { label: "IEP Active", aliases: ["iep active", "active", "state complaint", "in-progress"] },
+  { label: "Monitoring", aliases: ["monitoring", "annual review", "monitor"] },
+  { label: "Closed", aliases: ["closed", "archived", "offboarding", "complete"] },
 ];
+
+const getStudentStage = (student: any): string => {
+  const raw = (student?.pipelineStage || student?.studentStatus || student?.lifecycleStage || "Discovery").toLowerCase().trim();
+  for (const stage of PIPELINE_STAGES) {
+    if (stage.aliases.some((alias) => raw === alias || raw.includes(alias))) {
+      return stage.label;
+    }
+  }
+  return "Discovery";
+};
 
 export default function Students() {
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [sortAsc, setSortAsc] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStage, setSelectedStage] = useState<string>("All");
   const pipelineRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -85,8 +102,25 @@ export default function Students() {
   const students = allContacts.filter(isStudentContact);
   const baseList = students.length > 0 ? students : allContacts;
 
-  // Filter by search query (name, caseId, company, school)
+  // Real-time stage distribution counts
+  const stageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    PIPELINE_STAGES.forEach((s) => { counts[s.label] = 0; });
+    baseList.forEach((c) => {
+      const stage = getStudentStage(c);
+      counts[stage] = (counts[stage] || 0) + 1;
+    });
+    return counts;
+  }, [baseList]);
+
+  // Filter by selected pipeline stage + search query (name, caseId, company, school)
   const filteredList = baseList.filter((c) => {
+    if (selectedStage !== "All") {
+      const studentStage = getStudentStage(c);
+      if (studentStage !== selectedStage) {
+        return false;
+      }
+    }
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
     const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
@@ -213,33 +247,79 @@ export default function Students() {
         </div>
       </div>
 
-      {/* Pipeline bar — placeholder */}
+      {/* Pipeline bar — interactive filtering */}
       <div className="px-8 pb-2">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">
-          <span>IEP Pipeline</span>
-          <span className="ml-1 text-muted-foreground/50">(active cases)</span>
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">
+          <div className="flex items-center gap-1">
+            <span>IEP Pipeline</span>
+            <span className="ml-1 text-muted-foreground/60">(active cases)</span>
+          </div>
+          {selectedStage !== "All" && (
+            <span className="text-[11px] font-normal lowercase tracking-normal text-sky-400">
+              Filtering by: <strong className="font-semibold">{selectedStage}</strong>
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => scrollPipeline("left")} className="p-1 rounded hover:bg-muted text-muted-foreground flex-shrink-0 cursor-pointer">
+          <button onClick={() => scrollPipeline("left")} className="p-1 rounded hover:bg-muted text-muted-foreground flex-shrink-0 cursor-pointer" aria-label="Scroll pipeline left">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div ref={pipelineRef} className="flex gap-2 overflow-x-auto scrollbar-none flex-1 pb-1">
             {/* All pill */}
-            <div className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border-2 border-foreground bg-foreground text-background px-4 py-2 min-w-[64px] cursor-pointer">
-              <span className="text-xl font-bold leading-none">{totalAll}</span>
-              <span className="text-xs mt-0.5">All</span>
-            </div>
-            {PLACEHOLDER_STAGES.map((stage) => (
-              <div
-                key={stage.label}
-                className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border border-border bg-card px-4 py-2 min-w-[80px] cursor-pointer hover:bg-muted/50 transition-colors"
-              >
-                <span className="text-xl font-bold leading-none text-muted-foreground">{stage.count}</span>
-                <span className="text-xs mt-0.5 text-muted-foreground text-center leading-tight">{stage.label}</span>
+            <button
+              type="button"
+              onClick={() => setSelectedStage("All")}
+              className={cn(
+                "flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-4 py-2 min-w-[70px] cursor-pointer transition-all duration-200 select-none",
+                selectedStage === "All"
+                  ? "border-2 border-sky-400 bg-sky-50 text-sky-950 dark:bg-sky-950/80 dark:border-sky-400 dark:text-sky-100 shadow-md ring-2 ring-sky-400/30"
+                  : "border border-border/80 bg-card/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:border-slate-500"
+              )}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className={cn("text-xl font-bold leading-none", selectedStage === "All" ? "text-sky-600 dark:text-sky-300 font-extrabold" : "text-muted-foreground")}>
+                  {totalAll}
+                </span>
+                {selectedStage === "All" && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-600 dark:bg-sky-400 shadow-[0_0_6px_#38bdf8]" />
+                )}
               </div>
-            ))}
+              <span className={cn("text-xs mt-0.5", selectedStage === "All" ? "font-bold text-sky-900 dark:text-sky-100" : "text-muted-foreground")}>
+                All
+              </span>
+            </button>
+
+            {PIPELINE_STAGES.map((stage) => {
+              const isSelected = selectedStage === stage.label;
+              const count = stageCounts[stage.label] ?? 0;
+              return (
+                <button
+                  key={stage.label}
+                  type="button"
+                  onClick={() => setSelectedStage(stage.label)}
+                  className={cn(
+                    "flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-4 py-2 min-w-[84px] cursor-pointer transition-all duration-200 select-none",
+                    isSelected
+                      ? "border-2 border-sky-400 bg-sky-50 text-sky-950 dark:bg-sky-950/80 dark:border-sky-400 dark:text-sky-100 shadow-md ring-2 ring-sky-400/30"
+                      : "border border-border/80 bg-card/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:border-slate-500"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn("text-xl font-bold leading-none", isSelected ? "text-sky-600 dark:text-sky-300 font-extrabold" : "text-muted-foreground")}>
+                      {count}
+                    </span>
+                    {isSelected && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-600 dark:bg-sky-400 shadow-[0_0_6px_#38bdf8]" />
+                    )}
+                  </div>
+                  <span className={cn("text-xs mt-0.5 text-center leading-tight whitespace-nowrap", isSelected ? "font-bold text-sky-900 dark:text-sky-100" : "text-muted-foreground")}>
+                    {stage.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <button onClick={() => scrollPipeline("right")} className="p-1 rounded hover:bg-muted text-muted-foreground flex-shrink-0 cursor-pointer">
+          <button onClick={() => scrollPipeline("right")} className="p-1 rounded hover:bg-muted text-muted-foreground flex-shrink-0 cursor-pointer" aria-label="Scroll pipeline right">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -250,13 +330,30 @@ export default function Students() {
         <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
           {/* Table header */}
           <div className="border-b border-border bg-muted/30 px-4 py-2 text-xs text-muted-foreground flex items-center justify-between">
-            <span>{filteredList.length} {filteredList.length === 1 ? "student case" : "student cases"}</span>
-            {searchQuery && (
+            <div className="flex items-center gap-2">
+              <span>{filteredList.length} {filteredList.length === 1 ? "student case" : "student cases"}</span>
+              {selectedStage !== "All" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-sky-500/10 border border-sky-400/30 text-sky-700 dark:text-sky-300">
+                  Stage: <strong className="font-semibold">{selectedStage}</strong>
+                  <button
+                    onClick={() => setSelectedStage("All")}
+                    className="hover:text-foreground cursor-pointer text-muted-foreground ml-1"
+                    title="Clear stage filter"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
+            {(searchQuery || selectedStage !== "All") && (
               <button
-                onClick={() => setSearchQuery("")}
-                className="text-accent hover:underline text-xs"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedStage("All");
+                }}
+                className="text-accent hover:underline text-xs cursor-pointer font-medium"
               >
-                Clear filter
+                Clear all filters
               </button>
             )}
           </div>
@@ -279,19 +376,18 @@ export default function Students() {
                 <th className="px-4 py-3 text-left font-semibold text-foreground hidden lg:table-cell">Plan / Grade</th>
                 <th className="px-4 py-3 text-left font-semibold text-foreground hidden xl:table-cell">Last Updated</th>
                 <th className="px-4 py-3 text-left font-semibold text-foreground hidden sm:table-cell">Status</th>
-                <th className="px-4 py-3 text-right font-semibold text-foreground">Advocate Workspace</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     Loading students and cases...
                   </td>
                 </tr>
               ) : sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     {searchQuery ? "No matching students or cases found." : "No students yet. Click Add Student to get started."}
                   </td>
                 </tr>
@@ -325,9 +421,9 @@ export default function Students() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         {displayCaseId ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-xs font-mono font-bold text-amber-500 shadow-sm">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-xs font-mono font-bold text-amber-500 shadow-sm whitespace-nowrap">
                             Case #{displayCaseId.replace(/^Case\s*#?/i, "")}
                           </span>
                         ) : (
@@ -362,54 +458,16 @@ export default function Students() {
                           <span className="text-muted-foreground/50">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell text-xs">
+                      <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell text-xs whitespace-nowrap">
                         {contact.gradeLevel || contact.jobTitle || "IEP Student"}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground hidden xl:table-cell text-xs">
+                      <td className="px-4 py-3 text-muted-foreground hidden xl:table-cell text-xs whitespace-nowrap">
                         {contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—"}
                       </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-2.5 py-0.5 text-xs font-semibold">
-                          Active Case
+                      <td className="px-4 py-3 hidden sm:table-cell whitespace-nowrap">
+                        <span className="inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap">
+                          {contact.pipelineStage || "Active Case"}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setLocation(`/meeting-workspace/${contact.id}`)}
-                            title="Open IEP Meeting Workspace"
-                            className="h-8 px-2.5 text-xs font-bold gap-1 border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-slate-950 transition-all cursor-pointer shadow-sm"
-                          >
-                            <Zap className="h-3.5 w-3.5" />
-                            <span>Meeting</span>
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              const url = `/portal?preview=true&contactId=${contact.id}${contact.parentContactId ? `&parentContactId=${contact.parentContactId}` : ""}`;
-                              window.open(url, "_blank");
-                            }}
-                            title="Preview what the parent sees in Client Portal"
-                            className="h-8 px-2 text-xs text-muted-foreground hover:text-amber-500 inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                            <span className="hidden xl:inline">Portal</span>
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setLocation(`/contacts/${contact.id}`)}
-                            className="h-8 px-2.5 text-xs font-semibold gap-1 hover:bg-accent hover:text-accent-foreground transition-all cursor-pointer"
-                          >
-                            <Compass className="h-3.5 w-3.5 text-accent" />
-                            <span className="hidden sm:inline">Case Details</span>
-                          </Button>
-                        </div>
                       </td>
                     </tr>
                   );
