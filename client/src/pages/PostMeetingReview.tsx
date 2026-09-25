@@ -29,6 +29,7 @@ import { PortmasterReviewSummary } from "@/components/post-meeting-review/Portma
 import { TwinOverviewDeck } from "@/components/post-meeting-review/TwinOverviewDeck";
 import { ReviewQueueList } from "@/components/post-meeting-review/ReviewQueueList";
 import { StandardPortmasterFindingCard } from "@/components/post-meeting-review/StandardPortmasterFindingCard";
+import { ComparatorFindingCard } from "@/components/post-meeting-review/ComparatorFindingCard";
 import { AdvocateDecisionControls } from "@/components/post-meeting-review/AdvocateDecisionControls";
 import { EvidenceDetailsArea } from "@/components/post-meeting-review/EvidenceDetailsArea";
 import { ReviewCompletionSummary } from "@/components/post-meeting-review/ReviewCompletionSummary";
@@ -363,14 +364,24 @@ export default function PostMeetingReview() {
               <div className="lg:col-span-8 w-full space-y-4">
                 {selectedFinding ? (
                   <>
-                    {/* Visual 3-Panel Document Progression */}
-                    <StandardPortmasterFindingCard
-                      finding={selectedFinding}
-                      currentIndex={currentFindingIndex}
-                      totalCount={filteredFindings.length}
-                      onPrev={handlePrevFinding}
-                      onNext={handleNextFinding}
-                    />
+                    {/* Visual Finding Body: Type 1 (3-Panel) vs Type 2 (Comparator Circuit) */}
+                    {selectedFinding.visualType === "comparator_circuit" ? (
+                      <ComparatorFindingCard
+                        finding={selectedFinding}
+                        currentIndex={currentFindingIndex}
+                        totalCount={filteredFindings.length}
+                        onPrev={handlePrevFinding}
+                        onNext={handleNextFinding}
+                      />
+                    ) : (
+                      <StandardPortmasterFindingCard
+                        finding={selectedFinding}
+                        currentIndex={currentFindingIndex}
+                        totalCount={filteredFindings.length}
+                        onPrev={handlePrevFinding}
+                        onNext={handleNextFinding}
+                      />
+                    )}
 
                     {/* Universal Advocate Decision Controls */}
                     <AdvocateDecisionControls

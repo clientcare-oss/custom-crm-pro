@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { FileText, Play, Pause, FileCheck, Sparkles, Volume2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Play,
+  Pause,
+  Sparkles,
+  Volume2,
+  Anchor,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { PortmasterFinding } from "./types";
@@ -7,12 +16,23 @@ import { toast } from "sonner";
 
 interface ComparatorFindingCardProps {
   finding: PortmasterFinding;
+  currentIndex?: number;
+  totalCount?: number;
+  onPrev?: () => void;
+  onNext?: () => void;
 }
 
-export function ComparatorFindingCard({ finding }: ComparatorFindingCardProps) {
+export function ComparatorFindingCard({
+  finding,
+  currentIndex = 1,
+  totalCount = 5,
+  onPrev,
+  onNext,
+}: ComparatorFindingCardProps) {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const isMeetingConflict = finding.sourceTags.includes("meeting_conflict");
+  const isReviewFirst = finding.severity === "review_first";
   const changeLabel = finding.updatedIep.changeLabel || "MODIFIED";
 
   const handlePlayClip = () => {
@@ -23,9 +43,75 @@ export function ComparatorFindingCard({ finding }: ComparatorFindingCardProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 select-none">
+      {/* Top Header: Finding index, Navigation arrows, Title, and Review First badge */}
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <span className="text-xs font-semibold text-blue-200/70 font-mono">
+            Finding {currentIndex} of {totalCount}
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onPrev}
+              disabled={currentIndex <= 1}
+              className="w-7 h-7 rounded-lg bg-[#071F3B] border border-[#144A7E] text-blue-200 hover:text-white hover:bg-[#0B2C52] disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center cursor-pointer transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={currentIndex >= totalCount}
+              className="w-7 h-7 rounded-lg bg-[#071F3B] border border-[#144A7E] text-blue-200 hover:text-white hover:bg-[#0B2C52] disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center cursor-pointer transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
+              {finding.title}
+            </h2>
+            <p className="text-xs sm:text-sm text-blue-200/80 mt-1 max-w-2xl leading-relaxed">
+              {finding.oneLineExplanation}
+            </p>
+          </div>
+
+          {/* Review First / Check Badge */}
+          {isReviewFirst ? (
+            <div className="px-3 py-1.5 rounded-xl bg-rose-950/80 border border-rose-500/50 flex items-center gap-2">
+              <span className="text-rose-400 font-bold text-xs">!</span>
+              <div>
+                <span className="text-xs font-bold text-rose-300 block leading-none font-mono">
+                  REVIEW FIRST
+                </span>
+                <span className="text-[10.5px] text-rose-200/80 block mt-0.5">
+                  This item may impact the student&apos;s program.
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/50 flex items-center gap-2">
+              <span className="text-[#F5B544] font-bold text-xs">!</span>
+              <div>
+                <span className="text-xs font-bold text-[#F5B544] block leading-none font-mono">
+                  CHECK
+                </span>
+                <span className="text-[10.5px] text-amber-200/80 block mt-0.5">
+                  Wording or model change requires verification.
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Comparator Circuit Visual Board (Before -> Circuit -> After) */}
-      <div className="rounded-xl bg-[#041224] border border-[#113C6E] p-3 sm:p-4 shadow-lg space-y-3">
+      <div className="rounded-2xl bg-[#041224] border border-[#113C6E] p-3 sm:p-4 shadow-lg space-y-3">
         <div className="flex items-center justify-between text-xs border-b border-[#0F355E] pb-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-blue-300 font-bold">
@@ -156,19 +242,19 @@ export function ComparatorFindingCard({ finding }: ComparatorFindingCardProps) {
         </div>
       )}
 
-      {/* Why Portmaster flagged this */}
-      <div className="rounded-xl bg-[#051A33] border border-[#124278] p-3 sm:p-3.5 space-y-1.5">
-        <div className="flex items-center gap-2">
-          <span className="p-1 rounded bg-amber-500/20 text-[#F5B544]">
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+      {/* Why Portmaster Flagged This (Anchor Banner) */}
+      <div className="rounded-2xl bg-[#041935] border border-[#103D6D] p-3.5 sm:p-4 flex items-start gap-3 shadow-md">
+        <div className="w-8 h-8 rounded-xl bg-blue-900/50 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0 mt-0.5">
+          <Anchor className="h-4 w-4 text-[#F5B544]" />
+        </div>
+        <div className="space-y-1">
+          <h4 className="text-xs font-bold text-white tracking-wide">
             Why Portmaster flagged this
           </h4>
+          <p className="text-xs sm:text-[12.5px] text-blue-100/90 leading-relaxed">
+            {finding.whyPortmasterFlagged}
+          </p>
         </div>
-        <p className="text-xs text-blue-100/90 leading-relaxed pl-6">
-          {finding.whyPortmasterFlagged}
-        </p>
       </div>
     </div>
   );
