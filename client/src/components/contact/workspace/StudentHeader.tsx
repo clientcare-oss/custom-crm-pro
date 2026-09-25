@@ -159,9 +159,9 @@ export function StudentHeader({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setLocation(`/tools/iep-comparator?studentId=${contact.id}`)}
+            onClick={() => setLocation(`/post-meeting-review/${contact.id}`)}
             className="h-8 sm:h-9 px-3 text-xs font-semibold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 shadow-xs cursor-pointer transition-all gap-1.5"
-            title="Portmaster: Post-Meeting Review & IEP Amendment Comparison"
+            title="Portmaster: Post-Meeting Review & IEP Amendment Comparison (PG-044)"
           >
             <span className="text-sm">⚓</span>
             <span>Post-Meeting Review</span>

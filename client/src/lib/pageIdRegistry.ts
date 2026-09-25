@@ -84,6 +84,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/first-mate/popout":               { id: "PG-037-POP", name: "First Mate Floating Copilot", category: "Advocacy" },
   "/advocacy-pipeline":               { id: "PG-039", name: "Advocacy Pipeline", category: "CRM", description: "Interactive Kanban-style case management pipeline" },
   "/pipeline":                        { id: "PG-039", name: "Advocacy Pipeline", category: "CRM", description: "Interactive Kanban-style case management pipeline" },
+  "/post-meeting-review":             { id: "PG-044", name: "Post-Meeting Review", category: "Advocacy", description: "Portmaster post-meeting review and IEP amendment verification" },
   
   // Smart Files Suite
   "/smart-files":                     { id: "PG-033", name: "Smart Files Library", category: "Smart Files" },
@@ -180,6 +181,14 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     matcher: (path) => /^\/meeting-workspace(\/.*)?$/.test(path),
     id: "PG-043",
     name: "⚡ Meeting Workspace",
+    category: "Advocacy",
+  },
+
+  // Post-Meeting Review
+  {
+    matcher: (path) => /^\/post-meeting-review(\/.*)?$/.test(path),
+    id: "PG-044",
+    name: "Post-Meeting Review",
     category: "Advocacy",
   },
 
