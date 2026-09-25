@@ -75,6 +75,7 @@ import Metrics from "./pages/Metrics";
 import AdvocacyPipeline from "./pages/AdvocacyPipeline";
 import MeetingWorkspace from "./pages/MeetingWorkspace";
 import PostMeetingReview from "./pages/PostMeetingReview";
+import PwnDecoder from "./pages/PwnDecoder";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -191,6 +192,10 @@ function Router() {
           <Route path="/tasks" component={Tasks} />
           <Route path="/tech-tasks" component={TechTasks} />
           <Route path="/tools" component={Tools} />
+          <Route path="/tools/pwn-decoder/:reviewId" component={PwnDecoder} />
+          <Route path="/tools/pwn-decoder" component={PwnDecoder} />
+          <Route path="/pwn-decoder/:reviewId" component={PwnDecoder} />
+          <Route path="/pwn-decoder" component={PwnDecoder} />
           <Route path="/tools/worksheet-builder" component={DiscoveryWorksheetBuilder} />
           <Route path="/tools/iep-comparator" component={IepComparator} />
           <Route path="/tools/voyage-recorder" component={VoyageRecorder} />

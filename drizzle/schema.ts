@@ -2536,5 +2536,108 @@ export const meetingWorkspaces = mysqlTable("meeting_workspaces", {
 export type MeetingWorkspace = typeof meetingWorkspaces.$inferSelect;
 export type InsertMeetingWorkspace = typeof meetingWorkspaces.$inferInsert;
 
+/**
+ * PWN Decoder — PG-010-PWN Prior Written Notice Analysis Engine.
+ * Standalone advocacy tool for federal IDEA 34 C.F.R. §300.503 compliance and decision decoding.
+ */
+export const pwnReviews = mysqlTable("pwn_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("student_contact_id").notNull(),
+  pwnDocumentId: int("pwn_document_id"), // link to clientFiles.id if from vault/upload
+  pwnDocumentName: varchar("pwn_document_name", { length: 255 }).default("Prior Written Notice"),
+  pwnRawText: text("pwn_raw_text"),
+  stateOverlay: varchar("state_overlay", { length: 100 }).default("Not Configured"),
+  advocateName: varchar("advocate_name", { length: 150 }).default("Byron Honea"),
+  status: varchar("status", { length: 50 }).default("DRAFT").notNull(), // "DRAFT" | "ADVOCATE_REVIEWED" | "COMPLETED"
+  documentationStrength: varchar("documentation_strength", { length: 50 }).default("THIN").notNull(), // "STRONG" | "ADEQUATE" | "THIN" | "SERIOUS_CONCERN"
+  documentationStrengthReason: text("documentation_strength_reason"),
+  summary: text("summary"),
+  highestAttentionItems: text("highest_attention_items"), // JSON array
+  strengths: text("strengths"), // JSON array
+  requiredElementCount: int("required_element_count").default(9),
+  elementsNeedReviewCount: int("elements_need_review_count").default(0),
+  decisionsCount: int("decisions_count").default(0),
+  potentialProblemsCount: int("potential_problems_count").default(0),
+  advocateNotes: text("advocate_notes"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  studentIdx: index("pwn_reviews_student_idx").on(t.studentContactId),
+  statusIdx: index("pwn_reviews_status_idx").on(t.status),
+}));
+
+export type PwnReview = typeof pwnReviews.$inferSelect;
+export type InsertPwnReview = typeof pwnReviews.$inferInsert;
+
+export const pwnDecisions = mysqlTable("pwn_decisions", {
+  id: int("id").autoincrement().primaryKey(),
+  reviewId: int("review_id").notNull(),
+  decisionTitle: varchar("decision_title", { length: 255 }).notNull(),
+  action: varchar("action", { length: 50 }).notNull(), // "PROPOSED" | "REFUSED" | "UNCLEAR"
+  pwnLanguage: text("pwn_language"),
+  plainLanguage: text("plain_language"),
+  reason: text("reason"),
+  evidenceIdentified: text("evidence_identified"),
+  evidenceStatus: varchar("evidence_status", { length: 50 }).default("PRESENT"), // "PRESENT" | "WEAK" | "NOT_LOCATED"
+  optionsConsidered: text("options_considered"),
+  optionsStatus: varchar("options_status", { length: 50 }).default("PRESENT"), // "PRESENT" | "NOT_LOCATED"
+  rejectionReason: text("rejection_reason"),
+  relevantFactors: text("relevant_factors"),
+  documentLocation: varchar("document_location", { length: 100 }), // e.g. "PWN — Page 2"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  reviewIdx: index("pwn_decisions_review_idx").on(t.reviewId),
+}));
+
+export type PwnDecision = typeof pwnDecisions.$inferSelect;
+export type InsertPwnDecision = typeof pwnDecisions.$inferInsert;
+
+export const pwnRequirementFindings = mysqlTable("pwn_requirement_findings", {
+  id: int("id").autoincrement().primaryKey(),
+  reviewId: int("review_id").notNull(),
+  requirementKey: varchar("requirement_key", { length: 100 }).notNull(),
+  requirementTitle: varchar("requirement_title", { length: 255 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull(), // "PRESENT" | "WEAK_UNCLEAR" | "NOT_LOCATED" | "UNABLE_TO_DETERMINE"
+  relevantLanguage: text("relevant_language"),
+  explanation: text("explanation"),
+  strongerDocumentationTip: text("stronger_documentation_tip"),
+  source: varchar("source", { length: 100 }).default("34 C.F.R. §300.503"),
+  documentLocation: varchar("document_location", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  reviewIdx: index("pwn_req_findings_review_idx").on(t.reviewId),
+  keyIdx: index("pwn_req_findings_key_idx").on(t.requirementKey),
+}));
+
+export type PwnRequirementFinding = typeof pwnRequirementFindings.$inferSelect;
+export type InsertPwnRequirementFinding = typeof pwnRequirementFindings.$inferInsert;
+
+export const pwnConcerns = mysqlTable("pwn_concerns", {
+  id: int("id").autoincrement().primaryKey(),
+  reviewId: int("review_id").notNull(),
+  concernType: varchar("concern_type", { length: 100 }).notNull(),
+  relatedDecision: varchar("related_decision", { length: 255 }),
+  title: varchar("title", { length: 255 }).notNull(),
+  severity: varchar("severity", { length: 50 }).default("needs_attention"), // "needs_attention" | "review" | "documented"
+  relevantPwnLanguage: text("relevant_pwn_language"),
+  whyFlagged: text("why_flagged"),
+  relatedRequirement: varchar("related_requirement", { length: 255 }),
+  source: varchar("source", { length: 100 }).default("34 C.F.R. §300.503"),
+  documentLocation: varchar("document_location", { length: 100 }),
+  advocateStatus: varchar("advocate_status", { length: 50 }).default("UNREVIEWED"), // "UNREVIEWED" | "CONFIRMED" | "DISMISSED" | "UNDER_REVIEW"
+  advocateNote: text("advocate_note"),
+  advocateCorrection: text("advocate_correction"),
+  strongerDocumentationWouldIdentify: text("stronger_doc_would_identify"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  reviewIdx: index("pwn_concerns_review_idx").on(t.reviewId),
+  typeIdx: index("pwn_concerns_type_idx").on(t.concernType),
+  severityIdx: index("pwn_concerns_severity_idx").on(t.severity),
+}));
+
+export type PwnConcern = typeof pwnConcerns.$inferSelect;
+export type InsertPwnConcern = typeof pwnConcerns.$inferInsert;
+
 
 

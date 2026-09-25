@@ -36,6 +36,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/tools/voyage-recorder":           { id: "PG-010-REC", name: "Voyage Meeting Recorder", category: "Tools" },
   "/tools/worksheet-builder":         { id: "PG-010-WS", name: "Worksheet Studio", category: "Tools" },
   "/tools/iep-comparator":            { id: "PG-010-IEP", name: "IEP Comparator", category: "Tools" },
+  "/tools/pwn-decoder":               { id: "PG-010-PWN", name: "🧭 PWN Decoder", category: "Tools", description: "Decode what the district proposed, refused, explained, and may have missed" },
+  "/pwn-decoder":                     { id: "PG-010-PWN", name: "🧭 PWN Decoder", category: "Tools", description: "Decode what the district proposed, refused, explained, and may have missed" },
   "/meeting-workspace":               { id: "PG-043", name: "⚡ Meeting Workspace", category: "Advocacy", description: "Dedicated live meeting workspace for advocate IEP sessions" },
   
   // Templates & Marketing
@@ -226,6 +228,12 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     id: "PG-027",
     name: "Portal Experience",
     category: "Portal",
+  },
+  {
+    matcher: (path) => /^\/(?:tools\/)?pwn-decoder(?:\/|$)/.test(path),
+    id: "PG-010-PWN",
+    name: "🧭 PWN Decoder",
+    category: "Tools",
   },
 ];
 

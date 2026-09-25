@@ -127,6 +127,85 @@ export default function Tools() {
   // Tools configuration
   const toolsList = [
     {
+      id: "pwn-decoder",
+      title: "🧭 PWN Decoder",
+      subtitle: "Decode what the district proposed, refused, explained, and may have missed.",
+      description: "Analyze a Prior Written Notice for required elements, documentation strength, reasoning, supporting evidence, and potential concerns.",
+      btnText: "Open PWN Decoder →",
+      disabled: false,
+      featured: true,
+      onClick: () => {
+        setLocation(contactId ? `/tools/pwn-decoder?studentId=${contactId}` : "/tools/pwn-decoder");
+      },
+      preview: (
+        <div className="relative w-full h-full flex items-center justify-center bg-slate-950/40 border-b border-white/5 group overflow-hidden">
+          {/* Featured Badge */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+            <Compass className="h-3 w-3 text-amber-400" />
+            Federal IDEA
+          </div>
+          
+          {/* Background grid / radar lines */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(217,119,6,0.08)_0,transparent_70%)]" />
+          
+          {/* Main Visual: Document with Decoded Findings */}
+          <div className="relative z-10 w-full max-w-[270px] flex items-center justify-between px-2 gap-3">
+            {/* PWN Document Miniature */}
+            <div className="relative w-[110px] h-[126px] bg-[#000820] border border-amber-500/30 rounded-xl p-2.5 flex flex-col justify-between shadow-xl shadow-black/60">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-1">
+                  <span className="text-[8px] font-mono uppercase text-amber-400 font-bold">PWN §300.503</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+                <div className="h-1.5 w-16 bg-slate-700/80 rounded-xs" />
+                <div className="h-1.5 w-12 bg-slate-800 rounded-xs" />
+                {/* Proposed Badge inside */}
+                <div className="px-1 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-[7px] text-emerald-300 font-semibold inline-block">
+                  PROPOSED
+                </div>
+                <div className="h-1.5 w-18 bg-slate-800 rounded-xs" />
+                {/* Refused Badge inside */}
+                <div className="px-1 py-0.5 rounded bg-rose-950/60 border border-rose-500/40 text-[7px] text-rose-300 font-semibold inline-block">
+                  REFUSED
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-[7px] text-slate-500 pt-1 border-t border-white/5">
+                <span>9 Elements</span>
+                <span className="text-amber-400 font-medium">Core IDEA</span>
+              </div>
+            </div>
+
+            {/* Radar / Decoder Findings Column */}
+            <div className="flex-1 space-y-2">
+              <div className="p-2 rounded-lg bg-[#000820]/90 border border-emerald-500/25 shadow-sm">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10B981]" />
+                  <span className="text-[10px] font-bold text-emerald-300">Action Identified</span>
+                </div>
+                <div className="h-1 w-16 bg-emerald-500/20 rounded mt-1" />
+              </div>
+
+              <div className="p-2 rounded-lg bg-[#000820]/90 border border-amber-500/30 shadow-sm">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#F59E0B]" />
+                  <span className="text-[10px] font-bold text-amber-300">Why: Thin Rationale</span>
+                </div>
+                <div className="h-1 w-20 bg-amber-500/20 rounded mt-1" />
+              </div>
+
+              <div className="p-2 rounded-lg bg-[#000820]/90 border border-rose-500/25 shadow-sm">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_6px_#F43F5E]" />
+                  <span className="text-[10px] font-bold text-rose-300">Evidence Missing</span>
+                </div>
+                <div className="h-1 w-14 bg-rose-500/20 rounded mt-1" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       id: "iep-comparison",
       title: "IEP Comparison",
       description: "Compare IEPs side-by-side and instantly see what changed. Highlighted differences, connected insights, and advocacy notes keep you prepared.",
@@ -614,6 +693,11 @@ export default function Tools() {
                 <h3 className="text-xl font-bold font-serif text-white tracking-tight group-hover:text-indigo-300 transition-colors">
                   {tool.title}
                 </h3>
+                {(tool as any).subtitle && (
+                  <p className="text-xs font-semibold text-amber-300/90 leading-snug">
+                    {(tool as any).subtitle}
+                  </p>
+                )}
                 <p className="text-xs text-slate-400 leading-relaxed">
                   {tool.description}
                 </p>

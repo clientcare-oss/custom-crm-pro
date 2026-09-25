@@ -1425,3 +1425,7 @@ export * from "./db/timeTracking";
 // ─── Meeting Workspace (PG-043) ─────────────────────────────────────────
 export * from "./db/meetingWorkspace";
 
+// ─── PWN Decoder (PG-010-PWN) ─────────────────────────────────────────────
+export * from "./db/pwnDecoder";
+
+

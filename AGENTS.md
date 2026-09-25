@@ -87,6 +87,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-010-REC`: Voyage Meeting Recorder (`/tools/voyage-recorder`)
   - `PG-010-WS`: Worksheet Studio (`/tools/worksheet-builder`)
   - `PG-010-IEP`: IEP Comparator (`/tools/iep-comparator`)
+  - `PG-010-PWN`: PWN Decoder (`/tools/pwn-decoder`, `/pwn-decoder`)
   - `PG-011`: Templates (`/templates`)
   - `PG-012`: Lead Forms (`/lead-forms`)
   - `PG-013`: Automations (`/automations`)
