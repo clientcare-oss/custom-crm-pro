@@ -113,24 +113,16 @@ export function StandardPortmasterFindingCard({
         {/* Panel 1: Previous IEP */}
         <div className="rounded-2xl bg-[#03152C] border-[3px] border-[#1E60A6] p-4 space-y-3 shadow-md flex flex-col justify-between">
           <div>
-            {/* Header with Step 1 -> Arrow */}
-            <div className="flex items-center justify-between text-xs font-bold text-white border-b border-[#14477D]/70 pb-2.5 mb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center justify-center">
-                  <FileText className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
-                    Previous IEP
-                  </span>
-                  <span className="text-[11px] text-blue-300/80 font-sans font-medium">Aug 14, 2025</span>
-                </div>
+            {/* Header */}
+            <div className="flex items-center gap-2 text-xs font-bold text-white border-b border-[#14477D]/70 pb-2.5 mb-2.5">
+              <div className="w-6 h-6 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center justify-center">
+                <FileText className="h-3.5 w-3.5" />
               </div>
-
-              {/* Progression Arrow in Header */}
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-900/60 border border-blue-400/40 text-blue-200 text-xs font-sans font-semibold">
-                <span>1 of 3</span>
-                <span className="text-cyan-400 font-bold text-sm">→</span>
+              <div>
+                <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
+                  Previous IEP
+                </span>
+                <span className="text-[11px] text-blue-300/80 font-sans font-medium">Aug 14, 2025</span>
               </div>
             </div>
 
@@ -155,24 +147,16 @@ export function StandardPortmasterFindingCard({
         {/* Panel 2: Meeting Record (Center) */}
         <div className="rounded-2xl bg-[#03152C] border-[3px] border-teal-500/70 p-4 space-y-3 shadow-md flex flex-col justify-between">
           <div>
-            {/* Header with Step 2 -> Arrow */}
-            <div className="flex items-center justify-between text-xs font-bold text-white border-b border-teal-500/40 pb-2.5 mb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center">
-                  <CalendarCheck className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
-                    Meeting Record
-                  </span>
-                  <span className="text-[11px] text-teal-300/80 font-sans font-medium">Sept 18, 2026</span>
-                </div>
+            {/* Header */}
+            <div className="flex items-center gap-2 text-xs font-bold text-white border-b border-teal-500/40 pb-2.5 mb-2.5">
+              <div className="w-6 h-6 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center">
+                <CalendarCheck className="h-3.5 w-3.5" />
               </div>
-
-              {/* Progression Arrow in Header */}
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-900/60 border border-teal-400/40 text-teal-200 text-xs font-sans font-semibold">
-                <span>2 of 3</span>
-                <span className="text-teal-300 font-bold text-sm">→</span>
+              <div>
+                <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
+                  Meeting Record
+                </span>
+                <span className="text-[11px] text-teal-300/80 font-sans font-medium">Sept 18, 2026</span>
               </div>
             </div>
 
@@ -224,23 +208,16 @@ export function StandardPortmasterFindingCard({
         {/* Panel 3: Updated IEP */}
         <div className="rounded-2xl bg-[#03152C] border-[3px] border-rose-500/70 p-4 space-y-3 shadow-md flex flex-col justify-between">
           <div>
-            {/* Header with Step 3 Result */}
-            <div className="flex items-center justify-between text-xs font-bold text-white border-b border-rose-500/40 pb-2.5 mb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center justify-center">
-                  <FileText className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
-                    Updated IEP
-                  </span>
-                  <span className="text-[11px] text-rose-300/80 font-sans font-medium">Sept 25, 2026</span>
-                </div>
+            {/* Header */}
+            <div className="flex items-center gap-2 text-xs font-bold text-white border-b border-rose-500/40 pb-2.5 mb-2.5">
+              <div className="w-6 h-6 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center justify-center">
+                <FileText className="h-3.5 w-3.5" />
               </div>
-
-              {/* Result Indicator in Header */}
-              <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-900/60 border border-rose-400/40 text-rose-200 text-xs font-sans font-semibold">
-                <span>3 of 3 (Result)</span>
+              <div>
+                <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
+                  Updated IEP
+                </span>
+                <span className="text-[11px] text-rose-300/80 font-sans font-medium">Sept 25, 2026</span>
               </div>
             </div>
 
