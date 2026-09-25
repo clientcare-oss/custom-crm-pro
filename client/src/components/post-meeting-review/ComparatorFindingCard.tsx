@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  FileText,
   Play,
   Pause,
-  Sparkles,
-  Volume2,
   Anchor,
+  Sparkles,
+  ExternalLink,
+  Star,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,16 +39,24 @@ export function ComparatorFindingCard({
   const handlePlayClip = () => {
     setIsPlayingAudio(!isPlayingAudio);
     if (!isPlayingAudio) {
-      toast.info(`Playing meeting audio clip from ${finding.meetingRecord?.evidence?.timestamp || "01:14:22"}`);
+      toast.info(
+        `Playing meeting audio clip from ${
+          finding.meetingRecord?.evidence?.timestamp || "01:14:22"
+        }`
+      );
     }
   };
+
+  const metricLabel = finding.comparatorDiff?.metricLabel || "Frequency";
+  const prevVal = finding.comparatorDiff?.previousVal || finding.previousIep.value;
+  const updatedVal = finding.comparatorDiff?.updatedVal || finding.updatedIep.value;
 
   return (
     <div className="space-y-4 select-none">
       {/* Top Header: Finding index, Navigation arrows, Title, and Review First badge */}
       <div>
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-xs font-semibold text-blue-200/70 font-mono">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <span className="text-xs font-semibold text-blue-200/80">
             Finding {currentIndex} of {totalCount}
           </span>
 
@@ -73,10 +82,10 @@ export function ComparatorFindingCard({
 
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide font-sans">
               {finding.title}
             </h2>
-            <p className="text-xs sm:text-sm text-blue-200/80 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-sm text-blue-200/90 mt-1 max-w-2xl leading-relaxed font-sans">
               {finding.oneLineExplanation}
             </p>
           </div>
@@ -84,24 +93,24 @@ export function ComparatorFindingCard({
           {/* Review First / Check Badge */}
           {isReviewFirst ? (
             <div className="px-3 py-1.5 rounded-xl bg-rose-950/80 border border-rose-500/50 flex items-center gap-2">
-              <span className="text-rose-400 font-bold text-xs">!</span>
+              <span className="text-rose-400 font-bold text-sm">!</span>
               <div>
-                <span className="text-xs font-bold text-rose-300 block leading-none font-mono">
+                <span className="text-xs font-bold text-rose-300 block leading-none">
                   REVIEW FIRST
                 </span>
-                <span className="text-[10.5px] text-rose-200/80 block mt-0.5">
+                <span className="text-xs text-rose-200/80 block mt-0.5">
                   This item may impact the student&apos;s program.
                 </span>
               </div>
             </div>
           ) : (
             <div className="px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/50 flex items-center gap-2">
-              <span className="text-[#F5B544] font-bold text-xs">!</span>
+              <span className="text-[#F5B544] font-bold text-sm">!</span>
               <div>
-                <span className="text-xs font-bold text-[#F5B544] block leading-none font-mono">
+                <span className="text-xs font-bold text-[#F5B544] block leading-none">
                   CHECK
                 </span>
-                <span className="text-[10.5px] text-amber-200/80 block mt-0.5">
+                <span className="text-xs text-amber-200/80 block mt-0.5">
                   Wording or model change requires verification.
                 </span>
               </div>
@@ -110,133 +119,172 @@ export function ComparatorFindingCard({
         </div>
       </div>
 
-      {/* Comparator Circuit Visual Board (Before -> Circuit -> After) */}
-      <div className="rounded-2xl bg-[#041224] border border-[#113C6E] p-3 sm:p-4 shadow-lg space-y-3">
-        <div className="flex items-center justify-between text-xs border-b border-[#0F355E] pb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-blue-300 font-bold">
-              IEP Comparator Circuit
-            </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-[#F5B544] border border-amber-500/40">
-              {changeLabel}
-            </span>
-          </div>
-          {finding.comparatorDiff && (
-            <div className="text-[11px] font-mono text-teal-300 flex items-center gap-1.5">
-              <span>{finding.comparatorDiff.metricLabel}:</span>
-              <span className="text-rose-300 line-through">{finding.comparatorDiff.previousVal}</span>
-              <span className="text-blue-400">→</span>
-              <span className="text-emerald-300 font-bold">{finding.comparatorDiff.updatedVal}</span>
-            </div>
-          )}
-        </div>
+      {/* ============================================================== */}
+      {/* COMPARATOR CIRCUIT FLOW VIEW (Matching Reference Screenshot 1) */}
+      {/* ============================================================== */}
+      <div className="relative">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-stretch relative">
+          {/* ===================== LEFT CARD (Updated IEP) ===================== */}
+          <div className="rounded-2xl bg-[#030e20] border border-[#0e2c56] p-4 sm:p-5 flex flex-col justify-between shadow-xl relative transition-all hover:border-[#16447e]">
+            {/* Top Chip Bar */}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded-full bg-[#05162d] border border-[#0d3460] text-xs font-medium text-blue-200">
+                  {String(currentIndex).padStart(2, "0")} · {finding.category}
+                </span>
 
-        {/* 2-Card Flow with Central Glowing Circuit Line */}
-        <div className="grid grid-cols-1 lg:grid-cols-11 gap-2 sm:gap-3 items-stretch relative">
-          {/* Card 1: Previous IEP (5 cols) */}
-          <div className="lg:col-span-5 rounded-xl bg-[#05172C] border border-[#14477D] p-3.5 space-y-2 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-[10.5px] font-mono text-blue-300/70 border-b border-[#103A68] pb-1.5 mb-2">
-                <span className="font-bold uppercase tracking-wider text-blue-300">Previous IEP</span>
-                <span>Page {finding.previousIep.page}</span>
+                <span className="px-3 py-1 rounded-full bg-[#1e1503] border border-[#f5b544]/60 text-xs font-bold text-[#f5b544]">
+                  {metricLabel}: {prevVal} → {updatedVal}
+                </span>
               </div>
-              <span className="text-[10.5px] font-mono text-blue-400/80 block mb-1">
-                {finding.previousIep.section}
+
+              <span className="px-3 py-0.5 rounded-full bg-[#1e1503] border border-[#f5b544]/70 text-xs font-bold text-[#f5b544] uppercase tracking-wider">
+                {changeLabel}
               </span>
-              <div className="text-xs font-bold text-slate-100 bg-[#071D38] p-2.5 rounded-lg border border-[#185394]">
-                {finding.previousIep.value}
-              </div>
             </div>
-            <p className="text-[11px] text-blue-200/70 leading-relaxed pt-2">
-              {finding.previousIep.details}
-            </p>
-          </div>
 
-          {/* Central Circuit Connection Graphic (1 col) */}
-          <div className="lg:col-span-1 flex flex-col items-center justify-center py-2 lg:py-0 relative select-none">
-            <div className="w-full flex items-center justify-center">
-              {/* Glowing Pulse Node */}
-              <div className="relative flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-400/50 flex items-center justify-center shadow-[0_0_12px_rgba(20,184,166,0.3)]">
-                  <div className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse" />
-                </div>
-              </div>
+            {/* Card Heading */}
+            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-sans mb-3">
+              {finding.title}
+            </h3>
+
+            {/* Dark Inner Narrative Box with Normal Readable Text */}
+            <div className="rounded-xl bg-[#061834] border border-[#0e2d57] p-3.5 sm:p-4 text-slate-100 text-sm leading-relaxed font-sans shadow-inner">
+              <p className="font-normal text-slate-200">
+                {finding.updatedIep.details}
+              </p>
             </div>
-            <span className="text-[9.5px] font-mono uppercase text-teal-300/80 mt-1 font-bold">
-              Diff
-            </span>
-          </div>
 
-          {/* Card 2: Updated IEP (5 cols) */}
-          <div className="lg:col-span-5 rounded-xl bg-[#07182E] border border-rose-500/50 p-3.5 space-y-2 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between text-[10.5px] font-mono text-rose-300/80 border-b border-rose-500/30 pb-1.5 mb-2">
-                <span className="font-bold uppercase tracking-wider text-rose-300">Updated IEP</span>
-                <span>Page {finding.updatedIep.page}</span>
-              </div>
-              <span className="text-[10.5px] font-mono text-blue-300/70 block mb-1">
-                {finding.updatedIep.section}
+            {/* Card Footer */}
+            <div className="flex items-center justify-between pt-3.5 text-xs border-t border-[#0a2347] mt-3">
+              <span className="text-slate-400 font-normal">
+                Page {finding.updatedIep.page} · {finding.updatedIep.section}
               </span>
-              <div className="text-xs font-bold text-white bg-[#0A1F3B] p-2.5 rounded-lg border border-rose-500/40">
-                {finding.updatedIep.value}
+
+              <button
+                type="button"
+                className="text-xs font-semibold text-blue-400 hover:text-blue-200 cursor-pointer inline-flex items-center gap-1 transition-colors"
+              >
+                <span>Inspect</span>
+                <span>→</span>
+              </button>
+            </div>
+
+            {/* Circuit Connector Node on Right Border (Desktop) */}
+            <div className="hidden lg:flex absolute -right-[7px] top-1/2 -translate-y-1/2 z-20">
+              <div className="w-3.5 h-3.5 rounded-full bg-[#F5B544] border-2 border-[#000820] shadow-[0_0_10px_rgba(245,181,68,0.9)]" />
+            </div>
+          </div>
+
+          {/* ===================== CENTRAL CIRCUIT CONNECTION ===================== */}
+          {/* Desktop Circuit Bridge with Gold Dashed Line & Glowing Diamond */}
+          <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center pointer-events-none z-10 w-14">
+            {/* Left Dashed Line */}
+            <div className="w-4 h-[2px] border-t-2 border-dashed border-[#F5B544]/80" />
+
+            {/* Center Glowing Diamond Node */}
+            <div className="w-4 h-4 rotate-45 border-2 border-[#F5B544] bg-[#000820] shadow-[0_0_12px_rgba(245,181,68,0.9)] flex items-center justify-center shrink-0">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#F5B544]" />
+            </div>
+
+            {/* Right Dashed Line */}
+            <div className="w-4 h-[2px] border-t-2 border-dashed border-[#F5B544]/80" />
+          </div>
+
+          {/* ===================== RIGHT CARD (Previous IEP / Old Baseline) ===================== */}
+          <div className="rounded-2xl bg-[#030e20] border border-[#0e2c56] p-4 sm:p-5 flex flex-col justify-between shadow-xl relative transition-all hover:border-[#16447e]">
+            {/* Circuit Connector Node on Left Border (Desktop) */}
+            <div className="hidden lg:flex absolute -left-[7px] top-1/2 -translate-y-1/2 z-20">
+              <div className="w-3.5 h-3.5 rounded-full bg-[#F5B544] border-2 border-[#000820] shadow-[0_0_10px_rgba(245,181,68,0.9)]" />
+            </div>
+
+            {/* Top Chip Bar */}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="px-2.5 py-1 rounded-full bg-[#05162d] border border-[#0d3460] text-xs font-medium text-blue-200">
+                Old Baseline · {finding.category}
+              </span>
+
+              <span className="text-xs text-blue-300/70 font-medium">
+                Prior Language
+              </span>
+            </div>
+
+            {/* Card Heading */}
+            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-sans mb-3">
+              {finding.title}
+            </h3>
+
+            {/* Dark Inner Narrative Box with Normal Readable Text */}
+            <div className="rounded-xl bg-[#061834] border border-[#0e2d57] p-3.5 sm:p-4 text-slate-100 text-sm leading-relaxed font-sans shadow-inner">
+              <p className="font-normal text-slate-200">
+                {finding.previousIep.details}
+              </p>
+            </div>
+
+            {/* Card Footer */}
+            <div className="flex items-center justify-between pt-3.5 text-xs border-t border-[#0a2347] mt-3">
+              <span className="text-slate-400 font-normal">
+                Page {finding.previousIep.page} · {finding.previousIep.section}
+              </span>
+
+              <div className="flex items-center gap-2 text-blue-300/60">
+                <Star className="h-3.5 w-3.5" />
+                <CheckCircle2 className="h-3.5 w-3.5" />
               </div>
             </div>
-            <p className="text-[11px] text-rose-200/80 leading-relaxed pt-2">
-              {finding.updatedIep.details}
-            </p>
           </div>
         </div>
       </div>
 
       {/* Meeting Evidence Supplement (If Meeting Conflict) */}
       {isMeetingConflict && finding.meetingRecord?.evidence && (
-        <div className="rounded-xl bg-[#06243A] border border-teal-500/40 p-3 sm:p-3.5 space-y-2 shadow-sm">
+        <div className="rounded-2xl bg-[#06243A] border border-teal-500/40 p-4 space-y-2.5 shadow-md">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 text-teal-300">
-              <span className="text-sm">⚓</span>
-              <span className="text-xs font-bold uppercase tracking-wider font-mono">
-                Meeting Evidence (Conflict with District Commitment)
+            <div className="flex items-center gap-2 text-teal-300">
+              <Anchor className="h-4 w-4 text-[#F5B544]" />
+              <span className="text-xs sm:text-sm font-bold tracking-wide">
+                Meeting Evidence: Conflict with District Commitment
               </span>
             </div>
-            <span className="text-[10.5px] font-mono px-2 py-0.5 rounded bg-teal-950/80 border border-teal-500/40 text-teal-300 font-bold">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-950 border border-teal-500/40 text-teal-300 font-medium font-mono">
               Timestamp {finding.meetingRecord.evidence.timestamp}
             </span>
           </div>
 
-          <div className="text-xs text-blue-100 bg-[#041525] p-2.5 rounded-lg border border-[#0E355E] space-y-1">
+          <div className="text-sm text-blue-100 bg-[#041525] p-3 rounded-xl border border-[#0E355E] space-y-1.5 font-sans">
             <p className="font-semibold text-teal-200">
-              Team Commitment: {finding.meetingRecord.agreedDecision}
+              Team Agreement: {finding.meetingRecord.agreedDecision}
             </p>
-            <p className="text-[11.5px] text-blue-200/80 italic">
-              {finding.meetingRecord.evidence.transcriptExcerpt}
+            <p className="text-slate-200 italic leading-relaxed">
+              &ldquo;{finding.meetingRecord.evidence.transcriptExcerpt}&rdquo;
             </p>
-            <span className="text-[10px] font-mono text-blue-400 block pt-0.5">
+            <span className="text-xs text-blue-300/70 block pt-1">
               Speaker: {finding.meetingRecord.evidence.speaker} · {finding.meetingRecord.evidence.meetingDate}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 pt-0.5">
+          <div className="flex items-center gap-3 pt-1">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handlePlayClip}
-              className="h-7 text-xs font-semibold bg-[#0A3052] border-teal-400/40 text-teal-200 hover:text-white hover:bg-teal-900/60 cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+              className="h-8 px-3 text-xs font-semibold bg-[#0A3052] border-teal-400/40 text-teal-100 hover:text-white hover:bg-teal-900/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
             >
               {isPlayingAudio ? (
                 <>
-                  <Pause className="h-3 w-3 text-teal-300" />
+                  <Pause className="h-3.5 w-3.5 text-teal-300" />
                   <span>Pause Clip (0:42)</span>
                 </>
               ) : (
                 <>
-                  <Play className="h-3 w-3 text-teal-300 fill-teal-300" />
+                  <Play className="h-3.5 w-3.5 text-teal-300 fill-teal-300" />
                   <span>▶ Play Meeting Clip (0:42)</span>
                 </>
               )}
             </Button>
-            <span className="text-[11px] text-blue-300/60 font-mono">
-              Direct recording sync verified
+            <span className="text-xs text-blue-300/70">
+              Verified directly from meeting audio transcript
             </span>
           </div>
         </div>
@@ -248,10 +296,10 @@ export function ComparatorFindingCard({
           <Anchor className="h-4 w-4 text-[#F5B544]" />
         </div>
         <div className="space-y-1">
-          <h4 className="text-xs font-bold text-white tracking-wide">
+          <h4 className="text-xs sm:text-sm font-bold text-white tracking-wide font-sans">
             Why Portmaster flagged this
           </h4>
-          <p className="text-xs sm:text-[12.5px] text-blue-100/90 leading-relaxed">
+          <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed font-sans font-normal">
             {finding.whyPortmasterFlagged}
           </p>
         </div>

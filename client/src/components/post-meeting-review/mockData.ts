@@ -3,28 +3,29 @@ import type { PortmasterFinding, PortmasterSessionState } from "./types";
 export const INITIAL_PORTMASTER_FINDINGS: PortmasterFinding[] = [
   {
     id: "pm-find-1",
-    title: "Reading Services",
+    title: "Reading Comprehension Services",
     category: "Services",
     severity: "review_first",
     sourceTags: ["comparator_found", "meeting_conflict"],
     visualType: "comparator_circuit",
-    oneLineExplanation: "Frequency does not match meeting decision (reduced 5x/wk → 3x/wk).",
+    oneLineExplanation: "Frequency changed from 5x/week to 3x/week. The meeting record supports continuing 5x/week.",
     whyPortmasterFlagged:
-      "The school modified the specialized reading service frequency from daily (5x/week) to 3x/week. During the September 18 IEP meeting, the team explicitly committed to maintaining the full 5x/week allocation based on recent progress monitoring data.",
+      "The service decreased from 5x/week to 3x/week. The meeting record supports continuing 5x/week. This appears to be an unexplained change.",
     previousIep: {
       section: "Section IV: Specialized Instruction",
       page: 9,
       value: "30 minutes · 5x weekly (Pull-out)",
-      details: "Direct Orton-Gillingham multisensory reading instruction in resource room setting.",
+      details:
+        "By May 3, 2027, Michael will receive specialized reading instruction 30 minutes, 5 times per week in a resource room setting. Direct Orton-Gillingham multisensory reading instruction focused on foundational reading skills and vocabulary.",
     },
     meetingRecord: {
-      agreedDecision: "Team agreed to maintain specialized reading instruction at 30 minutes, 5 times per week without reduction.",
+      agreedDecision: "Continue current reading service at 30 minutes 5 times per week.",
       decisionDate: "Sept 18, 2026",
       evidence: {
         timestamp: "01:14:22",
         speaker: "Special Ed Lead (Mrs. Abernathy)",
         transcriptExcerpt:
-          "\"Looking at the reading fluency baseline, we will keep the current frequency of 30 minutes, 5 days a week so we don't disrupt his momentum heading into 5th grade.\"",
+          "Team agreed to maintain reading supports at 5x/week. Progress has been positive.",
         audioClipDuration: "0:42",
         decisionQuote: "Continue specialized reading 30 min / 5x weekly.",
         meetingDate: "September 18, 2026",
@@ -34,7 +35,8 @@ export const INITIAL_PORTMASTER_FINDINGS: PortmasterFinding[] = [
       section: "Section IV: Services Schedule",
       page: 8,
       value: "30 minutes · 3x weekly (Pull-out)",
-      details: "Small group reading instruction scheduled Mon/Wed/Fri only.",
+      details:
+        "By May 14, 2027, Michael will receive specialized reading instruction 30 minutes, 3 times per week in a small group setting. Small group reading instruction scheduled Mon/Wed/Fri only. Focus on foundational reading skills and vocabulary.",
       changeLabel: "MODIFIED",
     },
     comparatorDiff: {
@@ -57,14 +59,16 @@ export const INITIAL_PORTMASTER_FINDINGS: PortmasterFinding[] = [
     previousIep: {
       section: "Section VII: Behavior Support Plan",
       page: 14,
-      value: "Active BIP Attached (Sensory-driven de-escalation)",
-      details: "Includes 5-minute scheduled sensory breaks, calm-down corner access, and functional behavior matrix.",
+      value: "Active BIP Attached",
+      details:
+        "Active BIP Attached. Protocol includes 5-minute scheduled sensory breaks, calm-down corner access, and structured functional behavior reinforcement matrix.",
     },
     updatedIep: {
       section: "Section VII: Special Factors",
       page: 12,
       value: "BIP Checkbox: Not Checked",
-      details: "Entire 3-page positive behavioral intervention protocol removed from updated draft.",
+      details:
+        "Special factors checklist indicates Behavior Plan is Not Checked. The positive behavior supports and sensory protocol previously on pages 14–16 have been omitted from the finalized draft.",
       changeLabel: "REMOVED",
     },
     comparatorDiff: {
@@ -97,7 +101,7 @@ export const INITIAL_PORTMASTER_FINDINGS: PortmasterFinding[] = [
         timestamp: "00:38:15",
         speaker: "General Ed Teacher (Mr. Miller)",
         transcriptExcerpt:
-          "\"He can keep his headphones in his desk and put them on whenever class transitions get loud or during assembly time—that works well for us.\"",
+          "He can keep his headphones in his desk and put them on whenever class transitions get loud or during assembly time—that works well for us.",
         decisionQuote: "Headphones available all day upon prompt or request.",
         meetingDate: "September 18, 2026",
       },
@@ -134,16 +138,16 @@ export const INITIAL_PORTMASTER_FINDINGS: PortmasterFinding[] = [
         timestamp: "01:42:08",
         speaker: "Transportation Supervisor (Ms. Diaz)",
         transcriptExcerpt:
-          "\"We have medical verification of heat-triggered asthma. We will update the route sheet for direct curb-to-curb van service with A/C.\"",
+          "We have medical verification of heat-triggered asthma. We will update the route sheet for direct curb-to-curb van service with A/C.",
         decisionQuote: "Direct curb-to-curb A/C transport approved.",
         meetingDate: "September 18, 2026",
       },
     },
     updatedIep: {
       section: "Section IX: Transportation",
-      page: 15,
-      value: "Specialized Transport: NO",
-      details: "Marked as regular district bus transport without climate control specifications.",
+      page: 16,
+      value: "Regular bus route assigned",
+      details: "No specialized van route or climate control modifications recorded.",
       changeLabel: "UNLOCATED",
     },
     decision: "unreviewed",
@@ -155,42 +159,43 @@ export const INITIAL_PORTMASTER_FINDINGS: PortmasterFinding[] = [
     severity: "check",
     sourceTags: ["comparator_found"],
     visualType: "comparator_circuit",
-    oneLineExplanation: "Wording changed enough to require advocate review (service delivery model shifted).",
+    oneLineExplanation: "Wording changed enough to require advocate review (consultative vs direct).",
     whyPortmasterFlagged:
-      "OT service minutes were maintained at 60 min/monthly, but delivery model was altered from direct individual pull-out to integrated consultative group support without advocate notice.",
+      "The delivery model shifted from direct push-in fine motor support to consultative collaboration without corresponding parent consent documented.",
     previousIep: {
-      section: "Section V: Related Services",
-      page: 12,
-      value: "60 minutes monthly (Direct 1:1 Pull-out)",
-      details: "Sensory integration and fine-motor handwriting therapy in OT clinic room.",
+      section: "Section IV: Related Services - OT",
+      page: 10,
+      value: "Direct Push-in · 45 min weekly",
+      details:
+        "Licensed Occupational Therapist provides direct fine-motor handwriting and keyboarding instruction inside general education classroom.",
     },
     updatedIep: {
-      section: "Section V: Related Services",
-      page: 11,
-      value: "60 minutes monthly (Indirect Consultation / Group)",
-      details: "Consultation with classroom staff and embedded push-in group observation.",
+      section: "Section IV: Related Services - OT",
+      page: 9,
+      value: "Consultative · 30 min monthly",
+      details:
+        "Occupational Therapist consults with instructional staff on adaptive seating and assistive technology devices once per month.",
       changeLabel: "MODIFIED",
     },
     comparatorDiff: {
       metricLabel: "Delivery Model",
-      previousVal: "Direct 1:1 Pull-out",
-      updatedVal: "Indirect Consult / Push-in",
+      previousVal: "Direct Push-in 45m/wk",
+      updatedVal: "Consultative 30m/mo",
     },
     decision: "unreviewed",
   },
 ];
 
-export function createDefaultPortmasterSession(studentId: number, studentName = "Mikey Peroni"): PortmasterSessionState {
+export function createDefaultPortmasterSession(studentId: number, studentName: string): PortmasterSessionState {
   return {
     studentId,
     studentName,
-    grade: "Grade 5",
-    schoolDistrict: "Cobb County Schools",
+    meetingId: 1092,
     meetingType: "Annual IEP",
     meetingDate: "September 18, 2026",
-    totalAnalyzedCount: 42,
-    clearedAutomaticallyCount: 37,
-    findings: INITIAL_PORTMASTER_FINDINGS,
     status: "in_review",
+    findings: INITIAL_PORTMASTER_FINDINGS,
+    clearedAutomaticallyCount: 37,
+    totalAnalyzedCount: 42,
   };
 }

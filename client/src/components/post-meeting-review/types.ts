@@ -93,6 +93,7 @@ export interface PortmasterSessionState {
   studentName: string;
   grade?: string;
   schoolDistrict?: string;
+  meetingId?: number;
   meetingType: string;
   meetingDate: string;
   totalAnalyzedCount: number;

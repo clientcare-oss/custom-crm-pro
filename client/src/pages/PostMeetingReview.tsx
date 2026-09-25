@@ -3,6 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import PageIdBadge from "@/components/PageIdBadge";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -101,6 +102,7 @@ export default function PostMeetingReview() {
   );
   const [isUniversalIntakeOpen, setIsUniversalIntakeOpen] = useState<boolean>(false);
   const [isFullComparisonOpen, setIsFullComparisonOpen] = useState<boolean>(false);
+  const [visualModeOverride, setVisualModeOverride] = useState<"circuit" | "standard" | "auto">("auto");
 
   // Filtered queue items
   const filteredFindings = session.findings.filter((f) => {
@@ -364,8 +366,47 @@ export default function PostMeetingReview() {
               <div className="lg:col-span-8 w-full space-y-4">
                 {selectedFinding ? (
                   <>
+                    {/* View Switcher: Circuit Flow vs 3-Paper Flow */}
+                    <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
+                      <span className="text-xs text-blue-200/70 font-sans">
+                        Visual Presentation:
+                      </span>
+                      <div className="flex items-center gap-1 bg-[#04162D] p-1 rounded-xl border border-[#0F355E]">
+                        <button
+                          type="button"
+                          onClick={() => setVisualModeOverride("circuit")}
+                          className={cn(
+                            "h-7 px-3 rounded-lg text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 font-sans",
+                            (visualModeOverride === "circuit" ||
+                              (visualModeOverride === "auto" &&
+                                selectedFinding.visualType === "comparator_circuit"))
+                              ? "bg-[#1D4ED8] text-white shadow-sm font-bold"
+                              : "text-blue-300 hover:text-white"
+                          )}
+                        >
+                          <span>⚡ Circuit Flow</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVisualModeOverride("standard")}
+                          className={cn(
+                            "h-7 px-3 rounded-lg text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 font-sans",
+                            visualModeOverride === "standard" ||
+                              (visualModeOverride === "auto" &&
+                                selectedFinding.visualType !== "comparator_circuit")
+                              ? "bg-[#1D4ED8] text-white shadow-sm font-bold"
+                              : "text-blue-300 hover:text-white"
+                          )}
+                        >
+                          <span>📑 3-Paper Flow</span>
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Visual Finding Body: Type 1 (3-Panel) vs Type 2 (Comparator Circuit) */}
-                    {selectedFinding.visualType === "comparator_circuit" ? (
+                    {(visualModeOverride === "circuit" ||
+                      (visualModeOverride === "auto" &&
+                        selectedFinding.visualType === "comparator_circuit")) ? (
                       <ComparatorFindingCard
                         finding={selectedFinding}
                         currentIndex={currentFindingIndex}
