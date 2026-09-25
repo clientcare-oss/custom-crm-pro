@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, X, HelpCircle, RotateCcw, ArrowRight } from "lucide-react";
+import { Check, X, HelpCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { FindingDecision } from "./types";
@@ -18,80 +18,67 @@ export function AdvocateDecisionControls({
   canUndo = false,
 }: AdvocateDecisionControlsProps) {
   return (
-    <div className="rounded-xl bg-[#030F1F] border border-[#103D6D] p-3 sm:p-4 flex items-center justify-between gap-3 flex-wrap shadow-md">
-      <div className="space-y-0.5">
-        <span className="text-[11px] font-bold text-white uppercase tracking-wider font-mono block">
-          Advocate Decision
-        </span>
-        <p className="text-[11px] text-blue-200/60">
-          Decide whether this finding requires school follow-up or can be cleared.
-        </p>
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Button 1: Confirm Concern */}
-        <Button
+    <div className="space-y-2 select-none">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        {/* Button 1: Confirm Concern (Coral / Red) */}
+        <button
           type="button"
           onClick={() => onDecide("confirmed")}
           className={cn(
-            "h-8 sm:h-8.5 px-3.5 text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm border",
+            "h-10 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2 shadow-md border",
             currentDecision === "confirmed"
-              ? "bg-teal-500 text-slate-950 border-teal-300 ring-2 ring-teal-400/40"
-              : "bg-[#062920] border-teal-500/50 text-teal-300 hover:bg-teal-900/60 hover:text-white"
+              ? "bg-[#BE123C] text-white border-rose-300 ring-2 ring-rose-500/50"
+              : "bg-[#DC2626] text-white border-rose-400 hover:bg-[#B91C1C]"
           )}
-          title="Mark as confirmed concern requiring district follow-up or clarification"
         >
-          <Check className="h-3.5 w-3.5 text-teal-400" />
-          <span>✓ Confirm Concern</span>
-        </Button>
+          <Check className="h-4 w-4 stroke-[2.5]" />
+          <span>Confirm Concern</span>
+        </button>
 
-        {/* Button 2: Not a Concern */}
-        <Button
+        {/* Button 2: Not a Concern (Navy / Blue) */}
+        <button
           type="button"
           onClick={() => onDecide("not_a_concern")}
           className={cn(
-            "h-8 sm:h-8.5 px-3.5 text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm border",
+            "h-10 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer inline-flex items-center justify-center gap-2 shadow-sm border",
             currentDecision === "not_a_concern"
-              ? "bg-slate-700 text-white border-slate-500 ring-2 ring-slate-400/40"
-              : "bg-[#071626] border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              ? "bg-[#113867] text-white border-blue-400 ring-2 ring-blue-500/50"
+              : "bg-[#0B254E] text-blue-200 border-[#1A4B82] hover:bg-[#12386E] hover:text-white"
           )}
-          title="Dismiss from active queue as reviewed non-issue"
         >
-          <X className="h-3.5 w-3.5 text-slate-400" />
-          <span>✕ Not a Concern</span>
-        </Button>
+          <X className="h-4 w-4 stroke-[2.5]" />
+          <span>Not a Concern</span>
+        </button>
 
-        {/* Button 3: Hold */}
-        <Button
+        {/* Button 3: Hold for Now (Navy / Blue) */}
+        <button
           type="button"
           onClick={() => onDecide("hold")}
           className={cn(
-            "h-8 sm:h-8.5 px-3 text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm border",
+            "h-10 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer inline-flex items-center justify-center gap-2 shadow-sm border",
             currentDecision === "hold"
-              ? "bg-amber-500 text-slate-950 border-amber-300 ring-2 ring-amber-400/40 font-bold"
-              : "bg-[#251A08] border-amber-500/50 text-amber-300 hover:bg-amber-950 hover:text-white"
+              ? "bg-[#113867] text-amber-300 border-amber-400 ring-2 ring-amber-500/50"
+              : "bg-[#0B254E] text-blue-200 border-[#1A4B82] hover:bg-[#12386E] hover:text-white"
           )}
-          title="Hold in queue for further advocate deliberation"
         >
-          <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
-          <span>? Hold</span>
-        </Button>
+          <span className="font-bold text-base leading-none">?</span>
+          <span>Hold for Now</span>
+        </button>
+      </div>
 
-        {/* Undo button */}
-        {canUndo && onUndo && (
-          <Button
+      {/* Undo option if decision was made */}
+      {canUndo && onUndo && (
+        <div className="flex justify-end pt-1">
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
             onClick={onUndo}
-            className="h-8 px-2 text-xs text-blue-300 hover:text-white hover:bg-white/10 cursor-pointer inline-flex items-center gap-1 ml-1"
-            title="Undo previous decision"
+            className="text-xs text-blue-300/70 hover:text-blue-100 cursor-pointer inline-flex items-center gap-1 font-mono transition-colors"
           >
             <RotateCcw className="h-3 w-3" />
-            <span>Undo</span>
-          </Button>
-        )}
-      </div>
+            <span>Undo decision</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
