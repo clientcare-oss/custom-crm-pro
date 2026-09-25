@@ -110,7 +110,7 @@ export function StandardPortmasterFindingCard({
       {/* 3-Panel Document Progression: PREVIOUS IEP -> MEETING RECORD -> UPDATED IEP */}
       <div className="grid grid-cols-1 md:grid-cols-11 gap-2.5 items-center">
         {/* Panel 1: Previous IEP (3 cols on md) */}
-        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border border-[#0F3865] p-3.5 space-y-2.5 shadow-md">
+        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border-[3px] border-[#1E60A6] p-3.5 space-y-2.5 shadow-md">
           {/* Header */}
           <div className="flex items-center gap-2 text-xs font-bold text-white">
             <div className="w-5 h-5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center justify-center">
@@ -145,7 +145,7 @@ export function StandardPortmasterFindingCard({
         </div>
 
         {/* Panel 2: Meeting Record (Center, 3 cols on md) */}
-        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border border-blue-500/40 p-3.5 space-y-2.5 shadow-md">
+        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border-[3px] border-teal-500/70 p-3.5 space-y-2.5 shadow-md">
           {/* Header */}
           <div className="flex items-center gap-2 text-xs font-bold text-white">
             <div className="w-5 h-5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center">
@@ -207,7 +207,7 @@ export function StandardPortmasterFindingCard({
         </div>
 
         {/* Panel 3: Updated IEP (3 cols on md) */}
-        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border border-rose-500/40 p-3.5 space-y-2.5 shadow-md">
+        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border-[3px] border-rose-500/70 p-3.5 space-y-2.5 shadow-md">
           {/* Header */}
           <div className="flex items-center gap-2 text-xs font-bold text-white">
             <div className="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center">
@@ -238,7 +238,7 @@ export function StandardPortmasterFindingCard({
       </div>
 
       {/* Why Portmaster Flagged This (Anchor Banner) */}
-      <div className="rounded-2xl bg-[#041935] border border-[#103D6D] p-3.5 sm:p-4 flex items-start gap-3 shadow-md">
+      <div className="rounded-2xl bg-[#041935] border-2 border-[#103D6D] p-3.5 sm:p-4 flex items-start gap-3 shadow-md">
         <div className="w-8 h-8 rounded-xl bg-blue-900/50 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0 mt-0.5">
           <Anchor className="h-4 w-4 text-[#F5B544]" />
         </div>
