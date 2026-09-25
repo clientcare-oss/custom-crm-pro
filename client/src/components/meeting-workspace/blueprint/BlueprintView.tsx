@@ -22,11 +22,11 @@ interface BlueprintViewProps {
   detectedOrder: string[];
   onUpdateTargets: (targets: MeetingTarget[]) => void;
   onUpdateDetectedOrder: (order: string[]) => void;
-  onBuildBlueprint: () => Promise<void>;
+  onBuildBlueprint?: () => Promise<void>;
   onPreviewMeetingMode: () => void;
   onMarkReady: () => void;
   onOpenImportModal?: () => void;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
 export function BlueprintView({
@@ -42,7 +42,7 @@ export function BlueprintView({
   onPreviewMeetingMode,
   onMarkReady,
   onOpenImportModal,
-  isLoading,
+  isLoading = false,
 }: BlueprintViewProps) {
   const [showReorganizeModal, setShowReorganizeModal] = useState(false);
   const [showParentPreviewModal, setShowParentPreviewModal] = useState(false);
@@ -139,13 +139,13 @@ export function BlueprintView({
   return (
     <div className="space-y-6">
       {/* Top Banner & Primary Actions */}
-      <div className="rounded-2xl bg-gradient-to-br from-[#0B3767] via-[#09254D] to-[#071C38] border border-[#144E8A] p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
+      <div className="rounded-2xl bg-gradient-to-br from-[#0B3767] via-[#09254D] to-[#071C38] border border-[#144E8A] p-5 shadow-2xl flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="space-y-1 min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-500/20 text-[#F5B544]">
+            <span className="p-1.5 rounded-lg bg-amber-500/20 text-[#F5B544] shrink-0">
               <MapIcon className="h-4 w-4" />
             </span>
-            <h2 className="text-lg font-bold text-white tracking-wide">
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-wide whitespace-nowrap">
               IEP Meeting Blueprint
             </h2>
           </div>
@@ -204,42 +204,12 @@ export function BlueprintView({
 
           <Button
             size="sm"
-            onClick={onBuildBlueprint}
-            disabled={isLoading}
-            className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg border border-blue-400/30 px-3 py-2 cursor-pointer inline-flex items-center gap-1.5"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Building Blueprint...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 text-[#F5B544]" />
-                {targets.length > 0 ? "Re-Build Blueprint" : "✨ Build IEP Blueprint"}
-              </>
-            )}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
             onClick={onPreviewMeetingMode}
             disabled={targets.length === 0}
-            className="text-xs font-bold border-[#104375] bg-[#071F3D] text-amber-300 hover:text-white hover:border-amber-400/60 cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg px-3.5 py-2 cursor-pointer inline-flex items-center gap-1.5 border border-amber-400/40"
           >
-            <Eye className="h-3.5 w-3.5" />
-            Enter Meeting Mode
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={onMarkReady}
-            disabled={targets.length === 0}
-            className="text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg border border-emerald-400/40 px-3 py-2 cursor-pointer inline-flex items-center gap-1.5"
-          >
-            <Check className="h-3.5 w-3.5" />
-            ✓ Ready for Meeting
+            <PlayCircle className="h-3.5 w-3.5 text-slate-950" />
+            <span>Enter Meeting Mode</span>
           </Button>
         </div>
       </div>
