@@ -655,7 +655,7 @@ export default function MeetingWorkspace() {
               </div>
             )}
 
-            {/* TAB: BLUEPRINT (Know the Plan) */}
+            {/* TAB: BLUEPRINT (Discuss with parents and edit) */}
             {(activeTab === "BLUEPRINT" || activeTab === "PARENT_READY") && (
               <BlueprintView
                 studentName={studentName}
