@@ -108,131 +108,157 @@ export function StandardPortmasterFindingCard({
       </div>
 
       {/* 3-Panel Document Progression: PREVIOUS IEP -> MEETING RECORD -> UPDATED IEP */}
-      <div className="grid grid-cols-1 md:grid-cols-11 gap-2.5 items-center">
-        {/* Panel 1: Previous IEP (3 cols on md) */}
-        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border-[3px] border-[#1E60A6] p-3.5 space-y-2.5 shadow-md">
-          {/* Header */}
-          <div className="flex items-center gap-2 text-xs font-bold text-white">
-            <div className="w-5 h-5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center justify-center">
-              <FileText className="h-3 w-3" />
-            </div>
-            <div>
-              <span className="block leading-none font-sans">Previous IEP</span>
-              <span className="text-[11px] text-blue-300/70 font-sans">Aug 14, 2025</span>
-            </div>
-          </div>
+      {/* Maximum width 3-column grid without wasted between-card arrow columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 items-stretch">
+        {/* Panel 1: Previous IEP */}
+        <div className="rounded-2xl bg-[#03152C] border-[3px] border-[#1E60A6] p-4 space-y-3 shadow-md flex flex-col justify-between">
+          <div>
+            {/* Header with Step 1 -> Arrow */}
+            <div className="flex items-center justify-between text-xs font-bold text-white border-b border-[#14477D]/70 pb-2.5 mb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center justify-center">
+                  <FileText className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
+                    Previous IEP
+                  </span>
+                  <span className="text-[11px] text-blue-300/80 font-sans font-medium">Aug 14, 2025</span>
+                </div>
+              </div>
 
-          {/* Clean White Paper Body */}
-          <div className="rounded-xl bg-[#F8FAFC] text-slate-900 p-3.5 space-y-2 shadow-inner border border-slate-200">
-            <h4 className="text-xs font-bold text-slate-950 tracking-wide font-sans">
-              {finding.previousIep.section}
-            </h4>
-            <div className="text-xs font-semibold text-slate-800 font-sans">
-              30 minutes
-            </div>
-            <div className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-950 text-xs font-bold font-sans">
-              {finding.previousIep.value}
-            </div>
-            <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed pt-1 font-sans">
-              {finding.previousIep.details}
-            </p>
-          </div>
-        </div>
-
-        {/* Transition Arrow 1 (1 col on md) */}
-        <div className="hidden md:flex md:col-span-1 justify-center text-blue-400/80 text-xl font-bold">
-          →
-        </div>
-
-        {/* Panel 2: Meeting Record (Center, 3 cols on md) */}
-        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border-[3px] border-teal-500/70 p-3.5 space-y-2.5 shadow-md">
-          {/* Header */}
-          <div className="flex items-center gap-2 text-xs font-bold text-white">
-            <div className="w-5 h-5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center">
-              <CalendarCheck className="h-3 w-3" />
-            </div>
-            <div>
-              <span className="block leading-none font-sans">Meeting Record</span>
-              <span className="text-[11px] text-teal-300/80 font-sans">Sept 18, 2026</span>
-            </div>
-          </div>
-
-          {/* Deep Navy Meeting Record Body */}
-          <div className="rounded-xl bg-[#0B254E] text-slate-100 p-3.5 space-y-2 shadow-inner border border-blue-400/30">
-            <h4 className="text-xs font-bold text-white tracking-wide font-sans">
-              Team Decision
-            </h4>
-            <p className="text-xs sm:text-[13px] text-blue-100 leading-snug font-sans">
-              {finding.meetingRecord?.agreedDecision || "Continue current reading service at 30 minutes 5 times per week."}
-            </p>
-
-            {/* Quote block with normal readable font */}
-            <div className="p-2.5 rounded-lg bg-[#071A36] border border-blue-500/20 text-xs sm:text-[12.5px] text-blue-200 italic leading-relaxed font-sans">
-              &ldquo;{finding.meetingRecord?.evidence?.transcriptExcerpt || "Team agreed to maintain reading supports at 5x/week. Progress has been positive."}&rdquo;
+              {/* Progression Arrow in Header */}
+              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-900/60 border border-blue-400/40 text-blue-200 text-xs font-sans font-semibold">
+                <span>1 of 3</span>
+                <span className="text-cyan-400 font-bold text-sm">→</span>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-blue-300/70 pt-0.5">
-              <span>{finding.meetingRecord?.evidence?.timestamp || "01:14:22"}</span>
+            {/* Warm Low-Glare Tan Paper Body */}
+            <div className="rounded-xl bg-[#EFE8DB] text-[#221C16] p-3.5 sm:p-4 space-y-2.5 shadow-inner border border-[#D5C6AC]">
+              <h4 className="text-xs sm:text-[13px] font-bold text-[#1C1610] tracking-wide font-sans">
+                {finding.previousIep.section}
+              </h4>
+              <div className="text-xs sm:text-[13px] font-semibold text-[#382E24] font-sans">
+                30 minutes
+              </div>
+              <div className="inline-block px-2.5 py-0.5 rounded-md bg-[#DFD0B5] text-[#3A2A14] text-xs font-bold font-sans border border-[#C5B393]">
+                {finding.previousIep.value}
+              </div>
+              <p className="text-xs sm:text-[13px] text-[#44382C] leading-relaxed pt-1 font-sans">
+                {finding.previousIep.details}
+              </p>
             </div>
-
-            {/* Play Meeting Clip Button */}
-            <button
-              type="button"
-              onClick={handlePlayClip}
-              className={cn(
-                "w-full h-8 rounded-lg text-xs font-semibold cursor-pointer transition-all inline-flex items-center justify-center gap-1.5 shadow-sm border font-sans",
-                isPlayingAudio
-                  ? "bg-teal-500 text-slate-950 border-teal-300 animate-pulse font-bold"
-                  : "bg-[#113867] border-blue-400/40 text-blue-100 hover:bg-[#184882] hover:text-white"
-              )}
-            >
-              {isPlayingAudio ? (
-                <>
-                  <Volume2 className="h-3.5 w-3.5 text-slate-950 animate-bounce" />
-                  <span>Playing 01:14:22...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-3 w-3 fill-current text-blue-300" />
-                  <span>Play Meeting Clip</span>
-                </>
-              )}
-            </button>
           </div>
         </div>
 
-        {/* Transition Arrow 2 (1 col on md) */}
-        <div className="hidden md:flex md:col-span-1 justify-center text-blue-400/80 text-xl font-bold">
-          →
-        </div>
+        {/* Panel 2: Meeting Record (Center) */}
+        <div className="rounded-2xl bg-[#03152C] border-[3px] border-teal-500/70 p-4 space-y-3 shadow-md flex flex-col justify-between">
+          <div>
+            {/* Header with Step 2 -> Arrow */}
+            <div className="flex items-center justify-between text-xs font-bold text-white border-b border-teal-500/40 pb-2.5 mb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center">
+                  <CalendarCheck className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
+                    Meeting Record
+                  </span>
+                  <span className="text-[11px] text-teal-300/80 font-sans font-medium">Sept 18, 2026</span>
+                </div>
+              </div>
 
-        {/* Panel 3: Updated IEP (3 cols on md) */}
-        <div className="md:col-span-3 rounded-2xl bg-[#03152C] border-[3px] border-rose-500/70 p-3.5 space-y-2.5 shadow-md">
-          {/* Header */}
-          <div className="flex items-center gap-2 text-xs font-bold text-white">
-            <div className="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center">
-              <FileText className="h-3 w-3" />
+              {/* Progression Arrow in Header */}
+              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-900/60 border border-teal-400/40 text-teal-200 text-xs font-sans font-semibold">
+                <span>2 of 3</span>
+                <span className="text-teal-300 font-bold text-sm">→</span>
+              </div>
             </div>
-            <div>
-              <span className="block leading-none font-sans">Updated IEP</span>
-              <span className="text-[11px] text-emerald-300/80 font-sans">Sept 25, 2026</span>
+
+            {/* Deep Navy Meeting Record Body */}
+            <div className="rounded-xl bg-[#0B254E] text-slate-100 p-3.5 sm:p-4 space-y-2.5 shadow-inner border border-blue-400/30">
+              <h4 className="text-xs sm:text-[13px] font-bold text-white tracking-wide font-sans">
+                Team Decision
+              </h4>
+              <p className="text-xs sm:text-[13px] text-blue-100 leading-snug font-sans">
+                {finding.meetingRecord?.agreedDecision || "Continue current reading service at 30 minutes 5 times per week."}
+              </p>
+
+              {/* Quote block with normal readable font */}
+              <div className="p-2.5 rounded-lg bg-[#071A36] border border-blue-500/20 text-xs sm:text-[12.5px] text-blue-200 italic leading-relaxed font-sans">
+                &ldquo;{finding.meetingRecord?.evidence?.transcriptExcerpt || "Team agreed to maintain reading supports at 5x/week. Progress has been positive."}&rdquo;
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-blue-300/70 pt-0.5">
+                <span>{finding.meetingRecord?.evidence?.timestamp || "01:14:22"}</span>
+              </div>
+
+              {/* Play Meeting Clip Button */}
+              <button
+                type="button"
+                onClick={handlePlayClip}
+                className={cn(
+                  "w-full h-8 rounded-lg text-xs font-semibold cursor-pointer transition-all inline-flex items-center justify-center gap-1.5 shadow-sm border font-sans mt-1",
+                  isPlayingAudio
+                    ? "bg-teal-500 text-slate-950 border-teal-300 animate-pulse font-bold"
+                    : "bg-[#113867] border-blue-400/40 text-blue-100 hover:bg-[#184882] hover:text-white"
+                )}
+              >
+                {isPlayingAudio ? (
+                  <>
+                    <Volume2 className="h-3.5 w-3.5 text-slate-950 animate-bounce" />
+                    <span>Playing 01:14:22...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-3 w-3 fill-current text-blue-300" />
+                    <span>Play Meeting Clip</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Light Pink/Red Paper Body */}
-          <div className="rounded-xl bg-[#FEF2F2] text-slate-900 p-3.5 space-y-2 shadow-inner border border-rose-200">
-            <h4 className="text-xs font-bold text-slate-950 tracking-wide font-sans">
-              {finding.updatedIep.section}
-            </h4>
-            <div className="text-xs font-semibold text-slate-800 font-sans">
-              30 minutes
+        {/* Panel 3: Updated IEP */}
+        <div className="rounded-2xl bg-[#03152C] border-[3px] border-rose-500/70 p-4 space-y-3 shadow-md flex flex-col justify-between">
+          <div>
+            {/* Header with Step 3 Result */}
+            <div className="flex items-center justify-between text-xs font-bold text-white border-b border-rose-500/40 pb-2.5 mb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center justify-center">
+                  <FileText className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <span className="block leading-none font-sans font-bold text-white text-xs sm:text-[13px]">
+                    Updated IEP
+                  </span>
+                  <span className="text-[11px] text-rose-300/80 font-sans font-medium">Sept 25, 2026</span>
+                </div>
+              </div>
+
+              {/* Result Indicator in Header */}
+              <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-900/60 border border-rose-400/40 text-rose-200 text-xs font-sans font-semibold">
+                <span>3 of 3 (Result)</span>
+              </div>
             </div>
-            <div className="inline-block px-2 py-0.5 rounded-md bg-rose-200 text-rose-950 text-xs font-bold font-sans">
-              {finding.updatedIep.value}
+
+            {/* Warm Low-Glare Tan Paper Body */}
+            <div className="rounded-xl bg-[#EFE8DB] text-[#221C16] p-3.5 sm:p-4 space-y-2.5 shadow-inner border border-[#D5C6AC]">
+              <h4 className="text-xs sm:text-[13px] font-bold text-[#1C1610] tracking-wide font-sans">
+                {finding.updatedIep.section}
+              </h4>
+              <div className="text-xs sm:text-[13px] font-semibold text-[#382E24] font-sans">
+                30 minutes
+              </div>
+              <div className="inline-block px-2.5 py-0.5 rounded-md bg-[#F2D7D7] text-[#631B24] text-xs font-bold font-sans border border-[#E0B2B6]">
+                {finding.updatedIep.value}
+              </div>
+              <p className="text-xs sm:text-[13px] text-[#44382C] leading-relaxed pt-1 font-sans">
+                {finding.updatedIep.details}
+              </p>
             </div>
-            <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed pt-1 font-sans">
-              {finding.updatedIep.details}
-            </p>
           </div>
         </div>
       </div>

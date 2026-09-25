@@ -162,19 +162,19 @@ export function EvidenceDetailsArea({ finding }: EvidenceDetailsAreaProps) {
                   Exact text comparison between Previous IEP (Page {finding.previousIep.page}) and Updated IEP (Page {finding.updatedIep.page}):
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-[#F8FAFC] text-slate-900 border border-slate-300 space-y-1">
-                    <span className="text-[11px] font-bold text-slate-800 uppercase block font-mono">
+                  <div className="p-3.5 rounded-xl bg-[#EFE8DB] text-[#221C16] border border-[#D5C6AC] space-y-1.5 shadow-sm">
+                    <span className="text-[11px] font-bold text-[#1C1610] uppercase block font-sans">
                       Previous IEP (Aug 14, 2025)
                     </span>
-                    <p className="text-xs text-slate-700 leading-relaxed font-mono">
+                    <p className="text-xs text-[#44382C] leading-relaxed font-sans">
                       {finding.previousIep.details}
                     </p>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#FEF2F2] text-slate-900 border border-rose-300 space-y-1">
-                    <span className="text-[11px] font-bold text-rose-900 uppercase block font-mono">
+                  <div className="p-3.5 rounded-xl bg-[#EFE8DB] text-[#221C16] border border-[#D5C6AC] space-y-1.5 shadow-sm">
+                    <span className="text-[11px] font-bold text-[#631B24] uppercase block font-sans">
                       Updated IEP (Sept 25, 2026)
                     </span>
-                    <p className="text-xs text-slate-700 leading-relaxed font-mono">
+                    <p className="text-xs text-[#44382C] leading-relaxed font-sans">
                       {finding.updatedIep.details}
                     </p>
                   </div>
