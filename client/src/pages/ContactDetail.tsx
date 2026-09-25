@@ -1446,21 +1446,21 @@ function StudentTabs({
       <div className="flex items-center justify-end gap-2 pr-3 sm:pr-4 relative z-20 -mb-[1px]">
         <button
           type="button"
-          onClick={() => setLocation(`/meeting-workspace/${contactId}?import=true`)}
-          title="Import or Paste Advocate Ready Document"
-          className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
-        >
-          <span className="text-sm">📥</span>
-          <span className="whitespace-nowrap font-bold">Import Advocate Ready</span>
-        </button>
-        <button
-          type="button"
           onClick={() => setLocation(`/meeting-workspace/${contactId}`)}
           title="Open ⚡ Meeting Workspace"
           className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12.5px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
         >
           <span className="text-sm">⚡</span>
           <span className="whitespace-nowrap font-bold">Meeting Workspace</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setLocation(`/tools/iep-comparator?studentId=${contactId}`)}
+          title="Portmaster: Post-Meeting Review & IEP Amendment Comparison"
+          className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
+        >
+          <span className="text-sm">⚓</span>
+          <span className="whitespace-nowrap font-bold">Post-Meeting Review</span>
         </button>
       </div>
 
