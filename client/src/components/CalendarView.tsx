@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatDualTimes } from "@shared/timezones";
 
 interface Appointment {
   id: number;
@@ -16,6 +17,8 @@ interface Appointment {
   parentPhone?: string | null;
   studentName?: string | null;
   location?: string | null;
+  clientTimeZone?: string | null;
+  originalTimeZone?: string | null;
 }
 
 interface CalendarViewProps {
@@ -51,7 +54,7 @@ export default function CalendarView({ appointments, onDateClick, onEventClick }
 
   const days: React.ReactNode[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
-    days.push(<div key={`empty-${i}`} className="h-24 border border-border/30" />);
+    days.push(<div key={`empty-${i}`} className="min-h-[6.5rem] border border-border/30" />);
   }
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -61,29 +64,42 @@ export default function CalendarView({ appointments, onDateClick, onEventClick }
     days.push(
       <div
         key={day}
-        className={`h-24 border border-border/30 p-1 transition-colors ${isToday ? "bg-primary/5 border-primary/30" : "hover:bg-accent/20"}`}
+        className={`min-h-[6.5rem] border border-border/30 p-1 transition-colors ${isToday ? "bg-primary/5 border-primary/30" : "hover:bg-accent/20"}`}
         onClick={() => onDateClick?.(new Date(year, month, day))}
       >
         <span className={`text-xs font-medium ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>
           {day}
         </span>
-        <div className="mt-1 space-y-0.5 overflow-hidden">
+        <div className="mt-1 space-y-1 overflow-hidden">
           {dayAppointments.slice(0, 2).map((apt) => {
             const subtitle = [apt.meetingType, apt.studentName || apt.parentName].filter(Boolean).join(" · ");
+            const dual = formatDualTimes(apt.startTime, apt.endTime, apt.clientTimeZone, apt.originalTimeZone || "America/New_York");
             return (
               <div
                 key={apt.id}
                 onClick={(e) => { e.stopPropagation(); onEventClick?.(apt); }}
-                className={`text-[10px] px-1 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity overflow-hidden ${
-                  apt.status === "Confirmed" ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" :
-                  apt.status === "Cancelled" ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" :
-                  apt.status === "Completed" ? "bg-gray-100 text-gray-600 dark:bg-gray-800/60 dark:text-gray-300" :
-                  "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                className={`text-[10px] px-1.5 py-1 rounded cursor-pointer hover:opacity-90 transition-all border ${
+                  apt.status === "Confirmed" ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-950/60 dark:text-green-300 dark:border-green-800/50" :
+                  apt.status === "Cancelled" ? "bg-red-100 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/50" :
+                  apt.status === "Completed" ? "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-900/60 dark:text-gray-300 dark:border-gray-700/50" :
+                  "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/50"
                 }`}
+                title={`Waypoint: ${dual.waypointTime.timeRange} | Client: ${dual.clientTime.timeRange}`}
               >
-                <span className="block truncate font-medium">{apt.title}</span>
+                <div className="font-semibold truncate leading-tight">{apt.title}</div>
+                {/* Dual-time indicators: Green for Waypoint, Red for Client */}
+                <div className="flex items-center gap-1 font-mono text-[9px] mt-0.5 flex-wrap">
+                  <span className="text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-200/50 dark:bg-emerald-950 px-1 py-0.5 rounded">
+                    🟢 {dual.waypointTime.startTime} ET
+                  </span>
+                  {dual.clientTime.isDifferent && (
+                    <span className="text-rose-700 dark:text-rose-300 font-bold bg-rose-200/50 dark:bg-rose-950 px-1 py-0.5 rounded">
+                      🔴 {dual.clientTime.startTime} {dual.clientTime.tzAbbr}
+                    </span>
+                  )}
+                </div>
                 {subtitle && (
-                  <span className="block truncate opacity-75">{subtitle}</span>
+                  <span className="block truncate opacity-75 text-[9px] mt-0.5">{subtitle}</span>
                 )}
               </div>
             );

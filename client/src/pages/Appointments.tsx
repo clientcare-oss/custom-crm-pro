@@ -4,13 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ban } from "lucide-react";
+import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ban, Globe } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import VoiceInput from "@/components/VoiceInput";
 import { useState } from "react";
 import { toast } from "sonner";
 import CalendarView from "@/components/CalendarView";
+import {
+  formatDualTimes,
+  SIX_CORE_ZONES,
+  getFriendlyTimeZoneName,
+  detectTimeZoneFromLocation,
+} from "@shared/timezones";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MEETING_TYPES = ["IEP Meeting", "1:1 with Advocate", "Progress Update", "Consultation", "Follow-up"];
@@ -31,6 +37,10 @@ interface Appointment {
   studentName?: string | null;
   status: string;
   ownerId: number;
+  clientTimeZone?: string | null;
+  originalTimeZone?: string | null;
+  schoolTimeZone?: string | null;
+  assignedAdvocateName?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,7 +56,7 @@ export default function Appointments() {
   const [editAptData, setEditAptData] = useState<{
     title: string; description: string; startTime: string; endTime: string;
     location: string; videoLink: string; parentName: string; parentPhone: string;
-    studentName: string; status: string;
+    studentName: string; status: string; clientTimeZone: string;
   } | null>(null);
 
   const toLocalDateTimeInput = (dt: Date | string) => {
@@ -67,16 +77,18 @@ export default function Appointments() {
       parentPhone: apt.parentPhone || '',
       studentName: apt.studentName || '',
       status: apt.status,
+      clientTimeZone: apt.clientTimeZone || 'America/New_York',
     });
     setIsEditingApt(true);
   };
 
-  // Auto-fill parent/student info from selected contact
+  // Auto-fill parent/student info and time zone from selected contact
   const autoFillFromContact = (contactId: string, setter: (fn: (prev: any) => any) => void) => {
     const id = parseInt(contactId);
     const contact = (contacts as any[]).find((c: any) => c.id === id);
     if (!contact) return;
     const isStudent = contact.jobTitle === 'Student';
+    const detectedTz = contact.confirmedTimeZone || contact.timezone || (contact.state ? detectTimeZoneFromLocation(contact.city || "", contact.state).timeZone : "America/New_York");
     if (isStudent) {
       // Student selected: fill student name, then find parent for parent fields
       const parent = contact.parentContactId
@@ -87,6 +99,7 @@ export default function Appointments() {
         studentName: `${contact.firstName} ${contact.lastName}`,
         parentName: parent ? `${parent.firstName} ${parent.lastName}` : prev.parentName,
         parentPhone: parent ? (parent.phone || '') : prev.parentPhone,
+        clientTimeZone: detectedTz || prev.clientTimeZone || "America/New_York",
       }));
     } else {
       // Parent/contact selected: fill parent fields
@@ -94,6 +107,7 @@ export default function Appointments() {
         ...prev,
         parentName: `${contact.firstName} ${contact.lastName}`,
         parentPhone: contact.phone || '',
+        clientTimeZone: detectedTz || prev.clientTimeZone || "America/New_York",
       }));
     }
   };
@@ -116,6 +130,7 @@ export default function Appointments() {
       parentPhone: editAptData.parentPhone || undefined,
       studentName: editAptData.studentName || undefined,
       status: editAptData.status as 'Scheduled' | 'Confirmed' | 'Completed' | 'Cancelled',
+      clientTimeZone: editAptData.clientTimeZone || undefined,
     }, {
       onSuccess: () => {
         setIsEditingApt(false);
@@ -131,6 +146,7 @@ export default function Appointments() {
           parentPhone: editAptData.parentPhone || null,
           studentName: editAptData.studentName || null,
           status: editAptData.status,
+          clientTimeZone: editAptData.clientTimeZone,
         } : null);
       }
     });
@@ -146,6 +162,7 @@ export default function Appointments() {
     videoLink: "",
     parentName: "",
     studentName: "",
+    clientTimeZone: "America/New_York",
   });
 
   const { data: appointments = [], refetch } = trpc.appointments.list.useQuery();
@@ -156,7 +173,19 @@ export default function Appointments() {
     onSuccess: () => {
       toast.success("Appointment created!");
       setShowCreate(false);
-      setFormData({ clientId: "", title: "", description: "", meetingType: "", startTime: "", endTime: "", location: "", videoLink: "", parentName: "", studentName: "" });
+      setFormData({
+        clientId: "",
+        title: "",
+        description: "",
+        meetingType: "",
+        startTime: "",
+        endTime: "",
+        location: "",
+        videoLink: "",
+        parentName: "",
+        studentName: "",
+        clientTimeZone: "America/New_York",
+      });
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -224,6 +253,8 @@ export default function Appointments() {
       meetingType: formData.meetingType || undefined,
       parentName: formData.parentName || undefined,
       studentName: formData.studentName || undefined,
+      clientTimeZone: formData.clientTimeZone || undefined,
+      originalTimeZone: "America/New_York",
     });
   };
 
@@ -423,6 +454,26 @@ export default function Appointments() {
                     </div>
                   </div>
                   <div>
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Globe className="h-3 w-3 text-primary" /> Client Time Zone
+                    </label>
+                    <Select
+                      value={editAptData.clientTimeZone}
+                      onValueChange={(v) => setEditAptData(d => d ? { ...d, clientTimeZone: v } : d)}
+                    >
+                      <SelectTrigger className="mt-1 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SIX_CORE_ZONES.map((z) => (
+                          <SelectItem key={z.id} value={z.id}>
+                            {z.name} ({z.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <label className="text-xs font-medium text-muted-foreground">Status</label>
                     <Select
                       value={editAptData.status}
@@ -546,16 +597,80 @@ export default function Appointments() {
                 )}
               </div>
 
-              {/* Date & Time */}
-              <div className="flex items-start gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-medium">{fmt(selectedApt.startTime).date}</p>
-                  <p className="text-muted-foreground">
-                    {fmt(selectedApt.startTime).time} – {fmt(selectedApt.endTime).time}
-                  </p>
-                </div>
-              </div>
+              {/* Multi-Zone Schedule Alignment (Red for Client, Green for Waypoint Advocate) */}
+              {(() => {
+                const dualTime = formatDualTimes(
+                  selectedApt.startTime,
+                  selectedApt.endTime,
+                  selectedApt.clientTimeZone,
+                  selectedApt.originalTimeZone || "America/New_York"
+                );
+                return (
+                  <div className="rounded-xl border border-border/70 bg-card/60 p-3.5 space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Globe className="h-3.5 w-3.5 text-primary" /> Multi-Zone Schedule Alignment
+                      </span>
+                      {dualTime.clientTime.isDifferent ? (
+                        <span className="text-[11px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.5 rounded-full">
+                          {dualTime.clientTime.friendlyName} vs Eastern
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-medium text-emerald-300 bg-emerald-950/50 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                          Both Eastern (Synchronized)
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* 🔴 CLIENT'S SCHEDULED TIME (RED) */}
+                      <div className="rounded-lg border-2 border-rose-500/70 bg-rose-950/40 p-3 flex flex-col justify-between shadow-sm">
+                        <div className="flex items-center justify-between text-xs text-rose-300 font-semibold mb-1">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse inline-block" />
+                            Client Scheduled Time
+                          </span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/40">
+                            {dualTime.clientTime.tzAbbr}
+                          </span>
+                        </div>
+                        <p className="text-base sm:text-lg font-bold text-rose-100 font-mono tracking-tight">
+                          {dualTime.clientTime.timeRange}
+                        </p>
+                        <p className="text-[11px] text-rose-300/90 mt-1">
+                          {dualTime.clientTime.dateFormatted} · {dualTime.clientTime.friendlyName} Time
+                        </p>
+                      </div>
+
+                      {/* 🟢 WAYPOINT / ADVOCATE TIME (GREEN) */}
+                      <div className="rounded-lg border-2 border-emerald-500/70 bg-emerald-950/40 p-3 flex flex-col justify-between shadow-sm">
+                        <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold mb-1">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                            Waypoint Advocate Time
+                          </span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
+                            {dualTime.waypointTime.tzAbbr}
+                          </span>
+                        </div>
+                        <p className="text-base sm:text-lg font-bold text-emerald-100 font-mono tracking-tight">
+                          {dualTime.waypointTime.timeRange}
+                        </p>
+                        <p className="text-[11px] text-emerald-300/90 mt-1">
+                          {dualTime.waypointTime.dateFormatted} · Atlanta, GA (EDT)
+                        </p>
+                      </div>
+                    </div>
+
+                    {dualTime.clientTime.isDifferent && (
+                      <div className="text-xs text-muted-foreground bg-muted/40 rounded-md p-2.5 border border-border/50 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary shrink-0" />
+                        <span>{dualTime.explanation}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Join Meeting */}
               {selectedApt.videoLink && (
@@ -717,6 +832,32 @@ export default function Appointments() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Client Time Zone */}
+              <div>
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-primary" /> Client Time Zone *
+                </label>
+                <Select
+                  value={formData.clientTimeZone}
+                  onValueChange={(v) => setFormData({ ...formData, clientTimeZone: v })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select client time zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SIX_CORE_ZONES.map((z) => (
+                      <SelectItem key={z.id} value={z.id}>
+                        {z.name} ({z.code}) — {z.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Advocate operates in Eastern Time (Atlanta, GA). Client calendar will reflect their local zone.
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium">Start Time *</label>
@@ -751,6 +892,36 @@ export default function Appointments() {
                   />
                 </div>
               </div>
+
+              {/* Live Dual Time Zone Preview */}
+              {formData.startTime && formData.endTime && (
+                <div className="rounded-lg border border-border/70 bg-card/60 p-3 space-y-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-primary" /> Live Time Alignment Preview
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {/* 🔴 RED: Client time */}
+                    <div className="p-2.5 rounded-md bg-rose-950/40 border border-rose-500/50 text-rose-300">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-0.5 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-rose-500" /> Client Time ({getFriendlyTimeZoneName(formData.clientTimeZone)})
+                      </div>
+                      <div className="font-mono font-semibold text-rose-100">
+                        {formatDualTimes(new Date(formData.startTime), new Date(formData.endTime), formData.clientTimeZone).clientTime.timeRange}
+                      </div>
+                    </div>
+                    {/* 🟢 GREEN: Waypoint time */}
+                    <div className="p-2.5 rounded-md bg-emerald-950/40 border border-emerald-500/50 text-emerald-300">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-0.5 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" /> Waypoint Time (Eastern)
+                      </div>
+                      <div className="font-mono font-semibold text-emerald-100">
+                        {formatDualTimes(new Date(formData.startTime), new Date(formData.endTime), formData.clientTimeZone).waypointTime.timeRange}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm font-medium">Location</label>
                 <VoiceInput
@@ -870,72 +1041,104 @@ export default function Appointments() {
             <p className="text-center text-muted-foreground py-8">No upcoming appointments</p>
           ) : (
             <div className="space-y-3">
-              {upcomingAppointments.map((apt: Appointment) => (
-                <div
-                  key={apt.id}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedApt(apt)}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-lg bg-primary/5 flex flex-col items-center justify-center shrink-0">
-                      <span className="text-xs font-medium text-primary">
-                        {new Date(apt.startTime).toLocaleDateString([], { month: "short" })}
-                      </span>
-                      <span className="text-lg font-bold text-primary leading-none">
-                        {new Date(apt.startTime).getDate()}
-                      </span>
+              {upcomingAppointments.map((apt: Appointment) => {
+                const dual = formatDualTimes(
+                  apt.startTime,
+                  apt.endTime,
+                  apt.clientTimeZone,
+                  apt.originalTimeZone || "America/New_York"
+                );
+                return (
+                  <div
+                    key={apt.id}
+                    className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedApt(apt)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-primary/5 flex flex-col items-center justify-center shrink-0">
+                        <span className="text-xs font-medium text-primary">
+                          {new Date(apt.startTime).toLocaleDateString([], { month: "short" })}
+                        </span>
+                        <span className="text-lg font-bold text-primary leading-none">
+                          {new Date(apt.startTime).getDate()}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium">{apt.title}</p>
+                          {apt.meetingType && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+                              {apt.meetingType}
+                            </span>
+                          )}
+                          {apt.videoLink && <Video className="h-3.5 w-3.5 text-blue-500" aria-label="Video meeting" />}
+                        </div>
+
+                        {/* Dual-Time Display (Red for Client, Green for Waypoint) */}
+                        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                          {/* 🔴 RED BADGE: CLIENT SCHEDULED TIME */}
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-950/50 text-rose-300 border border-rose-500/40 shadow-sm"
+                            title={`Client's local scheduled time in ${dual.clientTime.friendlyName} Time`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-rose-500" />
+                            <span className="font-medium text-[10px] text-rose-400 uppercase tracking-wide">Client ({dual.clientTime.tzAbbr}):</span>
+                            <span className="font-mono">{dual.clientTime.startTime}</span>
+                          </span>
+
+                          {/* 🟢 GREEN BADGE: WAYPOINT ADVOCATE TIME */}
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-950/50 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                            title="Waypoint Advocate's time in Atlanta, GA (Eastern)"
+                          >
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <span className="font-medium text-[10px] text-emerald-400 uppercase tracking-wide">Waypoint ({dual.waypointTime.tzAbbr}):</span>
+                            <span className="font-mono">{dual.waypointTime.startTime}</span>
+                          </span>
+                        </div>
+
+                        {dual.clientTime.isDifferent && (
+                          <p className="text-[11px] text-muted-foreground/85 italic mt-1 flex items-center gap-1">
+                            <span>{dual.explanation}</span>
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {apt.parentName && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <User className="h-3 w-3" />{apt.parentName}
+                            </span>
+                          )}
+                          {apt.studentName && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <span className="text-muted-foreground/50">·</span>{apt.studentName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium">{apt.title}</p>
-                        {apt.meetingType && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
-                            {apt.meetingType}
-                          </span>
-                        )}
-                        {apt.videoLink && <Video className="h-3.5 w-3.5 text-blue-500" aria-label="Video meeting" />}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {new Date(apt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        {" – "}
-                        {new Date(apt.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        {apt.parentName && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <User className="h-3 w-3" />{apt.parentName}
-                          </span>
-                        )}
-                        {apt.studentName && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <span className="text-muted-foreground/50">·</span>{apt.studentName}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
+                        {apt.status}
+                      </span>
+                      <Select
+                        value={apt.status}
+                        onValueChange={(v) => handleStatusChange(apt.id, v)}
+                      >
+                        <SelectTrigger className="w-[130px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Scheduled">Scheduled</SelectItem>
+                          <SelectItem value="Confirmed">Confirmed</SelectItem>
+                          <SelectItem value="Completed">Completed</SelectItem>
+                          <SelectItem value="Cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
-                      {apt.status}
-                    </span>
-                    <Select
-                      value={apt.status}
-                      onValueChange={(v) => handleStatusChange(apt.id, v)}
-                    >
-                      <SelectTrigger className="w-[130px] h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Scheduled">Scheduled</SelectItem>
-                        <SelectItem value="Confirmed">Confirmed</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                        <SelectItem value="Cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

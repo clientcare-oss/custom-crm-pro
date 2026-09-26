@@ -110,6 +110,8 @@ export function ScheduleMeetingModal({
         startTime: start,
         endTime: end,
         location: meetingLink,
+        clientTimeZone: meetingTimeZone,
+        originalTimeZone: viewerTimeZone || "America/New_York",
       });
 
       toast.success("Meeting scheduled with confirmed time zone");
@@ -235,29 +237,35 @@ export function ScheduleMeetingModal({
         ) : (
           /* Confirmation Step */
           <div className="space-y-4 py-2">
-            <div className="p-4 rounded-xl bg-slate-900/90 border border-sky-500/40 space-y-3">
-              <div className="text-sm text-slate-200 leading-relaxed">
-                This meeting is being scheduled for{" "}
-                <strong className="text-sky-300 font-mono">
+            <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-3">
+              {/* 🔴 RED: Client time */}
+              <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/50">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400 flex items-center gap-1.5 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  Client Scheduled Time ({getFriendlyTimeZoneName(meetingTimeZone)})
+                </span>
+                <div className="text-base font-bold text-rose-100 font-mono">
                   {timeStr} ({getFriendlyTimeZoneName(meetingTimeZone)} Time)
-                </strong>
-                .
+                </div>
               </div>
 
-              <div className="text-sm text-slate-200 leading-relaxed">
-                For you, this will be{" "}
-                <strong className="text-emerald-300 font-mono">
+              {/* 🟢 GREEN: Waypoint Advocate time */}
+              <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/50">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 flex items-center gap-1.5 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Waypoint Advocate Time (Atlanta / Eastern)
+                </span>
+                <div className="text-base font-bold text-emerald-100 font-mono">
                   {viewerTime.timeString} ({getFriendlyTimeZoneName(viewerTimeZone)} Time)
-                </strong>
-                .
+                </div>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs text-slate-400 italic">
+              <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs text-slate-300 italic">
                 {plainExplanation}
               </div>
 
               <div className="text-xs font-semibold text-sky-400 pt-1">
-                Is {getFriendlyTimeZoneName(meetingTimeZone)} Time correct?
+                Is {getFriendlyTimeZoneName(meetingTimeZone)} Time correct for this family?
               </div>
             </div>
           </div>

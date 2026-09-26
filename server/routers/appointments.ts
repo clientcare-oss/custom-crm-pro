@@ -28,6 +28,8 @@ export const appointmentsRouter = router({
           meetingType: z.string().optional(),
           parentName: z.string().optional(),
           studentName: z.string().optional(),
+          clientTimeZone: z.string().optional(),
+          originalTimeZone: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -53,17 +55,24 @@ export const appointmentsRouter = router({
           console.log('[book] no sessionTypeId, using client endTime, diff_min:', (input.endTime.getTime() - input.startTime.getTime()) / 60000);
         }
 
-        // Auto-fill parentPhone from the linked contact (student's parent)
+        // Auto-fill parentPhone and clientTimeZone from the linked contact (student's parent or student)
         let resolvedParentPhone: string | undefined = undefined;
+        let resolvedClientTz: string | undefined = input.clientTimeZone;
         if (input.clientId && dbConn2) {
           try {
             const { contacts: contactsTable } = await import("../../drizzle/schema");
             const [student] = await dbConn2.select().from(contactsTable).where(eq(contactsTable.id, input.clientId)).limit(1);
             if (student) {
+              if (!resolvedClientTz) {
+                resolvedClientTz = (student as any).confirmedTimeZone || (student as any).timezone;
+              }
               // If student has a parentContactId, get the parent's phone
               if ((student as any).parentContactId) {
                 const [parent] = await dbConn2.select().from(contactsTable).where(eq(contactsTable.id, (student as any).parentContactId)).limit(1);
                 if (parent?.phone) resolvedParentPhone = parent.phone;
+                if (!resolvedClientTz && parent) {
+                  resolvedClientTz = (parent as any).confirmedTimeZone || (parent as any).timezone;
+                }
               } else if (student.phone) {
                 // No parent link — use the contact's own phone
                 resolvedParentPhone = student.phone;
@@ -73,6 +82,8 @@ export const appointmentsRouter = router({
         }
         const appointment = await db.createAppointment({
           ...input,
+          clientTimeZone: resolvedClientTz || "America/New_York",
+          originalTimeZone: input.originalTimeZone || "America/New_York",
           endTime: computedEndTime,
           status: "Scheduled",
           parentPhone: resolvedParentPhone ?? input.parentName ? resolvedParentPhone : undefined,
@@ -111,10 +122,25 @@ export const appointmentsRouter = router({
           parentPhone: z.string().optional(),
           studentName: z.string().optional(),
           status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
+          clientTimeZone: z.string().optional(),
+          originalTimeZone: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        return await db.createAppointment(input, ctx.user.id);
+        let clientTz = input.clientTimeZone;
+        if (!clientTz && input.clientId) {
+          try {
+            const contact = await db.getContactById(input.clientId, ctx.user.id);
+            if (contact) {
+              clientTz = (contact as any).confirmedTimeZone || (contact as any).timezone;
+            }
+          } catch { /* ignore */ }
+        }
+        return await db.createAppointment({
+          ...input,
+          clientTimeZone: clientTz || "America/New_York",
+          originalTimeZone: input.originalTimeZone || "America/New_York",
+        }, ctx.user.id);
       }),
     update: adminProcedure
       .input(
@@ -132,6 +158,8 @@ export const appointmentsRouter = router({
           parentPhone: z.string().optional(),
           studentName: z.string().optional(),
           status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
+          clientTimeZone: z.string().optional(),
+          originalTimeZone: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {

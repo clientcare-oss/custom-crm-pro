@@ -446,3 +446,167 @@ export function getFriendlyTimeZoneName(ianaZone: string): string {
       return ianaZone.split("/").pop()?.replace(/_/g, " ") || ianaZone;
   }
 }
+
+/**
+ * Converts a Waypoint / Eastern "HH:MM" wall-clock slot on a given date to an absolute UTC timestamp (ms).
+ * Accurately calculates daylight saving time (EDT UTC-4 vs EST UTC-5).
+ */
+export function easternSlotToUtcMs(
+  dateStr: string,
+  timeStr: string,
+  easternTz = "America/New_York"
+): number {
+  const [h, m] = timeStr.split(":").map(Number);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const noonUtc = Date.UTC(year, month - 1, day, 12, 0, 0);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: easternTz,
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(new Date(noonUtc));
+  const tzHour = Number(parts.find((p) => p.type === "hour")?.value ?? 12);
+  const tzMin = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+  const offsetMs = (12 - tzHour) * 3600000 - tzMin * 60000;
+  return Date.UTC(year, month - 1, day, h, m, 0) + offsetMs;
+}
+
+export interface SlotConversionResult {
+  rawEasternSlot: string; // "09:00"
+  utcMs: number;
+  clientTimeDisplay: string; // "6:00 AM"
+  clientTzAbbr: string; // "PDT"
+  clientHour24: number;
+  clientMinute: number;
+  waypointTimeDisplay: string; // "9:00 AM"
+  waypointTzAbbr: string; // "EDT"
+  isDifferentZone: boolean;
+}
+
+/**
+ * Converts an Eastern availability slot to the client's preferred local timezone.
+ */
+export function convertEasternSlotToClient(
+  dateStr: string,
+  slotTimeStr: string,
+  clientTz: string,
+  waypointTz = "America/New_York"
+): SlotConversionResult {
+  const utcMs = easternSlotToUtcMs(dateStr, slotTimeStr, waypointTz);
+  const dateObj = new Date(utcMs);
+  const clientInfo = getTimeInZone(clientTz, dateObj);
+  const waypointInfo = getTimeInZone(waypointTz, dateObj);
+
+  return {
+    rawEasternSlot: slotTimeStr,
+    utcMs,
+    clientTimeDisplay: clientInfo.timeString,
+    clientTzAbbr: clientInfo.tzAbbr,
+    clientHour24: clientInfo.hour,
+    clientMinute: clientInfo.minute,
+    waypointTimeDisplay: waypointInfo.timeString,
+    waypointTzAbbr: waypointInfo.tzAbbr,
+    isDifferentZone: clientTz !== waypointTz,
+  };
+}
+
+export interface DualTimeInfo {
+  // Client scheduled time (RED styling)
+  clientTime: {
+    timeZone: string;
+    friendlyName: string;
+    tzAbbr: string;
+    startTime: string;
+    endTime: string;
+    timeRange: string;
+    dateFormatted: string;
+    isDifferent: boolean;
+  };
+  // Waypoint / Advocate time (GREEN styling)
+  waypointTime: {
+    timeZone: string;
+    friendlyName: string;
+    tzAbbr: string;
+    startTime: string;
+    endTime: string;
+    timeRange: string;
+    dateFormatted: string;
+  };
+  // Plain language comparison
+  explanation: string;
+  diffHours: number;
+}
+
+/**
+ * Formats appointment start and end times in both the Client's local timezone (RED)
+ * and the Waypoint Advocate's Eastern timezone (GREEN).
+ */
+export function formatDualTimes(
+  startTime: Date | string,
+  endTime: Date | string | undefined | null,
+  clientTimeZone: string | null | undefined = "America/New_York",
+  waypointTimeZone: string = "America/New_York"
+): DualTimeInfo {
+  const start = new Date(startTime);
+  const end = endTime ? new Date(endTime) : new Date(start.getTime() + 60 * 60 * 1000);
+  const clientTz = clientTimeZone || "America/New_York";
+  const waypointTz = waypointTimeZone || "America/New_York";
+
+  const clientStart = getTimeInZone(clientTz, start);
+  const clientEnd = getTimeInZone(clientTz, end);
+
+  const waypointStart = getTimeInZone(waypointTz, start);
+  const waypointEnd = getTimeInZone(waypointTz, end);
+
+  const diffHours = getTimeDifferenceHours(clientTz, waypointTz, start);
+  const isDifferent = clientTz !== waypointTz && diffHours !== 0;
+
+  const clientDateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: clientTz,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const waypointDateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: waypointTz,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+
+  let explanation = "Client and Waypoint are in the same time zone.";
+  if (isDifferent) {
+    const diffAbs = Math.abs(diffHours);
+    const hrsWord = diffAbs === 1 ? "hour" : "hours";
+    if (diffHours < 0) {
+      explanation = `Client is ${diffAbs} ${hrsWord} behind Waypoint (Atlanta). When it is ${waypointStart.timeString} for advocate, it is ${clientStart.timeString} for client.`;
+    } else {
+      explanation = `Client is ${diffAbs} ${hrsWord} ahead of Waypoint (Atlanta). When it is ${waypointStart.timeString} for advocate, it is ${clientStart.timeString} for client.`;
+    }
+  }
+
+  return {
+    clientTime: {
+      timeZone: clientTz,
+      friendlyName: getFriendlyTimeZoneName(clientTz),
+      tzAbbr: clientStart.tzAbbr,
+      startTime: clientStart.timeString,
+      endTime: clientEnd.timeString,
+      timeRange: `${clientStart.timeString} – ${clientEnd.timeString} ${clientStart.tzAbbr}`,
+      dateFormatted: clientDateFormatter.format(start),
+      isDifferent,
+    },
+    waypointTime: {
+      timeZone: waypointTz,
+      friendlyName: getFriendlyTimeZoneName(waypointTz),
+      tzAbbr: waypointStart.tzAbbr,
+      startTime: waypointStart.timeString,
+      endTime: waypointEnd.timeString,
+      timeRange: `${waypointStart.timeString} – ${waypointEnd.timeString} ${waypointStart.tzAbbr}`,
+      dateFormatted: waypointDateFormatter.format(start),
+    },
+    explanation,
+    diffHours,
+  };
+}

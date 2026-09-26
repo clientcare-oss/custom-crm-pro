@@ -1,7 +1,12 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { Loader2, ChevronLeft, ChevronRight, CalendarDays, Clock } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CalendarDays, Clock, Globe } from "lucide-react";
 import { toast } from "sonner";
+import {
+  convertEasternSlotToClient,
+  SlotConversionResult,
+  getFriendlyTimeZoneName,
+} from "@shared/timezones";
 
 interface InlineSchedulerProps {
   sessionTypeId: number | null;
@@ -33,15 +38,15 @@ function toDateString(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function getUserTimezone(): string {
+function getDetectedTimezone(): string {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, " ");
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York";
   } catch {
-    return "Eastern Time";
+    return "America/New_York";
   }
 }
 
-// Preview placeholder slots
+// Preview placeholder slots (Eastern)
 const PREVIEW_SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"];
 
 export default function InlineScheduler({
@@ -56,13 +61,13 @@ export default function InlineScheduler({
   isPreview = false,
 }: InlineSchedulerProps) {
   const today = new Date();
+  const detectedTz = useMemo(() => getDetectedTimezone(), []);
+  const [clientTz, setClientTz] = useState<string>(detectedTz);
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<SlotConversionResult | null>(null);
   const [isBooking, setIsBooking] = useState(false);
-
-  const userTz = getUserTimezone();
 
   // Fetch session type to know which days of the week have hours
   const { data: sessionTypeData } = trpc.sessionTypes.getById.useQuery(
@@ -102,8 +107,8 @@ export default function InlineScheduler({
 
   const bookAppointment = trpc.appointments.book.useMutation({
     onSuccess: () => {
-      if (selectedDate && selectedTime) {
-        onBooked(selectedDate, selectedTime);
+      if (selectedDate && selectedSlot) {
+        onBooked(selectedDate, `${selectedSlot.clientTimeDisplay} ${selectedSlot.clientTzAbbr}`);
       }
     },
     onError: () => {
@@ -112,7 +117,7 @@ export default function InlineScheduler({
     },
   });
 
-  // Fetch available slots for the selected date
+  // Fetch available slots for the selected date (returns Eastern times)
   const { data: slots, isLoading: slotsLoading } = trpc.appointments.getAvailableSlots.useQuery(
     { sessionTypeId: sessionTypeId!, date: selectedDate! },
     { enabled: !!selectedDate && !!sessionTypeId && !isPreview }
@@ -120,9 +125,17 @@ export default function InlineScheduler({
 
   const displaySlots: string[] = isPreview ? PREVIEW_SLOTS : (slots ?? []);
 
-  // Split into AM and PM groups
-  const amSlots = displaySlots.filter(t => parseInt(t.split(":")[0]) < 12);
-  const pmSlots = displaySlots.filter(t => parseInt(t.split(":")[0]) >= 12);
+  // Convert Eastern slots to client timezone
+  const convertedSlots: SlotConversionResult[] = useMemo(() => {
+    if (!selectedDate) return [];
+    return displaySlots.map((rawSlot) =>
+      convertEasternSlotToClient(selectedDate, rawSlot, clientTz, "America/New_York")
+    );
+  }, [displaySlots, selectedDate, clientTz]);
+
+  // Split into AM and PM groups based on client local hour
+  const amSlots = useMemo(() => convertedSlots.filter((s) => s.clientHour24 < 12), [convertedSlots]);
+  const pmSlots = useMemo(() => convertedSlots.filter((s) => s.clientHour24 >= 12), [convertedSlots]);
 
   // Build calendar days
   const calendarDays = useMemo(() => {
@@ -152,7 +165,7 @@ export default function InlineScheduler({
     if (isPastDate(day) && !isPreview) return;
     if (isDayUnavailable(day)) return;
     setSelectedDate(toDateString(viewYear, viewMonth, day));
-    setSelectedTime(null);
+    setSelectedSlot(null);
   };
 
   const handlePrevMonth = () => {
@@ -166,11 +179,10 @@ export default function InlineScheduler({
   };
 
   const handleBook = async () => {
-    if (!selectedDate || !selectedTime || isPreview) return;
+    if (!selectedDate || !selectedSlot || isPreview) return;
     setIsBooking(true);
-    const startTime = new Date(`${selectedDate}T${selectedTime}`);
-    console.log('[InlineScheduler] handleBook effectiveDurationMin:', effectiveDurationMin, 'sessionTypeData:', sessionTypeData);
-    const endTime = new Date(startTime.getTime() + effectiveDurationMin * 60 * 1000);
+    const startTime = new Date(selectedSlot.utcMs);
+    const endTime = new Date(selectedSlot.utcMs + effectiveDurationMin * 60 * 1000);
     bookAppointment.mutate({
       title: `${sessionTypeName || "Discovery Call"} — ${studentName || parentName}`,
       startTime,
@@ -180,7 +192,9 @@ export default function InlineScheduler({
       meetingType: sessionTypeName || undefined,
       parentName: parentName || undefined,
       studentName: studentName || undefined,
-      description: `Session: ${sessionTypeName || "Discovery Call"}\nParent: ${parentName}\nStudent: ${studentName || "N/A"}\nEmail: ${parentEmail}`,
+      clientTimeZone: clientTz,
+      originalTimeZone: "America/New_York",
+      description: `Session: ${sessionTypeName || "Discovery Call"}\nParent: ${parentName}\nStudent: ${studentName || "N/A"}\nEmail: ${parentEmail}\nClient Time Zone: ${clientTz}`,
     });
   };
 
@@ -189,7 +203,7 @@ export default function InlineScheduler({
   return (
     <div className="rounded-2xl overflow-hidden border border-blue-500/30 bg-slate-900/80 shadow-xl shadow-blue-900/20">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/60 bg-slate-800/60">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/60 bg-slate-800/60 flex-wrap gap-2">
         <div className="flex items-center gap-2 text-slate-200 text-sm font-semibold tracking-wide uppercase">
           <CalendarDays className="w-4 h-4 text-blue-400" />
           {sessionTypeName || "DISCOVERY CALL"}
@@ -289,85 +303,138 @@ export default function InlineScheduler({
         </div>
 
         {/* RIGHT: Time slots */}
-        <div className="flex-1 p-5 min-w-0">
-          {/* Timezone */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs text-slate-400">{userTz}</span>
-            {selectedDate && (
-              <span className="text-xs text-blue-400 font-medium">
-                {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-              </span>
+        <div className="flex-1 p-5 min-w-0 flex flex-col justify-between">
+          <div>
+            {/* Timezone Selector for Clients */}
+            <div className="mb-4 pb-3 border-b border-slate-700/60 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-blue-400" />
+                  Your Time Zone
+                </span>
+                {selectedDate && (
+                  <span className="text-xs text-blue-400 font-medium">
+                    {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={clientTz}
+                  onChange={(e) => {
+                    setClientTz(e.target.value);
+                    setSelectedSlot(null);
+                  }}
+                  className="w-full text-xs bg-slate-800/90 text-slate-100 border border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-blue-400 focus:outline-none"
+                >
+                  <option value="America/New_York">Eastern Time (ET · Atlanta/New York)</option>
+                  <option value="America/Chicago">Central Time (CT · Chicago/Dallas)</option>
+                  <option value="America/Denver">Mountain Time (MT · Denver/Salt Lake)</option>
+                  <option value="America/Phoenix">Mountain Standard (MST · Arizona No DST)</option>
+                  <option value="America/Los_Angeles">Pacific Time (PT · Los Angeles/Seattle)</option>
+                  <option value="America/Anchorage">Alaska Time (AKT · Anchorage)</option>
+                  <option value="Pacific/Honolulu">Hawaii Time (HT · Honolulu)</option>
+                  {![
+                    "America/New_York", "America/Chicago", "America/Denver",
+                    "America/Phoenix", "America/Los_Angeles", "America/Anchorage",
+                    "Pacific/Honolulu"
+                  ].includes(detectedTz) && (
+                    <option value={detectedTz}>{detectedTz.replace(/_/g, " ")} (Detected)</option>
+                  )}
+                </select>
+              </div>
+              {clientTz !== "America/New_York" && (
+                <p className="text-[10px] text-sky-400/90 flex items-center gap-1 pt-0.5">
+                  <span>✓ Slots automatically converted to {getFriendlyTimeZoneName(clientTz)} Time.</span>
+                </p>
+              )}
+            </div>
+
+            {!selectedDate ? (
+              <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
+                <CalendarDays className="w-8 h-8 text-slate-600" />
+                <span>Select a date to see available times</span>
+              </div>
+            ) : slotsLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+              </div>
+            ) : convertedSlots.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
+                <Clock className="w-8 h-8 text-slate-600" />
+                <span>No available times on this day.</span>
+                <span className="text-xs">Please select a different date.</span>
+              </div>
+            ) : (
+              <div className="space-y-4 overflow-y-auto max-h-64 pr-1">
+                {amSlots.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Morning (AM)</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {amSlots.map((slot) => {
+                        const isSelected = selectedSlot?.rawEasternSlot === slot.rawEasternSlot;
+                        return (
+                          <button
+                            key={slot.rawEasternSlot}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`
+                              py-2 px-2 rounded-xl text-xs font-semibold border transition-all flex flex-col items-center justify-center
+                              ${isSelected
+                                ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
+                                : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
+                              }
+                            `}
+                          >
+                            <span>{slot.clientTimeDisplay}</span>
+                            {slot.isDifferentZone && (
+                              <span className={`text-[10px] opacity-75 font-normal ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
+                                ({slot.waypointTimeDisplay} ET)
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {pmSlots.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Afternoon / Evening (PM)</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {pmSlots.map((slot) => {
+                        const isSelected = selectedSlot?.rawEasternSlot === slot.rawEasternSlot;
+                        return (
+                          <button
+                            key={slot.rawEasternSlot}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`
+                              py-2 px-2 rounded-xl text-xs font-semibold border transition-all flex flex-col items-center justify-center
+                              ${isSelected
+                                ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
+                                : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
+                              }
+                            `}
+                          >
+                            <span>{slot.clientTimeDisplay}</span>
+                            {slot.isDifferentZone && (
+                              <span className={`text-[10px] opacity-75 font-normal ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
+                                ({slot.waypointTimeDisplay} ET)
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
-          {!selectedDate ? (
-            <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
-              <CalendarDays className="w-8 h-8 text-slate-600" />
-              <span>Select a date to see available times</span>
-            </div>
-          ) : slotsLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-            </div>
-          ) : displaySlots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
-              <Clock className="w-8 h-8 text-slate-600" />
-              <span>No available times on this day.</span>
-              <span className="text-xs">Please select a different date.</span>
-            </div>
-          ) : (
-            <div className="space-y-4 overflow-y-auto max-h-64 pr-1">
-              {amSlots.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">AM</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {amSlots.map(t => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setSelectedTime(t)}
-                        className={`
-                          py-2 px-1 rounded-xl text-xs font-semibold border transition-all
-                          ${selectedTime === t
-                            ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
-                            : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
-                          }
-                        `}
-                      >
-                        {formatTime12(t).replace(" AM", "").replace(" PM", "")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {pmSlots.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">PM</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {pmSlots.map(t => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setSelectedTime(t)}
-                        className={`
-                          py-2 px-1 rounded-xl text-xs font-semibold border transition-all
-                          ${selectedTime === t
-                            ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
-                            : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
-                          }
-                        `}
-                      >
-                        {formatTime12(t).replace(" AM", "").replace(" PM", "")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Confirm button */}
-          {selectedTime && (
+          {selectedSlot && (
             <button
               type="button"
               disabled={isBooking || isPreview}
@@ -377,7 +444,11 @@ export default function InlineScheduler({
               {isBooking ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Booking...</>
               ) : (
-                <>Confirm {formatTime12(selectedTime)}{isPreview ? " (preview)" : ""}</>
+                <>
+                  Confirm {selectedSlot.clientTimeDisplay} {selectedSlot.clientTzAbbr}
+                  {selectedSlot.isDifferentZone && ` (${selectedSlot.waypointTimeDisplay} ET Waypoint)`}
+                  {isPreview ? " (preview)" : ""}
+                </>
               )}
             </button>
           )}
