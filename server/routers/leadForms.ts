@@ -40,7 +40,49 @@ export const leadFormsRouter = router({
     getBySlug: publicProcedure
       .input(z.object({ slug: z.string() }))
       .query(async ({ input }) => {
-        const form = await db.getLeadFormBySlug(input.slug);
+        let form = await db.getLeadFormBySlug(input.slug);
+        if (!form && (input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form")) {
+          const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+          const defaultOwnerId = owner?.id ?? 1;
+          try {
+            await db.createLeadForm({
+              ownerId: defaultOwnerId,
+              name: "Public Intake Form",
+              slug: input.slug,
+              description: "Default public intake form for families",
+              schedulingEnabled: false,
+              schedulingType: "builtin",
+              isActive: true,
+            });
+            form = await db.getLeadFormBySlug(input.slug);
+          } catch {
+            form = await db.getLeadFormBySlug(input.slug);
+          }
+          if (!form) {
+            return {
+              id: 0,
+              ownerId: defaultOwnerId,
+              name: "Public Intake Form",
+              slug: input.slug,
+              description: "Default public intake form for families",
+              schedulingEnabled: false,
+              schedulingType: "builtin" as const,
+              schedulingUrl: null,
+              schedulingLabel: "Schedule Your Consultation",
+              sessionTypeId: null,
+              fields: null,
+              customLabels: null,
+              isActive: true,
+              confirmationHeadline: "Thank You!",
+              confirmationBody: "Your information has been received. Byron Honea or a Waypoint team member will review your details and reach out shortly.",
+              saveOurNumberMessage: "Save our number in your contacts so you don't miss our call!",
+              confirmationImageUrl: null,
+              confirmationHeadlineAlign: "center" as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+          }
+        }
         if (!form || !form.isActive) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
         return form;
       }),
@@ -158,9 +200,16 @@ export const leadFormsRouter = router({
       }))
       .mutation(async ({ input }) => {
         // Get form and owner
-        const form = await db.getLeadFormBySlug(input.slug);
-        if (!form || !form.isActive) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
-        const ownerId = form.ownerId;
+        let form = await db.getLeadFormBySlug(input.slug);
+        let ownerId: number;
+        if (!form && (input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form")) {
+          const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+          ownerId = owner?.id ?? 1;
+        } else if (!form || !form.isActive) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
+        } else {
+          ownerId = form.ownerId;
+        }
         // Create parent contact
         const parentResult = await db.createContact({
           firstName: input.parentFirstName,

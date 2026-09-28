@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -122,10 +122,34 @@ export default function DynamicForm() {
     }
   }, [submitted, confettiDone]);
 
-  const { data: formConfig, isLoading, error } = trpc.leadForms.getBySlug.useQuery(
+  const { data: rawFormConfig, isLoading } = trpc.leadForms.getBySlug.useQuery(
     { slug },
-    { retry: false, enabled: !!slug }
+    { retry: false, enabled: !!slug && !isPreview }
   );
+
+  const fallbackFormConfig = useMemo(() => ({
+    id: 0,
+    ownerId: "default",
+    name: "Public Intake Form",
+    slug: slug || "public-intake",
+    description: "Initial consultation and student intake form",
+    schedulingEnabled: false,
+    schedulingType: "builtin" as const,
+    schedulingUrl: null,
+    schedulingLabel: "Schedule Your Consultation",
+    sessionTypeId: null,
+    fields: JSON.stringify(DEFAULT_FIELDS),
+    customLabels: null,
+    isActive: true,
+    confirmationHeadline: "Thank You!",
+    confirmationBody: "Your intake form has been submitted successfully. Byron Honea will review your details and reach out shortly.",
+    saveOurNumberMessage: "Save our number in your contacts so you don't miss our call!",
+    confirmationImageUrl: null,
+    confirmationHeadlineAlign: "center" as const,
+  }), [slug]);
+
+  // Use fallback if preview mode or default public-intake slug and no server config returned
+  const formConfig = rawFormConfig || (isPreview || slug === "public-intake" || slug === "intake" || !slug ? fallbackFormConfig : null);
 
   // Fetch session type details for confirmation screen (after formConfig is available)
   const sessionTypeId = (formConfig as any)?.sessionTypeId ?? null;
@@ -241,7 +265,7 @@ export default function DynamicForm() {
   }
 
   // ── Not found ──
-  if (error || !formConfig) {
+  if (!isLoading && !formConfig) {
     return (
       <div className="min-h-screen bg-[#000821] text-white flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-red-600/15 via-blue-900/10 to-transparent blur-3xl pointer-events-none -z-10" />
