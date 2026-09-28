@@ -24,7 +24,7 @@ export default function PortalBook() {
   const [bookedInfo, setBookedInfo] = useState<{ date: string; time: string; sessionName: string } | null>(null);
 
   const { data: myStudents = [], isLoading: studentsLoading } = trpc.portal.getMyStudents.useQuery(undefined, { retry: false });
-  const { data: sessionTypes = [], isLoading } = trpc.sessionTypes.listAll.useQuery(undefined, { retry: false });
+  const { data: sessionTypes = [], isLoading } = trpc.sessionTypes.listPortal.useQuery(undefined, { retry: false });
   const selectedType = sessionTypes.find((st: any) => st.id === selectedSessionTypeId);
   const selectedStudent = (myStudents as any[]).find((s: any) => s.id === selectedStudentId) ?? ((myStudents as any[]).length === 1 ? (myStudents as any[])[0] : null);
   // Auto-select if only one student

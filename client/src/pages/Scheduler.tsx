@@ -29,7 +29,7 @@ import {
 import {
   Phone, Video, Link2, Eye, Copy, Wrench,
   Plus, ChevronDown, ChevronUp, Trash2, Calendar, ExternalLink,
-  Clock, Bell, Users, CheckCircle2, AlertCircle, Loader2
+  Clock, Bell, Users, CheckCircle2, AlertCircle, Loader2, Globe
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -99,6 +99,7 @@ interface SessionFormData {
   reminders: Reminder[];
   teamAvailability: boolean;
   teamMemberIds: string[];
+  showInPortal: boolean;
 }
 
 const defaultForm = (): SessionFormData => ({
@@ -125,6 +126,7 @@ const defaultForm = (): SessionFormData => ({
   canReschedule: true,
   canCancel: false,
   sendConfirmationEmail: true,
+  showInPortal: true,
   weeklyHours: JSON.parse(JSON.stringify(DEFAULT_WEEKLY_HOURS)),
   reminders: JSON.parse(JSON.stringify(DEFAULT_REMINDERS)),
   teamAvailability: true,
@@ -177,6 +179,7 @@ function sessionToForm(s: any): SessionFormData {
     canReschedule: s.canReschedule ?? true,
     canCancel: s.canCancel ?? false,
     sendConfirmationEmail: s.sendConfirmationEmail ?? true,
+    showInPortal: s.showInPortal === true || s.showInPortal === 1 || s.showInPortal === "true" || s.showInPortal === "1",
     weeklyHours: s.weeklyHours ? JSON.parse(s.weeklyHours) : JSON.parse(JSON.stringify(DEFAULT_WEEKLY_HOURS)),
     reminders: s.reminderSettings ? JSON.parse(s.reminderSettings) : JSON.parse(JSON.stringify(DEFAULT_REMINDERS)),
     teamAvailability,
@@ -189,12 +192,14 @@ function SessionCard({
   session,
   onEdit,
   onToggle,
+  onTogglePortal,
   onDelete,
   onCopy,
 }: {
   session: any;
   onEdit: () => void;
   onToggle: (val: boolean) => void;
+  onTogglePortal: (val: boolean) => void;
   onDelete: () => void;
   onCopy: () => void;
 }) {
@@ -234,6 +239,30 @@ function SessionCard({
         <p className="text-xs text-muted-foreground mt-1">
           {durationLabel}, {dateRangeLabel}, {session.timezone ?? "EDT/EST"}
         </p>
+      </div>
+
+      {/* Client Portal Visibility Toggle Button */}
+      <div className="flex items-center justify-between gap-2 py-1.5 px-3 rounded-lg bg-[#030C22]/90 border border-[#0D4B84]/40">
+        <div className="flex items-center gap-2">
+          <Globe className={`h-3.5 w-3.5 ${session.showInPortal ? "text-cyan-400" : "text-slate-500"}`} />
+          <span className="text-xs font-semibold text-slate-200">Client Portal</span>
+        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePortal(!session.showInPortal);
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all border cursor-pointer ${
+            session.showInPortal
+              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 hover:bg-cyan-500/30 shadow-sm shadow-cyan-500/10"
+              : "bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200 hover:border-slate-600"
+          }`}
+          title={session.showInPortal ? "Visible in Client Portal (click to turn off)" : "Hidden from Client Portal (click to turn on)"}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${session.showInPortal ? "bg-cyan-400 animate-pulse" : "bg-slate-500"}`} />
+          {session.showInPortal ? "Portal: ON" : "Portal: OFF"}
+        </button>
       </div>
 
       <div className="flex items-center gap-3 pt-1 border-t border-border">
@@ -857,6 +886,7 @@ function SessionEditForm({
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground pt-2">Additional Settings</p>
             <div className="space-y-3">
               {[
+                { key: "showInPortal" as const, label: "Show in Client Portal", desc: "Clients can select and book this session directly inside their Client Portal workspace." },
                 { key: "canReschedule" as const, label: "Clients can reschedule", desc: "Attendees can reschedule using the link in confirmation messages." },
                 { key: "canCancel" as const, label: "Clients can cancel", desc: "Attendees can cancel using the link in confirmation messages." },
                 { key: "sendConfirmationEmail" as const, label: "Clients get confirmation email", desc: "Attendees will get an email confirming the scheduled session." },
@@ -936,6 +966,16 @@ export default function Scheduler() {
   const toggleMutation = trpc.sessionTypes.toggleActive.useMutation({
     onSuccess: () => utils.sessionTypes.list.invalidate(),
     onError: (e: any) => toast.error(e.message || "Failed to update"),
+  });
+
+  const togglePortalMutation = trpc.sessionTypes.togglePortal.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.showInPortal ? "Session now visible in Client Portal" : "Session hidden from Client Portal");
+      utils.sessionTypes.list.invalidate();
+      utils.sessionTypes.listAll.invalidate();
+      utils.sessionTypes.listPortal.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to update portal visibility"),
   });
 
   const openCreate = () => {
@@ -1030,6 +1070,7 @@ export default function Scheduler() {
               session={session}
               onEdit={() => openEdit(session)}
               onToggle={(val) => toggleMutation.mutate({ id: session.id, isActive: val })}
+              onTogglePortal={(val) => togglePortalMutation.mutate({ id: session.id, showInPortal: val })}
               onDelete={() => {
                 setEditingId(session.id);
                 deleteMutation.mutate({ id: session.id });

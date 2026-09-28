@@ -22,6 +22,7 @@ export const sessionTypesRouter = router({
       return rows.map((r) => ({
         ...r,
         isActive: r.isActive === true || (r as any).isActive === 1 || (r as any).isActive === "true" || (r as any).isActive === "1",
+        showInPortal: r.showInPortal === true || (r as any).showInPortal === 1 || (r as any).showInPortal === "true" || (r as any).showInPortal === "1",
       }));
     }),
 
@@ -41,6 +42,7 @@ export const sessionTypesRouter = router({
         return {
           ...row,
           isActive: row.isActive === true || (row as any).isActive === 1 || (row as any).isActive === "true" || (row as any).isActive === "1",
+          showInPortal: row.showInPortal === true || (row as any).showInPortal === 1 || (row as any).showInPortal === "true" || (row as any).showInPortal === "1",
         };
       }),
 
@@ -75,6 +77,7 @@ export const sessionTypesRouter = router({
           canCancel: z.boolean().default(false),
           sendConfirmationEmail: z.boolean().default(true),
           isActive: z.boolean().default(true),
+          showInPortal: z.boolean().default(true),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -140,6 +143,7 @@ export const sessionTypesRouter = router({
           canCancel: z.boolean().optional(),
           sendConfirmationEmail: z.boolean().optional(),
           isActive: z.boolean().optional(),
+          showInPortal: z.boolean().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -181,6 +185,20 @@ export const sessionTypesRouter = router({
         return { success: true };
       }),
 
+    // Toggle show in client portal
+    togglePortal: protectedProcedure
+      .input(z.object({ id: z.number(), showInPortal: z.boolean() }))
+      .mutation(async ({ input }) => {
+        const { sessionTypes } = await import("../../drizzle/schema");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new Error("DB unavailable");
+        await dbConn
+          .update(sessionTypes)
+          .set({ showInPortal: input.showInPortal, updatedAt: new Date() })
+          .where(eq(sessionTypes.id, input.id));
+        return { success: true };
+      }),
+
     // Public: list active session types for booking page and intake forms
     listAll: publicProcedure.query(async () => {
       const { sessionTypes } = await import("../../drizzle/schema");
@@ -194,8 +212,27 @@ export const sessionTypesRouter = router({
         .map((r) => ({
           ...r,
           isActive: r.isActive === true || (r as any).isActive === 1 || (r as any).isActive === "true" || (r as any).isActive === "1",
+          showInPortal: r.showInPortal === true || (r as any).showInPortal === 1 || (r as any).showInPortal === "true" || (r as any).showInPortal === "1",
         }))
         .filter((r) => r.isActive);
+    }),
+
+    // Public: list active session types enabled for the Client Portal
+    listPortal: publicProcedure.query(async () => {
+      const { sessionTypes } = await import("../../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new Error("DB unavailable");
+      const rows = await dbConn
+        .select()
+        .from(sessionTypes)
+        .orderBy(asc(sessionTypes.createdAt));
+      return rows
+        .map((r) => ({
+          ...r,
+          isActive: r.isActive === true || (r as any).isActive === 1 || (r as any).isActive === "true" || (r as any).isActive === "1",
+          showInPortal: r.showInPortal === true || (r as any).showInPortal === 1 || (r as any).showInPortal === "true" || (r as any).showInPortal === "1",
+        }))
+        .filter((r) => r.isActive && r.showInPortal);
     }),
 
     // Public: get a single session type by ID (for inline scheduler)

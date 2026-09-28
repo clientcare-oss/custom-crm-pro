@@ -728,7 +728,7 @@ export default function ClientPortal() {
     nextStep: "",
     whoHasBall: "",
   });
-  const { data: publicSessionTypes } = trpc.sessionTypes.listAll.useQuery(undefined, { retry: false });
+  const { data: publicSessionTypes } = trpc.sessionTypes.listPortal.useQuery(undefined, { retry: false });
 
   // Attorney edit state in Workspace Mode
   const [editingAttorney, setEditingAttorney] = useState(false);
