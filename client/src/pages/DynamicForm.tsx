@@ -123,7 +123,7 @@ export default function DynamicForm() {
   }, [submitted, confettiDone]);
 
   const { data: rawFormConfig, isLoading } = trpc.leadForms.getBySlug.useQuery(
-    { slug },
+    { slug, preview: isPreview },
     { retry: false, enabled: !!slug, refetchOnMount: "always", staleTime: 0 }
   );
 

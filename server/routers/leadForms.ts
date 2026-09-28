@@ -38,7 +38,7 @@ export const leadFormsRouter = router({
 
     // Get a single form by slug (public — for rendering the form)
     getBySlug: publicProcedure
-      .input(z.object({ slug: z.string() }))
+      .input(z.object({ slug: z.string(), preview: z.boolean().optional() }))
       .query(async ({ input }) => {
         let form = await db.getLeadFormBySlug(input.slug);
         if (!form && (input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form")) {
@@ -83,8 +83,14 @@ export const leadFormsRouter = router({
             };
           }
         }
-        if (!form || !form.isActive) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
-        return form;
+        if (!form) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
+        const isPublicIntake = input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form";
+        const isActive = Boolean(form.isActive) || isPublicIntake || Boolean(input.preview);
+        if (!isActive) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
+        return {
+          ...form,
+          isActive: true,
+        };
       }),
 
     // Create a new form

@@ -1178,16 +1178,24 @@ export async function getLeadForms(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
   if (ownerId !== undefined) {
-    return await db
+    const list = await db
       .select()
       .from(leadForms)
       .where(eq(leadForms.ownerId, ownerId))
       .orderBy(desc(leadForms.createdAt));
+    return list.map((f) => ({
+      ...f,
+      isActive: f.isActive === true || (f as any).isActive === 1 || (f as any).isActive === "true" || (f as any).isActive === "1",
+    }));
   }
-  return await db
+  const list = await db
     .select()
     .from(leadForms)
     .orderBy(desc(leadForms.createdAt));
+  return list.map((f) => ({
+    ...f,
+    isActive: f.isActive === true || (f as any).isActive === 1 || (f as any).isActive === "true" || (f as any).isActive === "1",
+  }));
 }
 
 export async function getLeadFormBySlug(slug: string) {
@@ -1198,7 +1206,13 @@ export async function getLeadFormBySlug(slug: string) {
     .from(leadForms)
     .where(eq(leadForms.slug, slug))
     .limit(1);
-  return result[0];
+  if (!result[0]) return undefined;
+  const form = result[0];
+  const rawActive = (form as any).isActive;
+  return {
+    ...form,
+    isActive: rawActive === true || rawActive === 1 || rawActive === "true" || rawActive === "1",
+  };
 }
 
 export async function getLeadFormById(id: number, _ownerId?: number) {
@@ -1209,7 +1223,13 @@ export async function getLeadFormById(id: number, _ownerId?: number) {
     .from(leadForms)
     .where(eq(leadForms.id, id))
     .limit(1);
-  return result[0];
+  if (!result[0]) return undefined;
+  const form = result[0];
+  const rawActive = (form as any).isActive;
+  return {
+    ...form,
+    isActive: rawActive === true || rawActive === 1 || rawActive === "true" || rawActive === "1",
+  };
 }
 
 export async function createLeadForm(data: {
