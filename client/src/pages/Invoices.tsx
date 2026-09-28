@@ -343,23 +343,49 @@ export default function Invoices() {
                     className="border-b border-border hover:bg-muted/30 transition-colors"
                   >
                     <td className="px-6 py-4 text-sm font-semibold text-foreground">
-                      {invoice.invoiceNumber}
+                      <div>
+                        <p>{invoice.invoiceNumber}</p>
+                        {invoice.referralCreditApplied && Number(invoice.referralCreditApplied) > 0 && (
+                          <div className="mt-1 flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-md w-fit">
+                              🎁 ${Number(invoice.referralCreditApplied).toFixed(2)} Referral Credit Applied
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              Regular: ${Number(invoice.regularPlanAmount || invoice.amount).toFixed(2)} | Credit: -${Number(invoice.referralCreditApplied).toFixed(2)} | Charge: ${Number(invoice.total).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-foreground">
-                      ${Number(invoice.total || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      <div>
+                        <span>${Number(invoice.total || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                        {invoice.referralCreditApplied && Number(invoice.referralCreditApplied) > 0 && (
+                          <span className="block text-[10px] text-emerald-400 font-normal">
+                            Reduced from ${Number(invoice.regularPlanAmount || invoice.amount).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-foreground">
-                      ${Number(invoice.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      ${Number(invoice.regularPlanAmount || invoice.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4">
-                      <div
-                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
-                          invoice.status as InvoiceStatus
-                        )}`}
-                      >
-                        {getStatusIcon(invoice.status as InvoiceStatus)}
-                        {invoice.status}
-                      </div>
+                      {invoice.paymentStatusNote === "Satisfied by Referral Credit" || (Number(invoice.total) === 0 && Number(invoice.referralCreditApplied) > 0) ? (
+                        <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          <CheckCircle className="h-3 w-3" />
+                          Satisfied by Referral Credit
+                        </div>
+                      ) : (
+                        <div
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
+                            invoice.status as InvoiceStatus
+                          )}`}
+                        >
+                          {getStatusIcon(invoice.status as InvoiceStatus)}
+                          {invoice.status}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
                       {invoice.dueDate

@@ -38,11 +38,64 @@ export const referralsRouter = router({
       return {
         referralCode: "WP-DEMO1",
         stats: {
+          totalReferred: 3,
+          becameClients: 2,
           referredCount: 3,
           convertedCount: 2,
           availableCreditCents: 5000,
+          availableCreditDollars: 50,
           availableCreditFormatted: "$50.00",
+          pendingCreditCents: 0,
+          pendingCreditFormatted: "$0.00",
+          totalEarnedCents: 5000,
+          totalUsedCents: 0,
         },
+        upcomingPayment: {
+          hasUpcomingPayment: true,
+          invoiceId: 999,
+          invoiceNumber: "INV-2026-1015",
+          paymentDate: new Date().toISOString(),
+          paymentDateFormatted: "October 15, 2026",
+          dueDateFormatted: "October 15, 2026",
+          cutoffDateFormatted: "October 10, 2026",
+          regularAmountCents: 10500,
+          regularAmountFormatted: "$105.00",
+          regularPlanAmountFormatted: "$105.00",
+          regularPlanAmountCents: 10500,
+          creditAppliedCents: 0,
+          creditAppliedFormatted: "-$0.00",
+          referralCreditAppliedFormatted: "$0.00",
+          referralCreditAppliedCents: 0,
+          scheduledChargeCents: 10500,
+          scheduledChargeFormatted: "$105.00",
+          isInsideCutoff: false,
+          isPastCutoff: false,
+          cutoffWarningMessage: "Apply referral credit by: October 10, 2026",
+          message: "Apply referral credit by: October 10, 2026",
+          creditStatus: "none" as const,
+          paymentStatusNote: null,
+          isSatisfiedByCredit: false,
+        },
+        history: [
+          {
+            id: 1,
+            amountCents: 2500,
+            amountFormatted: "+ $25.00",
+            note: "Referral converted — Sarah M.",
+            status: "available",
+            transactionType: "referral_reward",
+            date: new Date().toISOString(),
+          },
+          {
+            id: 2,
+            amountCents: 2500,
+            amountFormatted: "+ $25.00",
+            note: "Referral converted — Jennifer R.",
+            status: "available",
+            transactionType: "referral_reward",
+            date: new Date().toISOString(),
+          },
+        ],
         referrals: [
           {
             id: 1,
@@ -79,7 +132,130 @@ export const referralsRouter = router({
     return await db.getClientPortalReferralData(clientId);
   }),
 
-  // ── Client / Parent Portal: Apply Waypoint Credit toward an eligible invoice ──
+  // ── Client / Parent Portal: Get upcoming scheduled payment & 5-day cutoff status ──
+  getUpcomingPayment: portalProcedure.query(async ({ ctx }) => {
+    let clientId = (ctx as any).portalContactId;
+    if ((ctx as any).isAdminPreview && !clientId) {
+      clientId = 1;
+    }
+    if (!clientId) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Client contact ID not found" });
+    }
+    return await db.getUpcomingScheduledPayment({ clientId });
+  }),
+
+  // ── Client / Parent Portal: Apply Credit to My Next Payment (Client-Controlled) ──
+  applyToNextPayment: portalProcedure
+    .input(
+      z.object({
+        amountCents: z.number().int().positive("Amount must be greater than 0"),
+        invoiceId: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      let clientId = (ctx as any).portalContactId;
+      if ((ctx as any).isAdminPreview && !clientId) {
+        clientId = 1;
+      }
+      if (!clientId) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Client contact ID not found" });
+      }
+
+      const res = await db.applyCreditToNextPayment({
+        clientId,
+        amountCents: input.amountCents,
+        invoiceId: input.invoiceId,
+        staffUserName: "Client Self-Service (Portal)",
+      });
+
+      if (!res.success) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: res.error || "Failed to apply credit" });
+      }
+
+      return res;
+    }),
+
+  // ── Client / Parent Portal: Cancel / Reverse Pending Credit Application ──
+  cancelCreditApplication: portalProcedure
+    .input(
+      z.object({
+        invoiceId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      let clientId = (ctx as any).portalContactId;
+      if ((ctx as any).isAdminPreview && !clientId) {
+        clientId = 1;
+      }
+      if (!clientId) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Client contact ID not found" });
+      }
+
+      const res = await db.cancelCreditApplication({
+        clientId,
+        invoiceId: input.invoiceId,
+        staffUserName: "Client Self-Service (Portal)",
+      });
+
+      if (!res.success) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: res.error || "Failed to cancel credit application" });
+      }
+
+      return res;
+    }),
+
+  // ── Staff / Admin: Apply referral credit to client's upcoming payment ──
+  adminApplyToPayment: adminProcedure
+    .input(
+      z.object({
+        clientId: z.number(),
+        amountCents: z.number().int().positive(),
+        invoiceId: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const staffUser = ctx.user;
+      const res = await db.applyCreditToNextPayment({
+        clientId: input.clientId,
+        amountCents: input.amountCents,
+        invoiceId: input.invoiceId,
+        staffUserId: staffUser.id,
+        staffUserName: staffUser.name || staffUser.email || "Waypoint Staff",
+      });
+
+      if (!res.success) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: res.error || "Failed to apply credit" });
+      }
+
+      return res;
+    }),
+
+  // ── Staff / Admin: Cancel / Return referral credit from an invoice ──
+  adminCancelCreditApplication: adminProcedure
+    .input(
+      z.object({
+        clientId: z.number(),
+        invoiceId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const staffUser = ctx.user;
+      const res = await db.cancelCreditApplication({
+        clientId: input.clientId,
+        invoiceId: input.invoiceId,
+        staffUserId: staffUser.id,
+        staffUserName: staffUser.name || staffUser.email || "Waypoint Staff",
+        skipCutoffCheckForTesting: true,
+      });
+
+      if (!res.success) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: res.error || "Failed to cancel credit application" });
+      }
+
+      return res;
+    }),
+
+  // ── Legacy / Direct Invoice Credit Redemption ──
   applyPortalCredit: portalProcedure
     .input(
       z.object({

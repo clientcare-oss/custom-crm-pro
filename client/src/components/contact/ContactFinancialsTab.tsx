@@ -8,6 +8,12 @@ interface InvoiceItem {
   id: number;
   number?: string;
   totalAmount?: number | string;
+  amount?: number | string;
+  total?: number | string;
+  regularPlanAmount?: number | string | null;
+  referralCreditApplied?: number | string | null;
+  creditApplicationStatus?: string | null;
+  paymentStatusNote?: string | null;
   status: string;
   createdAt: string | Date;
 }
@@ -72,11 +78,25 @@ export default function ContactFinancialsTab({
                   <div>
                     <p className="text-xs font-bold text-white">Invoice #{inv.number || inv.id}</p>
                     <p className="text-[10px] text-slate-400">{new Date(inv.createdAt).toLocaleDateString()}</p>
+                    {inv.referralCreditApplied && Number(inv.referralCreditApplied) > 0 && (
+                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-1.5 py-0.5 rounded">
+                          🎁 ${Number(inv.referralCreditApplied).toFixed(2)} Referral Credit Applied
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-mono">
+                          (Regular: ${Number(inv.regularPlanAmount || inv.amount || 0).toFixed(2)} | Charge: ${Number(inv.total || inv.totalAmount || 0).toFixed(2)})
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-white">${inv.totalAmount || "0.00"}</span>
-                  <Badge className={`text-[10px] font-bold ${getStatusColor(inv.status)}`}>{inv.status}</Badge>
+                  <span className="text-xs font-bold text-white font-mono">${inv.total || inv.totalAmount || "0.00"}</span>
+                  <Badge className={`text-[10px] font-bold ${getStatusColor(inv.status)}`}>
+                    {inv.paymentStatusNote === "Satisfied by Referral Credit" || (Number(inv.total) === 0 && Number(inv.referralCreditApplied) > 0)
+                      ? "Satisfied by Referral Credit"
+                      : inv.status}
+                  </Badge>
                 </div>
               </Card>
             ))}

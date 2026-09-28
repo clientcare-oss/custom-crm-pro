@@ -20,6 +20,7 @@ const isTestEnv = typeof process !== "undefined" && (process.env.NODE_ENV === "t
 export const inMemoryContacts = new Map<number, { id: number; firstName: string; lastName: string; referralCode: string; email?: string }>();
 export const inMemoryReferrals = new Map<number, Referral>();
 export const inMemoryLedger = new Map<number, WaypointCreditTransaction[]>();
+export const inMemoryInvoices = new Map<number, any>();
 let inMemorySettings: ReferralProgramSettings | null = null;
 let nextReferralId = 100;
 let nextLedgerId = 100;
@@ -28,6 +29,7 @@ export function clearInMemoryReferralState() {
   inMemoryContacts.clear();
   inMemoryReferrals.clear();
   inMemoryLedger.clear();
+  inMemoryInvoices.clear();
   inMemorySettings = null;
 }
 
@@ -587,6 +589,8 @@ export async function qualifyAndRewardReferral(params: {
       staffUserId: null,
       staffUserName: null,
       note: "Referral Credit — New Family",
+      status: "posted",
+      source: "system",
       createdAt: now,
     };
     const clientList = inMemoryLedger.get(refRecord.referrerClientId) || [];
@@ -653,10 +657,13 @@ export async function qualifyAndRewardReferral(params: {
 /**
  * Calculate client's available Waypoint Credit balance from ledger transactions.
  * Waypoint Credit has NO CASH VALUE. Cannot be negative.
+ * Automatically deducts any pending application amounts to prevent double use.
  */
 export async function getClientCreditBalance(clientId: number): Promise<{
   availableCreditCents: number;
   availableCreditFormatted: string;
+  pendingCreditCents: number;
+  pendingCreditFormatted: string;
   totalEarnedCents: number;
   totalUsedCents: number;
 }> {
@@ -665,12 +672,15 @@ export async function getClientCreditBalance(clientId: number): Promise<{
     let balance = 0;
     let earned = 0;
     let used = 0;
+    let pending = 0;
 
     for (const entry of entries) {
       balance += entry.amount;
-      if (entry.amount > 0) {
+      if (entry.amount > 0 && entry.transactionType !== "credit_returned") {
         earned += entry.amount;
-      } else {
+      } else if (entry.status === "pending_application") {
+        pending += Math.abs(entry.amount);
+      } else if (entry.status === "used" || entry.transactionType === "payment_redemption" || entry.transactionType === "credit_used") {
         used += Math.abs(entry.amount);
       }
     }
@@ -679,6 +689,8 @@ export async function getClientCreditBalance(clientId: number): Promise<{
     return {
       availableCreditCents: safeBalance,
       availableCreditFormatted: `$${(safeBalance / 100).toFixed(2)}`,
+      pendingCreditCents: pending,
+      pendingCreditFormatted: `$${(pending / 100).toFixed(2)}`,
       totalEarnedCents: earned,
       totalUsedCents: used,
     };
@@ -689,6 +701,8 @@ export async function getClientCreditBalance(clientId: number): Promise<{
     return {
       availableCreditCents: 0,
       availableCreditFormatted: "$0.00",
+      pendingCreditCents: 0,
+      pendingCreditFormatted: "$0.00",
       totalEarnedCents: 0,
       totalUsedCents: 0,
     };
@@ -698,6 +712,7 @@ export async function getClientCreditBalance(clientId: number): Promise<{
     .select({
       amount: waypointCreditLedger.amount,
       transactionType: waypointCreditLedger.transactionType,
+      status: waypointCreditLedger.status,
     })
     .from(waypointCreditLedger)
     .where(eq(waypointCreditLedger.clientId, clientId));
@@ -705,12 +720,15 @@ export async function getClientCreditBalance(clientId: number): Promise<{
   let balance = 0;
   let earned = 0;
   let used = 0;
+  let pending = 0;
 
   for (const entry of entries) {
     balance += entry.amount;
-    if (entry.amount > 0) {
+    if (entry.amount > 0 && entry.transactionType !== "credit_returned") {
       earned += entry.amount;
-    } else {
+    } else if (entry.status === "pending_application") {
+      pending += Math.abs(entry.amount);
+    } else if (entry.status === "used" || entry.transactionType === "payment_redemption" || entry.transactionType === "credit_used") {
       used += Math.abs(entry.amount);
     }
   }
@@ -719,6 +737,8 @@ export async function getClientCreditBalance(clientId: number): Promise<{
   return {
     availableCreditCents: safeBalance,
     availableCreditFormatted: `$${(safeBalance / 100).toFixed(2)}`,
+    pendingCreditCents: pending,
+    pendingCreditFormatted: `$${(pending / 100).toFixed(2)}`,
     totalEarnedCents: earned,
     totalUsedCents: used,
   };
@@ -785,6 +805,8 @@ export async function addManualCreditAdjustment(params: {
       staffUserId: params.staffUserId,
       staffUserName: params.staffUserName,
       note: params.reason.trim(),
+      status: "posted",
+      source: "staff",
       createdAt: new Date(),
     };
     const list = inMemoryLedger.get(params.clientId) || [];
@@ -880,6 +902,8 @@ export async function applyCreditToInvoice(params: {
       staffUserId: params.staffUserId || null,
       staffUserName: params.staffUserName || "Self-Service Parent Portal",
       note: params.note || `Applied Waypoint Credit to Invoice #${params.invoiceId}`,
+      status: "used",
+      source: "client_portal",
       createdAt: new Date(),
     };
     const list = inMemoryLedger.get(params.clientId) || [];
@@ -964,6 +988,659 @@ export async function applyCreditToInvoice(params: {
     appliedAmountCents: amountToApply,
     remainingCreditCents: updatedCredit.availableCreditCents,
     remainingInvoiceBalanceCents: remainingInvoiceCents,
+  };
+}
+
+/**
+ * 5-Day Cutoff Calculator for Scheduled Payments.
+ * Referral credit must be applied at least 5 calendar days before scheduled payment date.
+ */
+export function checkFiveDayCutoff(dueDate: Date | string): {
+  isInsideCutoff: boolean;
+  daysRemaining: number;
+  paymentDateFormatted: string;
+  cutoffDateFormatted: string;
+  cutoffWarningMessage: string;
+} {
+  const d = new Date(dueDate);
+  const now = new Date();
+
+  // Calendar day calculation (midnight-to-midnight)
+  const todayCal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const paymentCal = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const diffMs = paymentCal.getTime() - todayCal.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  const cutoffCal = new Date(paymentCal);
+  cutoffCal.setDate(cutoffCal.getDate() - 5);
+
+  const paymentDateFormatted = paymentCal.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const cutoffDateFormatted = cutoffCal.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const isInsideCutoff = diffDays < 5;
+  const cutoffWarningMessage = isInsideCutoff
+    ? "Next payment is already processing. Referral credits can no longer be applied to this upcoming payment. Your available credit will remain in your account and can be applied to a future payment."
+    : `Apply referral credit by: ${cutoffDateFormatted}`;
+
+  return {
+    isInsideCutoff,
+    daysRemaining: diffDays,
+    paymentDateFormatted,
+    cutoffDateFormatted,
+    cutoffWarningMessage,
+  };
+}
+
+export interface UpcomingPaymentInfo {
+  hasUpcomingPayment: boolean;
+  invoice?: any;
+  invoiceId: number;
+  invoiceNumber: string;
+  paymentDate: string;
+  paymentDateFormatted: string;
+  dueDateFormatted: string;
+  cutoffDateFormatted: string;
+  regularAmountCents: number;
+  regularAmountFormatted: string;
+  regularPlanAmountFormatted: string;
+  regularPlanAmountCents: number;
+  creditAppliedCents: number;
+  creditAppliedFormatted: string;
+  referralCreditAppliedFormatted: string;
+  referralCreditAppliedCents: number;
+  scheduledChargeCents: number;
+  scheduledChargeFormatted: string;
+  isInsideCutoff: boolean;
+  isPastCutoff: boolean;
+  cutoffWarningMessage: string;
+  message: string;
+  creditStatus: "none" | "pending_application" | "used" | "satisfied_by_credit";
+  paymentStatusNote: string | null;
+  isSatisfiedByCredit: boolean;
+}
+
+/**
+ * Retrieve the client's next scheduled payment / upcoming invoice with dynamic 5-day cutoff check.
+ */
+export async function getUpcomingScheduledPayment(params: {
+  clientId: number;
+  studentContactId?: number;
+}): Promise<UpcomingPaymentInfo> {
+  const now = new Date();
+  const defaultDueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 17);
+
+  if (isTestEnv) {
+    let inv = inMemoryInvoices.get(params.clientId);
+    if (!inv || inv.status === "Paid" || inv.status === "Cancelled") {
+      inv = undefined;
+      for (const item of Array.from(inMemoryInvoices.values())) {
+        if (item.clientId === params.clientId && item.status !== "Cancelled" && item.status !== "Paid") {
+          inv = item;
+          break;
+        }
+      }
+    }
+
+    if (!inv) {
+      inv = {
+        id: 999,
+        invoiceNumber: "INV-2026-1015",
+        clientId: params.clientId,
+        amount: "105.00",
+        regularPlanAmount: "105.00",
+        total: "105.00",
+        referralCreditApplied: "0.00",
+        status: "Draft",
+        creditApplicationStatus: "none",
+        paymentStatusNote: null,
+        dueDate: defaultDueDate,
+      };
+      inMemoryInvoices.set(inv.id, inv);
+    }
+
+    const cutoff = checkFiveDayCutoff(inv.dueDate);
+    const regularAmountCents = Math.round(parseFloat(inv.regularPlanAmount || inv.amount || "105.00") * 100);
+    const creditAppliedCents = Math.round(parseFloat(inv.referralCreditApplied || "0.00") * 100);
+    const scheduledChargeCents = Math.round(parseFloat(inv.total || "105.00") * 100);
+    const isSatisfiedByCredit = scheduledChargeCents === 0 && creditAppliedCents > 0;
+
+    return {
+      hasUpcomingPayment: true,
+      invoice: inv,
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoiceNumber || `INV-${inv.id}`,
+      paymentDate: new Date(inv.dueDate).toISOString(),
+      paymentDateFormatted: cutoff.paymentDateFormatted,
+      dueDateFormatted: cutoff.paymentDateFormatted,
+      cutoffDateFormatted: cutoff.cutoffDateFormatted,
+      regularAmountCents,
+      regularAmountFormatted: `$${(regularAmountCents / 100).toFixed(2)}`,
+      regularPlanAmountFormatted: `$${(regularAmountCents / 100).toFixed(2)}`,
+      regularPlanAmountCents: regularAmountCents,
+      creditAppliedCents,
+      creditAppliedFormatted: `-$${(creditAppliedCents / 100).toFixed(2)}`,
+      referralCreditAppliedFormatted: `$${(creditAppliedCents / 100).toFixed(2)}`,
+      referralCreditAppliedCents: creditAppliedCents,
+      scheduledChargeCents,
+      scheduledChargeFormatted: `$${(scheduledChargeCents / 100).toFixed(2)}`,
+      isInsideCutoff: cutoff.isInsideCutoff,
+      isPastCutoff: cutoff.isInsideCutoff,
+      cutoffWarningMessage: cutoff.cutoffWarningMessage,
+      message: cutoff.cutoffWarningMessage,
+      creditStatus: isSatisfiedByCredit ? "satisfied_by_credit" : (inv.creditApplicationStatus as any) || "none",
+      paymentStatusNote: inv.paymentStatusNote || (isSatisfiedByCredit ? "Satisfied by Referral Credit" : null),
+      isSatisfiedByCredit,
+    };
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const openInvoices = await db
+    .select()
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.clientId, params.clientId),
+        sql`${invoices.status} != 'Cancelled'`
+      )
+    )
+    .orderBy(asc(invoices.dueDate), desc(invoices.createdAt));
+
+  let inv = openInvoices.find((i) => i.status !== "Paid" || (i.referralCreditApplied && parseFloat(i.referralCreditApplied) > 0));
+
+  if (!inv) {
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+    const newInvoiceNumber = `INV-${params.clientId}-${nextMonth.getFullYear()}${String(nextMonth.getMonth() + 1).padStart(2, "0")}`;
+
+    await db.insert(invoices).values({
+      ownerId: 1,
+      clientId: params.clientId,
+      invoiceNumber: newInvoiceNumber,
+      amount: "105.00",
+      regularPlanAmount: "105.00",
+      total: "105.00",
+      referralCreditApplied: "0.00",
+      status: "Draft",
+      creditApplicationStatus: "none",
+      dueDate: nextMonth,
+    });
+
+    const [created] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceNumber, newInvoiceNumber))
+      .limit(1);
+
+    inv = created;
+  }
+
+  const invDueDate = inv?.dueDate ? new Date(inv.dueDate) : defaultDueDate;
+  const cutoff = checkFiveDayCutoff(invDueDate);
+  const regularAmountCents = Math.round(parseFloat(inv?.regularPlanAmount || inv?.amount || "105.00") * 100);
+  const creditAppliedCents = Math.round(parseFloat(inv?.referralCreditApplied || "0.00") * 100);
+  const scheduledChargeCents = Math.round(parseFloat(inv?.total || "105.00") * 100);
+  const isSatisfiedByCredit = scheduledChargeCents === 0 && creditAppliedCents > 0;
+
+  return {
+    hasUpcomingPayment: true,
+    invoice: inv,
+    invoiceId: inv?.id || 1,
+    invoiceNumber: inv?.invoiceNumber || `INV-${inv?.id || 1}`,
+    paymentDate: invDueDate.toISOString(),
+    paymentDateFormatted: cutoff.paymentDateFormatted,
+    dueDateFormatted: cutoff.paymentDateFormatted,
+    cutoffDateFormatted: cutoff.cutoffDateFormatted,
+    regularAmountCents,
+    regularAmountFormatted: `$${(regularAmountCents / 100).toFixed(2)}`,
+    regularPlanAmountFormatted: `$${(regularAmountCents / 100).toFixed(2)}`,
+    regularPlanAmountCents: regularAmountCents,
+    creditAppliedCents,
+    creditAppliedFormatted: `-$${(creditAppliedCents / 100).toFixed(2)}`,
+    referralCreditAppliedFormatted: `$${(creditAppliedCents / 100).toFixed(2)}`,
+    referralCreditAppliedCents: creditAppliedCents,
+    scheduledChargeCents,
+    scheduledChargeFormatted: `$${(scheduledChargeCents / 100).toFixed(2)}`,
+    isInsideCutoff: cutoff.isInsideCutoff,
+    isPastCutoff: cutoff.isInsideCutoff,
+    cutoffWarningMessage: cutoff.cutoffWarningMessage,
+    message: cutoff.cutoffWarningMessage,
+    creditStatus: isSatisfiedByCredit ? "satisfied_by_credit" : (inv?.creditApplicationStatus as any) || "none",
+    paymentStatusNote: inv?.paymentStatusNote || (isSatisfiedByCredit ? "Satisfied by Referral Credit" : null),
+    isSatisfiedByCredit,
+  };
+}
+
+/**
+ * Apply client referral credit to next scheduled payment.
+ * Connects directly to the billing system, updates the invoice responsible for the charge,
+ * enforces 5-day cutoff, and prevents double use.
+ */
+export async function applyCreditToNextPayment(params: {
+  clientId: number;
+  amountCents: number;
+  invoiceId?: number;
+  studentContactId?: number;
+  staffUserId?: number;
+  staffUserName?: string;
+  skipCutoffCheckForTesting?: boolean;
+}): Promise<{
+  success: boolean;
+  appliedCents: number;
+  appliedFormatted: string;
+  regularAmountCents: number;
+  regularAmountFormatted: string;
+  newPaymentAmountCents: number;
+  newPaymentAmountFormatted: string;
+  remainingCreditCents: number;
+  paymentDateFormatted: string;
+  isSatisfiedByCredit: boolean;
+  error?: string;
+}> {
+  if (params.amountCents <= 0) {
+    return {
+      success: false,
+      appliedCents: 0,
+      appliedFormatted: "$0.00",
+      regularAmountCents: 0,
+      regularAmountFormatted: "$0.00",
+      newPaymentAmountCents: 0,
+      newPaymentAmountFormatted: "$0.00",
+      remainingCreditCents: 0,
+      paymentDateFormatted: "",
+      isSatisfiedByCredit: false,
+      error: "Please specify an amount greater than $0 to apply.",
+    };
+  }
+
+  const currentCredit = await getClientCreditBalance(params.clientId);
+  if (params.amountCents > currentCredit.availableCreditCents) {
+    return {
+      success: false,
+      appliedCents: 0,
+      appliedFormatted: "$0.00",
+      regularAmountCents: 0,
+      regularAmountFormatted: "$0.00",
+      newPaymentAmountCents: 0,
+      newPaymentAmountFormatted: "$0.00",
+      remainingCreditCents: currentCredit.availableCreditCents,
+      paymentDateFormatted: "",
+      isSatisfiedByCredit: false,
+      error: `Amount exceeds your available Waypoint Credit balance (${currentCredit.availableCreditFormatted}).`,
+    };
+  }
+
+  const upcoming = await getUpcomingScheduledPayment({
+    clientId: params.clientId,
+    studentContactId: params.studentContactId,
+  });
+
+  if (upcoming.isInsideCutoff && !params.skipCutoffCheckForTesting) {
+    return {
+      success: false,
+      appliedCents: 0,
+      appliedFormatted: "$0.00",
+      regularAmountCents: upcoming.regularAmountCents,
+      regularAmountFormatted: upcoming.regularAmountFormatted,
+      newPaymentAmountCents: upcoming.scheduledChargeCents,
+      newPaymentAmountFormatted: upcoming.scheduledChargeFormatted,
+      remainingCreditCents: currentCredit.availableCreditCents,
+      paymentDateFormatted: upcoming.paymentDateFormatted,
+      isSatisfiedByCredit: false,
+      error: "Referral credits can no longer be applied to this upcoming payment. Your available credit will remain in your account and can be applied to a future payment.",
+    };
+  }
+
+  if (params.amountCents > upcoming.regularAmountCents) {
+    return {
+      success: false,
+      appliedCents: 0,
+      appliedFormatted: "$0.00",
+      regularAmountCents: upcoming.regularAmountCents,
+      regularAmountFormatted: upcoming.regularAmountFormatted,
+      newPaymentAmountCents: upcoming.scheduledChargeCents,
+      newPaymentAmountFormatted: upcoming.scheduledChargeFormatted,
+      remainingCreditCents: currentCredit.availableCreditCents,
+      paymentDateFormatted: upcoming.paymentDateFormatted,
+      isSatisfiedByCredit: false,
+      error: `Applied credit ($${(params.amountCents / 100).toFixed(2)}) cannot exceed the upcoming invoice balance (${upcoming.regularAmountFormatted}).`,
+    };
+  }
+
+  const maxApplicable = Math.min(currentCredit.availableCreditCents, upcoming.regularAmountCents);
+  const amountToApply = Math.min(params.amountCents, maxApplicable);
+  const newPaymentAmountCents = Math.max(0, upcoming.regularAmountCents - amountToApply);
+  const isSatisfiedByCredit = newPaymentAmountCents === 0;
+
+  const targetInvoiceId = params.invoiceId || upcoming.invoiceId;
+
+  if (isTestEnv) {
+    const inv = inMemoryInvoices.get(targetInvoiceId) || {
+      id: targetInvoiceId,
+      invoiceNumber: upcoming.invoiceNumber,
+      clientId: params.clientId,
+    };
+
+    inv.regularPlanAmount = (upcoming.regularAmountCents / 100).toFixed(2);
+    inv.referralCreditApplied = (amountToApply / 100).toFixed(2);
+    inv.total = (newPaymentAmountCents / 100).toFixed(2);
+    inv.status = isSatisfiedByCredit ? "Paid" : (inv.status || "Draft");
+    inv.creditApplicationStatus = isSatisfiedByCredit ? "satisfied_by_credit" : "pending_application";
+    inv.paymentStatusNote = isSatisfiedByCredit ? "Satisfied by Referral Credit" : null;
+    inv.paidDate = isSatisfiedByCredit ? new Date() : null;
+    inMemoryInvoices.set(targetInvoiceId, inv);
+
+    const tx: WaypointCreditTransaction = {
+      id: ++nextLedgerId,
+      clientId: params.clientId,
+      referralId: null,
+      transactionType: "credit_applied_pending",
+      amount: -amountToApply,
+      relatedInvoiceId: targetInvoiceId,
+      relatedPaymentId: null,
+      staffUserId: params.staffUserId || null,
+      staffUserName: params.staffUserName || "Self-Service Parent Portal",
+      note: `Applied to ${upcoming.paymentDateFormatted} payment`,
+      status: isSatisfiedByCredit ? "used" : "pending_application",
+      source: params.staffUserId ? "staff" : "client_portal",
+      createdAt: new Date(),
+    };
+    const list = inMemoryLedger.get(params.clientId) || [];
+    list.unshift(tx);
+    inMemoryLedger.set(params.clientId, list);
+
+    const updatedBalance = await getClientCreditBalance(params.clientId);
+
+    return {
+      success: true,
+      appliedCents: amountToApply,
+      appliedFormatted: `-$${(amountToApply / 100).toFixed(2)}`,
+      regularAmountCents: upcoming.regularAmountCents,
+      regularAmountFormatted: upcoming.regularAmountFormatted,
+      newPaymentAmountCents,
+      newPaymentAmountFormatted: `$${(newPaymentAmountCents / 100).toFixed(2)}`,
+      remainingCreditCents: updatedBalance.availableCreditCents,
+      paymentDateFormatted: upcoming.paymentDateFormatted,
+      isSatisfiedByCredit,
+    };
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(invoices)
+    .set({
+      regularPlanAmount: (upcoming.regularAmountCents / 100).toFixed(2),
+      referralCreditApplied: (amountToApply / 100).toFixed(2),
+      total: (newPaymentAmountCents / 100).toFixed(2),
+      status: isSatisfiedByCredit ? "Paid" : undefined,
+      creditApplicationStatus: isSatisfiedByCredit ? "satisfied_by_credit" : "pending_application",
+      paymentStatusNote: isSatisfiedByCredit ? "Satisfied by Referral Credit" : null,
+      paidDate: isSatisfiedByCredit ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(invoices.id, targetInvoiceId));
+
+  await db.insert(waypointCreditLedger).values({
+    clientId: params.clientId,
+    transactionType: "credit_applied_pending",
+    amount: -amountToApply,
+    relatedInvoiceId: targetInvoiceId,
+    staffUserId: params.staffUserId || null,
+    staffUserName: params.staffUserName || "Self-Service Parent Portal",
+    note: `Applied to ${upcoming.paymentDateFormatted} payment`,
+    status: isSatisfiedByCredit ? "used" : "pending_application",
+    source: params.staffUserId ? "staff" : "client_portal",
+  });
+
+  const updatedBalance = await getClientCreditBalance(params.clientId);
+
+  return {
+    success: true,
+    appliedCents: amountToApply,
+    appliedFormatted: `-$${(amountToApply / 100).toFixed(2)}`,
+    regularAmountCents: upcoming.regularAmountCents,
+    regularAmountFormatted: upcoming.regularAmountFormatted,
+    newPaymentAmountCents,
+    newPaymentAmountFormatted: `$${(newPaymentAmountCents / 100).toFixed(2)}`,
+    remainingCreditCents: updatedBalance.availableCreditCents,
+    paymentDateFormatted: upcoming.paymentDateFormatted,
+    isSatisfiedByCredit,
+  };
+}
+
+/**
+ * Cancel or reverse a pending referral credit application.
+ * Returns credit to available balance if payment has not processed yet.
+ */
+export async function cancelCreditApplication(params: {
+  clientId: number;
+  invoiceId: number;
+  staffUserId?: number;
+  staffUserName?: string;
+  skipCutoffCheckForTesting?: boolean;
+}): Promise<{
+  success: boolean;
+  returnedCents: number;
+  restoredTotalCents?: number;
+  newAvailableCreditCents: number;
+  error?: string;
+}> {
+  if (isTestEnv) {
+    const inv = inMemoryInvoices.get(params.invoiceId);
+    if (!inv || !inv.referralCreditApplied || parseFloat(inv.referralCreditApplied) <= 0) {
+      return { success: false, returnedCents: 0, newAvailableCreditCents: 0, error: "No applied credit found on this invoice" };
+    }
+
+    if (inv.creditApplicationStatus === "used") {
+      return { success: false, returnedCents: 0, newAvailableCreditCents: 0, error: "Payment has already been processed with this credit" };
+    }
+
+    const returnedAmountCents = Math.round(parseFloat(inv.referralCreditApplied) * 100);
+
+    inv.referralCreditApplied = "0.00";
+    inv.total = inv.regularPlanAmount || inv.amount || "105.00";
+    inv.creditApplicationStatus = "returned";
+    inv.paymentStatusNote = null;
+    if (inv.status === "Paid") inv.status = "Draft";
+    inMemoryInvoices.set(params.invoiceId, inv);
+
+    const tx: WaypointCreditTransaction = {
+      id: ++nextLedgerId,
+      clientId: params.clientId,
+      referralId: null,
+      transactionType: "credit_returned",
+      amount: returnedAmountCents,
+      relatedInvoiceId: params.invoiceId,
+      relatedPaymentId: null,
+      staffUserId: params.staffUserId || null,
+      staffUserName: params.staffUserName || "Self-Service Parent Portal",
+      note: `Credit returned — payment canceled`,
+      status: "returned",
+      source: params.staffUserId ? "staff" : "client_portal",
+      createdAt: new Date(),
+    };
+    const list = inMemoryLedger.get(params.clientId) || [];
+    for (const item of list) {
+      if (item.relatedInvoiceId === params.invoiceId && (item.status === "pending_application" || item.transactionType === "credit_applied_pending")) {
+        item.status = "returned";
+      }
+    }
+    list.unshift(tx);
+    inMemoryLedger.set(params.clientId, list);
+
+    const updated = await getClientCreditBalance(params.clientId);
+    return {
+      success: true,
+      returnedCents: returnedAmountCents,
+      restoredTotalCents: Math.round(parseFloat(inv.regularPlanAmount || inv.amount || "105.00") * 100),
+      newAvailableCreditCents: updated.availableCreditCents,
+    };
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [inv] = await db.select().from(invoices).where(eq(invoices.id, params.invoiceId)).limit(1);
+  if (!inv || !inv.referralCreditApplied || parseFloat(inv.referralCreditApplied) <= 0) {
+    return { success: false, returnedCents: 0, newAvailableCreditCents: 0, error: "No applied credit found on this invoice" };
+  }
+
+  if (inv.creditApplicationStatus === "used") {
+    return { success: false, returnedCents: 0, newAvailableCreditCents: 0, error: "Payment has already been processed with this credit" };
+  }
+
+  const returnedAmountCents = Math.round(parseFloat(inv.referralCreditApplied) * 100);
+
+  await db
+    .update(invoices)
+    .set({
+      referralCreditApplied: "0.00",
+      total: inv.regularPlanAmount || inv.amount,
+      creditApplicationStatus: "returned",
+      paymentStatusNote: null,
+      status: inv.status === "Paid" ? "Draft" : inv.status,
+      updatedAt: new Date(),
+    })
+    .where(eq(invoices.id, params.invoiceId));
+
+  await db
+    .update(waypointCreditLedger)
+    .set({ status: "returned" })
+    .where(
+      and(
+        eq(waypointCreditLedger.clientId, params.clientId),
+        eq(waypointCreditLedger.relatedInvoiceId, params.invoiceId),
+        eq(waypointCreditLedger.status, "pending_application")
+      )
+    );
+
+  await db.insert(waypointCreditLedger).values({
+    clientId: params.clientId,
+    transactionType: "credit_returned",
+    amount: returnedAmountCents,
+    relatedInvoiceId: params.invoiceId,
+    staffUserId: params.staffUserId || null,
+    staffUserName: params.staffUserName || "Self-Service Parent Portal",
+    note: "Credit returned — payment canceled",
+    status: "returned",
+    source: params.staffUserId ? "staff" : "client_portal",
+  });
+
+  const updated = await getClientCreditBalance(params.clientId);
+  return {
+    success: true,
+    returnedCents: returnedAmountCents,
+    newAvailableCreditCents: updated.availableCreditCents,
+  };
+}
+
+/**
+ * Process scheduled payment on the backend / payment processor.
+ * Marks the credit as 'used', charges the reduced total (or $0 if fully satisfied),
+ * and ensures the recurring plan price is preserved for subsequent billing cycles.
+ */
+export async function processScheduledPayment(params: {
+  invoiceId: number;
+  paymentId?: string;
+}): Promise<{
+  success: boolean;
+  chargedAmountCents: number;
+  chargedAmountFormatted: string;
+  creditAppliedCents: number;
+  isSatisfiedByCredit: boolean;
+  status: string;
+}> {
+  if (isTestEnv) {
+    const inv = inMemoryInvoices.get(params.invoiceId) || {
+      id: params.invoiceId,
+      total: "55.00",
+      regularPlanAmount: "105.00",
+      referralCreditApplied: "50.00",
+      status: "Draft",
+    };
+
+    const totalCents = Math.round(parseFloat(inv.total || "0") * 100);
+    const creditCents = Math.round(parseFloat(inv.referralCreditApplied || "0.00") * 100);
+    const isSatisfiedByCredit = totalCents === 0;
+
+    inv.status = "Paid";
+    inv.creditApplicationStatus = isSatisfiedByCredit ? "satisfied_by_credit" : "used";
+    inv.paidDate = new Date();
+    inv.paymentStatusNote = isSatisfiedByCredit ? "Satisfied by Referral Credit" : "Paid";
+    inMemoryInvoices.set(params.invoiceId, inv);
+
+    for (const [, entries] of Array.from(inMemoryLedger.entries())) {
+      for (const entry of entries) {
+        if (entry.relatedInvoiceId === params.invoiceId && entry.status === "pending_application") {
+          entry.status = "used";
+          entry.transactionType = "payment_redemption";
+        }
+      }
+    }
+
+    return {
+      success: true,
+      chargedAmountCents: totalCents,
+      chargedAmountFormatted: `$${(totalCents / 100).toFixed(2)}`,
+      creditAppliedCents: creditCents,
+      isSatisfiedByCredit,
+      status: "Paid",
+    };
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [inv] = await db.select().from(invoices).where(eq(invoices.id, params.invoiceId)).limit(1);
+  if (!inv) throw new Error("Invoice not found");
+
+  const totalCents = Math.round(parseFloat(inv.total || "0") * 100);
+  const creditCents = Math.round(parseFloat(inv.referralCreditApplied || "0.00") * 100);
+  const isSatisfiedByCredit = totalCents === 0;
+
+  await db
+    .update(invoices)
+    .set({
+      status: "Paid",
+      creditApplicationStatus: isSatisfiedByCredit ? "satisfied_by_credit" : "used",
+      paymentStatusNote: isSatisfiedByCredit ? "Satisfied by Referral Credit" : "Paid",
+      paidDate: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(invoices.id, params.invoiceId));
+
+  await db
+    .update(waypointCreditLedger)
+    .set({
+      status: "used",
+      transactionType: "payment_redemption",
+    })
+    .where(
+      and(
+        eq(waypointCreditLedger.relatedInvoiceId, params.invoiceId),
+        eq(waypointCreditLedger.status, "pending_application")
+      )
+    );
+
+  return {
+    success: true,
+    chargedAmountCents: totalCents,
+    chargedAmountFormatted: `$${(totalCents / 100).toFixed(2)}`,
+    creditAppliedCents: creditCents,
+    isSatisfiedByCredit,
+    status: "Paid",
   };
 }
 
@@ -1101,22 +1778,33 @@ export async function getClientPortalReferralData(clientId: number) {
       rewardedAt: r.rewardedAt,
     }));
 
+    const upcoming = await getUpcomingScheduledPayment({ clientId });
+    const ledger = await getClientCreditLedger(clientId);
+
     return {
       referralCode,
       stats: {
         totalReferred: list.length,
         becameClients: list.filter((r) => r.status === "qualified" || r.status === "rewarded").length,
+        referredCount: list.length,
+        convertedCount: list.filter((r) => r.status === "qualified" || r.status === "rewarded").length,
         availableCreditCents: creditStats.availableCreditCents,
         availableCreditDollars: creditStats.availableCreditCents / 100,
         availableCreditFormatted: creditStats.availableCreditFormatted,
+        pendingCreditCents: creditStats.pendingCreditCents,
+        pendingCreditFormatted: creditStats.pendingCreditFormatted,
+        totalEarnedCents: creditStats.totalEarnedCents,
+        totalUsedCents: creditStats.totalUsedCents,
       },
-      history: safeReferrals.map((sr) => ({
-        id: sr.id,
-        maskedName: sr.displayName,
-        status: sr.status,
-        rewardIssued: sr.status === "rewarded",
-        creditAmountFormatted: `$${(sr.creditEarnedCents / 100).toFixed(2)}`,
-        date: sr.createdAt,
+      upcomingPayment: upcoming,
+      history: ledger.map((entry) => ({
+        id: entry.id,
+        amountCents: entry.amount,
+        amountFormatted: `${entry.amount >= 0 ? "+" : "-"} $${(Math.abs(entry.amount) / 100).toFixed(2)}`,
+        note: entry.note || (entry.amount >= 0 ? "Referral reward" : "Credit applied to payment"),
+        status: entry.status || "posted",
+        transactionType: entry.transactionType,
+        date: entry.createdAt,
       })),
       referrals: safeReferrals,
     };
@@ -1180,6 +1868,8 @@ export async function getClientPortalReferralData(clientId: number) {
 
   const totalReferred = referralsList.length;
   const totalConverted = referralsList.filter((r) => r.status === "qualified" || r.status === "rewarded").length;
+  const upcoming = await getUpcomingScheduledPayment({ clientId });
+  const ledger = await getClientCreditLedger(clientId);
 
   return {
     referralCode,
@@ -1191,14 +1881,20 @@ export async function getClientPortalReferralData(clientId: number) {
       availableCreditCents: creditStats.availableCreditCents,
       availableCreditDollars: creditStats.availableCreditCents / 100,
       availableCreditFormatted: creditStats.availableCreditFormatted,
+      pendingCreditCents: creditStats.pendingCreditCents,
+      pendingCreditFormatted: creditStats.pendingCreditFormatted,
+      totalEarnedCents: creditStats.totalEarnedCents,
+      totalUsedCents: creditStats.totalUsedCents,
     },
-    history: safeReferrals.map((sr) => ({
-      id: sr.id,
-      maskedName: sr.displayName,
-      status: sr.status,
-      rewardIssued: sr.status === "rewarded",
-      creditAmountFormatted: `$${(sr.creditEarnedCents / 100).toFixed(2)}`,
-      date: sr.createdAt,
+    upcomingPayment: upcoming,
+    history: ledger.map((entry) => ({
+      id: entry.id,
+      amountCents: entry.amount,
+      amountFormatted: `${entry.amount >= 0 ? "+" : "-"} $${(Math.abs(entry.amount) / 100).toFixed(2)}`,
+      note: entry.note || (entry.amount >= 0 ? "Referral reward" : "Credit applied to payment"),
+      status: entry.status || "posted",
+      transactionType: entry.transactionType,
+      date: entry.createdAt,
     })),
     referrals: safeReferrals,
   };

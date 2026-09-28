@@ -360,6 +360,10 @@ export const invoices = mysqlTable("invoices", {
   dueDate: datetime("dueDate"),
   paidDate: datetime("paidDate"),
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  regularPlanAmount: decimal("regularPlanAmount", { precision: 12, scale: 2 }),
+  referralCreditApplied: decimal("referralCreditApplied", { precision: 12, scale: 2 }).default("0.00"),
+  creditApplicationStatus: varchar("creditApplicationStatus", { length: 50 }).default("none"),
+  paymentStatusNote: varchar("paymentStatusNote", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -2755,6 +2759,8 @@ export const waypointCreditLedger = mysqlTable("waypoint_credit_ledger", {
   staffUserId: int("staff_user_id"), // links to users.id if manual adjustment
   staffUserName: varchar("staff_user_name", { length: 255 }),
   note: text("note"), // required reason for manual adjustment or audit note
+  status: varchar("status", { length: 50 }).default("posted"), // "available" | "pending_application" | "used" | "returned" | "posted"
+  source: varchar("source", { length: 50 }).default("system"), // "client_portal" | "staff" | "system"
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   clientIdx: index("waypoint_credit_ledger_client_idx").on(t.clientId),
