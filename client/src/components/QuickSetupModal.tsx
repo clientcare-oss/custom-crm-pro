@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -81,13 +81,26 @@ const EMPTY: FormData = {
 interface QuickSetupModalProps {
   open: boolean;
   onClose: () => void;
+  initialData?: Partial<FormData>;
 }
 
-export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps) {
+export default function QuickSetupModal({ open, onClose, initialData }: QuickSetupModalProps) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(EMPTY);
   const [result, setResult] = useState<{ caseId: string; parentContactId: number; studentContactId: number } | null>(null);
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (open && initialData) {
+      setForm((prev) => ({
+        ...EMPTY,
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(initialData).filter(([_, v]) => v !== undefined && v !== "")
+        ),
+      }));
+    }
+  }, [open, initialData]);
 
   const set = (field: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));

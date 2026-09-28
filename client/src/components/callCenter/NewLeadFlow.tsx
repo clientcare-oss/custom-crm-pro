@@ -19,7 +19,9 @@ import {
   Sparkles,
   ArrowRight,
   Send,
+  Zap,
 } from "lucide-react";
+import QuickSetupModal from "@/components/QuickSetupModal";
 
 const ISSUE_OPTIONS = [
   "IEP",
@@ -56,6 +58,7 @@ export function NewLeadFlow() {
   const [selectedIssues, setSelectedIssues] = useState<string[]>(call.selectedIssues || ["IEP"]);
   const [discoveryNotes, setDiscoveryNotes] = useState<string>("");
   const [createdLeadId, setCreatedLeadId] = useState<number | null>(null);
+  const [showQuickSetup, setShowQuickSetup] = useState(false);
 
   // tRPC mutation to create lead
   const createLeadMutation = trpc.leads.create.useMutation({
@@ -334,6 +337,15 @@ export function NewLeadFlow() {
 
           <Button
             size="sm"
+            onClick={() => setShowQuickSetup(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs h-9 px-3 rounded-xl gap-1.5 shadow-sm"
+          >
+            <Zap className="h-4 w-4" />
+            Quick Client Setup
+          </Button>
+
+          <Button
+            size="sm"
             variant="outline"
             onClick={() => {
               window.location.href = "/scheduler";
@@ -371,6 +383,23 @@ export function NewLeadFlow() {
           </Button>
         </div>
       </div>
+
+      {/* Modal: Quick Client Setup */}
+      <QuickSetupModal
+        open={showQuickSetup}
+        onClose={() => setShowQuickSetup(false)}
+        initialData={{
+          parentFirstName: parentName.split(" ")[0] || "",
+          parentLastName: parentName.split(" ").slice(1).join(" ") || "",
+          parentPhone: phone,
+          parentEmail: email,
+          studentFirstName: studentName.split(" ")[0] || "",
+          studentLastName: studentName.split(" ").slice(1).join(" ") || "",
+          schoolName: schoolDistrict,
+          state: state,
+          challenges: discoveryNotes,
+        }}
+      />
     </div>
   );
 }

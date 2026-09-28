@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { UserPlus, UserCheck, Briefcase, Search, ExternalLink, GraduationCap, Phone, Mail, Building, Plus } from "lucide-react";
+import { UserPlus, UserCheck, Briefcase, Search, ExternalLink, GraduationCap, Phone, Mail, Building, Plus, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { useActiveCall, CallerCategory } from "@/contexts/ActiveCallContext";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { AddNewContactModal } from "./AddNewContactModal";
+import QuickSetupModal from "@/components/QuickSetupModal";
 
 const OTHER_ROLES = [
   "School Staff",
@@ -34,6 +35,7 @@ export function CallerIdentitySelector({
   const { call, updateCall, setCallerCategory } = useActiveCall();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [showQuickSetup, setShowQuickSetup] = useState(false);
 
   // Queries for real CRM data
   const { data: contactsData = [], isLoading: contactsLoading } = trpc.contacts.list.useQuery();
@@ -81,8 +83,11 @@ export function CallerIdentitySelector({
 
   const handleSelectCategory = (cat: CallerCategory) => {
     setCallerCategory(cat);
-    if ((cat === "lead" || cat === "new_lead") && onSelectLeadForm) {
-      onSelectLeadForm();
+    if (cat === "lead" || cat === "new_lead") {
+      setShowQuickSetup(true);
+      if (onSelectLeadForm) {
+        onSelectLeadForm();
+      }
     }
   };
 
@@ -177,8 +182,9 @@ export function CallerIdentitySelector({
                 e.stopPropagation();
                 handleSelectCategory("lead");
               }}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-8 rounded-xl"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-8 rounded-xl shadow-sm gap-1.5"
             >
+              <Zap className="h-3.5 w-3.5 text-slate-950" />
               Open Lead Form
             </Button>
           </div>
@@ -506,6 +512,19 @@ export function CallerIdentitySelector({
             });
             toast.success(`Contact ${newC.name} added and selected`);
           }
+        }}
+      />
+
+      {/* Modal: Quick Client Setup (Portal Creation) */}
+      <QuickSetupModal
+        open={showQuickSetup}
+        onClose={() => setShowQuickSetup(false)}
+        initialData={{
+          parentPhone: call.callerInfo?.phone || "",
+          parentFirstName: call.callerInfo?.name ? call.callerInfo.name.split(" ")[0] : "",
+          parentLastName: call.callerInfo?.name ? call.callerInfo.name.split(" ").slice(1).join(" ") : "",
+          studentFirstName: call.studentName ? call.studentName.split(" ")[0] : "",
+          studentLastName: call.studentName ? call.studentName.split(" ").slice(1).join(" ") : "",
         }}
       />
     </div>
