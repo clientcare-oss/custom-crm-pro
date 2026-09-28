@@ -1,10 +1,10 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ban, Globe } from "lucide-react";
+import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ban, Globe, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import VoiceInput from "@/components/VoiceInput";
@@ -20,6 +20,15 @@ import {
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MEETING_TYPES = ["IEP Meeting", "1:1 with Advocate", "Progress Update", "Consultation", "Follow-up"];
+
+function getServiceKeyForMeetingType(meetingType: string): string | null {
+  const lower = (meetingType || "").toLowerCase();
+  if (lower.includes("iep")) return "IEP_MEETING";
+  if (lower.includes("504")) return "504_MEETING";
+  if (lower.includes("record")) return "RECORDS_REVIEW";
+  if (lower.includes("advocate") || lower.includes("1:1") || lower.includes("strategy")) return "ADVOCATE_SESSION";
+  return null;
+}
 
 interface Appointment {
   id: number;
@@ -233,15 +242,20 @@ export default function Appointments() {
     onError: (err) => toast.error(err.message),
   });
 
-  const handleCreate = () => {
-    if (!formData.clientId || !formData.title || !formData.startTime || !formData.endTime) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-    if (new Date(formData.endTime) <= new Date(formData.startTime)) {
-      toast.error("End time must be after start time");
-      return;
-    }
+  const utils = trpc.useUtils();
+  const logActivityMutation = trpc.caseActivity.create.useMutation();
+  const addExtraAllowanceMutation = trpc.serviceAllowances.addExtraAllowance.useMutation();
+
+  const [serviceLimitWarning, setServiceLimitWarning] = useState<{
+    serviceKey: string;
+    serviceName: string;
+    remaining: number | string;
+    totalAllowance: number | string;
+    used: number;
+    isNotIncluded?: boolean;
+  } | null>(null);
+
+  const executeCreate = (isOverride = false) => {
     createMutation.mutate({
       clientId: parseInt(formData.clientId),
       title: formData.title,
@@ -256,6 +270,78 @@ export default function Appointments() {
       clientTimeZone: formData.clientTimeZone || undefined,
       originalTimeZone: "America/New_York",
     });
+
+    if (isOverride && serviceLimitWarning) {
+      logActivityMutation.mutate({
+        studentContactId: parseInt(formData.clientId),
+        eventType: "service_limit_override",
+        title: `⚠️ Service Limit Override: Scheduled ${serviceLimitWarning.serviceName}`,
+        description: `Staff scheduled ${serviceLimitWarning.serviceName} exceeding included plan allowance (${serviceLimitWarning.used} of ${serviceLimitWarning.totalAllowance} already consumed). Authorized override.`,
+        ownerName: user?.name || "Byron Honea",
+        ownerRole: "Advocate",
+        isCompleted: true,
+        categoryColor: "amber",
+      });
+      toast.info("Override recorded in student Activity Timeline.");
+    }
+    setServiceLimitWarning(null);
+  };
+
+  const handleCreate = async () => {
+    if (!formData.clientId || !formData.title || !formData.startTime || !formData.endTime) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    if (new Date(formData.endTime) <= new Date(formData.startTime)) {
+      toast.error("End time must be after start time");
+      return;
+    }
+
+    // Check service allowance for student (Section 10 Scheduler Connection)
+    const studentId = parseInt(formData.clientId);
+    const serviceKey = getServiceKeyForMeetingType(formData.meetingType || "");
+    if (studentId && serviceKey) {
+      try {
+        const check = await utils.serviceAllowances.checkServiceAvailability.fetch({
+          studentContactId: studentId,
+          serviceKey,
+        });
+        if (check.isAtLimit) {
+          setServiceLimitWarning({
+            serviceKey: check.serviceKey || serviceKey,
+            serviceName: check.serviceName || "Service",
+            remaining: check.remaining ?? 0,
+            totalAllowance: check.totalAllowance ?? 0,
+            used: check.used ?? 0,
+            isNotIncluded: check.isNotIncluded ?? false,
+          });
+          return;
+        }
+      } catch {
+        // Fallback to normal scheduling if check fails
+      }
+    }
+
+    executeCreate(false);
+  };
+
+  const handleAddAllowanceAndSchedule = async () => {
+    if (!serviceLimitWarning || !formData.clientId) return;
+    try {
+      await addExtraAllowanceMutation.mutateAsync({
+        studentContactId: parseInt(formData.clientId),
+        serviceKey: serviceLimitWarning.serviceKey,
+        serviceName: serviceLimitWarning.serviceName,
+        additionalAmount: 1,
+        reason: `Authorized during appointment scheduling (${formData.title})`,
+        authorizedBy: user?.name || "Byron Honea",
+        date: new Date().toISOString().split("T")[0],
+      });
+      toast.success(`+1 Extra ${serviceLimitWarning.serviceName} authorized.`);
+      executeCreate(false);
+    } catch (err: any) {
+      toast.error("Failed to add allowance: " + err.message);
+    }
   };
 
   const handleStatusChange = (id: number, status: string) => {
@@ -1267,6 +1353,73 @@ export default function Appointments() {
           </CardContent>
         </Card>
       )}
+
+      {/* ⚠️ SERVICE LIMIT WARNING DIALOG (Section 10) */}
+      <Dialog open={!!serviceLimitWarning} onOpenChange={(open) => !open && setServiceLimitWarning(null)}>
+        <DialogContent className="max-w-md bg-[#000d2b] border border-amber-500/40 text-white shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-300 text-base">
+              <AlertTriangle className="h-5 w-5 text-amber-400" />
+              {serviceLimitWarning?.isNotIncluded
+                ? "⚠️ SERVICE NOT INCLUDED IN CURRENT PLAN"
+                : "⚠️ SERVICE LIMIT REACHED"}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground pt-1">
+              {serviceLimitWarning?.isNotIncluded ? (
+                <>
+                  <strong className="text-white">{serviceLimitWarning?.serviceName}</strong> is not included in the client's current plan.
+                </>
+              ) : (
+                <>
+                  This client has used or scheduled all included{" "}
+                  <strong className="text-white">{serviceLimitWarning?.serviceName}</strong> for the
+                  current service period ({serviceLimitWarning?.used} of{" "}
+                  {serviceLimitWarning?.totalAllowance} already consumed).
+                </>
+              )}
+            </p>
+          </DialogHeader>
+
+          <div className="py-2 space-y-2 text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg">
+            <p className="text-white font-medium">How would you like to proceed?</p>
+            <ul className="list-disc list-inside space-y-1 text-[11px]">
+              <li><strong>Add Extra Allowance:</strong> Authorizes +1 session and schedules immediately.</li>
+              <li><strong>Override & Schedule:</strong> Schedules appointment and records an audited override note in the Activity Timeline.</li>
+              <li><strong>Cancel:</strong> Aborts scheduling without changing allowances.</li>
+            </ul>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setServiceLimitWarning(null)}
+              className="text-xs text-muted-foreground hover:text-white"
+            >
+              Cancel
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddAllowanceAndSchedule}
+                disabled={addExtraAllowanceMutation.isPending}
+                className="text-xs border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20"
+              >
+                + Add Extra Allowance & Schedule
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => executeCreate(true)}
+                className="text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold"
+              >
+                Override & Schedule
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+

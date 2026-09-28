@@ -20,6 +20,12 @@ import {
   listCatalogEvents,
   recordCatalogEvent,
 } from "../db/services";
+import {
+  getPackageAllowances,
+  savePackageAllowances,
+  getActiveClientsCountForPackage,
+  isPackageConfigured,
+} from "../db/planMatrix";
 
 // ─── Folders (Categories) Router ──────────────────────────────────────────────
 
@@ -239,6 +245,9 @@ export const servicesRouter = router({
         priorityDeliveryTimeUnit: z.string().nullable().optional(),
         priorityDeliveryTimeLabel: z.string().nullable().optional(),
         priorityDescription: z.string().nullable().optional(),
+        isAdvocacyPackage: z.boolean().optional(),
+        allowancesLocked: z.boolean().optional(),
+        allowancesConfig: z.any().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -304,6 +313,9 @@ export const servicesRouter = router({
         priorityDeliveryTimeUnit: z.string().nullable().optional(),
         priorityDeliveryTimeLabel: z.string().nullable().optional(),
         priorityDescription: z.string().nullable().optional(),
+        isAdvocacyPackage: z.boolean().optional(),
+        allowancesLocked: z.boolean().optional(),
+        allowancesConfig: z.any().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -397,4 +409,64 @@ export const servicesRouter = router({
     });
     return { success: true, message: "Standard Waypoint services verified." };
   }),
+
+  // Get master package allowances for PG-035 Advocacy Package Editor
+  getPackageAllowances: adminProcedure
+    .input(
+      z.object({
+        serviceId: z.number().optional(),
+        planKey: z.string().min(1),
+        planName: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const res = await getPackageAllowances(input.planKey, input.planName);
+      const activeClientsCount = await getActiveClientsCountForPackage(input.planKey);
+      return {
+        ...res,
+        activeClientsCount,
+      };
+    }),
+
+  // Update master package allowances from PG-035 Advocacy Package Editor
+  updatePackageAllowances: adminProcedure
+    .input(
+      z.object({
+        serviceId: z.number().optional(),
+        planKey: z.string().min(1),
+        planName: z.string().optional(),
+        isLocked: z.boolean().default(false),
+        applyToActiveClients: z.boolean().default(false),
+        allowances: z.array(
+          z.object({
+            serviceKey: z.string().min(1),
+            serviceName: z.string().min(1),
+            category: z.enum(["meeting", "advocacy", "review", "document"]).optional(),
+            allowanceType: z.enum(["limited", "unlimited", "not_included"]),
+            baseAllowance: z.number().int().min(0).default(0),
+            trackingMethod: z.enum(["calendar", "timeline", "manual", "connected_tool"]).optional(),
+            reserveOnOpen: z.boolean().optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const actor = ctx.user?.name || ctx.user?.email || "Admin";
+      const result = await savePackageAllowances({
+        planKey: input.planKey,
+        planName: input.planName,
+        isLocked: input.isLocked,
+        allowances: input.allowances as any,
+        applyToActiveClients: input.applyToActiveClients,
+        actor,
+      });
+      return result;
+    }),
+
+  // Get count of active clients for a package (for the Apply Changes modal)
+  getActiveClientsCount: adminProcedure
+    .input(z.object({ planKey: z.string().min(1) }))
+    .query(async ({ input }) => {
+      return { count: await getActiveClientsCountForPackage(input.planKey) };
+    }),
 });

@@ -61,8 +61,10 @@ import { metricsRouter } from "./routers/metrics";
 import { timeTrackingRouter } from "./routers/timeTracking";
 import { meetingWorkspaceRouter } from "./routers/meetingWorkspace";
 import { pwnDecoderRouter } from "./routers/pwnDecoder";
+import { serviceAllowancesRouter } from "./routers/serviceAllowances";
 
 export const appRouter = router({
+  serviceAllowances: serviceAllowancesRouter,
   pwnDecoder: pwnDecoderRouter,
   meetingWorkspace: meetingWorkspaceRouter,
   metrics: metricsRouter,

@@ -42,6 +42,7 @@ import ClientCallControls from "@/components/quo/ClientCallControls";
 import CallLogsWithCallback from "@/components/quo/CallLogsWithCallback";
 import { StudentWorkspaceTab } from "@/components/contact/workspace/StudentWorkspaceTab";
 import { ActivityTimeline } from "@/components/contact/workspace/ActivityTimeline";
+import { ServiceAllowancesCard } from "@/components/contact/ServiceAllowancesCard";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -429,6 +430,8 @@ export default function ContactDetail() {
           toast.success("Student details updated successfully");
           setShowEditStudentModal(false);
           utils.contacts.detail.invalidate({ id: contactId });
+          utils.serviceAllowances.getUsageSummary.invalidate();
+          utils.serviceAllowances.getAllowances.invalidate();
         },
         onError: (err) => {
           toast.error("Failed to update student details: " + err.message);
@@ -448,6 +451,8 @@ export default function ContactDetail() {
           toast.success(`Plan status updated to: ${newPlanType}`);
           utils.contacts.detail.invalidate({ id: contactId });
           utils.contacts.list.invalidate();
+          utils.serviceAllowances.getUsageSummary.invalidate();
+          utils.serviceAllowances.getAllowances.invalidate();
         },
         onError: (err) => {
           toast.error("Failed to update plan status: " + err.message);
@@ -1876,6 +1881,14 @@ function StudentTabs({
       {/* DETAILS */}
       <TabsContent value="details" className="mt-4 space-y-4">
         <PortalLinkSection contactId={contactId} currentPortalUserId={contact.portalUserId ?? null} utils={utils} />
+        
+        {/* 📊 Service Allowances & Usage (PG-030 Student Workspace) */}
+        <ServiceAllowancesCard
+          contact={contact}
+          contactId={contactId}
+          onNavigateToTimeline={() => setActiveTab("workspace")}
+        />
+
         <Card className="rounded-xl border border-border p-6 space-y-4">
           <DetailRow label="First Name" value={contact.firstName} />
           <DetailRow label="Last Name" value={contact.lastName} />

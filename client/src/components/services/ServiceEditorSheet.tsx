@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -39,12 +40,14 @@ import type {
   PlanEligibilityMap,
   PlanEligibilityStatus,
 } from "./serviceTypes";
+import { PackageAllowancesEditor } from "./PackageAllowancesEditor";
 
 interface ServiceEditorSheetProps {
   open: boolean;
   onClose: () => void;
   service?: CatalogServiceItem | null;
   folders: CatalogFolderItem[];
+  allServices?: CatalogServiceItem[];
   onSave: (data: Partial<CatalogServiceItem>) => Promise<void>;
   saving: boolean;
 }
@@ -54,12 +57,17 @@ export const ServiceEditorSheet: React.FC<ServiceEditorSheetProps> = ({
   onClose,
   service,
   folders,
+  allServices = [],
   onSave,
   saving,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    "basic" | "pricing" | "plans" | "visibility" | "delivery" | "deliverables" | "priority" | "status"
+    "basic" | "pricing" | "allowances" | "plans" | "visibility" | "delivery" | "deliverables" | "priority" | "status"
   >("basic");
+
+  // Advocacy Package classification & lock state
+  const [isAdvocacyPackage, setIsAdvocacyPackage] = useState(false);
+  const [allowancesLocked, setAllowancesLocked] = useState(true);
 
   // Form State
   const [internalName, setInternalName] = useState("");
@@ -137,6 +145,16 @@ export const ServiceEditorSheet: React.FC<ServiceEditorSheetProps> = ({
         setBillingType(service.billingType || "one_time");
         setBillingInterval(service.billingInterval || "monthly");
         setCustomPriceAllowed(service.customPriceAllowed !== false);
+
+        // Detect advocacy package classification
+        const isPkg = Boolean(
+          service.isAdvocacyPackage ||
+          service.folderId === 1 ||
+          ["anchor", "navigator", "family", "advocacy_plan_105", "advocacy_plan_55"].includes((service.serviceCode || "").toLowerCase()) ||
+          (service.name && (service.name.toLowerCase().includes("anchor") || service.name.toLowerCase().includes("navigator") || service.name.toLowerCase().includes("family") || service.name.toLowerCase().includes("membership")))
+        );
+        setIsAdvocacyPackage(isPkg);
+        setAllowancesLocked(service.allowancesLocked !== false);
 
         // Parse plan eligibility
         try {
@@ -244,6 +262,8 @@ export const ServiceEditorSheet: React.FC<ServiceEditorSheetProps> = ({
 
         setIsActive(true);
         setIsArchived(false);
+        setIsAdvocacyPackage(false);
+        setAllowancesLocked(true);
       }
       setActiveTab("basic");
     }
@@ -337,6 +357,8 @@ export const ServiceEditorSheet: React.FC<ServiceEditorSheetProps> = ({
       priorityPrice: priorityPriceCents,
       priorityDeliveryTimeLabel: priorityDeliveryTimeLabel.trim() || null,
       priorityDescription: priorityDescription.trim() || null,
+      isAdvocacyPackage,
+      allowancesLocked,
       isActive,
       isArchived,
     };
@@ -392,6 +414,7 @@ export const ServiceEditorSheet: React.FC<ServiceEditorSheetProps> = ({
           {[
             { key: "basic", label: "Basic Info" },
             { key: "pricing", label: "Pricing" },
+            ...(isAdvocacyPackage ? [{ key: "allowances", label: "📊 Included Allowances" }] : []),
             { key: "plans", label: "Plan Availability" },
             { key: "visibility", label: "Where It Appears" },
             { key: "delivery", label: "Delivery & Reqs" },
@@ -419,6 +442,56 @@ export const ServiceEditorSheet: React.FC<ServiceEditorSheetProps> = ({
           {/* 1. BASIC INFO */}
           {activeTab === "basic" && (
             <div className="space-y-4">
+              {/* Service Classification Selector */}
+              <div className="p-3.5 rounded-xl bg-[#00143f] border border-blue-900/60 shadow-sm space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div>
+                    <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span>Service Classification</span>
+                      {isAdvocacyPackage ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-950 text-sky-300 border border-sky-500/40">
+                          Advocacy Package
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                          Standalone Service
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-blue-200/70 mt-0.5">
+                      Choose whether this service is a monthly Advocacy Package (with included service limits & usage tracking) or a standalone service/add-on.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-[#000821] p-1 rounded-lg border border-blue-900/60 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsAdvocacyPackage(false)}
+                      className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all cursor-pointer ${
+                        !isAdvocacyPackage
+                          ? "bg-slate-700 text-white font-semibold shadow-xs"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      📄 Standalone
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAdvocacyPackage(true);
+                        toast.info("Included Services & Allowances tab is now available!");
+                      }}
+                      className={`px-2.5 py-1 text-xs rounded-md font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        isAdvocacyPackage
+                          ? "bg-sky-600 text-white shadow-xs"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <span>📦 Advocacy Package</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs text-slate-300">Client-Facing Title *</Label>
@@ -594,6 +667,19 @@ export const ServiceEditorSheet: React.FC<ServiceEditorSheetProps> = ({
                 )}
               </div>
             </div>
+          )}
+
+          {/* 2.5. INCLUDED ADVOCACY PACKAGE ALLOWANCES */}
+          {activeTab === "allowances" && isAdvocacyPackage && (
+            <PackageAllowancesEditor
+              planKey={serviceCode || clientFacingTitle || "custom"}
+              planName={clientFacingTitle || internalName || "Advocacy Package"}
+              serviceId={service?.id}
+              catalogServices={allServices}
+              onAllowancesUpdated={(_, locked) => {
+                setAllowancesLocked(locked);
+              }}
+            />
           )}
 
           {/* 3. PLAN AVAILABILITY */}

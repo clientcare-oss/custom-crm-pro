@@ -27,6 +27,9 @@ import {
   Compass,
   FileCheck,
   HeartPulse,
+  Lock,
+  Unlock,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -175,14 +178,33 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
             )}
 
             {/* Service Type Badges */}
-            {isMembership && (
+            {service.isAdvocacyPackage ? (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10.5px] font-bold rounded-md bg-sky-950/80 text-sky-300 border border-sky-500/40">
+                📦 Advocacy Package
+              </span>
+            ) : isMembership ? (
               <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10.5px] font-semibold rounded-md bg-purple-950/60 text-purple-300 border border-purple-800/40">
                 <Users className="w-2.5 h-2.5" />
                 Membership
               </span>
+            ) : null}
+
+            {/* Advocacy Package Allowances Summary Badge */}
+            {service.isAdvocacyPackage && (
+              service.allowancesLocked || service.allowancesConfig || ["anchor", "navigator", "family", "advocacy_plan_105", "advocacy_plan_55"].includes((service.serviceCode || "").toLowerCase()) ? (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10.5px] font-semibold rounded-md bg-[#001744] text-sky-300 border border-sky-500/30">
+                  <Lock className="w-2.5 h-2.5 text-sky-400" />
+                  9 Included Services · 🔒 Allowances Configured
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10.5px] font-semibold rounded-md bg-amber-950/70 text-amber-300 border border-amber-600/40">
+                  <AlertTriangle className="w-2.5 h-2.5 text-amber-400" />
+                  ⚠️ Allowances Need Setup
+                </span>
+              )
             )}
 
-            {!isMembership && isAddOn && (
+            {!isMembership && !service.isAdvocacyPackage && isAddOn && (
               <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10.5px] font-semibold rounded-md bg-blue-950/60 text-blue-300 border border-blue-800/40">
                 <Sparkles className="w-2.5 h-2.5" />
                 Add-On

@@ -178,6 +178,7 @@ export async function createService(data: Partial<InsertService>, actor: string 
       smartFileTemplateId, workflowTemplateId, taskTemplateId, priorityEnabled, priorityPrice,
       priorityDeliveryTimeValue, priorityDeliveryTimeUnit, priorityDeliveryTimeLabel, priorityDescription,
       stripeProductId, stripePriceId, stripeRecurringPriceId, stripePriorityPriceId, stripeSyncStatus,
+      isAdvocacyPackage, allowancesLocked, allowancesConfig,
       createdBy, updatedBy
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?,
@@ -190,6 +191,7 @@ export async function createService(data: Partial<InsertService>, actor: string 
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
+      ?, ?, ?,
       ?, ?
     ) RETURNING *;`,
     [
@@ -205,6 +207,7 @@ export async function createService(data: Partial<InsertService>, actor: string 
       data.smartFileTemplateId ?? null, data.workflowTemplateId ?? null, data.taskTemplateId ?? null, data.priorityEnabled ? 1 : 0, data.priorityPrice ?? null,
       data.priorityDeliveryTimeValue ?? null, data.priorityDeliveryTimeUnit || null, data.priorityDeliveryTimeLabel || null, data.priorityDescription || null,
       data.stripeProductId || null, data.stripePriceId || null, data.stripeRecurringPriceId || null, data.stripePriorityPriceId || null, data.stripeSyncStatus || "not_connected",
+      (data as any).isAdvocacyPackage ? 1 : 0, (data as any).allowancesLocked ? 1 : 0, typeof (data as any).allowancesConfig === "object" ? JSON.stringify((data as any).allowancesConfig) : (data as any).allowancesConfig || null,
       actor, actor
     ]
   );
@@ -312,6 +315,9 @@ export async function updateService(id: number, data: Partial<InsertService>, ac
   if (data.stripePriorityPriceId !== undefined) addField("stripePriorityPriceId", data.stripePriorityPriceId);
   if (data.stripeSyncStatus !== undefined) addField("stripeSyncStatus", data.stripeSyncStatus);
   if (data.stripeSyncedAt !== undefined) addField("stripeSyncedAt", data.stripeSyncedAt);
+  if ((data as any).isAdvocacyPackage !== undefined) addField("isAdvocacyPackage", (data as any).isAdvocacyPackage ? 1 : 0);
+  if ((data as any).allowancesLocked !== undefined) addField("allowancesLocked", (data as any).allowancesLocked ? 1 : 0);
+  if ((data as any).allowancesConfig !== undefined) addField("allowancesConfig", typeof (data as any).allowancesConfig === "object" ? JSON.stringify((data as any).allowancesConfig) : (data as any).allowancesConfig);
 
   addField("updatedBy", actor);
   addField("updatedAt", new Date().toISOString());
@@ -845,6 +851,15 @@ function formatServiceRow(r: any): Service {
     stripePriorityPriceId: r.stripePriorityPriceId || null,
     stripeSyncStatus: r.stripeSyncStatus || "not_connected",
     stripeSyncedAt: r.stripeSyncedAt ? new Date(r.stripeSyncedAt) : null,
+    isAdvocacyPackage: Boolean(
+      r.isAdvocacyPackage === 1 ||
+      r.isAdvocacyPackage === true ||
+      r.folderId === 1 ||
+      ["anchor", "navigator", "family", "advocacy_plan_105", "advocacy_plan_55"].includes((r.serviceCode || "").toLowerCase()) ||
+      (r.name && (r.name.toLowerCase().includes("anchor") || r.name.toLowerCase().includes("navigator") || r.name.toLowerCase().includes("family") || r.name.toLowerCase().includes("membership")))
+    ),
+    allowancesLocked: Boolean(r.allowancesLocked === 1 || r.allowancesLocked === true),
+    allowancesConfig: r.allowancesConfig || null,
     createdBy: r.createdBy || "System",
     updatedBy: r.updatedBy || null,
     createdAt: r.createdAt ? new Date(r.createdAt) : new Date(),

@@ -1621,6 +1621,9 @@ export const services = mysqlTable("services", {
   priorityDeliveryTimeUnit: varchar("priorityDeliveryTimeUnit", { length: 32 }),
   priorityDeliveryTimeLabel: varchar("priorityDeliveryTimeLabel", { length: 64 }),
   priorityDescription: text("priorityDescription"),
+  isAdvocacyPackage: boolean("isAdvocacyPackage").default(false).notNull(),
+  allowancesLocked: boolean("allowancesLocked").default(false).notNull(),
+  allowancesConfig: text("allowancesConfig"),
   stripeProductId: varchar("stripeProductId", { length: 255 }),
   stripePriceId: varchar("stripePriceId", { length: 255 }),
   stripeRecurringPriceId: varchar("stripeRecurringPriceId", { length: 255 }),
@@ -2640,6 +2643,62 @@ export const pwnConcerns = mysqlTable("pwn_concerns", {
 
 export type PwnConcern = typeof pwnConcerns.$inferSelect;
 export type InsertPwnConcern = typeof pwnConcerns.$inferInsert;
+
+/**
+ * Student Service Allowances & Usage (PG-030 Student Workspace)
+ * Tracks plan allowances, extra authorized credits, tracking method, and service periods.
+ */
+export const studentServiceAllowances = mysqlTable("student_service_allowances", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("student_contact_id").notNull(),
+  serviceKey: varchar("service_key", { length: 100 }).notNull(), // "IEP_MEETING", "504_MEETING", "RECORDS_REVIEW", "EMAIL_ASSISTANCE", "STATE_COMPLAINT", "PWN_SUPPORT", "ADVOCATE_SESSION", etc.
+  serviceName: varchar("service_name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 50 }).default("meeting").notNull(), // "meeting" | "advocacy" | "review" | "document"
+  allowanceType: varchar("allowance_type", { length: 50 }).default("limited").notNull(), // "limited" | "unlimited"
+  baseAllowance: int("base_allowance").default(0).notNull(),
+  extraAllowance: int("extra_allowance").default(0).notNull(),
+  trackingMethod: varchar("tracking_method", { length: 50 }).default("calendar").notNull(), // "calendar" | "timeline" | "manual"
+  reserveOnOpen: boolean("reserve_on_open").default(true).notNull(),
+  planPeriodStart: varchar("plan_period_start", { length: 50 }),
+  planPeriodEnd: varchar("plan_period_end", { length: 50 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  studentIdx: index("student_service_allowances_student_idx").on(t.studentContactId),
+  serviceKeyIdx: index("student_service_allowances_key_idx").on(t.serviceKey),
+}));
+
+export type StudentServiceAllowance = typeof studentServiceAllowances.$inferSelect;
+export type InsertStudentServiceAllowance = typeof studentServiceAllowances.$inferInsert;
+
+/**
+ * Plan Service Matrix (PG-030 Central Plan Service Matrix)
+ * Master configuration defining what services and allowances are included with each Waypoint plan
+ * (Navigator, Anchor, Family, Monthly Advocacy, Pay Per Use, etc.).
+ */
+export const planServiceMatrix = mysqlTable("plan_service_matrix", {
+  id: int("id").autoincrement().primaryKey(),
+  planKey: varchar("plan_key", { length: 100 }).notNull(), // "navigator", "anchor", "family", "monthly_advocacy", "pay_per_use"
+  planName: varchar("plan_name", { length: 255 }).notNull(), // "Navigator", "Anchor", "Family", "Monthly Advocacy", "Pay Per Use"
+  serviceKey: varchar("service_key", { length: 100 }).notNull(),
+  serviceName: varchar("service_name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 50 }).default("meeting").notNull(),
+  allowanceType: varchar("allowance_type", { length: 50 }).default("limited").notNull(), // "limited" | "unlimited" | "not_included"
+  baseAllowance: int("base_allowance").default(0).notNull(),
+  trackingMethod: varchar("tracking_method", { length: 50 }).default("calendar").notNull(), // "calendar" | "timeline" | "manual"
+  reserveOnOpen: boolean("reserve_on_open").default(true).notNull(),
+  isLocked: boolean("is_locked").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  planKeyIdx: index("plan_service_matrix_plan_idx").on(t.planKey),
+  serviceKeyIdx: index("plan_service_matrix_service_idx").on(t.serviceKey),
+}));
+
+export type PlanServiceMatrixEntry = typeof planServiceMatrix.$inferSelect;
+export type InsertPlanServiceMatrixEntry = typeof planServiceMatrix.$inferInsert;
+
 
 
 

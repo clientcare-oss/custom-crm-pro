@@ -57,6 +57,9 @@ export interface CatalogServiceItem {
   requireQuestionnaire: boolean;
   requireAgreement: boolean;
   requirePayment: boolean;
+  isAdvocacyPackage?: boolean;
+  allowancesLocked?: boolean;
+  allowancesConfig?: string | null;
   smartFileTemplateId: number | null;
   workflowTemplateId: number | null;
   taskTemplateId: number | null;

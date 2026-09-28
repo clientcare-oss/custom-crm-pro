@@ -535,6 +535,7 @@ function ServicesCatalogMain() {
         onClose={() => setEditorOpen(false)}
         service={editingService}
         folders={(folders as CatalogFolderItem[]) || []}
+        allServices={(allServices as CatalogServiceItem[]) || []}
         onSave={handleSaveService}
         saving={createServiceMutation.isPending || updateServiceMutation.isPending}
       />

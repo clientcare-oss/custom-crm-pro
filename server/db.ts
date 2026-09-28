@@ -1460,4 +1460,8 @@ export * from "./db/meetingWorkspace";
 // ─── PWN Decoder (PG-010-PWN) ─────────────────────────────────────────────
 export * from "./db/pwnDecoder";
 
+// ─── Service Allowances & Usage (PG-030) ──────────────────────────────────
+export * from "./db/serviceAllowances";
+export * from "./db/planMatrix";
+
 

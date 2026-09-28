@@ -15,6 +15,10 @@ import {
   History,
   Pencil,
   X,
+  Lock,
+  Unlock,
+  AlertTriangle,
+  Package,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import type { CatalogServiceItem, CatalogFolderItem } from "./serviceTypes";
@@ -47,6 +51,12 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
   const { data: auditEvents } = trpc.services.events.useQuery(
     { serviceId: service.id, limit: 10 },
     { enabled: open && !!service.id }
+  );
+
+  // Query package allowances if this is an advocacy package
+  const { data: packageAllowancesData } = trpc.services.getPackageAllowances.useQuery(
+    { planKey: service.serviceCode, planName: service.name },
+    { enabled: open && !!service.isAdvocacyPackage }
   );
 
   let deliverables: any[] = [];
@@ -136,6 +146,108 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Advocacy Package Allowances Section */}
+          {service.isAdvocacyPackage && (
+            <div className="rounded-xl border border-sky-500/30 bg-[#001035] p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-sky-950/80 border border-sky-500/40 flex items-center justify-center text-sky-400">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>📊 Included Services & Allowances</span>
+                      {packageAllowancesData?.isLocked ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#001744] text-sky-300 border border-sky-500/40">
+                          <Lock className="w-2.5 h-2.5 text-sky-400" />
+                          Locked
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-950/60 text-blue-300 border border-blue-800/40">
+                          <Unlock className="w-2.5 h-2.5 text-blue-400" />
+                          Unlocked
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-[11px] text-blue-200/70">
+                      Standard client entitlements connected to Student → Details → Service Allowances & Usage.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {packageAllowancesData?.allowances && packageAllowancesData.allowances.length > 0 ? (
+                <div className="overflow-x-auto rounded-lg border border-blue-900/60 bg-[#000d2b]">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-sky-500/20 bg-[#082043] text-[10.5px] uppercase font-bold text-sky-200 tracking-wider">
+                        <th className="py-2 px-3">Service</th>
+                        <th className="py-2 px-2 text-center">Included</th>
+                        <th className="py-2 px-2 text-center">Allowance</th>
+                        <th className="py-2 px-2 text-center">Quantity</th>
+                        <th className="py-2 px-3 text-right">Tracking</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40 font-medium">
+                      {packageAllowancesData.allowances.map((item) => {
+                        const isInc = item.allowanceType !== "not_included";
+                        return (
+                          <tr key={item.serviceKey} className="hover:bg-[#001744]/60 transition-colors">
+                            <td className="py-2 px-3 text-white">
+                              <div className="font-semibold text-xs">{item.serviceName}</div>
+                              <div className="text-[10px] font-mono text-sky-400/60">{item.serviceKey}</div>
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              {isInc ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-600/40 text-[11px] font-bold">
+                                  ✓
+                                </span>
+                              ) : (
+                                <span className="text-slate-500 text-xs">—</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              {item.allowanceType === "unlimited" ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-sky-950/80 text-sky-300 border border-sky-500/40">
+                                  Unlimited (∞)
+                                </span>
+                              ) : item.allowanceType === "limited" ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-950/80 text-blue-200 border border-blue-700/40">
+                                  Limited
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-xs">Not Included</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-2 text-center font-mono font-bold text-sky-200">
+                              {item.allowanceType === "unlimited" ? (
+                                <span className="text-sky-300 font-extrabold text-sm">∞</span>
+                              ) : item.allowanceType === "limited" ? (
+                                <span className="text-emerald-300 text-xs">{item.baseAllowance}</span>
+                              ) : (
+                                <span className="text-slate-500 text-xs">0</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <span className="text-[10.5px] text-blue-300/80 capitalize">
+                                {item.trackingMethod || "Calendar"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg bg-amber-950/30 border border-amber-900/50 text-amber-200 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>No service allowances configured yet for this package. Click "Edit Service" to configure.</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Descriptions */}
           <div className="space-y-3">

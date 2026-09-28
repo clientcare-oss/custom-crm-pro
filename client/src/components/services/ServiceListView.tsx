@@ -66,8 +66,28 @@ export const ServiceListView: React.FC<ServiceListViewProps> = ({
             return (
               <tr key={service.id} className="hover:bg-[#001848] transition-colors">
                 <td className="py-2 px-3">
-                  <div className="font-semibold text-white text-xs sm:text-sm">{service.clientFacingTitle || service.name}</div>
-                  <div className="font-mono text-[10px] text-sky-400/60">{service.serviceCode}</div>
+                  <div className="font-semibold text-white text-xs sm:text-sm flex items-center gap-2">
+                    <span>{service.clientFacingTitle || service.name}</span>
+                    {service.isAdvocacyPackage && (
+                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-sky-950/80 text-sky-300 border border-sky-500/40">
+                        Advocacy Package
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="font-mono text-[10px] text-sky-400/60">{service.serviceCode}</span>
+                    {service.isAdvocacyPackage && (
+                      service.allowancesLocked || service.allowancesConfig || ["anchor", "navigator", "family", "advocacy_plan_105", "advocacy_plan_55"].includes((service.serviceCode || "").toLowerCase()) ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9.5px] font-medium bg-[#001744] text-sky-300 border border-sky-500/30">
+                          9 Included Services · 🔒 Allowances Configured
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9.5px] font-medium bg-amber-950/70 text-amber-300 border border-amber-600/40">
+                          ⚠️ Allowances Need Setup
+                        </span>
+                      )
+                    )}
+                  </div>
                 </td>
                 <td className="py-2 px-3 text-blue-100/90">
                   <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#000821] border border-blue-800/50 text-sky-300">
