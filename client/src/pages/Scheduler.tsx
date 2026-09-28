@@ -791,50 +791,59 @@ function SessionEditForm({
 
             <div className="space-y-3">
               {form.reminders.map((r, idx) => (
-                <div key={idx} className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-muted-foreground">Send</span>
+                <div key={idx} className="rounded-xl border border-[#0D4B84]/50 bg-[#030C22]/80 p-3.5 space-y-2.5 shadow-sm">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="text-xs text-slate-300 font-medium">Send</span>
                     <Select value={r.method} onValueChange={(v) => updateReminder(idx, "method", v)}>
-                      <SelectTrigger className="h-8 text-xs w-32"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="sms">SMS</SelectItem>
-                        <SelectItem value="both">Email & SMS</SelectItem>
+                      <SelectTrigger className="h-8 text-xs w-36 bg-[#030C22] text-white border-[#0D4B84] font-medium"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
+                        <SelectItem value="email" className="hover:bg-blue-600/30">Email</SelectItem>
+                        <SelectItem value="sms" className="hover:bg-blue-600/30">SMS</SelectItem>
+                        <SelectItem value="both" className="hover:bg-blue-600/30">Email &amp; SMS</SelectItem>
                       </SelectContent>
                     </Select>
-                    <VoiceInput
+                    <Input
                       type="number"
                       min={1}
+                      max={999}
                       value={r.amount}
                       onChange={(e) => updateReminder(idx, "amount", parseInt(e.target.value) || 1)}
-                      className="h-8 w-16 text-xs"
+                      className="h-8 w-16 text-center font-bold text-sm bg-[#030C22] text-white border-[#0D4B84] focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                     />
                     <Select value={r.unit} onValueChange={(v) => updateReminder(idx, "unit", v)}>
-                      <SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="minutes">Minutes</SelectItem>
-                        <SelectItem value="hours">Hours</SelectItem>
+                      <SelectTrigger className="h-8 text-xs w-28 bg-[#030C22] text-white border-[#0D4B84] font-medium"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
+                        <SelectItem value="minutes" className="hover:bg-blue-600/30">Minutes</SelectItem>
+                        <SelectItem value="hours" className="hover:bg-blue-600/30">Hours</SelectItem>
                       </SelectContent>
                     </Select>
-                    <span className="text-xs text-muted-foreground">before session</span>
-                    <button onClick={() => removeReminder(idx)} className="ml-auto text-muted-foreground hover:text-destructive">
-                      <Trash2 className="h-3.5 w-3.5" />
+                    <span className="text-xs text-slate-300 font-medium">before session</span>
+                    <button
+                      type="button"
+                      onClick={() => removeReminder(idx)}
+                      className="ml-auto text-slate-400 hover:text-rose-400 p-1 rounded transition-colors"
+                      title="Delete reminder"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 pt-0.5">
                     <input
                       type="checkbox"
+                      id={`reminder-notify-${idx}`}
                       checked={r.notifyOwner}
                       onChange={(e) => updateReminder(idx, "notifyOwner", e.target.checked)}
-                      className="h-3.5 w-3.5 accent-accent"
+                      className="h-4 w-4 rounded accent-blue-600 cursor-pointer"
                     />
-                    <span className="text-xs text-muted-foreground">Also send email reminders to me</span>
+                    <label htmlFor={`reminder-notify-${idx}`} className="text-xs text-slate-300 cursor-pointer select-none">
+                      Also send email reminders to me
+                    </label>
                   </div>
                 </div>
               ))}
               {form.reminders.length < 2 && (
-                <Button variant="outline" size="sm" onClick={addReminder} className="text-xs gap-1.5">
-                  <Plus className="h-3.5 w-3.5" /> Add reminder
+                <Button variant="outline" size="sm" onClick={addReminder} className="text-xs gap-1.5 bg-[#0A254D]/50 border-[#0D4B84] text-white hover:bg-blue-600/20">
+                  <Plus className="h-3.5 w-3.5 text-blue-400" /> Add reminder
                 </Button>
               )}
             </div>
