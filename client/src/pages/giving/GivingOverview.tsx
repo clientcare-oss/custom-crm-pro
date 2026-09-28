@@ -49,33 +49,33 @@ export default function GivingOverview() {
   return (
     <div className="min-h-screen bg-[#07162B] text-white p-6 md:p-8 space-y-8">
       {/* ── Top Header Bar ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="space-y-1">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div className="space-y-1 min-w-0 flex-1">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-inner">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-inner shrink-0">
               <HandHeart className="h-6 w-6" />
             </div>
-            <div>
-              <div className="flex items-center gap-2.5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
                   Giving & Impact
                 </h1>
                 <PageIdBadge id="PG-040" name="Giving & Impact Overview" />
               </div>
-              <p className="text-xs md:text-sm text-white/60">
+              <p className="text-xs md:text-sm text-white/60 truncate">
                 Manage donations, supporters, scholarships, funds, receipts, and charitable reporting.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Action Controls (Strictly single-row, no wrapping) */}
+        <div className="flex items-center gap-2.5 shrink-0 overflow-x-auto max-w-full pb-0.5">
           <Button
             type="button"
             variant="outline"
             onClick={() => setModal501c3Open(true)}
-            className="border-amber-400/40 text-amber-300 hover:bg-amber-400/10 hover:text-amber-200 text-xs font-semibold h-9 px-3.5 gap-2 shadow-xs cursor-pointer"
+            className="border-amber-400/40 text-amber-300 hover:bg-amber-400/10 hover:text-amber-200 text-xs font-semibold h-9 px-3 gap-1.5 shadow-xs cursor-pointer whitespace-nowrap shrink-0"
           >
             <Settings className="h-4 w-4 text-amber-400" />
             <span>Manage 501(c)(3)</span>
@@ -84,7 +84,7 @@ export default function GivingOverview() {
           <Button
             type="button"
             onClick={() => setScholarshipModalOpen(true)}
-            className="bg-amber-500 hover:bg-amber-400 text-[#07162B] font-bold text-xs h-9 px-3.5 gap-1.5 shadow-md cursor-pointer"
+            className="bg-amber-500 hover:bg-amber-400 text-[#07162B] font-bold text-xs h-9 px-3.5 gap-1.5 shadow-md cursor-pointer whitespace-nowrap shrink-0"
           >
             <GraduationCap className="h-4 w-4" />
             <span>Initiate Scholarship</span>
@@ -93,7 +93,7 @@ export default function GivingOverview() {
           <Button
             type="button"
             onClick={() => setLocation("/giving/donations")}
-            className="bg-emerald-500 hover:bg-emerald-400 text-[#07162B] font-bold text-xs h-9 px-3.5 gap-1.5 shadow-md cursor-pointer"
+            className="bg-emerald-500 hover:bg-emerald-400 text-[#07162B] font-bold text-xs h-9 px-3.5 gap-1.5 shadow-md cursor-pointer whitespace-nowrap shrink-0"
           >
             <Plus className="h-4 w-4" />
             <span>Record Donation</span>
