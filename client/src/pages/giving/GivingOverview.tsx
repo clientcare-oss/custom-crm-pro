@@ -189,6 +189,52 @@ export default function GivingOverview() {
         </Card>
       </div>
 
+      {/* ── Elongated Family Scholarships & Grants Command Bar ── */}
+      <div className="rounded-2xl border border-amber-400/30 bg-gradient-to-r from-amber-500/15 via-[#001A41]/90 to-amber-950/20 p-4 md:p-5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="h-12 w-12 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+            <GraduationCap className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
+                Family Advocacy Scholarships & Grants
+              </h2>
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[11px] px-2 py-0.5 font-semibold">
+                {isLoading ? "..." : `${stats?.activeScholarshipsCount ?? 0} Active Grants`}
+              </Badge>
+              <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/30 text-[11px] px-2 py-0.5 font-semibold">
+                {isLoading ? "..." : `${formatCurrency(stats?.scholarshipFundBalanceCents ?? 0)} Available`}
+              </Badge>
+            </div>
+            <p className="text-xs text-white/60 mt-0.5">
+              Subsidize IEP advocacy retainer fees, evaluation stipends, and dispute assistance from 501(c)(3) charitable funds.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setLocation("/giving/scholarships")}
+            className="border-amber-400/40 text-amber-300 hover:bg-amber-400/10 hover:text-amber-200 text-xs font-semibold h-9 px-3.5 gap-1.5 cursor-pointer shadow-xs"
+          >
+            <span>Track Scholarships</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+
+          <Button
+            type="button"
+            onClick={() => setScholarshipModalOpen(true)}
+            className="bg-amber-500 hover:bg-amber-400 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-md cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Initiate Scholarship</span>
+          </Button>
+        </div>
+      </div>
+
       {/* ── Subsystem Hub Shortcuts ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <Link href="/giving/supporters" className="block">
@@ -211,36 +257,15 @@ export default function GivingOverview() {
           </div>
         </Link>
 
-        <div className="rounded-xl border border-amber-400/40 bg-gradient-to-b from-amber-500/15 via-[#001A41]/80 to-black/30 p-3.5 transition-all text-center space-y-2 group shadow-sm flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="h-8 w-8 rounded-lg bg-amber-500/25 text-amber-300 mx-auto flex items-center justify-center group-hover:scale-105 transition-transform">
+        <Link href="/giving/scholarships" className="block">
+          <div className="rounded-xl border border-white/10 bg-black/25 hover:bg-white/5 p-3.5 transition-all text-center space-y-1.5 group cursor-pointer">
+            <div className="h-8 w-8 rounded-lg bg-amber-500/20 text-amber-300 mx-auto flex items-center justify-center group-hover:scale-105 transition-transform">
               <GraduationCap className="h-4 w-4" />
             </div>
-            <p className="text-xs font-bold text-white group-hover:text-amber-300">Scholarships</p>
-            <p className="text-[10px] text-amber-200/90 font-medium">
-              {isLoading ? "Loading..." : `${stats?.activeScholarshipsCount ?? 0} Active Grants`}
-            </p>
+            <p className="text-xs font-semibold text-white group-hover:text-amber-300">Scholarships</p>
+            <p className="text-[10px] text-white/50">Student grants</p>
           </div>
-          <div className="grid grid-cols-2 gap-1.5 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setLocation("/giving/scholarships")}
-              className="h-6 px-1 text-[10px] font-semibold border-amber-400/40 text-amber-200 hover:bg-amber-400/20 cursor-pointer w-full"
-            >
-              Track
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setScholarshipModalOpen(true)}
-              className="h-6 px-1 text-[10px] font-bold bg-amber-500 hover:bg-amber-400 text-[#07162B] cursor-pointer w-full"
-            >
-              + Initiate
-            </Button>
-          </div>
-        </div>
+        </Link>
 
         <Link href="/giving/funds" className="block">
           <div className="rounded-xl border border-white/10 bg-black/25 hover:bg-white/5 p-3.5 transition-all text-center space-y-1.5 group cursor-pointer">
