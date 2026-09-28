@@ -1174,13 +1174,19 @@ export function getInsertId(result: any): number {
 }
 
 // ============ LEAD FORMS ============
-export async function getLeadForms(ownerId: number) {
+export async function getLeadForms(ownerId?: number) {
   const db = await getDb();
   if (!db) return [];
+  if (ownerId !== undefined) {
+    return await db
+      .select()
+      .from(leadForms)
+      .where(eq(leadForms.ownerId, ownerId))
+      .orderBy(desc(leadForms.createdAt));
+  }
   return await db
     .select()
     .from(leadForms)
-    .where(eq(leadForms.ownerId, ownerId))
     .orderBy(desc(leadForms.createdAt));
 }
 
@@ -1195,13 +1201,13 @@ export async function getLeadFormBySlug(slug: string) {
   return result[0];
 }
 
-export async function getLeadFormById(id: number, ownerId: number) {
+export async function getLeadFormById(id: number, _ownerId?: number) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db
     .select()
     .from(leadForms)
-    .where(and(eq(leadForms.id, id), eq(leadForms.ownerId, ownerId)))
+    .where(eq(leadForms.id, id))
     .limit(1);
   return result[0];
 }
@@ -1225,7 +1231,7 @@ export async function createLeadForm(data: {
   return await db.insert(leadForms).values(data);
 }
 
-export async function updateLeadForm(id: number, ownerId: number, data: Partial<{
+export async function updateLeadForm(id: number, _ownerId: number, data: Partial<{
   name: string;
   slug: string;
   description: string;
@@ -1235,7 +1241,7 @@ export async function updateLeadForm(id: number, ownerId: number, data: Partial<
   schedulingLabel: string;
   isActive: boolean;
   fields: string;
-  customLabels: string;
+  customLabels: string | null;
   sessionTypeId: number | null;
   confirmationHeadline: string | null;
   confirmationBody: string | null;
@@ -1249,15 +1255,15 @@ export async function updateLeadForm(id: number, ownerId: number, data: Partial<
   return await db
     .update(leadForms)
     .set(data)
-    .where(and(eq(leadForms.id, id), eq(leadForms.ownerId, ownerId)));
+    .where(eq(leadForms.id, id));
 }
 
-export async function deleteLeadForm(id: number, ownerId: number) {
+export async function deleteLeadForm(id: number, _ownerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return await db
     .delete(leadForms)
-    .where(and(eq(leadForms.id, id), eq(leadForms.ownerId, ownerId)));
+    .where(eq(leadForms.id, id));
 }
 
 export async function incrementLeadFormSubmissionCount(slug: string) {

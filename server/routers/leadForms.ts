@@ -10,9 +10,9 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 
 export const leadFormsRouter = router({
 
-    // List all forms for the owner
-    list: adminProcedure.query(async ({ ctx }) => {
-      return await db.getLeadForms(ctx.user.id);
+    // List all forms for the workspace (admin only)
+    list: adminProcedure.query(async () => {
+      return await db.getLeadForms();
     }),
 
     // Get or auto-create the built-in public intake form record (admin only)
@@ -56,7 +56,7 @@ export const leadFormsRouter = router({
         schedulingLabel: z.string().optional(),
         isActive: z.boolean().default(true),
         fields: z.array(z.string()).optional(),
-        customLabels: z.string().optional(),
+        customLabels: z.string().nullable().optional(),
         sessionTypeId: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -80,7 +80,7 @@ export const leadFormsRouter = router({
           schedulingLabel: input.schedulingLabel,
           isActive: input.isActive,
           fields: input.fields ? JSON.stringify(input.fields) : undefined,
-          customLabels: input.customLabels,
+          customLabels: input.customLabels ?? undefined,
           sessionTypeId: input.sessionTypeId,
         });
         const id = db.getInsertId(result);
@@ -99,7 +99,7 @@ export const leadFormsRouter = router({
         schedulingLabel: z.string().optional(),
         isActive: z.boolean().optional(),
         fields: z.array(z.string()).optional(),
-        customLabels: z.string().optional(),
+        customLabels: z.string().nullable().optional(),
         sessionTypeId: z.number().nullable().optional(),
         confirmationHeadline: z.string().max(200).optional(),
         confirmationBody: z.string().optional(),
@@ -110,10 +110,13 @@ export const leadFormsRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, fields, customLabels, sessionTypeId, ...rest } = input;
+        const normalizedCustomLabels = customLabels !== undefined
+          ? (!customLabels || customLabels === "{}" ? null : customLabels)
+          : undefined;
         await db.updateLeadForm(id, ctx.user.id, {
           ...rest,
           ...(fields !== undefined ? { fields: JSON.stringify(fields) } : {}),
-          ...(customLabels !== undefined ? { customLabels } : {}),
+          ...(normalizedCustomLabels !== undefined ? { customLabels: normalizedCustomLabels } : {}),
           ...(sessionTypeId !== undefined ? { sessionTypeId } : {}),
         });
         return { success: true };

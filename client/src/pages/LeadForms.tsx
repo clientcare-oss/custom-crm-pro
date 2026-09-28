@@ -285,7 +285,15 @@ export default function LeadForms() {
                   </div>
                   <div>
                     <CardTitle className="text-sm font-semibold">Public Intake Form</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">Default · Families fill this out</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Default · Families fill this out
+                      {publicIntakeForm?.fields && (() => {
+                        try {
+                          const p = JSON.parse(publicIntakeForm.fields);
+                          return Array.isArray(p) ? ` · ${p.length} questions active` : "";
+                        } catch { return ""; }
+                      })()}
+                    </p>
                   </div>
                 </div>
                 <Badge variant="outline" className="text-green-600 border-green-500/40 bg-green-500/10 text-xs shrink-0">
@@ -678,6 +686,17 @@ export default function LeadForms() {
                           <span>{form.submissionCount ?? 0} submissions</span>
                           <span>·</span>
                           <span>Created {new Date(form.createdAt).toLocaleDateString()}</span>
+                          {form.fields && (() => {
+                            try {
+                              const p = JSON.parse(form.fields);
+                              return Array.isArray(p) ? (
+                                <>
+                                  <span>·</span>
+                                  <span>{p.length} questions</span>
+                                </>
+                              ) : null;
+                            } catch { return null; }
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -747,7 +766,12 @@ export default function LeadForms() {
           if (!open) { setShowCreateModal(false); setEditingForm(null); }
         }}
         editingForm={editingForm}
-        onSuccess={() => { refetch(); setShowCreateModal(false); setEditingForm(null); }}
+        onSuccess={() => {
+          refetch();
+          refetchIntake();
+          setShowCreateModal(false);
+          setEditingForm(null);
+        }}
       />
 
       {/* Delete Confirm */}

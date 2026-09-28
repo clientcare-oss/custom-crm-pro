@@ -90,14 +90,14 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
       let enabledFields: FieldKey[] = [...DEFAULT_FIELDS];
       if (editingForm.fields) {
         try {
-          const parsed = JSON.parse(editingForm.fields);
-          if (Array.isArray(parsed) && parsed.length > 0) enabledFields = parsed as FieldKey[];
+          const parsed = typeof editingForm.fields === "string" ? JSON.parse(editingForm.fields) : editingForm.fields;
+          if (Array.isArray(parsed)) enabledFields = parsed as FieldKey[];
         } catch { /* ignore */ }
       }
       let customLabels: Record<string, string> = {};
       if (editingForm.customLabels) {
         try {
-          const parsed = JSON.parse(editingForm.customLabels);
+          const parsed = typeof editingForm.customLabels === "string" ? JSON.parse(editingForm.customLabels) : editingForm.customLabels;
           if (parsed && typeof parsed === "object") customLabels = parsed;
         } catch { /* ignore */ }
       }
@@ -212,6 +212,19 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
       return;
     }
 
+    // Auto-commit any in-progress label edit if the user typed and immediately clicked "Save"
+    let currentCustomLabels = { ...form.customLabels };
+    if (editingLabelKey) {
+      const field = ALL_FIELDS.find((f) => f.key === editingLabelKey);
+      const defaultLabel = field?.label ?? "";
+      const trimmed = editingLabelValue.trim();
+      if (!trimmed || trimmed === defaultLabel) {
+        delete currentCustomLabels[editingLabelKey];
+      } else {
+        currentCustomLabels[editingLabelKey] = trimmed;
+      }
+    }
+
     const payload = {
       name: form.name,
       description: form.description || undefined,
@@ -222,9 +235,9 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
       sessionTypeId: form.sessionTypeId ?? undefined,
       isActive: form.isActive,
       fields: form.enabledFields,
-      customLabels: Object.keys(form.customLabels).length > 0
-        ? JSON.stringify(form.customLabels)
-        : undefined,
+      customLabels: Object.keys(currentCustomLabels).length > 0
+        ? JSON.stringify(currentCustomLabels)
+        : "{}",
     };
 
     if (isEditing) {
