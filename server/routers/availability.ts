@@ -10,11 +10,12 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 
 export const availabilityRouter = router({
 
-    get: adminProcedure.query(async ({ ctx }) => {
-      return await db.getOwnerAvailability(ctx.user.id);
+    get: publicProcedure.query(async ({ ctx }) => {
+      const ownerId = ctx.user?.id ?? 1;
+      return await db.getOwnerAvailability(ownerId);
     }),
 
-    update: adminProcedure
+    update: protectedProcedure
       .input(
         z.array(
           z.object({
@@ -26,7 +27,8 @@ export const availabilityRouter = router({
         )
       )
       .mutation(async ({ ctx, input }) => {
-        return await db.updateOwnerAvailability(ctx.user.id, input);
+        const ownerId = ctx.user?.id ?? 1;
+        return await db.updateOwnerAvailability(ownerId, input);
       }),
   
 });

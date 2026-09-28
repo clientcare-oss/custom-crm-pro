@@ -656,10 +656,16 @@ export async function getOwnerAvailability(ownerId: number) {
   const db = await getDb();
   if (!db) return [];
 
-  return await db
+  const rows = await db
     .select()
     .from(ownerAvailability)
     .where(eq(ownerAvailability.ownerId, ownerId))
+    .orderBy(asc(ownerAvailability.dayOfWeek));
+  if (rows.length > 0) return rows;
+
+  return await db
+    .select()
+    .from(ownerAvailability)
     .orderBy(asc(ownerAvailability.dayOfWeek));
 }
 

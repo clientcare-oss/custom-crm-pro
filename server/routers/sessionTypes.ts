@@ -11,7 +11,7 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 export const sessionTypesRouter = router({
 
     // List all session types for the workspace
-    list: adminProcedure.query(async () => {
+    list: publicProcedure.query(async () => {
       const { sessionTypes } = await import("../../drizzle/schema");
       const dbConn = await db.getDb();
       if (!dbConn) throw new Error("DB unavailable");
@@ -26,7 +26,7 @@ export const sessionTypesRouter = router({
     }),
 
     // Get a single session type
-    get: adminProcedure
+    get: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const { sessionTypes } = await import("../../drizzle/schema");
@@ -45,7 +45,7 @@ export const sessionTypesRouter = router({
       }),
 
     // Create a new session type with standard defaults pre-filled
-    create: adminProcedure
+    create: protectedProcedure
       .input(
         z.object({
           name: z.string().min(1).max(255),
@@ -109,7 +109,7 @@ export const sessionTypesRouter = router({
       }),
 
     // Update a session type
-    update: adminProcedure
+    update: protectedProcedure
       .input(
         z.object({
           id: z.number(),
@@ -155,7 +155,7 @@ export const sessionTypesRouter = router({
       }),
 
     // Delete a session type
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const { sessionTypes } = await import("../../drizzle/schema");
@@ -168,7 +168,7 @@ export const sessionTypesRouter = router({
       }),
 
     // Toggle active/inactive
-    toggleActive: adminProcedure
+    toggleActive: protectedProcedure
       .input(z.object({ id: z.number(), isActive: z.boolean() }))
       .mutation(async ({ input }) => {
         const { sessionTypes } = await import("../../drizzle/schema");
