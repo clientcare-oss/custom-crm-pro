@@ -80,8 +80,8 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
   const [editingLabelValue, setEditingLabelValue] = useState("");
   const isEditing = !!editingForm;
 
-  // Fetch session types for the selector
-  const { data: sessionTypes } = trpc.sessionTypes.listAll.useQuery(undefined, {
+  // Fetch session types from the actual scheduler tool
+  const { data: sessionTypes = [] } = trpc.sessionTypes.list.useQuery(undefined, {
     enabled: open,
   });
 
@@ -405,12 +405,12 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                             <select
                               value={form.sessionTypeId ?? ""}
                               onChange={(e) => set("sessionTypeId", e.target.value ? Number(e.target.value) : null)}
-                              className="w-full appearance-none bg-background border border-border rounded-md px-3 py-2 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-ring"
+                              className="w-full appearance-none bg-[#030C22] border border-[#0D4B84] text-white rounded-md px-3 py-2 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                             >
-                              <option value="">— No specific session type —</option>
-                              {(sessionTypes ?? []).map((st) => (
-                                <option key={st.id} value={st.id}>
-                                  {st.name} ({st.duration} {st.durationUnit})
+                              <option value="" className="bg-[#0A254D] text-white">— No specific session type —</option>
+                              {sessionTypes.map((st) => (
+                                <option key={st.id} value={st.id} className="bg-[#0A254D] text-white">
+                                  {st.name} ({st.duration} {st.durationUnit}){st.isActive ? "" : " (Inactive in Scheduler)"}
                                 </option>
                               ))}
                             </select>

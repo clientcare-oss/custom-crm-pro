@@ -10,33 +10,38 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 
 export const sessionTypesRouter = router({
 
-    // List all session types for the owner
-    list: adminProcedure.query(async ({ ctx }) => {
+    // List all session types for the workspace
+    list: adminProcedure.query(async () => {
       const { sessionTypes } = await import("../../drizzle/schema");
       const dbConn = await db.getDb();
       if (!dbConn) throw new Error("DB unavailable");
       const rows = await dbConn
         .select()
         .from(sessionTypes)
-        .where(eq(sessionTypes.ownerId, ctx.user.id))
         .orderBy(asc(sessionTypes.createdAt));
-      return rows;
+      return rows.map((r) => ({
+        ...r,
+        isActive: r.isActive === true || (r as any).isActive === 1 || (r as any).isActive === "true" || (r as any).isActive === "1",
+      }));
     }),
 
     // Get a single session type
     get: adminProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ ctx, input }) => {
+      .query(async ({ input }) => {
         const { sessionTypes } = await import("../../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new Error("DB unavailable");
         const [row] = await dbConn
           .select()
           .from(sessionTypes)
-          .where(and(eq(sessionTypes.id, input.id), eq(sessionTypes.ownerId, ctx.user.id)))
+          .where(eq(sessionTypes.id, input.id))
           .limit(1);
         if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-        return row;
+        return {
+          ...row,
+          isActive: row.isActive === true || (row as any).isActive === 1 || (row as any).isActive === "true" || (row as any).isActive === "1",
+        };
       }),
 
     // Create a new session type with standard defaults pre-filled
@@ -137,7 +142,7 @@ export const sessionTypesRouter = router({
           isActive: z.boolean().optional(),
         })
       )
-      .mutation(async ({ ctx, input }) => {
+      .mutation(async ({ input }) => {
         const { sessionTypes } = await import("../../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new Error("DB unavailable");
@@ -145,56 +150,52 @@ export const sessionTypesRouter = router({
         await dbConn
           .update(sessionTypes)
           .set({ ...data, updatedAt: new Date() })
-          .where(and(eq(sessionTypes.id, id), eq(sessionTypes.ownerId, ctx.user.id)));
+          .where(eq(sessionTypes.id, id));
         return { success: true };
       }),
 
     // Delete a session type
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
+      .mutation(async ({ input }) => {
         const { sessionTypes } = await import("../../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new Error("DB unavailable");
         await dbConn
           .delete(sessionTypes)
-          .where(and(eq(sessionTypes.id, input.id), eq(sessionTypes.ownerId, ctx.user.id)));
+          .where(eq(sessionTypes.id, input.id));
         return { success: true };
       }),
 
     // Toggle active/inactive
     toggleActive: adminProcedure
       .input(z.object({ id: z.number(), isActive: z.boolean() }))
-      .mutation(async ({ ctx, input }) => {
+      .mutation(async ({ input }) => {
         const { sessionTypes } = await import("../../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new Error("DB unavailable");
         await dbConn
           .update(sessionTypes)
           .set({ isActive: input.isActive, updatedAt: new Date() })
-          .where(and(eq(sessionTypes.id, input.id), eq(sessionTypes.ownerId, ctx.user.id)));
+          .where(eq(sessionTypes.id, input.id));
         return { success: true };
       }),
 
-    // Public: list active session types for a booking page (by ownerId)
-    // Returns all active session types for the owner (no ownerId required — uses ENV owner)
+    // Public: list active session types for booking page and intake forms
     listAll: publicProcedure.query(async () => {
-      const { sessionTypes, users } = await import("../../drizzle/schema");
+      const { sessionTypes } = await import("../../drizzle/schema");
       const dbConn = await db.getDb();
       if (!dbConn) throw new Error("DB unavailable");
-      let owner = await db.getUserByOpenId(ENV.ownerOpenId);
-      // Fallback: if OWNER_OPEN_ID doesn't match, use the first admin user
-      if (!owner) {
-        const [firstAdmin] = await dbConn.select().from(users).where(eq(users.role, 'admin')).limit(1);
-        owner = firstAdmin ?? null;
-      }
-      if (!owner) return [];
       const rows = await dbConn
         .select()
         .from(sessionTypes)
-        .where(and(eq(sessionTypes.ownerId, owner.id), eq(sessionTypes.isActive, true)))
         .orderBy(asc(sessionTypes.createdAt));
-      return rows;
+      return rows
+        .map((r) => ({
+          ...r,
+          isActive: r.isActive === true || (r as any).isActive === 1 || (r as any).isActive === "true" || (r as any).isActive === "1",
+        }))
+        .filter((r) => r.isActive);
     }),
 
     // Public: get a single session type by ID (for inline scheduler)
