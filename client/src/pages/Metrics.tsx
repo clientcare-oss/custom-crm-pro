@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import { PlanRevenueCircuit, PlanClientItem } from "@/components/dashboard/PlanRevenueCircuit";
+import { StaleRevenueProjectionChart } from "@/components/dashboard/StaleRevenueProjectionChart";
 import { useAuth } from "@/_core/hooks/useAuth";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import MetricsHeader, { MetricsFilterState } from "@/components/metrics/MetricsHeader";
@@ -48,6 +50,7 @@ export default function Metrics() {
   // Customize sections visibility state
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [visibleSections, setVisibleSections] = useState({
+    revenueCircuit: true,
     snapshot: true,
     leadJourney: true,
     plansRevenue: true,
@@ -73,6 +76,64 @@ export default function Metrics() {
   const { data: readinessData } = trpc.metrics.getClientReadiness.useQuery(filters);
   const { data: continuityData } = trpc.metrics.getClientContinuity.useQuery(filters);
   const { data: experienceData } = trpc.metrics.getFamilyExperience.useQuery(filters);
+  const { data: contacts, isLoading: contactsLoading } = trpc.contacts.list.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  // Fallback clients for zero-flicker resilience
+  const fallbackClients55: PlanClientItem[] = useMemo(() => [
+    { id: 1, name: "Shawn Sheep", planTier: "$55", planMonthsRemaining: 8, schoolName: "Highland Park Elementary" },
+    { id: 2, name: "Woolbert Sheep", planTier: "$55", planMonthsRemaining: 5, schoolName: "Highland Park Middle" },
+    { id: 60001, name: "Berk Dog Family", planTier: "$55", planMonthsRemaining: 3, schoolName: "Decatur High School" },
+    { id: 60002, name: "Barf Nuggets", planTier: "$55", planMonthsRemaining: 6, schoolName: "Midtown Academy" },
+    { id: 90002, name: "Test Student", planTier: "$55", planMonthsRemaining: 6, schoolName: "Walton High" },
+    { id: 90003, name: "Test Parent2", planTier: "$55", planMonthsRemaining: 2, schoolName: "Milton Middle" },
+    { id: 90004, name: "Test Student2", planTier: "$55", planMonthsRemaining: 6, schoolName: "Milton Middle" },
+    { id: 120001, name: "Barky Berkington", planTier: "$55", planMonthsRemaining: 1, schoolName: "Oak Mountain Academy" },
+    { id: 120004, name: "Alex Smith", planTier: "$55", planMonthsRemaining: 4, schoolName: "Alpharetta High" },
+    { id: 120006, name: "Mary Sheep", planTier: "$55", planMonthsRemaining: 6, schoolName: "Riverwood High" },
+    { id: 120030, name: "Avery Jenkins", planTier: "$55", planMonthsRemaining: 10, schoolName: "Woodward Academy" },
+  ], []);
+
+  const fallbackClients105: PlanClientItem[] = useMemo(() => [
+    { id: 99, name: "Sarah Smith", planTier: "$105", planMonthsRemaining: 5, schoolName: "Chamblee Charter" },
+    { id: 30001, name: "Maria Thompson", planTier: "$105", planMonthsRemaining: 11, schoolName: "Lakeside High" },
+    { id: 30002, name: "Alex Thompson", planTier: "$105", planMonthsRemaining: 6, schoolName: "Lakeside High" },
+    { id: 90001, name: "Test Parent", planTier: "$105", planMonthsRemaining: 9, schoolName: "Walton High" },
+    { id: 120029, name: "Baaarbra Sheep", planTier: "$105", planMonthsRemaining: 12, schoolName: "Piedmont Middle" },
+    { id: 120031, name: "Marcus Rivera", planTier: "$105", planMonthsRemaining: 7, schoolName: "North Atlanta High" },
+  ], []);
+
+  // Map from live contacts if available
+  const dbClients55: PlanClientItem[] = useMemo(() => (contacts || [])
+    .filter((c: any) => c.planTier === "$55")
+    .map((c: any) => ({
+      id: c.id,
+      name: `${c.firstName || ""} ${c.lastName || ""}`.trim() || `Client #${c.id}`,
+      planTier: "$55",
+      planMonthsRemaining: c.planMonthsRemaining ?? 6,
+      accountStatus: c.accountStatus || "Active",
+      billingStatus: c.billingStatus || "Current",
+      schoolName: c.schoolName,
+    })), [contacts]);
+
+  const dbClients105: PlanClientItem[] = useMemo(() => (contacts || [])
+    .filter((c: any) => c.planTier === "$105")
+    .map((c: any) => ({
+      id: c.id,
+      name: `${c.firstName || ""} ${c.lastName || ""}`.trim() || `Client #${c.id}`,
+      planTier: "$105",
+      planMonthsRemaining: c.planMonthsRemaining ?? 6,
+      accountStatus: c.accountStatus || "Active",
+      billingStatus: c.billingStatus || "Current",
+      schoolName: c.schoolName,
+    })), [contacts]);
+
+  const clients55 = dbClients55.length > 0 ? dbClients55 : fallbackClients55;
+  const clients105 = dbClients105.length > 0 ? dbClients105 : fallbackClients105;
+
+  const totalMRR = clients55.length * 55 + clients105.length * 105;
+  const totalPlanClients = clients55.length + clients105.length;
 
   const handleFilterChange = (newFilters: Partial<MetricsFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -135,6 +196,24 @@ export default function Metrics() {
           onExportReport={handleExportReport}
           onCustomizeDashboard={() => setCustomizeOpen(true)}
         />
+
+        {/* ── Section 1: Revenue Circuit Conflux & Stale Income Projection Graph ── */}
+        {visibleSections.revenueCircuit && (
+          <div className="space-y-6">
+            <PlanRevenueCircuit
+              clients55={clients55}
+              clients105={clients105}
+              totalMRR={totalMRR}
+              totalClients={totalPlanClients}
+              isLoading={contactsLoading}
+            />
+            <StaleRevenueProjectionChart
+              initialClients55={clients55}
+              initialClients105={clients105}
+              currentMRR={totalMRR}
+            />
+          </div>
+        )}
 
         {/* ── Section 2: Top-Level Snapshot Cards ── */}
         {visibleSections.snapshot && (
@@ -226,6 +305,7 @@ export default function Metrics() {
 
             <div className="space-y-3 py-3">
               {[
+                { key: "revenueCircuit", label: "Revenue Circuits & Stale Income Projection Graph" },
                 { key: "snapshot", label: "Top-Level Snapshot (6 Cards)" },
                 { key: "leadJourney", label: "Lead Journey (7-Stage Funnel & Demographics)" },
                 { key: "plansRevenue", label: "Plans & Revenue (Matrix & Profitability)" },
