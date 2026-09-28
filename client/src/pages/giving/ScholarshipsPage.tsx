@@ -8,24 +8,9 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import PageIdBadge from "@/components/PageIdBadge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AwardScholarshipModal } from "@/components/giving/AwardScholarshipModal";
 import {
   GraduationCap,
   Plus,
@@ -38,7 +23,6 @@ import {
   ExternalLink,
   Sparkles,
 } from "lucide-react";
-import { toast } from "sonner";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -51,59 +35,7 @@ export default function ScholarshipsPage() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
-  const [awardForm, setAwardForm] = useState({
-    studentName: "",
-    familyContactName: "",
-    familyEmail: "",
-    programTier: "Core Advocacy Co-Sponsorship ($55/mo)",
-    monthlyGrantAmount: "55.00",
-    fundId: "fnd-1",
-    sponsorName: "",
-    notes: "",
-  });
-
-  const utils = trpc.useUtils();
   const { data: scholarships = [], isLoading } = trpc.giving.listScholarships.useQuery();
-  const { data: funds = [] } = trpc.giving.listFunds.useQuery();
-
-  const awardMutation = trpc.giving.awardScholarship.useMutation({
-    onSuccess: () => {
-      toast.success("Scholarship grant awarded successfully");
-      utils.giving.listScholarships.invalidate();
-      utils.giving.getOverviewStats.invalidate();
-      setModalOpen(false);
-      setAwardForm({
-        studentName: "",
-        familyContactName: "",
-        familyEmail: "",
-        programTier: "Core Advocacy Co-Sponsorship ($55/mo)",
-        monthlyGrantAmount: "55.00",
-        fundId: "fnd-1",
-        sponsorName: "",
-        notes: "",
-      });
-    },
-    onError: (err) => toast.error(err.message || "Failed to award scholarship"),
-  });
-
-  const handleAward = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cents = Math.round(parseFloat(awardForm.monthlyGrantAmount) * 100);
-    if (isNaN(cents) || cents <= 0) {
-      toast.error("Please enter a valid grant amount");
-      return;
-    }
-    awardMutation.mutate({
-      studentName: awardForm.studentName,
-      familyContactName: awardForm.familyContactName,
-      familyEmail: awardForm.familyEmail || undefined,
-      programTier: awardForm.programTier,
-      monthlyGrantAmount: cents,
-      fundId: awardForm.fundId,
-      sponsorName: awardForm.sponsorName || undefined,
-      notes: awardForm.notes || undefined,
-    });
-  };
 
   const filtered = scholarships.filter((s: any) => {
     const q = search.toLowerCase();
@@ -239,150 +171,8 @@ export default function ScholarshipsPage() {
         </div>
       </Card>
 
-      {/* Award Modal */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-[#07162B] border-amber-500/30 text-white p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-amber-400" />
-              Award Family Advocacy Scholarship
-            </DialogTitle>
-            <DialogDescription className="text-xs text-white/60">
-              Grant advocacy fee assistance from designated restricted scholarship funds
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleAward} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/80">Student Full Name *</Label>
-              <Input
-                required
-                value={awardForm.studentName}
-                onChange={(e) => setAwardForm({ ...awardForm, studentName: e.target.value })}
-                placeholder="Lucas Vance"
-                className="bg-black/30 border-white/15 text-xs text-white"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-white/80">Parent / Guardian Name *</Label>
-                <Input
-                  required
-                  value={awardForm.familyContactName}
-                  onChange={(e) => setAwardForm({ ...awardForm, familyContactName: e.target.value })}
-                  placeholder="Amanda Vance"
-                  className="bg-black/30 border-white/15 text-xs text-white"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-white/80">Parent Email</Label>
-                <Input
-                  type="email"
-                  value={awardForm.familyEmail}
-                  onChange={(e) => setAwardForm({ ...awardForm, familyEmail: e.target.value })}
-                  placeholder="amanda@example.com"
-                  className="bg-black/30 border-white/15 text-xs text-white"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-white/80">Program Tier</Label>
-                <Select
-                  value={awardForm.programTier}
-                  onValueChange={(val) => {
-                    const defaultAmount = val.includes("105") ? "105.00" : val.includes("55") ? "55.00" : "250.00";
-                    setAwardForm({ ...awardForm, programTier: val, monthlyGrantAmount: defaultAmount });
-                  }}
-                >
-                  <SelectTrigger className="bg-black/30 border-white/15 text-xs text-white h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#001A41] border-white/15 text-white text-xs">
-                    <SelectItem value="Core Advocacy Co-Sponsorship ($55/mo)">$55/mo Co-Sponsorship</SelectItem>
-                    <SelectItem value="Full Advocacy Retainer ($105/mo)">$105/mo Full Retainer</SelectItem>
-                    <SelectItem value="Evaluation Review Stipend">Evaluation Review Stipend</SelectItem>
-                    <SelectItem value="Due Process Legal Aid Grant">Due Process Legal Aid Grant</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs text-white/80">Grant Amount ($ USD) *</Label>
-                <Input
-                  required
-                  type="number"
-                  step="0.01"
-                  value={awardForm.monthlyGrantAmount}
-                  onChange={(e) => setAwardForm({ ...awardForm, monthlyGrantAmount: e.target.value })}
-                  className="bg-black/30 border-white/15 text-sm font-mono text-white focus-visible:ring-amber-400"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/80">Disbursing Fund</Label>
-              <Select
-                value={awardForm.fundId}
-                onValueChange={(val) => setAwardForm({ ...awardForm, fundId: val })}
-              >
-                <SelectTrigger className="bg-black/30 border-white/15 text-xs text-white h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#001A41] border-white/15 text-white text-xs">
-                  {funds.map((f: any) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name} ({f.restrictionType})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/80">Sponsoring Partner (Optional)</Label>
-              <Input
-                value={awardForm.sponsorName}
-                onChange={(e) => setAwardForm({ ...awardForm, sponsorName: e.target.value })}
-                placeholder="e.g. Peachtree Children's Foundation"
-                className="bg-black/30 border-white/15 text-xs text-white"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/80">Advocacy Scope / Notes</Label>
-              <Input
-                value={awardForm.notes}
-                onChange={(e) => setAwardForm({ ...awardForm, notes: e.target.value })}
-                placeholder="e.g. Transition goal & speech services dispute assistance"
-                className="bg-black/30 border-white/15 text-xs text-white"
-              />
-            </div>
-
-            <DialogFooter className="pt-3 border-t border-white/10 flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setModalOpen(false)}
-                className="text-white/70 hover:text-white text-xs cursor-pointer"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={awardMutation.isPending}
-                className="bg-amber-500 hover:bg-amber-400 text-[#07162B] font-bold text-xs cursor-pointer"
-              >
-                {awardMutation.isPending ? "Awarding..." : "Confirm Grant Award"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Award & Initiate Scholarship Modal */}
+      <AwardScholarshipModal open={modalOpen} onOpenChange={setModalOpen} />
     </div>
   );
 }

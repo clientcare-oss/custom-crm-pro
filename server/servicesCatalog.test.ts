@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { appRouter } from "./routers";
+import { getLocalDbClient } from "./_core/d1Client";
 import {
   listServices,
   getServiceById,
@@ -50,6 +51,152 @@ describe("PG-035 Advocacy Services Catalog Master Library", () => {
 
   const adminCaller = appRouter.createCaller(adminCtx);
   const publicCaller = appRouter.createCaller(publicCtx);
+
+  beforeAll(async () => {
+    const client = getLocalDbClient();
+    try {
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS service_folders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organizationId INTEGER NOT NULL DEFAULT 1,
+          name TEXT NOT NULL,
+          slug TEXT NOT NULL,
+          description TEXT,
+          icon TEXT DEFAULT 'folder',
+          color TEXT DEFAULT 'blue',
+          sortOrder INTEGER NOT NULL DEFAULT 0,
+          isArchived INTEGER NOT NULL DEFAULT 0,
+          createdBy TEXT NOT NULL DEFAULT 'System',
+          updatedBy TEXT,
+          createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS services (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organizationId INTEGER NOT NULL DEFAULT 1,
+          ownerId INTEGER NOT NULL DEFAULT 1,
+          folderId INTEGER,
+          serviceCode TEXT NOT NULL,
+          internalName TEXT NOT NULL,
+          clientFacingTitle TEXT NOT NULL,
+          name TEXT NOT NULL,
+          shortDescription TEXT,
+          fullDescription TEXT,
+          internalInstructions TEXT,
+          sortOrder INTEGER NOT NULL DEFAULT 0,
+          icon TEXT DEFAULT 'briefcase',
+          accentColor TEXT DEFAULT 'blue',
+          price INTEGER,
+          standardPrice INTEGER NOT NULL DEFAULT 0,
+          currency TEXT NOT NULL DEFAULT 'usd',
+          billingType TEXT NOT NULL DEFAULT 'one_time',
+          billingInterval TEXT,
+          customPriceAllowed INTEGER NOT NULL DEFAULT 1,
+          sessionDurationMinutes INTEGER,
+          deliveryTimeValue INTEGER,
+          deliveryTimeUnit TEXT DEFAULT 'business_days',
+          deliveryTimeLabel TEXT DEFAULT '3 business days',
+          isActive INTEGER NOT NULL DEFAULT 1,
+          isArchived INTEGER NOT NULL DEFAULT 0,
+          availableInDiscoveryCall INTEGER NOT NULL DEFAULT 1,
+          availableInParentPortal INTEGER NOT NULL DEFAULT 1,
+          availableInSupportOfferPanel INTEGER NOT NULL DEFAULT 1,
+          availableAsStandalone INTEGER NOT NULL DEFAULT 1,
+          availableAsAddOn INTEGER NOT NULL DEFAULT 1,
+          visibleToEmployees INTEGER NOT NULL DEFAULT 1,
+          planEligibility TEXT,
+          includedItems TEXT,
+          allowDocumentUpload INTEGER NOT NULL DEFAULT 1,
+          requireDocumentUpload INTEGER NOT NULL DEFAULT 0,
+          requireQuestionnaire INTEGER NOT NULL DEFAULT 0,
+          requireAgreement INTEGER NOT NULL DEFAULT 0,
+          requirePayment INTEGER NOT NULL DEFAULT 1,
+          smartFileTemplateId INTEGER,
+          workflowTemplateId INTEGER,
+          taskTemplateId INTEGER,
+          priorityEnabled INTEGER NOT NULL DEFAULT 0,
+          priorityPrice INTEGER,
+          priorityDeliveryTimeValue INTEGER,
+          priorityDeliveryTimeUnit TEXT,
+          priorityDeliveryTimeLabel TEXT,
+          priorityDescription TEXT,
+          stripeProductId TEXT,
+          stripePriceId TEXT,
+          stripeRecurringPriceId TEXT,
+          stripePriorityPriceId TEXT,
+          stripeSyncStatus TEXT NOT NULL DEFAULT 'not_connected',
+          stripeSyncedAt TEXT,
+          createdBy TEXT NOT NULL DEFAULT 'System',
+          updatedBy TEXT,
+          createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS service_catalog_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organizationId INTEGER NOT NULL DEFAULT 1,
+          serviceId INTEGER,
+          folderId INTEGER,
+          eventType TEXT NOT NULL,
+          actor TEXT NOT NULL,
+          details TEXT,
+          previousValues TEXT,
+          newValues TEXT,
+          ipAddress TEXT,
+          createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      const existing = await client.execute("SELECT id, serviceCode FROM services WHERE organizationId = 1");
+      const codes = new Set(existing.rows.map((r: any) => r.serviceCode));
+
+      if (!codes.has("state_complaint_support")) {
+        await client.execute({
+          sql: `INSERT INTO services (
+            id, organizationId, ownerId, serviceCode, internalName, clientFacingTitle, name,
+            standardPrice, price, currency, billingType, isActive, isArchived, availableInDiscoveryCall,
+            availableInParentPortal, availableInSupportOfferPanel, availableAsStandalone, availableAsAddOn,
+            visibleToEmployees, allowDocumentUpload, requirePayment, stripeSyncStatus, createdBy
+          ) VALUES (
+            3, 1, 1, 'state_complaint_support', 'State Complaint Support', 'State Complaint Support', 'State Complaint Support',
+            20000, 20000, 'usd', 'one_time', 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 'not_connected', 'System'
+          );`,
+          args: []
+        });
+      }
+
+      if (!codes.has("advocacy_plan_55")) {
+        await client.execute({
+          sql: `INSERT INTO services (
+            organizationId, ownerId, serviceCode, internalName, clientFacingTitle, name,
+            standardPrice, price, currency, billingType, billingInterval, isActive, isArchived, createdBy
+          ) VALUES (
+            1, 1, 'advocacy_plan_55', 'Advocacy Plan $55', 'Advocacy Plan $55', 'Advocacy Plan $55',
+            5500, 5500, 'usd', 'recurring', 'monthly', 1, 0, 'System'
+          );`,
+          args: []
+        });
+      }
+
+      if (!codes.has("advocacy_plan_105")) {
+        await client.execute({
+          sql: `INSERT INTO services (
+            organizationId, ownerId, serviceCode, internalName, clientFacingTitle, name,
+            standardPrice, price, currency, billingType, billingInterval, isActive, isArchived, createdBy
+          ) VALUES (
+            1, 1, 'advocacy_plan_105', 'Advocacy Plan $105', 'Advocacy Plan $105', 'Advocacy Plan $105',
+            10500, 10500, 'usd', 'recurring', 'monthly', 1, 0, 'System'
+          );`,
+          args: []
+        });
+      }
+    } catch (e: any) {
+      console.warn("Test setup database warning:", e.message);
+    }
+  });
 
   it("1. Public catalog loads active non-archived services without duplicate records", async () => {
     const catalog = await publicCaller.services.publicCatalog();
@@ -121,11 +268,14 @@ describe("PG-035 Advocacy Services Catalog Master Library", () => {
   });
 
   it("6. Duplicating a service creates a new inactive record with a unique serviceCode", async () => {
-    // Duplicate canonical service #3 (State Complaint)
-    const duplicate = await adminCaller.services.duplicate({ id: 3 });
+    // Duplicate canonical service (State Complaint)
+    const stateComplaint = await adminCaller.services.getByCode({
+      serviceCode: "state_complaint_support",
+    });
+    const duplicate = await adminCaller.services.duplicate({ id: stateComplaint?.id || 3 });
 
     expect(duplicate).toBeDefined();
-    expect(duplicate.id).not.toBe(3);
+    expect(duplicate.id).not.toBe(stateComplaint?.id || 3);
     expect(duplicate.serviceCode).toContain("copy");
     expect(duplicate.isActive).toBe(false); // Must start as inactive per spec
     expect(duplicate.isArchived).toBe(false);
