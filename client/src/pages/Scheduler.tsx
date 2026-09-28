@@ -93,6 +93,8 @@ interface SessionFormData {
   sendConfirmationEmail: boolean;
   weeklyHours: WeeklyHours;
   reminders: Reminder[];
+  teamAvailability: boolean;
+  teamMemberIds: string[];
 }
 
 const defaultForm = (): SessionFormData => ({
@@ -121,9 +123,32 @@ const defaultForm = (): SessionFormData => ({
   sendConfirmationEmail: true,
   weeklyHours: JSON.parse(JSON.stringify(DEFAULT_WEEKLY_HOURS)),
   reminders: JSON.parse(JSON.stringify(DEFAULT_REMINDERS)),
+  teamAvailability: true,
+  teamMemberIds: ["waypoint", "abby"],
 });
 
 function sessionToForm(s: any): SessionFormData {
+  let teamMemberIds: string[] = ["waypoint", "abby"];
+  let teamAvailability = true;
+
+  if (s.teamMemberIds) {
+    try {
+      const parsed = JSON.parse(s.teamMemberIds);
+      if (Array.isArray(parsed)) {
+        teamMemberIds = parsed.map(String);
+        teamAvailability = teamMemberIds.length > 0;
+      }
+    } catch {
+      if (s.teamMemberIds === "off" || s.teamMemberIds === "disabled" || s.teamMemberIds === "false") {
+        teamAvailability = false;
+        teamMemberIds = [];
+      }
+    }
+  } else if (s.teamMemberIds === "" || s.teamMemberIds === "[]") {
+    teamAvailability = false;
+    teamMemberIds = [];
+  }
+
   return {
     name: s.name ?? "",
     description: s.description ?? "",
@@ -150,6 +175,8 @@ function sessionToForm(s: any): SessionFormData {
     sendConfirmationEmail: s.sendConfirmationEmail ?? true,
     weeklyHours: s.weeklyHours ? JSON.parse(s.weeklyHours) : JSON.parse(JSON.stringify(DEFAULT_WEEKLY_HOURS)),
     reminders: s.reminderSettings ? JSON.parse(s.reminderSettings) : JSON.parse(JSON.stringify(DEFAULT_REMINDERS)),
+    teamAvailability,
+    teamMemberIds: teamMemberIds.length > 0 ? teamMemberIds : ["waypoint", "abby"],
   };
 }
 
@@ -266,6 +293,34 @@ function SessionEditForm({
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [availOpen, setAvailOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const { data: teamMembers = [] } = trpc.team.listMembers.useQuery();
+
+  const availableTeam = [
+    { id: "waypoint", name: "Waypoint Advocates", initials: "W", color: "from-blue-500 to-indigo-600" },
+    ...(teamMembers.length > 0
+      ? teamMembers.map((m: any, idx: number) => {
+          const id = String(m.acceptedUserId || m.inviteId || `member-${idx}`);
+          const name = m.userName || m.name || m.userEmail || "Team Member";
+          const initials = name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) || "TM";
+          const gradients = [
+            "from-purple-500 to-pink-600",
+            "from-emerald-500 to-teal-600",
+            "from-amber-500 to-orange-600",
+            "from-cyan-500 to-blue-600",
+          ];
+          return {
+            id,
+            name,
+            initials,
+            color: gradients[idx % gradients.length],
+          };
+        })
+      : [
+          { id: "abby", name: "Abby Honea", initials: "AH", color: "from-purple-500 to-pink-600" },
+        ]
+    ),
+  ];
 
   const set = (key: keyof SessionFormData, val: any) =>
     setForm((f) => ({ ...f, [key]: val }));
@@ -616,23 +671,95 @@ function SessionEditForm({
             </div>
 
             {/* Team availability */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Switch checked={true} disabled />
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Team availability</p>
-                  <p className="text-xs text-muted-foreground">Round robin — team members take turns handling this session.</p>
+            <div className="space-y-3 rounded-xl border border-[#0D4B84]/50 bg-[#030C22]/80 p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-white">Team availability</p>
+                    {form.teamAvailability ? (
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                        Round Robin On
+                      </span>
+                    ) : (
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700">
+                        Single Host
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    {form.teamAvailability
+                      ? "Round robin — team members take turns handling this session."
+                      : "Direct booking — sessions are handled exclusively by the primary account."}
+                  </p>
                 </div>
+                <Switch
+                  checked={form.teamAvailability}
+                  onCheckedChange={(val) => {
+                    set("teamAvailability", val);
+                    if (val && (!form.teamMemberIds || form.teamMemberIds.length === 0)) {
+                      set("teamMemberIds", availableTeam.map((m) => m.id));
+                    }
+                  }}
+                  className="data-[state=checked]:bg-blue-600 cursor-pointer"
+                />
               </div>
-              <div className="pl-8 flex items-center gap-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-7 w-7 rounded-full bg-accent/20 flex items-center justify-center text-xs font-bold text-accent">W</div>
-                  <span className="text-xs text-muted-foreground">Waypoint Advocates</span>
+
+              {/* Team member selection pills */}
+              <div className="pt-1">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {availableTeam.map((member) => {
+                    const isSelected = form.teamMemberIds.includes(member.id);
+
+                    return (
+                      <button
+                        key={member.id}
+                        type="button"
+                        disabled={!form.teamAvailability}
+                        onClick={() => {
+                          if (!form.teamAvailability) return;
+                          if (isSelected) {
+                            if (form.teamMemberIds.length <= 1) {
+                              toast.info("At least one team member must be selected for round robin.");
+                              return;
+                            }
+                            set("teamMemberIds", form.teamMemberIds.filter((id) => id !== member.id));
+                          } else {
+                            set("teamMemberIds", [...form.teamMemberIds, member.id]);
+                          }
+                        }}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          !form.teamAvailability
+                            ? "opacity-50 cursor-not-allowed bg-[#030C22] border border-[#0D4B84]/30 text-slate-400"
+                            : isSelected
+                            ? "bg-[#0A254D] border border-blue-400 text-white shadow-sm ring-1 ring-blue-500/30 hover:border-blue-300 cursor-pointer"
+                            : "bg-[#030C22]/80 border border-border/50 text-slate-400 hover:text-slate-200 hover:border-border cursor-pointer"
+                        }`}
+                      >
+                        {/* High-contrast avatar */}
+                        <div
+                          className={`h-6 w-6 rounded-full bg-gradient-to-br ${member.color} flex items-center justify-center text-[11px] font-bold text-white shadow-sm ring-1 ring-white/30`}
+                        >
+                          {member.initials}
+                        </div>
+                        <span className={isSelected && form.teamAvailability ? "text-white font-medium" : "text-slate-300"}>
+                          {member.name}
+                        </span>
+                        {form.teamAvailability && (
+                          <span
+                            className={`h-2 w-2 rounded-full transition-colors ${
+                              isSelected ? "bg-emerald-400 shadow-sm shadow-emerald-400/50" : "bg-slate-600"
+                            }`}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center gap-1.5 ml-2">
-                  <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">AH</div>
-                  <span className="text-xs text-muted-foreground">Abby Honea</span>
-                </div>
+                {form.teamAvailability && (
+                  <p className="text-[11px] text-slate-400 mt-2">
+                    Click a member to toggle their round-robin participation.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -824,6 +951,7 @@ export default function Scheduler() {
       ...data,
       weeklyHours: JSON.stringify(data.weeklyHours),
       reminderSettings: JSON.stringify(data.reminders),
+      teamMemberIds: data.teamAvailability ? JSON.stringify(data.teamMemberIds) : "[]",
     };
     if (isCreating) {
       createMutation.mutate(payload as any);
