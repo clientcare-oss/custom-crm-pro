@@ -384,18 +384,19 @@ function SessionEditForm({
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Duration *</Label>
-                <VoiceInput
+                <Input
                   type="number"
                   min={1}
                   value={form.duration}
                   onChange={(e) => set("duration", parseInt(e.target.value) || 1)}
+                  className="w-full h-9 text-sm font-semibold bg-[#030C22] text-white border-[#0D4B84]"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Interval</Label>
                 <Select value={form.durationUnit} onValueChange={(v) => set("durationUnit", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="h-9 bg-[#030C22] border-[#0D4B84] text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
                     <SelectItem value="minutes">Minutes</SelectItem>
                     <SelectItem value="hours">Hours</SelectItem>
                   </SelectContent>
@@ -406,8 +407,8 @@ function SessionEditForm({
             <div className="space-y-1.5">
               <Label className="text-xs">Date range *</Label>
               <Select value={form.dateRange} onValueChange={(v) => set("dateRange", v)}>
-                <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectTrigger className="w-48 h-9 bg-[#030C22] border-[#0D4B84] text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
                   <SelectItem value="indefinitely">Indefinitely</SelectItem>
                   <SelectItem value="rolling">Rolling-window</SelectItem>
                   <SelectItem value="fixed">Fixed range</SelectItem>
@@ -415,10 +416,10 @@ function SessionEditForm({
               </Select>
               {form.dateRange === "rolling" && (
                 <div className="flex items-center gap-2 mt-2">
-                  <VoiceInput
+                  <Input
                     type="number"
                     min={1}
-                    className="w-20"
+                    className="w-24 h-9 text-sm font-semibold text-center bg-[#030C22] text-white border-[#0D4B84]"
                     value={form.dateRangeDays}
                     onChange={(e) => set("dateRangeDays", parseInt(e.target.value) || 30)}
                   />
@@ -490,18 +491,18 @@ function SessionEditForm({
                     <span className="text-xs font-semibold w-8 text-muted-foreground">{DAY_LABELS[day]}</span>
                     {isOn && slots.length > 0 ? (
                       <div className="flex items-center gap-2">
-                        <VoiceInput
+                        <Input
                           type="time"
                           value={slots[0].start}
                           onChange={(e) => updateDayTime(day, 0, "start", e.target.value)}
-                          className="h-8 w-28 text-xs"
+                          className="h-9 w-32 text-xs font-semibold bg-[#030C22] text-white border-[#0D4B84] px-2.5 rounded-lg"
                         />
                         <span className="text-muted-foreground text-xs">-</span>
-                        <VoiceInput
+                        <Input
                           type="time"
                           value={slots[0].end}
                           onChange={(e) => updateDayTime(day, 0, "end", e.target.value)}
-                          className="h-8 w-28 text-xs"
+                          className="h-9 w-32 text-xs font-semibold bg-[#030C22] text-white border-[#0D4B84] px-2.5 rounded-lg"
                         />
                       </div>
                     ) : (
@@ -523,40 +524,40 @@ function SessionEditForm({
                   <p className="text-xs text-muted-foreground">Block off time before and/or after a scheduled timeslot.</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 pl-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-8 pt-1">
                 <div className="flex items-center gap-2">
-                  <VoiceInput
+                  <Input
                     type="number"
                     min={0}
                     value={form.bufferBefore}
                     onChange={(e) => set("bufferBefore", parseInt(e.target.value) || 0)}
-                    className="w-16 h-8 text-xs"
+                    className="w-20 h-9 text-sm font-bold text-center bg-[#030C22] text-white border-[#0D4B84] rounded-lg px-2 focus:ring-1 focus:ring-blue-400"
                   />
                   <Select value={form.bufferBeforeUnit} onValueChange={(v) => set("bufferBeforeUnit", v)}>
-                    <SelectTrigger className="h-8 text-xs w-24"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="minutes">Minutes</SelectItem>
-                      <SelectItem value="hours">Hours</SelectItem>
+                    <SelectTrigger className="h-9 text-xs w-28 bg-[#030C22] border-[#0D4B84] text-white font-medium"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
+                      <SelectItem value="minutes" className="hover:bg-blue-600/30">Minutes</SelectItem>
+                      <SelectItem value="hours" className="hover:bg-blue-600/30">Hours</SelectItem>
                     </SelectContent>
                   </Select>
-                  <span className="text-xs text-muted-foreground">before</span>
+                  <span className="text-xs text-muted-foreground font-medium">before</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <VoiceInput
+                  <Input
                     type="number"
                     min={0}
                     value={form.bufferAfter}
                     onChange={(e) => set("bufferAfter", parseInt(e.target.value) || 0)}
-                    className="w-16 h-8 text-xs"
+                    className="w-20 h-9 text-sm font-bold text-center bg-[#030C22] text-white border-[#0D4B84] rounded-lg px-2 focus:ring-1 focus:ring-blue-400"
                   />
                   <Select value={form.bufferAfterUnit} onValueChange={(v) => set("bufferAfterUnit", v)}>
-                    <SelectTrigger className="h-8 text-xs w-24"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="minutes">Minutes</SelectItem>
-                      <SelectItem value="hours">Hours</SelectItem>
+                    <SelectTrigger className="h-9 text-xs w-28 bg-[#030C22] border-[#0D4B84] text-white font-medium"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
+                      <SelectItem value="minutes" className="hover:bg-blue-600/30">Minutes</SelectItem>
+                      <SelectItem value="hours" className="hover:bg-blue-600/30">Hours</SelectItem>
                     </SelectContent>
                   </Select>
-                  <span className="text-xs text-muted-foreground">after</span>
+                  <span className="text-xs text-muted-foreground font-medium">after</span>
                 </div>
               </div>
             </div>
@@ -570,20 +571,20 @@ function SessionEditForm({
                   <p className="text-xs text-muted-foreground">Time needed between scheduling and session start.</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 pl-8">
-                <VoiceInput
+              <div className="flex items-center gap-2 pl-8 pt-1">
+                <Input
                   type="number"
                   min={0}
                   value={form.minNotice}
                   onChange={(e) => set("minNotice", parseInt(e.target.value) || 0)}
-                  className="w-16 h-8 text-xs"
+                  className="w-20 h-9 text-sm font-bold text-center bg-[#030C22] text-white border-[#0D4B84] rounded-lg px-2 focus:ring-1 focus:ring-blue-400"
                 />
                 <Select value={form.minNoticeUnit} onValueChange={(v) => set("minNoticeUnit", v)}>
-                  <SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="minutes">Minutes</SelectItem>
-                    <SelectItem value="hours">Hours</SelectItem>
-                    <SelectItem value="days">Days</SelectItem>
+                  <SelectTrigger className="h-9 text-xs w-28 bg-[#030C22] border-[#0D4B84] text-white font-medium"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
+                    <SelectItem value="minutes" className="hover:bg-blue-600/30">Minutes</SelectItem>
+                    <SelectItem value="hours" className="hover:bg-blue-600/30">Hours</SelectItem>
+                    <SelectItem value="days" className="hover:bg-blue-600/30">Days</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -598,19 +599,19 @@ function SessionEditForm({
                   <p className="text-xs text-muted-foreground">Set availability by unique time intervals.</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 pl-8">
+              <div className="flex items-center gap-2 pl-8 pt-1">
                 <Select
                   value={String(form.customIncrements)}
                   onValueChange={(v) => set("customIncrements", parseInt(v))}
                 >
-                  <SelectTrigger className="h-8 text-xs w-20"><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="h-9 text-xs w-24 bg-[#030C22] border-[#0D4B84] text-white font-bold"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white">
                     {[5, 10, 15, 20, 30, 45, 60].map((n) => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      <SelectItem key={n} value={String(n)} className="hover:bg-blue-600/30">{n}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="text-xs text-muted-foreground">minutes</span>
+                <span className="text-xs text-muted-foreground font-medium">minutes</span>
               </div>
             </div>
 
