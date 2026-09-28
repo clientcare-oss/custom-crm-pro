@@ -1464,8 +1464,12 @@ function generateFallbackFastAssist(
 
   if (
     text.includes("out of placement") ||
+    text.includes("suspend") ||
     text.includes("suspens") ||
     text.includes("days out") ||
+    text.includes("remove him") ||
+    text.includes("remove her") ||
+    text.includes("remove them") ||
     text.includes("mdr") ||
     text.includes("manifestation") ||
     text.includes("disciplinary removal") ||

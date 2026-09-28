@@ -122,18 +122,42 @@ function generateOfflineHeuristicResponse<T = any>(
   }
 
   if (options.stage === "FAST") {
-    const payload = {
-      currentIssue: {
-        label: "Evaluation Request Review",
-        priority: "High Priority",
-        description: "School questioning evaluation necessity based solely on passing grades.",
-      },
-      quickAssist: {
-        sayThis: "Under IDEA 34 CFR § 300.111, passing grades alone cannot be used to deny an evaluation.",
-        askNext: ["Can the district provide the specific screening data used to make this determination?"],
-        whyItMatters: "Academic passing grades do not preclude eligibility or need for special education services.",
-      },
-    };
+    const isDiscipline =
+      textLower.includes("suspend") ||
+      textLower.includes("suspens") ||
+      textLower.includes("remove him") ||
+      textLower.includes("remove her") ||
+      textLower.includes("remove them") ||
+      textLower.includes("removal") ||
+      textLower.includes("disciplinary") ||
+      textLower.includes("mdr") ||
+      textLower.includes("manifestation");
+
+    const payload = isDiscipline
+      ? {
+          currentIssue: {
+            label: "Disciplinary Removal (10-Day MDR Rule)",
+            priority: "High Priority",
+            description: "Cumulative removals exceeding 10 school days trigger procedural protections under 34 CFR § 300.530.",
+          },
+          quickAssist: {
+            sayThis: "Under IDEA 34 CFR § 300.530, disciplinary removals exceeding 10 cumulative school days constitute a change in placement requiring a Manifestation Determination Review.",
+            askNext: ["Has an MDR meeting date been scheduled within 10 school days of this removal?"],
+            whyItMatters: "Schools cannot repeatedly remove a student with a disability without convening an MDR.",
+          },
+        }
+      : {
+          currentIssue: {
+            label: "Evaluation Request Review",
+            priority: "High Priority",
+            description: "School questioning evaluation necessity based solely on passing grades.",
+          },
+          quickAssist: {
+            sayThis: "Under IDEA 34 CFR § 300.111, passing grades alone cannot be used to deny an evaluation.",
+            askNext: ["Can the district provide the specific screening data used to make this determination?"],
+            whyItMatters: "Academic passing grades do not preclude eligibility or need for special education services.",
+          },
+        };
     return {
       data: payload as unknown as T,
       rawContent: JSON.stringify(payload),
