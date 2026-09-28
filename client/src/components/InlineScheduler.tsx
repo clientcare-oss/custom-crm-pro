@@ -201,14 +201,14 @@ export default function InlineScheduler({
   const todayStr = toDateString(today.getFullYear(), today.getMonth(), today.getDate());
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-blue-500/30 bg-slate-900/80 shadow-xl shadow-blue-900/20">
+    <div className="rounded-2xl overflow-hidden border border-[#0D4B84]/80 bg-[#030C22]/90 shadow-2xl shadow-blue-950/60 backdrop-blur-xl">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/60 bg-slate-800/60 flex-wrap gap-2">
-        <div className="flex items-center gap-2 text-slate-200 text-sm font-semibold tracking-wide uppercase">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#0D4B84]/60 bg-[#0A254D]/90 flex-wrap gap-2">
+        <div className="flex items-center gap-2 text-white text-sm font-semibold tracking-wide uppercase">
           <CalendarDays className="w-4 h-4 text-blue-400" />
           {sessionTypeName || "DISCOVERY CALL"}
         </div>
-        <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+        <div className="flex items-center gap-1.5 text-blue-200/70 text-xs">
           <Clock className="w-3.5 h-3.5 text-blue-400" />
           {effectiveDurationMin >= 60 && effectiveDurationMin % 60 === 0
             ? `${effectiveDurationMin / 60} hour${effectiveDurationMin / 60 !== 1 ? 's' : ''}`
@@ -219,13 +219,13 @@ export default function InlineScheduler({
       {/* Body: two-column */}
       <div className="flex flex-col md:flex-row">
         {/* LEFT: Calendar */}
-        <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-slate-700/60">
+        <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-[#0D4B84]/50">
           {/* Month nav */}
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-700/60 text-slate-400 hover:text-white transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-blue-600/20 text-blue-300 hover:text-white transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -235,7 +235,7 @@ export default function InlineScheduler({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-700/60 text-slate-400 hover:text-white transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-blue-600/20 text-blue-300 hover:text-white transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -248,7 +248,7 @@ export default function InlineScheduler({
               return (
                 <div
                   key={d}
-                  className={`text-center text-xs font-medium py-1 ${hasHours ? "text-slate-400" : "text-slate-700"}`}
+                  className={`text-center text-xs font-medium py-1 ${hasHours ? "text-blue-300/80" : "text-blue-900/50"}`}
                 >
                   {d}
                 </div>
@@ -276,14 +276,14 @@ export default function InlineScheduler({
                   className={`
                     mx-auto w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-all
                     ${isSelected
-                      ? "bg-blue-500 text-white shadow-md shadow-blue-500/40"
+                      ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/50 ring-2 ring-blue-300"
                       : isDisabled
                         ? isUnavailable
-                          ? "text-slate-700 cursor-not-allowed"
-                          : "text-slate-600 cursor-not-allowed"
+                          ? "text-blue-950/40 cursor-not-allowed"
+                          : "text-blue-900/40 cursor-not-allowed"
                         : isToday
-                          ? "ring-2 ring-blue-500/50 text-blue-300 hover:bg-blue-500/20 cursor-pointer"
-                          : "text-slate-300 hover:bg-slate-700/60 cursor-pointer"
+                          ? "ring-2 ring-blue-400 text-blue-200 hover:bg-blue-600/25 cursor-pointer font-bold"
+                          : "text-blue-100 hover:bg-blue-600/20 cursor-pointer"
                     }
                   `}
                 >
@@ -295,8 +295,8 @@ export default function InlineScheduler({
 
           {/* Legend */}
           {!isPreview && availableDayIndices.size > 0 && (
-            <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-600">
-              <span className="w-2 h-2 rounded-full bg-slate-700 inline-block" />
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-blue-400/60">
+              <span className="w-2 h-2 rounded-full bg-blue-950 inline-block border border-blue-800" />
               <span>No availability</span>
             </div>
           )}
@@ -306,14 +306,14 @@ export default function InlineScheduler({
         <div className="flex-1 p-5 min-w-0 flex flex-col justify-between">
           <div>
             {/* Timezone Selector for Clients */}
-            <div className="mb-4 pb-3 border-b border-slate-700/60 space-y-1.5">
+            <div className="mb-4 pb-3 border-b border-[#0D4B84]/50 space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5 text-blue-400" />
                   Your Time Zone
                 </span>
                 {selectedDate && (
-                  <span className="text-xs text-blue-400 font-medium">
+                  <span className="text-xs text-blue-300 font-medium">
                     {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                   </span>
                 )}
@@ -325,7 +325,7 @@ export default function InlineScheduler({
                     setClientTz(e.target.value);
                     setSelectedSlot(null);
                   }}
-                  className="w-full text-xs bg-slate-800/90 text-slate-100 border border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-blue-400 focus:outline-none"
+                  className="w-full text-xs bg-[#0A254D] text-white border border-[#0D4B84] rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-blue-400 focus:outline-none"
                 >
                   <option value="America/New_York">Eastern Time (ET · Atlanta/New York)</option>
                   <option value="America/Chicago">Central Time (CT · Chicago/Dallas)</option>
@@ -344,15 +344,15 @@ export default function InlineScheduler({
                 </select>
               </div>
               {clientTz !== "America/New_York" && (
-                <p className="text-[10px] text-sky-400/90 flex items-center gap-1 pt-0.5">
+                <p className="text-[10px] text-sky-300 flex items-center gap-1 pt-0.5">
                   <span>✓ Slots automatically converted to {getFriendlyTimeZoneName(clientTz)} Time.</span>
                 </p>
               )}
             </div>
 
             {!selectedDate ? (
-              <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
-                <CalendarDays className="w-8 h-8 text-slate-600" />
+              <div className="flex flex-col items-center justify-center h-32 text-blue-300/60 text-sm gap-2">
+                <CalendarDays className="w-8 h-8 text-blue-400/50" />
                 <span>Select a date to see available times</span>
               </div>
             ) : slotsLoading ? (
@@ -360,8 +360,8 @@ export default function InlineScheduler({
                 <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
               </div>
             ) : convertedSlots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm gap-2">
-                <Clock className="w-8 h-8 text-slate-600" />
+              <div className="flex flex-col items-center justify-center h-32 text-blue-300/60 text-sm gap-2">
+                <Clock className="w-8 h-8 text-blue-400/50" />
                 <span>No available times on this day.</span>
                 <span className="text-xs">Please select a different date.</span>
               </div>
@@ -369,7 +369,7 @@ export default function InlineScheduler({
               <div className="space-y-4 overflow-y-auto max-h-64 pr-1">
                 {amSlots.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Morning (AM)</p>
+                    <p className="text-xs font-semibold text-blue-300 mb-2 uppercase tracking-wider">Morning (AM)</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {amSlots.map((slot) => {
                         const isSelected = selectedSlot?.rawEasternSlot === slot.rawEasternSlot;
@@ -381,14 +381,14 @@ export default function InlineScheduler({
                             className={`
                               py-2 px-2 rounded-xl text-xs font-semibold border transition-all flex flex-col items-center justify-center
                               ${isSelected
-                                ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
-                                : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
+                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-md shadow-blue-500/40 ring-1 ring-blue-300"
+                                : "bg-[#0A254D]/70 text-blue-100 border-[#0D4B84]/70 hover:border-blue-400 hover:bg-blue-600/25"
                               }
                             `}
                           >
                             <span>{slot.clientTimeDisplay}</span>
                             {slot.isDifferentZone && (
-                              <span className={`text-[10px] opacity-75 font-normal ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
+                              <span className={`text-[10px] opacity-75 font-normal ${isSelected ? "text-blue-100" : "text-blue-300"}`}>
                                 ({slot.waypointTimeDisplay} ET)
                               </span>
                             )}
@@ -400,7 +400,7 @@ export default function InlineScheduler({
                 )}
                 {pmSlots.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Afternoon / Evening (PM)</p>
+                    <p className="text-xs font-semibold text-blue-300 mb-2 uppercase tracking-wider">Afternoon / Evening (PM)</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {pmSlots.map((slot) => {
                         const isSelected = selectedSlot?.rawEasternSlot === slot.rawEasternSlot;
@@ -412,14 +412,14 @@ export default function InlineScheduler({
                             className={`
                               py-2 px-2 rounded-xl text-xs font-semibold border transition-all flex flex-col items-center justify-center
                               ${isSelected
-                                ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30"
-                                : "bg-slate-800/60 text-blue-300 border-slate-700/60 hover:border-blue-500/50 hover:bg-blue-500/10"
+                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-md shadow-blue-500/40 ring-1 ring-blue-300"
+                                : "bg-[#0A254D]/70 text-blue-100 border-[#0D4B84]/70 hover:border-blue-400 hover:bg-blue-600/25"
                               }
                             `}
                           >
                             <span>{slot.clientTimeDisplay}</span>
                             {slot.isDifferentZone && (
-                              <span className={`text-[10px] opacity-75 font-normal ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
+                              <span className={`text-[10px] opacity-75 font-normal ${isSelected ? "text-blue-100" : "text-blue-300"}`}>
                                 ({slot.waypointTimeDisplay} ET)
                               </span>
                             )}
@@ -439,7 +439,7 @@ export default function InlineScheduler({
               type="button"
               disabled={isBooking || isPreview}
               onClick={handleBook}
-              className="mt-4 w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-semibold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+              className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-60 text-white text-sm font-semibold transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2"
             >
               {isBooking ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Booking...</>
