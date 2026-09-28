@@ -186,9 +186,12 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
     setEditingLabelKey(null);
   };
 
+  const utils = trpc.useUtils();
+
   const createMutation = trpc.leadForms.create.useMutation({
     onSuccess: (data) => {
       toast.success(`Form created! Share at /form/${data.slug}`);
+      utils.leadForms.invalidate();
       onSuccess();
     },
     onError: (e) => toast.error("Failed to create form: " + e.message),
@@ -197,6 +200,7 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
   const updateMutation = trpc.leadForms.update.useMutation({
     onSuccess: () => {
       toast.success("Form updated!");
+      utils.leadForms.invalidate();
       onSuccess();
     },
     onError: (e) => toast.error("Failed to update form: " + e.message),

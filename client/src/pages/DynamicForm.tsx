@@ -76,7 +76,7 @@ const EMPTY: FormData = {
 
 export default function DynamicForm() {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug ?? "";
+  const slug = params.slug || "public-intake";
 
   // Detect preview mode from URL query param
   const isPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "true";
@@ -124,7 +124,7 @@ export default function DynamicForm() {
 
   const { data: rawFormConfig, isLoading } = trpc.leadForms.getBySlug.useQuery(
     { slug },
-    { retry: false, enabled: !!slug && !isPreview }
+    { retry: false, enabled: !!slug, refetchOnMount: "always", staleTime: 0 }
   );
 
   const fallbackFormConfig = useMemo(() => ({
@@ -148,8 +148,8 @@ export default function DynamicForm() {
     confirmationHeadlineAlign: "center" as const,
   }), [slug]);
 
-  // Use fallback if preview mode or default public-intake slug and no server config returned
-  const formConfig = rawFormConfig || (isPreview || slug === "public-intake" || slug === "intake" || !slug ? fallbackFormConfig : null);
+  // Use fetched form configuration from database; fall back to default template once loading finishes
+  const formConfig = rawFormConfig || (!isLoading ? fallbackFormConfig : null);
 
   // Fetch session type details for confirmation screen (after formConfig is available)
   const sessionTypeId = (formConfig as any)?.sessionTypeId ?? null;
@@ -179,27 +179,27 @@ export default function DynamicForm() {
 
   const totalSteps = formConfig?.schedulingEnabled ? 4 : 3;
 
-  // Parse enabled fields from form config (falls back to all fields)
-  const enabledFields: FieldKey[] = (() => {
+  // Parse enabled fields from form config (dynamically reacts to saved DB preferences)
+  const enabledFields: FieldKey[] = useMemo(() => {
     if (!formConfig?.fields) return DEFAULT_FIELDS;
     try {
       const parsed = typeof formConfig.fields === "string" ? JSON.parse(formConfig.fields) : formConfig.fields;
       if (Array.isArray(parsed) && parsed.length > 0) return parsed as FieldKey[];
     } catch { /* ignore */ }
     return DEFAULT_FIELDS;
-  })();
+  }, [formConfig?.fields]);
 
   const isFieldEnabled = (key: FieldKey) => enabledFields.includes(key);
 
   // Parse custom labels from form config
-  const customLabels: Record<string, string> = (() => {
+  const customLabels: Record<string, string> = useMemo(() => {
     if (!formConfig?.customLabels) return {};
     try {
       const parsed = typeof formConfig.customLabels === "string" ? JSON.parse(formConfig.customLabels) : formConfig.customLabels;
       if (parsed && typeof parsed === "object") return parsed as Record<string, string>;
     } catch { /* ignore */ }
     return {};
-  })();
+  }, [formConfig?.customLabels]);
 
   // Get the display label for a field (custom label overrides default)
   const getLabel = (key: FieldKey): string => {
