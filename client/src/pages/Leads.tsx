@@ -23,6 +23,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 const LEAD_STATUSES = ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Ready for Archive", "Won", "Lost"] as const;
 type LeadStatus = (typeof LEAD_STATUSES)[number];
@@ -155,30 +156,35 @@ export default function Leads() {
   };
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Discovery Pipeline</h1>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Discovery Pipeline</h1>
+            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              PG-003
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">
             Track families through your discovery process
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => setLocation("/leads/0/discovery")}
             variant="outline"
             className="gap-2 border-amber-500/40 text-amber-600 hover:bg-amber-500/10 dark:text-amber-400"
           >
-            <PhoneCall className="w-4 h-4" />
-            View Discovery Call Process
+            <PhoneCall className="size-4 shrink-0" />
+            <span>View Discovery Call Process</span>
           </Button>
           <Button
             onClick={() => setQuickSetupOpen(true)}
             className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
           >
-            <Zap className="w-4 h-4" />
-            Quick Setup
+            <Zap className="size-4 shrink-0" />
+            <span>Quick Setup</span>
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -356,24 +362,29 @@ export default function Leads() {
       {/* Pipeline Columns */}
       {isLoading ? (
         <div className="flex items-center justify-center rounded-lg border border-border bg-muted/50 p-12">
-          <Loader2 className="h-6 w-6 animate-spin text-accent" />
+          <Loader2 className="size-6 animate-spin text-accent" />
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <div className="flex items-start gap-4 overflow-x-auto pb-6 pt-1 select-none min-h-[calc(100vh-220px)] scrollbar-thin">
           {LEAD_STATUSES.map((status) => (
-            <div key={status} className="space-y-3">
+            <div
+              key={status}
+              className="w-[280px] shrink-0 flex flex-col rounded-xl bg-card/60 dark:bg-[#071933]/70 border border-border/80 shadow-sm p-3.5 space-y-3"
+            >
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground">{status}</h3>
-                  <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-semibold text-foreground text-sm truncate" title={status}>
+                    {status}
+                  </h3>
+                  <span className="rounded-full bg-muted/80 px-2 py-0.5 text-xs font-semibold text-muted-foreground shrink-0 border border-border/40">
                     {leadsByStatus[status].length}
                   </span>
                 </div>
                 {status.includes("Follow-up") && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Zap className="w-3 h-3 text-yellow-500" />
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Zap className="size-3 text-amber-500 shrink-0" />
                     <Select>
-                      <SelectTrigger className="h-7 text-xs bg-muted border-muted-foreground/20">
+                      <SelectTrigger className="h-7 text-xs bg-background/80 border-border/60 w-full min-w-0">
                         <SelectValue placeholder="Select email template" />
                       </SelectTrigger>
                       <SelectContent>
@@ -385,21 +396,23 @@ export default function Leads() {
                   </div>
                 )}
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2.5 overflow-y-auto max-h-[calc(100vh-320px)] pr-0.5 scrollbar-thin">
                 {leadsByStatus[status].length > 0 ? (
                   leadsByStatus[status].map((lead) => (
                     <Card
                       key={lead.id}
-                      className="rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md"
+                      className="rounded-lg border border-border bg-card p-3.5 shadow-sm transition-all hover:shadow-md overflow-hidden"
                     >
-                      <div className="space-y-3">
+                      <div className="space-y-2.5">
                         {/* Student name as card title */}
-                        <div>
-                          <h4 className="font-semibold text-foreground leading-tight">
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-foreground text-sm leading-snug break-words">
                             {lead.studentName || lead.source || "Untitled Lead"}
                           </h4>
                           {lead.studentName && lead.source && (
-                            <p className="text-xs text-muted-foreground mt-0.5">via {lead.source}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`via ${lead.source}`}>
+                              via {lead.source}
+                            </p>
                           )}
                         </div>
 
@@ -407,15 +420,15 @@ export default function Leads() {
                         {(lead.parentName || lead.parentPhone) && (
                           <div className="space-y-1">
                             {lead.parentName && (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <User className="h-3 w-3 flex-shrink-0" />
-                                <span>{lead.parentName}</span>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                                <User className="size-3.5 shrink-0 text-muted-foreground/70" />
+                                <span className="truncate">{lead.parentName}</span>
                               </div>
                             )}
                             {lead.parentPhone && (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <Phone className="h-3 w-3 flex-shrink-0" />
-                                <span>{lead.parentPhone}</span>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                                <Phone className="size-3.5 shrink-0 text-muted-foreground/70" />
+                                <span className="truncate">{lead.parentPhone}</span>
                               </div>
                             )}
                           </div>
@@ -423,9 +436,9 @@ export default function Leads() {
 
                         {/* Student details */}
                         {(lead.studentAge || lead.studentGrade) && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <GraduationCap className="h-3 w-3 flex-shrink-0" />
-                            <span>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                            <GraduationCap className="size-3.5 shrink-0 text-muted-foreground/70" />
+                            <span className="truncate">
                               {[
                                 lead.studentAge ? `Age ${lead.studentAge}` : null,
                                 lead.studentGrade || null,
@@ -438,9 +451,9 @@ export default function Leads() {
 
                         {/* Discovery call date */}
                         {lead.discoveryCallDate && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3 flex-shrink-0" />
-                            <span>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                            <Calendar className="size-3.5 shrink-0 text-muted-foreground/70" />
+                            <span className="truncate">
                               Discovery Call:{" "}
                               {new Date(lead.discoveryCallDate).toLocaleDateString()}
                             </span>
@@ -455,61 +468,69 @@ export default function Leads() {
                         )}
 
                         {/* Status badge */}
-                        <div
-                          className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                            status
-                          )}`}
-                        >
-                          {status === "New" ? "Discovery Call" : status}
+                        <div>
+                          <div
+                            className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold max-w-full truncate ${getStatusColor(
+                              status
+                            )}`}
+                          >
+                            {status === "New" ? "Discovery Call" : status}
+                          </div>
                         </div>
 
                         {/* Notes */}
                         {lead.notes && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
+                          <p className="text-xs text-muted-foreground line-clamp-2 break-words" title={lead.notes}>
                             {lead.notes}
                           </p>
                         )}
 
                         {/* Action buttons */}
-                        <div className="flex flex-col gap-2 pt-1">
+                        <div className="flex flex-col gap-1.5 pt-1">
                           {/* Begin Discovery Call — shown on New leads */}
                           {status === "New" && (
                             <Button
                               onClick={() => setLocation(`/leads/${lead.id}/discovery`)}
                               size="sm"
-                              className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold gap-1.5"
+                              className="w-full min-w-0 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold gap-1.5 px-3 py-1.5 shadow-sm justify-center"
                             >
-                              <PhoneCall className="h-3 w-3" />
-                              Begin Discovery Call
+                              <PhoneCall className="size-3.5 shrink-0" />
+                              <span className="truncate">Begin Discovery Call</span>
                             </Button>
                           )}
-                          <div className="flex gap-2">
+                          <div className="flex items-center gap-1.5">
                             <Button
                               onClick={() => handleEdit(lead)}
                               variant="outline"
                               size="sm"
-                              className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
+                              title="Edit Lead"
+                              aria-label="Edit Lead"
+                              className={cn(
+                                "rounded-md border border-border bg-background text-foreground shadow-sm transition-all hover:bg-muted text-xs font-semibold gap-1.5",
+                                (lead as any).contactId ? "h-8 w-8 p-0 shrink-0 justify-center" : "flex-1 min-w-0 py-1 px-2.5 justify-center"
+                              )}
                             >
-                              <Edit2 className="h-3 w-3" />
+                              <Edit2 className="size-3.5 shrink-0" />
+                              {!(lead as any).contactId && <span className="truncate">Edit Lead</span>}
                             </Button>
-                            {(lead as any).contactId && (
+                            {(lead as any).contactId ? (
                               <Button
                                 onClick={() => setLocation(`/contacts/${(lead as any).contactId}`)}
                                 variant="outline"
                                 size="sm"
-                                className="flex-1 rounded-md border border-accent/40 bg-accent/5 px-2 py-1 text-xs font-semibold text-accent shadow-sm transition-all hover:bg-accent/10 gap-1"
+                                className="flex-1 min-w-0 rounded-md border border-accent/40 bg-accent/5 px-2.5 py-1 text-xs font-semibold text-accent shadow-sm transition-all hover:bg-accent/10 gap-1.5 justify-center"
                               >
-                                <UserCircle className="h-3 w-3" />
-                                View Contact
+                                <UserCircle className="size-3.5 shrink-0" />
+                                <span className="truncate">View Contact</span>
                               </Button>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       </div>
                     </Card>
                   ))
                 ) : (
-                  <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
+                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center">
                     <p className="text-xs text-muted-foreground">
                       No leads yet
                     </p>
