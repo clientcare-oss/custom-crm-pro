@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard,
   GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight,
-  CircleParking, UploadCloud, Camera, HardDrive, RefreshCw
+  CircleParking, UploadCloud, Camera, HardDrive, RefreshCw, Gift
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -60,6 +60,7 @@ import { RenewalListingExperience } from "@/components/portal/onboarding/Renewal
 import { PlanTransitionExperience } from "@/components/portal/PlanTransitionExperience";
 import { PortalAppointmentsTab } from "@/components/portal/PortalAppointmentsTab";
 import { PortalMembershipTab } from "@/components/portal/PortalMembershipTab";
+import { PortalReferralsTab } from "@/components/portal/PortalReferralsTab";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
 import { resolvePortalTabId, broadcastPageId } from "@/lib/pageIdRegistry";
 import { openWaypointScan } from "@/lib/waypointScanEvents";
@@ -557,6 +558,7 @@ const NAV_ITEMS = [
   { id: "cases",         icon: Briefcase,      label: "Cases" },
   { id: "voyage-log",       icon: Video,          label: "Voyage Log" },
   { id: "financials",       icon: CreditCard,     label: "Membership" },
+  { id: "referrals",        icon: Gift,           label: "Referrals" },
   { id: "renewal",          icon: Sparkles,       label: "Plan Renewal" },
   { id: "notes",            icon: StickyNote,     label: "Notes" },
   { id: "attorney",         icon: Scale,          label: "Legal Counsel" },
@@ -1790,6 +1792,17 @@ export default function ClientPortal() {
               pageName="Plan Renewal"
             />
           </div>
+        );
+
+      case "referrals":
+      case "referral":
+        return (
+          <PortalReferralsTab
+            studentContactId={effectiveStudentContactId}
+            effectiveStudent={effectiveStudent}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            isAdminView={isAdminView}
+          />
         );
 
       default:

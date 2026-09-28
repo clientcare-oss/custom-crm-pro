@@ -62,8 +62,12 @@ import { timeTrackingRouter } from "./routers/timeTracking";
 import { meetingWorkspaceRouter } from "./routers/meetingWorkspace";
 import { pwnDecoderRouter } from "./routers/pwnDecoder";
 import { serviceAllowancesRouter } from "./routers/serviceAllowances";
+import { referralsRouter } from "./routers/referrals";
+import { lawyerPrepRouter } from "./routers/lawyerPrep";
 
 export const appRouter = router({
+  lawyerPrep: lawyerPrepRouter,
+  referrals: referralsRouter,
   serviceAllowances: serviceAllowancesRouter,
   pwnDecoder: pwnDecoderRouter,
   meetingWorkspace: meetingWorkspaceRouter,

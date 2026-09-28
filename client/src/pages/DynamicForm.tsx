@@ -101,6 +101,52 @@ export default function DynamicForm() {
   const { data: businessPhoneData } = trpc.system.getBusinessPhone.useQuery(undefined, { enabled: true });
   const [businessPhone, setBusinessPhone] = useState("");
 
+  // ── Referral Tracking (Give $25. Get $25.) ──
+  const [referralCode, setReferralCode] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    const fromUrl =
+      new URLSearchParams(window.location.search).get("ref") ||
+      new URLSearchParams(window.location.search).get("referral");
+    if (fromUrl && fromUrl.trim()) {
+      const code = fromUrl.trim().toUpperCase();
+      try {
+        sessionStorage.setItem("waypoint_referral_code", code);
+        localStorage.setItem("waypoint_referral_code", code);
+      } catch {}
+      return code;
+    }
+    try {
+      const fromStorage =
+        sessionStorage.getItem("waypoint_referral_code") ||
+        localStorage.getItem("waypoint_referral_code");
+      return fromStorage?.trim().toUpperCase() || "";
+    } catch {
+      return "";
+    }
+  });
+
+  const { data: refValidation } = trpc.referrals.validateCode.useQuery(
+    { code: referralCode },
+    { enabled: !!referralCode, retry: false }
+  );
+
+  // Auto-prefill referredBy when valid referral code is detected
+  useEffect(() => {
+    if (refValidation?.isValid && refValidation.referrerName) {
+      const refName = refValidation.referrerName;
+      setForm((prev) => {
+        if (!prev.referredBy) {
+          return {
+            ...prev,
+            howHeardAboutUs: prev.howHeardAboutUs || "Friend or Family Referral",
+            referredBy: refName,
+          };
+        }
+        return prev;
+      });
+    }
+  }, [refValidation]);
+
   // Sync phone from server when available
   useEffect(() => {
     if (businessPhoneData?.phone) setBusinessPhone(businessPhoneData.phone);
@@ -235,6 +281,7 @@ export default function DynamicForm() {
     if (!validateStep()) return;
     submitMutation.mutate({
       slug,
+      referralCode: refValidation?.isValid ? referralCode : (referralCode || undefined),
       parentFirstName: form.parentFirstName, parentLastName: form.parentLastName,
       parentEmail: form.parentEmail, parentPhone: form.parentPhone,
       timezone: form.timezone || undefined, bestTimeToCall: form.bestTimeToCall || undefined,
@@ -572,6 +619,28 @@ export default function DynamicForm() {
               </p>
             </div>
           </div>
+
+          {/* Referral Banner (Give $25. Get $25.) */}
+          {refValidation?.isValid && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-[#0A254D]/90 to-emerald-950/70 border border-emerald-500/50 text-emerald-200 text-sm flex items-center gap-3.5 shadow-xl shadow-emerald-950/40">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0 text-xl shadow-inner">
+                🎁
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-bold text-white text-sm">
+                    Referred by {refValidation.referrerName || "a Waypoint Family"}
+                  </p>
+                  <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold">
+                    {referralCode}
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-200/90 mt-0.5 leading-relaxed">
+                  <strong className="text-emerald-300 font-semibold">Give $25. Get $25.</strong> Your family will receive <strong className="text-white underline decoration-emerald-400 font-bold">$25 off</strong> your first eligible advocacy service!
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Step 1: Parent Info */}
           {step === 1 && (

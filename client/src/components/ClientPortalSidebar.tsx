@@ -4,7 +4,7 @@ import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
   ChevronLeft, ChevronRight, Home, Video, Sparkles, CheckCircle2, Lock, PenTool, GraduationCap,
-  MapPin, RotateCcw, CreditCard, PenLine, FileSignature, CircleParking, RefreshCw
+  MapPin, RotateCcw, CreditCard, PenLine, FileSignature, CircleParking, RefreshCw, Gift
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -31,6 +31,7 @@ export const NAV_ITEMS = [
   { id: "cases",         icon: Briefcase,     label: "Cases" },
   { id: "voyage-log",    icon: Video,         label: "Voyage Log" },
   { id: "financials",    icon: CreditCard,    label: "Membership" },
+  { id: "referrals",     icon: Gift,          label: "Referrals" },
   { id: "renewal",       icon: Sparkles,      label: "Plan Renewal" },
   { id: "notes",         icon: StickyNote,    label: "Notes" },
   { id: "attorney",      icon: Scale,         label: "Legal Counsel" },

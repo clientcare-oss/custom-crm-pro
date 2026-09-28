@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +36,10 @@ import {
   CheckCircle2,
   Lock,
   ArrowRight,
+  Gift,
   type LucideIcon 
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -217,6 +219,180 @@ const COLOR_GUIDE: ColorGuideItem[] = [
     borderColor: "#18365D",
   },
 ];
+
+function ReferralProgramSettingsCard() {
+  const { data: settings, isLoading, refetch } = trpc.referrals.getSettings.useQuery();
+  const updateSettingsMutation = trpc.referrals.updateSettings.useMutation({
+    onSuccess: () => {
+      toast.success("Referral program settings saved");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to update settings");
+    },
+  });
+
+  const [enabled, setEnabled] = useState(true);
+  const [newClientDiscount, setNewClientDiscount] = useState("25");
+  const [referrerCredit, setReferrerCredit] = useState("25");
+  const [qualificationTrigger, setQualificationTrigger] = useState("First successful eligible payment");
+
+  useEffect(() => {
+    if (settings) {
+      setEnabled(settings.programEnabled ?? true);
+      setNewClientDiscount(String((settings.newClientDiscountCents ?? 2500) / 100));
+      setReferrerCredit(String((settings.referrerCreditCents ?? 2500) / 100));
+      setQualificationTrigger(settings.qualificationTrigger || "First successful eligible payment");
+    }
+  }, [settings]);
+
+  const handleSave = () => {
+    const discountNum = parseFloat(newClientDiscount);
+    const creditNum = parseFloat(referrerCredit);
+    if (isNaN(discountNum) || discountNum < 0) {
+      toast.error("Please enter a valid positive discount amount");
+      return;
+    }
+    if (isNaN(creditNum) || creditNum < 0) {
+      toast.error("Please enter a valid positive credit amount");
+      return;
+    }
+
+    updateSettingsMutation.mutate({
+      programEnabled: enabled,
+      newClientDiscountCents: Math.round(discountNum * 100),
+      referrerCreditCents: Math.round(creditNum * 100),
+      qualificationTrigger,
+    });
+  };
+
+  return (
+    <Card className="rounded-2xl border border-border shadow-sm">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Gift className="h-5 w-5 text-amber-500" />
+              Waypoint Referral & Credit Settings
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Configure the default client referral program (&quot;Give $25. Get $25.&quot;) and Waypoint Credit rules.
+            </CardDescription>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30">
+            No Cash Value Enforced
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {isLoading ? (
+          <p className="text-xs text-muted-foreground">Loading referral program settings...</p>
+        ) : (
+          <>
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/40">
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold text-foreground">Referral Program Active</div>
+                <div className="text-[11px] text-muted-foreground">
+                  When enabled, existing clients can generate referral links and earn Waypoint Credit.
+                </div>
+              </div>
+              <Switch checked={enabled} onCheckedChange={setEnabled} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  New Client Discount ($)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-bold">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={newClientDiscount}
+                    onChange={(e) => setNewClientDiscount(e.target.value)}
+                    className="pl-7 text-xs font-mono"
+                    placeholder="25"
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Deducted automatically from the new client&apos;s first eligible payment.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Referring Client Credit ($)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-bold">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={referrerCredit}
+                    onChange={(e) => setReferrerCredit(e.target.value)}
+                    className="pl-7 text-xs font-mono"
+                    placeholder="25"
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Issued to the referring client as Waypoint Credit upon successful qualification.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="p-3 rounded-xl border border-border bg-background space-y-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Qualification Trigger
+                </span>
+                <p className="text-xs font-bold text-foreground">First Eligible Payment</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Credit is only issued when referred client successfully completes their first payment.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl border border-border bg-background space-y-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Credit Type
+                </span>
+                <p className="text-xs font-bold text-foreground">Waypoint Credit</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Functions like store credit applied against invoices. Cannot reduce balances below $0.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl border border-border bg-background space-y-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Cash Value
+                </span>
+                <p className="text-xs font-bold text-amber-500">NONE</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Cannot be cashed out, withdrawn, or transferred between clients.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <p className="text-[11px] text-muted-foreground italic">
+                Default offer: &quot;Give ${newClientDiscount || "25"}. Get ${referrerCredit || "25"}.&quot;
+              </p>
+              <Button
+                onClick={handleSave}
+                disabled={updateSettingsMutation.isPending}
+                className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs px-5 h-8 shadow-xs"
+              >
+                {updateSettingsMutation.isPending ? "Saving..." : "Save Referral Settings"}
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Settings() {
   const { projectLabel, setProjectLabel, presetOptions, projectIconKey, setProjectIconKey } = useTerminology();
@@ -758,6 +934,9 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Referral & Waypoint Credit Program Settings (Give $25. Get $25.) */}
+          <ReferralProgramSettingsCard />
 
           {/* Practice Terminology Section */}
           <Card className="rounded-2xl border border-border shadow-sm">

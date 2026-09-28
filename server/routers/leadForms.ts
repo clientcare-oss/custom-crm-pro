@@ -203,6 +203,7 @@ export const leadFormsRouter = router({
         zipCode: z.string().optional(),
         countyDistrict: z.string().optional(),
         challenges: z.string().optional(),
+        referralCode: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         // Get form and owner
@@ -259,12 +260,28 @@ export const leadFormsRouter = router({
           status: "Planning",
         }, ownerId);
         // Create lead
-        await db.createLead({
+        const leadResult = await db.createLead({
           contactId: parentContactId,
-          source: form.name,
+          source: input.referralCode ? `${form.name} (Ref: ${input.referralCode})` : form.name,
           status: "New",
-          notes: `Form submission: ${form.name}. Student: ${input.studentFirstName} ${input.studentLastName}.`,
+          notes: `Form submission: ${form.name}. Student: ${input.studentFirstName} ${input.studentLastName}.${input.referralCode ? ` Referral Code: ${input.referralCode}.` : ''}${input.referredBy ? ` Referred By: ${input.referredBy}.` : ''}`,
         }, ownerId);
+        const leadId = db.getInsertId(leadResult);
+
+        // Record referral relationship if referral code or referredBy was provided
+        if (input.referralCode || input.referredBy) {
+          try {
+            await db.createReferralRecord({
+              referralCode: input.referralCode,
+              referredLeadId: leadId,
+              referredClientId: parentContactId,
+              notes: `Lead form submission via "${form.name}". ${input.referredBy ? `Referred By: ${input.referredBy}` : ''}`,
+            });
+          } catch (refErr) {
+            console.error("Failed to attach referral to lead:", refErr);
+          }
+        }
+
         // Increment submission count
         await db.incrementLeadFormSubmissionCount(input.slug);
 

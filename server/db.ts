@@ -37,6 +37,10 @@ import {
   firstMateSessions,
   guidanceSessions,
   clientPresence,
+  referrals,
+  waypointCreditLedger,
+  referralProgramSettings,
+  aiLawyerPreps,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -476,20 +480,52 @@ export async function createInvoice(data: any, ownerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db.insert(invoices).values({
+  const res = await db.insert(invoices).values({
     ...data,
     ownerId,
   });
+
+  if (data.status === "Paid" && data.clientId) {
+    try {
+      const invId = (res as any)?.insertId || 0;
+      const { qualifyAndRewardReferral } = await import("./db/referrals");
+      await qualifyAndRewardReferral({
+        referredClientId: data.clientId,
+        qualifyingInvoiceId: Number(invId) || undefined,
+      });
+    } catch (refErr) {
+      console.warn("[Referral] Failed to qualify referral on createInvoice:", refErr);
+    }
+  }
+
+  return res;
 }
 
 export async function updateInvoice(id: number, ownerId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db
+  const result = await db
     .update(invoices)
     .set(data)
     .where(eq(invoices.id, id));
+
+  if (data.status === "Paid") {
+    try {
+      const [inv] = await db.select({ clientId: invoices.clientId }).from(invoices).where(eq(invoices.id, id)).limit(1);
+      if (inv?.clientId) {
+        const { qualifyAndRewardReferral } = await import("./db/referrals");
+        await qualifyAndRewardReferral({
+          referredClientId: inv.clientId,
+          qualifyingInvoiceId: id,
+        });
+      }
+    } catch (refErr) {
+      console.warn("[Referral] Failed to qualify referral on updateInvoice:", refErr);
+    }
+  }
+
+  return result;
 }
 
 export async function createInvoiceLineItems(items: any[]) {
@@ -1463,5 +1499,11 @@ export * from "./db/pwnDecoder";
 // ─── Service Allowances & Usage (PG-030) ──────────────────────────────────
 export * from "./db/serviceAllowances";
 export * from "./db/planMatrix";
+
+// ─── Waypoint Referral & Credit System ──────────────────────────────────
+export * from "./db/referrals";
+
+// ─── Student Legal Involvement & AI Lawyer Prep ─────────────────────────
+export * from "./db/lawyerPrep";
 
 

@@ -39,6 +39,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/tools/pwn-decoder":               { id: "PG-010-PWN", name: "🧭 PWN Decoder", category: "Tools", description: "Decode what the district proposed, refused, explained, and may have missed" },
   "/pwn-decoder":                     { id: "PG-010-PWN", name: "🧭 PWN Decoder", category: "Tools", description: "Decode what the district proposed, refused, explained, and may have missed" },
   "/meeting-workspace":               { id: "PG-043", name: "⚡ Meeting Workspace", category: "Advocacy", description: "Dedicated live meeting workspace for advocate IEP sessions" },
+  "/tools/lawyer-prep":               { id: "PG-030-LP", name: "AI Lawyer Prep Workspace", category: "Advocacy", description: "Case-level attorney preparation, evidence indexing, and legal compliance summary" },
   
   // Templates & Marketing
   "/templates":                       { id: "PG-011", name: "Document & Email Templates", category: "Content" },
@@ -101,6 +102,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/book":                            { id: "PG-029", name: "Discovery Booking Page", category: "Public" },
   "/portal/book":                     { id: "PG-029", name: "Portal Discovery Booking", category: "Portal" },
   "/intake":                          { id: "PG-028", name: "Student Intake Form", category: "Public" },
+  "/get-started":                     { id: "PG-028-REF", name: "Get Started Referral Intake", category: "Public", description: "Public student intake form with referral attribution" },
   
   // Portal Journey Stages (Standard 14-Step Blueprint)
   "/portal/discovery":                { id: "PG-027-S01", name: "Portal: Discovery Inquiry", category: "Portal Stage" },
@@ -194,6 +196,14 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     category: "Advocacy",
   },
 
+  // AI Lawyer Prep Workspace
+  {
+    matcher: (path) => /^\/(?:contacts|students)\/[^/]+\/lawyer-prep/.test(path),
+    id: "PG-030-LP",
+    name: "AI Lawyer Prep Workspace",
+    category: "Advocacy",
+  },
+
   // Contact / Student Detail Pages
   {
     matcher: (path) => /^\/contacts\/[^/]+/.test(path),
@@ -252,6 +262,8 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
   "files":            { id: "PG-023-ACT", name: "Action Center", category: "Portal" },
   "parking-lot":       { id: "PG-023-PRK", name: "Parking Lot", category: "Portal" },
   "financials":       { id: "PG-023-MBR", name: "Portal Membership", category: "Portal" },
+  "referrals":        { id: "PG-023-REF", name: "Portal Referrals (Give $25. Get $25.)", category: "Portal", description: "Client referral link, conversion history, and Waypoint Credit balance" },
+  "referral":         { id: "PG-023-REF", name: "Portal Referrals (Give $25. Get $25.)", category: "Portal", description: "Client referral link, conversion history, and Waypoint Credit balance" },
   "voyage-log":       { id: "PG-023-VOY", name: "Voyage Meeting Logs", category: "Portal" },
   "notes":            { id: "PG-023-NTE", name: "Case Notes", category: "Portal" },
   "details":          { id: "PG-023-STU", name: "My Students", category: "Portal" },

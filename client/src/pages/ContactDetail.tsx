@@ -43,6 +43,10 @@ import CallLogsWithCallback from "@/components/quo/CallLogsWithCallback";
 import { StudentWorkspaceTab } from "@/components/contact/workspace/StudentWorkspaceTab";
 import { ActivityTimeline } from "@/components/contact/workspace/ActivityTimeline";
 import { ServiceAllowancesCard } from "@/components/contact/ServiceAllowancesCard";
+import { StudentReferralTab } from "@/components/contact/workspace/StudentReferralTab";
+import { LegalInvolvementWarning } from "@/components/contact/lawyer-prep/LegalInvolvementWarning";
+import { LegalInvolvementModal } from "@/components/contact/lawyer-prep/LegalInvolvementModal";
+import { LawyerPrepWorkspace } from "@/components/contact/lawyer-prep/LawyerPrepWorkspace";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -1419,6 +1423,8 @@ function StudentTabs({
 }) {
   const [activeTab, setActiveTab] = useState("workspace");
   const [, setLocation] = useLocation();
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [isLawyerPrepOpen, setIsLawyerPrepOpen] = useState(false);
 
   type TabItem = { value: string; label: string; icon: any; count?: number };
 
@@ -1447,8 +1453,66 @@ function StudentTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full gap-0">
+      {/* 🚨 ⚖️ Highly Visible Case Legal Warning Banner (Persistently visible across ALL tabs) */}
+      {contact.lawyerInvolved && (
+        <div className="mb-3.5">
+          <LegalInvolvementWarning
+            attorneyName={contact.attorneyName}
+            attorneyFirm={contact.attorneyFirm}
+            attorneyRepresents={contact.attorneyRepresents}
+            attorneyInvolvementDate={contact.attorneyInvolvementDate}
+            onOpenDetails={() => setIsLegalModalOpen(true)}
+            onOpenLawyerPrep={() => setIsLawyerPrepOpen(true)}
+          />
+        </div>
+      )}
+
       {/* Tabs perched on top of the 2-row navigation bars (Right Aligned, touching the box below) */}
-      <div className="flex items-center justify-end gap-2 pr-3 sm:pr-4 relative z-20 -mb-[1px]">
+      <div className="flex items-center justify-end gap-2 pr-3 sm:pr-4 relative z-20 -mb-[1px] flex-wrap">
+        {/* ⚖️ Lawyer Involved Perched Button */}
+        <button
+          type="button"
+          onClick={() => setIsLegalModalOpen(true)}
+          title="Manage Attorney Involvement & Legal Representation"
+          className={cn(
+            "group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-xl border-t border-x border-b-0 text-xs sm:text-[12px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]",
+            contact.lawyerInvolved
+              ? "bg-[#2A050A] border-rose-500/80 text-rose-200 hover:border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.3)]"
+              : "bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-[#0D4B84] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60"
+          )}
+        >
+          <span className="text-sm">⚖️</span>
+          <span className="whitespace-nowrap font-bold">
+            {contact.lawyerInvolved ? "🚨 Lawyer Involved" : "Lawyer Involved"}
+          </span>
+        </button>
+
+        {/* ✨ ⚖️ Prepare Case for Lawyer Perched Button */}
+        {contact.lawyerInvolved && (
+          <button
+            type="button"
+            onClick={() => setIsLawyerPrepOpen(true)}
+            title="Open AI Lawyer Prep Workspace (PG-030-LP)"
+            className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-r from-[#F5B544] via-amber-400 to-[#F5B544] text-slate-950 hover:from-amber-400 hover:to-amber-500 border-t border-x border-amber-300 border-b-0 text-xs sm:text-[12px] font-bold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
+          >
+            <span className="text-sm">✨</span>
+            <span className="whitespace-nowrap font-bold">Lawyer Prep</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("referral")}
+          title="Open 🎁 Referral & Waypoint Credit Console"
+          className={`group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl border-t border-x border-b-0 text-xs sm:text-[12.5px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px] ${
+            activeTab === "referral"
+              ? "bg-[#071C3C] border-[#F5B544] text-[#F5B544] font-bold shadow-[0_2px_12px_rgba(245,181,68,0.22)]"
+              : "bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-[#0D4B84] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60"
+          }`}
+        >
+          <span className="text-sm">🎁</span>
+          <span className="whitespace-nowrap font-bold">Referral</span>
+        </button>
         <button
           type="button"
           onClick={() => setLocation(`/meeting-workspace/${contactId}`)}
@@ -1538,6 +1602,15 @@ function StudentTabs({
       {/* 2. ACTIVITY TIMELINE TAB (COMPLETE CASE HISTORY & ASK CASE HISTORY) */}
       <TabsContent value="activity-timeline" className="mt-4">
         <ActivityTimeline contact={contact} onSwitchTab={setActiveTab} />
+      </TabsContent>
+
+      {/* 🎁 REFERRAL & WAYPOINT CREDIT CONSOLE TAB (PG-030) */}
+      <TabsContent value="referral" className="mt-4">
+        <StudentReferralTab
+          contactId={contactId}
+          contactName={`${contact.firstName} ${contact.lastName}`}
+          isParent={contact.jobTitle === "Parent"}
+        />
       </TabsContent>
 
       {/* COMPASS TAB */}
@@ -1918,14 +1991,17 @@ function StudentTabs({
               <Scale className="h-5 w-5 text-red-500" />
               Legal Representation (Attorney)
             </h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditingAttorney(!editingAttorney)}
-              className="h-8 w-8 p-0"
-            >
-              {editingAttorney ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLegalModalOpen(true)}
+                className="h-8 px-2.5 text-xs font-semibold border-rose-500/40 text-rose-300 hover:bg-rose-950/40"
+              >
+                <Scale className="h-3.5 w-3.5 mr-1.5" />
+                Manage Legal Representation
+              </Button>
+            </div>
           </div>
 
           {editingAttorney ? (
@@ -2003,6 +2079,33 @@ function StudentTabs({
           )}
         </Card>
       </TabsContent>
+
+      {/* ⚖️ Legal Representation Setup & Edit Modal */}
+      {isLegalModalOpen && (
+        <LegalInvolvementModal
+          isOpen={isLegalModalOpen}
+          onClose={() => setIsLegalModalOpen(false)}
+          studentContactId={contactId}
+          studentName={fullName}
+          onSaved={() => utils.contacts.detail.invalidate({ id: contactId })}
+        />
+      )}
+
+      {/* ✨ ⚖️ AI Lawyer Prep Workspace */}
+      {isLawyerPrepOpen && (
+        <LawyerPrepWorkspace
+          isOpen={isLawyerPrepOpen}
+          onClose={() => setIsLawyerPrepOpen(false)}
+          contactId={contactId}
+          contactName={fullName}
+          school={contact.school}
+          district={contact.district}
+          currentPlan={contact.planType}
+          attorneyName={contact.attorneyName}
+          attorneyFirm={contact.attorneyFirm}
+          attorneyRepresents={contact.attorneyRepresents}
+        />
+      )}
     </Tabs>
   );
 }

@@ -143,11 +143,18 @@ export const contacts = mysqlTable("contacts", {
   approvalTimestamp: timestamp("approvalTimestamp"),
   scholarshipNotes: text("scholarshipNotes"),
   // Attorney / Legal representation fields
+  lawyerInvolved: boolean("lawyerInvolved").default(false),
   attorneyName: varchar("attorneyName", { length: 200 }),
   attorneyPhone: varchar("attorneyPhone", { length: 50 }),
   attorneyEmail: varchar("attorneyEmail", { length: 320 }),
   attorneyFirm: varchar("attorneyFirm", { length: 200 }),
   attorneyAddress: text("attorneyAddress"),
+  attorneyRepresents: varchar("attorneyRepresents", { length: 100 }).default("Parent/Student"), // "Parent/Student" | "School/District" | "Other"
+  attorneyInvolvementDate: varchar("attorneyInvolvementDate", { length: 100 }),
+  legalNotes: text("legalNotes"),
+  attorneyDocuments: text("attorneyDocuments"), // JSON array of uploaded/linked attorney files
+  legalStatusUpdatedAt: timestamp("legalStatusUpdatedAt"),
+  legalStatusUpdatedBy: varchar("legalStatusUpdatedBy", { length: 150 }),
   // Quo (OpenPhone) integration fields
   quoContactId: varchar("quoContactId", { length: 255 }),
   quoSyncStatus: varchar("quoSyncStatus", { length: 50 }).default("not_synced"),
@@ -177,6 +184,7 @@ export const contacts = mysqlTable("contacts", {
   mapLocationUpdatedAt: varchar("mapLocationUpdatedAt", { length: 100 }),
   mapLocationStatus: varchar("mapLocationStatus", { length: 50 }).default("needs_geocoding"), // "ready" | "needs_geocoding" | "needs_review" | "failed"
   isDemoData: boolean("isDemoData").default(false),
+  referralCode: varchar("referralCode", { length: 50 }), // Permanent unique referral code e.g. WP-7K4M9
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -185,6 +193,7 @@ export const contacts = mysqlTable("contacts", {
   portalUserIdIdx: index("contacts_portalUserId_idx").on(t.portalUserId),
   jobTitleIdx: index("contacts_jobTitle_idx").on(t.jobTitle),
   caseIdIdx: index("contacts_caseId_idx").on(t.caseId),
+  referralCodeIdx: index("contacts_referralCode_idx").on(t.referralCode),
 }));
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
@@ -2699,6 +2708,104 @@ export const planServiceMatrix = mysqlTable("plan_service_matrix", {
 export type PlanServiceMatrixEntry = typeof planServiceMatrix.$inferSelect;
 export type InsertPlanServiceMatrixEntry = typeof planServiceMatrix.$inferInsert;
 
+/**
+ * Referrals Table
+ * Connects existing clients to new leads/clients who sign up via referral.
+ * Statuses: "pending" | "qualified" | "rewarded"
+ */
+export const referrals = mysqlTable("referrals", {
+  id: int("id").autoincrement().primaryKey(),
+  referralCode: varchar("referral_code", { length: 50 }).notNull(),
+  referrerClientId: int("referrer_client_id").notNull(), // links to contacts.id (referring client)
+  referredLeadId: int("referred_lead_id"), // links to leads.id
+  referredClientId: int("referred_client_id"), // links to contacts.id when converted
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // "pending" | "qualified" | "rewarded"
+  discountAmount: int("discount_amount").default(2500).notNull(), // in cents ($25.00 default)
+  creditAmount: int("credit_amount").default(2500).notNull(), // in cents ($25.00 default)
+  qualifyingInvoiceId: int("qualifying_invoice_id"), // links to invoices.id
+  qualifiedAt: timestamp("qualified_at"),
+  rewardedAt: timestamp("rewarded_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  referralCodeIdx: index("referrals_code_idx").on(t.referralCode),
+  referrerIdx: index("referrals_referrer_idx").on(t.referrerClientId),
+  leadIdx: index("referrals_lead_idx").on(t.referredLeadId),
+  clientIdx: index("referrals_client_idx").on(t.referredClientId),
+  statusIdx: index("referrals_status_idx").on(t.status),
+}));
 
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = typeof referrals.$inferInsert;
 
+/**
+ * Waypoint Credit Ledger Table
+ * Complete audit trail for client Waypoint Credit transactions.
+ * NO cash value. Cannot be withdrawn or transferred.
+ */
+export const waypointCreditLedger = mysqlTable("waypoint_credit_ledger", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("client_id").notNull(), // links to contacts.id
+  referralId: int("referral_id"), // links to referrals.id if applicable
+  transactionType: varchar("transaction_type", { length: 50 }).notNull(), // "referral_reward" | "payment_redemption" | "manual_adjustment" | "reversal"
+  amount: int("amount").notNull(), // signed integer in cents: positive (credit) or negative (usage)
+  relatedInvoiceId: int("related_invoice_id"), // links to invoices.id if applied to payment
+  relatedPaymentId: varchar("related_payment_id", { length: 255 }),
+  staffUserId: int("staff_user_id"), // links to users.id if manual adjustment
+  staffUserName: varchar("staff_user_name", { length: 255 }),
+  note: text("note"), // required reason for manual adjustment or audit note
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  clientIdx: index("waypoint_credit_ledger_client_idx").on(t.clientId),
+  referralIdx: index("waypoint_credit_ledger_referral_idx").on(t.referralId),
+  typeIdx: index("waypoint_credit_ledger_type_idx").on(t.transactionType),
+}));
+
+export type WaypointCreditTransaction = typeof waypointCreditLedger.$inferSelect;
+export type InsertWaypointCreditTransaction = typeof waypointCreditLedger.$inferInsert;
+
+/**
+ * Referral Program Settings Table
+ * Admin-configurable parameters for Give $25. Get $25. program
+ */
+export const referralProgramSettings = mysqlTable("referral_program_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  programEnabled: boolean("program_enabled").default(true).notNull(),
+  newClientDiscountCents: int("new_client_discount_cents").default(2500).notNull(), // $25.00
+  referrerCreditCents: int("referrer_credit_cents").default(2500).notNull(), // $25.00
+  qualificationTrigger: varchar("qualification_trigger", { length: 100 }).default("First successful eligible payment").notNull(),
+  creditType: varchar("credit_type", { length: 50 }).default("Waypoint Credit").notNull(),
+  cashValue: varchar("cash_value", { length: 50 }).default("NONE").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReferralProgramSettings = typeof referralProgramSettings.$inferSelect;
+export type InsertReferralProgramSettings = typeof referralProgramSettings.$inferInsert;
+
+/**
+ * AI Lawyer Preps table
+ * Stores structured attorney-ready case snapshots and advocate notes for counsel prep.
+ */
+export const aiLawyerPreps = mysqlTable("ai_lawyer_preps", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("student_contact_id").notNull(),
+  version: int("version").default(1).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  attorneyName: varchar("attorney_name", { length: 200 }),
+  attorneyFirm: varchar("attorney_firm", { length: 200 }),
+  attorneyRepresents: varchar("attorney_represents", { length: 100 }),
+  snapshotData: text("snapshot_data").notNull(), // JSON containing all 11 structured sections
+  advocateNotes: text("advocate_notes"),
+  missingInfoChecklist: text("missing_info_checklist"), // JSON object mapping checklist items to status
+  selectedPacketSections: text("selected_packet_sections"), // JSON array of section IDs to include in packet
+  generatedBy: varchar("generated_by", { length: 150 }),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  studentIdx: index("ai_lawyer_preps_student_idx").on(t.studentContactId),
+}));
+
+export type AiLawyerPrep = typeof aiLawyerPreps.$inferSelect;
+export type InsertAiLawyerPrep = typeof aiLawyerPreps.$inferInsert;
 

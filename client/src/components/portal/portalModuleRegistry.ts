@@ -26,7 +26,8 @@ import {
   Layers,
   MapPin,
   CreditCard,
-  CircleParking
+  CircleParking,
+  Gift
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -294,6 +295,17 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     unlockedStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
     description: "Household membership plans, retainers, and payment receipts."
+  },
+  {
+    id: "referrals",
+    name: "Referrals",
+    icon: Gift,
+    sidebarGroup: "account",
+    displayOrder: 41,
+    visibleStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
+    unlockedStages: ["ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
+    lockedPreviewAllowed: true,
+    description: "Give $25. Get $25. Share Waypoint with other families and earn Waypoint Credit."
   },
   {
     id: "appointments",

@@ -30,6 +30,8 @@ import {
   Globe,
   Zap,
   Download,
+  Scale,
+  Sparkles,
 } from "lucide-react";
 import { parseStudentDiagnoses } from "@/lib/studentUtils";
 import {
@@ -39,6 +41,9 @@ import {
   getCallingStatus,
   getFriendlyTimeZoneName,
 } from "@shared/timezones";
+import { LegalInvolvementWarning } from "../lawyer-prep/LegalInvolvementWarning";
+import { LegalInvolvementModal } from "../lawyer-prep/LegalInvolvementModal";
+import { LawyerPrepWorkspace } from "../lawyer-prep/LawyerPrepWorkspace";
 
 interface StudentHeaderProps {
   contact: any;
@@ -50,6 +55,8 @@ interface StudentHeaderProps {
   onPreviewPortal: () => void;
   onUpdatePlanType: (newPlanType: string) => void;
   calculatedAge: number | null;
+  onOpenLegalModal?: () => void;
+  onOpenLawyerPrep?: () => void;
 }
 
 export function StudentHeader({
@@ -62,7 +69,15 @@ export function StudentHeader({
   onPreviewPortal,
   onUpdatePlanType,
   calculatedAge,
+  onOpenLegalModal,
+  onOpenLawyerPrep,
 }: StudentHeaderProps) {
+  const [internalLegalModalOpen, setInternalLegalModalOpen] = React.useState(false);
+  const [internalLawyerPrepOpen, setInternalLawyerPrepOpen] = React.useState(false);
+
+  const handleOpenLegalModal = onOpenLegalModal || (() => setInternalLegalModalOpen(true));
+  const handleOpenLawyerPrep = onOpenLawyerPrep || (() => setInternalLawyerPrepOpen(true));
+
   const [localPlanType, setLocalPlanType] = React.useState<string>(contact.planType || "No IEP/504 Yet");
 
   React.useEffect(() => {
@@ -167,6 +182,35 @@ export function StudentHeader({
             <span>Post-Meeting Review</span>
           </Button>
 
+          {/* ⚖️ Lawyer Involved Toggle / Status Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenLegalModal}
+            className={cn(
+              "h-8 sm:h-9 px-3 text-xs font-semibold shadow-xs cursor-pointer transition-all gap-1.5",
+              contact.lawyerInvolved
+                ? "border-rose-500/80 bg-rose-950/60 text-rose-200 hover:bg-rose-900/80 hover:text-white hover:border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.3)]"
+                : "border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white"
+            )}
+            title="Manage Attorney Involvement & Legal Representation"
+          >
+            <Scale className={cn("h-3.5 w-3.5", contact.lawyerInvolved ? "text-rose-400" : "text-slate-400")} />
+            <span>{contact.lawyerInvolved ? "🚨 ⚖️ Lawyer Involved" : "⚖️ Lawyer Involved"}</span>
+          </Button>
+
+          {contact.lawyerInvolved && (
+            <Button
+              size="sm"
+              onClick={handleOpenLawyerPrep}
+              className="h-8 sm:h-9 px-3 text-xs font-bold bg-gradient-to-r from-[#F5B544] via-amber-400 to-[#F5B544] text-slate-950 hover:from-amber-400 hover:to-amber-500 shadow-md shadow-amber-500/20 border border-amber-300/40 transition-all cursor-pointer flex items-center gap-1.5"
+              title="Launch AI Lawyer Prep Workspace (PG-030-LP)"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-slate-950 fill-slate-950" />
+              <span>✨ ⚖️ Prepare Case for Lawyer</span>
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -200,6 +244,18 @@ export function StudentHeader({
           )}
         </div>
       </div>
+
+      {/* 🚨 ⚖️ Red Legal Warning in Student Header */}
+      {contact.lawyerInvolved && (
+        <LegalInvolvementWarning
+          attorneyName={contact.attorneyName}
+          attorneyFirm={contact.attorneyFirm}
+          attorneyRepresents={contact.attorneyRepresents}
+          attorneyInvolvementDate={contact.attorneyInvolvementDate}
+          onOpenDetails={handleOpenLegalModal}
+          onOpenLawyerPrep={handleOpenLawyerPrep}
+        />
+      )}
 
       {/* Main Student Header Console — Exact Visual Reference Match */}
       <div className="rounded-3xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] p-5 sm:p-6 shadow-2xl relative overflow-hidden">
@@ -479,6 +535,31 @@ export function StudentHeader({
           </div>
         </div>
       </div>
+
+      {/* Internal Modals */}
+      {!onOpenLegalModal && internalLegalModalOpen && (
+        <LegalInvolvementModal
+          isOpen={internalLegalModalOpen}
+          onClose={() => setInternalLegalModalOpen(false)}
+          studentContactId={contact.id}
+          studentName={fullName}
+        />
+      )}
+
+      {!onOpenLawyerPrep && internalLawyerPrepOpen && (
+        <LawyerPrepWorkspace
+          isOpen={internalLawyerPrepOpen}
+          onClose={() => setInternalLawyerPrepOpen(false)}
+          contactId={contact.id}
+          contactName={fullName}
+          school={contact.school}
+          district={contact.district}
+          currentPlan={currentPlanType}
+          attorneyName={contact.attorneyName}
+          attorneyFirm={contact.attorneyFirm}
+          attorneyRepresents={contact.attorneyRepresents}
+        />
+      )}
     </div>
   );
 }

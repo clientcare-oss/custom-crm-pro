@@ -107,6 +107,7 @@ function Router() {
     window.location.pathname === "/portal/book" ||
     window.location.pathname === "/book" ||
     window.location.pathname === "/intake" ||
+    window.location.pathname === "/get-started" ||
     window.location.pathname.startsWith("/form/") ||
     window.location.pathname.startsWith("/smart-files/response/");
 
@@ -138,9 +139,9 @@ function Router() {
       );
     }
 
-    if (window.location.pathname === '/intake' || window.location.pathname.startsWith('/form/')) {
-      // Redirect /intake to /form/public-intake-form so it uses DynamicForm with the inline scheduler
-      if (window.location.pathname === '/intake') {
+    if (window.location.pathname === '/intake' || window.location.pathname === '/get-started' || window.location.pathname.startsWith('/form/')) {
+      // Redirect /intake or /get-started to /form/public-intake preserving ?ref=WP-XXXXX query params
+      if (window.location.pathname === '/intake' || window.location.pathname === '/get-started') {
         const search = window.location.search;
         window.location.replace('/form/public-intake' + search);
         return null;
@@ -254,6 +255,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/get-started">{() => { window.location.replace('/form/public-intake' + window.location.search); return null; }}</Route>
       <Route path="/intake">{() => { window.location.replace('/form/public-intake' + window.location.search); return null; }}</Route>
       <Route path="/form/:slug" component={DynamicForm} />
       <Route path="/book" component={BookingPage} />
