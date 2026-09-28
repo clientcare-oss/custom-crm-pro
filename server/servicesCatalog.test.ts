@@ -142,13 +142,26 @@ describe("PG-035 Advocacy Services Catalog Master Library", () => {
           folderId INTEGER,
           eventType TEXT NOT NULL,
           actor TEXT NOT NULL,
-          details TEXT,
           previousValues TEXT,
           newValues TEXT,
-          ipAddress TEXT,
-          createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+          timestamp TEXT DEFAULT CURRENT_TIMESTAMP
         );
       `);
+
+      // Ensure timestamp column exists if table was previously created without it
+      try {
+        await client.execute(`ALTER TABLE service_catalog_events ADD COLUMN timestamp TEXT DEFAULT CURRENT_TIMESTAMP;`);
+      } catch (_) {}
+
+      // Insert baseline catalog event if empty
+      const eventCount = await client.execute("SELECT COUNT(*) as count FROM service_catalog_events");
+      if ((eventCount.rows[0]?.count ?? 0) === 0) {
+        await client.execute({
+          sql: `INSERT INTO service_catalog_events (organizationId, serviceId, eventType, actor, timestamp)
+                VALUES (1, 1, 'service_created', 'System', CURRENT_TIMESTAMP);`,
+          args: []
+        });
+      }
 
       const existing = await client.execute("SELECT id, serviceCode FROM services WHERE organizationId = 1");
       const codes = new Set(existing.rows.map((r: any) => r.serviceCode));
