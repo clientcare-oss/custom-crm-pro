@@ -10,7 +10,7 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 
 export const leadsRouter = router({
 
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: protectedProcedure.query(async ({ ctx }) => {
       return await db.getLeadsByOwner(ctx.user.id);
     }),
 

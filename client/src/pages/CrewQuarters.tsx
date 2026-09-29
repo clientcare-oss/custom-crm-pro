@@ -60,6 +60,7 @@ import {
   ExternalLink,
   Award,
   LayoutDashboard,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import CrewMessagesWorkspace from "@/components/crew-quarters/CrewMessagesWorkspace";
@@ -123,6 +124,7 @@ export default function CrewQuarters() {
   const { data: tasks = [] } = trpc.internalTasks.list.useQuery({ status: "all" });
   const { data: contacts = [] } = trpc.contacts.list.useQuery();
   const { data: callLogs = [] } = trpc.callLogs.listAll.useQuery();
+  const { data: leads = [] } = trpc.leads.list.useQuery(undefined, { enabled: !!user });
   const { data: unreadMessages = [] } = trpc.messages.unread.useQuery(undefined, { enabled: !!user });
   const { data: crewStats } = trpc.crewMessages.getOverviewStats.useQuery(undefined, { enabled: !!user });
   const crewUnreadTotal = crewStats?.unreadTotal || 0;
@@ -283,6 +285,7 @@ export default function CrewQuarters() {
   const unassignedCalls = (callLogs as any[]).filter((c) => c.status === "unassigned");
   const openTasks = (tasks as any[]).filter((t) => t.status !== "complete");
   const studentsList = (contacts as any[]).filter((c) => c.jobTitle === "Student" || !c.parentContactId);
+  const newLeadsCount = (leads as any[]).filter((l) => l.status === "New").length;
   const dbUnreadCount = Array.isArray(unreadMessages) ? (unreadMessages as any[]).length : 0;
   const newMessagesCount = dbUnreadCount > 0 ? dbUnreadCount : 1;
 
@@ -438,10 +441,29 @@ export default function CrewQuarters() {
       {/* ── TAB CONTENT 2: OVERVIEW DASHBOARD ── */}
       {currentTab === "overview" && (
         <div className="space-y-8">
-          {/* ── Main Employee Summary Metrics (5 Metric Cards) ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
+          {/* ── Main Employee Summary Metrics (6 Metric Cards) ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
             
-            {/* Card 1: Meetings Today */}
+            {/* Card 1: New Leads */}
+            <div 
+              onClick={() => setLocation("/leads")}
+              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white font-mono leading-none">
+                    {newLeadsCount}
+                  </div>
+                  <div className="text-xs text-blue-200/80 font-medium mt-1">New Leads</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+
+            {/* Card 2: Meetings Today */}
             <div 
               onClick={() => setLocation("/calendar")}
               className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
@@ -523,8 +545,8 @@ export default function CrewQuarters() {
               <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
             </div>
 
-            {/* Card 5: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
-            <div className="col-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
+            {/* Card 6: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
+            <div className="col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
           {/* Multi-Layered, Ultra-Fine Bathymetric Topographic Ocean Depth Contours */}
           <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
             <svg
