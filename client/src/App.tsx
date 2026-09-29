@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch, useLocation } from "wouter";
+import { Route, Switch, useLocation, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
@@ -65,7 +65,6 @@ import SmartFiles from "./pages/SmartFiles";
 import SmartFileEditor from "./pages/SmartFileEditor";
 import SmartFileAssignments from "./pages/SmartFileAssignments";
 import SmartFilePortalViewer from "./pages/SmartFilePortalViewer";
-import TechTasks from "./pages/TechTasks";
 import DiscoveryCallPage from "./pages/DiscoveryCallPage";
 import Workspace from "./pages/Workspace";
 import IepComparator from "./pages/IepComparator";
@@ -203,7 +202,7 @@ function Router() {
           <Route path="/national-coverage" component={NationalCoverage} />
           <Route path="/scheduler" component={Scheduler} />
           <Route path="/tasks" component={Tasks} />
-          <Route path="/tech-tasks" component={TechTasks} />
+          <Route path="/tech-tasks">{() => <Redirect to="/tasks" />}</Route>
           <Route path="/tools" component={Tools} />
           <Route path="/tools/pwn-decoder/:reviewId" component={PwnDecoder} />
           <Route path="/tools/pwn-decoder" component={PwnDecoder} />

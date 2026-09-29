@@ -180,7 +180,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Practice & Operations",
       items: [
         { icon: CheckSquare, label: "Tasks", path: "/tasks" },
-        { icon: Layers, label: "Tech Tasks", path: "/tech-tasks" },
         { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
         { icon: LayoutTemplate, label: "Templates", path: "/templates" },
         { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },

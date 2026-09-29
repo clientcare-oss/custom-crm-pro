@@ -1,7 +1,6 @@
 import { router } from "./_core/trpc";
 import { portalAuthRouter } from "./routers/portalAuth";
 import { smartFilesRouter } from "./routers/smartFiles";
-import { techTasksRouter } from "./routers/techTasks";
 import { systemRouter } from "./_core/systemRouter";
 import { voiceRouter } from "./routers/voice";
 import { authRouter } from "./routers/auth";
@@ -85,7 +84,6 @@ export const appRouter = router({
   portalProvisioning: portalProvisioningRouter,
   portalAuth: portalAuthRouter,
   smartFiles: smartFilesRouter,
-  techTasks: techTasksRouter,
   system: systemRouter,
   voice: voiceRouter,
   auth: authRouter,

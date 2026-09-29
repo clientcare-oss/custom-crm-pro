@@ -467,7 +467,6 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "braindump", label: "Advocate BrainDump", path: "/brain-dump", group: "Advocacy & AI Tools", icon: Brain },
   // Practice & Operations
   { id: "tasks", label: "Tasks Queue", path: "/tasks", group: "Practice & Operations", icon: CheckSquare },
-  { id: "tech_tasks", label: "Tech Tasks", path: "/tech-tasks", group: "Practice & Operations", icon: Layers },
   { id: "call_logs", label: "Call Logs (Quo VoIP)", path: "/call-logs", group: "Practice & Operations", icon: Phone },
   { id: "templates", label: "Templates Hub", path: "/templates", group: "Practice & Operations", icon: LayoutTemplate },
   { id: "knowledge_base", label: "Knowledge Base", path: "/knowledge-base", group: "Practice & Operations", icon: BookOpen },

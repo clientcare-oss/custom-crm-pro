@@ -118,7 +118,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-033-ASN`: Smart File Assignments (`/smart-files/:id/assignments`)
   - `PG-033-EDT`: Smart File Editor (`/smart-files/:id`)
   - `PG-033-VWR`: Smart File Portal Viewer (`/smart-files/response/:id`)
-  - `PG-034`: Tech Tasks (`/tech-tasks`)
+  - `PG-034`: Tech Tasks (Retired — redirects to `/tasks`)
   - `PG-035`: Services Catalog (`/services`)
   - `PG-036`: Sponsors & Partners (`/sponsors`)
   - `PG-037`: First Mate (`/first-mate`)

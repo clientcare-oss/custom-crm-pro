@@ -81,7 +81,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/giving/reports":                  { id: "PG-040-REP", name: "Giving Reports & Analytics", category: "Giving & Impact", description: "Form 990 readiness and charitable giving metrics" },
   "/giving/website-tools":            { id: "PG-040-WEB", name: "Website Tools", category: "Giving & Impact", description: "Donation forms, buttons, progress bars, and campaign builders for public website" },
   "/giving/501c3":                    { id: "PG-040-SET", name: "Manage 501(c)(3)", category: "Giving & Impact" },
-  "/tech-tasks":                      { id: "PG-034", name: "Technical Tasks & Backlog", category: "Productivity" },
+  "/tech-tasks":                      { id: "PG-034", name: "Technical Tasks (Retired - Redirects to Tasks)", category: "Productivity" },
   
   // Case & Client Portals
   "/client-portal":                   { id: "PG-023", name: "Client Portal", category: "Portal" },
