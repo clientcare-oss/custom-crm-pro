@@ -552,8 +552,8 @@ export default function CrewQuarters() {
         </div>
       </div>
 
-      {/* ── Internal Tab Navigation Bar (Under the Number Blocks) ── */}
-      <div className="flex items-center justify-between gap-3 border-b border-blue-900/40 pb-4 overflow-x-auto">
+      {/* ── Internal Tab Navigation Bar (Framed with Top & Bottom Dividers) ── */}
+      <div className="flex items-center justify-between gap-3 border-y border-blue-900/40 py-4 overflow-x-auto">
         <div className="flex items-center gap-1.5 sm:gap-2 bg-[#000d2b]/90 border border-blue-900/60 p-1.5 rounded-2xl shadow-inner backdrop-blur-md">
           {[
             { id: "overview", label: "Overview", icon: LayoutDashboard },
