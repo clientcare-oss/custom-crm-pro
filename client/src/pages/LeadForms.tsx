@@ -3,7 +3,8 @@ import {
   ClipboardList, Copy, ExternalLink, Eye, CheckCircle2, Users, GraduationCap,
   Link2, Zap, Globe, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar,
   MoreHorizontal, Hash, ImagePlus, Save, Sparkles, Phone, MessageSquare, X,
-  Upload, ChevronDown, ChevronUp, AlignCenter, AlignLeft, ArrowLeft
+  Upload, ChevronDown, ChevronUp, AlignCenter, AlignLeft, ArrowLeft,
+  ArrowRight, Clock, Mail, CheckSquare, Layers
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -315,9 +316,21 @@ export default function LeadForms() {
                     </p>
                   </div>
                 </div>
-                <Badge variant="outline" className="text-green-600 border-green-500/40 bg-green-500/10 text-xs shrink-0">
-                  <CheckCircle2 className="w-3 h-3 mr-1" /> Active
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/automations?trigger=lead_form_submitted")}
+                    className="cursor-pointer group"
+                    title="Click to view attached automated flow"
+                  >
+                    <Badge variant="outline" className="text-purple-400 border-purple-500/40 bg-purple-500/10 text-xs shrink-0 flex items-center gap-1 group-hover:bg-purple-500/20 transition-colors">
+                      <Zap className="w-3 h-3 text-purple-400" /> Automations Attached
+                    </Badge>
+                  </button>
+                  <Badge variant="outline" className="text-green-600 border-green-500/40 bg-green-500/10 text-xs shrink-0">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Active
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -333,6 +346,28 @@ export default function LeadForms() {
                   {copiedId === "intake" ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                 </Button>
               </div>
+
+              {/* Attached Automation Notification Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Zap className="w-4 h-4 text-purple-400 shrink-0" />
+                  <div className="truncate">
+                    <span className="font-semibold text-foreground">Attached Workflow: </span>
+                    <span className="text-purple-300 font-medium">Client Intake & Onboarding Flow</span>
+                    <span className="text-muted-foreground hidden lg:inline"> (Fires welcome email + discovery invite immediately upon submission)</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-purple-500/30 text-purple-300 hover:text-purple-200 hover:bg-purple-500/20 gap-1.5 shrink-0"
+                  onClick={() => setLocation("/automations?trigger=lead_form_submitted")}
+                >
+                  <span>View in Automations</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+              </div>
+
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => window.open(`${intakeUrl}?preview=true`, "_blank")} className="gap-1.5">
                   <Eye className="w-3.5 h-3.5" />
@@ -352,13 +387,143 @@ export default function LeadForms() {
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => publicIntakeForm && setEditingForm(publicIntakeForm)} className="gap-1.5" disabled={!publicIntakeForm}>
                   <Pencil className="w-3.5 h-3.5" />
-                  Edit
+                  Edit Form & Settings
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setLocation("/automations?trigger=lead_form_submitted")} className="gap-1.5 text-purple-400 border-purple-500/30 hover:bg-purple-500/10">
+                  <Zap className="w-3.5 h-3.5 text-purple-400" />
+                  Attached Automations
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* ── AUTOMATIONS & SUBMISSION LIFECYCLE GUIDE ── */}
+      <Card className="border-border/60 border-l-4 border-l-purple-500 bg-purple-500/[0.03] dark:bg-[#071328]/80">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                <Zap className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-sm sm:text-base font-semibold">Post-Submission Automations & Next Steps</CardTitle>
+                  <Badge variant="outline" className="text-purple-300 border-purple-500/40 bg-purple-500/10 text-[10px]">
+                    Live Trigger Connected
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  What happens in the CRM the moment a family submits any lead form
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                onClick={() => setLocation("/automations?trigger=lead_form_submitted")}
+                className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-sm"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>View & Edit in Automations Module</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-background/80 dark:bg-[#040C1A] border border-border/70 rounded-xl p-4 space-y-3">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              When a prospective client completes your public intake form, the CRM automatically provisions their profiles and executes the 
+              <strong className="text-foreground"> Client Intake & Onboarding Flow</strong>. Here is the step-by-step lifecycle:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              <div className="p-3 rounded-lg bg-card/60 border border-border/60 flex flex-col justify-between gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400">
+                    <Users className="w-4 h-4" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">1. Instant Profiles</span>
+                  </div>
+                  <p className="font-semibold text-xs text-foreground">Contact & Case Created</p>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Parent contact, student profile, and a dedicated case record (with unique Case ID) are generated automatically.
+                  </p>
+                </div>
+                <Badge variant="secondary" className="w-fit text-[10px]">CRM Database</Badge>
+              </div>
+
+              <div className="p-3 rounded-lg bg-card/60 border border-border/60 flex flex-col justify-between gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-amber-500">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">2. Step 1 (0 min)</span>
+                  </div>
+                  <p className="font-semibold text-xs text-foreground">Welcome & Discovery Link</p>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Sends the personalized advocate welcome email with your Discovery Call calendar booking link.
+                  </p>
+                </div>
+                <Badge variant="secondary" className="w-fit text-[10px] text-amber-600 dark:text-amber-400">Email Dispatched</Badge>
+              </div>
+
+              <div className="p-3 rounded-lg bg-card/60 border border-border/60 flex flex-col justify-between gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-purple-500 dark:text-purple-400">
+                    <Mail className="w-4 h-4" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">3. Step 2 (+24h)</span>
+                  </div>
+                  <p className="font-semibold text-xs text-foreground">Intake Questionnaire</p>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Sends follow-up requesting student documentation, current IEP/504, and school evaluation files.
+                  </p>
+                </div>
+                <Badge variant="secondary" className="w-fit text-[10px] text-purple-600 dark:text-purple-400">Follow-up Step</Badge>
+              </div>
+
+              <div className="p-3 rounded-lg bg-card/60 border border-border/60 flex flex-col justify-between gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-emerald-500">
+                    <CheckSquare className="w-4 h-4" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">4. Step 3 (+48h)</span>
+                  </div>
+                  <p className="font-semibold text-xs text-foreground">Advocate Review Task</p>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Automatically queues a high-priority task on the student's project board to audit their paperwork.
+                  </p>
+                </div>
+                <Badge variant="secondary" className="w-fit text-[10px] text-emerald-600 dark:text-emerald-400">Internal Task</Badge>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                <span>Need to customize email templates, timing delays, or add SMS/task steps?</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1 px-2"
+                  onClick={() => setLocation("/automations?trigger=lead_form_submitted")}
+                >
+                  <span>Open Flow Builder</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
+                  onClick={() => setLocation("/automations")}
+                >
+                  All Automations
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── CUSTOMIZE CONFIRMATION PAGE ── */}
       <Collapsible open={confirmationOpen} onOpenChange={setConfirmationOpen}>
@@ -685,6 +850,16 @@ export default function LeadForms() {
                               <Calendar className="w-3 h-3 mr-1" /> Scheduling
                             </Badge>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => setLocation("/automations?trigger=lead_form_submitted")}
+                            className="inline-flex items-center gap-1 cursor-pointer"
+                            title="Click to view attached automated flow"
+                          >
+                            <Badge variant="outline" className="text-purple-400 border-purple-500/40 bg-purple-500/10 text-xs hover:bg-purple-500/20 transition-colors">
+                              <Zap className="w-3 h-3 mr-1 text-purple-400" /> Automations Attached
+                            </Badge>
+                          </button>
                         </div>
                         {form.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{form.description}</p>

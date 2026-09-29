@@ -61,6 +61,7 @@ import Services from "./pages/Services";
 import NationalCoverage from "./pages/NationalCoverage";
 import PageIdShowcase from "./pages/PageIdShowcase";
 import PortalBook from "./pages/PortalBook";
+import Agreements from "./pages/Agreements";
 import SmartFiles from "./pages/SmartFiles";
 import SmartFileEditor from "./pages/SmartFileEditor";
 import SmartFileAssignments from "./pages/SmartFileAssignments";
@@ -78,6 +79,7 @@ import AdvocacyPipeline from "./pages/AdvocacyPipeline";
 import MeetingWorkspace from "./pages/MeetingWorkspace";
 import PostMeetingReview from "./pages/PostMeetingReview";
 import PwnDecoder from "./pages/PwnDecoder";
+import ReceiptView from "./pages/ReceiptView";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -120,6 +122,8 @@ function Router() {
     window.location.pathname === "/intake" ||
     window.location.pathname === "/get-started" ||
     window.location.pathname.startsWith("/form/") ||
+    window.location.pathname.startsWith("/receipt/") ||
+    window.location.pathname.startsWith("/portal/receipt/") ||
     window.location.pathname.startsWith("/smart-files/response/");
 
   if (loading && !isPublicRoute) {
@@ -193,8 +197,9 @@ function Router() {
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />
-          <Route path="/contracts" component={Contracts} />
-          <Route path="/smart-files" component={SmartFiles} />
+          <Route path="/agreements" component={Agreements} />
+          <Route path="/contracts">{() => <Redirect to="/agreements" />}</Route>
+          <Route path="/smart-files">{() => <Redirect to="/agreements" />}</Route>
           <Route path="/smart-files/:id/assignments" component={SmartFileAssignments} />
           <Route path="/smart-files/:id" component={SmartFileEditor} />
           <Route path="/appointments" component={Appointments} />
@@ -258,6 +263,8 @@ function Router() {
           <Route path="/tools/case-compass" component={CaseCompassRedirect} />
           <Route path="/case-compass" component={CaseCompassRedirect} />
           <Route path="/book" component={BookingPage} />
+          <Route path="/receipt/:id" component={ReceiptView} />
+          <Route path="/portal/receipt/:id" component={ReceiptView} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>
@@ -274,6 +281,8 @@ function Router() {
       <Route path="/form/:slug" component={DynamicForm} />
       <Route path="/book" component={BookingPage} />
       <Route path="/portal/book" component={PortalBook} />
+      <Route path="/receipt/:id" component={ReceiptView} />
+      <Route path="/portal/receipt/:id" component={ReceiptView} />
       {/* Portal is public so email links work for unauthenticated clients */}
       <Route path="/portal" component={ClientPortal} />
       <Route path="/client-portal" component={ClientPortal} />

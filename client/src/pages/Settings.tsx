@@ -38,6 +38,7 @@ import {
   ArrowRight,
   Gift,
   GitBranch,
+  Receipt,
   type LucideIcon 
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -46,6 +47,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import PageIdBadge from "@/components/PageIdBadge";
 import BusinessOperationsSection from "@/components/settings/BusinessOperationsSection";
+import { ReceiptSettingsTab } from "@/components/settings/ReceiptSettingsTab";
 
 const ICON_COMPONENT_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers,
@@ -405,11 +407,13 @@ export default function Settings() {
     presetOptions.some((o) => o.value === projectLabel) ? projectLabel : "__custom__"
   );
 
-  // Settings view section tab: "portal" | "admin" | "operations" | "colors"
+  // Settings view section tab: "portal" | "admin" | "receipts" | "operations" | "colors"
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
   const initialSectionParam = (searchParams.get("section") || searchParams.get("tab")) as any;
-  const initialSection: "portal" | "admin" | "operations" | "colors" = 
-    initialSectionParam === "operations" || initialSectionParam === "workflows" || initialSectionParam === "workflow-designer"
+  const initialSection: "portal" | "admin" | "receipts" | "operations" | "colors" = 
+    initialSectionParam === "receipts" || initialSectionParam === "receipt"
+      ? "receipts"
+      : initialSectionParam === "operations" || initialSectionParam === "workflows" || initialSectionParam === "workflow-designer"
       ? "operations"
       : initialSectionParam === "admin"
       ? "admin"
@@ -417,9 +421,9 @@ export default function Settings() {
       ? "colors"
       : "portal";
 
-  const [activeSection, setActiveSection] = useState<"portal" | "admin" | "operations" | "colors">(initialSection);
+  const [activeSection, setActiveSection] = useState<"portal" | "admin" | "receipts" | "operations" | "colors">(initialSection);
 
-  const handleSectionChange = (section: "portal" | "admin" | "operations" | "colors") => {
+  const handleSectionChange = (section: "portal" | "admin" | "receipts" | "operations" | "colors") => {
     setActiveSection(section);
     const url = new URL(window.location.href);
     if (section !== "portal") {
@@ -605,6 +609,18 @@ export default function Settings() {
           >
             <Briefcase className="w-4 h-4" />
             Admin CRM (What Byron & Staff See)
+          </button>
+
+          <button
+            onClick={() => handleSectionChange("receipts")}
+            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === "receipts"
+                ? "bg-gradient-to-r from-[#d4af37] to-[#c5a028] text-slate-950 shadow-md shadow-amber-500/20"
+                : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+            }`}
+          >
+            <Receipt className="w-4 h-4" />
+            Receipts (Payment Confirmation)
           </button>
 
           <button
@@ -1184,6 +1200,11 @@ export default function Settings() {
       {/* ── SECTION 3: BUSINESS OPERATIONS & WORKFLOW DESIGNER ────────────── */}
       {activeSection === "operations" && (
         <BusinessOperationsSection />
+      )}
+
+      {/* ── SECTION 4: WAYPOINT RECEIPT EXPERIENCE & SETTINGS (PG-024-REC) ── */}
+      {activeSection === "receipts" && (
+        <ReceiptSettingsTab />
       )}
 
     </div>

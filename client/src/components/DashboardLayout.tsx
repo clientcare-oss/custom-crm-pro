@@ -25,7 +25,7 @@ import {
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, FileSignature, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, type LucideIcon } from "lucide-react";
 import { getStoredEmployees, checkEmployeeModuleAccess } from "@/components/team/teamStore";
 import { CRM_MODULES } from "@/components/team/teamTypes";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
@@ -151,13 +151,32 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       ],
     },
     {
-      groupLabel: "Templates & Forms",
+      groupLabel: "Business",
       items: [
-        { icon: LayoutTemplate, label: "Smart Files", path: "/smart-files" },
-        { icon: ScrollText, label: "Contracts", path: "/contracts" },
-        { icon: FileText, label: "Invoices", path: "/invoices" },
-        { icon: Briefcase, label: "Services", path: "/services" },
-        { icon: Banknote, label: "Bill Guardian", path: "/bill-guardian" },
+        { 
+          icon: Briefcase, 
+          label: "Services", 
+          path: "/services",
+          keywords: ["services", "catalog", "pricing", "packages", "pg-035"]
+        },
+        { 
+          icon: FileText, 
+          label: "Billing", 
+          path: "/invoices",
+          keywords: ["billing", "invoices", "payments", "revenue", "pg-005"]
+        },
+        { 
+          icon: FileSignature, 
+          label: "Agreements", 
+          path: "/agreements",
+          keywords: ["agreements", "contracts", "signatures", "e-sign", "templates", "legal", "pg-046"]
+        },
+        { 
+          icon: Banknote, 
+          label: "Bill Guardian", 
+          path: "/bill-guardian",
+          keywords: ["bill guardian", "audit", "fee tracker", "pg-022"]
+        },
       ],
     },
     {

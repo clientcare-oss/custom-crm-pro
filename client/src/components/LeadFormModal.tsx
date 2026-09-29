@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import {
   Calendar, Link2, ClipboardList, Info, Settings, ListChecks,
-  CheckSquare, Square, Pencil, Check, X, CalendarDays, ExternalLink, ChevronDown
+  CheckSquare, Square, Pencil, Check, X, CalendarDays, ExternalLink, ChevronDown,
+  Zap, Clock, Mail, Sparkles
 } from "lucide-react";
 import { ALL_FIELDS, DEFAULT_FIELDS } from "@/lib/formFields";
 import type { FieldKey } from "@/lib/formFields";
@@ -460,6 +461,80 @@ export function LeadFormModal({ open, onOpenChange, editingForm, onSuccess }: Le
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Attached Automations & Post-Submission Sequence */}
+              <div className="border border-purple-500/30 bg-purple-500/5 dark:bg-purple-950/20 rounded-xl p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shrink-0">
+                      <Zap className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">Post-Submission Automations</p>
+                        <Badge variant="outline" className="text-[10px] text-purple-300 border-purple-500/40 bg-purple-500/10">
+                          Active Workflow
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Connected sequence: <strong className="text-purple-300 font-medium">Client Intake & Onboarding Flow</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1.5 border-purple-500/30 text-purple-300 hover:text-purple-200 hover:bg-purple-500/20 shrink-0"
+                    onClick={() => window.open("/automations?trigger=lead_form_submitted", "_blank")}
+                  >
+                    <span>View in Automations</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Button>
+                </div>
+
+                <div className="bg-background/80 dark:bg-slate-900/60 border border-purple-500/20 rounded-lg p-3 text-xs space-y-2.5">
+                  <p className="text-muted-foreground leading-relaxed">
+                    The moment a parent submits this form, the CRM creates their <strong>Parent Contact</strong>, <strong>Student Profile</strong>, and <strong>Case Workspace</strong>, then automatically executes this sequence:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-border/40">
+                    <div className="p-2 rounded bg-muted/40 border border-border/50">
+                      <div className="flex items-center gap-1 text-amber-500 text-[10px] font-bold uppercase tracking-wider">
+                        <Clock className="w-3 h-3" />
+                        <span>Step 1 · 0 min</span>
+                      </div>
+                      <p className="font-semibold text-foreground text-xs mt-1">Welcome & Discovery Link</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Sends welcome email with calendar consultation invite.</p>
+                    </div>
+                    <div className="p-2 rounded bg-muted/40 border border-border/50">
+                      <div className="flex items-center gap-1 text-blue-500 text-[10px] font-bold uppercase tracking-wider">
+                        <Mail className="w-3 h-3" />
+                        <span>Step 2 · +24 hrs</span>
+                      </div>
+                      <p className="font-semibold text-foreground text-xs mt-1">Intake Questionnaire</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Requests student IEP/504 records and onboarding details.</p>
+                    </div>
+                    <div className="p-2 rounded bg-muted/40 border border-border/50">
+                      <div className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">
+                        <CheckSquare className="w-3 h-3" />
+                        <span>Step 3 · +48 hrs</span>
+                      </div>
+                      <p className="font-semibold text-foreground text-xs mt-1">Advocate Review Task</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Queues audit task on project board to review client files.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
+                    <span>Need to edit the email copy or adjust timing?</span>
+                    <button
+                      type="button"
+                      onClick={() => window.open("/automations?trigger=lead_form_submitted", "_blank")}
+                      className="font-medium text-purple-400 hover:text-purple-300 underline flex items-center gap-1"
+                    >
+                      Open Automations Module ↗
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Active Toggle */}

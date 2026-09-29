@@ -105,6 +105,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-023`: Client Portal (`/portal`, `/client-portal`, `/project-workspace/:id`)
   - `PG-023-TRN`: Plan Transition (`/portal?tab=plan-transition`)
   - `PG-024`: Settings (`/settings`)
+  - `PG-024-REC`: Company Settings → Receipts (`/settings?section=receipts`)
   - `PG-025`: Case Compass Console (`/case-compass`, `/tools/case-compass`)
   - `PG-026`: Page ID Showcase (`/page-id-showcase`)
   - `PG-027`: Portal Experience Management (`/portal-management`, `/manage-experiences`)
@@ -141,6 +142,8 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-043`: Meeting Workspace (`/meeting-workspace`, `/meeting-workspace/:studentId`)
   - `PG-044`: Post-Meeting Review (`/post-meeting-review`, `/post-meeting-review/:studentId`)
   - `PG-045`: Client Messages (`/messages`)
+  - `PG-046`: Agreements Engine (`/agreements`)
+  - `PG-047`: Waypoint Payment Receipt Experience (`/receipt/:id`, `/portal/receipt/:id`)
   - `PG-404`: Not Found (`/404`)
 
 ---

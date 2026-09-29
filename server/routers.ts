@@ -63,8 +63,12 @@ import { pwnDecoderRouter } from "./routers/pwnDecoder";
 import { serviceAllowancesRouter } from "./routers/serviceAllowances";
 import { referralsRouter } from "./routers/referrals";
 import { lawyerPrepRouter } from "./routers/lawyerPrep";
+import { agreementsRouter } from "./routers/agreements";
+import { receiptsRouter } from "./routers/receipts";
 
 export const appRouter = router({
+  receipts: receiptsRouter,
+  agreements: agreementsRouter,
   lawyerPrep: lawyerPrepRouter,
   referrals: referralsRouter,
   serviceAllowances: serviceAllowancesRouter,

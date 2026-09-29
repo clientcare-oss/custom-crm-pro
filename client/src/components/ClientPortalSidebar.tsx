@@ -26,6 +26,7 @@ export const NAV_ITEMS = [
   { id: "tasks",         icon: CheckSquare,       label: "Tasks" },
   { id: "parking-lot",   icon: CircleParking,    label: "Parking Lot" },
   { id: "smart-docs",    icon: VaultSafeIcon,    label: "Document Vault" },
+  { id: "agreements",    icon: FileSignature,    label: "Agreements" },
   { id: "files",         icon: ActionCenterIcon, label: "Action Center" },
   { id: "tools",         icon: Wrench,        label: "Tools" },
   { id: "cases",         icon: Briefcase,     label: "Cases" },

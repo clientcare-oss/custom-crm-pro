@@ -317,8 +317,23 @@ export default function Automations() {
       }));
       setAutomations(mapped);
       
-      // Update active selection reference if currently editing
-      if (selectedAutomation) {
+      // Auto-open requested automation if linked from Lead Forms or another module
+      const params = new URLSearchParams(window.location.search);
+      const requestedTrigger = params.get("trigger");
+      const requestedId = params.get("id");
+      if (requestedTrigger) {
+        const found = mapped.find(m => m.triggerEvent === requestedTrigger);
+        if (found) {
+          setSelectedAutomation(found);
+          setActiveView("edit");
+        }
+      } else if (requestedId) {
+        const found = mapped.find(m => String(m.id) === requestedId);
+        if (found) {
+          setSelectedAutomation(found);
+          setActiveView("edit");
+        }
+      } else if (selectedAutomation) {
         const updatedSelection = mapped.find(m => m.name === selectedAutomation.name);
         if (updatedSelection) {
           setSelectedAutomation(updatedSelection);

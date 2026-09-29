@@ -2786,3 +2786,185 @@ export const aiLawyerPreps = mysqlTable("ai_lawyer_preps", {
 export type AiLawyerPrep = typeof aiLawyerPreps.$inferSelect;
 export type InsertAiLawyerPrep = typeof aiLawyerPreps.$inferInsert;
 
+/**
+ * Agreements Engine (PG-046)
+ * Consolidated legal document, e-signature, and audit trail engine.
+ */
+export const agreementTemplates = mysqlTable("agreement_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  agreementType: varchar("agreement_type", { length: 100 }).default("service_agreement").notNull(),
+  content: text("content").notNull(), // Rich document HTML / TipTap JSON template
+  mergeFields: text("merge_fields"), // JSON array of configured merge field tokens
+  requiredAcknowledgments: text("required_acknowledgments"), // JSON array: [{ id, text, required }]
+  initialsRequired: int("initials_required").default(0).notNull(), // 0 or 1
+  signatureConfig: text("signature_config"), // JSON configuration for signers & counter-signers
+  status: varchar("status", { length: 50 }).default("active").notNull(), // 'draft' | 'active' | 'archived'
+  version: int("version").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerIdx: index("agreement_templates_owner_idx").on(t.ownerId),
+}));
+
+export type AgreementTemplate = typeof agreementTemplates.$inferSelect;
+export type InsertAgreementTemplate = typeof agreementTemplates.$inferInsert;
+
+export const agreements = mysqlTable("agreements", {
+  id: int("id").autoincrement().primaryKey(),
+  templateId: int("template_id"),
+  ownerId: int("owner_id").notNull(),
+  clientId: int("client_id").notNull(),
+  studentContactId: int("student_contact_id"),
+  serviceId: int("service_id"),
+  planId: int("plan_id"),
+  advocateId: int("advocate_id"),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(), // Frozen rendered agreement snapshot
+  status: varchar("status", { length: 50 }).default("Draft").notNull(), // Draft, Ready, Sent, Viewed, Awaiting_Signature, Signed, Completed, Expired, Voided
+  sentAt: timestamp("sent_at"),
+  viewedAt: timestamp("viewed_at"),
+  signedAt: timestamp("signed_at"),
+  completedAt: timestamp("completed_at"),
+  expiresAt: timestamp("expires_at"),
+  signerName: varchar("signer_name", { length: 255 }),
+  signerIp: varchar("signer_ip", { length: 64 }),
+  userAgent: text("user_agent"),
+  signatureUrl: text("signature_url"),
+  signatureKey: text("signature_key"),
+  initialsData: text("initials_data"), // JSON: initials per clause/section
+  acknowledgmentData: text("acknowledgment_data"), // JSON: items acknowledged by client
+  mergeFieldSnapshot: text("merge_field_snapshot"), // JSON snapshot of merged tokens at generation
+  signedPdfUrl: text("signed_pdf_url"),
+  signedPdfKey: text("signed_pdf_key"),
+  documentHash: varchar("document_hash", { length: 128 }), // SHA-256 integrity hash of final document
+  contentLocked: int("content_locked").default(0).notNull(), // 1 when executed
+  internalNotes: text("internal_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerIdx: index("agreements_owner_idx").on(t.ownerId),
+  clientIdx: index("agreements_client_idx").on(t.clientId),
+  studentIdx: index("agreements_student_idx").on(t.studentContactId),
+}));
+
+export type Agreement = typeof agreements.$inferSelect;
+export type InsertAgreement = typeof agreements.$inferInsert;
+
+export const agreementSigners = mysqlTable("agreement_signers", {
+  id: int("id").autoincrement().primaryKey(),
+  agreementId: int("agreement_id").notNull(),
+  role: varchar("role", { length: 100 }).default("client").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, viewed, signed, declined
+  signedAt: timestamp("signed_at"),
+  signatureUrl: text("signature_url"),
+  signatureKey: text("signature_key"),
+  ipAddress: varchar("ip_address", { length: 64 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  agreementIdx: index("agreement_signers_agreement_idx").on(t.agreementId),
+}));
+
+export type AgreementSigner = typeof agreementSigners.$inferSelect;
+export type InsertAgreementSigner = typeof agreementSigners.$inferInsert;
+
+/**
+ * ── WAYPOINT TRANSACTIONS & RECEIPTS ENGINE (PG-047) ──────────────────────────
+ * Financial transactions confirmed via Stripe webhooks/events.
+ * Provides internal linkage between friendly Waypoint receipt numbers (WP-XXXXXX)
+ * and Stripe PaymentIntent/Invoice/Subscription IDs.
+ */
+export const transactions = mysqlTable("transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  receiptNumber: varchar("receipt_number", { length: 64 }).notNull().unique(), // e.g. "WP-001284"
+  ownerId: int("owner_id").notNull(),
+  clientId: int("client_id"),
+  studentContactId: int("student_contact_id"),
+  serviceId: int("service_id"),
+  serviceName: varchar("service_name", { length: 255 }).notNull(),
+  planName: varchar("plan_name", { length: 255 }),
+  transactionType: varchar("transaction_type", { length: 50 }).default("enrollment").notNull(), // enrollment, recurring, standalone, retainer
+  amountCents: int("amount_cents").notNull(),
+  currency: varchar("currency", { length: 10 }).default("usd").notNull(),
+  status: varchar("status", { length: 50 }).default("PAID").notNull(), // PAID, PARTIALLY_REFUNDED, REFUNDED, FAILED, PENDING
+  paymentMethodType: varchar("payment_method_type", { length: 50 }).default("card"),
+  paymentMethodBrand: varchar("payment_method_brand", { length: 50 }), // Visa, Mastercard, Amex, Discover
+  paymentMethodLast4: varchar("payment_method_last4", { length: 10 }), // e.g. "2986"
+  paidAt: timestamp("paid_at").defaultNow().notNull(),
+  nextPaymentDate: timestamp("next_payment_date"),
+  nextPaymentAmountCents: int("next_payment_amount_cents"),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  stripeInvoiceId: varchar("stripe_invoice_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  refundAmountCents: int("refund_amount_cents").default(0),
+  refundReason: text("refund_reason"),
+  refundedAt: timestamp("refunded_at"),
+  receiptPdfUrl: text("receipt_pdf_url"),
+  receiptPdfKey: text("receipt_pdf_key"),
+  emailSentAt: timestamp("email_sent_at"),
+  internalNotes: text("internal_notes"),
+  metadata: text("metadata"), // JSON
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  receiptNumIdx: index("transactions_receipt_num_idx").on(t.receiptNumber),
+  stripePiIdx: index("transactions_stripe_pi_idx").on(t.stripePaymentIntentId),
+  stripeInvIdx: index("transactions_stripe_inv_idx").on(t.stripeInvoiceId),
+  clientIdx: index("transactions_client_idx").on(t.clientId),
+}));
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;
+
+/**
+ * Receipt configuration & branding settings (PG-024-REC)
+ * Controls presentation, wording, prefix sequence, customer email delivery, and toggles.
+ */
+export const receiptSettings = mysqlTable("receipt_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(),
+  receiptExperienceEnabled: int("receipt_experience_enabled").default(1).notNull(), // 0 or 1
+  paymentSuccessAnimation: int("payment_success_animation").default(1).notNull(),
+  receiptPrinterAnimation: int("receipt_printer_animation").default(1).notNull(),
+  completionHeadline: varchar("completion_headline", { length: 255 }).default("You're officially aboard.").notNull(),
+  completionSupportingMessage: text("completion_supporting_message"),
+  completionButtonText: varchar("completion_button_text", { length: 255 }).default("Continue to Onboarding →").notNull(),
+  completionButtonUrl: varchar("completion_button_url", { length: 255 }).default("/portal").notNull(),
+  companyName: varchar("company_name", { length: 255 }).default("Waypoint Advocates").notNull(),
+  receiptDisplayName: varchar("receipt_display_name", { length: 255 }).default("WAYPOINT ADVOCATES").notNull(),
+  businessEmail: varchar("business_email", { length: 255 }).default("billing@waypointadvocates.com").notNull(),
+  businessPhone: varchar("business_phone", { length: 50 }).default("(404) 555-0100").notNull(),
+  businessAddress: varchar("business_address", { length: 255 }).default("Atlanta, GA"),
+  website: varchar("website", { length: 255 }).default("https://waypointadvocates.com"),
+  receiptFooterMessage: text("receipt_footer_message"),
+  supportContactInfo: text("support_contact_info"),
+  showPaymentMethod: int("show_payment_method").default(1).notNull(),
+  showNextPaymentDate: int("show_next_payment_date").default(1).notNull(),
+  showPlanServiceName: int("show_plan_service_name").default(1).notNull(),
+  showReceiptNumber: int("show_receipt_number").default(1).notNull(),
+  showBusinessAddress: int("show_business_address").default(0).notNull(),
+  showInternalTxRef: int("show_internal_tx_ref").default(0).notNull(),
+  receiptPrefix: varchar("receipt_prefix", { length: 20 }).default("WP-").notNull(),
+  nextReceiptSequence: int("next_receipt_sequence").default(1285).notNull(),
+  autoSendEmail: int("auto_send_email").default(1).notNull(),
+  senderDisplayName: varchar("sender_display_name", { length: 255 }).default("Waypoint Advocates").notNull(),
+  replyToEmail: varchar("reply_to_email", { length: 255 }).default("billing@waypointadvocates.com").notNull(),
+  attachPdfReceipt: int("attach_pdf_receipt").default(1).notNull(),
+  includeViewReceiptButton: int("include_view_receipt_button").default(1).notNull(),
+  stripeReceiptEmailEnabled: int("stripe_receipt_email_enabled").default(0).notNull(), // warns if both are 1
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReceiptSettings = typeof receiptSettings.$inferSelect;
+export type InsertReceiptSettings = typeof receiptSettings.$inferInsert;
+
+
+

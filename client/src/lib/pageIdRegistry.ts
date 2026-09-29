@@ -24,7 +24,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/students":                        { id: "PG-004", name: "Students", category: "CRM" },
   "/projects":                        { id: "PG-004", name: "Students", category: "CRM" },
   "/invoices":                        { id: "PG-005", name: "Invoices & Billing", category: "Billing" },
-  "/contracts":                       { id: "PG-006", name: "Agreements & Contracts", category: "Billing" },
+  "/contracts":                       { id: "PG-006", name: "Contracts (Redirects to /agreements)", category: "Business" },
+  "/agreements":                      { id: "PG-046", name: "Agreements Engine", category: "Business", description: "Canonical legal document, e-signature, and document integrity engine" },
   "/appointments":                    { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
   "/calendar":                        { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
   "/national-coverage":               { id: "PG-041", name: "National Coverage", category: "Schedule", description: "Meetings and client time zones at a glance, nationwide map & calling guidance" },
@@ -98,13 +99,15 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/pipeline":                        { id: "PG-039", name: "Advocacy Pipeline", category: "CRM", description: "Interactive Kanban-style case management pipeline" },
   "/post-meeting-review":             { id: "PG-044", name: "Post-Meeting Review", category: "Advocacy", description: "Portmaster post-meeting review and IEP amendment verification" },
   
-  // Smart Files Suite
-  "/smart-files":                     { id: "PG-033", name: "Smart Files Library", category: "Smart Files" },
+  // Smart Files Suite (Consolidated into Agreements Engine PG-046)
+  "/smart-files":                     { id: "PG-033", name: "Smart Files (Redirects to /agreements)", category: "Business" },
   "/guidance":                        { id: "PG-030-GCL", name: "Guide Client Live", category: "Advocacy", description: "Real-time Point Only co-browsing console" },
   "/portal/guidance":                 { id: "PG-030-GCL", name: "Client Portal Guidance Session", category: "Portal", description: "Active Waypoint guidance co-browsing session" },
   
   // Settings & System
   "/settings":                        { id: "PG-024", name: "Settings & Practice Profile", category: "Settings" },
+  "/settings/receipts":               { id: "PG-024-REC", name: "Company Settings → Receipts", category: "Settings", description: "Administrative control center for Waypoint payment receipt experience" },
+  "/receipt":                         { id: "PG-047", name: "Waypoint Payment Receipt", category: "Billing", description: "Official branded Waypoint payment confirmation terminal and receipt" },
   "/page-id-showcase":                { id: "PG-026", name: "Page ID Showcase", category: "System" },
   
   // Public & Client-Facing Touchpoints
@@ -225,6 +228,20 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     id: "PG-030",
     name: "Student Workspace",
     category: "CRM",
+  },
+
+  // Waypoint Payment Receipt
+  {
+    matcher: (path) => /^\/receipt\/[^/]+/.test(path),
+    id: "PG-047",
+    name: "Waypoint Payment Receipt",
+    category: "Billing",
+  },
+  {
+    matcher: (path) => /^\/portal\/receipt\/[^/]+/.test(path),
+    id: "PG-047",
+    name: "Portal Payment Receipt",
+    category: "Portal",
   },
 
   // Dynamic Forms
@@ -364,6 +381,15 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
     const tabParam = urlParams.get("tab");
     if (tabParam && CREW_QUARTERS_TAB_IDS[tabParam]) {
       return CREW_QUARTERS_TAB_IDS[tabParam];
+    }
+  }
+
+  // Check URL query search for receipts in settings
+  if (cleanPath === "/settings") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const sectionParam = urlParams.get("section") || urlParams.get("tab");
+    if (sectionParam === "receipts" || sectionParam === "receipt") {
+      return PAGE_IDS["/settings/receipts"];
     }
   }
 
