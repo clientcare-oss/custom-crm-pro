@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
 import { MessageSquare, Send, User } from "lucide-react";
 import RichTextEditor from "@/components/RichTextEditor";
+import PageIdBadge from "@/components/PageIdBadge";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -95,9 +96,12 @@ export default function Messages() {
       {/* Contacts Sidebar */}
       <Card className="w-80 flex flex-col">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Conversations
+          <CardTitle className="text-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              <span>Conversations</span>
+            </div>
+            <PageIdBadge id="PG-045" name="Client Messages" inline />
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 p-0 overflow-hidden">

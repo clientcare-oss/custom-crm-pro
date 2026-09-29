@@ -20,6 +20,7 @@ import BookingPage from "./pages/BookingPage";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import Settings from "./pages/Settings";
+import Messages from "./pages/Messages";
 import PortalManagement from "./pages/PortalManagement";
 import CaseCompassAdmin from "./pages/CaseCompassAdmin";
 import ContactDetail from "./pages/ContactDetail";
@@ -211,6 +212,7 @@ function Router() {
           <Route path="/walkthroughs" component={Walkthroughs} />
           <Route path="/call-center" component={UnassignedCallLogs} />
           <Route path="/call-logs" component={UnassignedCallLogs} />
+          <Route path="/messages" component={Messages} />
           <Route path="/team" component={Team} />
           <Route path="/tools/state-complaint-builder/:id/:section?" component={ComplaintWorkspace} />
           <Route path="/tools/state-complaint-builder" component={ComplaintCases} />

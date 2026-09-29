@@ -287,6 +287,7 @@ export default function CrewQuarters() {
   const studentsList = (contacts as any[]).filter((c) => c.jobTitle === "Student" || !c.parentContactId);
   const newLeadsCount = (leads as any[]).filter((l) => l.status === "New").length;
   const dbUnreadCount = Array.isArray(unreadMessages) ? (unreadMessages as any[]).length : 0;
+  const clientMessagesCount = dbUnreadCount;
   const newMessagesCount = dbUnreadCount > 0 ? dbUnreadCount : 1;
 
   return (
@@ -384,7 +385,7 @@ export default function CrewQuarters() {
         {/* Card 1: New Leads */}
         <div 
           onClick={() => setLocation("/leads")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
           {/* Unique Faded Texture 1: Celestial Navigation / Azimuth Rays */}
           <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
@@ -402,7 +403,7 @@ export default function CrewQuarters() {
           
           {/* Top Left Tiny Icon */}
           <div className="relative z-10 flex items-center justify-between w-full">
-            <div className="p-1.5 rounded-lg bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-105 transition-transform">
+            <div className="p-1 sm:p-1.5 rounded-lg bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-105 transition-transform">
               <UserPlus className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -415,7 +416,7 @@ export default function CrewQuarters() {
           </div>
 
           {/* Full Text at Bottom */}
-          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+          <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-blue-200/90 group-hover:text-white transition-colors tracking-tight whitespace-nowrap">
             New Leads
           </div>
         </div>
@@ -423,7 +424,7 @@ export default function CrewQuarters() {
         {/* Card 2: Meetings Today */}
         <div 
           onClick={() => setLocation("/calendar")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-sky-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(56,189,248,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-sky-400/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(56,189,248,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
           {/* Unique Faded Texture 2: Undulating Oceanic Flow & Tide Lines */}
           <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
@@ -436,7 +437,7 @@ export default function CrewQuarters() {
           
           {/* Top Left Tiny Icon */}
           <div className="relative z-10 flex items-center justify-between w-full">
-            <div className="p-1.5 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 group-hover:scale-105 transition-transform">
+            <div className="p-1 sm:p-1.5 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 group-hover:scale-105 transition-transform">
               <Calendar className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -449,15 +450,15 @@ export default function CrewQuarters() {
           </div>
 
           {/* Full Text at Bottom */}
-          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+          <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-blue-200/90 group-hover:text-white transition-colors tracking-tight whitespace-nowrap">
             Meetings Today
           </div>
         </div>
 
-        {/* Card 3: Callbacks */}
+        {/* Card 3: Client Emails */}
         <div 
-          onClick={() => setLocation("/call-logs")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-emerald-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(52,211,153,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+          onClick={() => setLocation("/messages")}
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-emerald-400/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(52,211,153,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
           {/* Unique Faded Texture 3: Sonar / Radar Range Rings */}
           <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
@@ -470,30 +471,36 @@ export default function CrewQuarters() {
           </svg>
           <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-400/20 transition-all duration-300" />
           
-          {/* Top Left Tiny Icon */}
+          {/* Top Left Tiny Icon with Email Emoji */}
           <div className="relative z-10 flex items-center justify-between w-full">
-            <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 group-hover:scale-105 transition-transform">
-              <Phone className="w-3.5 h-3.5" />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center min-w-[26px] min-h-[26px] sm:min-w-[28px] sm:min-h-[28px]">
+              <span className="text-xs sm:text-sm leading-none select-none" role="img" aria-label="Client Emails">✉️</span>
             </div>
+            {clientMessagesCount > 0 && (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+              </span>
+            )}
           </div>
 
           {/* Centered Huge Number */}
           <div className="flex-1 flex items-center justify-center my-1 relative z-10">
             <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-              {unassignedCalls.length || 3}
+              {clientMessagesCount}
             </div>
           </div>
 
           {/* Full Text at Bottom */}
-          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
-            Callbacks
+          <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-blue-200/90 group-hover:text-white transition-colors tracking-tight whitespace-nowrap">
+            Client Emails
           </div>
         </div>
 
         {/* Card 4: Tasks Due */}
         <div 
           onClick={() => handleTabChange("tasks")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
           {/* Unique Faded Texture 4: Architectural Coordinate Grid & Sounding Points */}
           <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
@@ -515,7 +522,7 @@ export default function CrewQuarters() {
           
           {/* Top Left Tiny Icon */}
           <div className="relative z-10 flex items-center justify-between w-full">
-            <div className="p-1.5 rounded-lg bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-105 transition-transform">
+            <div className="p-1 sm:p-1.5 rounded-lg bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-105 transition-transform">
               <CheckSquare className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -528,7 +535,7 @@ export default function CrewQuarters() {
           </div>
 
           {/* Full Text at Bottom */}
-          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+          <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-blue-200/90 group-hover:text-white transition-colors tracking-tight whitespace-nowrap">
             Tasks Due
           </div>
         </div>
@@ -536,7 +543,7 @@ export default function CrewQuarters() {
         {/* Card 5: Crew Messages */}
         <div 
           onClick={() => handleTabChange("messages")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-cyan-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(6,182,212,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-cyan-400/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(6,182,212,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
           {/* Unique Faded Texture 5: Transmission Propagation Frequency Waves */}
           <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
@@ -549,7 +556,7 @@ export default function CrewQuarters() {
           
           {/* Top Left Tiny Icon & Optional Ping Badge */}
           <div className="relative z-10 flex items-center justify-between w-full">
-            <div className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shrink-0 group-hover:scale-105 transition-transform">
+            <div className="p-1 sm:p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shrink-0 group-hover:scale-105 transition-transform">
               <MessageSquare className="w-3.5 h-3.5" />
             </div>
             {crewUnreadTotal > 0 && (
@@ -568,7 +575,7 @@ export default function CrewQuarters() {
           </div>
 
           {/* Full Text at Bottom */}
-          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+          <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-blue-200/90 group-hover:text-white transition-colors tracking-tight whitespace-nowrap">
             Crew Messages
           </div>
         </div>

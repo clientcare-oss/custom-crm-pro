@@ -53,6 +53,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/walkthroughs":                    { id: "PG-017", name: "System Walkthroughs", category: "Help" },
   "/call-center":                     { id: "PG-018", name: "Call Center", category: "Communications" },
   "/call-logs":                       { id: "PG-018", name: "Unassigned Call Logs", category: "Communications" },
+  "/messages":                        { id: "PG-045", name: "Client Messages", category: "Communications", description: "Direct parent and client messaging console" },
   "/team":                            { id: "PG-019", name: "Team & Staff Management", category: "Admin" },
   
   // Special Advocacy Engines

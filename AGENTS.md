@@ -133,6 +133,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-042`: Waypoint Metrics (`/metrics`, `/company/metrics`)
   - `PG-043`: Meeting Workspace (`/meeting-workspace`, `/meeting-workspace/:studentId`)
   - `PG-044`: Post-Meeting Review (`/post-meeting-review`, `/post-meeting-review/:studentId`)
+  - `PG-045`: Client Messages (`/messages`)
   - `PG-404`: Not Found (`/404`)
 
 ---
