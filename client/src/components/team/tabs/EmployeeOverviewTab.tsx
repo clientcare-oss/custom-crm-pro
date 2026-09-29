@@ -114,7 +114,7 @@ export default function EmployeeOverviewTab({
       </div>
 
       {/* ── Quick Action Shortcuts Bar ── */}
-      <div className="p-3.5 rounded-2xl border border-blue-900/50 bg-[#000a26] flex items-center gap-2 overflow-x-auto">
+      <div className="p-3.5 rounded-2xl border border-blue-900/50 bg-[#000a26] flex flex-wrap items-center gap-2">
         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 mr-1">
           Quick Actions:
         </span>

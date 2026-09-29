@@ -83,13 +83,16 @@ export default function EmployeeManagementWorkspace({
   const prevEmployee = currentIndex > 0 ? allEmployees[currentIndex - 1] : null;
   const nextEmployee = currentIndex < allEmployees.length - 1 ? allEmployees[currentIndex + 1] : null;
 
-  const TABS = [
+  const ROW1_TABS = [
     { id: "overview", label: "Overview", icon: User },
     { id: "employment", label: "Employment", icon: Briefcase },
     { id: "payroll", label: "Payroll & Comp", icon: DollarSign },
     { id: "roles", label: "Roles & Access", icon: Shield },
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "timeoff", label: "Time Off", icon: Plane },
+  ];
+
+  const ROW2_TABS = [
     { id: "documents", label: "Documents", icon: FileText },
     { id: "equipment", label: "Equipment", icon: Laptop },
     { id: "training", label: "Training", icon: GraduationCap },
@@ -319,24 +322,57 @@ export default function EmployeeManagementWorkspace({
         </div>
       </div>
 
-      {/* ── Tab Navigation Ribbon (11 Management Domains) ── */}
-      <div className="bg-[#000a26] border border-blue-900/60 rounded-2xl p-1.5 shadow-lg">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-1 select-none">
-          {TABS.map((tab) => {
+      {/* ── 2-Row Tab Navigation Command Deck (Double Bar with Divider, No Scrolling) ── */}
+      <div className="w-full rounded-2xl border border-blue-900/60 bg-gradient-to-br from-[#000d2b] via-[#00133d] to-[#000a26] p-1.5 sm:p-2 shadow-xl relative overflow-hidden space-y-1.5">
+        {/* Top subtle golden shimmer accent */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent pointer-events-none" />
+
+        {/* Row 1: Profile, HR & Scheduling (6 tabs) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5 w-full relative z-10">
+          {ROW1_TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                className={`w-full min-w-0 h-9 sm:h-9.5 px-2 py-1 rounded-xl text-xs sm:text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   isActive
-                    ? "bg-gradient-to-r from-blue-600 to-sky-600 text-white shadow-md shadow-blue-950/50 ring-1 ring-white/20"
-                    : "text-blue-200/70 hover:text-white hover:bg-white/[0.06]"
+                    ? "bg-gradient-to-r from-blue-600 via-sky-600 to-blue-500 text-white shadow-md shadow-blue-950/60 ring-1 ring-white/20 font-extrabold"
+                    : "text-blue-200/75 hover:text-white hover:bg-white/[0.07] border border-transparent"
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-sky-400"}`} />
-                <span>{tab.label}</span>
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-amber-300" : "text-sky-400"}`} />
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Middle Horizontal Divider */}
+        <div className="relative py-0.5">
+          <div className="border-t border-blue-900/70" />
+        </div>
+
+        {/* Row 2: Compliance, Assets & Records (5 tabs) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 w-full relative z-10">
+          {ROW2_TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full min-w-0 h-9 sm:h-9.5 px-2 py-1 rounded-xl text-xs sm:text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-gradient-to-r from-blue-600 via-sky-600 to-blue-500 text-white shadow-md shadow-blue-950/60 ring-1 ring-white/20 font-extrabold"
+                    : "text-blue-200/75 hover:text-white hover:bg-white/[0.07] border border-transparent"
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-amber-300" : "text-sky-400"}`} />
+                <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
