@@ -449,7 +449,7 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "meeting_workspace", label: "Meeting Workspace (PG-043)", path: "/meeting-workspace", group: "Manage Experiences", icon: Zap },
   { id: "post_meeting_review", label: "Post-Meeting Review (PG-044)", path: "/post-meeting-review", group: "Manage Experiences", icon: Zap },
   { id: "case_compass", label: "Case Compass", path: "/case-compass", group: "Manage Experiences", icon: Compass },
-  { id: "scheduler", label: "Public Scheduler", path: "/scheduler", group: "Manage Experiences", icon: CalendarClock },
+  { id: "scheduler", label: "Session Types", path: "/calendar?tab=session-types", group: "Call Center & Scheduling", icon: CalendarClock },
   // Templates & Forms
   { id: "lead_forms", label: "Lead Forms Builder", path: "/leads/forms", group: "Templates & Forms", icon: ClipboardList },
   { id: "smart_files", label: "Smart Files Suite", path: "/smart-files", group: "Templates & Forms", icon: LayoutTemplate },

@@ -1026,25 +1026,27 @@ export default function Scheduler() {
   return (
     <div className="space-y-6 p-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Scheduler</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Session Types</h1>
+            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              PG-008
+            </span>
+          </div>
+          <h2 className="text-sm font-semibold text-foreground mt-1.5">Manage your session types</h2>
+          <p className="text-sm text-muted-foreground mt-0.5 max-w-2xl leading-relaxed">
+            Create and manage the types of appointments people can book, including availability, duration, booking links, and Client Portal access.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.open("/book", "_blank")} className="text-xs gap-1.5">
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={() => window.open("/book", "_blank")} className="text-xs gap-1.5 cursor-pointer">
             <ExternalLink className="h-3.5 w-3.5" /> View Live Scheduler
           </Button>
-          <Button variant="outline" size="sm" onClick={() => window.location.href = "/calendar"} className="text-xs gap-1.5">
-            <Calendar className="h-3.5 w-3.5" /> Go to calendar
+          <Button variant="outline" size="sm" onClick={() => window.location.href = "/calendar"} className="text-xs gap-1.5 cursor-pointer">
+            <Calendar className="h-3.5 w-3.5" /> Go to Calendar
           </Button>
         </div>
-      </div>
-
-      <div>
-        <h2 className="text-base font-semibold text-foreground">Manage your sessions</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Edit the details of your sessions, copy the links to send to clients, and preview their experience.
-        </p>
       </div>
 
       {/* Session type grid */}

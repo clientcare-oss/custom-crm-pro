@@ -200,7 +200,8 @@ function Router() {
           <Route path="/appointments" component={Appointments} />
           <Route path="/calendar" component={Appointments} />
           <Route path="/national-coverage" component={NationalCoverage} />
-          <Route path="/scheduler" component={Scheduler} />
+          <Route path="/scheduler">{() => <Redirect to="/calendar?tab=session-types" />}</Route>
+          <Route path="/session-types">{() => <Redirect to="/calendar?tab=session-types" />}</Route>
           <Route path="/tasks" component={Tasks} />
           <Route path="/tech-tasks">{() => <Redirect to="/tasks" />}</Route>
           <Route path="/tools" component={Tools} />

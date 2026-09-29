@@ -28,7 +28,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/appointments":                    { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
   "/calendar":                        { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
   "/national-coverage":               { id: "PG-041", name: "National Coverage", category: "Schedule", description: "Meetings and client time zones at a glance, nationwide map & calling guidance" },
-  "/scheduler":                       { id: "PG-008", name: "Appointment Scheduler", category: "Schedule" },
+  "/scheduler":                       { id: "PG-008", name: "Session Types (Redirects to Calendar)", category: "Schedule" },
+  "/session-types":                   { id: "PG-008", name: "Session Types", category: "Schedule", description: "Create and manage the types of appointments people can book" },
   "/tasks":                           { id: "PG-009", name: "Tasks & Case To-Dos", category: "Productivity" },
   
   // Tools & Workspaces

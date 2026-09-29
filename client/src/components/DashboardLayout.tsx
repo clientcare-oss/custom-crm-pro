@@ -148,12 +148,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           path: "/meeting-workspace",
           keywords: ["meeting", "iep meeting", "meeting workspace", "pg-043", "blueprint", "advocate ready", "targets", "live meeting"]
         },
-        { 
-          icon: CalendarClock, 
-          label: "Scheduler", 
-          path: "/scheduler",
-          keywords: ["scheduler", "booking", "appointments", "availability", "experience", "pg-008"]
-        },
       ],
     },
     {
@@ -1196,7 +1190,7 @@ const PAGE_LIST = [
   { id: "PG-005", name: "Invoices", path: "/invoices" },
   { id: "PG-006", name: "Contracts", path: "/contracts" },
   { id: "PG-007", name: "Appointments / Calendar", path: "/calendar" },
-  { id: "PG-008", name: "Scheduler", path: "/scheduler" },
+  { id: "PG-008", name: "Session Types", path: "/calendar?tab=session-types" },
   { id: "PG-009", name: "Tasks", path: "/tasks" },
   { id: "PG-010", name: "Tools", path: "/tools" },
   { id: "PG-010-REC", name: "Voyage Meeting Recorder", path: "/tools/voyage-recorder" },
