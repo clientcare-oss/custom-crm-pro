@@ -28,6 +28,113 @@ import { cn } from "@/lib/utils";
 const LEAD_STATUSES = ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Ready for Archive", "Won", "Lost"] as const;
 type LeadStatus = (typeof LEAD_STATUSES)[number];
 
+function format12Hour(timeStr: string): string {
+  if (!timeStr) return "";
+  const parts = timeStr.split(":");
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h)) return timeStr;
+  const ampm = h >= 12 ? "PM" : "AM";
+  const displayH = h % 12 || 12;
+  const displayM = isNaN(m) ? "00" : String(m).padStart(2, "0");
+  return `${displayH}:${displayM} ${ampm}`;
+}
+
+function parseDiscoveryDateTime(raw: string | Date | null | undefined): {
+  dateObj: Date;
+  hasSpecificTime: boolean;
+  timeDisplay: string;
+  dateDisplay: string;
+  isToday: boolean;
+  isoDateStr: string;
+  timeStr: string;
+} {
+  if (!raw) {
+    const fallback = new Date();
+    return {
+      dateObj: fallback,
+      hasSpecificTime: false,
+      timeDisplay: "Time TBD",
+      dateDisplay: "",
+      isToday: false,
+      isoDateStr: "",
+      timeStr: "",
+    };
+  }
+
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) {
+    const fallback = new Date();
+    return {
+      dateObj: fallback,
+      hasSpecificTime: false,
+      timeDisplay: "Time TBD",
+      dateDisplay: "",
+      isToday: false,
+      isoDateStr: "",
+      timeStr: "",
+    };
+  }
+
+  const now = new Date();
+  const todayYear = now.getFullYear();
+  const todayMonth = now.getMonth();
+  const todayDate = now.getDate();
+
+  // Detect pure UTC midnight (which happens when type="date" string was parsed in UTC)
+  const isPureUtcMidnight =
+    d.getUTCHours() === 0 &&
+    d.getUTCMinutes() === 0 &&
+    d.getUTCSeconds() === 0 &&
+    d.getUTCMilliseconds() === 0;
+
+  let localDate: Date;
+  let hasSpecificTime: boolean;
+
+  if (isPureUtcMidnight) {
+    // When saved without time, preserve calendar year/month/date locally at default 10:00 AM
+    localDate = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 10, 0, 0, 0);
+    hasSpecificTime = false;
+  } else {
+    localDate = d;
+    hasSpecificTime = !(localDate.getHours() === 0 && localDate.getMinutes() === 0);
+  }
+
+  const isToday =
+    localDate.getFullYear() === todayYear &&
+    localDate.getMonth() === todayMonth &&
+    localDate.getDate() === todayDate;
+
+  const hours = String(localDate.getHours()).padStart(2, "0");
+  const minutes = String(localDate.getMinutes()).padStart(2, "0");
+  const timeStr = hasSpecificTime ? `${hours}:${minutes}` : "";
+
+  const yearStr = String(localDate.getFullYear());
+  const monthStr = String(localDate.getMonth() + 1).padStart(2, "0");
+  const dayStr = String(localDate.getDate()).padStart(2, "0");
+  const isoDateStr = `${yearStr}-${monthStr}-${dayStr}`;
+
+  const timeDisplay = hasSpecificTime
+    ? localDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : "Time TBD";
+
+  const dateDisplay = localDate.toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+
+  return {
+    dateObj: localDate,
+    hasSpecificTime,
+    timeDisplay,
+    dateDisplay,
+    isToday,
+    isoDateStr,
+    timeStr,
+  };
+}
+
 const emptyForm = {
   source: "",
   value: "",
@@ -39,6 +146,7 @@ const emptyForm = {
   studentAge: "",
   studentGrade: "",
   discoveryCallDate: "",
+  discoveryCallTime: "",
 };
 
 export default function Leads() {
@@ -91,6 +199,23 @@ export default function Leads() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    let finalDiscoveryDate: Date | undefined = undefined;
+    if (formData.discoveryCallDate) {
+      const [yearStr, monthStr, dayStr] = formData.discoveryCallDate.split("-");
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10) - 1;
+      const day = parseInt(dayStr, 10);
+
+      let hours = 10;
+      let minutes = 0;
+      if (formData.discoveryCallTime) {
+        const [hStr, mStr] = formData.discoveryCallTime.split(":");
+        hours = parseInt(hStr, 10) || 0;
+        minutes = parseInt(mStr, 10) || 0;
+      }
+      finalDiscoveryDate = new Date(year, month, day, hours, minutes, 0, 0);
+    }
+
     const payload = {
       source: formData.source || undefined,
       value: formData.value || undefined,
@@ -101,7 +226,7 @@ export default function Leads() {
       studentName: formData.studentName || undefined,
       studentAge: formData.studentAge ? parseInt(formData.studentAge) : undefined,
       studentGrade: formData.studentGrade || undefined,
-      discoveryCallDate: formData.discoveryCallDate ? new Date(formData.discoveryCallDate) : undefined,
+      discoveryCallDate: finalDiscoveryDate,
     };
 
     if (editingId) {
@@ -113,6 +238,39 @@ export default function Leads() {
 
   const handleEdit = (lead: any) => {
     setEditingId(lead.id);
+
+    let dateStr = "";
+    let timeStr = "";
+
+    if (lead.discoveryCallDate) {
+      const parsed = parseDiscoveryDateTime(lead.discoveryCallDate);
+      dateStr = parsed.isoDateStr;
+      timeStr = parsed.timeStr;
+
+      // If time isn't explicitly set on lead.discoveryCallDate, check if there's a matching appointment with a start time
+      if (!timeStr) {
+        const matchingApt = (appointments as any[]).find((apt) => {
+          if (!apt.startTime) return false;
+          const aptD = new Date(apt.startTime);
+          const isSameDay =
+            aptD.getFullYear() === parsed.dateObj.getFullYear() &&
+            aptD.getMonth() === parsed.dateObj.getMonth() &&
+            aptD.getDate() === parsed.dateObj.getDate();
+          const matchesContact = lead.contactId && apt.clientId === lead.contactId;
+          const matchesParent =
+            lead.parentName &&
+            apt.parentName &&
+            apt.parentName.toLowerCase().includes(lead.parentName.toLowerCase());
+          return isSameDay && (matchesContact || matchesParent);
+        });
+
+        if (matchingApt?.startTime) {
+          const aptD = new Date(matchingApt.startTime);
+          timeStr = `${String(aptD.getHours()).padStart(2, "0")}:${String(aptD.getMinutes()).padStart(2, "0")}`;
+        }
+      }
+    }
+
     setFormData({
       source: lead.source || "",
       value: (lead.value || 0).toString(),
@@ -123,9 +281,8 @@ export default function Leads() {
       studentName: lead.studentName || "",
       studentAge: lead.studentAge?.toString() || "",
       studentGrade: lead.studentGrade || "",
-      discoveryCallDate: lead.discoveryCallDate
-        ? new Date(lead.discoveryCallDate).toISOString().split("T")[0]
-        : "",
+      discoveryCallDate: dateStr,
+      discoveryCallTime: timeStr,
     });
     setOpen(true);
   };
@@ -184,8 +341,8 @@ export default function Leads() {
     // 1. Process Leads with discoveryCallDate
     (leads || []).forEach((lead) => {
       if (lead.discoveryCallDate) {
-        const d = new Date(lead.discoveryCallDate);
-        if (!isNaN(d.getTime())) {
+        const parsed = parseDiscoveryDateTime(lead.discoveryCallDate);
+        if (!isNaN(parsed.dateObj.getTime())) {
           seenLeadIds.add(lead.id);
 
           // Check if there is an appointment on the same day for this lead
@@ -193,9 +350,9 @@ export default function Leads() {
             if (!apt.startTime) return false;
             const aptD = new Date(apt.startTime);
             const isSameDay =
-              aptD.getFullYear() === d.getFullYear() &&
-              aptD.getMonth() === d.getMonth() &&
-              aptD.getDate() === d.getDate();
+              aptD.getFullYear() === parsed.dateObj.getFullYear() &&
+              aptD.getMonth() === parsed.dateObj.getMonth() &&
+              aptD.getDate() === parsed.dateObj.getDate();
             const matchesContact = lead.contactId && apt.clientId === lead.contactId;
             const matchesParent =
               lead.parentName &&
@@ -204,11 +361,10 @@ export default function Leads() {
             return isSameDay && (matchesContact || matchesParent);
           });
 
-          const effectiveDate = matchingApt?.startTime ? new Date(matchingApt.startTime) : d;
+          const effectiveDate = matchingApt?.startTime ? new Date(matchingApt.startTime) : parsed.dateObj;
           const hasSpecificTime =
             matchingApt?.startTime ||
-            d.getHours() !== 0 ||
-            d.getMinutes() !== 0;
+            parsed.hasSpecificTime;
 
           const timeDisplay = hasSpecificTime
             ? effectiveDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
@@ -418,16 +574,143 @@ export default function Leads() {
                 </div>
 
                 {/* Discovery Call */}
-                <div className="space-y-1 pt-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Discovery Call</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold">Discovery Call Date</label>
-                  <Input
-                    type="date"
-                    value={formData.discoveryCallDate}
-                    onChange={(e) => setFormData({ ...formData, discoveryCallDate: e.target.value })}
-                  />
+                <div className="space-y-2 pt-2 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Discovery Call Schedule</span>
+                    </p>
+                    {formData.discoveryCallDate && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, discoveryCallDate: "", discoveryCallTime: "" })}
+                        className="text-[11px] text-muted-foreground hover:text-rose-400 transition-colors cursor-pointer"
+                      >
+                        Clear Schedule
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold">Call Date</label>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const today = new Date();
+                              const y = today.getFullYear();
+                              const m = String(today.getMonth() + 1).padStart(2, "0");
+                              const d = String(today.getDate()).padStart(2, "0");
+                              setFormData({ ...formData, discoveryCallDate: `${y}-${m}-${d}` });
+                            }}
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 cursor-pointer"
+                          >
+                            Today
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const tmrw = new Date();
+                              tmrw.setDate(tmrw.getDate() + 1);
+                              const y = tmrw.getFullYear();
+                              const m = String(tmrw.getMonth() + 1).padStart(2, "0");
+                              const d = String(tmrw.getDate()).padStart(2, "0");
+                              setFormData({ ...formData, discoveryCallDate: `${y}-${m}-${d}` });
+                            }}
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground border border-border/40 cursor-pointer"
+                          >
+                            Tomorrow
+                          </button>
+                        </div>
+                      </div>
+                      <Input
+                        type="date"
+                        value={formData.discoveryCallDate}
+                        onChange={(e) => setFormData({ ...formData, discoveryCallDate: e.target.value })}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold">Call Time</label>
+                        <span className="text-[10px] text-muted-foreground">Local Time</span>
+                      </div>
+                      <Input
+                        type="time"
+                        value={formData.discoveryCallTime}
+                        onChange={(e) => setFormData({ ...formData, discoveryCallTime: e.target.value })}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quick Time Presets */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <span className="text-[10px] text-muted-foreground font-medium mr-1">Time presets:</span>
+                    {[
+                      { label: "9:00 AM", value: "09:00" },
+                      { label: "10:00 AM", value: "10:00" },
+                      { label: "11:30 AM", value: "11:30" },
+                      { label: "1:00 PM", value: "13:00" },
+                      { label: "2:00 PM", value: "14:00" },
+                      { label: "3:30 PM", value: "15:30" },
+                      { label: "4:30 PM", value: "16:30" },
+                    ].map((preset) => (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        onClick={() => {
+                          let dateVal = formData.discoveryCallDate;
+                          if (!dateVal) {
+                            const today = new Date();
+                            const y = today.getFullYear();
+                            const m = String(today.getMonth() + 1).padStart(2, "0");
+                            const d = String(today.getDate()).padStart(2, "0");
+                            dateVal = `${y}-${m}-${d}`;
+                          }
+                          setFormData({ ...formData, discoveryCallDate: dateVal, discoveryCallTime: preset.value });
+                        }}
+                        className={cn(
+                          "px-2 py-0.5 text-[10px] font-medium rounded-md border transition-all cursor-pointer",
+                          formData.discoveryCallTime === preset.value
+                            ? "bg-blue-600 text-white border-blue-500 shadow-xs"
+                            : "bg-muted/40 hover:bg-muted text-muted-foreground border-border/50"
+                        )}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Live scheduling feedback banner */}
+                  {formData.discoveryCallDate && (() => {
+                    const today = new Date();
+                    const y = today.getFullYear();
+                    const m = String(today.getMonth() + 1).padStart(2, "0");
+                    const d = String(today.getDate()).padStart(2, "0");
+                    const isTodayDate = formData.discoveryCallDate === `${y}-${m}-${d}`;
+
+                    return isTodayDate ? (
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/10 border border-blue-500/25 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                        <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-ping" />
+                        <span>
+                          Will appear in <strong>Today’s Discovery Calls</strong>
+                          {formData.discoveryCallTime ? ` at ${format12Hour(formData.discoveryCallTime)}` : " (Time TBD)"}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/40 border border-border/50 text-xs text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5 text-muted-foreground/70" />
+                        <span>
+                          Will appear in <strong>Upcoming Discovery Calls</strong>: {formData.discoveryCallDate}
+                          {formData.discoveryCallTime ? ` at ${format12Hour(formData.discoveryCallTime)}` : ""}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Lead Details */}
@@ -844,16 +1127,25 @@ export default function Leads() {
                           </div>
                         )}
 
-                        {/* Discovery call date */}
-                        {lead.discoveryCallDate && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-                            <Calendar className="size-3.5 shrink-0 text-muted-foreground/70" />
-                            <span className="truncate">
-                              Discovery Call:{" "}
-                              {new Date(lead.discoveryCallDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
+                        {/* Discovery call date & time */}
+                        {lead.discoveryCallDate && (() => {
+                          const parsed = parseDiscoveryDateTime(lead.discoveryCallDate);
+                          return (
+                            <div className="flex items-center justify-between gap-1.5 text-xs min-w-0">
+                              <div className="flex items-center gap-1.5 min-w-0 truncate">
+                                <Calendar className={cn("size-3.5 shrink-0", parsed.isToday ? "text-blue-500 dark:text-blue-400" : "text-muted-foreground/70")} />
+                                <span className={cn("truncate", parsed.isToday ? "font-semibold text-blue-600 dark:text-blue-400" : "text-muted-foreground")}>
+                                  Discovery: {parsed.dateDisplay}{parsed.hasSpecificTime ? ` · ${parsed.timeDisplay}` : ""}
+                                </span>
+                              </div>
+                              {parsed.isToday && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 shrink-0">
+                                  Today
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {/* Value */}
                         {lead.value && (
