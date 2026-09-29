@@ -384,139 +384,167 @@ export default function CrewQuarters() {
         {/* Card 1: New Leads */}
         <div 
           onClick={() => setLocation("/leads")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-amber-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
-          {/* Subtle bathymetric wave texture */}
-          <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
-            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
-          />
-          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
+          {/* Unique Faded Texture 1: Celestial Navigation / Azimuth Rays */}
+          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
+            <circle cx="130" cy="20" r="45" stroke="#f59e0b" strokeWidth="0.75" strokeDasharray="3 3" />
+            <circle cx="130" cy="20" r="75" stroke="#f59e0b" strokeWidth="0.5" />
+            <circle cx="130" cy="20" r="105" stroke="#f59e0b" strokeWidth="0.4" strokeDasharray="4 4" />
+            <line x1="130" y1="-30" x2="130" y2="100" stroke="#f59e0b" strokeWidth="0.6" strokeDasharray="2 4" />
+            <line x1="50" y1="20" x2="180" y2="20" stroke="#f59e0b" strokeWidth="0.6" strokeDasharray="2 4" />
+            <line x1="80" y1="-30" x2="180" y2="70" stroke="#f59e0b" strokeWidth="0.4" strokeDasharray="2 4" />
+          </svg>
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-300" />
           
-          {/* Huge Number */}
-          <div className="relative z-10">
+          {/* Top Left Tiny Icon */}
+          <div className="relative z-10 flex items-center justify-between w-full">
+            <div className="p-1.5 rounded-lg bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-105 transition-transform">
+              <UserPlus className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Centered Huge Number */}
+          <div className="flex-1 flex items-center justify-center my-1 relative z-10">
             <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {newLeadsCount}
             </div>
           </div>
 
-          {/* Icon Beside Text at Bottom */}
-          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
-            <div className="p-1 rounded-md bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-110 transition-transform">
-              <UserPlus className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
-              New Leads
-            </span>
+          {/* Full Text at Bottom */}
+          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+            New Leads
           </div>
         </div>
 
         {/* Card 2: Meetings Today */}
         <div 
           onClick={() => setLocation("/calendar")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-sky-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(56,189,248,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-sky-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(56,189,248,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
-          {/* Subtle bathymetric wave texture */}
-          <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
-            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
-          />
-          <div className="absolute -top-10 -right-10 w-28 h-28 bg-sky-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-sky-400/25 transition-all duration-300" />
+          {/* Unique Faded Texture 2: Undulating Oceanic Flow & Tide Lines */}
+          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
+            <path d="M-20 35 C 30 10, 80 60, 180 25" stroke="#38bdf8" strokeWidth="0.75" />
+            <path d="M-20 55 C 40 30, 90 80, 180 45" stroke="#38bdf8" strokeWidth="0.6" strokeDasharray="4 3" />
+            <path d="M-20 75 C 20 50, 100 100, 180 65" stroke="#38bdf8" strokeWidth="0.75" />
+            <path d="M-20 95 C 50 70, 110 115, 180 85" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="3 3" />
+          </svg>
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-sky-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-sky-400/20 transition-all duration-300" />
           
-          {/* Huge Number */}
-          <div className="relative z-10">
+          {/* Top Left Tiny Icon */}
+          <div className="relative z-10 flex items-center justify-between w-full">
+            <div className="p-1.5 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 group-hover:scale-105 transition-transform">
+              <Calendar className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Centered Huge Number */}
+          <div className="flex-1 flex items-center justify-center my-1 relative z-10">
             <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {todayAppointments.length || 2}
             </div>
           </div>
 
-          {/* Icon Beside Text at Bottom */}
-          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
-            <div className="p-1 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 group-hover:scale-110 transition-transform">
-              <Calendar className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
-              Meetings Today
-            </span>
+          {/* Full Text at Bottom */}
+          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+            Meetings Today
           </div>
         </div>
 
         {/* Card 3: Callbacks */}
         <div 
           onClick={() => setLocation("/call-logs")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-emerald-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(52,211,153,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-emerald-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(52,211,153,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
-          {/* Subtle bathymetric wave texture */}
-          <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
-            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
-          />
-          <div className="absolute -top-10 -right-10 w-28 h-28 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-400/25 transition-all duration-300" />
+          {/* Unique Faded Texture 3: Sonar / Radar Range Rings */}
+          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
+            <circle cx="140" cy="90" r="30" stroke="#34d399" strokeWidth="0.6" />
+            <circle cx="140" cy="90" r="60" stroke="#34d399" strokeWidth="0.6" strokeDasharray="3 4" />
+            <circle cx="140" cy="90" r="90" stroke="#34d399" strokeWidth="0.5" />
+            <circle cx="140" cy="90" r="120" stroke="#34d399" strokeWidth="0.4" strokeDasharray="5 4" />
+            <line x1="80" y1="90" x2="160" y2="90" stroke="#34d399" strokeWidth="0.5" strokeDasharray="2 3" />
+            <line x1="140" y1="30" x2="140" y2="120" stroke="#34d399" strokeWidth="0.5" strokeDasharray="2 3" />
+          </svg>
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-400/20 transition-all duration-300" />
           
-          {/* Huge Number */}
-          <div className="relative z-10">
+          {/* Top Left Tiny Icon */}
+          <div className="relative z-10 flex items-center justify-between w-full">
+            <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 group-hover:scale-105 transition-transform">
+              <Phone className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Centered Huge Number */}
+          <div className="flex-1 flex items-center justify-center my-1 relative z-10">
             <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {unassignedCalls.length || 3}
             </div>
           </div>
 
-          {/* Icon Beside Text at Bottom */}
-          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
-            <div className="p-1 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 group-hover:scale-110 transition-transform">
-              <Phone className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
-              Callbacks
-            </span>
+          {/* Full Text at Bottom */}
+          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+            Callbacks
           </div>
         </div>
 
         {/* Card 4: Tasks Due */}
         <div 
           onClick={() => handleTabChange("tasks")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-amber-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
-          {/* Subtle bathymetric wave texture */}
-          <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
-            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
-          />
-          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
+          {/* Unique Faded Texture 4: Architectural Coordinate Grid & Sounding Points */}
+          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.08]" preserveAspectRatio="none">
+            <line x1="20" y1="0" x2="20" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
+            <line x1="60" y1="0" x2="60" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
+            <line x1="100" y1="0" x2="100" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
+            <line x1="140" y1="0" x2="140" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
+            <line x1="0" y1="30" x2="160" y2="30" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
+            <line x1="0" y1="60" x2="160" y2="60" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
+            <line x1="0" y1="90" x2="160" y2="90" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
+            <circle cx="60" cy="60" r="1.5" fill="#f59e0b" />
+            <circle cx="100" cy="30" r="1.5" fill="#f59e0b" />
+            <circle cx="100" cy="90" r="1.5" fill="#f59e0b" />
+          </svg>
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-300" />
           
-          {/* Huge Number */}
-          <div className="relative z-10">
+          {/* Top Left Tiny Icon */}
+          <div className="relative z-10 flex items-center justify-between w-full">
+            <div className="p-1.5 rounded-lg bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-105 transition-transform">
+              <CheckSquare className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Centered Huge Number */}
+          <div className="flex-1 flex items-center justify-center my-1 relative z-10">
             <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {openTasks.length || 4}
             </div>
           </div>
 
-          {/* Icon Beside Text at Bottom */}
-          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
-            <div className="p-1 rounded-md bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-110 transition-transform">
-              <CheckSquare className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
-              Tasks Due
-            </span>
+          {/* Full Text at Bottom */}
+          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+            Tasks Due
           </div>
         </div>
 
         {/* Card 5: Crew Messages */}
         <div 
           onClick={() => handleTabChange("messages")}
-          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-cyan-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(6,182,212,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-cyan-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(6,182,212,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
-          {/* Subtle bathymetric wave texture */}
-          <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
-            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
-          />
-          <div className="absolute -top-10 -right-10 w-28 h-28 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-400/25 transition-all duration-300" />
+          {/* Unique Faded Texture 5: Transmission Propagation Frequency Waves */}
+          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
+            <path d="M 120 130 A 50 50 0 0 0 70 80" stroke="#06b6d4" strokeWidth="0.6" />
+            <path d="M 135 130 A 75 75 0 0 0 60 55" stroke="#06b6d4" strokeWidth="0.5" strokeDasharray="3 3" />
+            <path d="M 150 130 A 100 100 0 0 0 50 30" stroke="#06b6d4" strokeWidth="0.6" />
+            <path d="M 165 130 A 125 125 0 0 0 40 5" stroke="#06b6d4" strokeWidth="0.4" strokeDasharray="4 4" />
+          </svg>
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-400/20 transition-all duration-300" />
           
-          {/* Huge Number with Optional Live Ping */}
-          <div className="relative z-10 flex items-baseline gap-2">
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-              {crewUnreadTotal > 0 ? crewUnreadTotal : (newMessagesCount || 0)}
+          {/* Top Left Tiny Icon & Optional Ping Badge */}
+          <div className="relative z-10 flex items-center justify-between w-full">
+            <div className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shrink-0 group-hover:scale-105 transition-transform">
+              <MessageSquare className="w-3.5 h-3.5" />
             </div>
             {crewUnreadTotal > 0 && (
               <span className="relative flex h-2.5 w-2.5">
@@ -526,25 +554,21 @@ export default function CrewQuarters() {
             )}
           </div>
 
-          {/* Icon Beside Text at Bottom */}
-          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
-            <div className="p-1 rounded-md bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shrink-0 group-hover:scale-110 transition-transform">
-              <MessageSquare className="w-3.5 h-3.5" />
+          {/* Centered Huge Number */}
+          <div className="flex-1 flex items-center justify-center my-1 relative z-10">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
+              {crewUnreadTotal > 0 ? crewUnreadTotal : (newMessagesCount || 0)}
             </div>
-            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
-              Crew Messages
-            </span>
+          </div>
+
+          {/* Full Text at Bottom */}
+          <div className="relative z-10 text-center text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+            Crew Messages
           </div>
         </div>
 
-        {/* Card 6: Advocacy Changes Lives (Centered) */}
-        <div className="col-span-1 relative overflow-hidden rounded-2xl border border-blue-500/50 bg-gradient-to-br from-[#001438] via-[#000d2b] to-[#000821] p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgba(2,132,199,0.25)] group hover:border-cyan-400/80 hover:shadow-[0_10px_35px_rgba(2,132,199,0.35)] transition-all duration-300 min-h-[120px] sm:min-h-[130px]">
-          {/* Subtle bathymetric wave texture */}
-          <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-25 mix-blend-screen"
-            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
-          />
-
+        {/* Card 6: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
+        <div className="col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[125px] sm:min-h-[135px]">
           {/* Multi-Layered, Ultra-Fine Bathymetric Topographic Ocean Depth Contours */}
           <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
             <svg
@@ -576,25 +600,35 @@ export default function CrewQuarters() {
               <circle cx="35" cy="95" r="70" fill="#0284c7" fillOpacity="0.18" />
               <circle cx="110" cy="60" r="45" fill="#38bdf8" fillOpacity="0.08" />
 
-              {/* Bathymetric contour ridges */}
+              {/* Dense, delicate bathymetric contour ridges sweeping across the entire chart */}
               <path d="M-10 125 C 20 120, 35 105, 55 98 C 80 90, 105 106, 140 100 C 180 94, 220 106, 310 98" stroke="url(#topoDeep)" strokeWidth="0.65" />
               <path d="M-10 118 C 22 112, 38 98, 60 91 C 86 83, 112 99, 148 93 C 190 86, 230 100, 310 91" stroke="url(#topoDeep)" strokeWidth="0.65" />
               <path d="M-10 110 C 24 104, 42 90, 65 83 C 92 75, 120 92, 158 85 C 200 78, 240 93, 310 84" stroke="url(#topoCyan)" strokeWidth="0.75" />
               <path d="M-10 102 C 26 95, 46 82, 70 75 C 99 67, 128 84, 168 77 C 210 70, 250 86, 310 77" stroke="url(#topoCyan)" strokeWidth="0.85" filter="url(#oceanGlow)" />
               <path d="M-10 94 C 28 86, 50 74, 76 66 C 106 58, 136 76, 178 69 C 220 62, 260 79, 310 70" stroke="url(#topoCyan)" strokeWidth="0.95" />
               <path d="M-10 86 C 30 77, 54 65, 82 57 C 114 49, 145 68, 188 61 C 230 54, 270 72, 310 63" stroke="#38bdf8" strokeWidth="1.1" strokeOpacity="0.85" filter="url(#oceanGlow)" />
+              <path d="M-10 77 C 32 68, 58 56, 88 48 C 121 40, 154 60, 198 53 C 240 46, 280 65, 310 56" stroke="url(#topoCyan)" strokeWidth="0.85" />
+              <path d="M-10 68 C 34 58, 62 47, 94 39 C 128 31, 162 52, 208 45 C 250 38, 290 57, 310 49" stroke="url(#topoCyan)" strokeWidth="0.75" />
+              <path d="M-10 59 C 36 49, 66 38, 100 30 C 136 22, 171 43, 218 36 C 260 29, 295 48, 310 42" stroke="url(#topoDeep)" strokeWidth="0.65" />
+              <path d="M-10 50 C 38 40, 70 29, 106 21 C 144 13, 180 34, 228 27 C 270 20, 300 38, 310 34" stroke="url(#topoDeep)" strokeWidth="0.65" />
+              <path d="M-10 40 C 40 30, 74 19, 112 12 C 152 4, 189 25, 238 18 C 278 12, 302 28, 310 26" stroke="url(#topoDeep)" strokeWidth="0.55" />
+              <path d="M-10 30 C 42 20, 78 10, 118 4 C 160 -4, 198 16, 248 9 C 285 3, 305 18, 310 17" stroke="url(#topoDeep)" strokeWidth="0.5" />
+
+              {/* Secondary delicate intersecting elevation contours */}
+              <path d="M 120 120 C 145 100, 170 85, 205 78 C 245 70, 275 80, 310 75" stroke="#0ea5e9" strokeWidth="0.5" strokeOpacity="0.35" />
+              <path d="M 140 120 C 165 105, 190 92, 225 86 C 260 80, 285 88, 310 83" stroke="#0284c7" strokeWidth="0.45" strokeOpacity="0.25" />
+              <path d="M 80 0 C 110 25, 150 45, 195 40 C 240 35, 280 20, 310 12" stroke="#0284c7" strokeWidth="0.5" strokeOpacity="0.2" />
             </svg>
           </div>
 
-          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
-
-          {/* Centered Advocacy Changes Lives Typography */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center select-none py-1 my-auto">
-            <div className="text-[13px] sm:text-[14px] md:text-[15px] font-sans font-black tracking-[0.2em] text-[#F3CE85] leading-snug drop-shadow-[0_2px_12px_rgba(243,206,133,0.45)]">
+          {/* Right-Aligned Stacked Gold Typography + Accent Bar */}
+          <div className="relative z-10 ml-auto flex flex-col items-end text-right select-none pl-4">
+            <div className="text-[13px] sm:text-[14px] font-sans font-extrabold tracking-[0.2em] text-[#F3CE85] leading-[1.35] drop-shadow-[0_2px_8px_rgba(243,206,133,0.35)]">
               <div>ADVOCACY</div>
               <div>CHANGES</div>
               <div>LIVES</div>
             </div>
+            <div className="w-9 h-[2.5px] bg-gradient-to-r from-amber-400 to-[#F3CE85] rounded-full mt-2 shadow-[0_0_10px_rgba(243,206,133,0.8)]" />
           </div>
         </div>
       </div>
