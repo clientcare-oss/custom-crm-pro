@@ -62,10 +62,20 @@ import {
   LayoutDashboard,
   UserPlus,
   Mail,
+  Palmtree,
+  Timer,
+  CreditCard,
+  Laptop,
 } from "lucide-react";
 import { toast } from "sonner";
 import CrewMessagesWorkspace from "@/components/crew-quarters/CrewMessagesWorkspace";
 import CrewMessagesOverviewWidget from "@/components/crew-quarters/CrewMessagesOverviewWidget";
+import EmployeeAvailabilityTab from "@/components/crew-quarters/EmployeeAvailabilityTab";
+import EmployeeTimeOffTab from "@/components/crew-quarters/EmployeeTimeOffTab";
+import EmployeeTimesheetTab from "@/components/crew-quarters/EmployeeTimesheetTab";
+import EmployeeProfileTab from "@/components/crew-quarters/EmployeeProfileTab";
+import EmployeePayrollTab from "@/components/crew-quarters/EmployeePayrollTab";
+import EmployeeEquipmentTab from "@/components/crew-quarters/EmployeeEquipmentTab";
 
 interface TimeOffRequest {
   id: string;
@@ -647,57 +657,100 @@ export default function CrewQuarters() {
         </div>
       </div>
 
-      {/* ── Internal Tab Navigation Bar (Framed with Top & Bottom Dividers) ── */}
-      <div className="flex items-center justify-between gap-3 border-y border-blue-900/40 py-4 overflow-x-auto">
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#000d2b]/90 border border-blue-900/60 p-1.5 rounded-2xl shadow-inner backdrop-blur-md">
-          {[
-            { id: "overview", label: "Overview", icon: LayoutDashboard },
-            { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
-            { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
-            { id: "schedule", label: "Team Schedule", icon: Calendar },
-            { id: "resources", label: "Resources", icon: BookOpen },
-          ].map((tab) => {
-            const isActive = currentTab === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#0062E3] to-[#004BB5] text-white shadow-[0_4px_15px_rgba(0,98,227,0.4)] border border-sky-400/40"
-                    : "text-blue-200/80 hover:text-white hover:bg-white/[0.06] border border-transparent"
-                }`}
-              >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-sky-400"}`} />
-                <span>{tab.label}</span>
-                {Boolean(tab.badge && tab.badge > 0) && (
-                  <span
-                    className={`ml-1 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight ${
-                      tab.id === "messages"
-                        ? "bg-sky-400 text-slate-950 shadow-xs animate-pulse"
-                        : "bg-blue-900/80 text-blue-200 border border-blue-700/60"
-                    }`}
-                  >
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+      {/* ── Internal Tab Navigation Bar: Double Bar (Team Operations + Employee Self-Service) ── */}
+      <div className="w-full flex flex-col p-1.5 sm:p-2 bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border border-[#0D4B84] rounded-2xl shadow-2xl gap-1.5 mb-6 relative overflow-hidden">
+        {/* Top subtle golden accent shimmer line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
+
+        {/* Row 1: Team & Daily Operations */}
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pb-0.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
+            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#F3CE85] bg-[#07162B]/80 border border-amber-500/30 shrink-0 mr-1 select-none">
+              Team Ops
+            </span>
+            {[
+              { id: "overview", label: "Overview", icon: LayoutDashboard },
+              { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
+              { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
+              { id: "schedule", label: "Team Schedule", icon: Calendar },
+              { id: "resources", label: "Resources", icon: BookOpen },
+            ].map((tab) => {
+              const isActive = currentTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#0062E3] to-[#004BB5] text-white shadow-[0_4px_15px_rgba(0,98,227,0.4)] border border-sky-400/50 font-bold"
+                      : "text-blue-200/80 hover:text-white hover:bg-white/[0.08] border border-transparent"
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-white" : "text-sky-400"}`} />
+                  <span className="truncate">{tab.label}</span>
+                  {Boolean(tab.badge && tab.badge > 0) && (
+                    <span
+                      className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${
+                        tab.id === "messages"
+                          ? "bg-sky-400 text-slate-950 shadow-xs animate-pulse"
+                          : "bg-blue-900/80 text-blue-200 border border-blue-700/60"
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {currentTab === "overview" && (
+            <Button
+              size="sm"
+              onClick={() => handleTabChange("messages")}
+              className="hidden lg:flex items-center gap-1.5 bg-[#001433] hover:bg-[#001E4D] border border-sky-500/30 text-sky-300 hover:text-white text-xs font-semibold rounded-xl px-3 py-1.5 h-8 cursor-pointer shadow-sm transition-all shrink-0 ml-1"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span>Messages</span>
+              <ArrowRight className="w-3 h-3 shrink-0" />
+            </Button>
+          )}
         </div>
 
-        {currentTab === "overview" && (
-          <Button
-            size="sm"
-            onClick={() => handleTabChange("messages")}
-            className="hidden md:flex items-center gap-1.5 bg-[#001433] hover:bg-[#001E4D] border border-sky-500/30 text-sky-300 hover:text-white text-xs font-semibold rounded-xl px-3.5 py-2 cursor-pointer shadow-sm transition-all shrink-0"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span>Open Crew Messages</span>
-            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-          </Button>
-        )}
+        {/* Row 2: Employee Self-Service & Personal Management */}
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1.5 border-t border-[#0E3E75]/80 relative z-10 overflow-x-auto">
+          <div className="flex items-center gap-1 sm:gap-1.5 w-full">
+            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-sky-300 bg-[#07162B]/80 border border-sky-500/30 shrink-0 mr-1 select-none">
+              Employee Hub
+            </span>
+            {[
+              { id: "availability", label: "My Availability", icon: Clock },
+              { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
+              { id: "timesheet", label: "My Timesheet", icon: Timer },
+              { id: "profile", label: "Profile & Credentials", icon: Award },
+              { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
+              { id: "equipment", label: "Equipment & Tech", icon: Laptop },
+            ].map((tab) => {
+              const isActive = currentTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#0062E3] to-[#004BB5] text-white shadow-[0_4px_15px_rgba(0,98,227,0.4)] border border-sky-400/50 font-bold"
+                      : "text-blue-200/80 hover:text-white hover:bg-white/[0.08] border border-transparent"
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-white" : "text-amber-400"}`} />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* ── TAB CONTENT 1: CREW MESSAGES WORKSPACE ── */}
@@ -1694,6 +1747,36 @@ export default function CrewQuarters() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* ── TAB CONTENT 6: MY AVAILABILITY ── */}
+      {currentTab === "availability" && (
+        <EmployeeAvailabilityTab onViewTeamSchedule={() => handleTabChange("schedule")} />
+      )}
+
+      {/* ── TAB CONTENT 7: TIME OFF & PTO ── */}
+      {currentTab === "time-off" && (
+        <EmployeeTimeOffTab />
+      )}
+
+      {/* ── TAB CONTENT 8: MY TIMESHEET & HOURS ── */}
+      {currentTab === "timesheet" && (
+        <EmployeeTimesheetTab />
+      )}
+
+      {/* ── TAB CONTENT 9: PROFILE & CREDENTIALS ── */}
+      {currentTab === "profile" && (
+        <EmployeeProfileTab />
+      )}
+
+      {/* ── TAB CONTENT 10: PAYROLL & DIRECT DEPOSIT ── */}
+      {currentTab === "payroll" && (
+        <EmployeePayrollTab />
+      )}
+
+      {/* ── TAB CONTENT 11: EQUIPMENT & TECH ASSETS ── */}
+      {currentTab === "equipment" && (
+        <EmployeeEquipmentTab />
       )}
 
       {/* ── Time Off Request Modal ── */}

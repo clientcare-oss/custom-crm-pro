@@ -291,11 +291,17 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
 
 // ─── Crew Quarters Sub-ID Mappings ───────────────────────────────────────────
 export const CREW_QUARTERS_TAB_IDS: Record<string, PageIdInfo> = {
-  "overview":   { id: "PG-038-OVR", name: "Crew Quarters Overview", category: "Core", description: "Personal employee home base and operational station overview" },
-  "messages":   { id: "PG-038-MSG", name: "Crew Messages Workspace", category: "Communications", description: "Internal team communication, direct messaging, and case collaboration" },
-  "tasks":      { id: "PG-038-TSK", name: "Crew Task Queue", category: "Productivity", description: "Personal advocate action items, IEP reviews, and milestones" },
-  "schedule":   { id: "PG-038-SCH", name: "Team Schedule & Time Off", category: "Schedule", description: "Staff calendar, leave requests, and coverage scheduling" },
-  "resources":  { id: "PG-038-RES", name: "Employee Resources", category: "Content", description: "Staff directory, handbook, policy templates, and guidance" },
+  "overview":     { id: "PG-038-OVR", name: "Crew Quarters Overview", category: "Core", description: "Personal employee home base and operational station overview" },
+  "messages":     { id: "PG-038-MSG", name: "Crew Messages Workspace", category: "Communications", description: "Internal team communication, direct messaging, and case collaboration" },
+  "tasks":        { id: "PG-038-TSK", name: "Crew Task Queue", category: "Productivity", description: "Personal advocate action items, IEP reviews, and milestones" },
+  "schedule":     { id: "PG-038-SCH", name: "Team Schedule & Time Off", category: "Schedule", description: "Staff calendar, leave requests, and coverage scheduling" },
+  "resources":    { id: "PG-038-RES", name: "Employee Resources", category: "Content", description: "Staff directory, handbook, policy templates, and guidance" },
+  "availability": { id: "PG-038-AVL", name: "My Availability", category: "Employee", description: "Personal working hours, capacity targets, and schedule availability" },
+  "time-off":     { id: "PG-038-PTO", name: "Time Off & PTO", category: "Employee", description: "Paid leave tracking, time off requests, and holiday schedule" },
+  "timesheet":    { id: "PG-038-TIM", name: "My Timesheet & Hours", category: "Employee", description: "Weekly hours tracking, billable case hours, and activity logs" },
+  "profile":      { id: "PG-038-CRD", name: "Employee Profile & Credentials", category: "Employee", description: "Advocate credentials, certifications, licenses, and bio" },
+  "payroll":      { id: "PG-038-PAY", name: "Payroll & Compensation", category: "Employee", description: "Pay schedule, direct deposit status, and compensation overview" },
+  "equipment":    { id: "PG-038-EQP", name: "Equipment & Tech Assets", category: "Employee", description: "Company hardware, assigned devices, software logins, and IT assets" },
 };
 
 /**
