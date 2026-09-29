@@ -101,12 +101,11 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Call Center & Scheduling",
       items: [
         { icon: Headset, label: "Call Center", path: "/call-center" },
-        { icon: Calendar, label: "Calendar", path: "/calendar" },
-        {
-          icon: Globe2,
-          label: "National Coverage",
-          path: "/national-coverage",
-          keywords: ["national coverage", "map", "time zone", "clocks", "united states", "coverage", "pg-041"],
+        { 
+          icon: Calendar, 
+          label: "Calendar", 
+          path: "/calendar",
+          keywords: ["calendar", "appointments", "schedule", "national coverage", "coverage", "time zones", "clocks", "pg-007", "pg-041"],
         },
       ],
     },

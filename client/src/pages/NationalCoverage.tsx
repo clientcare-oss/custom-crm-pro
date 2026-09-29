@@ -149,8 +149,8 @@ export default function NationalCoverage() {
       <div className="min-h-screen bg-[#000821] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6">
         {/* TOP NAVIGATION / HEADER BAR */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
-          {/* Left: Page Title & Subtitle */}
-          <div>
+          {/* Left: Page Title & Subtitle + Calendar Tab Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
                 <Globe2 className="w-6 h-6 text-white" />
@@ -163,6 +163,24 @@ export default function NationalCoverage() {
                   Meetings and client time zones at a glance.
                 </p>
               </div>
+            </div>
+
+            <div className="flex items-center gap-1 p-1 bg-slate-900/90 rounded-xl border border-slate-800 shadow-inner">
+              <button
+                type="button"
+                onClick={() => setLocation("/calendar")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all cursor-pointer"
+              >
+                <Calendar className="w-3.5 h-3.5 text-sky-400" />
+                Calendar
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-950/70 text-sky-200 border border-sky-500/40 shadow-sm cursor-default"
+              >
+                <Globe2 className="w-3.5 h-3.5 text-sky-400" />
+                National Coverage
+              </button>
             </div>
           </div>
 

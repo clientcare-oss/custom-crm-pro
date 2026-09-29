@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { RequestCallbackModal } from "./RequestCallbackModal";
 import { trpc } from "@/lib/trpc";
+import ClientCallingSafetyBadge from "@/components/callingSafety/ClientCallingSafetyBadge";
 
 interface ExistingClientFlowProps {
   onRequestCallback?: () => void;
@@ -30,10 +31,12 @@ export function ExistingClientFlow({ onRequestCallback }: ExistingClientFlowProp
   // Queries for real appointments & tasks
   const { data: appointments = [] } = trpc.appointments.list.useQuery();
   const { data: tasks = [] } = trpc.tasks.getAll.useQuery();
+  const { data: contacts = [] } = trpc.contacts.list.useQuery();
 
   const clientName = call.contactName || call.callerInfo.name || "Client";
   const studentName = call.studentName || "Student on file";
   const contactId = call.contactId || 1;
+  const currentContact = (contacts as any[]).find((c: any) => c.id === contactId);
 
   // Upcoming meetings for this student
   const nextMeeting = appointments.find((a: any) =>
@@ -58,13 +61,26 @@ export function ExistingClientFlow({ onRequestCallback }: ExistingClientFlowProp
                 Retainer Client
               </Badge>
             </div>
-            <div className="text-xs text-slate-300 flex items-center gap-2 mt-0.5">
+            <div className="text-xs text-slate-300 flex items-center gap-2 mt-0.5 flex-wrap">
               <span className="flex items-center gap-1 text-amber-300 font-medium">
                 <GraduationCap className="h-3.5 w-3.5" />
                 Student: {studentName}
               </span>
               <span>•</span>
               <span className="text-slate-400">Assigned Advocate: Byron Honea</span>
+              {currentContact && (
+                <>
+                  <span>•</span>
+                  <ClientCallingSafetyBadge
+                    timeZone={currentContact.confirmedTimeZone || currentContact.timezone || currentContact.timeZone}
+                    city={currentContact.city}
+                    state={currentContact.state}
+                    preferredStart={currentContact.preferredCallingStartTime}
+                    preferredEnd={currentContact.preferredCallingEndTime}
+                    compact
+                  />
+                </>
+              )}
             </div>
           </div>
         </div>

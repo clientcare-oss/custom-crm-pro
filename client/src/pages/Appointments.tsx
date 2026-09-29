@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import CalendarView, { CalendarViewMode, CalendarScope } from "@/components/CalendarView";
 import ReassignAppointmentModal from "@/components/calendar/ReassignAppointmentModal";
 import StaffStatusManagerModal from "@/components/calendar/StaffStatusManagerModal";
+import NationalCoverage from "./NationalCoverage";
+import ClientCallingSafetyBadge from "@/components/callingSafety/ClientCallingSafetyBadge";
+import { cn } from "@/lib/utils";
 import {
   formatDualTimes,
   SIX_CORE_ZONES,
@@ -64,6 +67,20 @@ export default function Appointments() {
   const initialView = (searchParams.get("view") as CalendarViewMode) || "day";
   const initialScope = (searchParams.get("scope") as CalendarScope) || "my";
   const initialFilter = searchParams.get("advocate") || "all";
+  const initialTab = searchParams.get("tab") === "coverage" ? "coverage" : "calendar";
+
+  const [activeTab, setActiveTab] = useState<"calendar" | "coverage">(initialTab);
+
+  const handleTabChange = (newTab: "calendar" | "coverage") => {
+    setActiveTab(newTab);
+    const url = new URL(window.location.href);
+    if (newTab === "coverage") {
+      url.searchParams.set("tab", "coverage");
+    } else {
+      url.searchParams.delete("tab");
+    }
+    window.history.replaceState(null, "", url.toString());
+  };
 
   const [viewMode, setViewMode] = useState<CalendarViewMode>(initialView);
   const [scope, setScope] = useState<CalendarScope>(initialScope);
@@ -815,6 +832,13 @@ export default function Appointments() {
                     )}
                   </div>
                 )}
+
+                {/* Contextual Calling Safety */}
+                <div className="mt-2.5 p-2.5 rounded-lg border border-border/70 bg-card/40">
+                  <ClientCallingSafetyBadge
+                    timeZone={selectedApt.clientTimeZone}
+                  />
+                </div>
               </div>
 
               {/* Multi-Zone Schedule Alignment (Red for Client, Green for Waypoint Advocate) */}
@@ -1113,6 +1137,12 @@ export default function Appointments() {
                 <p className="text-[11px] text-muted-foreground mt-1">
                   Advocate operates in Eastern Time (Atlanta, GA). Client calendar will reflect their local zone.
                 </p>
+                <div className="mt-2 p-2 rounded-md bg-muted/40 border border-border/60">
+                  <ClientCallingSafetyBadge
+                    timeZone={formData.clientTimeZone}
+                    compact
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1239,6 +1269,56 @@ export default function Appointments() {
           </DialogContent>
         </Dialog>
 
+      {/* ── Calendar / National Coverage Navigation Switcher ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-border/60">
+        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-xl border border-border/50 shadow-inner">
+          <button
+            type="button"
+            onClick={() => handleTabChange("calendar")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
+              activeTab === "calendar"
+                ? "bg-card text-foreground shadow-sm border border-border/60"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+            )}
+          >
+            <Calendar className="w-4 h-4 text-primary" />
+            Calendar
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("coverage")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
+              activeTab === "coverage"
+                ? "bg-card text-foreground shadow-sm border border-border/60"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+            )}
+          >
+            <Globe className="w-4 h-4 text-sky-400" />
+            National Coverage
+          </button>
+        </div>
+
+        {activeTab === "coverage" ? (
+          <div className="text-xs text-slate-400 flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Interactive US Coverage Map, Clocks & Safe Calling Guidance</span>
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-primary" />
+            <span>Dual-Zone Schedule Alignment Active</span>
+          </div>
+        )}
+      </div>
+
+      {activeTab === "coverage" ? (
+        <div className="-mx-6 -mb-6">
+          <NationalCoverage />
+        </div>
+      ) : (
+        <>
       {/* ── Calendar View ── */}
       <CalendarView
         appointments={mergedAppointments as any}
@@ -1507,6 +1587,8 @@ export default function Appointments() {
             </div>
           </CardContent>
         </Card>
+      )}
+        </>
       )}
 
       {/* ⚠️ SERVICE LIMIT WARNING DIALOG (Section 10) */}

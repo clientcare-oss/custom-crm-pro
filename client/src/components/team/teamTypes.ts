@@ -440,7 +440,7 @@ export const CRM_MODULES: ModuleDefinition[] = [
   // Call Center & Scheduling
   { id: "call_center", label: "Call Center Telephony", path: "/call-center", group: "Call Center & Scheduling", icon: Headset },
   { id: "calendar", label: "Calendar & Availability", path: "/calendar", group: "Call Center & Scheduling", icon: Calendar },
-  { id: "national_coverage", label: "National Coverage Map", path: "/national-coverage", group: "Call Center & Scheduling", icon: Globe2 },
+  { id: "national_coverage", label: "National Coverage Map", path: "/calendar?tab=coverage", group: "Call Center & Scheduling", icon: Globe2 },
   // Pipelines
   { id: "advocacy_pipeline", label: "Advocacy Pipeline", path: "/advocacy-pipeline", group: "Pipelines", icon: Workflow },
   { id: "leads", label: "Lead Center & Pipeline", path: "/leads", group: "Pipelines", icon: TrendingUp },
