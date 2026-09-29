@@ -18,6 +18,9 @@ import {
 import "@xyflow/react/dist/style.css";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
+import PageIdBadge from "@/components/PageIdBadge";
+import { getStoredEmployees, checkEmployeeModuleAccess } from "@/components/team/teamStore";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -25,7 +28,7 @@ import VoiceInput from "@/components/VoiceInput";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import {
   GitBranch, Plus, Pencil, Trash2, Save, Square, Diamond,
-  StickyNote, Loader2, CheckCircle2, PlusCircle,
+  StickyNote, Loader2, CheckCircle2, PlusCircle, ArrowLeft, Lock, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -177,16 +180,45 @@ type SaveStatus = "saved" | "saving" | "unsaved";
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Workflows() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const [, setLocation] = useLocation();
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const initialWorkflowId = searchParams.get("id") ? parseInt(searchParams.get("id")!) : null;
+
+  // Employee & Permission check via established Team Management architecture
+  const employees = getStoredEmployees();
+  const currentEmployee = employees.find(
+    (e) =>
+      (user?.email && e.email.toLowerCase() === user.email.toLowerCase()) ||
+      (user?.name && e.name.toLowerCase() === user.name.toLowerCase())
+  );
+
+  const isDirectAdmin = user?.role === "admin" || user?.email?.toLowerCase().includes("byron@waypointadvocates.com");
+  const accessLevel = isDirectAdmin
+    ? "edit"
+    : currentEmployee
+    ? checkEmployeeModuleAccess(currentEmployee, "workflows")
+    : "none";
+
+  const hasAccess = isDirectAdmin || accessLevel !== "none";
+  const canEdit = isDirectAdmin || accessLevel === "edit";
+  const isAdmin = canEdit;
+
   const utils = trpc.useUtils();
 
   // Workflow list
   const { data: workflows = [], isLoading } = trpc.workflows.list.useQuery();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(initialWorkflowId);
   const { data: selectedWorkflow } = trpc.workflows.get.useQuery(
     { id: selectedId! },
     { enabled: selectedId !== null }
   );
+
+  // If no workflow selected yet but list has loaded, select first
+  useEffect(() => {
+    if (selectedId === null && workflows.length > 0 && !initialWorkflowId) {
+      setSelectedId(workflows[0].id);
+    }
+  }, [selectedId, workflows, initialWorkflowId]);
 
   // Canvas state
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -504,20 +536,60 @@ export default function Workflows() {
     );
   };
 
+  // Unauthorized block
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-[#000821] text-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-[#0a192f] border border-amber-500/30 rounded-2xl p-6 text-center space-y-4 shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+            <Lock className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold text-white">Restricted Access · Executive Permission Required</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Workflow Designer is a company-level business process planning tool restricted to CEO, Management, and authorized personnel.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400">
+            Access can be granted by an administrator in <strong>Team Management → Employee Permissions</strong>.
+          </div>
+          <Button
+            onClick={() => setLocation("/")}
+            className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs h-9 rounded-xl"
+          >
+            Return to Operational Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       {/* Left panel: workflow list */}
       <div className="w-64 flex-shrink-0 border-r bg-background flex flex-col">
-        <div className="p-4 border-b flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GitBranch className="h-5 w-5 text-accent" />
-            <span className="font-semibold text-sm">Workflows</span>
+        <div className="p-3.5 border-b space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4 text-emerald-500" />
+              <span className="font-bold text-sm tracking-tight">Workflow Designer</span>
+            </div>
+            <PageIdBadge id="PG-015" name="Workflow Designer" />
           </div>
-          {isAdmin && (
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={openCreateWf}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={() => setLocation("/settings?section=operations")}
+              className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Business Operations</span>
+            </button>
+            {isAdmin && (
+              <Button size="sm" variant="outline" className="h-6 px-2 text-[11px] gap-1 border-border/80" onClick={openCreateWf}>
+                <Plus className="h-3 w-3" /> New
+              </Button>
+            )}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {isLoading && <p className="text-xs text-muted-foreground p-2">Loading...</p>}

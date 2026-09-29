@@ -175,7 +175,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
         { icon: Zap, label: "Automations", path: "/automations" },
         { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
-        { icon: GitBranch, label: "Workflows", path: "/workflows" },
         { icon: Brain, label: "BrainDump", path: "/brain-dump" },
       ],
     },
@@ -281,7 +280,7 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           icon: Settings, 
           label: "Settings", 
           path: "/settings",
-          keywords: ["settings", "preferences", "config", "pg-024"]
+          keywords: ["settings", "preferences", "config", "pg-024", "workflow designer", "workflows", "business operations", "process planning"]
         },
       ],
     },

@@ -315,7 +315,6 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "crew_quarters",
       "automations",
       "ai_connections",
-      "workflows",
       "tech_tasks",
       "knowledge_base",
       "settings",
@@ -465,7 +464,6 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "voyage_log", label: "Voyage Log (Recorder)", path: "/tools/voyage-recorder", group: "Advocacy & AI Tools", icon: Video },
   { id: "automations", label: "Automations Engine", path: "/automations", group: "Advocacy & AI Tools", icon: Zap },
   { id: "ai_connections", label: "AI Connections", path: "/ai-connections", group: "Advocacy & AI Tools", icon: Sparkles },
-  { id: "workflows", label: "Workflows", path: "/workflows", group: "Advocacy & AI Tools", icon: GitBranch },
   { id: "braindump", label: "Advocate BrainDump", path: "/brain-dump", group: "Advocacy & AI Tools", icon: Brain },
   // Practice & Operations
   { id: "tasks", label: "Tasks Queue", path: "/tasks", group: "Practice & Operations", icon: CheckSquare },
@@ -478,6 +476,7 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "giving", label: "Giving & Impact", path: "/giving", group: "Giving & Impact", icon: HandHeart },
   // Company & Leadership
   { id: "team", label: "Team & Staff Management", path: "/team", group: "Company", icon: UserCheck, isSensitive: true },
+  { id: "workflows", label: "Workflow Designer", path: "/settings?section=operations", group: "Company", icon: GitBranch, isSensitive: true },
   { id: "settings", label: "System Settings", path: "/settings", group: "Company", icon: Settings, isSensitive: true },
 ];
 

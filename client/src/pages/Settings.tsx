@@ -37,6 +37,7 @@ import {
   Lock,
   ArrowRight,
   Gift,
+  GitBranch,
   type LucideIcon 
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -44,6 +45,7 @@ import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import PageIdBadge from "@/components/PageIdBadge";
+import BusinessOperationsSection from "@/components/settings/BusinessOperationsSection";
 
 const ICON_COMPONENT_MAP: Record<ProjectIconKey, LucideIcon> = {
   GraduationCap, Briefcase, FolderOpen, BookOpen, Users, Star, Heart, Target, Compass, ClipboardList, FileText, Layers,
@@ -403,8 +405,31 @@ export default function Settings() {
     presetOptions.some((o) => o.value === projectLabel) ? projectLabel : "__custom__"
   );
 
-  // Settings view section tab: "all" | "portal" | "admin" | "colors"
-  const [activeSection, setActiveSection] = useState<"portal" | "admin" | "colors">("portal");
+  // Settings view section tab: "portal" | "admin" | "operations" | "colors"
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const initialSectionParam = (searchParams.get("section") || searchParams.get("tab")) as any;
+  const initialSection: "portal" | "admin" | "operations" | "colors" = 
+    initialSectionParam === "operations" || initialSectionParam === "workflows" || initialSectionParam === "workflow-designer"
+      ? "operations"
+      : initialSectionParam === "admin"
+      ? "admin"
+      : initialSectionParam === "colors"
+      ? "colors"
+      : "portal";
+
+  const [activeSection, setActiveSection] = useState<"portal" | "admin" | "operations" | "colors">(initialSection);
+
+  const handleSectionChange = (section: "portal" | "admin" | "operations" | "colors") => {
+    setActiveSection(section);
+    const url = new URL(window.location.href);
+    if (section !== "portal") {
+      url.searchParams.set("section", section);
+    } else {
+      url.searchParams.delete("section");
+      url.searchParams.delete("tab");
+    }
+    window.history.replaceState(null, "", url.toString());
+  };
   
   // Theme comparison filter: "all" | "dark" | "light"
   const [themeModeFilter, setThemeModeFilter] = useState<"all" | "dark" | "light">("dark");
@@ -556,10 +581,10 @@ export default function Settings() {
           </span>
         </div>
 
-        {/* ── PRIMARY SCOPE SWITCHER (CLIENT PORTAL vs. ADMIN CRM vs. COLOR SYSTEM) ── */}
+        {/* ── PRIMARY SCOPE SWITCHER (CLIENT PORTAL vs. ADMIN CRM vs. BUSINESS OPERATIONS vs. COLOR SYSTEM) ── */}
         <div className="flex items-center gap-2 pt-3 flex-wrap">
           <button
-            onClick={() => setActiveSection("portal")}
+            onClick={() => handleSectionChange("portal")}
             className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeSection === "portal"
                 ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
@@ -571,7 +596,7 @@ export default function Settings() {
           </button>
 
           <button
-            onClick={() => setActiveSection("admin")}
+            onClick={() => handleSectionChange("admin")}
             className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeSection === "admin"
                 ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
@@ -583,7 +608,19 @@ export default function Settings() {
           </button>
 
           <button
-            onClick={() => setActiveSection("colors")}
+            onClick={() => handleSectionChange("operations")}
+            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === "operations"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+                : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+            }`}
+          >
+            <GitBranch className="w-4 h-4" />
+            Business Operations (Workflow Designer)
+          </button>
+
+          <button
+            onClick={() => handleSectionChange("colors")}
             className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeSection === "colors"
                 ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
@@ -1142,6 +1179,11 @@ export default function Settings() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* ── SECTION 3: BUSINESS OPERATIONS & WORKFLOW DESIGNER ────────────── */}
+      {activeSection === "operations" && (
+        <BusinessOperationsSection />
       )}
 
     </div>
