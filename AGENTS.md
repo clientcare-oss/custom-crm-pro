@@ -97,6 +97,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-017`: Walkthroughs (`/walkthroughs`)
   - `PG-018`: Unassigned Call Logs (`/call-logs`)
   - `PG-019`: Team Management (`/team`)
+  - `PG-019-E01` to `PG-019-E06`: Dedicated Staff Management Consoles (`/team/emp-:id`)
   - `PG-020`: State Complaint Builder (`/state-complaint-builder`, `/tools/state-complaint-builder`)
   - `PG-020-WS`: State Complaint Workspace (`/tools/state-complaint-builder/:id`)
   - `PG-021`: BrainDump (`/brain-dump`)

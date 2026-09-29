@@ -53,8 +53,13 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/walkthroughs":                    { id: "PG-017", name: "System Walkthroughs", category: "Help" },
   "/call-center":                     { id: "PG-018", name: "Call Center", category: "Communications" },
   "/call-logs":                       { id: "PG-018", name: "Unassigned Call Logs", category: "Communications" },
-  "/messages":                        { id: "PG-045", name: "Client Messages", category: "Communications", description: "Direct parent and client messaging console" },
   "/team":                            { id: "PG-019", name: "Team & Staff Management", category: "Admin" },
+  "/team/emp-1":                      { id: "PG-019-E01", name: "Byron Honea · Employee Management", category: "Admin" },
+  "/team/emp-2":                      { id: "PG-019-E02", name: "Sarah Jenkins · Employee Management", category: "Admin" },
+  "/team/emp-3":                      { id: "PG-019-E03", name: "Marcus Vance · Employee Management", category: "Admin" },
+  "/team/emp-4":                      { id: "PG-019-E04", name: "Elena Rostova · Employee Management", category: "Admin" },
+  "/team/emp-5":                      { id: "PG-019-E05", name: "David Chen · Employee Management", category: "Admin" },
+  "/team/emp-6":                      { id: "PG-019-E06", name: "Abby Miller · Employee Management", category: "Admin" },
   
   // Special Advocacy Engines
   "/state-complaint-builder":         { id: "PG-020", name: "State Complaint Builder", category: "Advocacy" },
@@ -245,6 +250,13 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     id: "PG-010-PWN",
     name: "🧭 PWN Decoder",
     category: "Tools",
+  },
+  // Team / Employee Detail Dynamic Routes
+  {
+    matcher: (path) => /^\/team\/emp-/.test(path),
+    id: "PG-019-EMP",
+    name: "Employee Management",
+    category: "Admin",
   },
 ];
 

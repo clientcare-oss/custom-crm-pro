@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -36,6 +36,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import PageIdBadge from "@/components/PageIdBadge";
+import { broadcastPageId } from "@/lib/pageIdRegistry";
 import { EmployeeRecord, ROLE_DEFINITIONS } from "./teamTypes";
 import EmployeeOverviewTab from "./tabs/EmployeeOverviewTab";
 import EmployeeEmploymentTab from "./tabs/EmployeeEmploymentTab";
@@ -83,6 +84,17 @@ export default function EmployeeManagementWorkspace({
   const prevEmployee = currentIndex > 0 ? allEmployees[currentIndex - 1] : null;
   const nextEmployee = currentIndex < allEmployees.length - 1 ? allEmployees[currentIndex + 1] : null;
 
+  // Compute individual Employee Sub-Page ID (e.g. PG-019-E01, PG-019-E02, etc.) for the bottom hashtag dock
+  const subNumber = currentIndex >= 0 ? String(currentIndex + 1).padStart(2, "0") : "01";
+  const employeeSubPageId = `PG-019-E${subNumber}`;
+  const employeeSubPageTitle = `${employee.name} · Staff Administration`;
+
+  useEffect(() => {
+    return () => {
+      broadcastPageId({ id: "PG-019", name: "Team & Staff Management", category: "Admin" });
+    };
+  }, []);
+
   const ROW1_TABS = [
     { id: "overview", label: "Overview", icon: User },
     { id: "employment", label: "Employment", icon: Briefcase },
@@ -116,12 +128,13 @@ export default function EmployeeManagementWorkspace({
 
           <span className="text-slate-600 hidden sm:inline">•</span>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-slate-400">Record ID:</span>
-            <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-md">
-              {employee.id}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400 font-medium">Managing Staff:</span>
+            <span className="font-bold text-sky-300 bg-blue-950/60 border border-blue-800/60 px-2.5 py-0.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+              <span className={`w-1.5 h-1.5 rounded-full ${employee.status === "active" ? "bg-emerald-400" : employee.status === "on_leave" ? "bg-amber-400" : "bg-slate-400"}`} />
+              {employee.name}
             </span>
-            <PageIdBadge id="PG-019" name="Employee Management Workspace" />
+            <PageIdBadge id={employeeSubPageId} name={employeeSubPageTitle} />
           </div>
         </div>
 
@@ -195,10 +208,10 @@ export default function EmployeeManagementWorkspace({
       </div>
 
       {/* ── Active Employee Executive Header Banner ── */}
-      <div className="rounded-3xl border border-blue-800/80 bg-gradient-to-r from-[#000d2b] via-[#00133d] to-[#000d2b] p-6 sm:p-7 shadow-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="w-full overflow-hidden rounded-3xl border border-blue-800/80 bg-gradient-to-r from-[#000d2b] via-[#00133d] to-[#000d2b] p-5 sm:p-6 lg:p-7 shadow-xl relative">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 w-full min-w-0">
           {/* Left: Avatar & Identity */}
-          <div className="flex items-start sm:items-center gap-4 sm:gap-5">
+          <div className="flex items-start sm:items-center gap-4 sm:gap-5 min-w-0 flex-1">
             <div
               className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center font-black text-xl sm:text-2xl shadow-xl shrink-0 ring-4 ring-blue-900/40 ${employee.avatarColor}`}
             >
@@ -209,22 +222,22 @@ export default function EmployeeManagementWorkspace({
                 .slice(0, 2)}
             </div>
 
-            <div className="space-y-1.5 min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight truncate max-w-full">
                   {employee.name}
                 </h2>
                 {employee.preferredName && (
-                  <span className="text-xs sm:text-sm text-blue-200/60 font-medium">
+                  <span className="text-xs sm:text-sm text-blue-200/60 font-medium whitespace-nowrap">
                     ("{employee.preferredName}")
                   </span>
                 )}
 
                 {/* Primary Role Badge */}
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold border ${primaryRoleDef?.badgeClass}`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold border whitespace-nowrap ${primaryRoleDef?.badgeClass}`}
                 >
-                  <PrimaryIcon className="w-3.5 h-3.5" />
+                  <PrimaryIcon className="w-3.5 h-3.5 shrink-0" />
                   <span>{primaryRoleDef?.label}</span>
                 </span>
 
@@ -236,9 +249,9 @@ export default function EmployeeManagementWorkspace({
                   return (
                     <span
                       key={rId}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold border ${r.badgeClass} opacity-80`}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold border whitespace-nowrap ${r.badgeClass} opacity-80`}
                     >
-                      <RIcon className="w-3 h-3" />
+                      <RIcon className="w-3 h-3 shrink-0" />
                       <span>{r.label}</span>
                     </span>
                   );
@@ -246,36 +259,36 @@ export default function EmployeeManagementWorkspace({
 
                 {/* Employment Status Badge */}
                 {employee.status === "active" && (
-                  <Badge className="bg-emerald-950 text-emerald-300 border border-emerald-500/40 text-xs font-bold gap-1 px-2.5 py-0.5">
-                    <UserCheck className="w-3 h-3" /> Active Duty
+                  <Badge className="bg-emerald-950 text-emerald-300 border border-emerald-500/40 text-xs font-bold gap-1 px-2.5 py-0.5 whitespace-nowrap">
+                    <UserCheck className="w-3 h-3 shrink-0" /> Active Duty
                   </Badge>
                 )}
                 {employee.status === "on_leave" && (
-                  <Badge className="bg-amber-950 text-amber-300 border border-amber-500/40 text-xs font-bold gap-1 px-2.5 py-0.5">
-                    <Plane className="w-3 h-3" /> On Leave
+                  <Badge className="bg-amber-950 text-amber-300 border border-amber-500/40 text-xs font-bold gap-1 px-2.5 py-0.5 whitespace-nowrap">
+                    <Plane className="w-3 h-3 shrink-0" /> On Leave
                   </Badge>
                 )}
                 {employee.status === "inactive" && (
-                  <Badge className="bg-slate-900 text-slate-400 border border-slate-700 text-xs font-bold gap-1 px-2.5 py-0.5">
-                    <UserX className="w-3 h-3" /> Inactive
+                  <Badge className="bg-slate-900 text-slate-400 border border-slate-700 text-xs font-bold gap-1 px-2.5 py-0.5 whitespace-nowrap">
+                    <UserX className="w-3 h-3 shrink-0" /> Inactive
                   </Badge>
                 )}
               </div>
 
               {/* Job Title & Contact Details */}
-              <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs sm:text-sm text-blue-200/80">
-                <span className="font-semibold text-white">{employee.jobTitle}</span>
+              <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs sm:text-sm text-blue-200/80">
+                <span className="font-semibold text-white truncate max-w-[240px] sm:max-w-none">{employee.jobTitle}</span>
                 <span className="text-slate-600 hidden sm:inline">•</span>
-                <span className="flex items-center gap-1.5 text-blue-300/80">
+                <span className="flex items-center gap-1.5 text-blue-300/80 truncate">
                   <Mail className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <a href={`mailto:${employee.email}`} className="hover:text-white transition-colors">
+                  <a href={`mailto:${employee.email}`} className="hover:text-white transition-colors truncate">
                     {employee.email}
                   </a>
                 </span>
                 {employee.phone && (
                   <>
                     <span className="text-slate-600 hidden sm:inline">•</span>
-                    <span className="flex items-center gap-1.5 text-blue-300/80">
+                    <span className="flex items-center gap-1.5 text-blue-300/80 whitespace-nowrap">
                       <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <a href={`tel:${employee.phone}`} className="hover:text-white transition-colors">
                         {employee.phone}
@@ -286,7 +299,7 @@ export default function EmployeeManagementWorkspace({
                 {employee.department && (
                   <>
                     <span className="text-slate-600 hidden sm:inline">•</span>
-                    <span className="flex items-center gap-1.5 text-blue-300/80">
+                    <span className="flex items-center gap-1.5 text-blue-300/80 whitespace-nowrap">
                       <Building className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                       <span>{employee.department}</span>
                     </span>
@@ -297,24 +310,24 @@ export default function EmployeeManagementWorkspace({
           </div>
 
           {/* Right: Quick Operational Badges & Deactivation */}
-          <div className="flex flex-wrap items-center gap-2.5 lg:self-center">
+          <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-center pt-2 lg:pt-0">
             {employee.status === "active" ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onDeactivateClick(employee)}
-                className="border-red-900/60 bg-red-950/30 hover:bg-red-950/60 text-red-300 hover:text-white text-xs font-semibold rounded-xl h-8 px-3 gap-1.5 cursor-pointer shadow-xs transition-all"
+                className="border-red-900/60 bg-red-950/30 hover:bg-red-950/60 text-red-300 hover:text-white text-xs font-semibold rounded-xl h-8 px-3 gap-1.5 cursor-pointer shadow-xs transition-all whitespace-nowrap shrink-0"
               >
-                <UserX className="w-3.5 h-3.5 text-red-400" />
+                <UserX className="w-3.5 h-3.5 text-red-400 shrink-0" />
                 <span>Offboard Employee</span>
               </Button>
             ) : (
               <Button
                 size="sm"
                 onClick={() => onReactivateClick(employee)}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl h-8 px-3 gap-1.5 cursor-pointer shadow-xs"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl h-8 px-3 gap-1.5 cursor-pointer shadow-xs whitespace-nowrap shrink-0"
               >
-                <UserCheck className="w-3.5 h-3.5" />
+                <UserCheck className="w-3.5 h-3.5 shrink-0" />
                 <span>Reactivate Staff</span>
               </Button>
             )}
