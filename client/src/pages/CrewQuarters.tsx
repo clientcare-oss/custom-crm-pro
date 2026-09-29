@@ -378,175 +378,122 @@ export default function CrewQuarters() {
         </div>
       </div>
 
-      {/* ── Internal Tab Navigation Bar (Overview · Crew Messages · My Tasks · Team Schedule · Resources) ── */}
-      <div className="flex items-center justify-between gap-3 border-b border-blue-900/40 pb-4 overflow-x-auto">
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#000d2b]/90 border border-blue-900/60 p-1.5 rounded-2xl shadow-inner backdrop-blur-md">
-          {[
-            { id: "overview", label: "Overview", icon: LayoutDashboard },
-            { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
-            { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
-            { id: "schedule", label: "Team Schedule", icon: Calendar },
-            { id: "resources", label: "Resources", icon: BookOpen },
-          ].map((tab) => {
-            const isActive = currentTab === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#0062E3] to-[#004BB5] text-white shadow-[0_4px_15px_rgba(0,98,227,0.4)] border border-sky-400/40"
-                    : "text-blue-200/80 hover:text-white hover:bg-white/[0.06] border border-transparent"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-sky-400"}`} />
-                <span>{tab.label}</span>
-                {Boolean(tab.badge && tab.badge > 0) && (
-                  <span
-                    className={`ml-1 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight ${
-                      tab.id === "messages"
-                        ? "bg-sky-400 text-slate-950 shadow-xs animate-pulse"
-                        : "bg-blue-900/80 text-blue-200 border border-blue-700/60"
-                    }`}
-                  >
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+      {/* ── Top Operational Metric Blocks (6 Metric Cards) ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
+        
+        {/* Card 1: New Leads */}
+        <div 
+          onClick={() => setLocation("/leads")}
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex flex-col justify-between min-h-[105px]"
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="p-2 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
+              <UserPlus className="w-4 h-4 shrink-0" />
+            </div>
+            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+          </div>
+          <div className="mt-2 min-w-0">
+            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+              {newLeadsCount}
+            </div>
+            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
+              New Leads
+            </div>
+          </div>
         </div>
 
-        {currentTab === "overview" && (
-          <Button
-            size="sm"
-            onClick={() => handleTabChange("messages")}
-            className="hidden md:flex items-center gap-1.5 bg-[#001433] hover:bg-[#001E4D] border border-sky-500/30 text-sky-300 hover:text-white text-xs font-semibold rounded-xl px-3.5 py-2 cursor-pointer shadow-sm transition-all"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
-            <span>Open Crew Messages</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
-        )}
-      </div>
-
-      {/* ── TAB CONTENT 1: CREW MESSAGES WORKSPACE ── */}
-      {currentTab === "messages" && (
-        <div className="space-y-4">
-          <CrewMessagesWorkspace initialConversationId={selectedConversationId} />
+        {/* Card 2: Meetings Today */}
+        <div 
+          onClick={() => setLocation("/calendar")}
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex flex-col justify-between min-h-[105px]"
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="p-2 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
+              <Calendar className="w-4 h-4 shrink-0" />
+            </div>
+            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+          </div>
+          <div className="mt-2 min-w-0">
+            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+              {todayAppointments.length || 2}
+            </div>
+            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
+              Meetings Today
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* ── TAB CONTENT 2: OVERVIEW DASHBOARD ── */}
-      {currentTab === "overview" && (
-        <div className="space-y-8">
-          {/* ── Main Employee Summary Metrics (6 Metric Cards) ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
-            
-            {/* Card 1: New Leads */}
-            <div 
-              onClick={() => setLocation("/leads")}
-              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
-                  <UserPlus className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white font-mono leading-none">
-                    {newLeadsCount}
-                  </div>
-                  <div className="text-xs text-blue-200/80 font-medium mt-1">New Leads</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+        {/* Card 3: Callbacks */}
+        <div 
+          onClick={() => setLocation("/call-logs")}
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-emerald-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(52,211,153,0.15)] flex flex-col justify-between min-h-[105px]"
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+              <Phone className="w-4 h-4 shrink-0" />
             </div>
-
-            {/* Card 2: Meetings Today */}
-            <div 
-              onClick={() => setLocation("/calendar")}
-              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white font-mono leading-none">
-                    {todayAppointments.length || 2}
-                  </div>
-                  <div className="text-xs text-blue-200/80 font-medium mt-1">Meetings Today</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+          </div>
+          <div className="mt-2 min-w-0">
+            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+              {unassignedCalls.length || 3}
             </div>
-
-            {/* Card 2: Callbacks */}
-            <div 
-              onClick={() => setLocation("/call-logs")}
-              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-emerald-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(52,211,153,0.15)] flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white font-mono leading-none">
-                    {unassignedCalls.length || 3}
-                  </div>
-                  <div className="text-xs text-blue-200/80 font-medium mt-1">Callbacks</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
+              Callbacks
             </div>
+          </div>
+        </div>
 
-            {/* Card 3: Tasks Due */}
-            <div 
-              onClick={() => handleTabChange("tasks")}
-              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
-                  <CheckSquare className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white font-mono leading-none">
-                    {openTasks.length || 4}
-                  </div>
-                  <div className="text-xs text-blue-200/80 font-medium mt-1">Tasks Due</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+        {/* Card 4: Tasks Due */}
+        <div 
+          onClick={() => handleTabChange("tasks")}
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex flex-col justify-between min-h-[105px]"
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="p-2 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
+              <CheckSquare className="w-4 h-4 shrink-0" />
             </div>
-
-            {/* Card 4: New Messages (Switches to Crew Messages tab) */}
-            <div 
-              onClick={() => handleTabChange("messages")}
-              className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-4 sm:p-5 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform relative">
-                  <MessageSquare className="w-5 h-5" />
-                  {crewUnreadTotal > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white font-mono leading-none">
-                    {crewUnreadTotal > 0 ? crewUnreadTotal : (newMessagesCount || 0)}
-                  </div>
-                  <div className="text-xs text-blue-200/80 font-medium mt-1">Crew Messages</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
+            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+          </div>
+          <div className="mt-2 min-w-0">
+            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+              {openTasks.length || 4}
             </div>
+            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
+              Tasks Due
+            </div>
+          </div>
+        </div>
 
-            {/* Card 6: Waypoint Motto Tile — Epic Bathymetric Topographic Map & Luminous Gold Typography */}
-            <div className="col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[96px]">
+        {/* Card 5: Crew Messages */}
+        <div 
+          onClick={() => handleTabChange("messages")}
+          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex flex-col justify-between min-h-[105px]"
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="p-2 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform relative">
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              {crewUnreadTotal > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                </span>
+              )}
+            </div>
+            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+          </div>
+          <div className="mt-2 min-w-0">
+            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+              {crewUnreadTotal > 0 ? crewUnreadTotal : (newMessagesCount || 0)}
+            </div>
+            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
+              Crew Messages
+            </div>
+          </div>
+        </div>
+
+        {/* Card 6: Waypoint Creed Motto Tile */}
+        <div className="col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-3.5 sm:p-4 flex flex-col justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[105px]">
           {/* Multi-Layered, Ultra-Fine Bathymetric Topographic Ocean Depth Contours */}
           <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
             <svg
@@ -578,38 +525,96 @@ export default function CrewQuarters() {
               <circle cx="35" cy="95" r="70" fill="#0284c7" fillOpacity="0.18" />
               <circle cx="110" cy="60" r="45" fill="#38bdf8" fillOpacity="0.08" />
 
-              {/* Dense, delicate bathymetric contour ridges sweeping across the entire chart */}
+              {/* Bathymetric contour ridges */}
               <path d="M-10 125 C 20 120, 35 105, 55 98 C 80 90, 105 106, 140 100 C 180 94, 220 106, 310 98" stroke="url(#topoDeep)" strokeWidth="0.65" />
               <path d="M-10 118 C 22 112, 38 98, 60 91 C 86 83, 112 99, 148 93 C 190 86, 230 100, 310 91" stroke="url(#topoDeep)" strokeWidth="0.65" />
               <path d="M-10 110 C 24 104, 42 90, 65 83 C 92 75, 120 92, 158 85 C 200 78, 240 93, 310 84" stroke="url(#topoCyan)" strokeWidth="0.75" />
               <path d="M-10 102 C 26 95, 46 82, 70 75 C 99 67, 128 84, 168 77 C 210 70, 250 86, 310 77" stroke="url(#topoCyan)" strokeWidth="0.85" filter="url(#oceanGlow)" />
               <path d="M-10 94 C 28 86, 50 74, 76 66 C 106 58, 136 76, 178 69 C 220 62, 260 79, 310 70" stroke="url(#topoCyan)" strokeWidth="0.95" />
               <path d="M-10 86 C 30 77, 54 65, 82 57 C 114 49, 145 68, 188 61 C 230 54, 270 72, 310 63" stroke="#38bdf8" strokeWidth="1.1" strokeOpacity="0.85" filter="url(#oceanGlow)" />
-              <path d="M-10 77 C 32 68, 58 56, 88 48 C 121 40, 154 60, 198 53 C 240 46, 280 65, 310 56" stroke="url(#topoCyan)" strokeWidth="0.85" />
-              <path d="M-10 68 C 34 58, 62 47, 94 39 C 128 31, 162 52, 208 45 C 250 38, 290 57, 310 49" stroke="url(#topoCyan)" strokeWidth="0.75" />
-              <path d="M-10 59 C 36 49, 66 38, 100 30 C 136 22, 171 43, 218 36 C 260 29, 295 48, 310 42" stroke="url(#topoDeep)" strokeWidth="0.65" />
-              <path d="M-10 50 C 38 40, 70 29, 106 21 C 144 13, 180 34, 228 27 C 270 20, 300 38, 310 34" stroke="url(#topoDeep)" strokeWidth="0.65" />
-              <path d="M-10 40 C 40 30, 74 19, 112 12 C 152 4, 189 25, 238 18 C 278 12, 302 28, 310 26" stroke="url(#topoDeep)" strokeWidth="0.55" />
-              <path d="M-10 30 C 42 20, 78 10, 118 4 C 160 -4, 198 16, 248 9 C 285 3, 305 18, 310 17" stroke="url(#topoDeep)" strokeWidth="0.5" />
-
-              {/* Secondary delicate intersecting elevation contours */}
-              <path d="M 120 120 C 145 100, 170 85, 205 78 C 245 70, 275 80, 310 75" stroke="#0ea5e9" strokeWidth="0.5" strokeOpacity="0.35" />
-              <path d="M 140 120 C 165 105, 190 92, 225 86 C 260 80, 285 88, 310 83" stroke="#0284c7" strokeWidth="0.45" strokeOpacity="0.25" />
-              <path d="M 80 0 C 110 25, 150 45, 195 40 C 240 35, 280 20, 310 12" stroke="#0284c7" strokeWidth="0.5" strokeOpacity="0.2" />
             </svg>
           </div>
 
-          {/* Right-Aligned Stacked Gold Typography + Accent Bar */}
-          <div className="relative z-10 ml-auto flex flex-col items-end text-right select-none pl-4">
-            <div className="text-[13px] sm:text-[14px] font-sans font-extrabold tracking-[0.2em] text-[#F3CE85] leading-[1.35] drop-shadow-[0_2px_8px_rgba(243,206,133,0.35)]">
+          {/* Creed Header */}
+          <div className="relative z-10 flex items-center justify-between w-full">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300/80">Creed</span>
+            <div className="w-5 h-[2px] bg-gradient-to-r from-amber-400 to-[#F3CE85] rounded-full shadow-[0_0_8px_rgba(243,206,133,0.8)]" />
+          </div>
+
+          {/* Stacked Gold Typography */}
+          <div className="relative z-10 flex flex-col items-start select-none mt-2">
+            <div className="text-[11px] sm:text-[12px] font-sans font-extrabold tracking-[0.14em] text-[#F3CE85] leading-tight drop-shadow-[0_2px_8px_rgba(243,206,133,0.35)]">
               <div>ADVOCACY</div>
               <div>CHANGES</div>
               <div>LIVES</div>
             </div>
-            <div className="w-9 h-[2.5px] bg-gradient-to-r from-amber-400 to-[#F3CE85] rounded-full mt-2 shadow-[0_0_10px_rgba(243,206,133,0.8)]" />
           </div>
         </div>
       </div>
+
+      {/* ── Internal Tab Navigation Bar (Under the Number Blocks) ── */}
+      <div className="flex items-center justify-between gap-3 border-b border-blue-900/40 pb-4 overflow-x-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#000d2b]/90 border border-blue-900/60 p-1.5 rounded-2xl shadow-inner backdrop-blur-md">
+          {[
+            { id: "overview", label: "Overview", icon: LayoutDashboard },
+            { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
+            { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
+            { id: "schedule", label: "Team Schedule", icon: Calendar },
+            { id: "resources", label: "Resources", icon: BookOpen },
+          ].map((tab) => {
+            const isActive = currentTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#0062E3] to-[#004BB5] text-white shadow-[0_4px_15px_rgba(0,98,227,0.4)] border border-sky-400/40"
+                    : "text-blue-200/80 hover:text-white hover:bg-white/[0.06] border border-transparent"
+                }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-sky-400"}`} />
+                <span>{tab.label}</span>
+                {Boolean(tab.badge && tab.badge > 0) && (
+                  <span
+                    className={`ml-1 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight ${
+                      tab.id === "messages"
+                        ? "bg-sky-400 text-slate-950 shadow-xs animate-pulse"
+                        : "bg-blue-900/80 text-blue-200 border border-blue-700/60"
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {currentTab === "overview" && (
+          <Button
+            size="sm"
+            onClick={() => handleTabChange("messages")}
+            className="hidden md:flex items-center gap-1.5 bg-[#001433] hover:bg-[#001E4D] border border-sky-500/30 text-sky-300 hover:text-white text-xs font-semibold rounded-xl px-3.5 py-2 cursor-pointer shadow-sm transition-all shrink-0"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+            <span>Open Crew Messages</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+          </Button>
+        )}
+      </div>
+
+      {/* ── TAB CONTENT 1: CREW MESSAGES WORKSPACE ── */}
+      {currentTab === "messages" && (
+        <div className="space-y-4">
+          <CrewMessagesWorkspace initialConversationId={selectedConversationId} />
+        </div>
+      )}
+
+      {/* ── TAB CONTENT 2: OVERVIEW DASHBOARD ── */}
+      {currentTab === "overview" && (
+        <div className="space-y-8">
 
       {/* ── ROW 2: Today's Schedule · My Tasks · Quick Actions ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
