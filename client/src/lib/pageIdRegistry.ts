@@ -64,7 +64,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   // Special Advocacy Engines
   "/state-complaint-builder":         { id: "PG-020", name: "State Complaint Builder", category: "Advocacy" },
   "/tools/state-complaint-builder":   { id: "PG-020", name: "State Complaint Builder", category: "Advocacy" },
-  "/brain-dump":                      { id: "PG-021", name: "Advocate BrainDump", category: "Productivity" },
+  "/brain-dump":                      { id: "PG-021", name: "My Notes & Company Notes", category: "Productivity", description: "Business thinking space, Wall & List views, and company notes" },
+  "/notes":                           { id: "PG-021", name: "My Notes", category: "Productivity" },
   "/bill-guardian":                   { id: "PG-022", name: "Bill Guardian", category: "Billing" },
   "/first-mate":                      { id: "PG-037", name: "First Mate Live Advocacy Copilot", category: "Advocacy", description: "Live Advocacy Copilot and real-time meeting assistant" },
   "/ai-connections":                  { id: "PG-032", name: "AI Connections", category: "AI" },
@@ -314,6 +315,7 @@ export const CREW_QUARTERS_TAB_IDS: Record<string, PageIdInfo> = {
   "profile":      { id: "PG-038-CRD", name: "Employee Profile & Credentials", category: "Employee", description: "Advocate credentials, certifications, licenses, and bio" },
   "payroll":      { id: "PG-038-PAY", name: "Payroll & Compensation", category: "Employee", description: "Pay schedule, direct deposit status, and compensation overview" },
   "equipment":    { id: "PG-038-EQP", name: "Equipment & Tech Assets", category: "Employee", description: "Company hardware, assigned devices, software logins, and IT assets" },
+  "notes":        { id: "PG-038-NOT", name: "My Notes", category: "Employee", description: "Individual employee business thinking space, sticky notes, and idea capture" },
 };
 
 /**

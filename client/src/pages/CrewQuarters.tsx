@@ -66,6 +66,7 @@ import {
   Timer,
   CreditCard,
   Laptop,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 import CrewMessagesWorkspace from "@/components/crew-quarters/CrewMessagesWorkspace";
@@ -76,6 +77,7 @@ import EmployeeTimesheetTab from "@/components/crew-quarters/EmployeeTimesheetTa
 import EmployeeProfileTab from "@/components/crew-quarters/EmployeeProfileTab";
 import EmployeePayrollTab from "@/components/crew-quarters/EmployeePayrollTab";
 import EmployeeEquipmentTab from "@/components/crew-quarters/EmployeeEquipmentTab";
+import NotesWorkspace from "@/components/braindump/NotesWorkspace";
 
 interface TimeOffRequest {
   id: string;
@@ -725,6 +727,7 @@ export default function CrewQuarters() {
               Employee Hub
             </span>
             {[
+              { id: "notes", label: "My Notes", icon: Lightbulb },
               { id: "availability", label: "My Availability", icon: Clock },
               { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
               { id: "timesheet", label: "My Timesheet", icon: Timer },
@@ -1638,6 +1641,17 @@ export default function CrewQuarters() {
       {/* ── TAB CONTENT 11: EQUIPMENT & TECH ASSETS ── */}
       {currentTab === "equipment" && (
         <EmployeeEquipmentTab />
+      )}
+
+      {/* ── TAB CONTENT 12: MY NOTES (PG-038-NOT) ── */}
+      {currentTab === "notes" && (
+        <NotesWorkspace
+          scope="employee"
+          targetEmployeeId="emp-byron-honea"
+          targetEmployeeName="Byron Honea"
+          isCeoOrAdmin={true}
+          companyName="Waypoint Advocates"
+        />
       )}
 
       {/* ── Time Off Request Modal ── */}

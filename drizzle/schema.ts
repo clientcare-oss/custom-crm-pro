@@ -1040,6 +1040,16 @@ export const brainDumpItems = mysqlTable("brainDumpItems", {
   pinned: boolean("pinned").default(false).notNull(),
   tags: text("tags"),   // JSON array of strings
   sortOrder: int("sortOrder").default(0).notNull(),
+  scope: varchar("scope", { length: 50 }).default("unclassified").notNull(), // 'employee' | 'company' | 'unclassified'
+  employeeId: varchar("employeeId", { length: 100 }), // e.g. 'emp-byron-honea'
+  organizationId: varchar("organizationId", { length: 100 }).default("default"),
+  bringUpDate: varchar("bringUpDate", { length: 50 }), // Calendar reminder date e.g. 'Sep 28, 2026' or '2026-09-28'
+  wallPositionX: int("wallPositionX"),
+  wallPositionY: int("wallPositionY"),
+  wallRotation: int("wallRotation").default(0),
+  taskConvertedId: int("taskConvertedId"),
+  pinColor: varchar("pinColor", { length: 20 }).default("yellow"),
+  stickyColor: varchar("stickyColor", { length: 50 }).default("yellow"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

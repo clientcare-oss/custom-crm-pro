@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import VoiceInput from "@/components/VoiceInput";
 import VoiceTextarea from "@/components/VoiceTextarea";
+import NotesWorkspace from "@/components/braindump/NotesWorkspace";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -25,6 +26,8 @@ import {
   Network,
   HelpCircle,
   Clock,
+  Lightbulb,
+  Building,
 } from "lucide-react";
 
 const WORKFLOW_COLORS = [
@@ -47,6 +50,14 @@ export function BusinessOperationsSection() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
   const isAdmin = user?.role === "admin";
+
+  const [activeSubTab, setActiveSubTab] = useState<"company_notes" | "workflows">(() => {
+    if (typeof window !== "undefined") {
+      const search = window.location.search;
+      if (search.includes("workflows")) return "workflows";
+    }
+    return "company_notes";
+  });
 
   const { data: workflows = [], isLoading } = trpc.workflows.list.useQuery();
 
@@ -135,17 +146,54 @@ export function BusinessOperationsSection() {
 
   return (
     <div className="space-y-6">
-      {/* ── ARCHITECTURAL DISTINCTION CALLOUT ─────────────────────────────── */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-slate-900/60 to-slate-900/40 p-5 shadow-sm space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-              <Network className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                Business Operations · Workflow Designer
-              </h2>
+      {/* ── SUB-TAB NAVIGATION: COMPANY NOTES vs WORKFLOW DESIGNER ── */}
+      <div className="flex items-center gap-2 border-b border-border/60 pb-3 flex-wrap">
+        <button
+          onClick={() => setActiveSubTab("company_notes")}
+          className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeSubTab === "company_notes"
+              ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+              : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+          }`}
+        >
+          <Building className="w-4 h-4" />
+          Company Notes (Organization Thinking & Planning)
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab("workflows")}
+          className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeSubTab === "workflows"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+              : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+          }`}
+        >
+          <GitBranch className="w-4 h-4" />
+          Process Workflows (Workflow Designer)
+        </button>
+      </div>
+
+      {activeSubTab === "company_notes" && (
+        <NotesWorkspace
+          scope="company"
+          companyName="Waypoint Advocates"
+          isCeoOrAdmin={isAdmin}
+        />
+      )}
+
+      {activeSubTab === "workflows" && (
+        <>
+          {/* ── ARCHITECTURAL DISTINCTION CALLOUT ─────────────────────────────── */}
+          <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-slate-900/60 to-slate-900/40 p-5 shadow-sm space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Network className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                    Business Operations · Workflow Designer
+                  </h2>
               <p className="text-xs text-slate-300">
                 Visual process planning, lifecycle mapping, and operational decision trees for executive leadership.
               </p>
@@ -414,6 +462,8 @@ export function BusinessOperationsSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </>
+      )}
     </div>
   );
 }

@@ -175,7 +175,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
         { icon: Zap, label: "Automations", path: "/automations" },
         { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
-        { icon: Brain, label: "BrainDump", path: "/brain-dump" },
       ],
     },
     {
@@ -1215,7 +1214,9 @@ const PAGE_LIST = [
   { id: "PG-018", name: "Call Logs", path: "/call-logs" },
   { id: "PG-019", name: "Team", path: "/team" },
   { id: "PG-020", name: "State Complaint Builder", path: "/state-complaint-builder" },
-  { id: "PG-021", name: "Brain Dump", path: "/brain-dump" },
+  { id: "PG-021", name: "My Notes & Company Notes", path: "/brain-dump" },
+  { id: "PG-038-NOT", name: "My Notes (Crew Quarters)", path: "/crew-quarters?tab=notes" },
+  { id: "PG-024-NOT", name: "Company Notes (Settings)", path: "/settings?section=operations" },
   { id: "PG-022", name: "Bill Guardian", path: "/bill-guardian" },
   { id: "PG-023", name: "Client Portal", path: "/client-portal" },
   { id: "PG-024", name: "Settings", path: "/settings" },

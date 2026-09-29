@@ -24,7 +24,9 @@ import {
   UserX,
   UserCheck,
   ChevronDown,
+  Lightbulb,
 } from "lucide-react";
+import NotesWorkspace from "@/components/braindump/NotesWorkspace";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -108,6 +110,7 @@ export default function EmployeeManagementWorkspace({
     { id: "documents", label: "Documents", icon: FileText },
     { id: "equipment", label: "Equipment", icon: Laptop },
     { id: "training", label: "Training", icon: GraduationCap },
+    { id: "employee_notes", label: "My Notes", icon: Lightbulb },
     { id: "notes", label: "Management Notes", icon: MessageSquare },
     { id: "activity", label: "Activity Audit", icon: History },
   ];
@@ -439,6 +442,15 @@ export default function EmployeeManagementWorkspace({
 
         {activeTab === "training" && (
           <EmployeeTrainingAdminTab employee={employee} onSave={onSaveEmployee} />
+        )}
+
+        {activeTab === "employee_notes" && (
+          <NotesWorkspace
+            scope="employee"
+            targetEmployeeId={employee.id}
+            targetEmployeeName={employee.name}
+            isCeoOrAdmin={true}
+          />
         )}
 
         {activeTab === "notes" && (
