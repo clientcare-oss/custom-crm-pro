@@ -33,6 +33,118 @@ export interface CallFlowDefinition {
 }
 
 export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
+  "Discovery Call": {
+    id: "discovery-call",
+    name: "Discovery Call",
+    category: "Consultation",
+    description: "Scheduled deep-dive consultation with a prospective family to understand educational challenges, present Waypoint advocacy plans, and confirm enrollment.",
+    badgeColor: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+    steps: [
+      {
+        id: "step-1",
+        title: "Opening & Introduction",
+        description: "Connect with parent, establish warmth and empathy, and frame the 20-30 minute consultation.",
+        instructions: [
+          "Verify parent's name and confirm they have 20-30 minutes for an uninterrupted conversation.",
+          "Introduce Byron Honea / Waypoint Master IEP Coach® methodology.",
+          "State the goal: Learn their story, assess IEP challenges, and determine if Waypoint is the right partner.",
+        ],
+        suggestedPhrasing:
+          "“Hi [Parent Name], this is [Name] with Waypoint Advocates. I'm calling for our scheduled discovery call about [Student Name]. How are you doing today?”",
+        whatNotToPromise: "Do not guarantee legal remedies or school placements prior to analyzing school records.",
+      },
+      {
+        id: "step-2",
+        title: "Their Story & Discovery Questions",
+        description: "Listen deeply to the student's journey, current IEP/504 friction, and parent priorities.",
+        instructions: [
+          "Ask what triggered them to reach out right now.",
+          "Review student's age, grade, eligibility category, and current placement.",
+          "Identify core friction points: evaluation denials, placement changes, behavioral incidents, or lack of progress.",
+        ],
+        suggestedPhrasing:
+          "“Take me back to what has been happening at school lately that made you say 'we need someone in our corner'?”",
+      },
+      {
+        id: "step-3",
+        title: "How Waypoint Works",
+        description: "Explain our Master IEP Coach® advocacy model, document review, and meeting strategy.",
+        instructions: [
+          "Explain our non-adversarial, data-focused, collaborative approach.",
+          "Describe how we analyze comprehensive school records and prior evaluations.",
+          "Explain Byron's role: sitting beside the family at the table to ensure procedural compliance and child-centered outcomes.",
+        ],
+        suggestedPhrasing:
+          "“We don't go in with guns blazing. We use objective data, state educational regulations, and Master IEP Coach strategies to help the district give your child what they truly need.”",
+      },
+      {
+        id: "step-4",
+        title: "Present Advocacy Plans & Services",
+        description: "Match the family's needs to Anchor Advocacy or specialized case service packages.",
+        instructions: [
+          "Present the recommended advocacy tier (e.g., Anchor Advocacy 12-Month Plan, Records Review, or Meeting Package).",
+          "Clarify investment and monthly retainer structure.",
+          "Confirm family understanding of advocacy scope.",
+        ],
+        suggestedPhrasing:
+          "“Based on what you've shared about [Student Name]'s upcoming triennial evaluation and annual review, our Anchor Advocacy plan provides full year-round representation.”",
+      },
+      {
+        id: "step-5",
+        title: "Closing & Next Steps",
+        description: "Capture the decision, publish plan to portal, send agreement, or schedule follow-up.",
+        instructions: [
+          "If moving forward: Publish agreed plan to Client Portal and send Advocacy Agreement.",
+          "If consulting with spouse: Set firm 48-hour follow-up date and send discovery summary.",
+          "If not a fit: Provide referral resources and log lost reason constructively.",
+        ],
+        suggestedPhrasing:
+          "“I can send over our Advocacy Agreement and open your secure Client Portal right now so you can upload [Student Name]'s current IEP. Would you like to get started?”",
+      },
+      {
+        id: "step-6",
+        title: "Wrap-Up & Record Sync",
+        description: "Save session notes, update Lead Center record, and schedule next tasks.",
+        instructions: [
+          "Review notes recorded during session.",
+          "Confirm Lead Center status is updated to 'Discovery Call Completed' or 'Won'.",
+          "Create onboarding task if converted.",
+        ],
+      },
+    ],
+    guide: {
+      overview: "Standard operating procedure for conducting formal scheduled Discovery Calls with prospective families.",
+      questionsToAsk: [
+        "What is the single biggest issue your child is facing right now in school?",
+        "When was your last IEP or 504 meeting, and did you sign or agree to the document?",
+        "Has the school conducted a psychoeducational or FBA evaluation in the last 3 years?",
+        "What outcome would make you feel like this school year was a complete victory?",
+      ],
+      informationToCollect: [
+        "Student diagnosis & IEP eligibility category",
+        "School district and current school",
+        "Upcoming meeting dates and deadlines",
+        "Parent primary contact preferences",
+      ],
+      howToExplain: "Waypoint brings professional Master IEP Coach® advocacy to the IEP table, turning stressful school meetings into collaborative student victories.",
+      pricingGuidance: "Anchor Advocacy plans typically range from $105/mo on 12-month agreements. Standalone reviews start at $250.",
+      whatNotToPromise: [
+        "Do not guarantee specific school placements or private school tuition reimbursement.",
+        "Do not offer legal representation in state court or formal OAH hearings.",
+      ],
+      escalationTriggers: [
+        "Manifestation Determination Review (MDR) scheduled within 10 days.",
+        "Imminent expulsion or disciplinary exclusion.",
+        "Physical restraint or seclusion incident reported.",
+      ],
+      closingSteps: [
+        "Record outcome in Discovery Call workflow.",
+        "Update Lead Center record status.",
+        "Dispatch agreement or follow-up email.",
+      ],
+    },
+  },
+
   "New Lead / Sales": {
     id: "new-lead-sales",
     name: "New Lead / Sales",

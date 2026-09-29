@@ -7,6 +7,7 @@ export type CallerCategory =
   | "new_lead"
   | "existing_client"
   | "other_contact"
+  | "discovery_call"
   | null;
 
 export interface CallerInfo {
@@ -32,6 +33,8 @@ export interface ActiveCallState {
   callerInfo: CallerInfo;
   contactId?: number | null;
   contactName?: string | null;
+  leadId?: number | null;
+  leadData?: any;
   studentId?: number | null;
   studentName?: string | null;
   otherRole?: string | null;
@@ -83,6 +86,8 @@ const initialCallState: ActiveCallState = {
   callerInfo: { name: "" },
   contactId: null,
   contactName: null,
+  leadId: null,
+  leadData: null,
   studentId: null,
   studentName: null,
   otherRole: null,

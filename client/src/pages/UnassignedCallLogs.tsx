@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -99,6 +99,75 @@ export default function UnassignedCallLogs() {
   const callsTodayCount = Math.max(logs.length, 6);
   const scheduledCount = Math.max(appointmentsData.length, 4);
   const leadsCount = Math.max(leadsData.length, 3);
+
+  // Auto-connect from Lead Center / Contact records via URL parameters
+  const [urlParamsHandled, setUrlParamsHandled] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || urlParamsHandled) return;
+    const params = new URLSearchParams(window.location.search);
+    const urlType = params.get("type"); // "discovery" | "lead" | "client"
+    const urlLeadIdStr = params.get("leadId");
+    const urlContactIdStr = params.get("contactId");
+
+    if (urlType === "discovery" || urlLeadIdStr) {
+      const parsedLeadId = urlLeadIdStr ? parseInt(urlLeadIdStr) : null;
+      setShowCallWorkspace(true);
+      setUrlParamsHandled(true);
+
+      const foundLead = parsedLeadId ? leadsData.find((l: any) => l.id === parsedLeadId) : null;
+      const parentName = foundLead?.parentName || foundLead?.name || "Discovery Call";
+
+      startCall({
+        callerCategory: "discovery_call",
+        callType: "Discovery Call",
+        leadId: parsedLeadId || undefined,
+        leadData: foundLead || undefined,
+        callerInfo: {
+          name: parentName,
+          phone: foundLead?.parentPhone || foundLead?.phone || undefined,
+          email: foundLead?.parentEmail || foundLead?.email || undefined,
+        },
+        studentName: foundLead?.studentName || undefined,
+        generalNotes: foundLead?.notes || "",
+      });
+
+      if (foundLead) {
+        toast.success(`Loaded Discovery Call for ${parentName}`);
+      }
+
+      setTimeout(() => {
+        const el = document.getElementById("call-workspace");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+    } else if (urlType === "client" || urlContactIdStr) {
+      const parsedContactId = urlContactIdStr ? parseInt(urlContactIdStr) : null;
+      setShowCallWorkspace(true);
+      setUrlParamsHandled(true);
+
+      const foundContact = parsedContactId ? contactsData.find((c: any) => c.id === parsedContactId) : null;
+      const fullName = foundContact ? (`${foundContact.firstName || ""} ${foundContact.lastName || ""}`.trim() || foundContact.name) : "Client";
+
+      startCall({
+        callerCategory: "existing_client",
+        callType: "Current Client",
+        contactId: parsedContactId || undefined,
+        contactName: fullName,
+        callerInfo: {
+          name: fullName,
+          phone: foundContact?.phone || undefined,
+          email: foundContact?.email || undefined,
+        },
+        studentName: foundContact?.studentName || undefined,
+      });
+
+      toast.success(`Loaded Client: ${fullName}`);
+
+      setTimeout(() => {
+        const el = document.getElementById("call-workspace");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+    }
+  }, [leadsData, contactsData, urlParamsHandled, startCall]);
 
   // Handlers
   const handleOpenQuoWithContact = (contact: ContactItem) => {

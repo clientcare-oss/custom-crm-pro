@@ -23,6 +23,8 @@ import { ExistingClientFlow } from "./ExistingClientFlow";
 import { AdvocacyCaseFlow } from "./AdvocacyCaseFlow";
 import { WrapUpCallSection } from "./WrapUpCallSection";
 import { RequestCallbackModal } from "./RequestCallbackModal";
+import DiscoveryCall from "@/pages/DiscoveryCall";
+import { toast } from "sonner";
 
 interface CallWorkspaceProps {
   onAddNewContactRequest?: () => void;
@@ -52,9 +54,10 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
     }
   };
 
-  const isLeadMode = call.callerCategory === "new_lead" || call.callType === "New Lead / Sales";
-  const isExistingClient = call.callerCategory === "existing_client" || call.callType === "Current Client";
-  const isAdvocacyCase = call.callType === "Advocacy / Case Question";
+  const isDiscoveryMode = call.callerCategory === "discovery_call" || call.callType === "Discovery Call";
+  const isLeadMode = (call.callerCategory === "new_lead" || call.callerCategory === "lead" || call.callType === "New Lead / Sales") && !isDiscoveryMode;
+  const isExistingClient = (call.callerCategory === "existing_client" || call.callerCategory === "client" || call.callType === "Current Client") && !isDiscoveryMode;
+  const isAdvocacyCase = call.callType === "Advocacy / Case Question" && !isDiscoveryMode;
 
   return (
     <div id="call-workspace" className="space-y-6 scroll-mt-6">
@@ -159,6 +162,44 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
       />
 
       {/* SPECIALIZED WORKFLOW PANELS BASED ON CALL TYPE & CATEGORY */}
+      {isDiscoveryMode && (
+        <div className="animate-in fade-in slide-in-from-top-3 duration-300 space-y-4">
+          {call.leadId ? (
+            <div className="rounded-2xl border border-amber-500/30 bg-[#07162B] p-5 shadow-2xl">
+              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-amber-400/20 text-amber-300 border-amber-400/40 text-xs font-bold">
+                    ACTIVE DISCOVERY CALL CANVAS
+                  </Badge>
+                  <span className="text-xs text-slate-300 font-mono">PG-018 · PG-003-DC Embedded</span>
+                </div>
+                <div className="text-xs text-slate-400">
+                  Real-time synchronization with Lead Center and student records.
+                </div>
+              </div>
+              <DiscoveryCall
+                leadId={call.leadId}
+                embedded={true}
+                onCallCompleted={(data) => {
+                  toast.success("Discovery call completed and synced to lead record!");
+                  scrollToWrapUp();
+                }}
+              />
+            </div>
+          ) : (
+            <div className="p-8 rounded-2xl border border-amber-400/40 bg-[#0a1829] text-center space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mx-auto">
+                <PhoneCall className="h-6 w-6" />
+              </div>
+              <h3 className="text-base font-bold text-white">Select a Lead to Activate Discovery Call</h3>
+              <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+                Choose the prospective parent or scheduled call in Section 1 above to load their student record, custom discovery questionnaire, and pricing workflows.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {isLeadMode && (
         <div className="animate-in fade-in slide-in-from-top-3 duration-300">
           <NewLeadFlow />

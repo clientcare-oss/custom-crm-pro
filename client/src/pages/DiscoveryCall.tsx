@@ -42,6 +42,8 @@ import DiscoverySectionHeader from "@/components/discovery/DiscoverySectionHeade
 
 interface DiscoveryCallPageProps {
   leadId: number;
+  embedded?: boolean;
+  onCallCompleted?: (data?: any) => void;
 }
 
 const NEXT_STEPS_KEYS = [
@@ -79,7 +81,11 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-export default function DiscoveryCall({ leadId }: DiscoveryCallPageProps) {
+export default function DiscoveryCall({
+  leadId,
+  embedded = false,
+  onCallCompleted,
+}: DiscoveryCallPageProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -372,19 +378,28 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
   const resourceCategories = Array.from(new Set(resources?.map((r) => r.category).filter(Boolean) ?? []));
 
   return (
-    <div className="min-h-screen bg-[#071422] text-white">
+    <div className={embedded ? "w-full space-y-6 text-white pb-6" : "min-h-screen bg-[#071422] text-white"}>
       {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-[#071422]/95 backdrop-blur border-b border-white/10 px-6 py-3 flex items-center justify-between">
+      <div className={embedded ? "bg-[#091C36] border border-sky-500/30 rounded-2xl px-5 py-3.5 flex items-center justify-between shadow-lg flex-wrap gap-3" : "sticky top-0 z-30 bg-[#071422]/95 backdrop-blur border-b border-white/10 px-6 py-3 flex items-center justify-between"}>
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation("/leads")}
-            className="text-muted-foreground hover:text-white gap-1"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Leads
-          </Button>
+          {embedded ? (
+            <div className="flex items-center gap-2">
+              <Badge className="bg-amber-400/20 text-amber-300 border-amber-400/40 text-[10px] font-bold">
+                CALL CENTER ACTIVE
+              </Badge>
+              <span className="text-xs text-slate-400 font-mono">PG-018 ↔ PG-003-DC</span>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/leads")}
+              className="text-muted-foreground hover:text-white gap-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Leads
+            </Button>
+          )}
           <span className="text-white/30">|</span>
           <PhoneCall className="w-4 h-4 text-amber-400" />
           <div className="flex items-center gap-2">
@@ -442,12 +457,29 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
           </DropdownMenu>
         </div>
         <div className="flex items-center gap-3">
+          {embedded && lead?.parentPhone && (
+            <Button
+              size="sm"
+              onClick={() => {
+                const clean = lead.parentPhone!.replace(/\D/g, "");
+                const formatted = clean.length === 10 ? `+1${clean}` : `+${clean}`;
+                try {
+                  window.location.href = `openphone://call?number=${formatted}`;
+                } catch {}
+                toast.success(`Opening Quo phone to call ${lead.parentName || lead.name}...`);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-3 rounded-xl gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>Call {lead.parentPhone}</span>
+            </Button>
+          )}
           {saving && <span className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Saving…</span>}
           {!saving && lastSaved && <span className="text-xs text-muted-foreground">Saved {lastSaved.toLocaleTimeString()}</span>}
           <Button
             size="sm"
             onClick={() => { setSaving(true); triggerSave(); }}
-            className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1"
+            className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1 cursor-pointer"
           >
             <Save className="w-3 h-3" />
             Save
@@ -456,7 +488,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
       </div>
 
       {/* Lead header card */}
-      <div className="px-6 pt-5 pb-4">
+      <div className={embedded ? "px-1 pt-1 pb-2" : "px-6 pt-5 pb-4"}>
         <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-5">
           <div className="flex flex-wrap items-start gap-6">
             {/* Avatar + name */}
@@ -518,7 +550,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
       </div>
 
       {/* Step tracker */}
-      <div className="px-6 pb-4">
+      <div className={embedded ? "px-1 pb-4" : "px-6 pb-4"}>
         <div className="rounded-xl bg-[#0d1f33] border border-white/10 p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold uppercase tracking-wide text-white/50">Pipeline Progress</span>
@@ -726,17 +758,17 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
       </div>
 
       {/* Tab bar */}
-      <div className="px-6 pb-3 flex gap-2">
+      <div className={embedded ? "px-1 pb-3 flex gap-2" : "px-6 pb-3 flex gap-2"}>
         <button
           onClick={() => setActiveTab("call")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === "call" ? "bg-amber-500 text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${activeTab === "call" ? "bg-amber-500 text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
         >
           <PhoneCall className="w-4 h-4 inline mr-1.5" />
           Call Guide
         </button>
         <button
           onClick={() => setActiveTab("resources")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === "resources" ? "bg-amber-500 text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${activeTab === "resources" ? "bg-amber-500 text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
         >
           <BookOpen className="w-4 h-4 inline mr-1.5" />
           Resources
@@ -745,7 +777,7 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
 
       {/* ===== CALL GUIDE TAB ===== */}
       {activeTab === "call" && (
-        <div className="px-6 pb-10 grid grid-cols-1 gap-4">
+        <div className={embedded ? "px-1 pb-6 grid grid-cols-1 gap-4" : "px-6 pb-10 grid grid-cols-1 gap-4"}>
 
           {/* Section 1: Call Script & Contact */}
           <div className="space-y-2">
@@ -1332,9 +1364,10 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                     <Button
                       onClick={() => {
                         saveMutation.mutate({ leadId, status: "Completed" });
+                        onCallCompleted?.({ status: "Completed", closingResponse: "Yes" });
                         toast.success("Lead moved to Won / Active Client!");
                       }}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 shadow-lg"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 shadow-lg cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4 mr-1.5" /> Move to Won / Active Client
                     </Button>
@@ -1552,9 +1585,10 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                     <Button
                       onClick={() => {
                         saveMutation.mutate({ leadId, status: "Lost" });
+                        onCallCompleted?.({ status: "Lost", closingResponse: "Not right now" });
                         toast.info("Feedback recorded and lead moved to Lost position.");
                       }}
-                      className="w-full bg-red-700 hover:bg-red-800 text-white font-semibold text-xs py-2.5 mt-2"
+                      className="w-full bg-red-700 hover:bg-red-800 text-white font-semibold text-xs py-2.5 mt-2 cursor-pointer"
                     >
                       <X className="w-4 h-4 mr-1.5" /> Record Feedback & Move to Lost Position
                     </Button>

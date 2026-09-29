@@ -899,8 +899,8 @@ export default function Leads() {
                   {call.leadId ? (
                     <Button
                       size="sm"
-                      onClick={() => setLocation(`/leads/${call.leadId}/discovery`)}
-                      className="text-xs font-semibold h-8 bg-blue-600 hover:bg-blue-700 text-white gap-1.5 px-3"
+                      onClick={() => setLocation(`/call-center?type=discovery&leadId=${call.leadId}`)}
+                      className="text-xs font-semibold h-8 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 px-3 cursor-pointer shadow-sm"
                     >
                       <PhoneCall className="w-3 h-3" />
                       <span>Start Call</span>
@@ -1015,8 +1015,8 @@ export default function Leads() {
                   {call.leadId ? (
                     <Button
                       size="sm"
-                      onClick={() => setLocation(`/leads/${call.leadId}/discovery`)}
-                      className="text-xs font-semibold h-8 bg-blue-600 hover:bg-blue-700 text-white gap-1.5 px-3"
+                      onClick={() => setLocation(`/call-center?type=discovery&leadId=${call.leadId}`)}
+                      className="text-xs font-semibold h-8 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 px-3 cursor-pointer shadow-sm"
                     >
                       <PhoneCall className="w-3 h-3" />
                       <span>Start Call</span>
@@ -1189,9 +1189,9 @@ export default function Leads() {
                           {/* Begin Discovery Call — shown on New leads */}
                           {status === "New" && (
                             <Button
-                              onClick={() => setLocation(`/leads/${lead.id}/discovery`)}
+                              onClick={() => setLocation(`/call-center?type=discovery&leadId=${lead.id}`)}
                               size="sm"
-                              className="w-full min-w-0 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold gap-1.5 px-3 py-1.5 shadow-sm justify-center"
+                              className="w-full min-w-0 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold gap-1.5 px-3 py-1.5 shadow-sm justify-center cursor-pointer"
                             >
                               <PhoneCall className="size-3.5 shrink-0" />
                               <span className="truncate">Begin Discovery Call</span>

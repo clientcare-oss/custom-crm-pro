@@ -62,6 +62,28 @@ export const discoveryRouter = router({
         } else {
           await dbConn.insert(discoveryCalls).values({ leadId, ownerId: ctx.user.id, ...data });
         }
+
+        // Synchronize outcome status & notes back to the original Lead Center record
+        try {
+          const { leads } = await import("../../drizzle/schema");
+          if (data.status === "Completed") {
+            const noteText = data.closingResponse
+              ? `Discovery call completed (${data.closingResponse}). ${data.additionalNotes || ""}`.trim()
+              : data.additionalNotes || undefined;
+            await dbConn.update(leads).set({
+              status: "Won",
+              ...(noteText ? { notes: noteText } : {}),
+            }).where(and(deq(leads.id, leadId), deq(leads.ownerId, ctx.user.id)));
+          } else if (data.status === "Lost") {
+            await dbConn.update(leads).set({
+              status: "Lost",
+              ...(data.additionalNotes ? { notes: data.additionalNotes } : {}),
+            }).where(and(deq(leads.id, leadId), deq(leads.ownerId, ctx.user.id)));
+          }
+        } catch (syncErr) {
+          console.warn("[Discovery] Could not sync status to lead record:", syncErr);
+        }
+
         return { success: true };
       }),
 

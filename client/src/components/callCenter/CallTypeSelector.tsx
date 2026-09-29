@@ -13,9 +13,11 @@ import {
   HelpCircle,
   MoreHorizontal,
   LucideIcon,
+  PhoneCall,
 } from "lucide-react";
 
 const CALL_TYPE_ICONS: Record<string, LucideIcon> = {
+  "Discovery Call": PhoneCall,
   "New Lead / Sales": UserPlus,
   "Current Client": UserCheck,
   "Advocacy / Case Question": Compass,

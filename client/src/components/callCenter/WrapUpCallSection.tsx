@@ -20,10 +20,12 @@ import {
 } from "lucide-react";
 
 const OUTCOME_OPTIONS = [
-  "Lead created",
-  "Discovery scheduled",
+  "Discovery call completed",
+  "Client enrolled / Won",
   "Agreement sent",
   "Payment link sent",
+  "Lead created",
+  "Discovery scheduled",
   "Client question answered",
   "Advocate callback requested",
   "Appointment scheduled",
@@ -81,6 +83,25 @@ export function WrapUpCallSection({ onCompleteSuccess }: WrapUpCallSectionProps)
           toast.success("Follow-up task created in CRM");
         } catch (taskErr) {
           console.warn("Could not create task automatically:", taskErr);
+        }
+      }
+
+      // If attached to a lead (or discovery call), sync outcome and notes to discovery / leads records
+      if (call.leadId) {
+        try {
+          const outcomeLower = outcome.toLowerCase();
+          const isWon = outcomeLower.includes("won") || outcomeLower.includes("completed") || outcomeLower.includes("enrolled") || outcomeLower.includes("agreement");
+          const isLost = outcomeLower.includes("lost");
+          await utils.client.discovery.save.mutate({
+            leadId: call.leadId,
+            status: isWon ? "Completed" : isLost ? "Lost" : "In Progress",
+            additionalNotes: finalNotes,
+            closingResponse: outcome,
+          });
+          utils.leads.list.invalidate();
+          utils.leads.get.invalidate({ id: call.leadId });
+        } catch (leadErr) {
+          console.warn("Could not sync lead outcome:", leadErr);
         }
       }
 

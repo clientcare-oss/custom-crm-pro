@@ -316,9 +316,9 @@ export function StudentWorkspaceTab({
         onStateChange={handleJourneyStateChange}
         onOpenDiscoveryCall={() => {
           if (contact.leadId) {
-            setLocation(`/leads/${contact.leadId}/discovery`);
+            setLocation(`/call-center?type=discovery&leadId=${contact.leadId}`);
           } else {
-            toast.info(`Opening Discovery Call workflow for ${fullName}`);
+            setLocation(`/call-center?type=discovery&contactId=${contactId}`);
           }
         }}
         parentContact={parentContact}
