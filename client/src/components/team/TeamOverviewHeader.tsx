@@ -119,27 +119,38 @@ export default function TeamOverviewHeader({
 
       {/* ── Role Count Badges (Dynamic from Real Workforce Records) ── */}
       <div className="rounded-2xl border border-blue-900/60 bg-[#000a26] p-4 sm:p-5 shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-amber-400" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
               Workforce Distribution by Role
             </h3>
           </div>
-          <span className="text-[11px] text-blue-300/70">
-            Click any role to filter the employee directory
-          </span>
+          <div className="flex items-center gap-3">
+            {activeRoleFilter !== "all" && (
+              <button
+                type="button"
+                onClick={() => onRoleFilterSelect?.("all")}
+                className="text-[11px] font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer"
+              >
+                Clear filter (show all)
+              </button>
+            )}
+            <span className="text-[11px] text-blue-300/70">
+              Click any role to filter the employee directory
+            </span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
           {(
             [
-              { id: "advocate", label: "Advocates", icon: Users, count: roleCounts.advocate, color: "text-sky-400 border-sky-500/30 bg-sky-950/40" },
-              { id: "call_center", label: "Call Center", icon: Headset, count: roleCounts.call_center, color: "text-emerald-400 border-emerald-500/30 bg-emerald-950/40" },
-              { id: "documentation", label: "Documentation", icon: FileText, count: roleCounts.documentation, color: "text-purple-400 border-purple-500/30 bg-purple-950/40" },
-              { id: "technology", label: "Technology", icon: Laptop, count: roleCounts.technology, color: "text-cyan-400 border-cyan-500/30 bg-cyan-950/40" },
-              { id: "operations", label: "Operations", icon: Settings, count: roleCounts.operations, color: "text-slate-300 border-slate-500/30 bg-slate-900/40" },
-              { id: "management", label: "Management", icon: Crown, count: roleCounts.management, color: "text-amber-400 border-amber-500/30 bg-amber-950/40" },
+              { id: "advocate", label: "Advocates", sub: "IEP Advocacy", icon: Users, count: roleCounts.advocate, color: "text-sky-400 border-sky-500/30 bg-sky-950/40" },
+              { id: "call_center", label: "Call Center", sub: "Phone & Intake", icon: Headset, count: roleCounts.call_center, color: "text-emerald-400 border-emerald-500/30 bg-emerald-950/40" },
+              { id: "documentation", label: "Documentation", sub: "Records & Filing", icon: FileText, count: roleCounts.documentation, color: "text-purple-400 border-purple-500/30 bg-purple-950/40" },
+              { id: "technology", label: "Technology", sub: "Systems & Security", icon: Laptop, count: roleCounts.technology, color: "text-cyan-400 border-cyan-500/30 bg-cyan-950/40" },
+              { id: "operations", label: "Operations", sub: "Logistics & Workflow", icon: Settings, count: roleCounts.operations, color: "text-slate-300 border-slate-500/30 bg-slate-900/40" },
+              { id: "management", label: "Management", sub: "Executive & Admin", icon: Crown, count: roleCounts.management, color: "text-amber-400 border-amber-500/30 bg-amber-950/40" },
             ] as const
           ).map((item) => {
             const isSelected = activeRoleFilter === item.id;
@@ -148,17 +159,26 @@ export default function TeamOverviewHeader({
               <button
                 key={item.id}
                 onClick={() => onRoleFilterSelect?.(isSelected ? "all" : item.id)}
-                className={`p-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer text-left ${item.color} ${
-                  isSelected ? "ring-2 ring-amber-400 scale-[1.02] shadow-md" : "hover:border-blue-400/40"
+                className={`p-3.5 rounded-xl border flex flex-col justify-between gap-2.5 transition-all cursor-pointer text-left ${item.color} ${
+                  isSelected ? "ring-2 ring-amber-400 scale-[1.02] shadow-lg shadow-amber-950/30" : "hover:border-blue-400/50 hover:bg-opacity-80"
                 }`}
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className="text-xs font-bold truncate">{item.label}</span>
+                <div className="flex items-center justify-between w-full">
+                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/10 shrink-0">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-black font-mono px-2.5 py-0.5 rounded-lg bg-black/50 text-white border border-white/10 shadow-xs shrink-0">
+                    {item.count}
+                  </span>
                 </div>
-                <span className="text-sm font-black font-mono px-2 py-0.5 rounded-lg bg-black/40 shrink-0">
-                  {item.count}
-                </span>
+                <div className="min-w-0">
+                  <div className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight whitespace-nowrap">
+                    {item.label}
+                  </div>
+                  <div className="text-[10px] text-blue-200/60 leading-tight whitespace-nowrap mt-0.5">
+                    {item.sub}
+                  </div>
+                </div>
               </button>
             );
           })}
@@ -186,9 +206,9 @@ export default function TeamOverviewHeader({
                 className="p-3.5 rounded-xl border border-amber-400/20 bg-[#000820]/90 flex items-start justify-between gap-3 text-xs"
               >
                 <div className="space-y-1 min-w-0">
-                  <div className="font-bold text-white flex items-center gap-1.5 truncate">
-                    <span className={`w-1.5 h-1.5 rounded-full ${att.level === "critical" ? "bg-red-400" : "bg-amber-400"}`} />
-                    {att.title}
+                  <div className="font-bold text-white flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${att.level === "critical" ? "bg-red-400" : "bg-amber-400"}`} />
+                    <span>{att.title}</span>
                   </div>
                   <p className="text-[11px] text-blue-200/70 leading-relaxed">
                     {att.description}
