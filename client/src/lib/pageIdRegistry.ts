@@ -52,7 +52,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/knowledge-base":                  { id: "PG-016", name: "Knowledge Base", category: "Advocacy" },
   "/walkthroughs":                    { id: "PG-017", name: "System Walkthroughs", category: "Help" },
   "/call-center":                     { id: "PG-018", name: "Call Center", category: "Communications" },
-  "/call-logs":                       { id: "PG-018", name: "Unassigned Call Logs", category: "Communications" },
+  "/call-logs":                       { id: "PG-018", name: "Call Center (Redirects to /call-center)", category: "Communications" },
   "/team":                            { id: "PG-019", name: "Team & Staff Management", category: "Admin" },
   "/team/emp-1":                      { id: "PG-019-E01", name: "Byron Honea · Employee Management", category: "Admin" },
   "/team/emp-2":                      { id: "PG-019-E02", name: "Sarah Jenkins · Employee Management", category: "Admin" },

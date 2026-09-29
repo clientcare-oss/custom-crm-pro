@@ -128,7 +128,7 @@ export default function EmployeeTimeOffAdminTab({
             </div>
             <Button
               size="sm"
-              onClick={() => setLocation("/call-logs")}
+              onClick={() => setLocation("/call-center")}
               className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl h-8 px-3 shrink-0 cursor-pointer"
             >
               <span>Assign Phone Shift</span>

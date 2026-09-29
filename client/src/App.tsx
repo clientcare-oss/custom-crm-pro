@@ -221,7 +221,7 @@ function Router() {
           <Route path="/knowledge-base" component={KnowledgeBase} />
           <Route path="/walkthroughs" component={Walkthroughs} />
           <Route path="/call-center" component={UnassignedCallLogs} />
-          <Route path="/call-logs" component={UnassignedCallLogs} />
+          <Route path="/call-logs">{() => <Redirect to="/call-center" />}</Route>
           <Route path="/messages" component={Messages} />
           <Route path="/team" component={Team} />
           <Route path="/tools/state-complaint-builder/:id/:section?" component={ComplaintWorkspace} />

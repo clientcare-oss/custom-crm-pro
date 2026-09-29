@@ -358,7 +358,7 @@ export default function TeamOverviewHeader({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setLocation("/call-logs")}
+              onClick={() => setLocation("/call-center")}
               className="w-full border-blue-700/60 hover:bg-blue-900/40 text-blue-200 text-xs rounded-xl py-2 gap-1.5 cursor-pointer mt-2"
             >
               <Phone className="w-3.5 h-3.5 text-emerald-400" />

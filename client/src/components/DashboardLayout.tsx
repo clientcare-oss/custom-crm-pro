@@ -180,7 +180,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "Practice & Operations",
       items: [
         { icon: CheckSquare, label: "Tasks", path: "/tasks" },
-        { icon: Phone, label: "Call Logs (Quo)", path: "/call-logs" },
         { icon: LayoutTemplate, label: "Templates", path: "/templates" },
         { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
         { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
@@ -1210,7 +1209,6 @@ const PAGE_LIST = [
   { id: "PG-016", name: "Knowledge Base", path: "/knowledge-base" },
   { id: "PG-017", name: "Walkthroughs", path: "/walkthroughs" },
   { id: "PG-018", name: "Call Center", path: "/call-center" },
-  { id: "PG-018", name: "Call Logs", path: "/call-logs" },
   { id: "PG-019", name: "Team", path: "/team" },
   { id: "PG-020", name: "State Complaint Builder", path: "/state-complaint-builder" },
   { id: "PG-021", name: "My Notes & Company Notes", path: "/brain-dump" },

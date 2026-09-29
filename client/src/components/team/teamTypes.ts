@@ -242,7 +242,6 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "calendar",
       "leads",
       "scheduler",
-      "call_logs",
       "tasks",
       "knowledge_base",
     ],
@@ -467,7 +466,6 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "braindump", label: "Advocate BrainDump", path: "/brain-dump", group: "Advocacy & AI Tools", icon: Brain },
   // Practice & Operations
   { id: "tasks", label: "Tasks Queue", path: "/tasks", group: "Practice & Operations", icon: CheckSquare },
-  { id: "call_logs", label: "Call Logs (Quo VoIP)", path: "/call-logs", group: "Practice & Operations", icon: Phone },
   { id: "templates", label: "Templates Hub", path: "/templates", group: "Practice & Operations", icon: LayoutTemplate },
   { id: "knowledge_base", label: "Knowledge Base", path: "/knowledge-base", group: "Practice & Operations", icon: BookOpen },
   { id: "walkthroughs", label: "Walkthroughs (SOPs)", path: "/walkthroughs", group: "Practice & Operations", icon: ListChecks },
