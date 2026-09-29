@@ -61,6 +61,7 @@ import {
   Award,
   LayoutDashboard,
   UserPlus,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import CrewMessagesWorkspace from "@/components/crew-quarters/CrewMessagesWorkspace";
@@ -471,10 +472,10 @@ export default function CrewQuarters() {
           </svg>
           <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-400/20 transition-all duration-300" />
           
-          {/* Top Left Tiny Icon with Email Emoji */}
+          {/* Top Left Tiny Icon */}
           <div className="relative z-10 flex items-center justify-between w-full">
-            <div className="p-1 sm:p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center min-w-[26px] min-h-[26px] sm:min-w-[28px] sm:min-h-[28px]">
-              <span className="text-xs sm:text-sm leading-none select-none" role="img" aria-label="Client Emails">✉️</span>
+            <div className="p-1 sm:p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 group-hover:scale-105 transition-transform">
+              <Mail className="w-3.5 h-3.5" />
             </div>
             {clientMessagesCount > 0 && (
               <span className="relative flex h-2.5 w-2.5">
