@@ -25,7 +25,9 @@ import {
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, type LucideIcon } from "lucide-react";
+import { getStoredEmployees, checkEmployeeModuleAccess } from "@/components/team/teamStore";
+import { CRM_MODULES } from "@/components/team/teamTypes";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
@@ -397,9 +399,67 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
   const { projectLabel, projectIconKey } = useTerminology();
   const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
-  const menuGroups = useMemo(() => buildMenuGroups(projectLabel, projectIcon), [projectLabel, projectIcon]);
+
+  // Match current user to employee record (by email) for dynamic sidebar and route access
+  const currentEmployee = useMemo(() => {
+    if (!user?.email) return null;
+    const employees = getStoredEmployees();
+    return (
+      employees.find(
+        (e) => e.email.toLowerCase() === user.email?.toLowerCase()
+      ) || null
+    );
+  }, [user?.email]);
+
+  const rawMenuGroups = useMemo(() => buildMenuGroups(projectLabel, projectIcon), [projectLabel, projectIcon]);
+
+  // Dynamically filter sidebar modules according to role permissions and employee overrides
+  const menuGroups = useMemo(() => {
+    if (
+      !currentEmployee ||
+      user?.role === "admin" ||
+      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
+    ) {
+      return rawMenuGroups;
+    }
+
+    return rawMenuGroups
+      .map((group) => {
+        const allowedItems = group.items.filter((item) => {
+          const modDef = CRM_MODULES.find(
+            (m) => m.path === item.path || (item.path !== "/" && m.path.startsWith(item.path))
+          );
+          if (!modDef) return true;
+          const access = checkEmployeeModuleAccess(currentEmployee, modDef.id);
+          return access !== "none";
+        });
+        return {
+          ...group,
+          items: allowedItems,
+        };
+      })
+      .filter((group) => group.items.length > 0);
+  }, [rawMenuGroups, currentEmployee, user?.role, user?.email]);
+
   const menuItems = useMemo(() => menuGroups.flatMap(g => g.items), [menuGroups]);
   const [location, setLocation] = useLocation();
+
+  // Route security check: block direct URL access to modules without permission
+  const currentForbiddenModule = useMemo(() => {
+    if (
+      !currentEmployee ||
+      user?.role === "admin" ||
+      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
+    ) {
+      return null;
+    }
+    const currentMod = CRM_MODULES.find(
+      (m) => m.path === location || (m.path !== "/" && location.startsWith(m.path))
+    );
+    if (!currentMod) return null;
+    const access = checkEmployeeModuleAccess(currentEmployee, currentMod.id);
+    return access === "none" ? currentMod : null;
+  }, [currentEmployee, user?.role, user?.email, location]);
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
@@ -964,9 +1024,42 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </div>
         )}
         <main className={cn("flex-1 p-4 relative", location.startsWith("/meeting-workspace") && "p-0 bg-[#000820]")}>
-          <ScopedErrorBoundary moduleName={activeMenuItem?.label ?? "Page"}>
-            {children}
-          </ScopedErrorBoundary>
+          {currentForbiddenModule ? (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-5 shadow-lg shadow-rose-950/40">
+                <Lock className="w-8 h-8" />
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 mb-3 tracking-wide uppercase">
+                Access Restricted
+              </span>
+              <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
+                Permission Required
+              </h2>
+              <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                Your employee profile does not have permission to view or manage the <strong className="text-white font-medium">{currentForbiddenModule.label}</strong> module.
+                If you require access for your role, please contact your administrator or Byron Honea in Team Management.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button
+                  onClick={() => setLocation("/")}
+                  className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 h-9 shadow-md"
+                >
+                  Return to Crew Quarters
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation("/crew-quarters?tab=profile")}
+                  className="border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 font-medium px-4 h-9"
+                >
+                  View My Credentials & Roles
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <ScopedErrorBoundary moduleName={activeMenuItem?.label ?? "Page"}>
+              {children}
+            </ScopedErrorBoundary>
+          )}
 
           {/* Floating Action Buttons (embedded directly in header on First Mate and Call Center) */}
           {!location.startsWith("/first-mate") && !location.startsWith("/call-center") && !location.startsWith("/call-logs") && (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -6,9 +6,19 @@ import PageIdBadge from "@/components/PageIdBadge";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import VoiceInput from "@/components/VoiceInput";
-import { Label } from "@/components/ui/label";
+import {
+  Users,
+  UserPlus,
+  Mail,
+  Copy,
+  Check,
+  Trash2,
+  Clock,
+  Link2,
+  Loader2,
+  CalendarCheck,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +26,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import VoiceInput from "@/components/VoiceInput";
 import {
   Select,
   SelectContent,
@@ -24,59 +36,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  Users,
-  UserPlus,
-  Mail,
-  Copy,
-  Check,
-  Trash2,
-  Shield,
-  User,
-  Clock,
-  Link2,
-  Loader2,
-  ChevronDown,
-  Plane,
-  CalendarCheck,
-  Phone,
-} from "lucide-react";
-import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-function getInitials(name?: string | null, email?: string) {
-  if (name) {
-    const parts = name.trim().split(" ");
-    return parts.length >= 2
-      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-      : parts[0].slice(0, 2).toUpperCase();
-  }
-  return (email ?? "?").slice(0, 2).toUpperCase();
-}
-
-function AvatarChip({
-  name,
-  email,
-  color = "bg-muted",
-}: {
-  name?: string | null;
-  email?: string | null;
-  color?: string;
-}) {
-  return (
-    <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-foreground ${color} flex-shrink-0`}
-      title={name ?? email ?? undefined}
-    >
-      {getInitials(name, email ?? undefined)}
-    </div>
-  );
-}
+// Team Management Modular Components
+import {
+  EmployeeRecord,
+  RoleId,
+} from "@/components/team/teamTypes";
+import {
+  getStoredEmployees,
+  saveEmployee,
+  addEmployee,
+  deactivateEmployee,
+  reactivateEmployee,
+  calculateWorkforceTotals,
+  calculateRoleCounts,
+  calculateAttentionItems,
+} from "@/components/team/teamStore";
+import TeamOverviewHeader from "@/components/team/TeamOverviewHeader";
+import EmployeeDirectoryTable from "@/components/team/EmployeeDirectoryTable";
+import EmployeeDetailDrawer from "@/components/team/EmployeeDetailDrawer";
+import AddEmployeeModal from "@/components/team/AddEmployeeModal";
+import DeactivateEmployeeModal from "@/components/team/DeactivateEmployeeModal";
 
 interface TimeOffRequest {
   id: string;
@@ -131,11 +111,38 @@ export default function TeamPage() {
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
 
-  const { data: members = [], isLoading: membersLoading } = trpc.team.listMembers.useQuery();
+  // Backend invites / members queries
+  const { data: members = [] } = trpc.team.listMembers.useQuery();
   const { data: invites = [], isLoading: invitesLoading } = trpc.team.listInvites.useQuery();
-  const { data: callLogs = [] } = trpc.callLogs.listAll.useQuery();
-  const unassignedCalls = (callLogs as any[]).filter((c) => c.status === "unassigned");
 
+  // Employee Directory state (connected to Crew Quarters shared storage)
+  const [employees, setEmployees] = useState<EmployeeRecord[]>(getStoredEmployees);
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeRecord | null>(null);
+  const [roleFilter, setRoleFilter] = useState<RoleId | "all">("all");
+
+  // Sync listener across tabs and windows
+  useEffect(() => {
+    const handleUpdate = () => {
+      const latest = getStoredEmployees();
+      setEmployees(latest);
+      if (selectedEmployee) {
+        const found = latest.find((e) => e.id === selectedEmployee.id);
+        if (found) setSelectedEmployee(found);
+      }
+    };
+    window.addEventListener("waypoint_team_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("waypoint_team_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [selectedEmployee]);
+
+  // Time off state synced with Crew Quarters
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(() => {
     try {
       const saved = localStorage.getItem("waypoint_time_off_requests");
@@ -145,6 +152,35 @@ export default function TeamPage() {
     }
   });
 
+  const handleApproveTimeOff = (id: string, note?: string) => {
+    const updated = timeOffRequests.map((req) =>
+      req.id === id ? { ...req, status: "Approved" as const, adminNote: note } : req
+    );
+    setTimeOffRequests(updated);
+    try {
+      localStorage.setItem("waypoint_time_off_requests", JSON.stringify(updated));
+    } catch {}
+    toast.success("Time off approved and coverage synchronized!");
+  };
+
+  const handleDenyTimeOff = (id: string, note?: string) => {
+    const updated = timeOffRequests.map((req) =>
+      req.id === id ? { ...req, status: "Denied" as const, adminNote: note } : req
+    );
+    setTimeOffRequests(updated);
+    try {
+      localStorage.setItem("waypoint_time_off_requests", JSON.stringify(updated));
+    } catch {}
+    toast.info("Time off request denied");
+  };
+
+  // Workforce totals & role counts (dynamic from actual employee records)
+  const totals = calculateWorkforceTotals(employees);
+  const roleCounts = calculateRoleCounts(employees);
+  const pendingLeaves = timeOffRequests.filter((r) => r.status === "Pending");
+  const attentionItems = calculateAttentionItems(employees, pendingLeaves.length);
+
+  // Invite modal state (for sending backend invite links)
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
@@ -174,55 +210,63 @@ export default function TeamPage() {
     onError: (e) => toast.error("Failed to revoke: " + e.message),
   });
 
-  const removeMemberMutation = trpc.team.removeMember.useMutation({
-    onSuccess: () => {
-      toast.success("Member removed");
-      utils.team.listMembers.invalidate();
-    },
-    onError: (e) => toast.error("Failed to remove: " + e.message),
-  });
-
-  const updateRoleMutation = trpc.team.updateRole.useMutation({
-    onSuccess: () => {
-      toast.success("Role updated");
-      utils.team.listMembers.invalidate();
-    },
-    onError: (e) => toast.error("Failed to update role: " + e.message),
-  });
-
-  const handleSendInvite = () => {
-    if (!inviteEmail.trim()) return;
-    inviteMutation.mutate({ email: inviteEmail.trim(), name: inviteName.trim() || undefined, role: inviteRole });
+  const handleOpenEmployee = (emp: EmployeeRecord) => {
+    setSelectedEmployee(emp);
+    setDrawerOpen(true);
   };
 
-  const handleCopyLink = () => {
-    if (!generatedLink) return;
-    navigator.clipboard.writeText(generatedLink).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+  const handleSaveEmployee = (updated: EmployeeRecord) => {
+    saveEmployee(updated);
+    const refreshed = getStoredEmployees();
+    setEmployees(refreshed);
+    setSelectedEmployee(updated);
   };
 
-  const handleCloseInvite = () => {
-    setInviteOpen(false);
-    setInviteEmail("");
-    setInviteName("");
-    setInviteRole("member");
-    setGeneratedLink(null);
-    setCopied(false);
+  const handleAddEmployee = (newEmp: Omit<EmployeeRecord, "id"> & { id?: string }) => {
+    const created = addEmployee(newEmp);
+    const refreshed = getStoredEmployees();
+    setEmployees(refreshed);
+    setSelectedEmployee(created);
+    setDrawerOpen(true);
+  };
+
+  const handleDeactivateClick = (emp: EmployeeRecord) => {
+    setDeactivatingEmployee(emp);
+    setDeactivateModalOpen(true);
+  };
+
+  const handleConfirmDeactivate = (id: string, notes: string) => {
+    deactivateEmployee(id, notes);
+    const refreshed = getStoredEmployees();
+    setEmployees(refreshed);
+    if (selectedEmployee?.id === id) {
+      const updated = refreshed.find((e) => e.id === id);
+      if (updated) setSelectedEmployee(updated);
+    }
+  };
+
+  const handleReactivateClick = (emp: EmployeeRecord) => {
+    reactivateEmployee(emp.id);
+    const refreshed = getStoredEmployees();
+    setEmployees(refreshed);
+    if (selectedEmployee?.id === emp.id) {
+      const updated = refreshed.find((e) => e.id === emp.id);
+      if (updated) setSelectedEmployee(updated);
+    }
+    toast.success(`${emp.name} restored to Active status!`);
   };
 
   const pendingInvites = invites.filter((i) => i.status === "pending");
 
   return (
     <>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Users className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+                <Users className="h-7 w-7 text-sky-400" />
                 Team &amp; Staff Management
               </h1>
               <span className="font-mono text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-400/10 text-amber-400 border border-amber-400/30">
@@ -230,307 +274,109 @@ export default function TeamPage() {
               </span>
               <PageIdBadge id="PG-019" name="Team & Staff Management" />
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Invite and manage staff members to help support client cases. Admins have full practice oversight; Members can view and edit student profiles.
+            <p className="text-xs sm:text-sm text-blue-200/70 mt-1">
+              Centralized practice administration for Waypoint Advocates. Administer workforce records, roles, PTO approvals, equipment, payroll, and module permissions.
             </p>
           </div>
-          <Button onClick={() => setInviteOpen(true)} className="flex items-center gap-2 shrink-0">
-            <UserPlus className="h-4 w-4" />
-            Invite Member
-          </Button>
-        </div>
 
-        {/* ── Relocated: Team Workload & Leadership Controls Deck (PG-019) ── */}
-        <div className="rounded-3xl border border-amber-400/40 bg-gradient-to-br from-[#000821] via-[#001035] to-[#000821] p-6 sm:p-8 shadow-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-800/60 pb-5">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded border border-amber-400/30">
-                  Management Deck
-                </span>
-                <span className="text-xs text-blue-300">Practice Owner &amp; Admin Oversight</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-serif text-white font-bold">
-                Team Workload &amp; Leadership Controls
-              </h2>
-            </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={() => setInviteOpen(true)}
+              variant="outline"
+              className="border-blue-700/60 text-blue-200 hover:text-white hover:bg-blue-900/40 text-xs rounded-xl h-9 px-3 gap-1.5 cursor-pointer"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              <span>Invite Link</span>
+            </Button>
 
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => setInviteOpen(true)}
-                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl gap-1.5 cursor-pointer shadow-md px-4 py-2"
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>Manage Team &amp; Roles</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Admin Card 1: Time Off Requests Awaiting Approval */}
-            <div className="rounded-2xl border border-blue-800/60 bg-blue-950/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="font-bold text-white text-xs flex items-center gap-1.5">
-                  <Plane className="w-4 h-4 text-amber-400" />
-                  <span>Leaves Awaiting Approval</span>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">
-                  {timeOffRequests.filter((r) => r.status === "Pending").length} Pending
-                </span>
-              </div>
-              <p className="text-[11px] text-blue-200/70">
-                Staff time-off requests needing review. Approve to automatically sync team coverage.
-              </p>
-              <div className="space-y-2">
-                {timeOffRequests
-                  .filter((r) => r.status === "Pending")
-                  .map((r) => (
-                    <div key={r.id} className="p-2.5 rounded-xl bg-[#000821] border border-blue-800/40 flex items-center justify-between text-xs">
-                      <div>
-                        <div className="font-bold text-white">{r.type}</div>
-                        <div className="text-[10px] text-blue-300/80">{r.startDate} — {r.endDate}</div>
-                        {r.returnDate && (
-                          <div className="text-[10px] text-amber-300/90 font-medium flex items-center gap-1 mt-0.5">
-                            <CalendarCheck className="w-3 h-3 text-amber-400 shrink-0" />
-                            <span>First day back: <strong className="text-amber-200">{r.returnDate}</strong></span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            const updated = timeOffRequests.map((req) => (req.id === r.id ? { ...req, status: "Approved" as const } : req));
-                            setTimeOffRequests(updated);
-                            localStorage.setItem("waypoint_time_off_requests", JSON.stringify(updated));
-                            toast.success("Time off approved!");
-                          }}
-                          className="h-7 px-2 text-[10px] bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 cursor-pointer"
-                        >
-                          Approve
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                {timeOffRequests.filter((r) => r.status === "Pending").length === 0 && (
-                  <div className="p-3 rounded-xl bg-[#000821]/60 border border-blue-800/30 text-center">
-                    <p className="text-xs text-blue-300/70">No pending leave requests</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Admin Card 2: Team Caseload Capacity */}
-            <div className="rounded-2xl border border-blue-800/60 bg-blue-950/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="font-bold text-white text-xs flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-sky-400" />
-                  <span>Team Caseload Capacity</span>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-sky-400/20 text-sky-300 font-bold">
-                  Balanced
-                </span>
-              </div>
-              <p className="text-[11px] text-blue-200/70">
-                Current active student caseloads distributed across staff advocates.
-              </p>
-              <div className="space-y-2">
-                {[
-                  { name: "Byron Honea", cases: 8, capacity: "80%" },
-                  { name: "Sarah Jenkins", cases: 6, capacity: "60%" },
-                  { name: "Marcus Vance", cases: 4, capacity: "40%" },
-                ].map((emp, idx) => (
-                  <div key={idx} className="p-2.5 rounded-xl bg-[#000821] border border-blue-800/40 flex items-center justify-between text-xs">
-                    <div>
-                      <div className="font-bold text-white">{emp.name}</div>
-                      <div className="text-[10px] text-blue-300/80">{emp.cases} Active Cases</div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-mono font-bold text-amber-300">{emp.capacity}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Admin Card 3: Unassigned Callbacks & Inquiries */}
-            <div className="rounded-2xl border border-blue-800/60 bg-blue-950/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="font-bold text-white text-xs flex items-center gap-1.5">
-                  <Phone className="w-4 h-4 text-emerald-400" />
-                  <span>Unassigned Lead Callbacks</span>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-400/20 text-emerald-300 font-bold">
-                  {unassignedCalls.length || 3} Pending
-                </span>
-              </div>
-              <p className="text-[11px] text-blue-200/70">
-                Inbound family inquiries and voicemails pending advocate assignment.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLocation("/call-logs")}
-                className="w-full border-blue-700/60 hover:bg-blue-900/40 text-blue-200 text-xs rounded-xl py-2 gap-1.5 cursor-pointer mt-2"
-              >
-                <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Triage Inbound Calls &amp; Assign</span>
-              </Button>
-            </div>
+            <Button
+              onClick={() => setAddModalOpen(true)}
+              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl h-9 px-4 gap-1.5 cursor-pointer shadow-md"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>+ Add Employee</span>
+            </Button>
           </div>
         </div>
 
-        {/* You (owner) */}
-        <Card className="p-4 rounded-xl border border-border">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Owner</p>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold flex-shrink-0">
-              {getInitials(user?.name ?? undefined, user?.email ?? undefined)}
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-foreground truncate">{user?.name ?? "You"}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div>
-            <Badge className="ml-auto bg-primary/10 text-primary border-primary/20 text-xs">Owner</Badge>
-          </div>
-        </Card>
+        {/* ── Workforce Totals, Role Distribution & Relocated Management Deck ── */}
+        <TeamOverviewHeader
+          totals={totals}
+          roleCounts={roleCounts}
+          attentionItems={attentionItems}
+          timeOffRequests={timeOffRequests}
+          onApproveTimeOff={handleApproveTimeOff}
+          onAddEmployee={() => setAddModalOpen(true)}
+          onSelectEmployeeById={(id) => {
+            const found = employees.find((e) => e.id === id);
+            if (found) handleOpenEmployee(found);
+          }}
+          activeRoleFilter={roleFilter}
+          onRoleFilterSelect={(r) => setRoleFilter(r)}
+        />
 
-        {/* Active Members */}
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
-            Active Members {members.length > 0 && `(${members.length})`}
-          </p>
-          {membersLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading members…
-            </div>
-          ) : members.length === 0 ? (
-            <Card className="p-6 rounded-xl border border-dashed border-border text-center">
-              <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No team members yet. Invite someone to get started.</p>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {members.map((m) => (
-                <Card key={m.inviteId} className="p-4 rounded-xl border border-border flex items-center gap-3">
-                  <AvatarChip
-                    name={m.userName ?? m.name}
-                    email={m.userEmail ?? m.email}
-                    color="bg-violet-100 dark:bg-violet-900/40"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-foreground truncate">
-                      {m.userName ?? m.name ?? m.userEmail ?? m.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">{m.userEmail ?? m.email}</p>
-                    {m.acceptedAt && (
-                      <p className="text-xs text-muted-foreground/60">
-                        Joined {new Date(m.acceptedAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                  {/* Role selector */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center gap-1.5 text-xs h-7 px-2">
-                        {m.role === "admin" ? (
-                          <Shield className="h-3 w-3 text-amber-500" />
-                        ) : (
-                          <User className="h-3 w-3 text-blue-500" />
-                        )}
-                        {m.role === "admin" ? "Admin" : "Member"}
-                        <ChevronDown className="h-3 w-3 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => updateRoleMutation.mutate({ inviteId: m.inviteId, role: "admin" })}
-                        className="flex items-center gap-2"
-                      >
-                        <Shield className="h-3.5 w-3.5 text-amber-500" />
-                        Admin — full access
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => updateRoleMutation.mutate({ inviteId: m.inviteId, role: "member" })}
-                        className="flex items-center gap-2"
-                      >
-                        <User className="h-3.5 w-3.5 text-blue-500" />
-                        Member — view/edit clients
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeMemberMutation.mutate({ inviteId: m.inviteId })}
-                    disabled={removeMemberMutation.isPending}
-                    title="Remove member"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* ── Primary Workforce Directory ── */}
+        <EmployeeDirectoryTable
+          employees={employees}
+          onSelectEmployee={handleOpenEmployee}
+          onAddEmployee={() => setAddModalOpen(true)}
+          roleFilter={roleFilter}
+          onRoleFilterChange={setRoleFilter}
+          onDeactivateClick={handleDeactivateClick}
+          onReactivateClick={handleReactivateClick}
+        />
 
-        {/* Pending Invites */}
+        {/* ── Pending Invite Tokens Section (Preserved Backend Integration) ── */}
         {(invitesLoading || pendingInvites.length > 0) && (
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
-              Pending Invites {pendingInvites.length > 0 && `(${pendingInvites.length})`}
+          <div className="rounded-2xl border border-blue-900/40 bg-[#000d2b]/60 p-5 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Pending Crew Registration Invites ({pendingInvites.length})
             </p>
             {invitesLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+              <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading invites…
               </div>
             ) : (
               <div className="space-y-2">
                 {pendingInvites.map((inv) => (
-                  <Card key={inv.id} className="p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/15 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground truncate">{inv.name ?? inv.email}</p>
-                      {inv.name && <p className="text-xs text-muted-foreground truncate">{inv.email}</p>}
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Clock className="h-3 w-3 text-muted-foreground/60" />
-                        <span className="text-xs text-muted-foreground/60">
-                          Sent {new Date(inv.createdAt).toLocaleDateString()}
-                        </span>
-                        <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
-                          {inv.role}
-                        </Badge>
+                  <div
+                    key={inv.id}
+                    className="p-3.5 rounded-xl border border-amber-400/30 bg-[#000820] flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-white truncate">{inv.name ?? inv.email}</p>
+                        <p className="text-[11px] text-slate-400 truncate">{inv.email}</p>
                       </div>
                     </div>
-                    {/* Copy link */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        const link = `${window.location.origin}/team/join?token=${inv.token}`;
-                        navigator.clipboard.writeText(link).then(() => toast.success("Invite link copied!"));
-                      }}
-                      title="Copy invite link"
-                    >
-                      <Link2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => revokeInviteMutation.mutate({ id: inv.id })}
-                      disabled={revokeInviteMutation.isPending}
-                      title="Revoke invite"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </Card>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const link = `${window.location.origin}/team/join?token=${inv.token}`;
+                          navigator.clipboard.writeText(link).then(() => toast.success("Invite link copied!"));
+                        }}
+                        className="h-7 px-2 text-xs text-sky-400 hover:text-white rounded-lg cursor-pointer"
+                      >
+                        <Link2 className="h-3.5 w-3.5 mr-1" />
+                        <span>Copy Link</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => revokeInviteMutation.mutate({ id: inv.id })}
+                        className="h-7 w-7 text-slate-500 hover:text-red-400 rounded-lg cursor-pointer"
+                        title="Revoke Invite"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -538,109 +384,116 @@ export default function TeamPage() {
         )}
       </div>
 
-      {/* Invite Dialog */}
-      <Dialog open={inviteOpen} onOpenChange={(v) => { if (!v) handleCloseInvite(); else setInviteOpen(true); }}>
-        <DialogContent className="sm:max-w-md">
+      {/* ── Master Tabbed Employee Record Drawer ── */}
+      <EmployeeDetailDrawer
+        employee={selectedEmployee}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSaveEmployee={handleSaveEmployee}
+        timeOffRequests={timeOffRequests}
+        onApproveTimeOff={handleApproveTimeOff}
+        onDenyTimeOff={handleDenyTimeOff}
+        onDeactivateClick={handleDeactivateClick}
+        onReactivateClick={handleReactivateClick}
+      />
+
+      {/* ── 7-Step Add Employee Wizard Modal ── */}
+      <AddEmployeeModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onAddEmployee={handleAddEmployee}
+      />
+
+      {/* ── Deactivate Employee Offboarding Checklist Modal ── */}
+      <DeactivateEmployeeModal
+        employee={deactivatingEmployee}
+        open={deactivateModalOpen}
+        onClose={() => {
+          setDeactivateModalOpen(false);
+          setDeactivatingEmployee(null);
+        }}
+        onConfirmDeactivate={handleConfirmDeactivate}
+      />
+
+      {/* ── Backend Fast Invite Dialog ── */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="sm:max-w-md bg-[#000821] border border-blue-800 text-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-primary" />
-              Invite Team Member
+              <UserPlus className="h-5 w-5 text-amber-400" />
+              <span>Create Crew Registration Invite</span>
             </DialogTitle>
           </DialogHeader>
 
           {!generatedLink ? (
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
-                <Label htmlFor="invite-email">Email address *</Label>
+                <Label htmlFor="invite-email" className="text-xs text-white">Email Address *</Label>
                 <VoiceInput
                   id="invite-email"
                   type="email"
-                  placeholder="colleague@example.com"
+                  placeholder="colleague@waypointadvocates.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendInvite()}
+                  className="bg-[#000d2b] border-blue-900/60 text-white text-xs h-9 rounded-xl"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="invite-name">Name (optional)</Label>
+                <Label htmlFor="invite-name" className="text-xs text-white">Full Name (optional)</Label>
                 <VoiceInput
                   id="invite-name"
                   placeholder="Jane Smith"
                   value={inviteName}
                   onChange={(e) => setInviteName(e.target.value)}
+                  className="bg-[#000d2b] border-blue-900/60 text-white text-xs h-9 rounded-xl"
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Role</Label>
-                <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as "admin" | "member")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">
-                      <div className="flex items-center gap-2">
-                        <User className="h-3.5 w-3.5 text-blue-500" />
-                        <span>Member</span>
-                        <span className="text-xs text-muted-foreground">— view/edit clients</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="admin">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-3.5 w-3.5 text-amber-500" />
-                        <span>Admin</span>
-                        <span className="text-xs text-muted-foreground">— full access</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           ) : (
-            <div className="space-y-4 py-2">
-              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4 text-center">
-                <Check className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-foreground">Invite link ready!</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Share this link with <strong>{inviteEmail}</strong> to accept their invitation.
+            <div className="space-y-3 py-2">
+              <div className="rounded-xl bg-emerald-950/40 border border-emerald-800/60 p-4 text-center space-y-1">
+                <Check className="h-6 w-6 text-emerald-400 mx-auto" />
+                <p className="text-sm font-semibold text-white">Invite link generated!</p>
+                <p className="text-xs text-slate-300">
+                  Share this registration link with <strong>{inviteEmail}</strong>.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <VoiceInput
-                  readOnly
-                  value={generatedLink}
-                  className="text-xs font-mono bg-muted"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleCopyLink}
-                  className="flex-shrink-0"
-                  title="Copy link"
-                >
-                  {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
+              <VoiceInput
+                readOnly
+                value={generatedLink}
+                className="text-xs font-mono bg-[#000d2b] border-blue-900/60 text-white h-9 rounded-xl"
+              />
             </div>
           )}
 
           <DialogFooter>
             {!generatedLink ? (
-              <>
-                <Button variant="ghost" onClick={handleCloseInvite}>Cancel</Button>
-                <Button
-                  onClick={handleSendInvite}
-                  disabled={!inviteEmail.trim() || inviteMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  {inviteMutation.isPending ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Creating…</>
-                  ) : (
-                    <><Link2 className="h-4 w-4" /> Generate Invite Link</>
-                  )}
-                </Button>
-              </>
+              <Button
+                onClick={() => {
+                  if (!inviteEmail.trim()) return;
+                  inviteMutation.mutate({
+                    email: inviteEmail.trim(),
+                    name: inviteName.trim() || undefined,
+                    role: inviteRole,
+                  });
+                }}
+                disabled={!inviteEmail.trim() || inviteMutation.isPending}
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl"
+              >
+                {inviteMutation.isPending ? "Generating…" : "Generate Invite Token"}
+              </Button>
             ) : (
-              <Button onClick={handleCloseInvite}>Done</Button>
+              <Button
+                onClick={() => {
+                  setInviteOpen(false);
+                  setGeneratedLink(null);
+                  setInviteEmail("");
+                  setInviteName("");
+                }}
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl"
+              >
+                Done
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>
