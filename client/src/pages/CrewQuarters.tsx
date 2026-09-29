@@ -384,116 +384,167 @@ export default function CrewQuarters() {
         {/* Card 1: New Leads */}
         <div 
           onClick={() => setLocation("/leads")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex flex-col justify-between min-h-[105px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-amber-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="p-2 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
-              <UserPlus className="w-4 h-4 shrink-0" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-          </div>
-          <div className="mt-2 min-w-0">
-            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+          {/* Subtle bathymetric wave texture */}
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
+            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
+          />
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
+          
+          {/* Huge Number */}
+          <div className="relative z-10">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {newLeadsCount}
             </div>
-            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
-              New Leads
+          </div>
+
+          {/* Icon Beside Text at Bottom */}
+          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
+            <div className="p-1 rounded-md bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-110 transition-transform">
+              <UserPlus className="w-3.5 h-3.5" />
             </div>
+            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+              New Leads
+            </span>
           </div>
         </div>
 
         {/* Card 2: Meetings Today */}
         <div 
           onClick={() => setLocation("/calendar")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex flex-col justify-between min-h-[105px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-sky-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(56,189,248,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="p-2 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
-              <Calendar className="w-4 h-4 shrink-0" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-          </div>
-          <div className="mt-2 min-w-0">
-            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+          {/* Subtle bathymetric wave texture */}
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
+            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
+          />
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-sky-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-sky-400/25 transition-all duration-300" />
+          
+          {/* Huge Number */}
+          <div className="relative z-10">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {todayAppointments.length || 2}
             </div>
-            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
-              Meetings Today
+          </div>
+
+          {/* Icon Beside Text at Bottom */}
+          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
+            <div className="p-1 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 group-hover:scale-110 transition-transform">
+              <Calendar className="w-3.5 h-3.5" />
             </div>
+            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+              Meetings Today
+            </span>
           </div>
         </div>
 
         {/* Card 3: Callbacks */}
         <div 
           onClick={() => setLocation("/call-logs")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-emerald-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(52,211,153,0.15)] flex flex-col justify-between min-h-[105px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-emerald-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(52,211,153,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
-              <Phone className="w-4 h-4 shrink-0" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-          </div>
-          <div className="mt-2 min-w-0">
-            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+          {/* Subtle bathymetric wave texture */}
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
+            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
+          />
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-400/25 transition-all duration-300" />
+          
+          {/* Huge Number */}
+          <div className="relative z-10">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {unassignedCalls.length || 3}
             </div>
-            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
-              Callbacks
+          </div>
+
+          {/* Icon Beside Text at Bottom */}
+          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
+            <div className="p-1 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 group-hover:scale-110 transition-transform">
+              <Phone className="w-3.5 h-3.5" />
             </div>
+            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+              Callbacks
+            </span>
           </div>
         </div>
 
         {/* Card 4: Tasks Due */}
         <div 
           onClick={() => handleTabChange("tasks")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-amber-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(245,181,68,0.15)] flex flex-col justify-between min-h-[105px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-amber-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="p-2 rounded-xl bg-amber-400/15 text-amber-400 border border-amber-400/30 group-hover:scale-105 transition-transform">
-              <CheckSquare className="w-4 h-4 shrink-0" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-          </div>
-          <div className="mt-2 min-w-0">
-            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+          {/* Subtle bathymetric wave texture */}
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
+            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
+          />
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
+          
+          {/* Huge Number */}
+          <div className="relative z-10">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {openTasks.length || 4}
             </div>
-            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
-              Tasks Due
+          </div>
+
+          {/* Icon Beside Text at Bottom */}
+          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
+            <div className="p-1 rounded-md bg-amber-400/15 text-amber-400 border border-amber-400/30 shrink-0 group-hover:scale-110 transition-transform">
+              <CheckSquare className="w-3.5 h-3.5" />
             </div>
+            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+              Tasks Due
+            </span>
           </div>
         </div>
 
         {/* Card 5: Crew Messages */}
         <div 
           onClick={() => handleTabChange("messages")}
-          className="group cursor-pointer rounded-2xl border border-blue-900/60 bg-[#000821] hover:border-sky-400/60 p-3.5 sm:p-4 transition-all duration-200 shadow-lg hover:shadow-[0_8px_25px_rgba(56,189,248,0.15)] flex flex-col justify-between min-h-[105px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001233] via-[#000c26] to-[#000619] hover:border-cyan-400/80 p-4 sm:p-5 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(6,182,212,0.25)] flex flex-col justify-between min-h-[120px] sm:min-h-[130px]"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="p-2 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform relative">
-              <MessageSquare className="w-4 h-4 shrink-0" />
-              {crewUnreadTotal > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
-                </span>
-              )}
-            </div>
-            <ChevronRight className="w-4 h-4 text-blue-400/60 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-          </div>
-          <div className="mt-2 min-w-0">
-            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none tracking-tight">
+          {/* Subtle bathymetric wave texture */}
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen group-hover:opacity-30 transition-opacity"
+            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
+          />
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-400/25 transition-all duration-300" />
+          
+          {/* Huge Number with Optional Live Ping */}
+          <div className="relative z-10 flex items-baseline gap-2">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-mono leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
               {crewUnreadTotal > 0 ? crewUnreadTotal : (newMessagesCount || 0)}
             </div>
-            <div className="text-xs text-blue-200/90 font-medium mt-1.5 truncate">
-              Crew Messages
+            {crewUnreadTotal > 0 && (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+              </span>
+            )}
+          </div>
+
+          {/* Icon Beside Text at Bottom */}
+          <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 min-w-0">
+            <div className="p-1 rounded-md bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shrink-0 group-hover:scale-110 transition-transform">
+              <MessageSquare className="w-3.5 h-3.5" />
             </div>
+            <span className="text-xs sm:text-sm font-semibold text-blue-200/90 group-hover:text-white transition-colors truncate">
+              Crew Messages
+            </span>
           </div>
         </div>
 
-        {/* Card 6: Waypoint Creed Motto Tile */}
-        <div className="col-span-1 relative rounded-2xl border border-blue-500/40 bg-gradient-to-br from-[#000821] via-[#001438] to-[#000821] p-3.5 sm:p-4 flex flex-col justify-between overflow-hidden shadow-[0_4px_25px_rgba(2,132,199,0.2)] group hover:border-cyan-400/60 transition-all duration-300 min-h-[105px]">
+        {/* Card 6: Advocacy Changes Lives (Centered) */}
+        <div className="col-span-1 relative overflow-hidden rounded-2xl border border-blue-500/50 bg-gradient-to-br from-[#001438] via-[#000d2b] to-[#000821] p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgba(2,132,199,0.25)] group hover:border-cyan-400/80 hover:shadow-[0_10px_35px_rgba(2,132,199,0.35)] transition-all duration-300 min-h-[120px] sm:min-h-[130px]">
+          {/* Subtle bathymetric wave texture */}
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-25 mix-blend-screen"
+            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
+          />
+
           {/* Multi-Layered, Ultra-Fine Bathymetric Topographic Ocean Depth Contours */}
           <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
             <svg
@@ -535,15 +586,11 @@ export default function CrewQuarters() {
             </svg>
           </div>
 
-          {/* Creed Header */}
-          <div className="relative z-10 flex items-center justify-between w-full">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300/80">Creed</span>
-            <div className="w-5 h-[2px] bg-gradient-to-r from-amber-400 to-[#F3CE85] rounded-full shadow-[0_0_8px_rgba(243,206,133,0.8)]" />
-          </div>
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
 
-          {/* Stacked Gold Typography */}
-          <div className="relative z-10 flex flex-col items-start select-none mt-2">
-            <div className="text-[11px] sm:text-[12px] font-sans font-extrabold tracking-[0.14em] text-[#F3CE85] leading-tight drop-shadow-[0_2px_8px_rgba(243,206,133,0.35)]">
+          {/* Centered Advocacy Changes Lives Typography */}
+          <div className="relative z-10 flex flex-col items-center justify-center text-center select-none py-1 my-auto">
+            <div className="text-[13px] sm:text-[14px] md:text-[15px] font-sans font-black tracking-[0.2em] text-[#F3CE85] leading-snug drop-shadow-[0_2px_12px_rgba(243,206,133,0.45)]">
               <div>ADVOCACY</div>
               <div>CHANGES</div>
               <div>LIVES</div>
