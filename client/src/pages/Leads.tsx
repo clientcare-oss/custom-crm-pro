@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar, Clock, ClipboardList } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar, Clock, ClipboardList, CalendarClock } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
@@ -808,7 +808,9 @@ export default function Leads() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
-            <span>📅</span>
+            <span className="p-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5" />
+            </span>
             <span>Today’s Discovery Calls</span>
             {todaysCalls.length > 0 && (
               <span className="rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 px-2 py-0.5 text-xs font-semibold">
@@ -921,7 +923,9 @@ export default function Leads() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
-            <span>🗓️</span>
+            <span className="p-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+            </span>
             <span>Upcoming Discovery Calls</span>
             {upcomingCalls.length > 0 && (
               <span className="rounded-full bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 px-2 py-0.5 text-xs font-semibold">
