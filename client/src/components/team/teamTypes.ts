@@ -45,6 +45,103 @@ export type RoleId =
   | "operations"
   | "management";
 
+export type CaseAccessLevel = "none" | "view" | "edit" | "manage";
+
+export interface CaseWorkspaceModuleDefinition {
+  id: string;
+  label: string;
+  category: "Strategy & Core" | "Case Records & Notes" | "Practice & Finances" | "Live IEP & Review";
+  description: string;
+  allowedLevels: CaseAccessLevel[];
+}
+
+export const CASE_WORKSPACE_MODULES: CaseWorkspaceModuleDefinition[] = [
+  {
+    id: "compass",
+    label: "Case Compass",
+    category: "Strategy & Core",
+    description: "Real-time IEP advocacy pipeline stage, who has the ball, and next meeting deadlines.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "notes",
+    label: "Internal Notes & Observations",
+    category: "Case Records & Notes",
+    description: "Confidential advocate notes, district communications, and internal parent observations.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "files",
+    label: "Student Documents & IEP Packets",
+    category: "Case Records & Notes",
+    description: "Uploads, psychological evaluations, prior written notices (PWN), and accommodation packets.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "tools",
+    label: "Advocacy Tools & Worksheets",
+    category: "Strategy & Core",
+    description: "Worksheet studio, IEP comparator, and PWN decoder analysis workspaces.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "appointments",
+    label: "Appointments & Timeline",
+    category: "Practice & Finances",
+    description: "Case calendar bookings, ARD/IEP meeting schedules, and advocate coverage blocks.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "financials",
+    label: "Billing, Retainers & Invoices",
+    category: "Practice & Finances",
+    description: "Retainer hours, fee schedules, client invoices, and payment ledger details.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "meeting_workspace",
+    label: "Live Meeting Workspace",
+    category: "Live IEP & Review",
+    description: "Real-time live meeting guidance console and First Mate AI copilot assistance.",
+    allowedLevels: ["none", "view", "manage"],
+  },
+  {
+    id: "post_meeting_review",
+    label: "Post-Meeting Review",
+    category: "Live IEP & Review",
+    description: "Meeting outcomes recap, IEP amendment diff tracker, and parent summary generator.",
+    allowedLevels: ["none", "view", "manage"],
+  },
+  {
+    id: "projects",
+    label: "State Complaints & Disputes",
+    category: "Strategy & Core",
+    description: "State complaint drafts, legal violation matrices, and formal dispute filings.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "voyage_log",
+    label: "Voyage Log (Recordings)",
+    category: "Case Records & Notes",
+    description: "Meeting audio recordings, transcript logs, and speaker-attributed records.",
+    allowedLevels: ["none", "view", "manage"],
+  },
+  {
+    id: "tasks",
+    label: "Case Tasks Queue",
+    category: "Practice & Finances",
+    description: "Assigned follow-up action items, school requests, and evaluation deadline tasks.",
+    allowedLevels: ["none", "view", "edit", "manage"],
+  },
+  {
+    id: "activity_timeline",
+    label: "Student Activity Timeline",
+    category: "Case Records & Notes",
+    description: "Chronological audit trail of case changes, portal interactions, and status updates.",
+    allowedLevels: ["none", "view", "edit"],
+  },
+];
+
 export interface RoleDefinition {
   id: RoleId;
   label: string;
@@ -54,6 +151,7 @@ export interface RoleDefinition {
   description: string;
   defaultModules: string[];
   defaultPermissions: string[];
+  defaultCaseAccess: Record<string, CaseAccessLevel>;
 }
 
 export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
@@ -66,6 +164,20 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
     description: "Practice executive, partner, or operations director with full system oversight.",
     defaultModules: ["all"],
     defaultPermissions: ["all"],
+    defaultCaseAccess: {
+      compass: "manage",
+      notes: "manage",
+      files: "manage",
+      tools: "manage",
+      appointments: "manage",
+      financials: "manage",
+      meeting_workspace: "manage",
+      post_meeting_review: "manage",
+      projects: "manage",
+      voyage_log: "manage",
+      tasks: "manage",
+      activity_timeline: "edit",
+    },
   },
   advocate: {
     id: "advocate",
@@ -82,7 +194,6 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "meeting_workspace",
       "post_meeting_review",
       "case_compass",
-      "advocate_workspace",
       "smart_files",
       "contracts",
       "first_mate",
@@ -97,11 +208,26 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
     defaultPermissions: [
       "view_clients",
       "edit_clients",
+      "upload_files",
       "view_assigned_cases",
       "manage_appointments",
       "view_team_calendar",
       "view_reports",
     ],
+    defaultCaseAccess: {
+      compass: "edit",
+      notes: "edit",
+      files: "edit",
+      tools: "edit",
+      appointments: "edit",
+      financials: "view",
+      meeting_workspace: "manage",
+      post_meeting_review: "manage",
+      projects: "edit",
+      voyage_log: "manage",
+      tasks: "edit",
+      activity_timeline: "view",
+    },
   },
   call_center: {
     id: "call_center",
@@ -126,6 +252,20 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "view_team_calendar",
       "manage_team_calendar",
     ],
+    defaultCaseAccess: {
+      compass: "view",
+      notes: "view",
+      files: "none",
+      tools: "none",
+      appointments: "edit",
+      financials: "none",
+      meeting_workspace: "none",
+      post_meeting_review: "none",
+      projects: "none",
+      voyage_log: "none",
+      tasks: "view",
+      activity_timeline: "view",
+    },
   },
   documentation: {
     id: "documentation",
@@ -146,7 +286,23 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
     defaultPermissions: [
       "view_clients",
       "view_assigned_cases",
+      "upload_files",
+      "export_records",
     ],
+    defaultCaseAccess: {
+      compass: "view",
+      notes: "view",
+      files: "edit",
+      tools: "edit",
+      appointments: "view",
+      financials: "none",
+      meeting_workspace: "view",
+      post_meeting_review: "edit",
+      projects: "edit",
+      voyage_log: "view",
+      tasks: "edit",
+      activity_timeline: "view",
+    },
   },
   technology: {
     id: "technology",
@@ -166,8 +322,24 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
     ],
     defaultPermissions: [
       "access_admin_settings",
+      "manage_integrations",
+      "access_ai_config",
       "view_reports",
     ],
+    defaultCaseAccess: {
+      compass: "none",
+      notes: "none",
+      files: "none",
+      tools: "manage",
+      appointments: "none",
+      financials: "none",
+      meeting_workspace: "view",
+      post_meeting_review: "none",
+      projects: "none",
+      voyage_log: "view",
+      tasks: "view",
+      activity_timeline: "view",
+    },
   },
   operations: {
     id: "operations",
@@ -191,7 +363,25 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "view_team_calendar",
       "manage_team_calendar",
       "view_reports",
+      "modify_billing",
+      "modify_contracts",
+      "upload_files",
+      "export_records",
     ],
+    defaultCaseAccess: {
+      compass: "view",
+      notes: "view",
+      files: "view",
+      tools: "view",
+      appointments: "edit",
+      financials: "manage",
+      meeting_workspace: "none",
+      post_meeting_review: "view",
+      projects: "view",
+      voyage_log: "view",
+      tasks: "manage",
+      activity_timeline: "view",
+    },
   },
 };
 
@@ -203,19 +393,36 @@ export interface PermissionDefinition {
 }
 
 export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
+  // Client & Cases
   { id: "view_clients", label: "View Clients & Students", category: "Client & Cases", description: "View student profiles, contacts, and basic demographic files." },
   { id: "edit_clients", label: "Edit Clients & Students", category: "Client & Cases", description: "Create, modify, and update student records and accommodations." },
+  { id: "delete_records", label: "Delete Records & Cases", category: "Client & Cases", description: "Permanently delete student records, case documents, and archive histories." },
+  { id: "export_records", label: "Download & Export Data", category: "Client & Cases", description: "Export student caseloads, IEP analysis sheets, and roster CSV spreadsheets." },
+  { id: "upload_files", label: "Upload Documents & Evaluations", category: "Client & Cases", description: "Upload FERPA-adjacent IEPs, psychological evaluations, and clinical records." },
+  { id: "modify_contracts", label: "Modify Contracts & Agreements", category: "Client & Cases", description: "Draft, amend, send, and void client advocacy service agreements." },
   { id: "view_assigned_cases", label: "View Assigned Cases Only", category: "Client & Cases", description: "Restricts case visibility strictly to assigned students." },
   { id: "view_all_cases", label: "View All Practice Cases", category: "Client & Cases", description: "Grants visibility to all active and archived practice cases." },
+  
+  // Calendar & Coverage
   { id: "manage_appointments", label: "Schedule & Edit Appointments", category: "Calendar & Coverage", description: "Create IEP meeting bookings and discovery calls." },
   { id: "view_team_calendar", label: "View Full Team Calendar", category: "Calendar & Coverage", description: "See all staff schedules, blocks, and client meetings." },
   { id: "manage_team_calendar", label: "Manage Team Calendar & Reassign", category: "Calendar & Coverage", description: "Reassign advocate coverage and adjust team booking slots." },
+  
+  // Staff & Management
   { id: "approve_time_off", label: "Approve Time Off (PTO)", category: "Staff & Management", description: "Review and approve or deny staff time-off requests." },
-  { id: "manage_employees", label: "Manage Employees & Staff", category: "Staff & Management", description: "Add new employees, edit roles, and run offboarding." },
-  { id: "manage_roles", label: "Manage Roles & Permissions", category: "Staff & Management", description: "Create roles and adjust granular access privileges." },
+  { id: "manage_employees", label: "Manage Employees & Staff", category: "Staff & Management", description: "Add new employees, edit compensation, assign roles, and run offboarding." },
+  { id: "manage_roles", label: "Manage Roles & Permissions", category: "Staff & Management", description: "Configure system roles, case workspace access, and security policies." },
+
+  // Finance & System
+  { id: "modify_billing", label: "Modify Billing & Retainers", category: "Finance & System", description: "Adjust hourly advocate rates, create/edit invoices, and credit retainer hours." },
+  { id: "issue_refunds", label: "Issue Refunds & Adjustments", category: "Finance & System", description: "Process payment refunds, void charges, and issue retainer credits." },
   { id: "manage_payroll", label: "View & Manage Payroll (Sensitive)", category: "Finance & System", description: "Access compensation, pay rates, and direct deposit details." },
-  { id: "view_reports", label: "View Practice Reports & Metrics", category: "Finance & System", description: "Access advocacy metrics, giving ledgers, and caseload dashboards." },
-  { id: "access_admin_settings", label: "Access System Settings", category: "Finance & System", description: "Configure API connections, integrations, and CRM security." },
+  { id: "view_sensitive_admin", label: "View Sensitive Admin Notes", category: "Finance & System", description: "Access confidential employee HR notes, compensation histories, and disciplinary records." },
+  { id: "view_reports", label: "View Practice Reports & Metrics", category: "Finance & System", description: "Access advocacy metrics, giving ledgers, and caseload revenue dashboards." },
+  { id: "change_company_settings", label: "Change Company & Practice Settings", category: "Finance & System", description: "Modify business profile, practice branding, legal terms, and global CRM defaults." },
+  { id: "manage_integrations", label: "Manage System Integrations", category: "Finance & System", description: "Configure Stripe payments, Quo VoIP telephony, AssemblyAI, and Clerk authentication." },
+  { id: "access_ai_config", label: "Access AI & Copilot Configuration", category: "Finance & System", description: "Manage Cloudflare Workers AI LLM prompts, model selection, and First Mate copilot tuning." },
+  { id: "access_admin_settings", label: "Access System Settings", category: "Finance & System", description: "Full technical control over CRM configuration, database tools, and security." },
 ];
 
 export interface ModuleDefinition {
@@ -244,7 +451,6 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "meeting_workspace", label: "Meeting Workspace (PG-043)", path: "/meeting-workspace", group: "Manage Experiences", icon: Zap },
   { id: "post_meeting_review", label: "Post-Meeting Review (PG-044)", path: "/post-meeting-review", group: "Manage Experiences", icon: Zap },
   { id: "case_compass", label: "Case Compass", path: "/case-compass", group: "Manage Experiences", icon: Compass },
-  { id: "advocate_workspace", label: "Advocate Case Workspace", path: "/workspace", group: "Manage Experiences", icon: LayoutGrid },
   { id: "scheduler", label: "Public Scheduler", path: "/scheduler", group: "Manage Experiences", icon: CalendarClock },
   // Templates & Forms
   { id: "lead_forms", label: "Lead Forms Builder", path: "/lead-forms", group: "Templates & Forms", icon: ClipboardList },
@@ -391,6 +597,7 @@ export interface EmployeeRecord {
   compensation: EmployeeCompensation;
   directDeposit: EmployeeDirectDeposit;
   modulePermissions: Record<string, "none" | "view" | "edit">;
+  caseWorkspaceAccess: Record<string, CaseAccessLevel>;
   permissionOverrides: Record<string, boolean>;
   documents: EmployeeDocument[];
   equipment: EmployeeEquipmentItem[];
@@ -453,6 +660,7 @@ export const INITIAL_EMPLOYEES: EmployeeRecord[] = [
       lastUpdated: "Sep 29, 2026",
     },
     modulePermissions: {},
+    caseWorkspaceAccess: {},
     permissionOverrides: {},
     documents: [
       { id: "doc-1", name: "Operating Agreement & Founder Certificate", category: "Employment Agreement", uploadedDate: "Jan 15, 2021", uploadedBy: "Byron Honea", size: "2.4 MB", status: "Active" },
@@ -527,6 +735,7 @@ export const INITIAL_EMPLOYEES: EmployeeRecord[] = [
       lastUpdated: "Jul 01, 2026",
     },
     modulePermissions: {},
+    caseWorkspaceAccess: {},
     permissionOverrides: {},
     documents: [
       { id: "doc-3", name: "Employment Agreement — Sarah Jenkins", category: "Employment Agreement", uploadedDate: "Mar 01, 2023", uploadedBy: "Byron Honea", size: "1.8 MB", status: "Active" },
@@ -596,6 +805,7 @@ export const INITIAL_EMPLOYEES: EmployeeRecord[] = [
       lastUpdated: "Jan 01, 2026",
     },
     modulePermissions: {},
+    caseWorkspaceAccess: {},
     permissionOverrides: {},
     documents: [
       { id: "doc-5", name: "Marcus Vance — Telephony & Intake Agreement", category: "Employment Agreement", uploadedDate: "Oct 15, 2024", uploadedBy: "Byron Honea", size: "1.2 MB", status: "Active" },
@@ -662,6 +872,7 @@ export const INITIAL_EMPLOYEES: EmployeeRecord[] = [
       lastUpdated: "Feb 01, 2025",
     },
     modulePermissions: {},
+    caseWorkspaceAccess: {},
     permissionOverrides: {},
     documents: [
       { id: "doc-6", name: "Contractor Agreement — Elena Rostova", category: "Contractor Agreement", uploadedDate: "Feb 01, 2025", uploadedBy: "Byron Honea", size: "1.4 MB", status: "Active" },
@@ -730,6 +941,7 @@ export const INITIAL_EMPLOYEES: EmployeeRecord[] = [
       lastUpdated: "Jan 10, 2026",
     },
     modulePermissions: {},
+    caseWorkspaceAccess: {},
     permissionOverrides: {},
     documents: [
       { id: "doc-8", name: "Confidentiality & Security Protocol 2026", category: "Confidentiality", uploadedDate: "Jan 10, 2026", uploadedBy: "Byron Honea", size: "850 KB", status: "Active" },
@@ -798,6 +1010,7 @@ export const INITIAL_EMPLOYEES: EmployeeRecord[] = [
       lastUpdated: "Jan 01, 2026",
     },
     modulePermissions: {},
+    caseWorkspaceAccess: {},
     permissionOverrides: {},
     documents: [
       { id: "doc-9", name: "Employment Agreement — Abby Miller", category: "Employment Agreement", uploadedDate: "Aug 01, 2023", uploadedBy: "Byron Honea", size: "1.9 MB", status: "Active" },

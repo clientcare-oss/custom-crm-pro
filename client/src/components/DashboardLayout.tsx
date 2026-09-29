@@ -156,12 +156,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           keywords: ["compass", "case compass", "cases", "disputes", "iep", "experience", "strategy"]
         },
         { 
-          icon: LayoutGrid, 
-          label: "Advocate Case Workspace", 
-          path: "/workspace",
-          keywords: ["workspace", "advocate case workspace", "case workspace", "pg-031", "employee workspace", "roles"]
-        },
-        { 
           icon: CalendarClock, 
           label: "Scheduler", 
           path: "/scheduler",

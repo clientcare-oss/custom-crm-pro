@@ -4,6 +4,7 @@ import {
   RoleId,
   ROLE_DEFINITIONS,
   CRM_MODULES,
+  CaseAccessLevel,
 } from "./teamTypes";
 
 const STORAGE_KEY = "waypoint_team_employees";
@@ -286,4 +287,78 @@ export function checkEmployeeModuleAccess(
   }
 
   return "none";
+}
+
+/**
+ * Checks what access level an employee has to a specific Student/Case Workspace area:
+ * 1. Checks specific employee override (if defined in caseWorkspaceAccess)
+ * 2. Management role has "manage" access
+ * 3. Falls back to role defaultCaseAccess (checks highest level across primary + additional roles)
+ */
+export function checkEmployeeCaseAccess(
+  employee: EmployeeRecord,
+  caseModId: string
+): CaseAccessLevel {
+  // If employee has a specific override:
+  if (employee.caseWorkspaceAccess && caseModId in employee.caseWorkspaceAccess) {
+    return employee.caseWorkspaceAccess[caseModId];
+  }
+
+  // Management gets full manage privileges
+  if (employee.primaryRole === "management" || employee.additionalRoles?.includes("management")) {
+    return "manage";
+  }
+
+  const levelRank: Record<CaseAccessLevel, number> = {
+    none: 0,
+    view: 1,
+    edit: 2,
+    manage: 3,
+  };
+
+  let highestLevel: CaseAccessLevel = "none";
+  const allRoles = [employee.primaryRole, ...(employee.additionalRoles || [])];
+
+  for (const roleId of allRoles) {
+    const roleDef = ROLE_DEFINITIONS[roleId];
+    if (roleDef?.defaultCaseAccess && caseModId in roleDef.defaultCaseAccess) {
+      const lvl = roleDef.defaultCaseAccess[caseModId];
+      if (levelRank[lvl] > levelRank[highestLevel]) {
+        highestLevel = lvl;
+      }
+    }
+  }
+
+  return highestLevel;
+}
+
+/**
+ * Checks whether an employee has a specific granular system permission:
+ * 1. Specific employee override in permissionOverrides
+ * 2. Management role gets all permissions
+ * 3. Checks defaultPermissions of primary and additional roles
+ */
+export function checkEmployeeActionPermission(
+  employee: EmployeeRecord,
+  permId: string
+): boolean {
+  if (employee.permissionOverrides && permId in employee.permissionOverrides) {
+    return employee.permissionOverrides[permId];
+  }
+
+  if (employee.primaryRole === "management" || employee.additionalRoles?.includes("management")) {
+    return true;
+  }
+
+  const allRoles = [employee.primaryRole, ...(employee.additionalRoles || [])];
+  for (const roleId of allRoles) {
+    const roleDef = ROLE_DEFINITIONS[roleId];
+    if (roleDef) {
+      if (roleDef.defaultPermissions.includes("all") || roleDef.defaultPermissions.includes(permId)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }

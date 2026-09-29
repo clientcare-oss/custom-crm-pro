@@ -173,6 +173,7 @@ export default function AddEmployeeModal({
         lastUpdated: startDate,
       },
       modulePermissions: {},
+      caseWorkspaceAccess: {},
       permissionOverrides: {},
       documents: [],
       equipment: [],

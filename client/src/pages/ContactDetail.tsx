@@ -3,7 +3,8 @@ import { CreateTaskInline } from "@/components/CreateTaskInline";
 import { EditTaskModal, type TaskEditPayload } from "@/components/EditTaskModal";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useParams, useLocation } from "wouter";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { getStoredEmployees, checkEmployeeCaseAccess } from "@/components/team/teamStore";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -1426,6 +1427,70 @@ function StudentTabs({
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [isLawyerPrepOpen, setIsLawyerPrepOpen] = useState(false);
 
+  // Match current user to employee record to enforce Case Workspace permissions
+  const { user } = useAuth();
+  const currentEmployee = useMemo(() => {
+    if (!user?.email) return null;
+    const employees = getStoredEmployees();
+    return employees.find((e) => e.email?.toLowerCase() === user.email?.toLowerCase()) || null;
+  }, [user?.email]);
+
+  const isCaseTabAllowed = (tabValue: string) => {
+    if (
+      !currentEmployee ||
+      user?.role === "admin" ||
+      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
+    ) {
+      return true;
+    }
+    const mapping: Record<string, string> = {
+      compass: "compass",
+      notes: "notes",
+      files: "files",
+      tools: "tools",
+      appointments: "appointments",
+      financials: "financials",
+      "time-tracker": "financials",
+      projects: "projects",
+      "voyage-log": "voyage_log",
+      tasks: "tasks",
+      "activity-timeline": "activity_timeline",
+    };
+    const caseModId = mapping[tabValue];
+    if (!caseModId) return true;
+    const access = checkEmployeeCaseAccess(currentEmployee, caseModId);
+    return access !== "none";
+  };
+
+  const isMeetingWorkspaceAllowed = useMemo(() => {
+    if (
+      !currentEmployee ||
+      user?.role === "admin" ||
+      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
+    ) {
+      return true;
+    }
+    return checkEmployeeCaseAccess(currentEmployee, "meeting_workspace") !== "none";
+  }, [currentEmployee, user]);
+
+  const isPostMeetingReviewAllowed = useMemo(() => {
+    if (
+      !currentEmployee ||
+      user?.role === "admin" ||
+      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
+    ) {
+      return true;
+    }
+    return checkEmployeeCaseAccess(currentEmployee, "post_meeting_review") !== "none";
+  }, [currentEmployee, user]);
+
+  // Ensure active tab fallback if currently selected tab is hidden
+  useEffect(() => {
+    if (!isCaseTabAllowed(activeTab)) {
+      setActiveTab("workspace");
+    }
+  }, [activeTab, currentEmployee]);
+
   type TabItem = { value: string; label: string; icon: any; count?: number };
 
   const row1Items: TabItem[] = [
@@ -1447,6 +1512,9 @@ function StudentTabs({
     { value: "time-tracker", label: "Time", icon: Timer },
     { value: "details", label: "Details", icon: Info },
   ];
+
+  const visibleRow1Items = row1Items.filter((item) => isCaseTabAllowed(item.value));
+  const visibleRow2Items = row2Items.filter((item) => isCaseTabAllowed(item.value));
 
   const triggerClass =
     "group flex-1 min-w-0 h-8 sm:h-8.5 md:h-9 px-1.5 sm:px-2 md:px-2.5 py-1 rounded-lg text-[10.5px] sm:text-[11.5px] md:text-[12px] font-medium flex items-center justify-center gap-1 sm:gap-1.5 transition-all duration-150 cursor-pointer text-blue-200/80 hover:text-white hover:bg-white/[0.08] border border-transparent data-[state=active]:bg-[#071C3C] data-[state=active]:border-[#F5B544] data-[state=active]:text-[#F5B544] data-[state=active]:font-bold data-[state=active]:shadow-[0_2px_12px_rgba(245,181,68,0.22)]";
@@ -1513,24 +1581,30 @@ function StudentTabs({
           <span className="text-sm">🎁</span>
           <span className="whitespace-nowrap font-bold">Referral</span>
         </button>
-        <button
-          type="button"
-          onClick={() => setLocation(`/meeting-workspace/${contactId}`)}
-          title="Open ⚡ Meeting Workspace"
-          className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12.5px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
-        >
-          <span className="text-sm">⚡</span>
-          <span className="whitespace-nowrap font-bold">Meeting Workspace</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setLocation(`/post-meeting-review/${contactId}`)}
-          title="Portmaster: Post-Meeting Review & IEP Amendment Comparison (PG-044)"
-          className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
-        >
-          <span className="text-sm">⚓</span>
-          <span className="whitespace-nowrap font-bold">Post-Meeting Review</span>
-        </button>
+
+        {isMeetingWorkspaceAllowed && (
+          <button
+            type="button"
+            onClick={() => setLocation(`/meeting-workspace/${contactId}`)}
+            title="Open ⚡ Meeting Workspace"
+            className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12.5px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
+          >
+            <span className="text-sm">⚡</span>
+            <span className="whitespace-nowrap font-bold">Meeting Workspace</span>
+          </button>
+        )}
+
+        {isPostMeetingReviewAllowed && (
+          <button
+            type="button"
+            onClick={() => setLocation(`/post-meeting-review/${contactId}`)}
+            title="Portmaster: Post-Meeting Review & IEP Amendment Comparison (PG-044)"
+            className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-t-xl bg-gradient-to-br from-[#0B3767] via-[#0A254D] to-[#071C3C] border-t border-x border-[#0D4B84] border-b-0 text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 text-xs sm:text-[12px] font-semibold shadow-lg transition-all duration-150 cursor-pointer translate-y-[1px]"
+          >
+            <span className="text-sm">⚓</span>
+            <span className="whitespace-nowrap font-bold">Post-Meeting Review</span>
+          </button>
+        )}
       </div>
 
       {/* Unified Command Center 2-Row Navigation Deck (No Horizontal Scrollbar, All Items Fit) */}
@@ -1540,7 +1614,7 @@ function StudentTabs({
 
         {/* Row 1: Core Case Flow */}
         <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10">
-          {row1Items.map((item) => {
+          {visibleRow1Items.map((item) => {
             const Icon = item.icon;
             return (
               <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
@@ -1557,22 +1631,24 @@ function StudentTabs({
         </div>
 
         {/* Row 2: Tools, Complaints & Practice Operations */}
-        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#0E3E75]/80 relative z-10">
-          {row2Items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
-                <Icon className="h-3.5 w-3.5 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
-                <span className="truncate">{item.label}</span>
-                {item.count !== undefined && item.count > 0 && (
-                  <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
-                    {item.count}
-                  </span>
-                )}
-              </TabsTrigger>
-            );
-          })}
-        </div>
+        {visibleRow2Items.length > 0 && (
+          <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#0E3E75]/80 relative z-10">
+            {visibleRow2Items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <TabsTrigger key={item.value} value={item.value} title={item.label} className={triggerClass}>
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
+                  <span className="truncate">{item.label}</span>
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="ml-0.5 inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+                      {item.count}
+                    </span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </div>
+        )}
       </TabsList>
 
       {/* 1. WORKSPACE TAB (PRIMARY CASE CONSOLE) */}
