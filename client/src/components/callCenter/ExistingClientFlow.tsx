@@ -160,7 +160,7 @@ export function ExistingClientFlow({ onRequestCallback }: ExistingClientFlowProp
             size="sm"
             variant="outline"
             onClick={() => {
-              window.location.href = `/case-compass`;
+              window.location.href = `/contacts/${contactId}?tab=compass`;
             }}
             className="border-sky-500/30 text-sky-200 hover:bg-sky-500/10 h-8 rounded-xl justify-start gap-2"
           >

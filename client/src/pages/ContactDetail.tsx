@@ -5,6 +5,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useParams, useLocation } from "wouter";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { getStoredEmployees, checkEmployeeCaseAccess } from "@/components/team/teamStore";
+import type { CaseAccessLevel } from "@/components/team/teamTypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -32,7 +33,8 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Lock } from "lucide-react";
+import CaseCompassCard from "@/components/CaseCompassCard";
 import ContactCompassTab from "@/components/contact/ContactCompassTab";
 import ContactNotesTab from "@/components/contact/ContactNotesTab";
 import ContactFilesTab from "@/components/contact/ContactFilesTab";
@@ -536,6 +538,8 @@ export default function ContactDetail() {
       toast.success("Compass updated — previous version saved to history");
       setEditingCompass(false);
       utils.contacts.detail.invalidate({ id: contactId });
+      const effectiveCaseId = data?.contact?.caseId || `WP-${contactId}`;
+      utils.caseCompass.get.invalidate({ caseId: effectiveCaseId });
     },
     onError: (err) => toast.error("Failed to save Compass: " + err.message),
   });
@@ -564,12 +568,9 @@ export default function ContactDetail() {
   const isParent = contact.jobTitle !== "Student";
 
   const handleCompassSave = () => {
-    if (!contact.caseId) {
-      toast.error("This student does not have a Case ID yet. Please refresh and try again.");
-      return;
-    }
+    const effectiveCaseId = contact.caseId || `WP-${contact.id}`;
     compassUpsert.mutate({
-      caseId: contact.caseId,
+      caseId: effectiveCaseId,
       currentStatus: compassForm.currentStatus || undefined,
       lastMeetingSummary: compassForm.lastMeetingSummary || undefined,
       nextStep: compassForm.nextStep || undefined,
@@ -1422,7 +1423,14 @@ function StudentTabs({
   onUpdatePlanType: (newPlan: string) => void;
   calculatedAge: number | null;
 }) {
-  const [activeTab, setActiveTab] = useState("workspace");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      const tabParam = p.get("tab");
+      if (tabParam) return tabParam;
+    }
+    return "workspace";
+  });
   const [, setLocation] = useLocation();
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [isLawyerPrepOpen, setIsLawyerPrepOpen] = useState(false);
@@ -1434,6 +1442,28 @@ function StudentTabs({
     const employees = getStoredEmployees();
     return employees.find((e) => e.email?.toLowerCase() === user.email?.toLowerCase()) || null;
   }, [user?.email]);
+
+  // Granular Case Compass permission level for active employee
+  const compassAccessLevel = useMemo<CaseAccessLevel>(() => {
+    if (
+      !currentEmployee ||
+      user?.role === "admin" ||
+      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
+    ) {
+      return "manage";
+    }
+    return checkEmployeeCaseAccess(currentEmployee, "compass");
+  }, [currentEmployee, user]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      const tabParam = p.get("tab");
+      if (tabParam && isCaseTabAllowed(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
 
   const isCaseTabAllowed = (tabValue: string) => {
     if (
@@ -1690,48 +1720,76 @@ function StudentTabs({
       </TabsContent>
 
       {/* COMPASS TAB */}
-      <TabsContent value="compass" className="mt-4">
-        {/* Client Portal Card */}
-        <ClientPortalCard contact={contact} parentContactId={contact.parentContactId} />
-        <div className="mt-6" />
-        {/* AI Buttons for Compass tab */}
-        <AiButtonRunner
-          contactId={contactId}
-          projectId={projects[0]?.id}
-          location="compass"
-          studentName={`${contact.firstName} ${contact.lastName}`}
-          caseId={contact.caseId ?? undefined}
-        />
-        <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-md overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-accent/20 bg-accent/10">
-            <div className="flex items-center gap-3">
-              <Compass className="h-7 w-7 text-accent animate-[spin_12s_linear_infinite]" />
-              <div>
-                <h2 className="font-bold text-foreground text-base">Waypoint Case Compass™</h2>
-                {contact.caseId && <p className="text-xs text-muted-foreground">Case ID: {contact.caseId}</p>}
-                {(compass as any)?.updatedAt && (
-                  <p className="text-xs text-muted-foreground">Last updated {new Date((compass as any).updatedAt).toLocaleDateString()}</p>
-                )}
-              </div>
+      <TabsContent value="compass" className="mt-4 space-y-6">
+        {compassAccessLevel === "none" ? (
+          <Card className="rounded-2xl border border-red-900/60 bg-red-950/20 p-8 text-center space-y-3 shadow-xl">
+            <Lock className="h-8 w-8 text-red-400 mx-auto" />
+            <h3 className="text-base font-bold text-white">Case Compass Access Restricted</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Your employee role does not have permission to view or manage the Case Compass for this student. Contact your practice administrator to request access.
+            </p>
+          </Card>
+        ) : (
+          <>
+            {/* Visual Interactive Case Compass Card */}
+            <div className="w-full">
+              <CaseCompassCard caseId={contact.caseId || `WP-${contact.id}`} isAdminView={true} />
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)} className="text-xs inline-flex items-center gap-1">
-                <Clock className="h-3 w-3" />{showHistory ? "Hide History" : "View History"}{showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              </Button>
-              {!editingCompass ? (
-                <Button size="sm" onClick={() => setEditingCompass(true)} className="text-xs inline-flex items-center gap-1">
-                  <Pencil className="h-3 w-3" />Edit Compass
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleCompassSave} disabled={compassUpsert.isPending} className="text-xs inline-flex items-center gap-1">
-                    {compassUpsert.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}Save
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setEditingCompass(false)} className="text-xs"><X className="h-3 w-3" /></Button>
+
+            {/* Client Portal Sync Card */}
+            <ClientPortalCard contact={contact} parentContactId={contact.parentContactId} />
+
+            {/* AI Buttons for Compass tab (Hidden for View-Only) */}
+            {compassAccessLevel !== "view" && (
+              <AiButtonRunner
+                contactId={contactId}
+                projectId={projects[0]?.id}
+                location="compass"
+                studentName={`${contact.firstName} ${contact.lastName}`}
+                caseId={contact.caseId ?? undefined}
+              />
+            )}
+
+            {/* Executive Case Compass Details & Management */}
+            <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-card to-accent/5 shadow-md overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-accent/20 bg-accent/10">
+                <div className="flex items-center gap-3">
+                  <Compass className="h-7 w-7 text-accent animate-[spin_12s_linear_infinite]" />
+                  <div>
+                    <h2 className="font-bold text-foreground text-base">Waypoint Case Compass™ Trajectory</h2>
+                    <p className="text-xs text-muted-foreground">Case ID: {contact.caseId || `WP-${contact.id}`}</p>
+                    {(compass as any)?.updatedAt && (
+                      <p className="text-xs text-muted-foreground">Last updated {new Date((compass as any).updatedAt).toLocaleDateString()}</p>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
+                <div className="flex items-center gap-2">
+                  {compassAccessLevel === "view" ? (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-semibold">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>View Only Access</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)} className="text-xs inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" />{showHistory ? "Hide History" : "View History"}{showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      </Button>
+                      {!editingCompass ? (
+                        <Button size="sm" onClick={() => setEditingCompass(true)} className="text-xs inline-flex items-center gap-1">
+                          <Pencil className="h-3 w-3" />Edit Compass
+                        </Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleCompassSave} disabled={compassUpsert.isPending} className="text-xs inline-flex items-center gap-1">
+                            {compassUpsert.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}Save
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditingCompass(false)} className="text-xs"><X className="h-3 w-3" /></Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
           <div className="p-6">
             {!editingCompass ? (
               (compass as any) ? (
@@ -1802,6 +1860,8 @@ function StudentTabs({
             </div>
           )}
         </div>
+          </>
+        )}
       </TabsContent>
 
       {/* VOYAGE LOG */}

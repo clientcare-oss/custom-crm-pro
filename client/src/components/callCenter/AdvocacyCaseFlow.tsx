@@ -140,7 +140,7 @@ export function AdvocacyCaseFlow({ onRequestCallback }: AdvocacyCaseFlowProps = 
           size="sm"
           variant="outline"
           onClick={() => {
-            window.location.href = `/case-compass`;
+            window.location.href = `/contacts/${contactId}?tab=compass`;
           }}
           className="border-indigo-500/30 text-indigo-200 hover:bg-indigo-500/10 h-7 rounded-lg gap-1.5 shrink-0"
         >

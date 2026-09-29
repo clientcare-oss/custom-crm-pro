@@ -150,12 +150,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           keywords: ["meeting", "iep meeting", "meeting workspace", "pg-043", "blueprint", "advocate ready", "targets", "live meeting"]
         },
         { 
-          icon: Compass, 
-          label: "Case Compass", 
-          path: "/case-compass",
-          keywords: ["compass", "case compass", "cases", "disputes", "iep", "experience", "strategy"]
-        },
-        { 
           icon: CalendarClock, 
           label: "Scheduler", 
           path: "/scheduler",

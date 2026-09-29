@@ -294,7 +294,7 @@ export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
           {
             label: "Open Case Compass →",
             actionType: "link",
-            path: "/case-compass",
+            getPath: (c) => `/students/${c.studentId || ""}?tab=compass`,
           },
         ],
       },

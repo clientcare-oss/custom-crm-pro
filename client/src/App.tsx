@@ -1,4 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
@@ -83,6 +85,15 @@ import { FirstMateProvider } from "./contexts/FirstMateContext";
 import PageIdBadge from "./components/PageIdBadge";
 import { WaypointScanGlobalModal } from "./components/portal/WaypointScanGlobalModal";
 import { AutoTruncateTooltip } from "./components/AutoTruncateTooltip";
+
+function CaseCompassRedirect() {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    toast.info("Case Compass is now located inside each individual student case.");
+    setLocation("/projects");
+  }, [setLocation]);
+  return null;
+}
 
 function Router() {
   // First Mate standalone pop-out window: mount immediately to prevent auth-loading flicker or remount loops
@@ -243,8 +254,8 @@ function Router() {
           <Route path="/meeting-workspace" component={MeetingWorkspace} />
           <Route path="/post-meeting-review/:studentId" component={PostMeetingReview} />
           <Route path="/post-meeting-review" component={PostMeetingReview} />
-          <Route path="/tools/case-compass" component={CaseCompassAdmin} />
-          <Route path="/case-compass" component={CaseCompassAdmin} />
+          <Route path="/tools/case-compass" component={CaseCompassRedirect} />
+          <Route path="/case-compass" component={CaseCompassRedirect} />
           <Route path="/book" component={BookingPage} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
