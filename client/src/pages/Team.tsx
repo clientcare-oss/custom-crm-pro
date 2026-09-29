@@ -54,7 +54,7 @@ import {
 } from "@/components/team/teamStore";
 import TeamOverviewHeader from "@/components/team/TeamOverviewHeader";
 import EmployeeDirectoryTable from "@/components/team/EmployeeDirectoryTable";
-import EmployeeDetailDrawer from "@/components/team/EmployeeDetailDrawer";
+import EmployeeManagementWorkspace from "@/components/team/EmployeeManagementWorkspace";
 import AddEmployeeModal from "@/components/team/AddEmployeeModal";
 import DeactivateEmployeeModal from "@/components/team/DeactivateEmployeeModal";
 
@@ -118,7 +118,6 @@ export default function TeamPage() {
   // Employee Directory state (connected to Crew Quarters shared storage)
   const [employees, setEmployees] = useState<EmployeeRecord[]>(getStoredEmployees);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeRecord | null>(null);
@@ -212,7 +211,7 @@ export default function TeamPage() {
 
   const handleOpenEmployee = (emp: EmployeeRecord) => {
     setSelectedEmployee(emp);
-    setDrawerOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSaveEmployee = (updated: EmployeeRecord) => {
@@ -227,7 +226,7 @@ export default function TeamPage() {
     const refreshed = getStoredEmployees();
     setEmployees(refreshed);
     setSelectedEmployee(created);
-    setDrawerOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDeactivateClick = (emp: EmployeeRecord) => {
@@ -261,141 +260,148 @@ export default function TeamPage() {
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-                <Users className="h-7 w-7 text-sky-400" />
-                Team &amp; Staff Management
-              </h1>
-              <span className="font-mono text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-400/10 text-amber-400 border border-amber-400/30">
-                PG-019
-              </span>
-              <PageIdBadge id="PG-019" name="Team & Staff Management" />
-            </div>
-            <p className="text-xs sm:text-sm text-blue-200/70 mt-1">
-              Centralized practice administration for Waypoint Advocates. Administer workforce records, roles, PTO approvals, equipment, payroll, and module permissions.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              onClick={() => setInviteOpen(true)}
-              variant="outline"
-              className="border-blue-700/60 text-blue-200 hover:text-white hover:bg-blue-900/40 text-xs rounded-xl h-9 px-3 gap-1.5 cursor-pointer"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-              <span>Invite Link</span>
-            </Button>
-
-            <Button
-              onClick={() => setAddModalOpen(true)}
-              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl h-9 px-4 gap-1.5 cursor-pointer shadow-md"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span>+ Add Employee</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* ── Workforce Totals, Role Distribution & Relocated Management Deck ── */}
-        <TeamOverviewHeader
-          totals={totals}
-          roleCounts={roleCounts}
-          attentionItems={attentionItems}
-          timeOffRequests={timeOffRequests}
-          onApproveTimeOff={handleApproveTimeOff}
-          onAddEmployee={() => setAddModalOpen(true)}
-          onSelectEmployeeById={(id) => {
-            const found = employees.find((e) => e.id === id);
-            if (found) handleOpenEmployee(found);
-          }}
-          activeRoleFilter={roleFilter}
-          onRoleFilterSelect={(r) => setRoleFilter(r)}
-        />
-
-        {/* ── Primary Workforce Directory ── */}
-        <EmployeeDirectoryTable
-          employees={employees}
-          onSelectEmployee={handleOpenEmployee}
-          onAddEmployee={() => setAddModalOpen(true)}
-          roleFilter={roleFilter}
-          onRoleFilterChange={setRoleFilter}
-          onDeactivateClick={handleDeactivateClick}
-          onReactivateClick={handleReactivateClick}
-        />
-
-        {/* ── Pending Invite Tokens Section (Preserved Backend Integration) ── */}
-        {(invitesLoading || pendingInvites.length > 0) && (
-          <div className="rounded-2xl border border-blue-900/40 bg-[#000d2b]/60 p-5 space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Pending Crew Registration Invites ({pendingInvites.length})
-            </p>
-            {invitesLoading ? (
-              <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading invites…
+        {selectedEmployee ? (
+          <EmployeeManagementWorkspace
+            employee={selectedEmployee}
+            allEmployees={employees}
+            onBackToDirectory={() => setSelectedEmployee(null)}
+            onSelectEmployee={(emp) => {
+              setSelectedEmployee(emp);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onSaveEmployee={handleSaveEmployee}
+            timeOffRequests={timeOffRequests}
+            onApproveTimeOff={handleApproveTimeOff}
+            onDenyTimeOff={handleDenyTimeOff}
+            onDeactivateClick={handleDeactivateClick}
+            onReactivateClick={handleReactivateClick}
+          />
+        ) : (
+          <>
+            {/* Top Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+                    <Users className="h-7 w-7 text-sky-400" />
+                    Team &amp; Staff Management
+                  </h1>
+                  <span className="font-mono text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-400/10 text-amber-400 border border-amber-400/30">
+                    PG-019
+                  </span>
+                  <PageIdBadge id="PG-019" name="Team & Staff Management" />
+                </div>
+                <p className="text-xs sm:text-sm text-blue-200/70 mt-1">
+                  Centralized practice administration for Waypoint Advocates. Administer workforce records, roles, PTO approvals, equipment, payroll, and module permissions.
+                </p>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {pendingInvites.map((inv) => (
-                  <div
-                    key={inv.id}
-                    className="p-3.5 rounded-xl border border-amber-400/30 bg-[#000820] flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-white truncate">{inv.name ?? inv.email}</p>
-                        <p className="text-[11px] text-slate-400 truncate">{inv.email}</p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const link = `${window.location.origin}/team/join?token=${inv.token}`;
-                          navigator.clipboard.writeText(link).then(() => toast.success("Invite link copied!"));
-                        }}
-                        className="h-7 px-2 text-xs text-sky-400 hover:text-white rounded-lg cursor-pointer"
-                      >
-                        <Link2 className="h-3.5 w-3.5 mr-1" />
-                        <span>Copy Link</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => revokeInviteMutation.mutate({ id: inv.id })}
-                        className="h-7 w-7 text-slate-500 hover:text-red-400 rounded-lg cursor-pointer"
-                        title="Revoke Invite"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  onClick={() => setInviteOpen(true)}
+                  variant="outline"
+                  className="border-blue-700/60 text-blue-200 hover:text-white hover:bg-blue-900/40 text-xs rounded-xl h-9 px-3 gap-1.5 cursor-pointer"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>Invite Link</span>
+                </Button>
+
+                <Button
+                  onClick={() => setAddModalOpen(true)}
+                  className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl h-9 px-4 gap-1.5 cursor-pointer shadow-md"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>+ Add Employee</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* ── Workforce Totals, Role Distribution & Relocated Management Deck ── */}
+            <TeamOverviewHeader
+              totals={totals}
+              roleCounts={roleCounts}
+              attentionItems={attentionItems}
+              timeOffRequests={timeOffRequests}
+              onApproveTimeOff={handleApproveTimeOff}
+              onAddEmployee={() => setAddModalOpen(true)}
+              onSelectEmployeeById={(id) => {
+                const found = employees.find((e) => e.id === id);
+                if (found) handleOpenEmployee(found);
+              }}
+              activeRoleFilter={roleFilter}
+              onRoleFilterSelect={(r) => setRoleFilter(r)}
+            />
+
+            {/* ── Primary Workforce Directory ── */}
+            <EmployeeDirectoryTable
+              employees={employees}
+              onSelectEmployee={handleOpenEmployee}
+              onAddEmployee={() => setAddModalOpen(true)}
+              roleFilter={roleFilter}
+              onRoleFilterChange={setRoleFilter}
+              onDeactivateClick={handleDeactivateClick}
+              onReactivateClick={handleReactivateClick}
+            />
+
+            {/* ── Pending Invite Tokens Section (Preserved Backend Integration) ── */}
+            {(invitesLoading || pendingInvites.length > 0) && (
+              <div className="rounded-2xl border border-blue-900/40 bg-[#000d2b]/60 p-5 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Pending Crew Registration Invites ({pendingInvites.length})
+                </p>
+                {invitesLoading ? (
+                  <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading invites…
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-2">
+                    {pendingInvites.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="p-3.5 rounded-xl border border-amber-400/30 bg-[#000820] flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0">
+                            <Mail className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-white truncate">{inv.name ?? inv.email}</p>
+                            <p className="text-[11px] text-slate-400 truncate">{inv.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const link = `${window.location.origin}/team/join?token=${inv.token}`;
+                              navigator.clipboard.writeText(link).then(() => toast.success("Invite link copied!"));
+                            }}
+                            className="h-7 px-2 text-xs text-sky-400 hover:text-white rounded-lg cursor-pointer"
+                          >
+                            <Link2 className="h-3.5 w-3.5 mr-1" />
+                            <span>Copy Link</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => revokeInviteMutation.mutate({ id: inv.id })}
+                            className="h-7 w-7 text-slate-500 hover:text-red-400 rounded-lg cursor-pointer"
+                            title="Revoke Invite"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
-
-      {/* ── Master Tabbed Employee Record Drawer ── */}
-      <EmployeeDetailDrawer
-        employee={selectedEmployee}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onSaveEmployee={handleSaveEmployee}
-        timeOffRequests={timeOffRequests}
-        onApproveTimeOff={handleApproveTimeOff}
-        onDenyTimeOff={handleDenyTimeOff}
-        onDeactivateClick={handleDeactivateClick}
-        onReactivateClick={handleReactivateClick}
-      />
 
       {/* ── 7-Step Add Employee Wizard Modal ── */}
       <AddEmployeeModal
