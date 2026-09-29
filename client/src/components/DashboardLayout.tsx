@@ -120,9 +120,9 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
         },
         { 
           icon: TrendingUp, 
-          label: "Leads", 
+          label: "Lead Center", 
           path: "/leads",
-          keywords: ["leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
+          keywords: ["lead center", "leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
         },
       ],
     },
@@ -1191,7 +1191,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 const PAGE_LIST = [
   { id: "PG-001", name: "Dashboard", path: "/" },
   { id: "PG-002", name: "Contacts", path: "/contacts" },
-  { id: "PG-003", name: "Leads", path: "/leads" },
+  { id: "PG-003", name: "Lead Center", path: "/leads" },
   { id: "PG-004", name: "Students", path: "/projects" },
   { id: "PG-005", name: "Invoices", path: "/invoices" },
   { id: "PG-006", name: "Contracts", path: "/contracts" },
