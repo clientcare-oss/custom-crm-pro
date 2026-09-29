@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar, Clock } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar, Clock, ClipboardList } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
@@ -481,6 +481,14 @@ export default function Leads() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            onClick={() => setLocation("/leads/forms")}
+            variant="outline"
+            className="gap-2 border-border/80 text-foreground hover:bg-accent/10"
+          >
+            <ClipboardList className="size-4 shrink-0 text-sky-500" />
+            <span>Manage Lead Forms</span>
+          </Button>
           <Button
             onClick={() => setLocation("/leads/0/discovery")}
             variant="outline"

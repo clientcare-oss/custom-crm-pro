@@ -3,8 +3,9 @@ import {
   ClipboardList, Copy, ExternalLink, Eye, CheckCircle2, Users, GraduationCap,
   Link2, Zap, Globe, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar,
   MoreHorizontal, Hash, ImagePlus, Save, Sparkles, Phone, MessageSquare, X,
-  Upload, ChevronDown, ChevronUp, AlignCenter, AlignLeft
+  Upload, ChevronDown, ChevronUp, AlignCenter, AlignLeft, ArrowLeft
 } from "lucide-react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/collapsible";
 
 export default function LeadForms() {
+  const [, setLocation] = useLocation();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showQuickSetup, setShowQuickSetup] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -176,6 +178,23 @@ export default function LeadForms() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
+      {/* Back to Lead Center Navigation */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setLocation("/leads")}
+          className="gap-1.5 text-muted-foreground hover:text-foreground text-xs -ml-2 h-7 px-2 font-medium cursor-pointer"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Lead Center</span>
+        </Button>
+        <span className="text-muted-foreground/30">/</span>
+        <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-normal bg-sky-500/10 text-sky-400 border-sky-500/30">
+          Lead Center · Form Studio
+        </Badge>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

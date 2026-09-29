@@ -212,6 +212,7 @@ function Router() {
           <Route path="/tools/iep-comparator" component={IepComparator} />
           <Route path="/tools/voyage-recorder" component={VoyageRecorder} />
           <Route path="/templates" component={Templates} />
+          <Route path="/leads/forms" component={LeadForms} />
           <Route path="/lead-forms" component={LeadForms} />
           <Route path="/automations" component={Automations} />
           <Route path="/integrations" component={Integrations} />

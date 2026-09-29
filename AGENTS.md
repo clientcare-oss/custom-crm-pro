@@ -89,7 +89,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-010-IEP`: IEP Comparator (`/tools/iep-comparator`)
   - `PG-010-PWN`: PWN Decoder (`/tools/pwn-decoder`, `/pwn-decoder`)
   - `PG-011`: Templates (`/templates`)
-  - `PG-012`: Lead Forms (`/lead-forms`)
+  - `PG-012`: Lead Forms (`/leads/forms`, `/lead-forms`)
   - `PG-013`: Automations (`/automations`)
   - `PG-014`: Integrations (`/integrations`)
   - `PG-015`: Workflows (`/workflows`)

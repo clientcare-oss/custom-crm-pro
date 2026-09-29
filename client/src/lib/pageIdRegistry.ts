@@ -44,6 +44,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   // Templates & Marketing
   "/templates":                       { id: "PG-011", name: "Document & Email Templates", category: "Content" },
   "/lead-forms":                      { id: "PG-012", name: "Lead Forms Builder", category: "Marketing" },
+  "/leads/forms":                     { id: "PG-012", name: "Lead Forms Builder", category: "Marketing", description: "Lead Center Form Studio" },
   "/automations":                     { id: "PG-013", name: "Automations Engine", category: "Automation" },
   "/integrations":                    { id: "PG-014", name: "Integrations & API", category: "Settings" },
   "/integrations/quo":                { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },

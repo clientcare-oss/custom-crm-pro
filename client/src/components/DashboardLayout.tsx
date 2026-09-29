@@ -159,7 +159,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
     {
       groupLabel: "Templates & Forms",
       items: [
-        { icon: ClipboardList, label: "Lead Forms", path: "/lead-forms" },
         { icon: LayoutTemplate, label: "Smart Files", path: "/smart-files" },
         { icon: ScrollText, label: "Contracts", path: "/contracts" },
         { icon: FileText, label: "Invoices", path: "/invoices" },
@@ -1202,7 +1201,7 @@ const PAGE_LIST = [
   { id: "PG-010", name: "Tools", path: "/tools" },
   { id: "PG-010-REC", name: "Voyage Meeting Recorder", path: "/tools/voyage-recorder" },
   { id: "PG-011", name: "Templates", path: "/templates" },
-  { id: "PG-012", name: "Lead Forms", path: "/lead-forms" },
+  { id: "PG-012", name: "Lead Forms", path: "/leads/forms" },
   { id: "PG-013", name: "Automations", path: "/automations" },
   { id: "PG-014", name: "Integrations", path: "/integrations" },
   { id: "PG-015", name: "Workflows", path: "/workflows" },

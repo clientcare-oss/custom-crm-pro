@@ -451,7 +451,7 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "case_compass", label: "Case Compass", path: "/case-compass", group: "Manage Experiences", icon: Compass },
   { id: "scheduler", label: "Public Scheduler", path: "/scheduler", group: "Manage Experiences", icon: CalendarClock },
   // Templates & Forms
-  { id: "lead_forms", label: "Lead Forms Builder", path: "/lead-forms", group: "Templates & Forms", icon: ClipboardList },
+  { id: "lead_forms", label: "Lead Forms Builder", path: "/leads/forms", group: "Templates & Forms", icon: ClipboardList },
   { id: "smart_files", label: "Smart Files Suite", path: "/smart-files", group: "Templates & Forms", icon: LayoutTemplate },
   { id: "contracts", label: "Contracts & Agreements", path: "/contracts", group: "Templates & Forms", icon: ScrollText },
   { id: "invoices", label: "Invoices & Billing", path: "/invoices", group: "Templates & Forms", icon: FileText, isSensitive: true },
