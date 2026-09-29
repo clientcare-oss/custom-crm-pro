@@ -75,7 +75,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
 - **Reference Table**:
   - `PG-001`: Dashboard (`/`)
   - `PG-002`: Contacts (`/contacts`)
-  - `PG-003`: Leads (`/leads`)
+  - `PG-003`: Lead Center (`/leads`)
   - `PG-003-DC`: Discovery Call Process (`/leads/:leadId/discovery`)
   - `PG-004`: Students (`/students`, `/projects`)
   - `PG-005`: Invoices (`/invoices`)

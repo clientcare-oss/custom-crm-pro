@@ -18,8 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar, Clock } from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
 import { useLocation } from "wouter";
@@ -50,6 +50,13 @@ export default function Leads() {
   const [formData, setFormData] = useState(emptyForm);
 
   const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery(
+    undefined,
+    {
+      enabled: user?.role === "admin",
+    }
+  );
+
+  const { data: appointments = [] } = trpc.appointments.list.useQuery(
     undefined,
     {
       enabled: user?.role === "admin",
@@ -155,13 +162,160 @@ export default function Leads() {
     return colors[status];
   };
 
+  // Unified Discovery Calls Processing
+  const allDiscoveryCalls = useMemo(() => {
+    const list: Array<{
+      id: string;
+      leadId?: number;
+      lead?: any;
+      parentName: string;
+      parentPhone?: string;
+      studentName?: string;
+      studentAge?: number;
+      studentGrade?: string;
+      inquiryReason?: string;
+      date: Date;
+      timeDisplay: string;
+      dateDisplay: string;
+    }> = [];
+
+    const seenLeadIds = new Set<number>();
+
+    // 1. Process Leads with discoveryCallDate
+    (leads || []).forEach((lead) => {
+      if (lead.discoveryCallDate) {
+        const d = new Date(lead.discoveryCallDate);
+        if (!isNaN(d.getTime())) {
+          seenLeadIds.add(lead.id);
+
+          // Check if there is an appointment on the same day for this lead
+          const matchingApt = (appointments as any[]).find((apt) => {
+            if (!apt.startTime) return false;
+            const aptD = new Date(apt.startTime);
+            const isSameDay =
+              aptD.getFullYear() === d.getFullYear() &&
+              aptD.getMonth() === d.getMonth() &&
+              aptD.getDate() === d.getDate();
+            const matchesContact = lead.contactId && apt.clientId === lead.contactId;
+            const matchesParent =
+              lead.parentName &&
+              apt.parentName &&
+              apt.parentName.toLowerCase().includes(lead.parentName.toLowerCase());
+            return isSameDay && (matchesContact || matchesParent);
+          });
+
+          const effectiveDate = matchingApt?.startTime ? new Date(matchingApt.startTime) : d;
+          const hasSpecificTime =
+            matchingApt?.startTime ||
+            d.getHours() !== 0 ||
+            d.getMinutes() !== 0;
+
+          const timeDisplay = hasSpecificTime
+            ? effectiveDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+            : "Time TBD";
+
+          const dateDisplay = effectiveDate.toLocaleDateString([], {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          });
+
+          list.push({
+            id: `lead-${lead.id}`,
+            leadId: lead.id,
+            lead,
+            parentName: lead.parentName || "Prospective Parent",
+            parentPhone: lead.parentPhone,
+            studentName: lead.studentName,
+            studentAge: lead.studentAge,
+            studentGrade: lead.studentGrade,
+            inquiryReason: lead.notes || (lead.source ? `Source: ${lead.source}` : undefined),
+            date: effectiveDate,
+            timeDisplay,
+            dateDisplay,
+          });
+        }
+      }
+    });
+
+    // 2. Process Appointments marked as Discovery Call that aren't already included
+    (appointments as any[]).forEach((apt) => {
+      const isDiscovery =
+        apt.title?.toLowerCase().includes("discovery") ||
+        apt.meetingType?.toLowerCase().includes("discovery");
+
+      if (isDiscovery && apt.startTime) {
+        const aptD = new Date(apt.startTime);
+        if (!isNaN(aptD.getTime())) {
+          const matchingLead = (leads || []).find((l) => {
+            const matchesId = l.contactId && apt.clientId === l.contactId;
+            const matchesParent =
+              l.parentName &&
+              apt.parentName &&
+              l.parentName.toLowerCase() === apt.parentName.toLowerCase();
+            return matchesId || matchesParent;
+          });
+
+          if (matchingLead && seenLeadIds.has(matchingLead.id)) {
+            return;
+          }
+
+          if (matchingLead) {
+            seenLeadIds.add(matchingLead.id);
+          }
+
+          const timeDisplay = aptD.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+          const dateDisplay = aptD.toLocaleDateString([], {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          });
+
+          list.push({
+            id: `apt-${apt.id}`,
+            leadId: matchingLead?.id,
+            lead: matchingLead || null,
+            parentName: apt.parentName || matchingLead?.parentName || "Prospective Parent",
+            parentPhone: apt.parentPhone || matchingLead?.parentPhone,
+            studentName: apt.studentName || matchingLead?.studentName,
+            studentAge: matchingLead?.studentAge,
+            studentGrade: matchingLead?.studentGrade,
+            inquiryReason:
+              apt.description || matchingLead?.notes || (apt.title ? `Title: ${apt.title}` : undefined),
+            date: aptD,
+            timeDisplay,
+            dateDisplay,
+          });
+        }
+      }
+    });
+
+    return list;
+  }, [leads, appointments]);
+
+  const { todaysCalls, upcomingCalls } = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const todayList = allDiscoveryCalls
+      .filter((c) => c.date >= todayStart && c.date <= todayEnd)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    const upcomingList = allDiscoveryCalls
+      .filter((c) => c.date > todayEnd)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    return { todaysCalls: todayList, upcomingCalls: upcomingList };
+  }, [allDiscoveryCalls]);
+
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Discovery Pipeline</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Lead Center</h1>
             <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               PG-003
             </span>
@@ -359,7 +513,248 @@ export default function Leads() {
         </div>
       </div>
 
-      {/* Pipeline Columns */}
+      {/* ── Section 1: Today's Discovery Calls ── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+            <span>📅</span>
+            <span>Today’s Discovery Calls</span>
+            {todaysCalls.length > 0 && (
+              <span className="rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 px-2 py-0.5 text-xs font-semibold">
+                {todaysCalls.length}
+              </span>
+            )}
+          </h2>
+        </div>
+
+        {todaysCalls.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            {todaysCalls.map((call) => (
+              <Card
+                key={call.id}
+                className="rounded-xl border border-border/80 bg-card/70 dark:bg-[#071933]/70 p-3.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 px-2 py-0.5 rounded-md">
+                      <Clock className="w-3.5 h-3.5 shrink-0" />
+                      <span>{call.timeDisplay}</span>
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      Today
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-semibold text-sm text-foreground truncate">
+                        {call.parentName}
+                      </h4>
+                      {call.parentPhone && (
+                        <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-muted-foreground/70" />
+                          {call.parentPhone}
+                        </span>
+                      )}
+                    </div>
+                    {call.studentName && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <GraduationCap className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" />
+                        <span className="truncate">
+                          Student: <span className="font-medium text-foreground">{call.studentName}</span>
+                          {(call.studentAge || call.studentGrade) && (
+                            <span className="text-muted-foreground/80">
+                              {" "}({[call.studentAge ? `Age ${call.studentAge}` : null, call.studentGrade].filter(Boolean).join(" · ")})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {call.inquiryReason && (
+                    <div className="text-xs text-muted-foreground bg-muted/40 dark:bg-muted/20 rounded-md p-2 border border-border/50 line-clamp-2">
+                      <span className="font-medium text-foreground/80">Inquiry: </span>
+                      {call.inquiryReason}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (call.lead) {
+                        handleEdit(call.lead);
+                      } else {
+                        setEditingId(null);
+                        setFormData({
+                          ...emptyForm,
+                          parentName: call.parentName,
+                          parentPhone: call.parentPhone || "",
+                          studentName: call.studentName || "",
+                        });
+                        setOpen(true);
+                      }
+                    }}
+                    className="flex-1 text-xs font-semibold h-8 gap-1.5"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    <span>Open Lead Record</span>
+                  </Button>
+                  {call.leadId ? (
+                    <Button
+                      size="sm"
+                      onClick={() => setLocation(`/leads/${call.leadId}/discovery`)}
+                      className="text-xs font-semibold h-8 bg-blue-600 hover:bg-blue-700 text-white gap-1.5 px-3"
+                    >
+                      <PhoneCall className="w-3 h-3" />
+                      <span>Start Call</span>
+                    </Button>
+                  ) : null}
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 sm:p-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              No discovery calls scheduled today.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Section 2: Upcoming Discovery Calls ── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+            <span>🗓️</span>
+            <span>Upcoming Discovery Calls</span>
+            {upcomingCalls.length > 0 && (
+              <span className="rounded-full bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 px-2 py-0.5 text-xs font-semibold">
+                {upcomingCalls.length}
+              </span>
+            )}
+          </h2>
+        </div>
+
+        {upcomingCalls.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            {upcomingCalls.map((call) => (
+              <Card
+                key={call.id}
+                className="rounded-xl border border-border/80 bg-card/70 dark:bg-[#071933]/70 p-3.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 px-2 py-0.5 rounded-md">
+                      <Clock className="w-3.5 h-3.5 shrink-0" />
+                      <span>{call.timeDisplay}</span>
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-muted-foreground/70" />
+                      <span>{call.dateDisplay}</span>
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-semibold text-sm text-foreground truncate">
+                        {call.parentName}
+                      </h4>
+                      {call.parentPhone && (
+                        <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-muted-foreground/70" />
+                          {call.parentPhone}
+                        </span>
+                      )}
+                    </div>
+                    {call.studentName && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <GraduationCap className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" />
+                        <span className="truncate">
+                          Student: <span className="font-medium text-foreground">{call.studentName}</span>
+                          {(call.studentAge || call.studentGrade) && (
+                            <span className="text-muted-foreground/80">
+                              {" "}({[call.studentAge ? `Age ${call.studentAge}` : null, call.studentGrade].filter(Boolean).join(" · ")})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {call.inquiryReason && (
+                    <div className="text-xs text-muted-foreground bg-muted/40 dark:bg-muted/20 rounded-md p-2 border border-border/50 line-clamp-2">
+                      <span className="font-medium text-foreground/80">Inquiry: </span>
+                      {call.inquiryReason}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (call.lead) {
+                        handleEdit(call.lead);
+                      } else {
+                        setEditingId(null);
+                        setFormData({
+                          ...emptyForm,
+                          parentName: call.parentName,
+                          parentPhone: call.parentPhone || "",
+                          studentName: call.studentName || "",
+                        });
+                        setOpen(true);
+                      }
+                    }}
+                    className="flex-1 text-xs font-semibold h-8 gap-1.5"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    <span>Open Lead Record</span>
+                  </Button>
+                  {call.leadId ? (
+                    <Button
+                      size="sm"
+                      onClick={() => setLocation(`/leads/${call.leadId}/discovery`)}
+                      className="text-xs font-semibold h-8 bg-blue-600 hover:bg-blue-700 text-white gap-1.5 px-3"
+                    >
+                      <PhoneCall className="w-3 h-3" />
+                      <span>Start Call</span>
+                    </Button>
+                  ) : null}
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 sm:p-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              No upcoming discovery calls scheduled.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Clear Visual Divider ── */}
+      <div className="border-t border-border/80 my-2" />
+
+      {/* ── Section 3: Discovery Pipeline (Preserved Unchanged) ── */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Discovery Pipeline
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Track families through your discovery process
+          </p>
+        </div>
+
+        {/* Pipeline Columns */}
       {isLoading ? (
         <div className="flex items-center justify-center rounded-lg border border-border bg-muted/50 p-12">
           <Loader2 className="size-6 animate-spin text-accent" />
@@ -541,6 +936,8 @@ export default function Leads() {
           ))}
         </div>
       )}
+      </div>
+
       <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
     </div>
   );

@@ -20,7 +20,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/metrics":                         { id: "PG-042", name: "Waypoint Metrics", category: "Company", description: "Company practice metrics, lead journey funnel, revenue, team time, outcomes, and client retention" },
   "/company/metrics":                 { id: "PG-042", name: "Waypoint Metrics", category: "Company", description: "Company practice metrics, lead journey funnel, revenue, team time, outcomes, and client retention" },
   "/contacts":                        { id: "PG-002", name: "Contacts", category: "CRM" },
-  "/leads":                           { id: "PG-003", name: "Leads", category: "CRM" },
+  "/leads":                           { id: "PG-003", name: "Lead Center", category: "CRM", description: "Scheduled discovery calls, prospective family intake, and discovery pipeline" },
   "/students":                        { id: "PG-004", name: "Students", category: "CRM" },
   "/projects":                        { id: "PG-004", name: "Students", category: "CRM" },
   "/invoices":                        { id: "PG-005", name: "Invoices & Billing", category: "Billing" },
