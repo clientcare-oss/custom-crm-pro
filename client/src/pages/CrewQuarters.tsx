@@ -386,16 +386,19 @@ export default function CrewQuarters() {
           onClick={() => setLocation("/leads")}
           className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
-          {/* Unique Faded Texture 1: Celestial Navigation / Azimuth Rays */}
-          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.09]" preserveAspectRatio="none">
-            <circle cx="130" cy="20" r="45" stroke="#f59e0b" strokeWidth="0.75" strokeDasharray="3 3" />
-            <circle cx="130" cy="20" r="75" stroke="#f59e0b" strokeWidth="0.5" />
-            <circle cx="130" cy="20" r="105" stroke="#f59e0b" strokeWidth="0.4" strokeDasharray="4 4" />
-            <line x1="130" y1="-30" x2="130" y2="100" stroke="#f59e0b" strokeWidth="0.6" strokeDasharray="2 4" />
-            <line x1="50" y1="20" x2="180" y2="20" stroke="#f59e0b" strokeWidth="0.6" strokeDasharray="2 4" />
-            <line x1="80" y1="-30" x2="180" y2="70" stroke="#f59e0b" strokeWidth="0.4" strokeDasharray="2 4" />
+          {/* Unique Faded Texture 1: Celestial Navigation / Azimuth Rays (Enhanced Visibility) */}
+          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.22] group-hover:opacity-[0.28] transition-opacity" preserveAspectRatio="none">
+            <circle cx="125" cy="25" r="30" stroke="#fbbf24" strokeWidth="0.9" strokeDasharray="3 2" />
+            <circle cx="125" cy="25" r="55" stroke="#f59e0b" strokeWidth="0.8" />
+            <circle cx="125" cy="25" r="85" stroke="#fbbf24" strokeWidth="0.7" strokeDasharray="4 3" />
+            <circle cx="125" cy="25" r="115" stroke="#f59e0b" strokeWidth="0.6" />
+            <line x1="125" y1="-25" x2="125" y2="115" stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="3 3" />
+            <line x1="35" y1="25" x2="185" y2="25" stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="3 3" />
+            <line x1="60" y1="-20" x2="190" y2="70" stroke="#fbbf24" strokeWidth="0.6" strokeDasharray="2 3" />
+            <line x1="60" y1="70" x2="190" y2="-20" stroke="#fbbf24" strokeWidth="0.6" strokeDasharray="2 3" />
+            <circle cx="125" cy="25" r="2.5" fill="#f59e0b" />
           </svg>
-          <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-300" />
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
           
           {/* Top Left Tiny Icon */}
           <div className="relative z-10 flex items-center justify-between w-full">
@@ -492,20 +495,23 @@ export default function CrewQuarters() {
           onClick={() => handleTabChange("tasks")}
           className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-amber-400/80 p-3.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(245,181,68,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
-          {/* Unique Faded Texture 4: Architectural Coordinate Grid & Sounding Points */}
-          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.08]" preserveAspectRatio="none">
-            <line x1="20" y1="0" x2="20" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
-            <line x1="60" y1="0" x2="60" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
-            <line x1="100" y1="0" x2="100" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
-            <line x1="140" y1="0" x2="140" y2="120" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
-            <line x1="0" y1="30" x2="160" y2="30" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
-            <line x1="0" y1="60" x2="160" y2="60" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
-            <line x1="0" y1="90" x2="160" y2="90" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="2 3" />
-            <circle cx="60" cy="60" r="1.5" fill="#f59e0b" />
-            <circle cx="100" cy="30" r="1.5" fill="#f59e0b" />
-            <circle cx="100" cy="90" r="1.5" fill="#f59e0b" />
+          {/* Unique Faded Texture 4: Architectural Coordinate Grid & Sounding Points (Enhanced Visibility) */}
+          <svg viewBox="0 0 160 120" fill="none" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.22] group-hover:opacity-[0.28] transition-opacity" preserveAspectRatio="none">
+            <line x1="25" y1="0" x2="25" y2="120" stroke="#f59e0b" strokeWidth="0.75" strokeDasharray="3 3" />
+            <line x1="65" y1="0" x2="65" y2="120" stroke="#fbbf24" strokeWidth="0.8" />
+            <line x1="105" y1="0" x2="105" y2="120" stroke="#f59e0b" strokeWidth="0.75" strokeDasharray="3 3" />
+            <line x1="145" y1="0" x2="145" y2="120" stroke="#fbbf24" strokeWidth="0.8" />
+            <line x1="0" y1="25" x2="160" y2="25" stroke="#f59e0b" strokeWidth="0.75" strokeDasharray="3 3" />
+            <line x1="0" y1="65" x2="160" y2="65" stroke="#fbbf24" strokeWidth="0.8" />
+            <line x1="0" y1="105" x2="160" y2="105" stroke="#f59e0b" strokeWidth="0.75" strokeDasharray="3 3" />
+            <circle cx="65" cy="65" r="2.5" fill="#fbbf24" />
+            <circle cx="145" cy="25" r="2.5" fill="#f59e0b" />
+            <circle cx="105" cy="105" r="2" fill="#fbbf24" />
+            <circle cx="25" cy="25" r="2" fill="#f59e0b" />
+            <path d="M 60 65 L 70 65 M 65 60 L 65 70" stroke="#f59e0b" strokeWidth="0.9" />
+            <path d="M 140 25 L 150 25 M 145 20 L 145 30" stroke="#fbbf24" strokeWidth="0.9" />
           </svg>
-          <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-300" />
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/25 transition-all duration-300" />
           
           {/* Top Left Tiny Icon */}
           <div className="relative z-10 flex items-center justify-between w-full">
