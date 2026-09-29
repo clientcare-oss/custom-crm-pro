@@ -172,7 +172,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       items: [
         { icon: MarineRadarIcon as any, label: "First Mate", path: "/first-mate" },
         { icon: Wrench, label: "Tools", path: "/tools" },
-        { icon: Video, label: "Voyage Log", path: "/tools/voyage-recorder" },
         { icon: Zap, label: "Automations", path: "/automations" },
         { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
       ],
@@ -1203,6 +1202,7 @@ const PAGE_LIST = [
   { id: "PG-008", name: "Scheduler", path: "/scheduler" },
   { id: "PG-009", name: "Tasks", path: "/tasks" },
   { id: "PG-010", name: "Tools", path: "/tools" },
+  { id: "PG-010-REC", name: "Voyage Meeting Recorder", path: "/tools/voyage-recorder" },
   { id: "PG-011", name: "Templates", path: "/templates" },
   { id: "PG-012", name: "Lead Forms", path: "/lead-forms" },
   { id: "PG-013", name: "Automations", path: "/automations" },

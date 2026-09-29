@@ -461,6 +461,12 @@ export default function MeetingWorkspace() {
             setMeetingStatus("LIVE");
             setActiveTab("MEETING_MODE");
             saveCurrentState({ status: "LIVE" });
+            // Connect to Voyage Log background meeting recording infrastructure
+            const globalRec = (window as any).voyageGlobalRecorder;
+            if (globalRec) {
+              if (selectedStudentId) globalRec.setSelectedContactId(selectedStudentId);
+              globalRec.setTitle(`${studentName} — ${meetingType || "Annual IEP Meeting"} (${meetingDate})`);
+            }
           }}
           isSaving={saveMutation.isPending}
           lastSavedAt={lastSavedAt}
@@ -697,7 +703,9 @@ export default function MeetingWorkspace() {
             {/* TAB: MEETING MODE (Run the Meeting — Top Priority Destination) */}
             {(activeTab === "MEETING_MODE" || activeTab === "ADVOCATE_READY") && (
               <MeetingModeView
+                studentContactId={selectedStudentId}
                 studentName={studentName}
+                caseId={caseId}
                 meetingType={meetingType}
                 meetingDate={meetingDate}
                 targets={targets}

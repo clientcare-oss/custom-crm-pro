@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare, Trash2, Printer } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare, Trash2, Printer, Video, Mic, ExternalLink, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +13,9 @@ import { openPrintDialog } from "../print/PrintableMeetingDocument";
 import { toast } from "sonner";
 
 interface MeetingModeViewProps {
+  studentContactId?: number | null;
   studentName: string;
+  caseId?: string | null;
   meetingType?: string;
   meetingDate?: string;
   targets: MeetingTarget[];
@@ -29,7 +31,9 @@ interface MeetingModeViewProps {
 }
 
 export function MeetingModeView({
+  studentContactId,
   studentName,
+  caseId,
   meetingType = "Annual IEP Meeting",
   meetingDate = "Upcoming",
   targets,
@@ -43,6 +47,46 @@ export function MeetingModeView({
   onUpdateCloseoutChecks,
   onCompleteMeeting,
 }: MeetingModeViewProps) {
+  // Voyage Log Meeting Recording state synchronized with global recorder
+  const [isVoyageRecording, setIsVoyageRecording] = useState(false);
+  const [voyageDuration, setVoyageDuration] = useState(0);
+  const [latestTranscript, setLatestTranscript] = useState<string>("");
+
+  useEffect(() => {
+    const checkRecorder = () => {
+      const globalRec = (window as any).voyageGlobalRecorder;
+      if (globalRec) {
+        setIsVoyageRecording(Boolean(globalRec.isRecording));
+        setVoyageDuration(globalRec.recordDuration || 0);
+        if (globalRec.liveTranscript && globalRec.liveTranscript.length > 0) {
+          setLatestTranscript(globalRec.liveTranscript[globalRec.liveTranscript.length - 1]);
+        }
+      }
+    };
+    checkRecorder();
+    const interval = setInterval(checkRecorder, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleToggleVoyageRecord = async () => {
+    const globalRec = (window as any).voyageGlobalRecorder;
+    if (!globalRec) {
+      toast.error("Voyage Recording engine not initialized");
+      return;
+    }
+    if (globalRec.isRecording) {
+      globalRec.stopRecording();
+      setIsVoyageRecording(false);
+      toast.success("Voyage recording saved to student case!");
+    } else {
+      if (studentContactId) globalRec.setSelectedContactId(studentContactId);
+      globalRec.setTitle(`${studentName} — ${meetingType} (${meetingDate})`);
+      await globalRec.startRecording();
+      setIsVoyageRecording(true);
+      toast.success("Voyage recording started!");
+    }
+  };
+
   // Slide-over Details Drawer state
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
 
@@ -220,6 +264,13 @@ export function MeetingModeView({
   const handleFinalizeMeeting = async () => {
     setIsCompleting(true);
     try {
+      // Auto-stop Voyage recording if running
+      const globalRec = (window as any).voyageGlobalRecorder;
+      if (globalRec?.isRecording) {
+        globalRec.stopRecording();
+        setIsVoyageRecording(false);
+      }
+
       const summary = {
         totalTargets: targets.length,
         raisedTargets: targets.filter((t) => t.requestRaised).length,
@@ -284,6 +335,109 @@ export function MeetingModeView({
 
   return (
     <div className="space-y-6 relative">
+      {/* ── Voyage Live Meeting Recording & Audio Transcription Bar ── */}
+      <div
+        className={cn(
+          "rounded-2xl border p-3.5 sm:p-4 shadow-xl transition-all flex flex-col md:flex-row md:items-center justify-between gap-3.5",
+          isVoyageRecording
+            ? "bg-gradient-to-r from-red-950/70 via-[#0a182e]/90 to-red-950/50 border-red-500/50 shadow-red-950/40"
+            : "bg-gradient-to-r from-[#071d3a] via-[#092244] to-[#06172f] border-blue-900/50"
+        )}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border",
+              isVoyageRecording
+                ? "bg-red-500/20 border-red-500/50 text-red-400"
+                : "bg-blue-500/15 border-blue-500/30 text-[#F5B544]"
+            )}
+          >
+            <Video className="w-5 h-5" />
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5">
+                {isVoyageRecording ? (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                    <span className="text-red-300 font-extrabold">VOYAGE RECORDING LIVE</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[#F5B544]">Voyage Meeting Media</span>
+                    <span className="text-slate-400">· Background Infrastructure</span>
+                  </>
+                )}
+              </span>
+
+              {isVoyageRecording && (
+                <span className="px-2 py-0.5 rounded-full bg-red-900/50 border border-red-500/40 text-[11px] font-mono font-bold text-red-200">
+                  {Math.floor(voyageDuration / 60)}:{String(voyageDuration % 60).padStart(2, "0")}
+                </span>
+              )}
+
+              {caseId && (
+                <span className="px-2 py-0.5 rounded-full bg-blue-950/60 border border-blue-800/60 text-[10.5px] font-mono text-blue-300">
+                  Case #{caseId.replace(/^Case\s*#?/i, "")}
+                </span>
+              )}
+            </div>
+
+            <p className="text-[11.5px] text-slate-300/90 truncate mt-0.5">
+              {isVoyageRecording ? (
+                latestTranscript ? (
+                  <span className="italic text-amber-200/90">🎙️ &ldquo;{latestTranscript}&rdquo;</span>
+                ) : (
+                  "Screen & microphone active · Deepgram Nova-3 transcribing in background..."
+                )
+              ) : (
+                "Capture meeting screen & audio directly into student's Voyage Log with Deepgram Nova-3 transcription."
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {studentContactId && (
+            <a
+              href={`/contacts/${studentContactId}?tab=voyage-log`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-blue-800/60 bg-blue-950/40 text-blue-300 hover:text-white hover:bg-blue-900/40 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              title="Open this student's Voyage Log recordings vault"
+            >
+              <span>Case Voyage Log</span>
+              <ExternalLink className="w-3 h-3 text-blue-400" />
+            </a>
+          )}
+
+          <Button
+            size="sm"
+            onClick={handleToggleVoyageRecord}
+            className={cn(
+              "text-xs font-bold px-3.5 py-1.5 rounded-xl cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all",
+              isVoyageRecording
+                ? "bg-red-600 hover:bg-red-700 text-white border border-red-400/40 shadow-red-950/60"
+                : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white border border-red-500/40"
+            )}
+          >
+            {isVoyageRecording ? (
+              <>
+                <Square className="w-3.5 h-3.5 fill-current" />
+                <span>Stop & Save Recording</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                <span>● Record Meeting with Voyage</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
       {/* Top Quick Status & Progress Bar */}
       <div className="rounded-2xl bg-gradient-to-r from-[#0B3767] via-[#09254D] to-[#071C38] border border-[#144E8A] p-4 sm:p-5 shadow-2xl flex items-center justify-between gap-4 flex-wrap">
         <div>
