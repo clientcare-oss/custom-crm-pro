@@ -7,6 +7,16 @@ import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import {
+  getStaffRoster,
+  updateStaffStatus,
+  updateStaffWeeklyHours,
+  addStaffBlockedTime,
+  removeStaffBlockedTime,
+  getAdvocateAvailabilitySummary,
+  reassignAppointment,
+  StaffStatus,
+} from "../services/staffAvailabilityService";
 
 export const appointmentsRouter = router({
 
@@ -121,7 +131,8 @@ export const appointmentsRouter = router({
           parentName: z.string().optional(),
           parentPhone: z.string().optional(),
           studentName: z.string().optional(),
-          status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
+          assignedAdvocateName: z.string().optional(),
+          status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled", "Needs Coverage"]).optional(),
           clientTimeZone: z.string().optional(),
           originalTimeZone: z.string().optional(),
         })
@@ -157,7 +168,8 @@ export const appointmentsRouter = router({
           parentName: z.string().optional(),
           parentPhone: z.string().optional(),
           studentName: z.string().optional(),
-          status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled"]).optional(),
+          assignedAdvocateName: z.string().optional(),
+          status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled", "Needs Coverage"]).optional(),
           clientTimeZone: z.string().optional(),
           originalTimeZone: z.string().optional(),
         })
@@ -222,6 +234,107 @@ export const appointmentsRouter = router({
 
         return { success: true };
       }),
+
+    // Reassign appointment to another advocate with human confirmation & activity timeline logging
+    reassign: protectedProcedure
+      .input(
+        z.object({
+          appointmentId: z.number(),
+          newAdvocateName: z.string().min(1),
+          reason: z.string().optional(),
+          adminOverride: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await reassignAppointment({
+          appointmentId: input.appointmentId,
+          newAdvocateName: input.newAdvocateName,
+          reason: input.reason,
+          changedByName: ctx.user.name || "Advocate",
+          changedByRole: ctx.user.role === "admin" ? "Admin" : "Advocate",
+          adminOverride: input.adminOverride,
+        });
+      }),
+
+    // Get staff roster with operational statuses and weekly availability
+    getStaffRoster: protectedProcedure.query(async () => {
+      return await getStaffRoster();
+    }),
+
+    // Update staff temporary status (Available, Limited, Out Today, PTO)
+    // If set to Out Today or PTO, flags scheduled appointments as Needs Coverage
+    updateStaffStatus: protectedProcedure
+      .input(
+        z.object({
+          staffId: z.string(),
+          status: z.enum(["Available", "Limited", "Out Today", "PTO"]),
+          statusNote: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await updateStaffStatus(input.staffId, input.status, input.statusNote, ctx.user.id);
+      }),
+
+    // Check availability across all advocates for a given appointment time window
+    checkAvailability: protectedProcedure
+      .input(
+        z.object({
+          startTime: z.date(),
+          endTime: z.date(),
+          excludeAppointmentId: z.number().optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        return await getAdvocateAvailabilitySummary(input.startTime, input.endTime, input.excludeAppointmentId);
+      }),
+
+    // Update staff weekly hours
+    updateStaffWeeklyHours: protectedProcedure
+      .input(
+        z.object({
+          staffId: z.string(),
+          weeklyHours: z.record(
+            z.string(),
+            z.array(z.object({ start: z.string(), end: z.string() }))
+          ),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const hoursRecord: Record<number, any> = {};
+        for (const [k, v] of Object.entries(input.weeklyHours)) {
+          hoursRecord[parseInt(k)] = v;
+        }
+        return await updateStaffWeeklyHours(input.staffId, hoursRecord);
+      }),
+
+    // Add blocked time / PTO / Training / Lunch
+    addBlockedTime: protectedProcedure
+      .input(
+        z.object({
+          staffId: z.string(),
+          type: z.enum(["Blocked", "PTO", "Training", "Lunch", "Unavailable"]),
+          startTime: z.string(),
+          endTime: z.string(),
+          reason: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { staffId, ...data } = input;
+        return await addStaffBlockedTime(staffId, data);
+      }),
+
+    // Remove blocked time
+    removeBlockedTime: protectedProcedure
+      .input(
+        z.object({
+          staffId: z.string(),
+          blockedId: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await removeStaffBlockedTime(input.staffId, input.blockedId);
+      }),
+
 
     // Public: get available time slots for a session type on a given date
     getAvailableSlots: publicProcedure

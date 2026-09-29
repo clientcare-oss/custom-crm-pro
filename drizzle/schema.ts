@@ -442,6 +442,7 @@ export const appointments = mysqlTable("appointments", {
     "Confirmed",
     "Completed",
     "Cancelled",
+    "Needs Coverage",
   ])
     .default("Scheduled")
     .notNull(),

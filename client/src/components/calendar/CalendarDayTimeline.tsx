@@ -1,0 +1,142 @@
+import { useMemo } from "react";
+import { MoreHorizontal } from "lucide-react";
+import { CalendarAppointment } from "./TodaysAppointmentsTable";
+
+interface CalendarDayTimelineProps {
+  appointments: CalendarAppointment[];
+  selectedDate: Date;
+  onEventClick: (apt: CalendarAppointment) => void;
+  onReassignClick: (apt: CalendarAppointment) => void;
+}
+
+const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+
+function formatHour(h: number): string {
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:00 ${ampm}`;
+}
+
+export default function CalendarDayTimeline({
+  appointments,
+  selectedDate,
+  onEventClick,
+  onReassignClick,
+}: CalendarDayTimelineProps) {
+  const selectedDateStr = useMemo(() => {
+    return new Date(selectedDate).toISOString().split("T")[0];
+  }, [selectedDate]);
+
+  // Appointments for selected day (excluding cancelled)
+  const dayAppointments = useMemo(() => {
+    return appointments.filter((apt) => {
+      const d = new Date(apt.startTime).toISOString().split("T")[0];
+      return d === selectedDateStr && apt.status !== "Cancelled";
+    });
+  }, [appointments, selectedDateStr]);
+
+  // Map appointments to the nearest hour slot
+  const appointmentsByHour = useMemo(() => {
+    const map: Record<number, CalendarAppointment[]> = {};
+    for (const h of HOURS) {
+      map[h] = [];
+    }
+
+    dayAppointments.forEach((apt) => {
+      const startH = new Date(apt.startTime).getHours();
+      // Clamp to 8..17
+      const slot = Math.min(Math.max(startH, 8), 17);
+      if (!map[slot]) map[slot] = [];
+      map[slot].push(apt);
+    });
+
+    return map;
+  }, [dayAppointments]);
+
+  return (
+    <div className="rounded-xl border border-blue-900/60 bg-[#000a22] shadow-2xl p-4 sm:p-5">
+      <div className="space-y-4">
+        {HOURS.map((hour) => {
+          const hourLabel = formatHour(hour);
+          const hourApts = appointmentsByHour[hour] || [];
+
+          return (
+            <div key={hour} className="flex items-start gap-4">
+              {/* Hour Label */}
+              <div className="w-16 sm:w-20 shrink-0 text-right pt-2">
+                <span className="text-xs font-semibold text-slate-400 font-mono">
+                  {hourLabel}
+                </span>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="flex-1 min-h-[46px] border-t border-blue-950/80 pt-2 space-y-2">
+                {hourApts.map((apt) => {
+                  const isNeedsCoverage = apt.status === "Needs Coverage";
+                  const startStr = new Date(apt.startTime).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  });
+                  const endStr = new Date(apt.endTime).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  });
+                  const studentName = apt.studentName || apt.parentName || "Student";
+                  const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
+
+                  // Card styling depending on type & coverage
+                  let cardStyle = "bg-[#021845] border-blue-800/60 border-l-[#00b4d8]";
+                  if (isNeedsCoverage) {
+                    cardStyle = "bg-[#2b0816] border-rose-800/70 border-l-[#e11d48]";
+                  } else if (apt.title.toLowerCase().includes("record")) {
+                    cardStyle = "bg-[#01282d] border-teal-800/60 border-l-[#059669]";
+                  }
+
+                  return (
+                    <div
+                      key={apt.id}
+                      onClick={() => onEventClick(apt)}
+                      className={`rounded-lg border border-l-4 p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 ${cardStyle}`}
+                    >
+                      {/* Left: Title & Subtitle */}
+                      <div>
+                        <div className="font-bold text-white text-sm tracking-tight leading-tight">
+                          {apt.title}
+                        </div>
+                        <div className="text-xs text-slate-300 mt-0.5">
+                          <span>{studentName}</span>
+                          <span className="mx-2 text-slate-500">|</span>
+                          <span>{advocateName}</span>
+                          {isNeedsCoverage && (
+                            <span className="ml-2 text-rose-400 font-medium">
+                              (Needs Coverage)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Time Range & Action Button */}
+                      <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-xs text-slate-300 font-mono">
+                          {startStr} – {endStr}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => onEventClick(apt)}
+                          className="h-7 w-8 rounded-md border border-blue-800/60 bg-[#001033] hover:bg-blue-900/50 text-slate-300 flex items-center justify-center transition-colors"
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-slate-400" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

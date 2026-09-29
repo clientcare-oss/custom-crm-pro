@@ -424,7 +424,7 @@ export default function CrewQuarters() {
 
         {/* Card 2: Meetings Today */}
         <div 
-          onClick={() => setLocation("/calendar")}
+          onClick={() => setLocation("/calendar?view=day&date=today&scope=my")}
           className="group cursor-pointer relative overflow-hidden rounded-2xl border border-blue-900/60 bg-gradient-to-b from-[#001438] via-[#000d2b] to-[#000821] hover:border-sky-400/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_35px_rgba(56,189,248,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
         >
           {/* Unique Faded Texture 2: Undulating Oceanic Flow & Tide Lines */}

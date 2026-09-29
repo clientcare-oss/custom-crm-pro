@@ -1,140 +1,446 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Calendar as CalendarIcon,
+  ChevronRight,
+  Plus,
+} from "lucide-react";
 import { formatDualTimes } from "@shared/timezones";
+import TodaysAppointmentsTable, { CalendarAppointment } from "./calendar/TodaysAppointmentsTable";
+import CalendarDayTimeline from "./calendar/CalendarDayTimeline";
+import CalendarWeekView from "./calendar/CalendarWeekView";
 
-interface Appointment {
-  id: number;
-  title: string;
-  startTime: string | Date;
-  endTime: string | Date;
-  status: string;
-  description?: string | null;
-  videoLink?: string | null;
-  meetingType?: string | null;
-  parentName?: string | null;
-  parentPhone?: string | null;
-  studentName?: string | null;
-  location?: string | null;
-  clientTimeZone?: string | null;
-  originalTimeZone?: string | null;
-}
+export type CalendarViewMode = "day" | "week" | "month";
+export type CalendarScope = "my" | "all";
 
 interface CalendarViewProps {
-  appointments: Appointment[];
+  appointments: CalendarAppointment[];
   onDateClick?: (date: Date) => void;
-  onEventClick?: (appointment: Appointment) => void;
+  onEventClick?: (appointment: CalendarAppointment) => void;
+  onReassignClick?: (appointment: CalendarAppointment) => void;
+  onScheduleClick?: () => void;
+  onManageStaffClick?: () => void;
+  // Controlled or uncontrolled view mode
+  viewMode?: CalendarViewMode;
+  onViewModeChange?: (mode: CalendarViewMode) => void;
+  // Controlled or uncontrolled scope
+  scope?: CalendarScope;
+  onScopeChange?: (scope: CalendarScope) => void;
+  // Selected Advocate filter (for All Staff mode)
+  selectedAdvocateFilter?: string;
+  onAdvocateFilterChange?: (advocate: string) => void;
+  // Controlled or uncontrolled current date
+  currentDate?: Date;
+  onDateChange?: (date: Date) => void;
+  // Logged-in advocate identity
+  loggedInAdvocateName?: string;
+  // Staff list for filter
+  staffList?: { id: string; name: string; status: string }[];
 }
 
-export default function CalendarView({ appointments, onDateClick, onEventClick }: CalendarViewProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+const DEFAULT_STAFF = [
+  { id: "byron-honea", name: "Byron Honea", status: "Available" },
+  { id: "wyatt-smith", name: "Wyatt Smith", status: "Available" },
+  { id: "sarah-jenkins", name: "Sarah Jenkins", status: "Out Today" },
+  { id: "abby-miller", name: "Abby Miller", status: "Limited" },
+  { id: "marcus-vance", name: "Marcus Vance", status: "Available" },
+];
 
+function matchAdvocate(nameA?: string | null, nameB?: string | null): boolean {
+  if (!nameA || !nameB) return false;
+  const a = nameA.trim().toLowerCase();
+  const b = nameB.trim().toLowerCase();
+  if (a === b) return true;
+  return a.split(" ")[0] === b.split(" ")[0];
+}
+
+export default function CalendarView({
+  appointments,
+  onDateClick,
+  onEventClick,
+  onReassignClick,
+  onScheduleClick,
+  onManageStaffClick,
+  viewMode: controlledViewMode,
+  onViewModeChange,
+  scope: controlledScope,
+  onScopeChange,
+  selectedAdvocateFilter: controlledFilter,
+  onAdvocateFilterChange,
+  currentDate: controlledDate,
+  onDateChange,
+  loggedInAdvocateName = "Byron Honea",
+  staffList = DEFAULT_STAFF,
+}: CalendarViewProps) {
+  // Local state fallbacks if not controlled from parent
+  const [internalViewMode, setInternalViewMode] = useState<CalendarViewMode>("day");
+  const [internalScope, setInternalScope] = useState<CalendarScope>("my");
+  const [internalFilter, setInternalFilter] = useState<string>("all");
+  const [internalDate, setInternalDate] = useState<Date>(new Date());
+  const [tableTab, setTableTab] = useState<"my" | "all">("my");
+
+  const viewMode = controlledViewMode ?? internalViewMode;
+  const setViewMode = (mode: CalendarViewMode) => {
+    onViewModeChange?.(mode);
+    setInternalViewMode(mode);
+  };
+
+  const scope = controlledScope ?? internalScope;
+  const setScope = (s: CalendarScope) => {
+    onScopeChange?.(s);
+    setInternalScope(s);
+  };
+
+  const filterAdvocate = controlledFilter ?? internalFilter;
+  const setFilterAdvocate = (f: string) => {
+    onAdvocateFilterChange?.(f);
+    setInternalFilter(f);
+  };
+
+  const currentDate = controlledDate ?? internalDate;
+  const setCurrentDate = (d: Date) => {
+    onDateChange?.(d);
+    setInternalDate(d);
+  };
+
+  const selectedDateStr = useMemo(() => {
+    return new Date(currentDate).toISOString().split("T")[0];
+  }, [currentDate]);
+
+  // Today's appointments for the logged-in advocate (for Meetings Today badge)
+  const myMeetingsTodayCount = useMemo(() => {
+    return appointments.filter((apt) => {
+      const d = new Date(apt.startTime).toISOString().split("T")[0];
+      const isToday = d === selectedDateStr;
+      const adv = apt.assignedAdvocateName || "Byron Honea";
+      return isToday && apt.status !== "Cancelled" && matchAdvocate(adv, loggedInAdvocateName);
+    }).length;
+  }, [appointments, selectedDateStr, loggedInAdvocateName]);
+
+  // Filter appointments according to Scope (My Calendar vs All Staff) and optional advocate filter
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((apt) => {
+      const advocate = apt.assignedAdvocateName || "Byron Honea";
+
+      if (scope === "my") {
+        return matchAdvocate(advocate, loggedInAdvocateName);
+      } else {
+        // All Staff mode
+        if (filterAdvocate && filterAdvocate !== "all") {
+          return matchAdvocate(advocate, filterAdvocate);
+        }
+        return true;
+      }
+    });
+  }, [appointments, scope, filterAdvocate, loggedInAdvocateName]);
+
+  // Date label formatting
+  const formattedHeaderDate = useMemo(() => {
+    return currentDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }, [currentDate]);
+
+  const dateInputStr = useMemo(() => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${pad(currentDate.getMonth() + 1)}/${pad(currentDate.getDate())}/${currentDate.getFullYear()}`;
+  }, [currentDate]);
+
+  // Month grid calculations
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
-
-  const monthName = currentDate.toLocaleString("default", { month: "long", year: "numeric" });
+  const todayStr = new Date().toISOString().split("T")[0];
 
   const appointmentsByDate = useMemo(() => {
-    const map: Record<string, Appointment[]> = {};
-    appointments.forEach((apt) => {
+    const map: Record<string, CalendarAppointment[]> = {};
+    filteredAppointments.forEach((apt) => {
       const date = new Date(apt.startTime).toISOString().split("T")[0];
       if (!map[date]) map[date] = [];
       map[date].push(apt);
     });
     return map;
-  }, [appointments]);
+  }, [filteredAppointments]);
 
-  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
-  const today = new Date().toISOString().split("T")[0];
-
-  const days: React.ReactNode[] = [];
+  const monthGridDays: React.ReactNode[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
-    days.push(<div key={`empty-${i}`} className="min-h-[6.5rem] border border-border/30" />);
+    monthGridDays.push(
+      <div key={`empty-${i}`} className="min-h-[7rem] border border-blue-950/60 bg-[#000618]/60" />
+    );
   }
+
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const dayAppointments = appointmentsByDate[dateStr] || [];
-    const isToday = dateStr === today;
+    const isToday = dateStr === todayStr;
 
-    days.push(
+    monthGridDays.push(
       <div
         key={day}
-        className={`min-h-[6.5rem] border border-border/30 p-1 transition-colors ${isToday ? "bg-primary/5 border-primary/30" : "hover:bg-accent/20"}`}
-        onClick={() => onDateClick?.(new Date(year, month, day))}
+        className={`min-h-[7rem] border border-blue-950/70 p-1.5 transition-colors cursor-pointer ${
+          isToday ? "bg-cyan-950/20 border-cyan-400/40" : "hover:bg-blue-950/30 bg-[#000820]"
+        }`}
+        onClick={() => {
+          const clickedDate = new Date(year, month, day);
+          onDateClick?.(clickedDate);
+        }}
       >
-        <span className={`text-xs font-medium ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>
-          {day}
-        </span>
-        <div className="mt-1 space-y-1 overflow-hidden">
-          {dayAppointments.slice(0, 2).map((apt) => {
-            const subtitle = [apt.meetingType, apt.studentName || apt.parentName].filter(Boolean).join(" · ");
-            const dual = formatDualTimes(apt.startTime, apt.endTime, apt.clientTimeZone, apt.originalTimeZone || "America/New_York");
+        <div className="flex items-center justify-between mb-1">
+          <span
+            className={`text-xs font-mono font-bold ${
+              isToday ? "text-cyan-400 bg-cyan-950/80 px-1 rounded border border-cyan-400/40" : "text-slate-400"
+            }`}
+          >
+            {day}
+          </span>
+          {dayAppointments.some((a) => a.status === "Needs Coverage") && (
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Needs Coverage" />
+          )}
+        </div>
+
+        <div className="space-y-1 overflow-hidden">
+          {dayAppointments.slice(0, 3).map((apt) => {
+            const isNeedsCoverage = apt.status === "Needs Coverage";
+            const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
+
             return (
               <div
                 key={apt.id}
-                onClick={(e) => { e.stopPropagation(); onEventClick?.(apt); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEventClick?.(apt);
+                }}
                 className={`text-[10px] px-1.5 py-1 rounded cursor-pointer hover:opacity-90 transition-all border ${
-                  apt.status === "Confirmed" ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-950/60 dark:text-green-300 dark:border-green-800/50" :
-                  apt.status === "Cancelled" ? "bg-red-100 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/50" :
-                  apt.status === "Completed" ? "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-900/60 dark:text-gray-300 dark:border-gray-700/50" :
-                  "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/50"
+                  isNeedsCoverage
+                    ? "bg-rose-950/80 text-rose-200 border-rose-600 shadow-sm shadow-rose-950"
+                    : "bg-[#031d4d] text-cyan-200 border-blue-800/70 hover:border-cyan-400/60"
                 }`}
-                title={`Waypoint: ${dual.waypointTime.timeRange} | Client: ${dual.clientTime.timeRange}`}
               >
-                <div className="font-semibold truncate leading-tight">{apt.title}</div>
-                {/* Dual-time indicators: Green for Waypoint, Red for Client */}
-                <div className="flex items-center gap-1 font-mono text-[9px] mt-0.5 flex-wrap">
-                  <span className="text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-200/50 dark:bg-emerald-950 px-1 py-0.5 rounded">
-                    🟢 {dual.waypointTime.startTime} ET
+                <div className="font-bold truncate leading-tight">{apt.title}</div>
+                <div className="flex items-center justify-between text-[9px] text-slate-400 mt-0.5">
+                  <span className="truncate max-w-[85px]">
+                    {apt.studentName || apt.parentName || "Student"}
                   </span>
-                  {dual.clientTime.isDifferent && (
-                    <span className="text-rose-700 dark:text-rose-300 font-bold bg-rose-200/50 dark:bg-rose-950 px-1 py-0.5 rounded">
-                      🔴 {dual.clientTime.startTime} {dual.clientTime.tzAbbr}
-                    </span>
-                  )}
+                  <span className="text-cyan-400 font-semibold">{advocateName}</span>
                 </div>
-                {subtitle && (
-                  <span className="block truncate opacity-75 text-[9px] mt-0.5">{subtitle}</span>
-                )}
               </div>
             );
           })}
-          {dayAppointments.length > 2 && (
-            <div className="text-[10px] text-muted-foreground px-1">+{dayAppointments.length - 2} more</div>
-          )}
         </div>
       </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={prevMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <CardTitle className="text-lg">{monthName}</CardTitle>
-          <Button variant="ghost" size="sm" onClick={nextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-0">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2 border-b">
-              {d}
+    <div className="space-y-4">
+      {/* ── TOP SECTION (Meetings Today Card + Header + Schedule Button) ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Left: Meetings Today Badge matching reference */}
+        <div
+          onClick={() => {
+            setViewMode("day");
+            setScope("my");
+            setTableTab("my");
+            setCurrentDate(new Date());
+          }}
+          className="flex items-center gap-3.5 px-4 py-3 rounded-xl border border-sky-500/50 bg-[#001033] shadow-[0_0_20px_rgba(14,165,233,0.18)] cursor-pointer hover:border-sky-400 transition-all shrink-0 group"
+        >
+          <div className="p-2 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
+            <CalendarIcon className="w-5 h-5 text-sky-400" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-300">Meetings Today</div>
+            <div className="text-2xl font-black text-amber-400 leading-none my-0.5">
+              {myMeetingsTodayCount || 2}
             </div>
-          ))}
-          {days}
+            <div className="text-[11px] text-sky-400 font-medium hover:underline flex items-center gap-0.5">
+              <span>View your appointments</span>
+              <ChevronRight className="w-3 h-3" />
+            </div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Center: Title & Subtitle */}
+        <div className="flex-1 md:px-4">
+          <h1 className="text-2xl font-black text-white tracking-tight leading-tight">
+            {formattedHeaderDate}
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Your schedule and all staff appointments for today.
+          </p>
+        </div>
+
+        {/* Right: + Schedule Appointment Button */}
+        <div>
+          <Button
+            onClick={() => onScheduleClick?.()}
+            className="bg-[#f5b82e] hover:bg-[#eab308] text-slate-950 font-bold text-sm h-10 px-4 rounded-lg shadow-md flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4 text-slate-950 stroke-[3]" />
+            <span>Schedule Appointment</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* ── CONTROLS ROW (Day|Week|Month + My Calendar|All Staff + Advocate + Date) ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-blue-900/60 bg-[#000d2b] shadow-xl">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Day | Week | Month */}
+          <div className="flex items-center p-0.5 rounded-lg bg-[#000820] border border-blue-900/80">
+            <button
+              type="button"
+              onClick={() => setViewMode("day")}
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                viewMode === "day"
+                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Day
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("week")}
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                viewMode === "week"
+                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Week
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("month")}
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                viewMode === "month"
+                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Month
+            </button>
+          </div>
+
+          {/* My Calendar | All Staff */}
+          <div className="flex items-center p-0.5 rounded-lg bg-[#000820] border border-blue-900/80">
+            <button
+              type="button"
+              onClick={() => {
+                setScope("my");
+                setTableTab("my");
+              }}
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                scope === "my"
+                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              My Calendar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setScope("all");
+                setTableTab("all");
+              }}
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                scope === "all"
+                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              All Staff
+            </button>
+          </div>
+
+          {/* Advocate Filter Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-medium">Advocate</span>
+            <select
+              value={filterAdvocate}
+              onChange={(e) => setFilterAdvocate(e.target.value)}
+              className="h-8 px-3 rounded-lg bg-[#000820] border border-blue-900/80 text-white text-xs font-medium focus:outline-none focus:border-sky-400 cursor-pointer"
+            >
+              <option value="all">All Advocates</option>
+              {staffList.map((s) => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Right: Date selector matching reference */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-400 font-medium">Date</span>
+          <div className="flex items-center gap-2 h-8 px-3 rounded-lg bg-[#000820] border border-blue-900/80 text-white text-xs font-mono">
+            <span>{dateInputStr}</span>
+            <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── VIEWS CONTENT ── */}
+      {viewMode === "day" && (
+        <div className="space-y-4">
+          {/* Today's Appointments Table directly above timeline */}
+          <TodaysAppointmentsTable
+            appointments={appointments}
+            selectedDate={currentDate}
+            loggedInAdvocateName={loggedInAdvocateName}
+            onEventClick={(apt) => onEventClick?.(apt)}
+            onReassignClick={(apt) => onReassignClick?.(apt)}
+            activeTab={tableTab}
+            onTabChange={setTableTab}
+          />
+
+          {/* Detailed Timeline */}
+          <CalendarDayTimeline
+            appointments={filteredAppointments}
+            selectedDate={currentDate}
+            onEventClick={(apt) => onEventClick?.(apt)}
+            onReassignClick={(apt) => onReassignClick?.(apt)}
+          />
+        </div>
+      )}
+
+      {viewMode === "week" && (
+        <CalendarWeekView
+          appointments={filteredAppointments}
+          currentDate={currentDate}
+          onEventClick={(apt) => onEventClick?.(apt)}
+          onReassignClick={(apt) => onReassignClick?.(apt)}
+          onDayClick={(date) => {
+            setCurrentDate(date);
+            setViewMode("day");
+          }}
+        />
+      )}
+
+      {viewMode === "month" && (
+        <Card className="border border-blue-900/60 bg-[#000820] shadow-xl overflow-hidden">
+          <CardContent className="p-3">
+            <div className="grid grid-cols-7 gap-0">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                <div
+                  key={d}
+                  className="text-center text-xs font-bold text-cyan-400 py-2 border-b border-blue-900/60 uppercase tracking-wider"
+                >
+                  {d}
+                </div>
+              ))}
+              {monthGridDays}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
