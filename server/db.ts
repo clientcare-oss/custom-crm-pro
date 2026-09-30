@@ -127,49 +127,7 @@ export * from "./db/services";
 // Contact functions are imported and re-exported from ./db/contacts
 
 // ============ LEADS ============
-
-export async function getLeadsByOwner(ownerId?: number) {
-  const db = await getDb();
-  if (!db) return [];
-
-  return await db
-    .select()
-    .from(leads)
-    .orderBy(desc(leads.createdAt));
-}
-
-export async function getLeadById(id: number, ownerId?: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-
-  const result = await db
-    .select()
-    .from(leads)
-    .where(eq(leads.id, id))
-    .limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function createLead(data: any, ownerId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  return await db.insert(leads).values({
-    ...data,
-    ownerId,
-  });
-}
-
-export async function updateLead(id: number, ownerId: number, data: any) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  return await db
-    .update(leads)
-    .set(data)
-    .where(eq(leads.id, id));
-}
+export { getLeadsByOwner, getLeadById, createLead, updateLead } from "./db/leads";
 
 // ============ PROJECTS ============
 

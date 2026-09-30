@@ -508,11 +508,115 @@ export const clientFiles = mysqlTable("clientFiles", {
   fileKey: text("fileKey").notNull(),
   fileSize: int("fileSize"),
   mimeType: varchar("mimeType", { length: 100 }).default("application/pdf"),
+  category: varchar("category", { length: 100 }).default("ieps-504s"),
+  documentType: varchar("documentType", { length: 100 }).default("Other"),
+  documentDate: varchar("documentDate", { length: 50 }),
+  uploadOrigin: varchar("uploadOrigin", { length: 50 }).default("Client"), // "Pre-Enrollment" | "Client" | "Advocate"
+  lifecycleStatusAtUpload: varchar("lifecycleStatusAtUpload", { length: 50 }),
+  studentContactId: int("studentContactId"),
+  isReviewed: int("isReviewed").default(0),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewedBy: int("reviewedBy"),
+  summary: text("summary"),
+  isCurrentPlan: int("isCurrentPlan").default(0),
+  uploadedBy: int("uploadedBy"),
+  iepFamilyId: int("iepFamilyId"),
+  isCurrentVersion: int("isCurrentVersion").default(0),
+  isBaseIep: int("isBaseIep").default(0),
+  isAmendment: int("isAmendment").default(0),
+  amendmentNumber: int("amendmentNumber"),
+  confirmationStatus: varchar("confirmationStatus", { length: 50 }).default("System Identified"),
   uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
 });
 
 export type ClientFile = typeof clientFiles.$inferSelect;
 export type InsertClientFile = typeof clientFiles.$inferInsert;
+
+/**
+ * Auditable record of pre-enrollment document upload acknowledgments.
+ */
+export const preEnrollmentUploadAcknowledgments = mysqlTable("preEnrollmentUploadAcknowledgments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  clientId: int("clientId"),
+  studentId: int("studentId"),
+  accepted: int("accepted").default(1).notNull(),
+  version: varchar("version", { length: 20 }).default("v1.0").notNull(),
+  exactText: text("exactText").notNull(),
+  relationshipStatus: varchar("relationshipStatus", { length: 50 }).default("Pre-Enrollment").notNull(),
+  ipAddress: varchar("ipAddress", { length: 100 }),
+  userAgent: text("userAgent"),
+  acceptedAt: timestamp("acceptedAt").defaultNow().notNull(),
+});
+
+export type PreEnrollmentUploadAcknowledgment = typeof preEnrollmentUploadAcknowledgments.$inferSelect;
+export type InsertPreEnrollmentUploadAcknowledgment = typeof preEnrollmentUploadAcknowledgments.$inferInsert;
+
+/**
+ * IEP Families table: Authoritative Current IEP & Version History linking base IEP and amendments.
+ */
+export const iepFamilies = mysqlTable("iepFamilies", {
+  id: int("id").autoincrement().primaryKey(),
+  studentContactId: int("studentContactId").notNull(),
+  clientId: int("clientId"),
+  schoolYear: varchar("schoolYear", { length: 50 }).notNull(), // e.g. "2026–2027"
+  baseIepDocumentId: int("baseIepDocumentId"), // Reference to clientFiles.id
+  baseIepDate: varchar("baseIepDate", { length: 50 }), // e.g. "May 15, 2026" or "2026-05-15"
+  latestVersionDocumentId: int("latestVersionDocumentId"), // Reference to clientFiles.id (latest amendment or base)
+  latestVersionDate: varchar("latestVersionDate", { length: 50 }),
+  latestVersionType: varchar("latestVersionType", { length: 100 }).default("Annual IEP"), // "Annual IEP" | "IEP Amendment"
+  isCurrentIep: int("isCurrentIep").default(0).notNull(), // 1 if this family is student's authoritative Current IEP
+  confirmationStatus: varchar("confirmationStatus", { length: 50 }).default("System Identified").notNull(), // "System Identified" | "Parent Confirmed" | "Waypoint Confirmed"
+  confirmedAt: timestamp("confirmedAt"),
+  confirmedBy: int("confirmedBy"),
+  pendingReviewDocumentId: int("pendingReviewDocumentId"), // When a newer candidate IEP is detected
+  pendingReviewDate: varchar("pendingReviewDate", { length: 50 }),
+  pendingReviewReason: text("pendingReviewReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type IepFamily = typeof iepFamilies.$inferSelect;
+export type InsertIepFamily = typeof iepFamilies.$inferInsert;
+
+/**
+ * Document Vault Analyses table:
+ * Stores structured intelligence extracted from PDFs (native text or OCR) and CRM comparison outcomes.
+ * Guarantees cost and processing control by caching results without redundant AI invocations.
+ */
+export const documentVaultAnalyses = mysqlTable("documentVaultAnalyses", {
+  id: int("id").autoincrement().primaryKey(),
+  fileId: int("fileId").notNull(), // Reference to clientFiles.id
+  studentContactId: int("studentContactId"),
+  nativeTextStatus: varchar("nativeTextStatus", { length: 50 }).default("good").notNull(), // "good" | "insufficient" | "unavailable"
+  ocrRan: int("ocrRan").default(0).notNull(), // 0 = native text sufficient, 1 = OCR fallback executed
+  processingState: varchar("processingState", { length: 50 }).default("completed").notNull(),
+  extractedText: text("extractedText"),
+  documentType: varchar("documentType", { length: 100 }),
+  iepMeetingDate: varchar("iepMeetingDate", { length: 50 }),
+  annualReviewDate: varchar("annualReviewDate", { length: 50 }),
+  effectiveDate: varchar("effectiveDate", { length: 50 }),
+  servicesStartDate: varchar("servicesStartDate", { length: 50 }),
+  servicesEndDate: varchar("servicesEndDate", { length: 50 }),
+  amendmentDate: varchar("amendmentDate", { length: 50 }),
+  revisionDate: varchar("revisionDate", { length: 50 }),
+  baseIepDate: varchar("baseIepDate", { length: 50 }),
+  school: varchar("school", { length: 200 }),
+  district: varchar("district", { length: 200 }),
+  grade: varchar("grade", { length: 50 }),
+  schoolYear: varchar("schoolYear", { length: 50 }),
+  studentName: varchar("studentName", { length: 200 }),
+  documentTypeNeedsReview: int("documentTypeNeedsReview").default(0).notNull(),
+  iepDateNeedsReview: int("iepDateNeedsReview").default(0).notNull(),
+  uncertaintyReason: text("uncertaintyReason"),
+  rawAnalysisJson: text("rawAnalysisJson"),
+  comparisonOutcome: varchar("comparisonOutcome", { length: 100 }), // "current_confirmed" | "newer_detected" | "amendment_connected" | "needs_review" | "older_retained"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DocumentVaultAnalysis = typeof documentVaultAnalyses.$inferSelect;
+export type InsertDocumentVaultAnalysis = typeof documentVaultAnalyses.$inferInsert;
 
 /**
  * Vault subscriptions for clients to maintain file access after service ends.

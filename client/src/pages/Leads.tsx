@@ -18,12 +18,163 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar, Clock, ClipboardList, CalendarClock } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Zap, UserCircle, Phone, PhoneCall, User, GraduationCap, Calendar, Clock, ClipboardList, CalendarClock, Globe } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import QuickSetupModal from "@/components/QuickSetupModal";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import {
+  getTimeInZone,
+  getCallingStatus,
+  detectTimeZoneFromLocation,
+  getTimeDifferenceHours,
+  formatTimeDifferenceText,
+  getFriendlyTimeZoneName,
+} from "@shared/timezones";
+
+const AREA_CODE_TIMEZONE_MAP: Record<string, string> = {
+  // Hawaii (HST)
+  "808": "Pacific/Honolulu",
+  // Alaska (AKST/AKDT)
+  "907": "America/Anchorage",
+  // Pacific (PST/PDT)
+  "206": "America/Los_Angeles", "209": "America/Los_Angeles", "213": "America/Los_Angeles",
+  "253": "America/Los_Angeles", "310": "America/Los_Angeles", "323": "America/Los_Angeles",
+  "360": "America/Los_Angeles", "408": "America/Los_Angeles", "415": "America/Los_Angeles",
+  "425": "America/Los_Angeles", "442": "America/Los_Angeles", "503": "America/Los_Angeles",
+  "509": "America/Los_Angeles", "510": "America/Los_Angeles", "530": "America/Los_Angeles",
+  "541": "America/Los_Angeles", "559": "America/Los_Angeles", "562": "America/Los_Angeles",
+  "619": "America/Los_Angeles", "626": "America/Los_Angeles", "628": "America/Los_Angeles",
+  "650": "America/Los_Angeles", "657": "America/Los_Angeles", "661": "America/Los_Angeles",
+  "669": "America/Los_Angeles", "702": "America/Los_Angeles", "707": "America/Los_Angeles",
+  "714": "America/Los_Angeles", "725": "America/Los_Angeles", "747": "America/Los_Angeles",
+  "760": "America/Los_Angeles", "775": "America/Los_Angeles", "805": "America/Los_Angeles",
+  "818": "America/Los_Angeles", "820": "America/Los_Angeles", "831": "America/Los_Angeles",
+  "858": "America/Los_Angeles", "909": "America/Los_Angeles", "916": "America/Los_Angeles",
+  "925": "America/Los_Angeles", "949": "America/Los_Angeles", "951": "America/Los_Angeles",
+  "971": "America/Los_Angeles",
+  // Mountain (MST/MDT & Arizona)
+  "303": "America/Denver", "307": "America/Denver", "385": "America/Denver",
+  "406": "America/Denver", "435": "America/Denver", "480": "America/Phoenix",
+  "505": "America/Denver", "520": "America/Phoenix", "575": "America/Denver",
+  "602": "America/Phoenix", "623": "America/Phoenix", "719": "America/Denver",
+  "720": "America/Denver", "801": "America/Denver", "928": "America/Phoenix",
+  "970": "America/Denver",
+  // Central (CST/CDT)
+  "205": "America/Chicago", "214": "America/Chicago", "217": "America/Chicago",
+  "218": "America/Chicago", "224": "America/Chicago", "225": "America/Chicago",
+  "228": "America/Chicago", "251": "America/Chicago", "254": "America/Chicago",
+  "256": "America/Chicago", "260": "America/Chicago", "262": "America/Chicago",
+  "269": "America/Chicago", "281": "America/Chicago", "309": "America/Chicago",
+  "312": "America/Chicago", "314": "America/Chicago", "316": "America/Chicago",
+  "318": "America/Chicago", "319": "America/Chicago", "320": "America/Chicago",
+  "325": "America/Chicago", "331": "America/Chicago", "334": "America/Chicago",
+  "337": "America/Chicago", "361": "America/Chicago", "402": "America/Chicago",
+  "405": "America/Chicago", "409": "America/Chicago", "414": "America/Chicago",
+  "417": "America/Chicago", "423": "America/Chicago", "469": "America/Chicago",
+  "479": "America/Chicago", "501": "America/Chicago", "502": "America/Chicago",
+  "504": "America/Chicago", "507": "America/Chicago", "512": "America/Chicago",
+  "515": "America/Chicago", "531": "America/Chicago", "563": "America/Chicago",
+  "573": "America/Chicago", "580": "America/Chicago", "601": "America/Chicago",
+  "605": "America/Chicago", "608": "America/Chicago", "612": "America/Chicago",
+  "615": "America/Chicago", "618": "America/Chicago", "620": "America/Chicago",
+  "630": "America/Chicago", "636": "America/Chicago", "641": "America/Chicago",
+  "651": "America/Chicago", "660": "America/Chicago", "662": "America/Chicago",
+  "701": "America/Chicago", "708": "America/Chicago", "712": "America/Chicago",
+  "713": "America/Chicago", "715": "America/Chicago", "731": "America/Chicago",
+  "763": "America/Chicago", "769": "America/Chicago", "773": "America/Chicago",
+  "779": "America/Chicago", "815": "America/Chicago", "816": "America/Chicago",
+  "817": "America/Chicago", "830": "America/Chicago", "832": "America/Chicago",
+  "847": "America/Chicago", "870": "America/Chicago", "901": "America/Chicago",
+  "903": "America/Chicago", "913": "America/Chicago", "918": "America/Chicago",
+  "920": "America/Chicago", "931": "America/Chicago", "936": "America/Chicago",
+  "940": "America/Chicago", "952": "America/Chicago", "956": "America/Chicago",
+  "972": "America/Chicago", "979": "America/Chicago",
+  // Eastern (EST/EDT)
+  "201": "America/New_York", "202": "America/New_York", "203": "America/New_York",
+  "207": "America/New_York", "212": "America/New_York", "215": "America/New_York",
+  "216": "America/New_York", "239": "America/New_York", "240": "America/New_York",
+  "267": "America/New_York", "301": "America/New_York", "302": "America/New_York",
+  "305": "America/New_York", "315": "America/New_York", "321": "America/New_York",
+  "330": "America/New_York", "336": "America/New_York", "347": "America/New_York",
+  "351": "America/New_York", "352": "America/New_York", "386": "America/New_York",
+  "401": "America/New_York", "404": "America/New_York", "407": "America/New_York",
+  "410": "America/New_York", "412": "America/New_York", "413": "America/New_York",
+  "434": "America/New_York", "443": "America/New_York", "470": "America/New_York",
+  "475": "America/New_York", "484": "America/New_York", "508": "America/New_York",
+  "516": "America/New_York", "518": "America/New_York", "540": "America/New_York",
+  "561": "America/New_York", "570": "America/New_York", "585": "America/New_York",
+  "603": "America/New_York", "609": "America/New_York", "610": "America/New_York",
+  "614": "America/New_York", "617": "America/New_York", "631": "America/New_York",
+  "646": "America/New_York", "678": "America/New_York", "703": "America/New_York",
+  "704": "America/New_York", "716": "America/New_York", "717": "America/New_York",
+  "718": "America/New_York", "724": "America/New_York", "727": "America/New_York",
+  "732": "America/New_York", "754": "America/New_York", "757": "America/New_York",
+  "770": "America/New_York", "772": "America/New_York", "774": "America/New_York",
+  "781": "America/New_York", "786": "America/New_York", "802": "America/New_York",
+  "803": "America/New_York", "804": "America/New_York", "813": "America/New_York",
+  "814": "America/New_York", "828": "America/New_York", "843": "America/New_York",
+  "845": "America/New_York", "848": "America/New_York", "856": "America/New_York",
+  "857": "America/New_York", "860": "America/New_York", "862": "America/New_York",
+  "864": "America/New_York", "865": "America/New_York", "908": "America/New_York",
+  "910": "America/New_York", "912": "America/New_York", "914": "America/New_York",
+  "917": "America/New_York", "919": "America/New_York", "929": "America/New_York",
+  "941": "America/New_York", "954": "America/New_York", "973": "America/New_York",
+  "978": "America/New_York", "980": "America/New_York"
+};
+
+function getTimeZoneFromPhone(phone?: string): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  const clean = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (clean.length < 3) return null;
+  const areaCode = clean.slice(0, 3);
+  return AREA_CODE_TIMEZONE_MAP[areaCode] || null;
+}
+
+function resolveDiscoveryCallLocation(
+  contact: any | undefined,
+  phone?: string,
+  notes?: string
+): { timeZone: string; city?: string; state?: string; friendlyTz: string } {
+  let timeZone: string | undefined = undefined;
+  let city: string | undefined = undefined;
+  let state: string | undefined = undefined;
+
+  if (contact) {
+    city = contact.city || undefined;
+    state = contact.state || undefined;
+    if (contact.confirmedTimeZone || contact.timezone) {
+      timeZone = contact.confirmedTimeZone || contact.timezone;
+    } else if (state) {
+      timeZone = detectTimeZoneFromLocation(city, state, contact.zipCode || undefined).timeZone;
+    }
+  }
+
+  // If not resolved from contact, check phone area code
+  if (!timeZone && phone) {
+    const fromPhone = getTimeZoneFromPhone(phone);
+    if (fromPhone) timeZone = fromPhone;
+  }
+
+  // If still not resolved, check notes for state or city
+  if (!timeZone && notes) {
+    const stateMatch = notes.match(/\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\b/i);
+    if (stateMatch) {
+      state = stateMatch[1].toUpperCase();
+      timeZone = detectTimeZoneFromLocation(undefined, state).timeZone;
+    }
+  }
+
+  const resolvedTz = timeZone || "America/New_York";
+  return {
+    timeZone: resolvedTz,
+    city,
+    state,
+    friendlyTz: getFriendlyTimeZoneName(resolvedTz),
+  };
+}
 
 const LEAD_STATUSES = ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Ready for Archive", "Won", "Lost"] as const;
 type LeadStatus = (typeof LEAD_STATUSES)[number];
@@ -171,6 +322,13 @@ export default function Leads() {
     }
   );
 
+  const { data: contacts = [] } = trpc.contacts.list.useQuery(
+    undefined,
+    {
+      enabled: user?.role === "admin",
+    }
+  );
+
   const createMutation = trpc.leads.create.useMutation({
     onSuccess: () => {
       toast.success("Lead created successfully");
@@ -216,7 +374,9 @@ export default function Leads() {
       finalDiscoveryDate = new Date(year, month, day, hours, minutes, 0, 0);
     }
 
+    const editingLead = editingId ? (leads || []).find((l: any) => l.id === editingId) : null;
     const payload = {
+      contactId: editingLead?.contactId,
       source: formData.source || undefined,
       value: formData.value || undefined,
       status: formData.status,
@@ -261,7 +421,11 @@ export default function Leads() {
             lead.parentName &&
             apt.parentName &&
             apt.parentName.toLowerCase().includes(lead.parentName.toLowerCase());
-          return isSameDay && (matchesContact || matchesParent);
+          const matchesStudent =
+            lead.studentName &&
+            apt.studentName &&
+            apt.studentName.toLowerCase().includes(lead.studentName.toLowerCase());
+          return isSameDay && (matchesContact || matchesParent || matchesStudent);
         });
 
         if (matchingApt?.startTime) {
@@ -271,16 +435,53 @@ export default function Leads() {
       }
     }
 
+    // Hydrate missing fields from contacts if lead was linked to a contact
+    let parentName = lead.parentName || "";
+    let parentPhone = lead.parentPhone || "";
+    let studentName = lead.studentName || "";
+    let studentAge = lead.studentAge?.toString() || "";
+    let studentGrade = lead.studentGrade || "";
+
+    if (lead.contactId && contacts) {
+      const contact = (contacts as any[]).find((c: any) => c.id === lead.contactId);
+      if (contact) {
+        if (!parentName) {
+          parentName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim();
+        }
+        if (!parentPhone) {
+          parentPhone = contact.phone || "";
+        }
+      }
+      const studentContact = (contacts as any[]).find(
+        (c: any) => c.parentContactId === lead.contactId || (c.id === lead.contactId && c.parentContactId)
+      );
+      if (studentContact) {
+        if (!studentName) {
+          studentName = `${studentContact.firstName || ""} ${studentContact.lastName || ""}`.trim();
+        }
+        if (!studentGrade) {
+          studentGrade = studentContact.gradeLevel || "";
+        }
+      }
+    }
+
+    if (!studentName && lead.notes) {
+      const match = lead.notes.match(/Student:\s*([^.\n,]+)/i);
+      if (match && match[1]) {
+        studentName = match[1].trim();
+      }
+    }
+
     setFormData({
       source: lead.source || "",
       value: (lead.value || 0).toString(),
       status: lead.status,
       notes: lead.notes || "",
-      parentName: lead.parentName || "",
-      parentPhone: lead.parentPhone || "",
-      studentName: lead.studentName || "",
-      studentAge: lead.studentAge?.toString() || "",
-      studentGrade: lead.studentGrade || "",
+      parentName,
+      parentPhone,
+      studentName,
+      studentAge,
+      studentGrade,
       discoveryCallDate: dateStr,
       discoveryCallTime: timeStr,
     });
@@ -334,9 +535,18 @@ export default function Leads() {
       date: Date;
       timeDisplay: string;
       dateDisplay: string;
+      timeZone: string;
+      city?: string;
+      state?: string;
+      friendlyTz: string;
+      clientTimeInfo: ReturnType<typeof getTimeInZone>;
+      callingStatus: ReturnType<typeof getCallingStatus>;
+      diffHours: number;
+      diffText: string;
     }> = [];
 
     const seenLeadIds = new Set<number>();
+    const now = new Date();
 
     // 1. Process Leads with discoveryCallDate
     (leads || []).forEach((lead) => {
@@ -358,7 +568,11 @@ export default function Leads() {
               lead.parentName &&
               apt.parentName &&
               apt.parentName.toLowerCase().includes(lead.parentName.toLowerCase());
-            return isSameDay && (matchesContact || matchesParent);
+            const matchesStudent =
+              lead.studentName &&
+              apt.studentName &&
+              apt.studentName.toLowerCase().includes(lead.studentName.toLowerCase());
+            return isSameDay && (matchesContact || matchesParent || matchesStudent);
           });
 
           const effectiveDate = matchingApt?.startTime ? new Date(matchingApt.startTime) : parsed.dateObj;
@@ -376,19 +590,67 @@ export default function Leads() {
             day: "numeric",
           });
 
+          // Resolve parent and student name with fallbacks from contacts and notes
+          let resolvedParent = lead.parentName;
+          let resolvedPhone = lead.parentPhone;
+          let resolvedStudent = lead.studentName;
+          let resolvedAge = lead.studentAge;
+          let resolvedGrade = lead.studentGrade;
+          let matchedContact: any = null;
+
+          if (lead.contactId && contacts) {
+            matchedContact = (contacts as any[]).find((x: any) => x.id === lead.contactId);
+            if (matchedContact) {
+              if (!resolvedParent) {
+                resolvedParent = `${matchedContact.firstName || ""} ${matchedContact.lastName || ""}`.trim() || undefined;
+              }
+              resolvedPhone = resolvedPhone || matchedContact.phone || undefined;
+            }
+          }
+          if (!resolvedStudent && lead.contactId && contacts) {
+            const sc = (contacts as any[]).find(
+              (x: any) => x.parentContactId === lead.contactId || (x.id === lead.contactId && x.parentContactId)
+            );
+            if (sc) {
+              resolvedStudent = `${sc.firstName || ""} ${sc.lastName || ""}`.trim() || undefined;
+              resolvedGrade = resolvedGrade || sc.gradeLevel || undefined;
+            }
+          }
+          if (!resolvedStudent && lead.notes) {
+            const match = lead.notes.match(/Student:\s*([^.\n,]+)/i);
+            if (match && match[1]) {
+              resolvedStudent = match[1].trim();
+            }
+          }
+
+          // Resolve National Time & Calling Appropriateness
+          const loc = resolveDiscoveryCallLocation(matchedContact, resolvedPhone, lead.notes);
+          const clientTimeInfo = getTimeInZone(loc.timeZone, now);
+          const callingStatus = getCallingStatus(loc.timeZone, {}, now);
+          const diffHours = getTimeDifferenceHours(loc.timeZone, "America/New_York", now);
+          const diffText = formatTimeDifferenceText(diffHours);
+
           list.push({
             id: `lead-${lead.id}`,
             leadId: lead.id,
             lead,
-            parentName: lead.parentName || "Prospective Parent",
-            parentPhone: lead.parentPhone,
-            studentName: lead.studentName,
-            studentAge: lead.studentAge,
-            studentGrade: lead.studentGrade,
+            parentName: resolvedParent || "Prospective Family",
+            parentPhone: resolvedPhone,
+            studentName: resolvedStudent,
+            studentAge: resolvedAge,
+            studentGrade: resolvedGrade,
             inquiryReason: lead.notes || (lead.source ? `Source: ${lead.source}` : undefined),
             date: effectiveDate,
             timeDisplay,
             dateDisplay,
+            timeZone: loc.timeZone,
+            city: loc.city,
+            state: loc.state,
+            friendlyTz: loc.friendlyTz,
+            clientTimeInfo,
+            callingStatus,
+            diffHours,
+            diffText,
           });
         }
       }
@@ -408,8 +670,12 @@ export default function Leads() {
             const matchesParent =
               l.parentName &&
               apt.parentName &&
-              l.parentName.toLowerCase() === apt.parentName.toLowerCase();
-            return matchesId || matchesParent;
+              apt.parentName.toLowerCase().includes(l.parentName.toLowerCase());
+            const matchesStudent =
+              l.studentName &&
+              apt.studentName &&
+              apt.studentName.toLowerCase().includes(l.studentName.toLowerCase());
+            return matchesId || matchesParent || matchesStudent;
           });
 
           if (matchingLead && seenLeadIds.has(matchingLead.id)) {
@@ -427,12 +693,26 @@ export default function Leads() {
             day: "numeric",
           });
 
+          let matchedContact: any = null;
+          if (apt.clientId && contacts) {
+            matchedContact = (contacts as any[]).find((c: any) => c.id === apt.clientId);
+          } else if (matchingLead?.contactId && contacts) {
+            matchedContact = (contacts as any[]).find((c: any) => c.id === matchingLead.contactId);
+          }
+
+          const resolvedPhone = apt.parentPhone || matchingLead?.parentPhone;
+          const loc = resolveDiscoveryCallLocation(matchedContact, resolvedPhone, apt.description || matchingLead?.notes);
+          const clientTimeInfo = getTimeInZone(loc.timeZone, now);
+          const callingStatus = getCallingStatus(loc.timeZone, {}, now);
+          const diffHours = getTimeDifferenceHours(loc.timeZone, "America/New_York", now);
+          const diffText = formatTimeDifferenceText(diffHours);
+
           list.push({
             id: `apt-${apt.id}`,
             leadId: matchingLead?.id,
             lead: matchingLead || null,
-            parentName: apt.parentName || matchingLead?.parentName || "Prospective Parent",
-            parentPhone: apt.parentPhone || matchingLead?.parentPhone,
+            parentName: apt.parentName || matchingLead?.parentName || "Prospective Family",
+            parentPhone: resolvedPhone,
             studentName: apt.studentName || matchingLead?.studentName,
             studentAge: matchingLead?.studentAge,
             studentGrade: matchingLead?.studentGrade,
@@ -441,13 +721,21 @@ export default function Leads() {
             date: aptD,
             timeDisplay,
             dateDisplay,
+            timeZone: loc.timeZone,
+            city: loc.city,
+            state: loc.state,
+            friendlyTz: loc.friendlyTz,
+            clientTimeInfo,
+            callingStatus,
+            diffHours,
+            diffText,
           });
         }
       }
     });
 
     return list;
-  }, [leads, appointments]);
+  }, [leads, appointments, contacts]);
 
   const { todaysCalls, upcomingCalls } = useMemo(() => {
     const now = new Date();
@@ -534,7 +822,7 @@ export default function Leads() {
                     <VoiceInput
                       value={formData.parentName}
                       onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                      placeholder="Jane Smith"
+                      placeholder="e.g. Maria Gonzalez"
                     />
                   </div>
                   <div className="space-y-2">
@@ -557,7 +845,7 @@ export default function Leads() {
                     <VoiceInput
                       value={formData.studentName}
                       onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                      placeholder="Alex Smith"
+                      placeholder="e.g. Diego Gonzalez"
                     />
                   </div>
                   <div className="space-y-2">
@@ -865,6 +1153,52 @@ export default function Leads() {
                     )}
                   </div>
 
+                  {/* ── National Time & Calling Appropriateness Indicator ── */}
+                  <div className="rounded-lg bg-slate-100/90 dark:bg-[#031024] border border-border/70 p-2.5 space-y-1.5 shadow-inner">
+                    <div className="flex items-center justify-between gap-1.5 text-xs flex-wrap">
+                      <div className="flex items-center gap-1.5 font-medium text-foreground">
+                        <Globe className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                        <span className="text-muted-foreground text-[11px]">Local:</span>
+                        <span className="font-mono font-bold text-sky-600 dark:text-sky-400">
+                          {call.clientTimeInfo.timeString}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-semibold">
+                          ({call.callingStatus.tzAbbr} · {call.friendlyTz})
+                        </span>
+                      </div>
+
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        {call.diffHours === 0 ? "Same time as Eastern HQ" : call.diffText}
+                      </span>
+                    </div>
+
+                    {/* Calling Appropriateness status badge */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5 flex-wrap">
+                      {call.callingStatus.status === "green" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>✓ Appropriate calling time</span>
+                        </span>
+                      ) : call.callingStatus.status === "yellow" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span>⚠ Use discretion ({call.callingStatus.recommendation})</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          <span>⚠ {call.callingStatus.label === "Too early" ? "Too early to call" : "Too late to call"}</span>
+                        </span>
+                      )}
+
+                      {(call.city || call.state) && (
+                        <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[120px]" title={[call.city, call.state].filter(Boolean).join(", ")}>
+                          {[call.city, call.state].filter(Boolean).join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   {call.inquiryReason && (
                     <div className="text-xs text-muted-foreground bg-muted/40 dark:bg-muted/20 rounded-md p-2 border border-border/50 line-clamp-2">
                       <span className="font-medium text-foreground/80">Inquiry: </span>
@@ -881,14 +1215,27 @@ export default function Leads() {
                       if (call.lead) {
                         handleEdit(call.lead);
                       } else {
-                        setEditingId(null);
-                        setFormData({
-                          ...emptyForm,
-                          parentName: call.parentName,
-                          parentPhone: call.parentPhone || "",
-                          studentName: call.studentName || "",
-                        });
-                        setOpen(true);
+                        const matched = (leads || []).find((l: any) =>
+                          (call.leadId && l.id === call.leadId) ||
+                          (call.studentName && l.studentName && l.studentName.toLowerCase().includes(call.studentName.toLowerCase())) ||
+                          (call.parentName && l.parentName && l.parentName.toLowerCase().includes(call.parentName.toLowerCase()))
+                        );
+                        if (matched) {
+                          handleEdit(matched);
+                        } else {
+                          setEditingId(null);
+                          setFormData({
+                            ...emptyForm,
+                            parentName: call.parentName && !call.parentName.includes("Prospective") ? call.parentName : "",
+                            parentPhone: call.parentPhone || "",
+                            studentName: call.studentName || "",
+                            studentAge: call.studentAge ? String(call.studentAge) : "",
+                            studentGrade: call.studentGrade || "",
+                            discoveryCallDate: call.date ? `${call.date.getFullYear()}-${String(call.date.getMonth() + 1).padStart(2, "0")}-${String(call.date.getDate()).padStart(2, "0")}` : "",
+                            discoveryCallTime: call.date ? `${String(call.date.getHours()).padStart(2, "0")}:${String(call.date.getMinutes()).padStart(2, "0")}` : "",
+                          });
+                          setOpen(true);
+                        }
                       }
                     }}
                     className="flex-1 text-xs font-semibold h-8 gap-1.5"
@@ -981,6 +1328,52 @@ export default function Leads() {
                     )}
                   </div>
 
+                  {/* ── National Time & Calling Appropriateness Indicator ── */}
+                  <div className="rounded-lg bg-slate-100/90 dark:bg-[#031024] border border-border/70 p-2.5 space-y-1.5 shadow-inner">
+                    <div className="flex items-center justify-between gap-1.5 text-xs flex-wrap">
+                      <div className="flex items-center gap-1.5 font-medium text-foreground">
+                        <Globe className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                        <span className="text-muted-foreground text-[11px]">Local:</span>
+                        <span className="font-mono font-bold text-sky-600 dark:text-sky-400">
+                          {call.clientTimeInfo.timeString}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-semibold">
+                          ({call.callingStatus.tzAbbr} · {call.friendlyTz})
+                        </span>
+                      </div>
+
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        {call.diffHours === 0 ? "Same time as Eastern HQ" : call.diffText}
+                      </span>
+                    </div>
+
+                    {/* Calling Appropriateness status badge */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5 flex-wrap">
+                      {call.callingStatus.status === "green" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>✓ Appropriate calling time</span>
+                        </span>
+                      ) : call.callingStatus.status === "yellow" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span>⚠ Use discretion ({call.callingStatus.recommendation})</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          <span>⚠ {call.callingStatus.label === "Too early" ? "Too early to call" : "Too late to call"}</span>
+                        </span>
+                      )}
+
+                      {(call.city || call.state) && (
+                        <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[120px]" title={[call.city, call.state].filter(Boolean).join(", ")}>
+                          {[call.city, call.state].filter(Boolean).join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   {call.inquiryReason && (
                     <div className="text-xs text-muted-foreground bg-muted/40 dark:bg-muted/20 rounded-md p-2 border border-border/50 line-clamp-2">
                       <span className="font-medium text-foreground/80">Inquiry: </span>
@@ -997,14 +1390,27 @@ export default function Leads() {
                       if (call.lead) {
                         handleEdit(call.lead);
                       } else {
-                        setEditingId(null);
-                        setFormData({
-                          ...emptyForm,
-                          parentName: call.parentName,
-                          parentPhone: call.parentPhone || "",
-                          studentName: call.studentName || "",
-                        });
-                        setOpen(true);
+                        const matched = (leads || []).find((l: any) =>
+                          (call.leadId && l.id === call.leadId) ||
+                          (call.studentName && l.studentName && l.studentName.toLowerCase().includes(call.studentName.toLowerCase())) ||
+                          (call.parentName && l.parentName && l.parentName.toLowerCase().includes(call.parentName.toLowerCase()))
+                        );
+                        if (matched) {
+                          handleEdit(matched);
+                        } else {
+                          setEditingId(null);
+                          setFormData({
+                            ...emptyForm,
+                            parentName: call.parentName && !call.parentName.includes("Prospective") ? call.parentName : "",
+                            parentPhone: call.parentPhone || "",
+                            studentName: call.studentName || "",
+                            studentAge: call.studentAge ? String(call.studentAge) : "",
+                            studentGrade: call.studentGrade || "",
+                            discoveryCallDate: call.date ? `${call.date.getFullYear()}-${String(call.date.getMonth() + 1).padStart(2, "0")}-${String(call.date.getDate()).padStart(2, "0")}` : "",
+                            discoveryCallTime: call.date ? `${String(call.date.getHours()).padStart(2, "0")}:${String(call.date.getMinutes()).padStart(2, "0")}` : "",
+                          });
+                          setOpen(true);
+                        }
                       }
                     }}
                     className="flex-1 text-xs font-semibold h-8 gap-1.5"

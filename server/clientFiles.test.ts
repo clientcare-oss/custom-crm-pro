@@ -103,4 +103,69 @@ describe("vault", () => {
     // Should return null or a subscription object
     expect(result === null || result === undefined || typeof result === "object").toBe(true);
   });
+
+  it("retrieves status-aware vault telemetry and handles pre-enrollment status", async () => {
+    const ctx = createClientContext(42);
+    const caller = appRouter.createCaller(ctx);
+
+    const status = await caller.clientFiles.getVaultStatus({});
+    expect(status).toHaveProperty("isRelationshipActive");
+    expect(status).toHaveProperty("lifecycleStatus");
+    expect(status).toHaveProperty("preEnrollmentAcknowledgmentAccepted");
+    expect(status).toHaveProperty("documentsSummary");
+    expect(status.documentsSummary).toHaveProperty("hasCurrentIep");
+  });
+
+  it("records pre-enrollment upload acknowledgment", async () => {
+    const ctx = createClientContext(42);
+    const caller = appRouter.createCaller(ctx);
+
+    const ackResult = await caller.clientFiles.recordPreEnrollmentAcknowledgment({
+      version: "v1.0",
+      exactText: "I acknowledge that submitting documents does not create an advocate-client relationship.",
+    });
+
+    expect(ackResult.success).toBe(true);
+
+    const updatedStatus = await caller.clientFiles.getVaultStatus({});
+    expect(updatedStatus.preEnrollmentAcknowledgmentAccepted).toBe(true);
+    expect(updatedStatus.acknowledgmentMetadata?.version).toBe("v1.0");
+  });
+
+  it("accepts status-aware upload with classification and derives school year", async () => {
+    const ctx = createClientContext(42);
+    const caller = appRouter.createCaller(ctx);
+
+    const uploadRes = await caller.clientFiles.upload({
+      fileName: "2024-2025_Annual_IEP_Meeting.pdf",
+      fileData: "JVBERi0xLjQKJcTl8uXrp/Og0MTGCjEgMCBvYmoKPDwKL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCg==", // simple PDF header base64
+      fileSize: 64,
+      studentId: 101,
+    });
+
+    expect(uploadRes).toBeDefined();
+    expect(["Annual IEP", "Current IEP"]).toContain(uploadRes.documentType);
+    expect(uploadRes.schoolYear).toBeDefined();
+    expect(uploadRes.analysis).toBeDefined();
+  });
+
+  it("manages authoritative IEP family and historical versions", async () => {
+    const ctx = createClientContext(42);
+    const caller = appRouter.createCaller(ctx);
+
+    const iepData = await caller.clientFiles.getCurrentIep({
+      clientId: 42,
+      studentId: 101,
+    });
+
+    expect(iepData).toBeDefined();
+    expect(iepData).toHaveProperty("currentFamily");
+    expect(iepData).toHaveProperty("versionHistory");
+    expect(Array.isArray(iepData.versionHistory)).toBe(true);
+
+    const families = await caller.clientFiles.listIepFamilies({
+      studentId: 101,
+    });
+    expect(Array.isArray(families)).toBe(true);
+  });
 });

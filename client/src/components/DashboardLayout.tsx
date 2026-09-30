@@ -296,7 +296,6 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       groupLabel: "System & Config",
       items: [
         { icon: Plug, label: "Integrations", path: "/integrations" },
-        { icon: Settings, label: "Settings", path: "/settings" },
       ],
     },
   ];

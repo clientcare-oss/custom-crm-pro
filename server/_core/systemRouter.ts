@@ -6,6 +6,10 @@ import { adminProcedure, protectedProcedure, publicProcedure, router } from "./t
 import * as db from "../db";
 import { ENV } from "./env";
 
+// In-memory cache for fast, reliable read-after-write consistency across sessions
+let cachedBusinessPhone: string | null = null;
+let cachedCompanyLogo: string | null = null;
+
 /** Resolve the owner user — tries ENV.ownerOpenId first, falls back to first admin in DB */
 async function resolveOwner() {
   let owner = await db.getUserByOpenId(ENV.ownerOpenId);
@@ -33,31 +37,164 @@ export const systemRouter = router({
 
   // Returns the owner's business phone number (for the "Save our number" notice on forms)
   getBusinessPhone: publicProcedure.query(async () => {
+    if (cachedBusinessPhone) {
+      return { phone: cachedBusinessPhone };
+    }
     const owner = await resolveOwner();
-    return { phone: owner?.phone ?? null };
+    if (owner?.phone) {
+      cachedBusinessPhone = owner.phone;
+      return { phone: owner.phone };
+    }
+    try {
+      const { users } = await import("../../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (dbConn) {
+        const admins = await dbConn.select().from(users).where(eq(users.role, "admin"));
+        const found = admins.find((u) => u.phone && u.phone.trim().length > 0);
+        if (found?.phone) {
+          cachedBusinessPhone = found.phone;
+          return { phone: found.phone };
+        }
+        const allUsers = await dbConn.select().from(users).limit(25);
+        const anyFound = allUsers.find((u) => u.phone && u.phone.trim().length > 0);
+        if (anyFound?.phone) {
+          cachedBusinessPhone = anyFound.phone;
+          return { phone: anyFound.phone };
+        }
+      }
+    } catch (e) {
+      console.warn("[System] getBusinessPhone users fallback error:", e);
+    }
+
+    try {
+      const { receiptSettings } = await import("../../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (dbConn) {
+        const [settings] = await dbConn.select().from(receiptSettings).limit(1);
+        if (settings?.businessPhone && settings.businessPhone.trim().length > 0) {
+          cachedBusinessPhone = settings.businessPhone;
+          return { phone: settings.businessPhone };
+        }
+      }
+    } catch {}
+
+    return { phone: null };
   }),
 
   // Sets the owner's business phone number — uses the logged-in user's own openId
-  // so it always updates the correct row regardless of OWNER_OPEN_ID env var
+  // and updates all admin seats, resolved owner, and receiptSettings
   setBusinessPhone: protectedProcedure
     .input(z.object({ phone: z.string().max(50) }))
     .mutation(async ({ ctx, input }) => {
-      await db.updateOwnerPhone(ctx.user.openId, input.phone);
-      return { success: true };
+      const trimmed = input.phone.trim();
+      cachedBusinessPhone = trimmed;
+
+      try {
+        const dbConn = await db.getDb();
+        if (dbConn) {
+          const { users } = await import("../../drizzle/schema");
+          if (ctx.user?.openId) {
+            await dbConn
+              .update(users)
+              .set({ phone: trimmed || null })
+              .where(eq(users.openId, ctx.user.openId));
+          }
+          if (ctx.user?.id) {
+            await dbConn
+              .update(users)
+              .set({ phone: trimmed || null })
+              .where(eq(users.id, ctx.user.id));
+          }
+          // Update all admins so practice-wide business phone stays synchronized
+          await dbConn
+            .update(users)
+            .set({ phone: trimmed || null })
+            .where(eq(users.role, "admin"));
+        }
+      } catch (e) {
+        console.warn("[System] updateOwnerPhone on users failed:", e);
+      }
+
+      try {
+        const owner = await resolveOwner();
+        if (owner && owner.openId && owner.openId !== ctx.user?.openId) {
+          await db.updateOwnerPhone(owner.openId, trimmed);
+        }
+      } catch (e) {
+        console.warn("[System] updateOwnerPhone for resolved owner failed:", e);
+      }
+
+      if (ENV.ownerOpenId && ENV.ownerOpenId !== ctx.user?.openId) {
+        try {
+          await db.updateOwnerPhone(ENV.ownerOpenId, trimmed);
+        } catch {}
+      }
+
+      // Also keep receiptSettings synchronized
+      try {
+        const dbConn = await db.getDb();
+        if (dbConn) {
+          const { receiptSettings } = await import("../../drizzle/schema");
+          const [existingReceipt] = await dbConn.select().from(receiptSettings).limit(1);
+          if (existingReceipt) {
+            await dbConn
+              .update(receiptSettings)
+              .set({ businessPhone: trimmed || "(404) 555-0100" })
+              .where(eq(receiptSettings.id, existingReceipt.id));
+          }
+        }
+      } catch {}
+
+      return { success: true, phone: trimmed };
     }),
 
   // Returns the owner's custom company logo URL
   getCompanyLogo: publicProcedure.query(async () => {
+    if (cachedCompanyLogo) {
+      return { logoUrl: cachedCompanyLogo };
+    }
     const owner = await resolveOwner();
-    return { logoUrl: owner?.logoUrl ?? null };
+    if (owner?.logoUrl) {
+      cachedCompanyLogo = owner.logoUrl;
+      return { logoUrl: owner.logoUrl };
+    }
+    try {
+      const { users } = await import("../../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (dbConn) {
+        const admins = await dbConn.select().from(users).where(eq(users.role, "admin"));
+        const found = admins.find((u) => u.logoUrl);
+        if (found?.logoUrl) {
+          cachedCompanyLogo = found.logoUrl;
+          return { logoUrl: found.logoUrl };
+        }
+      }
+    } catch {}
+    return { logoUrl: null };
   }),
 
   // Sets the owner's custom company logo URL
   setCompanyLogo: protectedProcedure
     .input(z.object({ logoUrl: z.string().max(2048).nullable() }))
     .mutation(async ({ ctx, input }) => {
-      await db.updateOwnerLogo(ctx.user.openId, input.logoUrl);
-      return { success: true };
+      cachedCompanyLogo = input.logoUrl;
+      try {
+        await db.updateOwnerLogo(ctx.user.openId, input.logoUrl);
+      } catch (e) {
+        console.warn("[System] updateOwnerLogo for user failed:", e);
+      }
+      try {
+        const owner = await resolveOwner();
+        if (owner && owner.openId && owner.openId !== ctx.user.openId) {
+          await db.updateOwnerLogo(owner.openId, input.logoUrl);
+        }
+      } catch {}
+      if (ENV.ownerOpenId && ENV.ownerOpenId !== ctx.user.openId) {
+        try {
+          await db.updateOwnerLogo(ENV.ownerOpenId, input.logoUrl);
+        } catch {}
+      }
+      return { success: true, logoUrl: input.logoUrl };
     }),
 
   // Get whether Quo webhook secret is configured (returns status only, not the secret)

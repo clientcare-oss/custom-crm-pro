@@ -218,7 +218,11 @@ function ReferralProgramSettingsCard() {
   );
 }
 
-export function AdminCrmSettingsTab() {
+export interface AdminCrmSettingsTabProps {
+  onPhoneUpdated?: (phone: string) => void;
+}
+
+export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps = {}) {
   const { projectLabel, setProjectLabel, presetOptions, projectIconKey, setProjectIconKey } = useTerminology();
   const [customValue, setCustomValue] = useState(
     presetOptions.some((o) => o.value === projectLabel) ? "" : projectLabel
@@ -227,11 +231,18 @@ export function AdminCrmSettingsTab() {
     presetOptions.some((o) => o.value === projectLabel) ? projectLabel : "__custom__"
   );
 
+  const utils = trpc.useUtils();
+
   // Business phone state
   const [phoneValue, setPhoneValue] = useState("");
   const { data: phoneData } = trpc.system.getBusinessPhone.useQuery();
   const setPhoneMutation = trpc.system.setBusinessPhone.useMutation({
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      const saved = variables.phone || data?.phone || "";
+      setPhoneValue(saved);
+      utils.system.getBusinessPhone.setData(undefined, { phone: saved || null });
+      utils.system.getBusinessPhone.invalidate();
+      onPhoneUpdated?.(saved);
       toast.success("Business phone number saved");
     },
     onError: () => toast.error("Failed to save phone number"),
@@ -242,7 +253,9 @@ export function AdminCrmSettingsTab() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
   const setLogoMutation = trpc.system.setCompanyLogo.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      utils.system.getCompanyLogo.setData(undefined, { logoUrl: variables.logoUrl || null });
+      utils.system.getCompanyLogo.invalidate();
       toast.success("Company logo updated");
     },
     onError: () => toast.error("Failed to update logo"),

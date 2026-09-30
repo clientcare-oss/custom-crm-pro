@@ -16,8 +16,23 @@ import { ReceiptSettingsTab } from "@/components/settings/ReceiptSettingsTab";
 
 export default function Settings() {
   const { projectLabel } = useTerminology();
-  const { data: phoneData } = trpc.system.getBusinessPhone.useQuery();
+  const { data: phoneData, refetch: refetchPhone } = trpc.system.getBusinessPhone.useQuery();
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
+
+  const [livePhone, setLivePhone] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (phoneData?.phone) {
+      setLivePhone(phoneData.phone);
+    }
+  }, [phoneData?.phone]);
+
+  const handlePhoneUpdated = (newPhone: string) => {
+    setLivePhone(newPhone);
+    refetchPhone();
+  };
+
+  const displayPhone = livePhone || phoneData?.phone || "Not Set";
 
   // Resolve initial section from URL query parameter
   const resolveInitialSection = (): SettingsSectionKey => {
@@ -81,7 +96,7 @@ export default function Settings() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <Building className="w-3.5 h-3.5 text-primary" />
-              <span className="text-muted-foreground">Firm:</span>
+              <span className="text-muted-foreground">Advocacy Practice:</span>
               <span className="font-bold text-foreground">Waypoint Advocates</span>
             </div>
 
@@ -90,7 +105,7 @@ export default function Settings() {
             <div className="flex items-center gap-1.5">
               <Phone className="w-3.5 h-3.5 text-emerald-500" />
               <span className="text-muted-foreground">Phone:</span>
-              <span className="font-bold text-foreground">{phoneData?.phone || "(404) 555-0199"}</span>
+              <span className="font-bold text-foreground font-mono">{displayPhone}</span>
             </div>
 
             <span className="text-slate-600 hidden sm:inline">•</span>
@@ -122,7 +137,7 @@ export default function Settings() {
         {/* SECTION 1: Payment Receipts (PG-024-REC) */}
         {activeSection === "receipts" && (
           <div className="space-y-4">
-            <ReceiptSettingsTab />
+            <ReceiptSettingsTab onPhoneUpdated={handlePhoneUpdated} />
           </div>
         )}
 
@@ -135,7 +150,7 @@ export default function Settings() {
 
         {/* SECTION 3: Admin CRM (What Byron & Staff See) */}
         {activeSection === "admin" && (
-          <AdminCrmSettingsTab />
+          <AdminCrmSettingsTab onPhoneUpdated={handlePhoneUpdated} />
         )}
 
         {/* SECTION 4: Business Operations & Workflow Designer */}

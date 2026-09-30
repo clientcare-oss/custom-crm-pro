@@ -264,6 +264,10 @@ export const leadFormsRouter = router({
           contactId: parentContactId,
           source: input.referralCode ? `${form.name} (Ref: ${input.referralCode})` : form.name,
           status: "New",
+          parentName: `${input.parentFirstName} ${input.parentLastName}`.trim(),
+          parentPhone: input.parentPhone || undefined,
+          studentName: `${input.studentFirstName} ${input.studentLastName}`.trim(),
+          studentGrade: input.gradeLevel || undefined,
           notes: `Form submission: ${form.name}. Student: ${input.studentFirstName} ${input.studentLastName}.${input.referralCode ? ` Referral Code: ${input.referralCode}.` : ''}${input.referredBy ? ` Referred By: ${input.referredBy}.` : ''}`,
         }, ownerId);
         const leadId = db.getInsertId(leadResult);

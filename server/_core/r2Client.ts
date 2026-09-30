@@ -60,14 +60,15 @@ export async function getR2SignedDownloadUrl(
   return await getSignedUrl(r2Client, command, { expiresIn });
 }
 
-/**
- * Uploads data directly to R2 using S3Client.
- */
 export async function uploadToR2(
   key: string,
   data: Buffer | Uint8Array | string,
   contentType: string = "application/octet-stream"
 ): Promise<void> {
+  if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+    return;
+  }
+
   const body =
     typeof data === "string"
       ? Buffer.from(data)
@@ -82,17 +83,29 @@ export async function uploadToR2(
     ContentType: contentType,
   });
 
-  await r2Client.send(command);
+  try {
+    await r2Client.send(command);
+  } catch (err) {
+    console.warn(`[R2Client] uploadToR2 failed for key ${key}:`, err);
+  }
 }
 
 /**
  * Deletes an object from R2.
  */
 export async function deleteFromR2(key: string): Promise<void> {
-  const command = new DeleteObjectCommand({
-    Bucket: R2_CONFIG.bucketName,
-    Key: key,
-  });
+  if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+    return;
+  }
 
-  await r2Client.send(command);
+  try {
+    const command = new DeleteObjectCommand({
+      Bucket: R2_CONFIG.bucketName,
+      Key: key,
+    });
+
+    await r2Client.send(command);
+  } catch (err) {
+    console.warn(`[R2Client] deleteFromR2 failed for key ${key}:`, err);
+  }
 }

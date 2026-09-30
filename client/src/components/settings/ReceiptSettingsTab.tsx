@@ -133,17 +133,27 @@ const SAMPLE_SCENARIOS: Record<PreviewScenario, TransactionReceiptData> = {
   },
 };
 
-export const ReceiptSettingsTab: React.FC = () => {
+export interface ReceiptSettingsTabProps {
+  onPhoneUpdated?: (phone: string) => void;
+}
+
+export const ReceiptSettingsTab: React.FC<ReceiptSettingsTabProps> = ({ onPhoneUpdated }) => {
+  const utils = trpc.useUtils();
   // Query server settings
   const { data: serverSettings, refetch } = trpc.receipts.getSettings.useQuery();
   const { data: systemTests, refetch: refetchTests } = trpc.receipts.runSystemTest.useQuery();
   const { data: recentTransactions } = trpc.receipts.listRecent.useQuery({ limit: 5 });
 
   const updateMutation = trpc.receipts.updateSettings.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("✓ Receipt settings saved successfully");
       refetch();
       refetchTests();
+      if (variables.businessPhone !== undefined) {
+        utils.system.getBusinessPhone.setData(undefined, { phone: variables.businessPhone || null });
+        utils.system.getBusinessPhone.invalidate();
+        onPhoneUpdated?.(variables.businessPhone || "");
+      }
     },
     onError: (err) => {
       toast.error(err.message || "Failed to save receipt settings");

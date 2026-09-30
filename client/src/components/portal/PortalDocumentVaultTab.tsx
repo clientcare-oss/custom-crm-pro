@@ -1,55 +1,40 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { 
   Folder, 
-  FolderPlus, 
   FileText, 
   FileSpreadsheet, 
   Mail, 
   Lock, 
   ShieldCheck, 
   Search, 
-  Filter, 
-  ArrowUpDown, 
-  Grid, 
-  List, 
   ChevronRight, 
-  ChevronLeft, 
-  Star, 
   Clock, 
-  Plus, 
   Download, 
   Eye, 
-  Info, 
   CheckCircle2, 
+  Circle,
   Sparkles, 
   FileCode, 
-  HelpCircle,
-  ExternalLink,
   MoreVertical,
-  X,
-  UploadCloud,
-  FileCheck,
+  UploadCloud, 
+  RefreshCw,
   Camera,
   HardDrive,
   ChevronDown,
-  Activity,
-  School,
-  Layers,
-  ArrowRight,
-  Shield,
-  Award
+  X,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
 import { CameraScannerModal } from "@/components/portal/CameraScannerModal";
-import VaultSafeIcon from "@/components/ui/VaultSafeIcon";
+import { trpc } from "@/lib/trpc";
+import { PreEnrollmentAcknowledgmentModal } from "@/components/portal/vault/PreEnrollmentAcknowledgmentModal";
+import { StatusAwareUploadModal } from "@/components/portal/vault/StatusAwareUploadModal";
+import { ViewAcknowledgmentModal } from "@/components/portal/vault/ViewAcknowledgmentModal";
+import { AiDocumentAnalysisModal } from "@/components/portal/vault/AiDocumentAnalysisModal";
 
 interface PortalDocumentVaultTabProps {
   effectiveStudent?: any;
@@ -63,7 +48,11 @@ export interface VaultWorkspace {
   name: string;
   fileCount: number;
   description: string;
-  iconColor?: string;
+  iconSrc: string;
+  accentBorder: string;
+  accentGlow: string;
+  accentText: string;
+  extraInfo?: string;
 }
 
 export interface VaultDocument {
@@ -78,219 +67,153 @@ export interface VaultDocument {
   isPinned?: boolean;
   uploadedBy: "Waypoint" | "Parent";
   summary?: string;
+  uploadOrigin?: "Pre-Enrollment" | "Client" | "Advocate";
+  isReviewed?: number;
+  documentType?: string;
+  documentDate?: string;
+  fileUrl?: string;
 }
 
 const INITIAL_WORKSPACES: VaultWorkspace[] = [
-  { id: "ieps-504s", name: "IEPs & 504s", fileCount: 12, description: "Current & historical IEPs, 504 plans, and amendments" },
-  { id: "evaluations", name: "Evaluations", fileCount: 10, description: "Psycho-ed evals, speech-language, OT, and PT assessments" },
-  { id: "school-records", name: "School Records", fileCount: 9, description: "Report cards, standardized test results, and attendance records" },
-  { id: "communication", name: "Communication", fileCount: 7, description: "Teacher emails, PWN notices, and meeting invites" },
-  { id: "medical-therapy", name: "Medical & Therapy", fileCount: 6, description: "Physician letters, clinical diagnosis notes, and private therapy reports" },
-  { id: "behavior-fba", name: "Behavior / FBA / BIP", fileCount: 5, description: "Functional behavioral assessments and behavior intervention plans" },
-  { id: "progress-reports", name: "Progress Reports", fileCount: 6, description: "Quarterly IEP goal tracking and special education progress marks" },
+  {
+    id: "ieps-504s",
+    name: "IEPs & 504s",
+    fileCount: 12,
+    description: "Current & historical IEPs, 504 plans, and amendments",
+    iconSrc: "/assets/vault/folder_ieps.png",
+    accentBorder: "border-amber-400/50 hover:border-amber-300",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(245,181,68,0.25)]",
+    accentText: "text-amber-400",
+    extraInfo: "Current IEP updated\nSep 10, 2026"
+  },
+  {
+    id: "evaluations",
+    name: "Evaluations",
+    fileCount: 10,
+    description: "Psycho-ed evals, speech-language, OT, and PT assessments",
+    iconSrc: "/assets/vault/folder_evals.png",
+    accentBorder: "border-sky-500/50 hover:border-sky-400",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(56,189,248,0.25)]",
+    accentText: "text-sky-400"
+  },
+  {
+    id: "school-records",
+    name: "School Records",
+    fileCount: 9,
+    description: "Report cards, standardized test results, and attendance records",
+    iconSrc: "/assets/vault/folder_school.png",
+    accentBorder: "border-teal-400/50 hover:border-teal-300",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(45,212,191,0.25)]",
+    accentText: "text-teal-400"
+  },
+  {
+    id: "communication",
+    name: "Communication",
+    fileCount: 7,
+    description: "Teacher emails, PWN notices, and meeting invites",
+    iconSrc: "/assets/vault/folder_comm.png",
+    accentBorder: "border-purple-400/50 hover:border-purple-300",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(192,132,252,0.25)]",
+    accentText: "text-purple-400"
+  },
+  {
+    id: "medical-therapy",
+    name: "Medical & Therapy",
+    fileCount: 6,
+    description: "Physician letters, clinical diagnosis notes, and private therapy reports",
+    iconSrc: "/assets/vault/folder_medical.png",
+    accentBorder: "border-rose-400/50 hover:border-rose-300",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(251,113,133,0.25)]",
+    accentText: "text-rose-400"
+  },
+  {
+    id: "behavior-fba",
+    name: "Behavior / FBA / BIP",
+    fileCount: 5,
+    description: "Functional behavioral assessments and behavior intervention plans",
+    iconSrc: "/assets/vault/folder_behavior.png",
+    accentBorder: "border-amber-500/50 hover:border-orange-400",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(251,146,60,0.25)]",
+    accentText: "text-orange-400"
+  },
+  {
+    id: "progress-reports",
+    name: "Progress Reports",
+    fileCount: 6,
+    description: "Quarterly IEP goal tracking and special education progress marks",
+    iconSrc: "/assets/vault/folder_progress.png",
+    accentBorder: "border-indigo-400/50 hover:border-indigo-300",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(129,140,248,0.25)]",
+    accentText: "text-indigo-400"
+  },
 ];
-
-interface FolderVisualConfig {
-  icon: React.ComponentType<{ className?: string }>;
-  badge: string;
-  badgeClass: string;
-  gradientClass: string;
-  borderClass: string;
-  iconBgClass: string;
-  iconColorClass: string;
-  glowClass: string;
-}
-
-const FOLDER_VISUAL_MAP: Record<string, FolderVisualConfig> = {
-  "ieps-504s": {
-    icon: FileText,
-    badge: "Legally Binding",
-    badgeClass: "bg-amber-400/15 text-amber-300 border-amber-400/30",
-    gradientClass: "from-amber-500/15 via-amber-500/5 to-transparent",
-    borderClass: "border-amber-400/30 hover:border-amber-400/70",
-    iconBgClass: "bg-amber-400/10 border-amber-400/30",
-    iconColorClass: "text-amber-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(245,181,68,0.2)]",
-  },
-  "evaluations": {
-    icon: Activity,
-    badge: "Clinical Evals",
-    badgeClass: "bg-indigo-400/15 text-indigo-300 border-indigo-400/30",
-    gradientClass: "from-indigo-500/15 via-indigo-500/5 to-transparent",
-    borderClass: "border-indigo-400/30 hover:border-indigo-400/70",
-    iconBgClass: "bg-indigo-400/10 border-indigo-400/30",
-    iconColorClass: "text-indigo-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(129,140,248,0.2)]",
-  },
-  "school-records": {
-    icon: School,
-    badge: "District Records",
-    badgeClass: "bg-sky-400/15 text-sky-300 border-sky-400/30",
-    gradientClass: "from-sky-500/15 via-sky-500/5 to-transparent",
-    borderClass: "border-sky-400/30 hover:border-sky-400/70",
-    iconBgClass: "bg-sky-400/10 border-sky-400/30",
-    iconColorClass: "text-sky-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(56,189,248,0.2)]",
-  },
-  "communication": {
-    icon: Mail,
-    badge: "PWN & Notices",
-    badgeClass: "bg-rose-400/15 text-rose-300 border-rose-400/30",
-    gradientClass: "from-rose-500/15 via-rose-500/5 to-transparent",
-    borderClass: "border-rose-400/30 hover:border-rose-400/70",
-    iconBgClass: "bg-rose-400/10 border-rose-400/30",
-    iconColorClass: "text-rose-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(251,113,133,0.2)]",
-  },
-  "medical-therapy": {
-    icon: ShieldCheck,
-    badge: "Private Therapy",
-    badgeClass: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
-    gradientClass: "from-emerald-500/15 via-emerald-500/5 to-transparent",
-    borderClass: "border-emerald-400/30 hover:border-emerald-400/70",
-    iconBgClass: "bg-emerald-400/10 border-emerald-400/30",
-    iconColorClass: "text-emerald-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(52,211,153,0.2)]",
-  },
-  "behavior-fba": {
-    icon: FileCheck,
-    badge: "BIP & Behavior",
-    badgeClass: "bg-orange-400/15 text-orange-300 border-orange-400/30",
-    gradientClass: "from-orange-500/15 via-orange-500/5 to-transparent",
-    borderClass: "border-orange-400/30 hover:border-orange-400/70",
-    iconBgClass: "bg-orange-400/10 border-orange-400/30",
-    iconColorClass: "text-orange-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(251,146,60,0.2)]",
-  },
-  "progress-reports": {
-    icon: FileSpreadsheet,
-    badge: "Quarterly Marks",
-    badgeClass: "bg-teal-400/15 text-teal-300 border-teal-400/30",
-    gradientClass: "from-teal-500/15 via-teal-500/5 to-transparent",
-    borderClass: "border-teal-400/30 hover:border-teal-400/70",
-    iconBgClass: "bg-teal-400/10 border-teal-400/30",
-    iconColorClass: "text-teal-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(45,212,191,0.2)]",
-  },
-};
-
-function getFolderVisual(id: string): FolderVisualConfig {
-  return FOLDER_VISUAL_MAP[id] || {
-    icon: Folder,
-    badge: "Custom Dossier",
-    badgeClass: "bg-amber-400/15 text-amber-300 border-amber-400/30",
-    gradientClass: "from-blue-500/15 via-blue-500/5 to-transparent",
-    borderClass: "border-blue-800/40 hover:border-amber-400/60",
-    iconBgClass: "bg-amber-400/10 border-amber-400/30",
-    iconColorClass: "text-amber-400",
-    glowClass: "group-hover:shadow-[0_0_20px_rgba(245,181,68,0.15)]",
-  };
-}
 
 const INITIAL_DOCUMENTS: VaultDocument[] = [
   {
     id: "doc-1",
-    title: "2025-08 IEP Meeting Notes.pdf",
+    title: "IEP Document",
     workspaceId: "ieps-504s",
     workspaceName: "IEPs & 504s",
     fileType: "pdf",
-    fileSize: "1.4 MB",
-    updatedAt: "2026-08-31",
-    relativeDate: "Today",
+    fileSize: "4.1 MB",
+    updatedAt: "Sep 10, 2026",
+    relativeDate: "Sep 10, 2026",
     isPinned: true,
     uploadedBy: "Waypoint",
-    summary: "Comprehensive meeting minutes and agreed reading accommodations recorded during annual IEP review."
+    documentType: "Current IEP",
+    summary: "Current legally binding IEP with specialized reading accommodations and behavioral milestones."
   },
   {
     id: "doc-2",
-    title: "PWN – Draft 2025.pdf",
-    workspaceId: "ieps-504s",
-    workspaceName: "IEPs & 504s",
-    fileType: "pdf",
-    fileSize: "840 KB",
-    updatedAt: "2026-08-30",
-    relativeDate: "Yesterday",
-    isPinned: false,
-    uploadedBy: "Waypoint",
-    summary: "Prior Written Notice draft detailing proposed modifications to special education classroom minutes."
-  },
-  {
-    id: "doc-3",
-    title: "Speech Language Eval Report.pdf",
-    workspaceId: "evaluations",
-    workspaceName: "Evaluations",
-    fileType: "pdf",
-    fileSize: "3.2 MB",
-    updatedAt: "2026-08-29",
-    relativeDate: "2 days ago",
-    isPinned: true,
-    uploadedBy: "Waypoint",
-    summary: "Standardized speech and expressive communication evaluation scores and clinician recommendations."
-  },
-  {
-    id: "doc-4",
-    title: "Progress Report – Q1.pdf",
-    workspaceId: "progress-reports",
-    workspaceName: "Progress Reports",
-    fileType: "pdf",
-    fileSize: "1.1 MB",
-    updatedAt: "2026-08-27",
-    relativeDate: "4 days ago",
-    isPinned: false,
-    uploadedBy: "Waypoint",
-    summary: "First quarter mastery milestones across math calculation and reading comprehension goals."
-  },
-  {
-    id: "doc-5",
-    title: "Email – Teacher Update.eml",
-    workspaceId: "communication",
-    workspaceName: "Communication",
-    fileType: "eml",
-    fileSize: "45 KB",
-    updatedAt: "2026-08-26",
-    relativeDate: "5 days ago",
-    isPinned: false,
-    uploadedBy: "Parent",
-    summary: "Thread between general education teacher regarding daily sensory break implementation."
-  },
-  {
-    id: "doc-6",
-    title: "Evaluation Summary.docx",
+    title: "Psychoeducational Evaluation",
     workspaceId: "evaluations",
     workspaceName: "Evaluations",
     fileType: "doc",
-    fileSize: "620 KB",
-    updatedAt: "2026-08-10",
-    relativeDate: "Aug 10",
-    isPinned: true,
-    uploadedBy: "Waypoint",
-    summary: "Multi-disciplinary assessment consolidation prepared by Byron Honea."
-  },
-  {
-    id: "doc-7",
-    title: "Eligibility Report.pdf",
-    workspaceId: "evaluations",
-    workspaceName: "Evaluations",
-    fileType: "pdf",
     fileSize: "2.8 MB",
-    updatedAt: "2026-08-08",
-    relativeDate: "Aug 08",
+    updatedAt: "Aug 22, 2026",
+    relativeDate: "Aug 22, 2026",
     isPinned: true,
     uploadedBy: "Waypoint",
-    summary: "Official IDEA Specific Learning Disability & OHI eligibility determination."
+    summary: "Multi-disciplinary cognitive and academic achievement diagnostic report."
   },
   {
-    id: "doc-8",
-    title: "Accommodations At-A-Glance.xlsx",
-    workspaceId: "ieps-504s",
-    workspaceName: "IEPs & 504s",
+    id: "doc-3",
+    title: "Progress Report",
+    workspaceId: "progress-reports",
+    workspaceName: "Progress Reports",
     fileType: "xlsx",
-    fileSize: "150 KB",
-    updatedAt: "2026-08-01",
-    relativeDate: "Aug 01",
-    isPinned: true,
+    fileSize: "1.1 MB",
+    updatedAt: "Aug 15, 2026",
+    relativeDate: "Aug 15, 2026",
+    isPinned: false,
     uploadedBy: "Waypoint",
-    summary: "Quick-reference matrix of testing accommodations and sensory tools for school staff."
+    summary: "Quarterly milestone tracking across math calculation and reading fluency benchmarks."
+  },
+  {
+    id: "doc-4",
+    title: "Behavior Plan (BIP)",
+    workspaceId: "behavior-fba",
+    workspaceName: "Behavior / FBA / BIP",
+    fileType: "pdf",
+    fileSize: "3.3 MB",
+    updatedAt: "Aug 2, 2026",
+    relativeDate: "Aug 2, 2026",
+    isPinned: false,
+    uploadedBy: "Waypoint",
+    summary: "Targeted sensory-break protocols and positive reinforcement strategies."
+  },
+  {
+    id: "doc-5",
+    title: "Teacher Communication",
+    workspaceId: "communication",
+    workspaceName: "Communication",
+    fileType: "eml",
+    fileSize: "652 KB",
+    updatedAt: "Jul 28, 2026",
+    relativeDate: "Jul 28, 2026",
+    isPinned: false,
+    uploadedBy: "Parent",
+    summary: "Discussion thread regarding weekly classroom accommodations and sensory check-ins."
   }
 ];
 
@@ -300,12 +223,15 @@ export default function PortalDocumentVaultTab({
   onNavigateTab,
   isLight = false,
 }: PortalDocumentVaultTabProps) {
-  const studentName = effectiveStudent ? `${effectiveStudent.firstName || ""} ${effectiveStudent.lastName || ""}`.trim() : "Student";
+  const studentFullName = effectiveStudent 
+    ? `${effectiveStudent.firstName || ""} ${effectiveStudent.lastName || ""}`.trim() 
+    : "Liam Jenkins";
+  const studentFirstName = effectiveStudent?.firstName || (studentFullName.split(" ")[0] || "Liam");
   const studentId = effectiveStudent?.id || 101;
   const storageKeyWorkspaces = `waypoint_vault_workspaces_${studentId}`;
   const storageKeyDocs = `waypoint_vault_documents_${studentId}`;
 
-  // State
+  // Workspaces state
   const [workspaces, setWorkspaces] = useState<VaultWorkspace[]>(() => {
     try {
       const saved = localStorage.getItem(storageKeyWorkspaces);
@@ -315,6 +241,7 @@ export default function PortalDocumentVaultTab({
     }
   });
 
+  // Documents state
   const [documents, setDocuments] = useState<VaultDocument[]>(() => {
     try {
       const saved = localStorage.getItem(storageKeyDocs);
@@ -324,56 +251,94 @@ export default function PortalDocumentVaultTab({
     }
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name">("newest");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  // Modals
-  const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const [showSecurityModal, setShowSecurityModal] = useState(false);
-  const [showNewWorkspaceModal, setShowNewWorkspaceModal] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showPinModal, setShowPinModal] = useState(false);
+  // Modals & Popovers
   const [selectedDocForPreview, setSelectedDocForPreview] = useState<VaultDocument | null>(null);
   const [activeWorkspaceModal, setActiveWorkspaceModal] = useState<VaultWorkspace | null>(null);
+  const [showAllFoldersModal, setShowAllFoldersModal] = useState(false);
+  const [showAllDocsModal, setShowAllDocsModal] = useState(false);
+  const [activeDropdownDocId, setActiveDropdownDocId] = useState<string | null>(null);
+  const [isDragOverUpload, setIsDragOverUpload] = useState(false);
 
-  // 2-Choice Upload Menu & Camera Scanner States
-  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
-  const uploadMenuRef = useRef<HTMLDivElement>(null);
+  // Status-Aware Document Vault Architecture
+  const { data: vaultStatus, refetch: refetchVaultStatus } = trpc.clientFiles.getVaultStatus.useQuery(
+    { studentId },
+    { retry: false }
+  );
+
+  const { data: serverVaultFiles, refetch: refetchVaultFiles } = trpc.clientFiles.listVault.useQuery(
+    { studentId },
+    { retry: false }
+  );
+
+  const [showPreEnrollmentAckModal, setShowPreEnrollmentAckModal] = useState(false);
+  const [showStatusAwareUploadModal, setShowStatusAwareUploadModal] = useState(false);
+  const [showViewAckModal, setShowViewAckModal] = useState(false);
+  const [analysisModalFileId, setAnalysisModalFileId] = useState<number | null>(null);
+  const [analysisModalFileName, setAnalysisModalFileName] = useState<string>("");
+  const [localAckAccepted, setLocalAckAccepted] = useState(false);
   const [showCameraScannerModal, setShowCameraScannerModal] = useState(false);
 
-  // Close upload menu on click outside
+  const isRelationshipActive = vaultStatus?.isRelationshipActive ?? false;
+  const isAckAccepted = isRelationshipActive || localAckAccepted || (vaultStatus?.preEnrollmentAcknowledgmentAccepted ?? false);
+
+  const handleInitiateUpload = useCallback(() => {
+    if (!isRelationshipActive && !isAckAccepted) {
+      setShowPreEnrollmentAckModal(true);
+    } else {
+      setShowStatusAwareUploadModal(true);
+    }
+  }, [isRelationshipActive, isAckAccepted]);
+
+  // Synchronize server-side uploaded files into local documents state
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (uploadMenuRef.current && !uploadMenuRef.current.contains(event.target as Node)) {
-        setUploadMenuOpen(false);
+    if (serverVaultFiles && serverVaultFiles.length > 0) {
+      setDocuments((prevDocs) => {
+        const existingIds = new Set(prevDocs.map((d) => d.id));
+        const newServerDocs: VaultDocument[] = serverVaultFiles
+          .filter((sf) => !existingIds.has(String(sf.id)))
+          .map((sf) => ({
+            id: String(sf.id),
+            title: sf.fileName,
+            workspaceId: sf.category || "ieps-504s",
+            workspaceName: sf.categoryName || "IEPs & 504s",
+            fileType: sf.fileName.endsWith(".xlsx") || sf.fileName.endsWith(".csv") ? "xlsx" 
+              : sf.fileName.endsWith(".docx") || sf.fileName.endsWith(".doc") ? "doc"
+              : sf.fileName.endsWith(".eml") ? "eml"
+              : "pdf",
+            fileSize: sf.fileSize ? `${(sf.fileSize / 1024 / 1024).toFixed(1)} MB` : "1.8 MB",
+            updatedAt: new Date(sf.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            relativeDate: "Recently",
+            isPinned: false,
+            uploadedBy: sf.uploadOrigin === "Advocate" ? "Waypoint" : "Parent",
+            summary: sf.summary || "Permanent educational record safely archived in Document Vault.",
+            uploadOrigin: sf.uploadOrigin as any,
+            isReviewed: sf.isReviewed,
+            documentType: sf.documentType,
+            documentDate: sf.documentDate || undefined,
+            fileUrl: sf.fileUrl,
+          }));
+
+        if (newServerDocs.length > 0) {
+          return [...newServerDocs, ...prevDocs];
+        }
+        return prevDocs;
+      });
+    }
+  }, [serverVaultFiles]);
+
+  // Handle URL trigger from lead form: ?action=upload
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("action") === "upload") {
+        if (!isRelationshipActive && !isAckAccepted) {
+          setShowPreEnrollmentAckModal(true);
+        } else {
+          setShowStatusAwareUploadModal(true);
+        }
       }
     }
-    if (uploadMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [uploadMenuOpen]);
-
-  // Form states
-  const [newWorkspaceName, setNewWorkspaceName] = useState("");
-  const [newWorkspaceDesc, setNewWorkspaceDesc] = useState("");
-  const [uploadTitle, setUploadTitle] = useState("");
-  const [uploadWorkspaceId, setUploadWorkspaceId] = useState(INITIAL_WORKSPACES[0].id);
-
-  // Save to localStorage
-  const saveWorkspaces = (next: VaultWorkspace[]) => {
-    setWorkspaces(next);
-    localStorage.setItem(storageKeyWorkspaces, JSON.stringify(next));
-  };
-
-  const saveDocuments = (next: VaultDocument[]) => {
-    setDocuments(next);
-    localStorage.setItem(storageKeyDocs, JSON.stringify(next));
-  };
+  }, [isRelationshipActive, isAckAccepted]);
 
   // Synchronize external uploads (e.g. from ClientPortalHeader)
   useEffect(() => {
@@ -381,14 +346,14 @@ export default function PortalDocumentVaultTab({
       try {
         const saved = localStorage.getItem(storageKeyDocs);
         if (saved) setDocuments(JSON.parse(saved));
-        const savedWs = localStorage.getItem(storageKeyWorkspaces);
-        if (savedWs) setWorkspaces(JSON.parse(savedWs));
+        refetchVaultFiles();
+        refetchVaultStatus();
       } catch (e) {
         console.error("Failed to sync vault:", e);
       }
     };
     const handleOpenUpload = () => {
-      setShowUploadModal(true);
+      handleInitiateUpload();
     };
 
     window.addEventListener("waypoint:vault-updated", handleVaultUpdated);
@@ -397,1153 +362,647 @@ export default function PortalDocumentVaultTab({
       window.removeEventListener("waypoint:vault-updated", handleVaultUpdated);
       window.removeEventListener("waypoint:open-upload-modal", handleOpenUpload);
     };
-  }, [storageKeyDocs, storageKeyWorkspaces]);
+  }, [storageKeyDocs, handleInitiateUpload, refetchVaultFiles, refetchVaultStatus]);
 
-  // Filtered and sorted documents
-  const filteredDocuments = useMemo(() => {
-    return documents
-      .filter((doc) => {
-        const matchesSearch = 
-          doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          doc.workspaceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (doc.summary && doc.summary.toLowerCase().includes(searchQuery.toLowerCase()));
-        
-        const matchesWorkspace = 
-          selectedWorkspaceFilter === "all" || doc.workspaceId === selectedWorkspaceFilter;
+  // Close dropdown menu on outside click
+  useEffect(() => {
+    function handleClickOutside() {
+      setActiveDropdownDocId(null);
+    }
+    if (activeDropdownDocId) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [activeDropdownDocId]);
 
-        return matchesSearch && matchesWorkspace;
-      })
-      .sort((a, b) => {
-        if (sortBy === "newest") return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-        if (sortBy === "oldest") return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-        if (sortBy === "name") return a.title.localeCompare(b.title);
-        return 0;
-      });
-  }, [documents, searchQuery, selectedWorkspaceFilter, sortBy]);
-
-  // Pinned documents
-  const pinnedDocuments = useMemo(() => {
-    return documents.filter((d) => d.isPinned);
+  // Find the authoritative current IEP
+  const currentIepDoc = useMemo(() => {
+    return documents.find(
+      (d) => d.documentType === "Current IEP" || (d.workspaceId === "ieps-504s" && !d.title.toLowerCase().includes("504"))
+    ) || documents[0];
   }, [documents]);
 
-  // Actions
-  const handleCreateWorkspace = () => {
-    if (!newWorkspaceName.trim()) {
-      toast.error("Please enter a workspace name.");
-      return;
-    }
-    const id = newWorkspaceName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const newWs: VaultWorkspace = {
-      id,
-      name: newWorkspaceName.trim(),
-      fileCount: 0,
-      description: newWorkspaceDesc.trim() || "Dedicated student record category",
+  const currentIepDate = useMemo(() => {
+    if (currentIepDoc?.documentDate) return currentIepDoc.documentDate;
+    if (vaultStatus?.documentsSummary?.currentIepDate) return vaultStatus.documentsSummary.currentIepDate;
+    return "September 10, 2026";
+  }, [currentIepDoc, vaultStatus]);
+
+  // File health checks
+  const documentsSummary = useMemo(() => {
+    return vaultStatus?.documentsSummary || {
+      hasCurrentIep: documents.some((d) => (d.workspaceId === "ieps-504s" || d.documentType === "Current IEP") && !d.title.toLowerCase().includes("504")),
+      currentIepDate: currentIepDate,
+      hasCurrent504: documents.some((d) => d.title.toLowerCase().includes("504") || d.documentType === "504 Plan"),
+      hasEvaluation: documents.some((d) => d.workspaceId === "evaluations" || d.documentType?.includes("Evaluation") || d.title.toLowerCase().includes("evaluation")),
+      hasProgressReport: documents.some((d) => d.workspaceId === "progress-reports" || d.documentType?.includes("Progress") || d.title.toLowerCase().includes("progress")),
     };
-    saveWorkspaces([...workspaces, newWs]);
-    setShowNewWorkspaceModal(false);
-    setNewWorkspaceName("");
-    setNewWorkspaceDesc("");
-    toast.success(`Created folder "${newWs.name}"!`);
-  };
+  }, [vaultStatus, documents, currentIepDate]);
 
-  const handleUploadDocument = () => {
-    if (!uploadTitle.trim()) {
-      toast.error("Please enter a document title or select a file.");
-      return;
-    }
-    const targetWs = workspaces.find((w) => w.id === uploadWorkspaceId) || workspaces[0];
-    const newDoc: VaultDocument = {
-      id: `doc-${Date.now()}`,
-      title: uploadTitle.endsWith(".pdf") ? uploadTitle : `${uploadTitle}.pdf`,
-      workspaceId: targetWs.id,
-      workspaceName: targetWs.name,
-      fileType: "pdf",
-      fileSize: "1.2 MB",
-      updatedAt: new Date().toISOString().split("T")[0],
-      relativeDate: "Just now",
-      isPinned: false,
-      uploadedBy: "Parent",
-      summary: "Uploaded by family into secure vault.",
-    };
+  // Dynamic counts for folders
+  const dynamicWorkspaces = useMemo(() => {
+    return workspaces.map((ws) => {
+      const count = documents.filter((d) => d.workspaceId === ws.id).length;
+      return {
+        ...ws,
+        fileCount: count > 0 ? count : ws.fileCount,
+      };
+    });
+  }, [workspaces, documents]);
 
-    const nextDocs = [newDoc, ...documents];
-    saveDocuments(nextDocs);
-
-    // Increment workspace count
-    const nextWs = workspaces.map((w) =>
-      w.id === targetWs.id ? { ...w, fileCount: w.fileCount + 1 } : w
-    );
-    saveWorkspaces(nextWs);
-
-    setShowUploadModal(false);
-    setUploadTitle("");
-    toast.success(`"${newDoc.title}" safely uploaded & encrypted in ${targetWs.name}!`);
-  };
-
-  const handleTogglePin = (docId: string) => {
-    const next = documents.map((d) =>
-      d.id === docId ? { ...d, isPinned: !d.isPinned } : d
-    );
-    saveDocuments(next);
-    const updated = next.find((d) => d.id === docId);
-    if (updated?.isPinned) {
-      toast.success(`Pinned "${updated.title}" to top favorites.`);
-    } else {
-      toast.info(`Unpinned "${updated?.title}".`);
-    }
-  };
-
-  // Helper for rendering luxury file chips
-  const renderFileTypeIcon = (type: VaultDocument["fileType"]) => {
+  // Render Luxury File Badges
+  const renderFileTypeBadge = (type: VaultDocument["fileType"]) => {
     switch (type) {
       case "pdf":
         return (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500/20 to-rose-600/30 border border-red-500/40 flex flex-col items-center justify-center text-red-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-            <FileText className="w-4 h-4 text-red-400" />
-            <span className="text-[8px] font-black uppercase tracking-tighter leading-none mt-0.5 text-red-300">PDF</span>
+          <div className="w-8 h-8 rounded-lg bg-[#E02424] text-white flex flex-col items-center justify-center shrink-0 shadow-md">
+            <span className="text-[9px] font-black uppercase tracking-wider leading-none">PDF</span>
           </div>
         );
       case "doc":
         return (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/30 border border-blue-400/40 flex flex-col items-center justify-center text-blue-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-            <FileCode className="w-4 h-4 text-blue-400" />
-            <span className="text-[8px] font-black uppercase tracking-tighter leading-none mt-0.5 text-blue-300">DOC</span>
+          <div className="w-8 h-8 rounded-lg bg-[#1A73E8] text-white flex flex-col items-center justify-center shrink-0 shadow-md">
+            <FileCode className="w-4 h-4 text-white" />
           </div>
         );
       case "xlsx":
         return (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-600/30 border border-emerald-400/40 flex flex-col items-center justify-center text-emerald-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-            <span className="text-[8px] font-black uppercase tracking-tighter leading-none mt-0.5 text-emerald-300">XLS</span>
+          <div className="w-8 h-8 rounded-lg bg-[#0F9D58] text-white flex flex-col items-center justify-center shrink-0 shadow-md">
+            <FileSpreadsheet className="w-4 h-4 text-white" />
           </div>
         );
       case "eml":
         return (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500/20 to-cyan-600/30 border border-sky-400/40 flex flex-col items-center justify-center text-sky-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-            <Mail className="w-4 h-4 text-sky-400" />
-            <span className="text-[8px] font-black uppercase tracking-tighter leading-none mt-0.5 text-sky-300">EML</span>
+          <div className="w-8 h-8 rounded-lg bg-[#8B5CF6] text-white flex flex-col items-center justify-center shrink-0 shadow-md">
+            <Mail className="w-4 h-4 text-white" />
           </div>
         );
       default:
         return (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/30 border border-amber-400/40 flex flex-col items-center justify-center text-amber-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-            <FileText className="w-4 h-4 text-amber-400" />
-            <span className="text-[8px] font-black uppercase tracking-tighter leading-none mt-0.5 text-amber-300">DOC</span>
+          <div className="w-8 h-8 rounded-lg bg-[#E02424] text-white flex flex-col items-center justify-center shrink-0 shadow-md">
+            <FileText className="w-4 h-4 text-white" />
           </div>
         );
     }
   };
 
   return (
-    <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 lg:space-y-8 animate-in fade-in duration-300 ${
-      isLight ? "text-slate-900" : "text-white"
-    }`}>
+    <div className="w-full min-h-screen bg-[#000820] text-white font-sans selection:bg-amber-400 selection:text-slate-950 pb-16">
       
-      {/* ── HEADER ──────────────────────────────────────────────────────── */}
-      <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5 pb-5 border-b border-white/10">
-        <div className="flex items-start gap-4">
-          {/* Executive Vault Safe Emblem */}
-          <div className="relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400/25 via-amber-500/15 to-[#040E1F] border border-amber-400/50 shadow-[0_0_24px_rgba(245,181,68,0.25)] shrink-0 group">
-            <VaultSafeIcon className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400 drop-shadow-[0_0_8px_rgba(245,181,68,0.4)]" />
-            <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-[#040E1F]"></span>
-            </span>
-          </div>
+      {/* ── ZONE 1: CINEMATIC DOCUMENT VAULT HERO ───────────────────────── */}
+      <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#020B1D] via-[#000820] to-[#000820] border-b border-blue-900/30">
+        
+        {/* Background Bank Vault Artwork */}
+        <div className="absolute right-0 top-0 bottom-0 w-full md:w-[70%] lg:w-[62%] pointer-events-none select-none z-0">
+          <img 
+            src="/assets/vault/vault_door_hero.png" 
+            alt="Bank Vault Door" 
+            className="w-full h-full object-cover object-right"
+            style={{
+              maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 40%, black 100%)",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 40%, black 100%)"
+            }}
+          />
+          {/* Subtle warm interior glow boost */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#000820] via-transparent to-transparent opacity-80" />
+        </div>
 
-          <div className="space-y-1 min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-400/10 text-amber-300 border border-amber-400/30 shadow-[0_0_10px_rgba(245,181,68,0.15)]">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" /> Bank-Grade Client Repository
+        {/* Hero Content Area */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 md:pt-10 md:pb-14">
+          <div className="max-w-xl lg:max-w-2xl">
+            
+            {/* Gold Outlined Badge */}
+            <div className="flex items-center gap-3 mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-widest text-amber-300 border border-amber-400/50 bg-amber-400/10 shadow-[0_0_12px_rgba(245,181,68,0.2)]">
+                <Lock className="w-3 h-3 text-amber-400" />
+                DOCUMENT VAULT
               </span>
               <PageIdBadge id="PG-023-VAULT" name="Document Vault" />
             </div>
 
-            <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-              Document Vault
+            {/* Student Name: Serif Display Typography */}
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-[54px] font-bold text-white tracking-tight leading-none mb-3.5 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+              {studentFullName}
             </h1>
 
-            <p className={`text-xs sm:text-sm ${isLight ? "text-slate-600" : "text-blue-200/80"} max-w-2xl`}>
-              Permanent zero-trust encrypted repository for {studentName}'s IEPs, evaluations, school records, and Byron Honea's case files.
+            {/* Human Reassuring Copy */}
+            <p className="text-slate-300 text-sm sm:text-base font-normal max-w-lg leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+              Your child’s important records, safely stored, organized, and always within reach.
             </p>
           </div>
         </div>
+      </section>
 
-        <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
-          {/* Upload Docs Button with 2 Options Popover */}
-          <div className="relative" ref={uploadMenuRef}>
+      {/* Main Content Viewport */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-2 space-y-7 sm:space-y-9 relative z-20">
+        
+        {/* ── ZONE 2: ACTION STRIP DIRECTLY BELOW HERO (3 PANELS) ───────── */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-3.5 lg:gap-4 items-stretch">
+          
+          {/* Panel A: CURRENT IEP */}
+          <div className="md:col-span-5 lg:col-span-5 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border border-blue-900/60 p-4 sm:p-5 flex items-center justify-between gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+            <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            
+            {/* Visual IEP Document Stack */}
+            <div className="relative shrink-0 flex items-center justify-center pl-1">
+              <img 
+                src="/assets/vault/iep_booklet_exact.png" 
+                alt="Current IEP Booklet" 
+                className="w-24 sm:w-28 md:w-32 h-auto object-contain drop-shadow-[0_6px_20px_rgba(0,0,0,0.7)] group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+
+            {/* Right Information */}
+            <div className="flex-1 min-w-0 pr-1">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-400 block mb-0.5">
+                CURRENT IEP
+              </span>
+
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-400/20 shrink-0" />
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
+                  On File
+                </h3>
+              </div>
+
+              <p className="text-xs text-slate-300 font-medium mb-3">
+                {currentIepDate}
+              </p>
+
+              <Button
+                type="button"
+                onClick={() => setSelectedDocForPreview(currentIepDoc)}
+                className="h-8 px-4 text-xs font-semibold rounded-full bg-[#082046] hover:bg-[#0c2f66] text-sky-200 border border-sky-400/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] gap-1.5 cursor-pointer transition-all hover:scale-[1.02]"
+              >
+                <span>View Current IEP</span>
+                <ArrowRight className="w-3.5 h-3.5 text-sky-300" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Panel B: NEED TO UPDATE? */}
+          <div className="md:col-span-4 lg:col-span-4 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border border-blue-900/60 p-4 sm:p-5 flex items-center gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+            {/* Circular Blue Refresh Icon */}
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#0A2347] border border-cyan-400/40 text-cyan-400 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(56,189,248,0.25)]">
+              <RefreshCw className="w-6 h-6 text-cyan-400" />
+            </div>
+
+            {/* Explanatory Friendly Text */}
+            <div className="min-w-0">
+              <h4 className="text-sm font-extrabold uppercase tracking-wide text-cyan-400 leading-tight mb-1">
+                NEED TO<br />UPDATE?
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                If you receive a newer IEP from the school, please upload it here so we can keep {studentFirstName}’s file current.
+              </p>
+            </div>
+          </div>
+
+          {/* Panel C: UPLOAD */}
+          <div 
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOverUpload(true);
+            }}
+            onDragLeave={() => setIsDragOverUpload(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragOverUpload(false);
+              handleInitiateUpload();
+            }}
+            className={`md:col-span-3 lg:col-span-3 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all ${
+              isDragOverUpload ? "border-amber-400 bg-amber-400/10 scale-[1.02]" : "border-blue-900/60"
+            }`}
+          >
+            {/* Large Gold Button */}
             <Button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setUploadMenuOpen((prev) => !prev);
-              }}
-              className="gap-2 text-xs font-bold bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-lg shadow-amber-400/25 hover:shadow-amber-400/40 h-10 px-4 rounded-xl border border-amber-200/50 transition-all cursor-pointer"
-              title="Add Documents to Secure Vault"
+              onClick={handleInitiateUpload}
+              className="w-full h-11 sm:h-12 rounded-xl bg-gradient-to-r from-[#F6B738] via-[#FAD36B] to-[#E5A425] hover:from-[#FAD36B] hover:to-[#F6B738] text-slate-950 font-extrabold text-sm sm:text-base shadow-[0_4px_24px_rgba(246,183,56,0.35)] gap-2 cursor-pointer transition-all active:scale-[0.99] border border-amber-200/40"
             >
-              <UploadCloud className="w-4 h-4 text-slate-950" />
-              <span>Upload Docs</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${uploadMenuOpen ? "rotate-180" : ""}`} />
+              <UploadCloud className="w-5 h-5 text-slate-950 stroke-[2.5]" />
+              <span>Upload Documents</span>
             </Button>
 
-            {/* Popup Menu: 2 Choices with Luxury Frosted Styling */}
-            {uploadMenuOpen && (
-              <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-2 z-[999] w-72 rounded-2xl border border-amber-400/30 bg-[#051329]/95 shadow-[0_12px_40px_rgba(0,0,0,0.8)] p-2.5 space-y-1.5 backdrop-blur-2xl animate-in fade-in-50 zoom-in-95">
-                <p className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 text-amber-400/80">
-                  ADD TO SECURE VAULT
-                </p>
-
-                {/* Choice 1: Scan with Camera */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUploadMenuOpen(false);
-                    setShowCameraScannerModal(true);
-                  }}
-                  className="w-full rounded-xl p-2.5 flex items-center gap-3 text-left transition-all border border-transparent hover:bg-white/[0.08] hover:border-amber-400/40 cursor-pointer group"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                    <Camera className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
-                      Scan with Camera
-                    </p>
-                    <p className="text-[10px] text-blue-200/60 leading-tight pt-0.5">
-                      Snap live photos of paper IEP pages
-                    </p>
-                  </div>
-                </button>
-
-                {/* Choice 2: Upload from Device */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUploadMenuOpen(false);
-                    setShowUploadModal(true);
-                  }}
-                  className="w-full rounded-xl p-2.5 flex items-center gap-3 text-left transition-all border border-transparent hover:bg-white/[0.08] hover:border-cyan-400/40 cursor-pointer group"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                    <HardDrive className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">
-                      Upload from Device
-                    </p>
-                    <p className="text-[10px] text-blue-200/60 leading-tight pt-0.5">
-                      Choose PDF, Word, or image files
-                    </p>
-                  </div>
-                </button>
-              </div>
-            )}
+            {/* Subtext */}
+            <p className="text-xs text-slate-300 font-medium mt-2.5">
+              Drag and drop files or click to browse
+            </p>
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              PDF, JPG, PNG, DOC accepted
+            </p>
           </div>
+        </section>
 
-          {/* How It Works Button */}
-          <Button
-            variant="outline"
-            onClick={() => setShowHowItWorks(true)}
-            className={`gap-2 text-xs font-semibold h-10 px-3.5 rounded-xl cursor-pointer ${
-              isLight ? "border-slate-300 text-slate-700 hover:bg-slate-100" : "border-blue-700/50 text-white bg-white/5 hover:bg-white/10 hover:border-amber-400/40"
-            }`}
-          >
-            <Info className="w-3.5 h-3.5 text-amber-400" />
-            How It Works
-          </Button>
-        </div>
-      </div>
-
-      {/* ── STUDENT RECORD SUMMARY STRIP (Executive Bank-Grade Telemetry) ────────── */}
-      <div className={`rounded-2xl border p-4 sm:p-5 shadow-2xl backdrop-blur-xl transition-all ${
-        isLight ? "bg-white border-slate-200" : "bg-gradient-to-r from-[#06172F]/95 via-[#081F42]/90 to-[#06172F]/95 border-blue-800/40"
-      }`}>
-        <div className="text-[11px] font-extrabold uppercase tracking-widest text-amber-400 mb-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Student Record Ledger & Vault Metrics</span>
-          </div>
-          <span className={`text-[10px] font-medium tracking-normal ${isLight ? "text-slate-400" : "text-blue-200/50"}`}>
-            Cloudflare R2 Synchronized
-          </span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-          {/* Stat 1: Total Records */}
-          <div className={`relative overflow-hidden p-3.5 rounded-xl border flex items-center gap-3 transition-all duration-300 group hover:border-amber-400/60 ${
-            isLight ? "bg-slate-50 border-slate-200 shadow-sm" : "bg-gradient-to-br from-[#0B2553]/70 to-[#071936]/80 border-blue-800/40 hover:shadow-[0_0_20px_rgba(245,181,68,0.15)]"
-          }`}>
-            <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-              <Folder className="w-5 h-5 text-amber-400" />
-            </div>
-            <div className="min-w-0">
-              <div className={`text-xl sm:text-2xl font-black tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-                {documents.length || 64}
-              </div>
-              <div className={`text-[11px] font-semibold truncate ${isLight ? "text-slate-500" : "text-blue-200/70"}`}>
-                Total Records
-              </div>
-            </div>
-          </div>
-
-          {/* Stat 2: Folders */}
-          <div className={`relative overflow-hidden p-3.5 rounded-xl border flex items-center gap-3 transition-all duration-300 group hover:border-cyan-400/60 ${
-            isLight ? "bg-slate-50 border-slate-200 shadow-sm" : "bg-gradient-to-br from-[#0B2553]/70 to-[#071936]/80 border-blue-800/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
-          }`}>
-            <div className="w-10 h-10 rounded-xl bg-cyan-400/15 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-              <Layers className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div className="min-w-0">
-              <div className={`text-xl sm:text-2xl font-black tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-                {workspaces.length}
-              </div>
-              <div className={`text-[11px] font-semibold truncate ${isLight ? "text-slate-500" : "text-blue-200/70"}`}>
-                Dossier Folders
-              </div>
-            </div>
-          </div>
-
-          {/* Stat 3: Recent Files */}
-          <div className={`relative overflow-hidden p-3.5 rounded-xl border flex items-center gap-3 transition-all duration-300 group hover:border-emerald-400/60 ${
-            isLight ? "bg-slate-50 border-slate-200 shadow-sm" : "bg-gradient-to-br from-[#0B2553]/70 to-[#071936]/80 border-blue-800/40 hover:shadow-[0_0_20px_rgba(52,211,153,0.15)]"
-          }`}>
-            <div className="w-10 h-10 rounded-xl bg-emerald-400/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-              <Clock className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div className="min-w-0">
-              <div className={`text-xl sm:text-2xl font-black tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-                {Math.max(1, documents.filter(d => d.relativeDate === "Today" || d.relativeDate === "Just now").length || 12)}
-              </div>
-              <div className={`text-[11px] font-semibold truncate ${isLight ? "text-slate-500" : "text-blue-200/70"}`}>
-                Recent Files
-              </div>
-            </div>
-          </div>
-
-          {/* Stat 4: Safe & Encrypted */}
-          <div className={`relative overflow-hidden p-3.5 rounded-xl border flex items-center gap-3 transition-all duration-300 group hover:border-emerald-400/60 ${
-            isLight ? "bg-slate-50 border-slate-200 shadow-sm" : "bg-gradient-to-br from-[#0B2553]/70 to-[#071936]/80 border-blue-800/40 hover:shadow-[0_0_20px_rgba(52,211,153,0.15)]"
-          }`}>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-5 h-5 text-emerald-300" />
-            </div>
-            <div className="min-w-0">
-              <div className={`text-lg sm:text-xl font-black tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-                AES-256
-              </div>
-              <div className={`text-[11px] font-semibold truncate text-emerald-400/90`}>
-                Zero-Trust Vault
-              </div>
-            </div>
-          </div>
-
-          {/* Stat 5: Pinned Records */}
-          <div className={`col-span-2 sm:col-span-1 relative overflow-hidden p-3.5 rounded-xl border flex items-center gap-3 transition-all duration-300 group hover:border-amber-400/60 ${
-            isLight ? "bg-slate-50 border-slate-200 shadow-sm" : "bg-gradient-to-br from-[#0B2553]/70 to-[#071936]/80 border-blue-800/40 hover:shadow-[0_0_20px_rgba(245,181,68,0.15)]"
-          }`}>
-            <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-              <Star className="w-5 h-5 text-amber-400 fill-amber-400/30" />
-            </div>
-            <div className="min-w-0">
-              <div className={`text-xl sm:text-2xl font-black tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-                {pinnedDocuments.length}
-              </div>
-              <div className={`text-[11px] font-semibold truncate ${isLight ? "text-slate-500" : "text-blue-200/70"}`}>
-                Pinned Key Docs
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── SEARCH & FILTER CONTROLS ────────────────────────────────────── */}
-      <div className={`p-3 rounded-2xl border shadow-md flex flex-col sm:flex-row items-stretch sm:items-center gap-3 transition-all ${
-        isLight ? "bg-white border-slate-200" : "bg-[#06172F]/80 border-blue-900/40 backdrop-blur-md"
-      }`}>
-        {/* Search Bar */}
-        <div className="relative flex-1">
-          <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"}`} />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search records by title, keyword, or category..."
-            className={`pl-10 h-10 text-xs rounded-xl focus-visible:ring-amber-400 ${
-              isLight ? "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400" : "bg-[#030C22] border-blue-900/40 text-white placeholder:text-white/40"
-            }`}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer ${isLight ? "text-slate-400 hover:text-slate-600" : "text-white/40 hover:text-white"}`}
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Filter Dropdown */}
-        <Select value={selectedWorkspaceFilter} onValueChange={setSelectedWorkspaceFilter}>
-          <SelectTrigger className={`w-full sm:w-[170px] h-10 text-xs rounded-xl shrink-0 ${
-            isLight ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"
-          }`}>
-            <div className="flex items-center gap-2 truncate">
-              <Filter className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <SelectValue placeholder="All Folders" />
-            </div>
-          </SelectTrigger>
-          <SelectContent className={isLight ? "bg-white border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"}>
-            <SelectItem value="all">All Folders</SelectItem>
-            {workspaces.map((w) => (
-              <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Sort Dropdown */}
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-          <SelectTrigger className={`w-full sm:w-[150px] h-10 text-xs rounded-xl shrink-0 ${
-            isLight ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"
-          }`}>
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className={`w-3.5 h-3.5 shrink-0 ${isLight ? "text-slate-400" : "text-white/60"}`} />
-              <SelectValue placeholder="Sort" />
-            </div>
-          </SelectTrigger>
-          <SelectContent className={isLight ? "bg-white border-slate-200 text-slate-900" : "bg-[#06172F] border-blue-900/40 text-white"}>
-            <SelectItem value="newest">Sort: Newest</SelectItem>
-            <SelectItem value="oldest">Sort: Oldest</SelectItem>
-            <SelectItem value="name">Sort: Name (A-Z)</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* View Toggle */}
-        <div className={`flex items-center p-1 rounded-xl border self-end sm:self-auto shrink-0 ${
-          isLight ? "bg-slate-100 border-slate-200" : "bg-[#030C22] border-blue-900/40"
-        }`}>
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              viewMode === "grid"
-                ? "bg-amber-400 text-slate-950 shadow-sm font-bold"
-                : isLight ? "text-slate-500 hover:text-slate-900" : "text-white/50 hover:text-white"
-            }`}
-            title="Grid View"
-          >
-            <Grid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              viewMode === "list"
-                ? "bg-amber-400 text-slate-950 shadow-sm font-bold"
-                : isLight ? "text-slate-500 hover:text-slate-900" : "text-white/50 hover:text-white"
-            }`}
-            title="List View"
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* ── CONDITIONAL VIEW: FULL TABLE LIST VIEW OR TWO-COLUMN GRID ── */}
-      {viewMode === "list" ? (
-        /* Full-Width Document Table View */
-        <div className={`rounded-2xl border shadow-xl overflow-hidden backdrop-blur-md ${
-          isLight ? "bg-white border-slate-200" : "bg-[#06172F]/90 border-blue-900/40"
-        }`}>
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-amber-400" />
-              <h2 className={`text-sm font-bold uppercase tracking-wider ${isLight ? "text-slate-900" : "text-white"}`}>
-                All Documents ({filteredDocuments.length})
-              </h2>
-            </div>
-            {selectedWorkspaceFilter !== "all" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedWorkspaceFilter("all")}
-                className="text-xs text-amber-400 hover:text-amber-300 h-7 px-2"
-              >
-                Clear Filter
-              </Button>
-            )}
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className={isLight ? "bg-slate-50 text-slate-500 border-b border-slate-200" : "bg-blue-950/40 text-blue-200/60 border-b border-blue-900/40"}>
-                  <th className="py-3 px-4 font-semibold">Document</th>
-                  <th className="py-3 px-4 font-semibold">Folder</th>
-                  <th className="py-3 px-4 font-semibold">Date Added</th>
-                  <th className="py-3 px-4 font-semibold">Size</th>
-                  <th className="py-3 px-4 font-semibold">Source</th>
-                  <th className="py-3 px-4 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${isLight ? "divide-slate-200" : "divide-white/5"}`}>
-                {filteredDocuments.map((doc) => (
-                  <tr
-                    key={doc.id}
-                    onClick={() => setSelectedDocForPreview(doc)}
-                    className={`transition-colors cursor-pointer ${
-                      isLight ? "hover:bg-slate-50" : "hover:bg-blue-950/40"
-                    }`}
-                  >
-                    <td className="py-3.5 px-4 font-bold flex items-center gap-3">
-                      {renderFileTypeIcon(doc.fileType)}
-                      <div className="min-w-0 max-w-xs md:max-w-md">
-                        <span className={`truncate block font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>
-                          {doc.title}
-                        </span>
-                        {doc.summary && (
-                          <span className={`text-[11px] truncate block ${isLight ? "text-slate-500" : "text-white/50"}`}>
-                            {doc.summary}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/15 text-amber-400 border border-amber-400/30">
-                        {doc.workspaceName}
-                      </span>
-                    </td>
-                    <td className={`py-3.5 px-4 text-[11px] ${isLight ? "text-slate-600" : "text-blue-200/70"}`}>
-                      {doc.updatedAt}
-                    </td>
-                    <td className={`py-3.5 px-4 text-[11px] ${isLight ? "text-slate-500" : "text-white/50"}`}>
-                      {doc.fileSize}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
-                        doc.uploadedBy === "Waypoint"
-                          ? "bg-blue-500/10 text-blue-400 border border-blue-400/20"
-                          : "bg-emerald-500/10 text-emerald-400 border border-emerald-400/20"
-                      }`}>
-                        {doc.uploadedBy}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => handleTogglePin(doc.id)}
-                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                            doc.isPinned ? "text-amber-400 hover:text-amber-300" : "text-white/30 hover:text-white"
-                          }`}
-                          title={doc.isPinned ? "Unpin document" : "Pin document"}
-                        >
-                          <Star className={`w-3.5 h-3.5 ${doc.isPinned ? "fill-amber-400" : ""}`} />
-                        </button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setSelectedDocForPreview(doc)}
-                          className="text-amber-400 hover:text-amber-300 text-xs h-7 px-2"
-                        >
-                          Preview
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredDocuments.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs text-white/50">
-                      No documents found matching your filter or search query.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        /* ── MAIN TWO-COLUMN SECTION (FOLDERS + RECENT DOCUMENTS) ─────── */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* ── ZONE 3: DOCUMENT FOLDERS GALLERY ─────────────────────────── */}
+        <section className="space-y-3.5">
           
-          {/* Left Column: FOLDERS (Executive Dossier Grid) */}
-          <div className="lg:col-span-6 space-y-3.5">
-            <div className="flex items-center justify-between">
-              <h2 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${isLight ? "text-slate-900" : "text-white"}`}>
-                <Layers className="w-4 h-4 text-amber-400" />
-                <span>Folders</span>
-                <span className="text-amber-400 font-extrabold">({workspaces.length})</span>
-              </h2>
-              <button
-                onClick={() => setSelectedWorkspaceFilter("all")}
-                className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-              >
-                View All
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-              {workspaces.map((ws) => {
-                const visual = getFolderVisual(ws.id);
-                const FolderIcon = visual.icon;
-                return (
-                  <div
-                    key={ws.id}
-                    onClick={() => setActiveWorkspaceModal(ws)}
-                    className={`group relative rounded-2xl p-4 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[148px] border shadow-xl backdrop-blur-md overflow-hidden ${
-                      isLight 
-                        ? "bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-400/60 hover:-translate-y-1 hover:shadow-amber-400/10" 
-                        : `bg-gradient-to-br from-[#0A2246]/90 via-[#071833]/85 to-[#040F22]/95 ${visual.borderClass} hover:-translate-y-1 ${visual.glowClass}`
-                    }`}
-                  >
-                    {/* Top Dossier Accent Lip */}
-                    <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent opacity-40 group-hover:opacity-100 transition-opacity" />
-                    
-                    {/* Ambient background glow inside card */}
-                    <div className={`absolute -right-8 -bottom-8 w-24 h-24 rounded-full bg-gradient-to-br ${visual.gradientClass} blur-xl pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity`} />
-
-                    {/* Top Header: Icon + Category Badge */}
-                    <div className="flex items-start justify-between gap-1.5 w-full mb-2">
-                      <div className={`w-9 h-9 rounded-xl ${visual.iconBgClass} flex items-center justify-center ${visual.iconColorClass} transition-transform group-hover:scale-110 duration-200 shadow-inner`}>
-                        <FolderIcon className="w-4 h-4" />
-                      </div>
-                      <span className={`px-2 py-0.5 rounded-full text-[8.5px] font-extrabold tracking-wider uppercase border shrink-0 ${visual.badgeClass}`}>
-                        {visual.badge}
-                      </span>
-                    </div>
-
-                    {/* Title & Count */}
-                    <div className="w-full text-left">
-                      <h3 className={`text-xs font-bold transition-colors leading-snug line-clamp-2 ${
-                        isLight ? "text-slate-900 group-hover:text-amber-600" : "text-white group-hover:text-amber-300"
-                      }`}>
-                        {ws.name}
-                      </h3>
-                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-white/5">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
-                          isLight ? "bg-slate-100 text-slate-600" : "bg-white/5 text-blue-200/70"
-                        }`}>
-                          {ws.fileCount} {ws.fileCount === 1 ? "record" : "records"}
-                        </span>
-                        <span className="text-[10px] font-bold text-amber-400/80 group-hover:text-amber-300 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          Open <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* + New Folder Card */}
-              <div
-                onClick={() => setShowNewWorkspaceModal(true)}
-                className={`group relative rounded-2xl p-4 transition-all duration-300 cursor-pointer flex flex-col items-center text-center justify-center min-h-[148px] border border-dashed ${
-                  isLight
-                    ? "bg-slate-50 hover:bg-slate-100 border-slate-300 hover:border-amber-400"
-                    : "bg-gradient-to-br from-[#06172F]/50 to-[#0A2246]/50 hover:from-[#082042]/70 hover:to-[#0D2D5B]/70 border-blue-800/40 hover:border-amber-400/70 hover:shadow-[0_0_20px_rgba(245,181,68,0.15)]"
-                }`}
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-400/10 group-hover:bg-amber-400/20 border border-amber-400/30 group-hover:border-amber-400/60 flex items-center justify-center text-amber-400 mb-2 transition-all duration-200 shadow-inner group-hover:scale-110">
-                  <Plus className="w-4 h-4" />
-                </div>
-                <p className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
-                  New Folder
-                </p>
-                <p className={`text-[10px] mt-0.5 ${isLight ? "text-slate-400" : "text-blue-200/50"}`}>
-                  Create custom category
+          {/* Gallery Header */}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <Folder className="w-5 h-5 text-amber-400 fill-amber-400" />
+              <div>
+                <h2 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">
+                  DOCUMENT FOLDERS
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  All of {studentFirstName}’s documents organized by category.
                 </p>
               </div>
             </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAllFoldersModal(true)}
+              className="h-8 px-3.5 text-xs text-slate-300 hover:text-white border-blue-900/60 hover:bg-white/5 rounded-full cursor-pointer gap-1"
+            >
+              <span>View All Folders</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            </Button>
           </div>
 
-          {/* Right Column: RECENT & FILTERED DOCUMENTS */}
-          <div className="lg:col-span-6 space-y-3.5">
-            <div className="flex items-center justify-between">
-              <h2 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${isLight ? "text-slate-900" : "text-white"}`}>
-                <FileText className="w-4 h-4 text-amber-400" />
-                <span>
-                  {selectedWorkspaceFilter !== "all" 
-                    ? `${workspaces.find(w => w.id === selectedWorkspaceFilter)?.name || "Filtered"} Documents`
-                    : "Recent Documents"
-                  }
-                </span>
-              </h2>
-              {selectedWorkspaceFilter !== "all" && (
-                <button
-                  onClick={() => setSelectedWorkspaceFilter("all")}
-                  className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-                >
-                  Clear Filter
-                </button>
-              )}
-            </div>
-
-            <div className={`rounded-2xl border p-4 space-y-2.5 shadow-xl backdrop-blur-md ${
-              isLight ? "bg-white border-slate-200" : "bg-gradient-to-br from-[#081F42]/90 via-[#06172F]/85 to-[#041024]/95 border-blue-800/40"
-            }`}>
-              {filteredDocuments.slice(0, 6).map((doc) => (
+          {/* Horizontal Folder Cards Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            {dynamicWorkspaces.map((folder) => {
+              return (
                 <div
-                  key={doc.id}
-                  onClick={() => setSelectedDocForPreview(doc)}
-                  className={`group flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
-                    isLight 
-                      ? "hover:bg-slate-50 border-slate-100 hover:border-slate-300" 
-                      : "bg-[#06172F]/60 hover:bg-[#0A2349]/90 border-blue-900/30 hover:border-amber-400/40 hover:shadow-lg"
-                  }`}
+                  key={folder.id}
+                  onClick={() => setActiveWorkspaceModal(folder)}
+                  className={`group relative rounded-2xl bg-[#051329] border p-3 flex flex-col justify-between transition-all duration-200 cursor-pointer hover:-translate-y-1 ${folder.accentBorder} ${folder.accentGlow}`}
                 >
-                  <div className="flex items-center gap-3 min-w-0 pr-2">
-                    {renderFileTypeIcon(doc.fileType)}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className={`text-xs font-bold transition-colors truncate ${isLight ? "text-slate-900 group-hover:text-amber-600" : "text-white group-hover:text-amber-300"}`}>
-                          {doc.title}
-                        </p>
-                        {doc.uploadedBy === "Waypoint" ? (
-                          <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-300 border border-blue-400/30 shrink-0">
-                            <ShieldCheck className="w-2.5 h-2.5 text-blue-300" />
-                            Waypoint
-                          </span>
-                        ) : (
-                          <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 shrink-0">
-                            Family
-                          </span>
-                        )}
-                      </div>
-                      <p className={`text-[11px] truncate mt-0.5 ${isLight ? "text-slate-500" : "text-white/50"}`}>
-                        <span className="text-amber-400/90 font-medium">{doc.workspaceName}</span> • {doc.fileSize}
+                  {/* Prominent 3D Folder Graphic */}
+                  <div className="w-full flex items-center justify-center py-2">
+                    <img 
+                      src={folder.iconSrc} 
+                      alt={folder.name} 
+                      className="w-16 h-13 sm:w-18 sm:h-14 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-200"
+                    />
+                  </div>
+
+                  {/* Card Details */}
+                  <div className="mt-1 flex items-end justify-between gap-1">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-xs sm:text-[13px] text-white tracking-tight leading-tight truncate">
+                        {folder.name}
+                      </h3>
+                      
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {folder.fileCount} documents
                       </p>
+
+                      {/* Folder 1 Extra Line: Current IEP updated */}
+                      {folder.extraInfo && (
+                        <p className="text-[10px] text-amber-400/90 leading-tight mt-1 whitespace-pre-line font-medium">
+                          {folder.extraInfo}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Small Circular Arrow Action Button */}
+                    <div className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-white/60 group-hover:border-white/60 group-hover:text-white transition-all shrink-0">
+                      <ChevronRight className="w-3 h-3 stroke-[2.5]" />
                     </div>
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${isLight ? "text-slate-500 bg-slate-100" : "text-blue-200/60 bg-white/5"}`}>
-                      {doc.relativeDate}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTogglePin(doc.id);
-                      }}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                        doc.isPinned
-                          ? "text-amber-400 hover:text-amber-300"
-                          : isLight ? "text-slate-300 hover:text-slate-600" : "text-white/20 hover:text-white/60"
-                      }`}
-                      title={doc.isPinned ? "Unpin document" : "Pin document"}
+        {/* ── ZONE 4: RECENTLY ADDED + FILE HEALTH AREA ─────────────────── */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          
+          {/* LEFT: RECENTLY ADDED (~58% width) */}
+          <div className="lg:col-span-7 rounded-2xl bg-[#051329] border border-blue-900/60 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex flex-col justify-between">
+            
+            <div>
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white">
+                    RECENTLY ADDED
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAllDocsModal(true)}
+                  className="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <span>View All Documents</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Rows List */}
+              <div className="divide-y divide-white/5">
+                {documents.slice(0, 5).map((doc) => {
+                  const isCurrent = doc.documentType === "Current IEP" || doc.id === currentIepDoc.id;
+                  
+                  return (
+                    <div 
+                      key={doc.id}
+                      className="py-3 flex items-center justify-between gap-3 group hover:bg-white/[0.02] -mx-2 px-2 rounded-xl transition-colors"
                     >
-                      <Star className={`w-3.5 h-3.5 ${doc.isPinned ? "fill-amber-400" : ""}`} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedDocForPreview(doc);
-                      }}
-                      className="p-1.5 rounded-lg text-white/30 hover:text-amber-400 hover:bg-amber-400/10 transition-colors cursor-pointer"
-                      title="Preview Document"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
+                      {/* File Icon & Info */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        {renderFileTypeBadge(doc.fileType)}
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+                              {doc.title}
+                            </span>
+                            
+                            {isCurrent && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#052E16] text-[#34D399] border border-emerald-500/40">
+                                Current IEP
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {doc.updatedAt} • {doc.fileSize}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right Actions */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          type="button"
+                          onClick={() => setSelectedDocForPreview(doc)}
+                          className="h-7 px-3 text-xs font-semibold rounded-full bg-[#081F42] hover:bg-[#0c2f66] text-slate-200 border border-blue-700/50 cursor-pointer shadow-sm"
+                        >
+                          View
+                        </Button>
+
+                        {/* Overflow Actions */}
+                        <div className="relative">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdownDocId((prev) => prev === doc.id ? null : doc.id);
+                            }}
+                            className="h-7 w-7 p-0 rounded-full text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                          >
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </Button>
+
+                          {activeDropdownDocId === doc.id && (
+                            <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-blue-900/60 bg-[#07162B] shadow-2xl p-1.5 text-xs space-y-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveDropdownDocId(null);
+                                  setSelectedDocForPreview(doc);
+                                }}
+                                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/10 flex items-center gap-2 text-slate-200"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-sky-400" />
+                                <span>Preview Document</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveDropdownDocId(null);
+                                  toast.success(`Downloading ${doc.title}...`);
+                                }}
+                                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/10 flex items-center gap-2 text-slate-200"
+                              >
+                                <Download className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Download File</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveDropdownDocId(null);
+                                  setAnalysisModalFileId(Number(doc.id.replace(/\D/g, "")) || 1);
+                                  setAnalysisModalFileName(doc.title);
+                                }}
+                                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/10 flex items-center gap-2 text-slate-200"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                                <span>AI Analysis</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: LIAM'S FILE LOOKS GOOD (~42% width) */}
+          <div className="lg:col-span-5 rounded-2xl bg-[#051329] border border-blue-900/60 p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between">
+            
+            {/* Background Archival Books & Clock Art on Far-Right */}
+            <div className="absolute right-0 bottom-0 top-0 w-[42%] pointer-events-none select-none z-0">
+              <img 
+                src="/assets/vault/archive_books_clean.png" 
+                alt="Archive Binders and Astrolabe" 
+                className="w-full h-full object-cover object-left-bottom opacity-85"
+                style={{
+                  maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 20%, black 50%, black 100%)",
+                  WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 20%, black 50%, black 100%)"
+                }}
+              />
+            </div>
+
+            {/* Front Reassuring Information */}
+            <div className="relative z-10 max-w-xs sm:max-w-sm">
+              
+              {/* Gold Shield Emblem */}
+              <div className="w-11 h-11 rounded-2xl bg-amber-400/15 border-2 border-amber-400/50 text-amber-400 flex items-center justify-center shadow-[0_0_20px_rgba(245,181,68,0.25)] mb-3">
+                <Lock className="w-5 h-5 text-amber-400" />
+              </div>
+
+              {/* Title & Human Copy */}
+              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-tight">
+                {studentFirstName}’s file looks good
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed mt-1 mb-4">
+                We have a current IEP on file. If you have any of the documents below, they are helpful to keep on file.
+              </p>
+
+              {/* Status Checklist Rows */}
+              <div className="space-y-2.5">
+                
+                {/* 1. Current IEP */}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    {documentsSummary.hasCurrentIep ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-slate-500" />
+                    )}
+                    <span className="text-slate-200 font-medium">Current IEP</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {documentsSummary.hasCurrentIep ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 font-semibold">On file</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-slate-400">Not on file</span>
+                      </>
+                    )}
                   </div>
                 </div>
-              ))}
 
-              {filteredDocuments.length === 0 && (
-                <div className="text-center py-8 text-xs text-white/50">
-                  No documents found in this folder yet.
+                {/* 2. Latest Evaluation */}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    {documentsSummary.hasEvaluation ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-slate-500" />
+                    )}
+                    <span className="text-slate-200 font-medium">Latest Evaluation</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {documentsSummary.hasEvaluation ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 font-semibold">On file</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-slate-400">Not on file</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              <div className="pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setViewMode("list")}
-                  className={`w-full h-9 rounded-xl text-amber-400 text-xs font-bold gap-2 transition-all cursor-pointer ${
-                    isLight ? "border-slate-200 bg-slate-50 hover:bg-slate-100" : "border-white/15 bg-white/[0.02] hover:bg-white/[0.08]"
-                  }`}
-                >
-                  <span>Open Full Document Table ({filteredDocuments.length})</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </div>
-          </div>
+                {/* 3. 504 Plan */}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    {documentsSummary.hasCurrent504 ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-slate-400" />
+                    )}
+                    <span className="text-slate-300">504 Plan</span>
+                  </div>
 
-        </div>
-      )}
-
-      {/* ── PINNED DOCUMENTS CAROUSEL / GRID ───────────────────────────── */}
-      <div className={`rounded-2xl border p-5 sm:p-6 space-y-4 shadow-2xl backdrop-blur-xl transition-all ${
-        isLight ? "bg-white border-slate-200" : "bg-gradient-to-br from-[#071D3E]/90 via-[#06172F]/85 to-[#040F22]/95 border-blue-800/40"
-      }`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_10px_rgba(245,181,68,0.2)]">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              </div>
-              <h2 className={`text-sm font-bold uppercase tracking-wider ${isLight ? "text-slate-900" : "text-white"}`}>
-                Pinned Priority Documents ({pinnedDocuments.length})
-              </h2>
-            </div>
-            <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-blue-200/70"}`}>
-              Instant 1-click access to {studentName}'s active IEP goals, critical evaluations, and current accommodations.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1.5 self-end sm:self-auto">
-            <button
-              onClick={() => toast.info("Showing previous pinned items")}
-              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                isLight ? "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100" : "border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-              title="Previous"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => toast.info("Showing next pinned items")}
-              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                isLight ? "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100" : "border-blue-900/40 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-              title="Next"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
-          {pinnedDocuments.map((doc) => (
-            <Card
-              key={doc.id}
-              onClick={() => setSelectedDocForPreview(doc)}
-              className={`group relative p-4 rounded-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between shadow-lg border overflow-hidden ${
-                isLight
-                  ? "bg-slate-50 hover:bg-white border-slate-200 hover:border-amber-400 hover:-translate-y-0.5"
-                  : "bg-gradient-to-br from-[#081B36] to-[#0A2246] hover:from-[#0C2A52] hover:to-[#0F366A] border-blue-900/40 hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(245,181,68,0.15)] hover:-translate-y-0.5"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2 mb-3">
-                {renderFileTypeIcon(doc.fileType)}
-                <div className="w-6 h-6 rounded-full bg-amber-400/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.2)]">
-                  <Star className="w-3.5 h-3.5 fill-amber-400" />
+                  <div className="flex items-center gap-1.5">
+                    {documentsSummary.hasCurrent504 ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 font-semibold">On file</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-slate-400">Not on file (if applicable)</span>
+                      </>
+                    )}
+                  </div>
                 </div>
+
+                {/* 4. Recent Progress Report */}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    {documentsSummary.hasProgressReport ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-slate-500" />
+                    )}
+                    <span className="text-slate-200 font-medium">Recent Progress Report</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {documentsSummary.hasProgressReport ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 font-semibold">On file</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-slate-400">Not on file</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
               </div>
-
-              <div>
-                <h3 className={`text-xs font-bold transition-colors line-clamp-2 ${isLight ? "text-slate-900 group-hover:text-amber-600" : "text-white group-hover:text-amber-300"}`}>
-                  {doc.title.replace(/\.[^/.]+$/, "")}
-                </h3>
-                <p className={`text-[11px] mt-1 truncate ${isLight ? "text-slate-500" : "text-white/50"}`}>
-                  {doc.workspaceName}
-                </p>
-                <p className={`text-[10px] mt-0.5 font-medium ${isLight ? "text-slate-400" : "text-white/40"}`}>
-                  Updated {doc.updatedAt}
-                </p>
-              </div>
-            </Card>
-          ))}
-
-          {/* + Pin Document Card */}
-          <Card
-            onClick={() => setShowPinModal(true)}
-            className={`group p-4 rounded-2xl border border-dashed transition-all duration-300 cursor-pointer flex flex-col items-center text-center justify-center min-h-[140px] ${
-              isLight
-                ? "bg-slate-50 hover:bg-slate-100 border-slate-300 hover:border-amber-400"
-                : "bg-[#06172F]/50 hover:bg-[#0A2246]/80 border-blue-800/40 hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(245,181,68,0.1)]"
-            }`}
-          >
-            <div className="w-9 h-9 rounded-full bg-amber-400/10 group-hover:bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-2 transition-all shadow-inner group-hover:scale-110">
-              <Plus className="w-4 h-4" />
-            </div>
-            <p className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
-              Pin Document
-            </p>
-          </Card>
-        </div>
-      </div>
-
-      {/* ── SECURITY / FERPA TRUST SEAL BANNER ─────────────────────────────────────── */}
-      <div className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all ${
-        isLight
-          ? "bg-slate-50 border-slate-200 text-slate-900"
-          : "bg-gradient-to-r from-[#051329] via-[#092248] to-[#051329] border-amber-400/30 text-white shadow-[0_0_30px_rgba(0,0,0,0.5)]"
-      }`}>
-        {/* Subtle top gold accent line */}
-        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
-
-        <div className="flex items-start gap-4 min-w-0">
-          <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400/25 via-amber-500/15 to-transparent border border-amber-400/50 shadow-[0_0_24px_rgba(245,181,68,0.25)] shrink-0">
-            <VaultSafeIcon className="w-6 h-6 text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className={`text-sm sm:text-base font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
-                Zero-Trust FERPA & Educational Record Stewardship
-              </h3>
-              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-400/15 text-emerald-300 border border-emerald-400/30">
-                AES-256 Cloudflare R2
-              </span>
-            </div>
-            <p className={`text-xs leading-relaxed max-w-3xl ${isLight ? "text-slate-600" : "text-blue-100/70"}`}>
-              Every uploaded document is encrypted both at rest and in transit. Waypoint Advocates adheres to strict FERPA privacy principles, guaranteeing your family's records remain permanently private, untampered, and solely accessible to you and Byron Honea.
-            </p>
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          onClick={() => setShowSecurityModal(true)}
-          className="gap-2 text-xs font-bold bg-amber-400 hover:bg-amber-500 text-slate-950 shadow-md shadow-amber-400/20 h-9 px-4 rounded-xl transition-all shrink-0 self-start md:self-auto cursor-pointer"
-        >
-          <ShieldCheck className="w-4 h-4 text-slate-950" />
-          <span>Security Standards</span>
-        </Button>
-      </div>
-
-      {/* ── MODALS ─────────────────────────────────────────────────────── */}
-
-      {/* Modal 1: How It Works */}
-      <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
-        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
-              <Folder className="w-5 h-5 text-amber-400" />
-              How the Document Vault Works
-            </DialogTitle>
-            <DialogDescription className="text-xs text-white/70 mt-1 leading-relaxed">
-              Your student's permanent educational repository, synchronized in real time with Waypoint Advocates.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3.5 my-2">
-            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-900/40 space-y-1">
-              <p className="text-xs font-bold text-amber-300">1. Permanent Preservation</p>
-              <p className="text-[11px] text-white/70 leading-relaxed">
-                All uploaded IEPs, neuropsych evaluations, and school correspondence are stored in zero-trust encrypted Cloudflare R2 cloud storage.
-              </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-900/40 space-y-1">
-              <p className="text-xs font-bold text-amber-300">2. Collaborative Folders</p>
-              <p className="text-[11px] text-white/70 leading-relaxed">
-                Organized by educational category so you and your advocate can locate historical records in seconds during IEP meetings.
-              </p>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-900/40 space-y-1">
-              <p className="text-xs font-bold text-amber-300">3. Action Center Integration</p>
-              <p className="text-[11px] text-white/70 leading-relaxed">
-                When you sign or complete requests inside the Action Center, finalized copies are automatically filed and indexed here.
+            {/* Bottom Outlined Gold CTA Button */}
+            <div className="relative z-10 pt-4">
+              <Button
+                type="button"
+                onClick={handleInitiateUpload}
+                className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400/10 via-amber-400/15 to-amber-500/10 hover:bg-amber-400/25 text-amber-300 border border-amber-400/60 font-bold text-xs sm:text-sm shadow-[0_0_20px_rgba(245,181,68,0.15)] gap-2 cursor-pointer transition-all active:scale-[0.99]"
+              >
+                <UploadCloud className="w-4 h-4 text-amber-400" />
+                <span>Upload More Documents</span>
+              </Button>
+              <p className="text-[11px] text-slate-400 text-center mt-1.5">
+                Help us keep {studentFirstName}’s file complete.
               </p>
             </div>
           </div>
+        </section>
 
-          <DialogFooter>
-            <Button
-              onClick={() => setShowHowItWorks(false)}
-              className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
-            >
-              Got It
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </main>
 
-      {/* Modal 2: Privacy & Security */}
-      <Dialog open={showSecurityModal} onOpenChange={setShowSecurityModal}>
-        <DialogContent className="max-w-lg bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
-              FERPA & Encryption Standards
-            </DialogTitle>
-            <DialogDescription className="text-xs text-white/70 mt-1 leading-relaxed">
-              How Byron Honea and Waypoint Advocates safeguard your family's sensitive student records.
-            </DialogDescription>
-          </DialogHeader>
+      {/* ── MODALS & FUNCTIONALITY ────────────────────────────────────────── */}
 
-          <div className="space-y-3 my-2 text-xs text-white/80 leading-relaxed">
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-950/30 border border-blue-900/40">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white">AES-256 Cloud Encryption:</strong> Every PDF, audio recording, and evaluation is encrypted both at rest and in transit via TLS 1.3.
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-950/30 border border-blue-900/40">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white">FERPA-Adjacent Safeguards:</strong> Access is strictly limited to authorized parents/guardians and Byron Honea (Master IEP Coach®).
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-950/30 border border-blue-900/40">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white">Complete Data Portability:</strong> You can download individual records or complete multi-year archive bundles anytime.
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={() => setShowSecurityModal(false)}
-              className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
-            >
-              Close Privacy Overview
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal 3: Create Folder */}
-      <Dialog open={showNewWorkspaceModal} onOpenChange={setShowNewWorkspaceModal}>
-        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
-              <FolderPlus className="w-5 h-5 text-amber-400" />
-              Create New Folder
-            </DialogTitle>
-            <DialogDescription className="text-xs text-white/70 mt-1">
-              Add a custom category folder for {studentName}'s records.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 my-2">
-            <div>
-              <Label className="text-xs text-white/80 mb-1.5 block">Folder Name</Label>
-              <Input
-                value={newWorkspaceName}
-                onChange={(e) => setNewWorkspaceName(e.target.value)}
-                placeholder="e.g., Independent OT Evaluations"
-                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs text-white/80 mb-1.5 block">Description (Optional)</Label>
-              <Input
-                value={newWorkspaceDesc}
-                onChange={(e) => setNewWorkspaceDesc(e.target.value)}
-                placeholder="Brief description of what goes here..."
-                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowNewWorkspaceModal(false)}
-              className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateWorkspace}
-              className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
-            >
-              Create Folder
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal 4: Upload File */}
-      <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
-        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
-              <UploadCloud className="w-5 h-5 text-amber-400" />
-              Upload Document to Vault
-            </DialogTitle>
-            <DialogDescription className="text-xs text-white/70 mt-1">
-              Add a document to {studentName}'s secure records archive.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 my-2">
-            <div>
-              <Label className="text-xs text-white/80 mb-1.5 block">Document Title</Label>
-              <Input
-                value={uploadTitle}
-                onChange={(e) => setUploadTitle(e.target.value)}
-                placeholder="e.g., 2026 Psycho-Ed Evaluation.pdf"
-                className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs text-white/80 mb-1.5 block">Destination Folder</Label>
-              <Select value={uploadWorkspaceId} onValueChange={setUploadWorkspaceId}>
-                <SelectTrigger className="bg-[#030C22] border-blue-900/40 text-white text-xs rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#06172F] border-blue-900/40 text-white">
-                  {workspaces.map((ws) => (
-                    <SelectItem key={ws.id} value={ws.id}>{ws.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="p-4 rounded-xl border border-dashed border-blue-800/40 bg-blue-950/20 text-center space-y-1.5">
-              <UploadCloud className="w-6 h-6 text-amber-400 mx-auto opacity-80" />
-              <p className="text-xs font-semibold text-white">Drag & drop your file here</p>
-              <p className="text-[10px] text-white/40">Supports PDF, DOCX, XLSX, EML, PNG up to 50MB</p>
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowUploadModal(false)}
-              className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleUploadDocument}
-              className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
-            >
-              Upload & Encrypt
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal 5: Document Preview */}
+      {/* Modal 1: Document Preview */}
       <Dialog open={!!selectedDocForPreview} onOpenChange={(open) => !open && setSelectedDocForPreview(null)}>
         {selectedDocForPreview && (
-          <DialogContent className="max-w-lg bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
+          <DialogContent className="max-w-lg bg-[#07162B] border-blue-900/60 text-white rounded-2xl p-6 shadow-2xl">
             <DialogHeader>
               <div className="flex items-center gap-2 mb-1">
                 <Badge className="bg-amber-400/20 text-amber-300 border-amber-400/40 text-[10px]">
                   {selectedDocForPreview.workspaceName}
                 </Badge>
-                <span className="text-[10px] text-white/50">{selectedDocForPreview.fileSize}</span>
+                <span className="text-[10px] text-slate-400">{selectedDocForPreview.fileSize}</span>
               </div>
               <DialogTitle className="text-base md:text-lg font-bold text-white break-words">
                 {selectedDocForPreview.title}
               </DialogTitle>
-              <DialogDescription className="text-xs text-white/70 mt-1">
+              <DialogDescription className="text-xs text-slate-300 mt-1">
                 Uploaded by {selectedDocForPreview.uploadedBy} • Last updated {selectedDocForPreview.updatedAt}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-3.5 my-2">
-              <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-900/40 text-xs text-white/80 leading-relaxed">
+            <div className="space-y-3.5 my-3">
+              <div className="p-4 rounded-xl bg-[#030E1F] border border-blue-900/40 text-xs text-slate-200 leading-relaxed">
                 <p className="font-semibold text-amber-400 mb-1">Document Summary:</p>
-                <p>{selectedDocForPreview.summary || "Permanent student educational document archived in encrypted storage."}</p>
+                <p>{selectedDocForPreview.summary || "Permanent student educational document safely archived in encrypted vault."}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40">
-                  <span className="text-white/50 block text-[10px]">Encryption Status:</span>
+                <div className="p-3 rounded-xl bg-[#030E1F] border border-blue-900/40">
+                  <span className="text-slate-400 block text-[10px]">Encryption Status:</span>
                   <span className="font-bold text-emerald-400 flex items-center gap-1 mt-0.5">
                     <ShieldCheck className="w-3.5 h-3.5" /> AES-256 Vault Stored
                   </span>
                 </div>
-                <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40">
-                  <span className="text-white/50 block text-[10px]">Quick Access:</span>
+                <div className="p-3 rounded-xl bg-[#030E1F] border border-blue-900/40">
+                  <span className="text-slate-400 block text-[10px]">Authoritative Status:</span>
                   <span className="font-bold text-white mt-0.5 block">
-                    {selectedDocForPreview.isPinned ? "★ Pinned to Top" : "Standard File"}
+                    {selectedDocForPreview.documentType === "Current IEP" ? "★ Authoritative IEP" : "Verified Record"}
                   </span>
                 </div>
               </div>
@@ -1553,13 +1012,14 @@ export default function PortalDocumentVaultTab({
               <Button
                 variant="outline"
                 onClick={() => {
-                  handleTogglePin(selectedDocForPreview.id);
                   setSelectedDocForPreview(null);
+                  setAnalysisModalFileId(Number(selectedDocForPreview.id.replace(/\D/g, "")) || 1);
+                  setAnalysisModalFileName(selectedDocForPreview.title);
                 }}
-                className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
+                className="border-purple-500/40 text-purple-300 hover:bg-purple-500/10 text-xs rounded-xl gap-1.5"
               >
-                <Star className={`w-3.5 h-3.5 mr-1.5 ${selectedDocForPreview.isPinned ? "fill-amber-400 text-amber-400" : ""}`} />
-                {selectedDocForPreview.isPinned ? "Unpin Document" : "Pin to Favorites"}
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                AI Document Analysis
               </Button>
 
               <Button
@@ -1577,23 +1037,23 @@ export default function PortalDocumentVaultTab({
         )}
       </Dialog>
 
-      {/* Modal 6: Folder Viewer */}
+      {/* Modal 2: Folder Contents Viewer */}
       <Dialog open={!!activeWorkspaceModal} onOpenChange={(open) => !open && setActiveWorkspaceModal(null)}>
         {activeWorkspaceModal && (
-          <DialogContent className="max-w-2xl bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
+          <DialogContent className="max-w-2xl bg-[#07162B] border-blue-900/60 text-white rounded-2xl p-6 shadow-2xl">
             <DialogHeader>
-              <div className="flex items-center gap-2">
-                <Folder className="w-5 h-5 text-amber-400 fill-amber-400/20" />
+              <div className="flex items-center gap-2.5">
+                <img src={activeWorkspaceModal.iconSrc} alt="" className="w-7 h-6 object-contain" />
                 <DialogTitle className="text-lg font-bold text-white">
                   {activeWorkspaceModal.name}
                 </DialogTitle>
               </div>
-              <DialogDescription className="text-xs text-white/70 mt-1">
+              <DialogDescription className="text-xs text-slate-300 mt-1">
                 {activeWorkspaceModal.description}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-2 my-2 max-h-[350px] overflow-y-auto pr-1">
+            <div className="space-y-2 my-3 max-h-[350px] overflow-y-auto pr-1">
               {documents
                 .filter((d) => d.workspaceId === activeWorkspaceModal.id)
                 .map((doc) => (
@@ -1603,13 +1063,13 @@ export default function PortalDocumentVaultTab({
                       setActiveWorkspaceModal(null);
                       setSelectedDocForPreview(doc);
                     }}
-                    className="flex items-center justify-between p-3 rounded-xl bg-blue-950/30 hover:bg-blue-900/40 border border-blue-900/40 transition-all cursor-pointer"
+                    className="flex items-center justify-between p-3 rounded-xl bg-[#030E1F] hover:bg-blue-900/30 border border-blue-900/40 transition-all cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0 pr-2">
-                      {renderFileTypeIcon(doc.fileType)}
+                      {renderFileTypeBadge(doc.fileType)}
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-white truncate">{doc.title}</p>
-                        <p className="text-[10px] text-white/50">{doc.fileSize} • Updated {doc.updatedAt}</p>
+                        <p className="text-[10px] text-slate-400">{doc.fileSize} • Updated {doc.updatedAt}</p>
                       </div>
                     </div>
                     <Button size="sm" variant="ghost" className="text-amber-400 text-xs hover:bg-amber-400/10">
@@ -1619,8 +1079,8 @@ export default function PortalDocumentVaultTab({
                 ))}
 
               {documents.filter((d) => d.workspaceId === activeWorkspaceModal.id).length === 0 && (
-                <div className="text-center py-8 text-white/50 text-xs">
-                  No documents in this folder yet.
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  No documents in this category yet.
                 </div>
               )}
             </div>
@@ -1629,19 +1089,18 @@ export default function PortalDocumentVaultTab({
               <Button
                 variant="outline"
                 onClick={() => setActiveWorkspaceModal(null)}
-                className="border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
+                className="border-blue-900/60 text-slate-200 hover:bg-white/10 text-xs rounded-xl"
               >
                 Close
               </Button>
               <Button
                 onClick={() => {
-                  setUploadWorkspaceId(activeWorkspaceModal.id);
                   setActiveWorkspaceModal(null);
-                  setShowUploadModal(true);
+                  handleInitiateUpload();
                 }}
                 className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl gap-1.5"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <UploadCloud className="w-3.5 h-3.5" />
                 Upload to {activeWorkspaceModal.name}
               </Button>
             </DialogFooter>
@@ -1649,63 +1108,154 @@ export default function PortalDocumentVaultTab({
         )}
       </Dialog>
 
-      {/* Modal 7: Pin Document Selector */}
-      <Dialog open={showPinModal} onOpenChange={setShowPinModal}>
-        <DialogContent className="max-w-md bg-[#06172F] border-blue-900/40 text-white rounded-2xl p-6 shadow-2xl">
+      {/* Modal 3: View All Folders */}
+      <Dialog open={showAllFoldersModal} onOpenChange={setShowAllFoldersModal}>
+        <DialogContent className="max-w-2xl bg-[#07162B] border-blue-900/60 text-white rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
-              <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-              Pin a Document to Favorites
+            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <Folder className="w-5 h-5 text-amber-400 fill-amber-400" />
+              All Document Folders
             </DialogTitle>
-            <DialogDescription className="text-xs text-white/70 mt-1">
-              Select any document to appear in your pinned quick-access row.
+            <DialogDescription className="text-xs text-slate-300 mt-1">
+              Browse all 7 organized document categories for {studentFullName}.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2 my-2 max-h-[300px] overflow-y-auto pr-1">
-            {documents
-              .filter((d) => !d.isPinned)
-              .map((doc) => (
-                <div
-                  key={doc.id}
-                  onClick={() => {
-                    handleTogglePin(doc.id);
-                    setShowPinModal(false);
-                  }}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/30 hover:bg-blue-900/40 border border-blue-900/40 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                    {renderFileTypeIcon(doc.fileType)}
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-white truncate">{doc.title}</p>
-                      <p className="text-[10px] text-white/50">{doc.workspaceName}</p>
-                    </div>
-                  </div>
-                  <Button size="sm" className="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold h-7 px-2.5 rounded-lg">
-                    Pin
-                  </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-3 max-h-[400px] overflow-y-auto pr-1">
+            {dynamicWorkspaces.map((ws) => (
+              <div
+                key={ws.id}
+                onClick={() => {
+                  setShowAllFoldersModal(false);
+                  setActiveWorkspaceModal(ws);
+                }}
+                className="p-3.5 rounded-xl bg-[#030E1F] hover:bg-blue-950/40 border border-blue-900/50 flex items-center gap-3 cursor-pointer group transition-all"
+              >
+                <img src={ws.iconSrc} alt="" className="w-10 h-9 object-contain shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                    {ws.name}
+                  </p>
+                  <p className="text-[11px] text-slate-400">{ws.fileCount} documents</p>
                 </div>
-              ))}
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white" />
+              </div>
+            ))}
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowPinModal(false)}
-              className="w-full border-blue-900/40 text-white hover:bg-white/10 text-xs rounded-xl"
+              onClick={() => setShowAllFoldersModal(false)}
+              className="border-blue-900/60 text-slate-200 hover:bg-white/10 text-xs rounded-xl"
             >
-              Cancel
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal 7: Camera Scanner Modal */}
+      {/* Modal 4: View All Documents */}
+      <Dialog open={showAllDocsModal} onOpenChange={setShowAllDocsModal}>
+        <DialogContent className="max-w-2xl bg-[#07162B] border-blue-900/60 text-white rounded-2xl p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 text-cyan-400" />
+              All Documents ({documents.length})
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-300 mt-1">
+              Complete archive of records stored in {studentFirstName}’s Document Vault.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 my-3 max-h-[400px] overflow-y-auto pr-1 divide-y divide-white/5">
+            {documents.map((doc) => (
+              <div
+                key={doc.id}
+                onClick={() => {
+                  setShowAllDocsModal(false);
+                  setSelectedDocForPreview(doc);
+                }}
+                className="pt-2.5 pb-2.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-white/[0.03] px-2 rounded-lg"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {renderFileTypeBadge(doc.fileType)}
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{doc.title}</p>
+                    <p className="text-[10px] text-slate-400">{doc.workspaceName} • {doc.fileSize} • {doc.updatedAt}</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" className="text-xs text-sky-400 hover:bg-sky-400/10 h-7 px-2.5">
+                  View
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAllDocsModal(false)}
+              className="border-blue-900/60 text-slate-200 hover:bg-white/10 text-xs rounded-xl"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 5: Camera Scanner Modal */}
       <CameraScannerModal
         isOpen={showCameraScannerModal}
         onClose={() => setShowCameraScannerModal(false)}
-        studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : displayName}
-        studentId={effectiveStudent?.id || 101}
+        studentName={studentFullName}
+        studentId={studentId}
+      />
+
+      {/* Modal 6: Pre-Enrollment Acknowledgment Modal */}
+      <PreEnrollmentAcknowledgmentModal
+        open={showPreEnrollmentAckModal}
+        onOpenChange={setShowPreEnrollmentAckModal}
+        studentName={studentFullName}
+        studentId={studentId}
+        onAcknowledged={() => {
+          setLocalAckAccepted(true);
+          refetchVaultStatus();
+          setShowStatusAwareUploadModal(true);
+        }}
+      />
+
+      {/* Modal 7: Status-Aware Upload Modal */}
+      <StatusAwareUploadModal
+        open={showStatusAwareUploadModal}
+        onOpenChange={setShowStatusAwareUploadModal}
+        studentId={studentId}
+        studentName={studentFullName}
+        isRelationshipActive={isRelationshipActive}
+        hasCurrentPlan={isRelationshipActive}
+        onViewAcknowledgment={() => setShowViewAckModal(true)}
+        onUploadComplete={() => {
+          refetchVaultFiles();
+          refetchVaultStatus();
+        }}
+      />
+
+      {/* Modal 8: View Pre-Enrollment Acknowledgment Modal */}
+      <ViewAcknowledgmentModal
+        open={showViewAckModal}
+        onOpenChange={setShowViewAckModal}
+        metadata={vaultStatus?.acknowledgmentMetadata}
+      />
+
+      {/* Modal 9: AI Document Intelligence Analysis Modal */}
+      <AiDocumentAnalysisModal
+        isOpen={!!analysisModalFileId}
+        onClose={() => {
+          setAnalysisModalFileId(null);
+          setAnalysisModalFileName("");
+        }}
+        fileId={analysisModalFileId}
+        fileName={analysisModalFileName}
       />
 
     </div>

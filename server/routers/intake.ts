@@ -102,6 +102,10 @@ export const intakeRouter = router({
           contactId: parentContactId,
           source: input.howHeardAboutUs || "Lead Form",
           status: "New",
+          parentName: `${input.parentFirstName} ${input.parentLastName}`.trim(),
+          parentPhone: input.parentPhone || undefined,
+          studentName: `${input.studentFirstName} ${input.studentLastName}`.trim(),
+          studentGrade: input.gradeLevel || undefined,
           notes: `Intake form submitted. Student: ${input.studentFirstName} ${input.studentLastName}. Challenges: ${input.challenges || 'Not specified'}.`,
         }, ownerId);
 

@@ -24,6 +24,7 @@ import {
   FileText,
   ShieldCheck,
   Sparkles,
+  UploadCloud,
 } from "lucide-react";
 import InlineScheduler from "@/components/InlineScheduler";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -476,6 +477,40 @@ export default function DynamicForm() {
               </div>
             </div>
           )}
+
+          {/* Direct Transition to Document Vault */}
+          <div className="bg-gradient-to-br from-amber-400/20 via-[#0A254D]/90 to-blue-900/30 border-2 border-amber-400/60 rounded-3xl p-6 sm:p-7 text-center space-y-4 shadow-[0_12px_40px_rgba(245,181,68,0.2)]">
+            <div className="w-14 h-14 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center mx-auto text-amber-300 shadow-inner">
+              <UploadCloud className="w-7 h-7 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-widest text-amber-400 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 inline-block mb-1.5">
+                Immediate Action Available
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                📄 Have documents ready? Let&apos;s get them uploaded.
+              </h3>
+              <p className="text-blue-100/90 text-xs sm:text-sm max-w-lg mx-auto mt-2 leading-relaxed">
+                If you have an IEP, 504 Plan, school evaluations, or progress reports, uploading them now helps Byron Honea and your advocate team prepare for your consultation.
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href={`/portal?tab=smart-docs&action=upload&from=lead-form${caseId ? `&caseId=${encodeURIComponent(caseId)}` : ""}`}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50 transition-all cursor-pointer transform hover:-translate-y-0.5"
+              >
+                <UploadCloud className="w-4 h-4 text-slate-950" />
+                <span>Enter Portal &amp; Upload Documents →</span>
+              </a>
+              <a
+                href="/portal?tab=smart-docs"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 border border-blue-400/40 hover:border-blue-400 bg-blue-950/40 text-blue-200 hover:text-white text-xs font-bold rounded-xl transition-all"
+              >
+                <span>Open Document Vault</span>
+              </a>
+            </div>
+          </div>
 
           <p className="text-blue-200/60 text-xs">
             Please save your Case ID for reference. You will receive a confirmation email at{" "}

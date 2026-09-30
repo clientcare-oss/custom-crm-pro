@@ -110,8 +110,15 @@ export default function LeadForms() {
     },
     onError: (e) => { toast.error("Upload failed: " + e.message); setConfImageUploading(false); },
   });
+  const utils = trpc.useUtils();
   const setPhoneMutation = trpc.system.setBusinessPhone.useMutation({
-    onSuccess: () => { toast.success("Phone number saved!"); refetchPhone(); setPhoneSaving(false); },
+    onSuccess: (_, variables) => {
+      utils.system.getBusinessPhone.setData(undefined, { phone: variables.phone || null });
+      utils.system.getBusinessPhone.invalidate();
+      toast.success("Phone number saved!");
+      refetchPhone();
+      setPhoneSaving(false);
+    },
     onError: (e) => { toast.error("Save failed: " + e.message); setPhoneSaving(false); },
   });
   const handleSavePhone = () => {
