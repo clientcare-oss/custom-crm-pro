@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ChevronDown, ChevronRight, FileText, Pause, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudentFileCard, type StudentFolderData } from "./StudentFileCard";
@@ -41,6 +41,29 @@ export function CabinetDrawer({
   className,
 }: CabinetDrawerProps) {
   const IconComponent = DRAWER_ICONS[type] || FileText;
+
+  // Responsive Shelf Columns: Always 5 columns on tablets & desktops (>= 768px), matching the physical 5-slot card catalog
+  const [cols, setCols] = useState(5);
+  useEffect(() => {
+    const updateCols = () => {
+      const w = window.innerWidth;
+      if (w < 640) setCols(1);
+      else if (w < 768) setCols(2);
+      else setCols(5);
+    };
+    updateCols();
+    window.addEventListener("resize", updateCols);
+    return () => window.removeEventListener("resize", updateCols);
+  }, []);
+
+  // Partition students into rows of cols so EVERY row gets its own divider rail directly underneath
+  const drawerRows = useMemo(() => {
+    const rows: StudentFolderData[][] = [];
+    for (let i = 0; i < students.length; i += cols) {
+      rows.push(students.slice(i, i + cols));
+    }
+    return rows;
+  }, [students, cols]);
 
   return (
     <div
@@ -120,27 +143,36 @@ export function CabinetDrawer({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 relative z-10">
-                {students.map((student, idx) => (
-                  <div key={student.id} className="relative">
-                    <StudentFileCard
-                      student={student}
-                      index={idx}
-                      onClick={() => onStudentClick(student.id)}
-                      onMarkerChange={onMarkerChange}
+            <div className="space-y-4 sm:space-y-5">
+              {drawerRows.map((row, rowIdx) => (
+                <div key={rowIdx} className="relative w-full">
+                  <div
+                    className="grid gap-3 sm:gap-4 relative z-10"
+                    style={{
+                      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                    }}
+                  >
+                    {row.map((student, colIdx) => (
+                      <div key={student.id} className="relative">
+                        <StudentFileCard
+                          student={student}
+                          index={rowIdx * cols + colIdx}
+                          onClick={() => onStudentClick(student.id)}
+                          onMarkerChange={onMarkerChange}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Front retaining rail / drawer lip after EACH card row */}
+                  <div className="relative -mt-3.5 sm:-mt-4 lg:-mt-5 z-20 w-full pointer-events-none select-none px-1 sm:px-2">
+                    <img
+                      src="/decor/shelf-retaining-rail.png"
+                      alt=""
+                      className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_10px_22px_rgba(0,0,0,0.98)]"
                     />
                   </div>
-                ))}
-              </div>
-              {/* Front retaining rail / drawer lip */}
-              <div className="relative -mt-3.5 sm:-mt-4 lg:-mt-5 z-20 w-full pointer-events-none select-none px-1 sm:px-2">
-                <img
-                  src="/decor/shelf-retaining-rail.png"
-                  alt=""
-                  className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_10px_22px_rgba(0,0,0,0.98)]"
-                />
-              </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

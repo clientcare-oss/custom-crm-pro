@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -304,22 +304,36 @@ export default function Students() {
 
   const hasActiveFilters = Boolean(selectedPlanFilter !== "ALL" || selectedGradeFilter !== "ALL");
 
-  // Pagination: Exactly 15 cards (3 rows of 5) per shelf view so all 3 shelves and drawers remain visible
+  // Responsive Shelf Columns: Always strictly 5 columns on tablets & desktops (>= 768px), matching the physical 5-slot card catalog
+  const [shelfCols, setShelfCols] = useState(5);
+  useEffect(() => {
+    const updateCols = () => {
+      const w = window.innerWidth;
+      if (w < 640) setShelfCols(1);
+      else if (w < 768) setShelfCols(2);
+      else setShelfCols(5);
+    };
+    updateCols();
+    window.addEventListener("resize", updateCols);
+    return () => window.removeEventListener("resize", updateCols);
+  }, []);
+
+  // Pagination: Exactly 3 rows of cards per shelf page
   const [shelfPage, setShelfPage] = useState(0);
-  const shelfPageSize = 15;
+  const shelfPageSize = shelfCols * 3;
   const totalShelfPages = Math.ceil(filteredActive.length / shelfPageSize) || 1;
   const pagedActive = useMemo(() => {
     return filteredActive.slice(shelfPage * shelfPageSize, (shelfPage + 1) * shelfPageSize);
-  }, [filteredActive, shelfPage]);
+  }, [filteredActive, shelfPage, shelfPageSize]);
 
-  // Partition active cards into rows of 5 for the 3 stepped shelves
+  // Partition active cards into rows of shelfCols so EVERY single visual row has its own divider rail directly under it
   const shelfRows = useMemo(() => {
     const rows: StudentFolderData[][] = [];
-    for (let i = 0; i < pagedActive.length; i += 5) {
-      rows.push(pagedActive.slice(i, i + 5));
+    for (let i = 0; i < pagedActive.length; i += shelfCols) {
+      rows.push(pagedActive.slice(i, i + shelfCols));
     }
     return rows;
-  }, [pagedActive]);
+  }, [pagedActive, shelfCols]);
 
   return (
     <ScopedErrorBoundary moduleName="Students">
@@ -411,16 +425,21 @@ export default function Students() {
                       </p>
                     </div>
                   ) : (
-                    // Stepped shelves with 5 folders per tier sitting IN slots
+                    // Stepped shelves with cards sitting IN slots, with a physical divider after EACH row
                     shelfRows.map((row, rowIdx) => (
                       <div key={rowIdx} className="relative w-full">
                         {/* Shelf Row Cards Grid (z-10) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 px-3 sm:px-6 lg:px-8 relative z-10">
+                        <div
+                          className="grid gap-3 sm:gap-4 px-3 sm:px-6 lg:px-8 relative z-10"
+                          style={{
+                            gridTemplateColumns: `repeat(${shelfCols}, minmax(0, 1fr))`,
+                          }}
+                        >
                           {row.map((student, colIdx) => (
                             <div key={student.id} className="relative">
                               <StudentFileCard
                                 student={student}
-                                index={rowIdx * 5 + colIdx}
+                                index={rowIdx * shelfCols + colIdx}
                                 onClick={() => setLocation(`/contacts/${student.id}`)}
                                 onMarkerChange={handleMarkerChange}
                               />
