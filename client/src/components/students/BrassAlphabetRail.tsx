@@ -89,7 +89,7 @@ export function BrassAlphabetRail({
   return (
     <div
       className={cn(
-        "relative rounded-full h-[42px] sm:h-[44px] border-[1.5px] border-[#B88943] ring-1 ring-[#FCE09E]/25 shadow-[0_8px_24px_rgba(0,0,0,0.95)] select-none overflow-visible",
+        "relative rounded-full h-[48px] sm:h-[50px] md:h-[52px] border-[1.5px] border-[#B88943] ring-1 ring-[#FCE09E]/25 shadow-[0_10px_28px_rgba(0,0,0,0.95)] select-none overflow-visible",
         "bg-gradient-to-b from-[#091322] via-[#050C17] to-[#02060D]",
         className
       )}
@@ -106,38 +106,37 @@ export function BrassAlphabetRail({
           onClick={() => onSelectLetter("ALL")}
           title="Show All Students"
           className={cn(
-            "relative shrink-0 flex items-center justify-between pl-3 pr-2.5 h-full rounded-l-full cursor-pointer z-20 transition-all",
+            "relative shrink-0 flex items-center justify-between pl-3.5 pr-3 h-full rounded-l-full cursor-pointer z-20 transition-all",
             "bg-gradient-to-b from-[#F5D895] via-[#D8A854] to-[#805518]",
             "border-r border-[#4A320A] shadow-[inset_0_1px_1px_rgba(255,255,255,0.85),2px_0_6px_rgba(0,0,0,0.7)]",
-            "hover:brightness-105 active:scale-[0.99] w-[78px] sm:w-[86px]"
+            "hover:brightness-105 active:scale-[0.99] w-[86px] sm:w-[96px]"
           )}
         >
           {/* Top-left brass screw */}
-          <div className="absolute top-1 left-3.5 pointer-events-none">
+          <div className="absolute top-1.5 left-3.5 pointer-events-none">
             <BrassScrewHead className="w-1.5 h-1.5 sm:w-2 sm:h-2" />
           </div>
 
           {/* Bottom-left brass screw (in line with top-left and bottom-right) */}
-          <div className="absolute bottom-1 left-3.5 pointer-events-none">
+          <div className="absolute bottom-1.5 left-3.5 pointer-events-none">
             <BrassScrewHead className="w-1.5 h-1.5 sm:w-2 sm:h-2" />
           </div>
 
           {/* Top-right brass screw */}
-          <div className="absolute top-1 right-2 pointer-events-none">
+          <div className="absolute top-1.5 right-2.5 pointer-events-none">
             <BrassScrewHead className="w-1.5 h-1.5 sm:w-2 sm:h-2" />
           </div>
 
           {/* Bottom-right brass screw */}
-          <div className="absolute bottom-1 right-2 pointer-events-none">
+          <div className="absolute bottom-1.5 right-2.5 pointer-events-none">
             <BrassScrewHead className="w-1.5 h-1.5 sm:w-2 sm:h-2" />
           </div>
-
 
           {/* "ALL" Engraved Text */}
           <div className="flex-1 text-center pl-2">
             <span
               className={cn(
-                "font-serif font-black tracking-widest text-[12px] sm:text-[13.5px] uppercase select-none transition-colors",
+                "font-serif font-black tracking-widest text-[13px] sm:text-[15px] uppercase select-none transition-colors",
                 selectedLetter === "ALL"
                   ? "text-[#100B04] drop-shadow-[0_1px_0_rgba(255,248,230,0.8)]"
                   : "text-[#2B1B07] hover:text-[#0D0802]"
@@ -149,65 +148,67 @@ export function BrassAlphabetRail({
 
           {/* Right edge pointer arrow */}
           <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center z-30 pointer-events-none">
-            <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[5.5px] border-l-[#C49443] drop-shadow-[1px_0_2px_rgba(0,0,0,0.8)]" />
+            <div className="w-0 h-0 border-y-[4.5px] border-y-transparent border-l-[6px] border-l-[#C49443] drop-shadow-[1px_0_2px_rgba(0,0,0,0.8)]" />
           </div>
 
           {/* Starting brass bracket for guide rod */}
-          <div className="absolute -right-1.5 bottom-[7.5px] sm:bottom-[8.5px] w-2 h-2 rounded-xs bg-gradient-to-b from-[#FFF2D6] via-[#B88943] to-[#4A310A] border border-[#2E1A03] shadow-xs pointer-events-none z-20" />
+          <div className="absolute -right-1.5 bottom-[9px] sm:bottom-[10.5px] w-2 h-2 rounded-xs bg-gradient-to-b from-[#FFF2D6] via-[#B88943] to-[#4A310A] border border-[#2E1A03] shadow-xs pointer-events-none z-20" />
         </button>
 
         {/* ─── 2. CENTER SECTION: Alphabet Letters + Continuous Lower Brass Guide Rail ─── */}
-        <div className="relative flex-1 h-full px-2 sm:px-3 flex flex-col justify-start">
+        <div className="relative flex-1 h-full px-2.5 sm:px-3 flex flex-col justify-start">
           
-          {/* Upper letters row */}
-          <div className="relative flex items-center justify-between w-full h-[26px] sm:h-[28px] pt-0.5 z-10">
-            {ALPHABET.map((letter) => {
-              const isSelected = selectedLetter === letter;
-              const count = letterCounts[letter] ?? 0;
+          {/* Shared 1:1 Track Container: Guarantees exact coordinate parity for letters, rod, and slider */}
+          <div className="relative w-full h-full">
+            {/* Upper letters row */}
+            <div className="relative flex items-center justify-between w-full h-[30px] sm:h-[32px] pt-1 z-10">
+              {ALPHABET.map((letter) => {
+                const isSelected = selectedLetter === letter;
+                const count = letterCounts[letter] ?? 0;
 
-              return (
-                <button
-                  key={letter}
-                  type="button"
-                  onClick={() => onSelectLetter(letter)}
-                  title={`${letter}${count ? ` (${count} students)` : ""}`}
-                  className="relative flex items-center justify-center flex-1 h-full cursor-pointer transition-all duration-150 focus:outline-none"
-                >
-                  <span
-                    className={cn(
-                      "font-serif text-[12px] sm:text-[13px] md:text-[14px] leading-none transition-all select-none",
-                      isSelected
-                        ? "text-[#FFF8EA] font-black scale-110 drop-shadow-[0_0_8px_rgba(255,224,158,0.95)]"
-                        : count > 0
-                        ? "text-[#F5D895] hover:text-[#FFF8EA] font-semibold"
-                        : "text-[#E6B864]/90 hover:text-[#FFF8EA] font-medium"
-                    )}
+                return (
+                  <button
+                    key={letter}
+                    type="button"
+                    onClick={() => onSelectLetter(letter)}
+                    title={`${letter}${count ? ` (${count} students)` : ""}`}
+                    className="relative flex items-center justify-center flex-1 h-full cursor-pointer transition-all duration-150 focus:outline-none"
                   >
-                    {letter}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Continuous horizontal cylindrical brass guide rod */}
-          <div className="absolute left-1 right-1 bottom-[8.5px] sm:bottom-[9.5px] h-[2.2px] rounded-full bg-gradient-to-r from-[#B88943] via-[#FCE09E] to-[#B88943] shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] pointer-events-none z-10">
-            {/* Top specular glint highlight line */}
-            <div className="absolute inset-x-0 top-0 h-[0.8px] bg-gradient-to-r from-transparent via-[#FFF9EC] to-transparent pointer-events-none" />
-          </div>
-
-          {/* Active Cast Brass Slider Knob riding on the guide rail under the active letter */}
-          {activeIndex >= 0 && activeIndex < 26 && (
-            <div
-              className="absolute bottom-[-3.5px] sm:bottom-[-4.5px] z-20 pointer-events-none transition-all duration-200 ease-out flex items-center justify-center"
-              style={{
-                left: `${((activeIndex + 0.5) / 26) * 100}%`,
-                transform: "translateX(-50%)",
-              }}
-            >
-              <BrassSliderDishKnob className="w-[20px] h-[20px] sm:w-[22px] sm:h-[22px]" />
+                    <span
+                      className={cn(
+                        "font-serif text-[13px] sm:text-[14.5px] md:text-[15.5px] leading-none transition-all select-none",
+                        isSelected
+                          ? "text-[#FFF8EA] font-black scale-115 drop-shadow-[0_0_10px_rgba(255,224,158,0.98)]"
+                          : "text-[#D0A75D] hover:text-[#FFF8EA] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                      )}
+                    >
+                      {letter}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          )}
+
+            {/* Continuous horizontal cylindrical brass guide rod */}
+            <div className="absolute left-0 right-0 bottom-[9.5px] sm:bottom-[10.5px] h-[2.5px] rounded-full bg-gradient-to-r from-[#B88943] via-[#FCE09E] to-[#B88943] shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] pointer-events-none z-10">
+              {/* Top specular glint highlight line */}
+              <div className="absolute inset-x-0 top-0 h-[0.9px] bg-gradient-to-r from-transparent via-[#FFF9EC] to-transparent pointer-events-none" />
+            </div>
+
+            {/* Active Cast Brass Slider Knob riding on the guide rail directly under the active letter */}
+            {activeIndex >= 0 && activeIndex < 26 && (
+              <div
+                className="absolute z-20 pointer-events-none transition-all duration-200 ease-out flex items-center justify-center"
+                style={{
+                  left: `${((activeIndex + 0.5) / 26) * 100}%`,
+                  bottom: "10.5px",
+                  transform: "translate(-50%, 50%)",
+                }}
+              >
+                <BrassSliderDishKnob className="w-[22px] h-[22px] sm:w-[25px] sm:h-[25px]" />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ─── 3. RIGHT END CAP: Solid Brushed Brass Terminal Fitting ─── */}
@@ -216,11 +217,11 @@ export function BrassAlphabetRail({
             "relative shrink-0 flex items-center justify-center pl-2.5 pr-3 h-full rounded-r-full select-none z-20",
             "bg-gradient-to-b from-[#F5D895] via-[#D8A854] to-[#805518]",
             "border-l border-[#4A320A] shadow-[inset_0_1px_1px_rgba(255,255,255,0.85),-2px_0_6px_rgba(0,0,0,0.7)]",
-            "w-[68px] sm:w-[76px]"
+            "w-[76px] sm:w-[86px]"
           )}
         >
           {/* Terminal brass bracket collar for guide rod */}
-          <div className="absolute -left-1.5 bottom-[7.5px] sm:bottom-[8.5px] w-2 h-2 rounded-xs bg-gradient-to-b from-[#FFF2D6] via-[#B88943] to-[#4A310A] border border-[#2E1A03] shadow-xs pointer-events-none z-20" />
+          <div className="absolute -left-1.5 bottom-[9px] sm:bottom-[10.5px] w-2 h-2 rounded-xs bg-gradient-to-b from-[#FFF2D6] via-[#B88943] to-[#4A310A] border border-[#2E1A03] shadow-xs pointer-events-none z-20" />
 
           {/* Top-left brass screw */}
           <div className="absolute top-1.5 left-2.5 pointer-events-none">

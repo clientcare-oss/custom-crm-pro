@@ -263,40 +263,54 @@ export default function Students() {
 
   return (
     <ScopedErrorBoundary moduleName="Students">
-      <div className="min-h-full bg-[#020712] text-[#F0DFC5] p-2 sm:p-5 lg:p-7 space-y-5">
-        {/* Top Header Badge & Meta */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <PageIdBadge id="PG-004" name="Students Case Registry" />
+      <div className="min-h-full bg-[#020712] text-[#F0DFC5] flex flex-col">
+        {/* ─── Top Full-Bleed Maritime Header Banner (Touches Left and Right Screen Edges With No Buffer) ─── */}
+        <div
+          className="w-full relative border-b border-[#8A6731]/60 shadow-[0_12px_36px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] bg-no-repeat bg-cover bg-bottom min-h-[240px] sm:min-h-[265px] lg:min-h-[295px] flex flex-col justify-between"
+          style={{ backgroundImage: "url('/decor/students-header-bg.png')" }}
+        >
+          {/* Row 1: Header Navigation Controls (Pushed left to give room for wide search box without touching leaves) */}
+          <div className="relative z-10 w-full pl-3 sm:pl-16 md:pl-20 lg:pl-28 xl:pl-32 pr-3 sm:pr-20 md:pr-24 lg:pr-32 xl:pr-36 pt-4 sm:pt-5">
+            <StudentsHeader
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              sortOrder={sortOrder}
+              onSortChange={setSortOrder}
+              onNewStudentClick={() => setNewStudentOpen(true)}
+              selectedPlanFilter={selectedPlanFilter}
+              onPlanFilterChange={setSelectedPlanFilter}
+              selectedGradeFilter={selectedGradeFilter}
+              onGradeFilterChange={setSelectedGradeFilter}
+              onResetFilters={() => {
+                setSelectedPlanFilter("ALL");
+                setSelectedGradeFilter("ALL");
+                setSelectedLetter("ALL");
+                setSearchQuery("");
+              }}
+              hasActiveFilters={hasActiveFilters}
+            />
+          </div>
+
+          {/* Row 2: Alphabetical Brass Rail (Lifted up a lil further into the deep blue nautical chart space) */}
+          <div className="relative z-10 w-full pl-3 sm:pl-16 md:pl-20 lg:pl-28 xl:pl-32 pr-3 sm:pr-20 md:pr-24 lg:pr-32 xl:pr-36 pb-16 sm:pb-20 lg:pb-24 xl:pb-28">
+            <div className="max-w-[1300px] xl:max-w-[1340px] mx-auto">
+              <BrassAlphabetRail
+                selectedLetter={selectedLetter}
+                onSelectLetter={setSelectedLetter}
+                letterCounts={letterCounts}
+              />
+            </div>
           </div>
         </div>
 
-        {/* ─── 1. Header (Navigation & Search with Plant on Books and Brass Lantern) ─── */}
-        <StudentsHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          sortOrder={sortOrder}
-          onSortChange={setSortOrder}
-          onNewStudentClick={() => setNewStudentOpen(true)}
-          selectedPlanFilter={selectedPlanFilter}
-          onPlanFilterChange={setSelectedPlanFilter}
-          selectedGradeFilter={selectedGradeFilter}
-          onGradeFilterChange={setSelectedGradeFilter}
-          onResetFilters={() => {
-            setSelectedPlanFilter("ALL");
-            setSelectedGradeFilter("ALL");
-            setSelectedLetter("ALL");
-            setSearchQuery("");
-          }}
-          hasActiveFilters={hasActiveFilters}
-        />
-
-        {/* ─── 2. Alphabetical Brass Indexing Rail ─── */}
-        <BrassAlphabetRail
-          selectedLetter={selectedLetter}
-          onSelectLetter={setSelectedLetter}
-          letterCounts={letterCounts}
-        />
+        {/* ─── Padded Body Section: Credenza Filing Cabinet & Drawers ─── */}
+        <div className="flex-1 p-2 sm:p-5 lg:p-7 space-y-5">
+          {/* Top Header Badge & Meta */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PageIdBadge id="PG-004" name="Students Case Registry" />
+            </div>
+          </div>
 
         {/* ─── 3. Large Front-Facing Physical Filing Credenza / Cabinet ─── */}
         <div className="relative rounded-2xl border-2 border-[#8A6731]/70 bg-gradient-to-b from-[#0A1A2F] via-[#061224] to-[#020814] p-3 sm:p-5 lg:p-6 shadow-[0_24px_70px_rgba(0,3,12,0.98)] ring-1 ring-[#F7D287]/20 space-y-4">
@@ -629,6 +643,7 @@ export default function Students() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </ScopedErrorBoundary>
   );

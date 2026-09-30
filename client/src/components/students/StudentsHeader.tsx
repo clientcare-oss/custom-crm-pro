@@ -1,26 +1,19 @@
 import React, { useState } from "react";
-import { Search, SlidersHorizontal, ArrowUpDown, Plus, X } from "lucide-react";
+import { Search, SlidersHorizontal, Plus, X, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { PlantOnBooks, CompassEmblem, BrassLantern } from "./CabinetOrnaments";
 
 interface StudentsHeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  sortOrder: "asc" | "desc";
-  onSortChange: (order: "asc" | "desc") => void;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (order: "asc" | "desc") => void;
   onNewStudentClick: () => void;
   selectedPlanFilter: string;
   onPlanFilterChange: (plan: string) => void;
@@ -34,7 +27,7 @@ interface StudentsHeaderProps {
 export function StudentsHeader({
   searchQuery,
   onSearchChange,
-  sortOrder,
+  sortOrder = "asc",
   onSortChange,
   onNewStudentClick,
   selectedPlanFilter,
@@ -50,58 +43,50 @@ export function StudentsHeader({
   return (
     <div
       className={cn(
-        "relative flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-2 px-2 sm:px-4",
+        "relative flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-1 sm:px-2 py-1",
         className
       )}
     >
-      {/* ─── LEFT: Plant on Books + Compass Emblem + Title ─── */}
-      <div className="flex items-center gap-3.5 relative z-10 shrink-0">
-        {/* Plant resting on antique books */}
-        <div className="hidden sm:block -mb-3 -mt-3">
-          <PlantOnBooks className="w-18 h-18 sm:w-22 sm:h-22" />
-        </div>
-
-        {/* Waypoint Antique Brass Compass Emblem */}
-        <CompassEmblem className="w-10 h-10 sm:w-11 sm:h-11" />
-
+      {/* ─── 1. LEFT: Students Title ─── */}
+      <div className="flex items-center gap-3 relative z-10 shrink-0">
         {/* Title & Subtitle */}
-        <div>
-          <h1 className="font-serif text-2xl sm:text-[32px] font-bold tracking-tight text-white leading-none">
+        <div className="select-none pr-1">
+          <h1 className="font-serif text-[26px] sm:text-[32px] md:text-[34px] font-bold text-white tracking-wide leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
             Students
           </h1>
-          <p className="text-xs sm:text-[13px] text-[#7B91B0] mt-1 font-sans">
+          <p className="font-serif text-[13px] sm:text-sm text-[#94ADC9] mt-1.5 leading-none tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
             All student cases and workspaces
           </p>
         </div>
       </div>
 
-      {/* ─── CENTER: Long Dark Search Field ─── */}
-      <div className="flex-1 max-w-xl mx-0 lg:mx-4 z-10">
+      {/* ─── 2. CENTER: Sleek Maritime Search Pill (Expanded & Made More Readable) ─── */}
+      <div className="flex-1 max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-1 sm:mx-3 z-10">
         <div className="relative flex items-center">
-          <Search className="absolute left-3.5 w-4 h-4 text-[#D8B478] pointer-events-none" />
+          <Search className="absolute left-3.5 w-4.5 h-4.5 text-[#7E97B8] pointer-events-none" />
           <Input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search students, schools, or keywords..."
             className={cn(
-              "w-full h-10.5 pl-10 pr-9 rounded-xl text-xs sm:text-sm text-[#F0DFC5] placeholder:text-[#64748B]",
-              "bg-[#030914] border border-[#6E5023]/60 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]",
-              "focus:border-[#E9BA6B] focus:ring-1 focus:ring-[#E9BA6B]/50 transition-all"
+              "w-full h-10 sm:h-11 pl-10 pr-9 rounded-lg text-sm sm:text-[15px] text-[#F0F6FC] placeholder:text-[#6E87A8]",
+              "bg-[#040B17]/92 border border-[#243654] shadow-[inset_0_2px_4px_rgba(0,0,0,0.7)]",
+              "focus:border-[#4B70A6] focus:ring-2 focus:ring-[#4B70A6]/40 transition-all"
             )}
           />
           {searchQuery && (
             <button
               onClick={() => onSearchChange("")}
-              className="absolute right-3 p-1 rounded hover:bg-[#B88943]/20 text-[#7B8EA7] hover:text-[#F0DFC5] cursor-pointer"
+              className="absolute right-3 p-1 rounded hover:bg-white/10 text-[#7E97B8] hover:text-white cursor-pointer"
               title="Clear search"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
       </div>
 
-      {/* ─── RIGHT: Filters, Sort, New Student, and Brass Lantern ─── */}
+      {/* ─── 3. RIGHT: Filters and + New Student ─── */}
       <div className="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap z-10">
         {/* Filters Popover */}
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
@@ -110,16 +95,17 @@ export function StudentsHeader({
               variant="outline"
               size="sm"
               className={cn(
-                "h-10 px-3.5 rounded-xl text-xs font-semibold gap-1.5 transition-all cursor-pointer",
-                "bg-[#07162B] border-[#8A6731]/80 text-[#F0DFC5] hover:bg-[#0D2444] hover:text-[#F7D287]",
-                hasActiveFilters && "border-[#E9BA6B] text-[#E9BA6B] shadow-[0_0_10px_rgba(233,186,107,0.3)]"
+                "h-10 sm:h-11 px-3.5 sm:px-4 rounded-lg text-xs sm:text-sm font-medium gap-2 transition-all cursor-pointer select-none",
+                "bg-gradient-to-b from-[#14233C]/95 to-[#0A1322]/98 border border-[#283C5C] text-[#C4D7ED]",
+                "hover:bg-[#1A2E4E] hover:border-[#3D5B8A] hover:text-white",
+                hasActiveFilters && "border-[#E9BA6B] text-[#E9BA6B] shadow-[0_0_10px_rgba(233,186,107,0.35)]"
               )}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#D8B478]" />
+              <SlidersHorizontal className="w-4 h-4 text-[#C4D7ED]" />
               <span>Filters</span>
-              <span className="text-[10px] text-[#A87938]">▾</span>
+              <ChevronDown className="w-3.5 h-3.5 text-[#8EA6C6]" />
               {hasActiveFilters && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E9BA6B] ml-0.5" />
+                <span className="w-2 h-2 rounded-full bg-[#E9BA6B] ml-0.5" />
               )}
             </Button>
           </PopoverTrigger>
@@ -168,55 +154,22 @@ export function StudentsHeader({
           </PopoverContent>
         </Popover>
 
-        {/* Sort: Name A–Z Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 px-3.5 rounded-xl text-xs font-semibold gap-1.5 bg-[#07162B] border-[#8A6731]/80 text-[#F0DFC5] hover:bg-[#0D2444] hover:text-[#F7D287] transition-all cursor-pointer"
-            >
-              <ArrowUpDown className="w-3.5 h-3.5 text-[#D8B478]" />
-              <span>Sort: Name {sortOrder === "asc" ? "A–Z" : "Z–A"}</span>
-              <span className="text-[10px] text-[#A87938]">▾</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-[#0A1729] border border-[#B88943]/40 text-[#F0DFC5] shadow-2xl rounded-xl">
-            <DropdownMenuItem
-              onClick={() => onSortChange("asc")}
-              className={cn("cursor-pointer text-xs", sortOrder === "asc" && "text-[#E9BA6B] font-bold")}
-            >
-              Name A–Z
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onSortChange("desc")}
-              className={cn("cursor-pointer text-xs", sortOrder === "desc" && "text-[#E9BA6B] font-bold")}
-            >
-              Name Z–A
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* New Student: Radiant Polished Gold Button */}
+        {/* New Student: Solid Radiant Brushed Brass Button */}
         <Button
           onClick={onNewStudentClick}
           size="sm"
           className={cn(
-            "h-10 px-4 rounded-xl text-xs font-bold gap-2 cursor-pointer shadow-[0_4px_14px_rgba(233,186,107,0.4)] transition-all select-none",
-            "bg-gradient-to-b from-[#FCE09E] via-[#E8B55F] to-[#B98132] text-[#1A1208]",
-            "hover:from-[#FFF1D1] hover:to-[#D29D4D] hover:shadow-[0_6px_20px_rgba(233,186,107,0.6)]",
-            "border border-[#FFE8B8] active:scale-95"
+            "h-10 sm:h-11 px-4 sm:px-4.5 rounded-lg text-xs sm:text-sm font-serif font-bold tracking-wide gap-2 cursor-pointer select-none",
+            "bg-gradient-to-b from-[#F2CD80] via-[#DCA348] to-[#AC7628] text-[#1F1406]",
+            "border border-[#FFE8A3]/70 shadow-[0_2px_10px_rgba(217,162,69,0.38),inset_0_1px_1px_rgba(255,255,255,0.7)]",
+            "hover:brightness-105 active:scale-[0.98] transition-all"
           )}
         >
-          <Plus className="w-4 h-4 text-[#1A1208] stroke-[2.8]" />
+          <Plus className="w-4 h-4 stroke-[2.8] text-[#1F1406]" />
           <span>New Student</span>
         </Button>
-
-        {/* Hanging Brass Nautical Lantern with Trailing Ivy */}
-        <div className="hidden lg:block -mt-5 -mb-5 pl-1 shrink-0">
-          <BrassLantern className="w-18 h-22 xl:w-22 xl:h-26" />
-        </div>
       </div>
     </div>
   );
 }
+

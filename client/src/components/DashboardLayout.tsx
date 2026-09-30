@@ -24,8 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
-import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, FileSignature, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, FileSignature, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
 import { getStoredEmployees, checkEmployeeModuleAccess } from "@/components/team/teamStore";
 import { CRM_MODULES } from "@/components/team/teamTypes";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
@@ -259,36 +258,170 @@ const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
-// Compass rose SVG watermark
-function CompassRose({ className }: { className?: string }) {
+// Authentic 8-Point Waypoint Nautical Compass Star with 3D faceted gold shading
+export function WaypointCompassStar({ className = "w-10 h-10" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 120 120"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Main cardinal points */}
-      <polygon points="60,8 55,55 60,50 65,55" fill="currentColor" opacity="0.6" />
-      <polygon points="60,112 55,65 60,70 65,65" fill="currentColor" opacity="0.6" />
-      <polygon points="8,60 55,55 50,60 55,65" fill="currentColor" opacity="0.6" />
-      <polygon points="112,60 65,55 70,60 65,65" fill="currentColor" opacity="0.6" />
-      {/* Ordinal points */}
-      <polygon points="22,22 52,55 57,50" fill="currentColor" opacity="0.35" />
-      <polygon points="98,22 68,55 63,50" fill="currentColor" opacity="0.35" />
-      <polygon points="22,98 52,65 57,70" fill="currentColor" opacity="0.35" />
-      <polygon points="98,98 68,65 63,70" fill="currentColor" opacity="0.35" />
-      {/* Center ring */}
-      <circle cx="60" cy="60" r="7" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-      <circle cx="60" cy="60" r="3" fill="currentColor" opacity="0.5" />
-      {/* Outer ring */}
-      <circle cx="60" cy="60" r="48" stroke="currentColor" strokeWidth="0.75" opacity="0.2" />
-      <circle cx="60" cy="60" r="38" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 4" opacity="0.2" />
-      {/* N label */}
-      <text x="57" y="6" fontSize="7" fill="currentColor" opacity="0.5" fontFamily="serif" fontWeight="bold">N</text>
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <defs>
+        <linearGradient id="wp-gold-facet-light" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FFF4D6" />
+          <stop offset="40%" stopColor="#F5D07F" />
+          <stop offset="100%" stopColor="#D4A74B" />
+        </linearGradient>
+        <linearGradient id="wp-gold-facet-dark" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#BA8832" />
+          <stop offset="50%" stopColor="#8C5E1B" />
+          <stop offset="100%" stopColor="#54370B" />
+        </linearGradient>
+        <linearGradient id="wp-gold-facet-mid" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FFE4A0" />
+          <stop offset="100%" stopColor="#B3832E" />
+        </linearGradient>
+      </defs>
+
+      {/* Outer Fine Brass Concentric Ring */}
+      <circle cx="50" cy="50" r="28" stroke="url(#wp-gold-facet-mid)" strokeWidth="1.2" opacity="0.85" />
+      <circle cx="50" cy="50" r="27" stroke="#0D1829" strokeWidth="0.5" opacity="0.5" />
+
+      {/* 4 Diagonal Smaller Points (NE, SE, SW, NW) */}
+      <polygon points="50,50 50,32 63,37" fill="url(#wp-gold-facet-dark)" />
+      <polygon points="50,50 63,37 68,50" fill="url(#wp-gold-facet-light)" />
+
+      <polygon points="50,50 68,50 63,63" fill="url(#wp-gold-facet-dark)" />
+      <polygon points="50,50 63,63 50,68" fill="url(#wp-gold-facet-light)" />
+
+      <polygon points="50,50 50,68 37,63" fill="url(#wp-gold-facet-dark)" />
+      <polygon points="50,50 37,63 32,50" fill="url(#wp-gold-facet-light)" />
+
+      <polygon points="50,50 32,50 37,37" fill="url(#wp-gold-facet-dark)" />
+      <polygon points="50,50 37,37 50,32" fill="url(#wp-gold-facet-light)" />
+
+      {/* 4 Primary Large Cardinal Points (N, S, E, W) */}
+      {/* NORTH */}
+      <polygon points="50,50 45.5,50 50,6" fill="url(#wp-gold-facet-light)" />
+      <polygon points="50,50 54.5,50 50,6" fill="url(#wp-gold-facet-dark)" />
+
+      {/* SOUTH */}
+      <polygon points="50,50 54.5,50 50,94" fill="url(#wp-gold-facet-light)" />
+      <polygon points="50,50 45.5,50 50,94" fill="url(#wp-gold-facet-dark)" />
+
+      {/* EAST */}
+      <polygon points="50,50 50,45.5 94,50" fill="url(#wp-gold-facet-dark)" />
+      <polygon points="50,50 50,54.5 94,50" fill="url(#wp-gold-facet-light)" />
+
+      {/* WEST */}
+      <polygon points="50,50 50,54.5 6,50" fill="url(#wp-gold-facet-dark)" />
+      <polygon points="50,50 50,45.5 6,50" fill="url(#wp-gold-facet-light)" />
+
+      {/* Center Beveled Brass Rivet Boss */}
+      <circle cx="50" cy="50" r="4.5" fill="url(#wp-gold-facet-light)" stroke="#261704" strokeWidth="0.8" />
+      <circle cx="49" cy="49" r="1.5" fill="#FFFFFF" opacity="0.9" />
     </svg>
   );
+}
+
+export interface MasterNavItem {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  path: string;
+  isActive: (loc: string) => boolean;
+}
+
+export function buildMasterNavItems(projectLabelPlural: string, projectIcon: React.ComponentType<{ className?: string }>): MasterNavItem[] {
+  return [
+    {
+      id: "home",
+      icon: LighthouseCottageIcon,
+      label: "Home",
+      path: "/",
+      isActive: (loc) => loc === "/" || loc === "/crew-quarters" || loc === "/dashboard" || loc === "/company/dashboard",
+    },
+    {
+      id: "call-center",
+      icon: Headset,
+      label: "Call Center",
+      path: "/call-center",
+      isActive: (loc) => loc === "/call-center" || loc.startsWith("/call-center/") || loc === "/call-logs",
+    },
+    {
+      id: "lead-center",
+      icon: TrendingUp,
+      label: "Lead Center",
+      path: "/leads",
+      isActive: (loc) => loc === "/leads" || loc.startsWith("/leads/") || loc === "/lead-forms",
+    },
+    {
+      id: "calendar",
+      icon: Calendar,
+      label: "Calendar",
+      path: "/calendar",
+      isActive: (loc) => loc === "/calendar" || loc === "/appointments" || loc === "/national-coverage" || loc === "/session-types" || loc === "/scheduler",
+    },
+    {
+      id: "students",
+      icon: projectIcon,
+      label: projectLabelPlural || "Students",
+      path: "/students",
+      isActive: (loc) => loc === "/students" || loc.startsWith("/students/") || loc === "/projects" || loc.startsWith("/projects/"),
+    },
+    {
+      id: "contacts",
+      icon: Users,
+      label: "Contacts",
+      path: "/contacts",
+      isActive: (loc) => loc === "/contacts" || (loc.startsWith("/contacts/") && !loc.startsWith("/contacts/new")),
+    },
+    {
+      id: "advocacy",
+      icon: Workflow,
+      label: "Advocacy",
+      path: "/advocacy-pipeline",
+      isActive: (loc) => loc === "/advocacy-pipeline" || loc.startsWith("/advocacy-pipeline") || loc === "/meeting-workspace" || loc.startsWith("/meeting-workspace") || loc === "/workspace" || loc.startsWith("/post-meeting-review"),
+    },
+    {
+      id: "documents",
+      icon: FileSignature,
+      label: "Documents",
+      path: "/agreements",
+      isActive: (loc) => loc === "/agreements" || loc === "/contracts" || loc.startsWith("/smart-files") || loc === "/invoices" || loc === "/bill-guardian",
+    },
+    {
+      id: "templates",
+      icon: LayoutTemplate,
+      label: "Templates",
+      path: "/templates",
+      isActive: (loc) => loc === "/templates" || loc.startsWith("/templates/"),
+    },
+    {
+      id: "tools",
+      icon: Wrench,
+      label: "Tools",
+      path: "/tools",
+      isActive: (loc) => loc === "/tools" || (loc.startsWith("/tools/") && !loc.startsWith("/tools/state-complaint")) || loc === "/first-mate" || loc === "/knowledge-base" || loc === "/walkthroughs",
+    },
+    {
+      id: "reports",
+      icon: Activity,
+      label: "Reports",
+      path: "/metrics",
+      isActive: (loc) => loc === "/metrics" || loc.startsWith("/metrics") || loc === "/company/metrics",
+    },
+    {
+      id: "giving",
+      icon: HandHeart,
+      label: "Giving & Impact",
+      path: "/giving",
+      isActive: (loc) => loc === "/giving" || loc.startsWith("/giving") || loc === "/sponsors",
+    },
+    {
+      id: "settings",
+      icon: Settings,
+      label: "Settings",
+      path: "/settings",
+      isActive: (loc) => loc === "/settings" || loc.startsWith("/settings") || loc === "/team" || loc.startsWith("/team") || loc === "/automations" || loc === "/integrations" || loc === "/ai-connections" || loc === "/portal-management" || loc === "/manage-experiences" || loc === "/services" || loc === "/tasks",
+    },
+  ];
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -342,6 +475,7 @@ type DashboardLayoutContentProps = {
 function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const isLight = theme === "blue";
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
   const { projectLabel, projectLabelPlural, projectIconKey } = useTerminology();
   const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
@@ -357,37 +491,30 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     );
   }, [user?.email]);
 
-  const rawMenuGroups = useMemo(() => buildMenuGroups(projectLabelPlural, projectIcon), [projectLabelPlural, projectIcon]);
+  const rawNavItems = useMemo(
+    () => buildMasterNavItems(projectLabelPlural, projectIcon),
+    [projectLabelPlural, projectIcon]
+  );
 
   // Dynamically filter sidebar modules according to role permissions and employee overrides
-  const menuGroups = useMemo(() => {
+  const navItems = useMemo(() => {
     if (
       !currentEmployee ||
       user?.role === "admin" ||
       user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
     ) {
-      return rawMenuGroups;
+      return rawNavItems;
     }
 
-    return rawMenuGroups
-      .map((group) => {
-        const allowedItems = group.items.filter((item) => {
-          const modDef = CRM_MODULES.find(
-            (m) => m.path === item.path || (item.path !== "/" && m.path.startsWith(item.path))
-          );
-          if (!modDef) return true;
-          const access = checkEmployeeModuleAccess(currentEmployee, modDef.id);
-          return access !== "none";
-        });
-        return {
-          ...group,
-          items: allowedItems,
-        };
-      })
-      .filter((group) => group.items.length > 0);
-  }, [rawMenuGroups, currentEmployee, user?.role, user?.email]);
-
-  const menuItems = useMemo(() => menuGroups.flatMap(g => g.items), [menuGroups]);
+    return rawNavItems.filter((item) => {
+      const modDef = CRM_MODULES.find(
+        (m) => m.path === item.path || (item.path !== "/" && m.path.startsWith(item.path))
+      );
+      if (!modDef) return true;
+      const access = checkEmployeeModuleAccess(currentEmployee, modDef.id);
+      return access !== "none";
+    });
+  }, [rawNavItems, currentEmployee, user?.role, user?.email]);
   const [location, setLocation] = useLocation();
 
   // Route security check: block direct URL access to modules without permission
@@ -406,7 +533,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     const access = checkEmployeeModuleAccess(currentEmployee, currentMod.id);
     return access === "none" ? currentMod : null;
   }, [currentEmployee, user?.role, user?.email, location]);
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
@@ -419,68 +546,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   });
   const crewUnreadCount = crewStats?.unreadTotal || 0;
 
-  // ============ COLLAPSIBLE SECTIONS & SEARCH STATE ============
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem("crm_sidebar_collapsed_sections");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return {};
-  });
 
-  const toggleSection = (groupLabel: string) => {
-    setCollapsedSections((prev) => {
-      const next = { ...prev, [groupLabel]: !prev[groupLabel] };
-      localStorage.setItem("crm_sidebar_collapsed_sections", JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Keyboard shortcut: ⌘K or Ctrl+K to quickly focus search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Filter menu groups and items based on search query in real time
-  const filteredMenuGroups = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return menuGroups;
-
-    return menuGroups
-      .map((group) => {
-        const groupLabelLower = group.groupLabel.toLowerCase();
-        const groupMatches =
-          groupLabelLower.includes(q) ||
-          groupLabelLower.replace("&", "and").includes(q) ||
-          groupLabelLower.includes(q.replace(/\band\b/g, "&"));
-
-        const matchingItems = groupMatches
-          ? group.items
-          : group.items.filter(
-              (item) =>
-                item.label.toLowerCase().includes(q) ||
-                item.path.toLowerCase().includes(q) ||
-                (item.keywords && item.keywords.some((k) => k.toLowerCase().includes(q)))
-            );
-        return {
-          ...group,
-          items: matchingItems,
-        };
-      })
-      .filter((group) => group.items.length > 0);
-  }, [menuGroups, searchQuery]);
 
   // ============ VOYAGE RECORDER GLOBAL PIPELINE ENGINE ============
   const [isRecording, setIsRecording] = useState(false);
@@ -678,22 +744,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     });
   };
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(
-    (item) =>
-      (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
-      (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
-      (item.path === "/giving" && (location === "/giving" || location.startsWith("/giving") || location === "/sponsors")) ||
-      (item.path === "/calendar" && (location === "/calendar" || location === "/appointments" || location === "/national-coverage" || location === "/session-types" || location === "/scheduler")) ||
-      (item.path === "/invoices" && (location === "/invoices" || location === "/bill-guardian")) ||
-      (item.path === "/knowledge-base" && (location === "/knowledge-base" || location === "/walkthroughs")) ||
-      (item.path === "/tools" && (location === "/tools" || location === "/first-mate" || (location.startsWith("/tools/") && !location.startsWith("/tools/state-complaint")))) ||
-      (item.path === "/settings" && (location === "/settings" || location === "/integrations" || location.startsWith("/integrations/") || location === "/ai-connections" || location === "/portal-management" || location === "/manage-experiences")) ||
-      (item.path === "/agreements" && (location === "/agreements" || location === "/contracts" || location.startsWith("/smart-files"))) ||
-      (item.path === "/projects" && (location === "/projects" || location === "/students")) ||
-      (item.path === "/team" && (location === "/team" || location.startsWith("/team/"))) ||
-      item.path === location
-  );
-  const isMobile = useIsMobile();
+  const activeMenuItem = navItems.find((item) => item.isActive(location));
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -729,213 +780,195 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           className="border-r-0 transition-all duration-[3000ms] ease-in-out"
           disableTransition={isResizing}
         >
-          {/* ── Header: toggle + logo + search ── */}
-          <SidebarHeader className="px-3 pt-4 pb-2.5 bg-slate-950/40 backdrop-blur-md border-b border-white/10 gap-2.5 relative">
+          {/* ── Header: Gold Shimmer + Circle Theme Toggle + Collapse Button + Logo & Wordmark ── */}
+          <SidebarHeader className="px-3 pt-3.5 pb-2 bg-transparent border-b border-[#152744] gap-0 relative">
             {/* Top golden accent shimmer line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#F7D287] to-transparent shadow-[0_0_10px_rgba(247,210,135,0.75)] pointer-events-none z-30" />
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shrink-0 cursor-pointer"
-                aria-label="Toggle navigation"
-              >
-                <PanelLeft className="h-4 w-4 text-sidebar-foreground/60" />
-              </button>
-              {!isCollapsed && (
-                <div className="flex items-center gap-2.5 min-w-0">
+            {!isCollapsed ? (
+              <div className="relative w-full flex flex-col items-center justify-center pt-1 pb-1">
+                {/* Circle Light/Dark Mode Toggle at top left (matching Client Portal) */}
+                <button
+                  onClick={toggleTheme}
+                  className={`absolute top-0 left-0 w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md z-20 ${
+                    isLight
+                      ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
+                      : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
+                  }`}
+                  title={isLight ? "Switch to dark mode" : "Switch to light mode"}
+                  aria-label="Toggle theme"
+                >
+                  {/* Sun Icon (rises and rotates in light mode) */}
+                  <Sun
+                    className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${
+                      isLight
+                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                        : "translate-y-6 -rotate-90 scale-50 opacity-0"
+                    }`}
+                  />
+                  {/* Moon Icon (sets and rotates in dark mode) */}
+                  <Moon
+                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${
+                      !isLight
+                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                        : "-translate-y-6 rotate-90 scale-50 opacity-0"
+                    }`}
+                  />
+                </button>
+
+                {/* Collapse button at top right */}
+                <button
+                  onClick={toggleSidebar}
+                  className="absolute top-0 right-0 h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-white/50 hover:text-white cursor-pointer z-20"
+                  title="Collapse navigation"
+                  aria-label="Collapse navigation"
+                >
+                  <PanelLeft className="h-4 w-4" />
+                </button>
+
+                {/* Waypoint Advocates Logo & Wordmark */}
+                <div className="flex flex-col items-center gap-1.5">
                   <img
                     src={logoData?.logoUrl || LOGO_URL}
                     alt="Waypoint Advocates"
-                    className="h-9 w-9 object-contain shrink-0"
+                    className="h-12 w-12 object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
                   />
-                  <div className="flex flex-col leading-tight min-w-0">
-                    <span className="text-sm font-bold tracking-widest text-sidebar-foreground uppercase truncate">Waypoint</span>
-                    <span className="text-[10px] tracking-[0.2em] text-sidebar-foreground/50 uppercase truncate">Advocates</span>
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="font-serif tracking-[0.24em] text-[#E5C175] text-[15px] font-bold uppercase select-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] pl-1">
+                      WAYPOINT
+                    </span>
+                    <span className="tracking-[0.28em] text-[#B9CDE3] text-[10.5px] font-semibold uppercase select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] pl-1 mt-0.5">
+                      ADVOCATES
+                    </span>
                   </div>
                 </div>
-              )}
-              {isCollapsed && (
-                <img
-                  src={logoData?.logoUrl || LOGO_URL}
-                  alt="Waypoint Advocates"
-                  className="h-8 w-8 object-contain mx-auto"
-                />
-              )}
-            </div>
-
-            {/* Live Module Search Bar */}
-            {!isCollapsed && (
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-200/70 pointer-events-none" />
-                <Input
-                  ref={searchInputRef}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search modules... (⌘K)"
-                  className="h-8.5 pl-8 pr-7 bg-[#082043]/70 backdrop-blur-sm border border-sky-400/25 text-xs rounded-xl placeholder:text-blue-200/50 focus-visible:ring-1 focus-visible:ring-[#F5B544] text-white shadow-md transition-colors font-medium"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-sidebar-foreground/60 hover:text-white p-0.5 rounded-sm cursor-pointer"
-                    title="Clear search"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-1 gap-2">
+                <button
+                  onClick={toggleSidebar}
+                  className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-white cursor-pointer"
+                  title="Expand navigation"
+                  aria-label="Expand navigation"
+                >
+                  <img
+                    src={logoData?.logoUrl || LOGO_URL}
+                    alt="Waypoint Advocates"
+                    className="h-7 w-7 object-contain drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]"
+                  />
+                </button>
+                <button
+                  onClick={toggleTheme}
+                  className={`relative w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md ${
+                    isLight
+                      ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
+                      : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
+                  }`}
+                  title={isLight ? "Switch to dark mode" : "Switch to light mode"}
+                  aria-label="Toggle theme"
+                >
+                  <Sun
+                    className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${
+                      isLight
+                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                        : "translate-y-6 -rotate-90 scale-50 opacity-0"
+                    }`}
+                  />
+                  <Moon
+                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${
+                      !isLight
+                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                        : "-translate-y-6 rotate-90 scale-50 opacity-0"
+                    }`}
+                  />
+                </button>
               </div>
             )}
           </SidebarHeader>
 
-          {/* ── Nav items with Expandable/Collapsible Sections ── */}
-          <SidebarContent className="bg-transparent px-2 py-1.5 overflow-y-auto space-y-1.5">
-            {filteredMenuGroups.length === 0 && searchQuery ? (
-              <div className="text-center py-8 px-3">
-                <Search className="h-6 w-6 mx-auto text-sidebar-foreground/30 mb-2" />
-                <p className="text-xs font-semibold text-sidebar-foreground/80">No modules found</p>
-                <p className="text-[10px] text-sidebar-foreground/40 mt-0.5">No match for "{searchQuery}"</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSearchQuery("")}
-                  className="mt-2 text-xs h-7 text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 cursor-pointer"
-                >
-                  Clear Search
-                </Button>
-              </div>
-            ) : (
-              filteredMenuGroups.map((group) => {
-                const isSearching = searchQuery.trim().length > 0;
-                const hasActiveItem = group.items.some((item) => item.path === location);
-                // When searching or if active, default to open unless manually collapsed
-                const isCollapsedSection = !isSearching && (collapsedSections[group.groupLabel] ?? false);
-
+          {/* ── Nav items: Clean Vertical List with Byron's Picked Icons & Radiant Highlight ── */}
+          <SidebarContent className="bg-transparent px-2.5 py-3 overflow-y-auto space-y-1">
+            <SidebarMenu className="gap-1">
+              {navItems.map((item) => {
+                const isActive = item.isActive(location);
+                const IconComponent = item.icon;
                 return (
-                  <div key={group.groupLabel} className="space-y-0.5">
-                    {/* Collapsible Section Header Button */}
-                    <button
-                      type="button"
-                      onClick={() => toggleSection(group.groupLabel)}
-                      className="w-full flex items-center justify-between px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/90 hover:text-white transition-colors group-data-[collapsible=icon]:hidden select-none cursor-pointer group/header"
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => setLocation(item.path)}
+                      tooltip={item.label}
+                      className={cn(
+                        "h-10 w-full px-3 rounded-lg text-[13.5px] cursor-pointer transition-all duration-150 flex items-center gap-3.5 select-none",
+                        isActive
+                          ? "bg-gradient-to-r from-[#173050]/95 via-[#23456F]/85 to-[#162E4D]/95 border border-[#D4AF37]/50 text-white font-semibold shadow-[0_2px_12px_rgba(212,175,55,0.18),inset_0_1px_0_rgba(255,255,255,0.12)]"
+                          : "text-[#B9CDE3] hover:text-white hover:bg-white/[0.07] border border-transparent font-medium"
+                      )}
                     >
-                      <span className={hasActiveItem ? "text-amber-400 font-extrabold drop-shadow-[0_0_8px_rgba(245,181,68,0.4)]" : ""}>
-                        {group.groupLabel}
-                      </span>
-                      <span className="text-sky-300/70 group-hover/header:text-white transition-transform">
-                        {isCollapsedSection ? (
-                          <ChevronRight className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )}
-                      </span>
-                    </button>
-
-                    {/* Section Items Card — Translucent Container Box Over Full Lighthouse Image */}
-                    {!isCollapsedSection && (
-                      <div className="rounded-xl bg-[#082043]/60 hover:bg-[#082043]/75 backdrop-blur-md border border-sky-400/20 hover:border-sky-400/35 p-1 shadow-lg relative overflow-hidden transition-all duration-200 animate-in fade-in">
-                        <SidebarMenu className="gap-0.5">
-                          {group.items.map((item) => {
-                            const isActive = 
-                              (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
-                              (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
-                              (item.path === "/giving" && (location === "/giving" || location.startsWith("/giving") || location === "/sponsors")) ||
-                              (item.path === "/calendar" && (location === "/calendar" || location === "/appointments" || location === "/national-coverage" || location === "/session-types" || location === "/scheduler")) ||
-                              (item.path === "/invoices" && (location === "/invoices" || location === "/bill-guardian")) ||
-                              (item.path === "/knowledge-base" && (location === "/knowledge-base" || location === "/walkthroughs")) ||
-                              (item.path === "/tools" && (location === "/tools" || location === "/first-mate" || (location.startsWith("/tools/") && !location.startsWith("/tools/state-complaint")))) ||
-                              (item.path === "/settings" && (location === "/settings" || location === "/integrations" || location.startsWith("/integrations/") || location === "/ai-connections" || location === "/portal-management" || location === "/manage-experiences")) ||
-                              (item.path === "/agreements" && (location === "/agreements" || location === "/contracts" || location.startsWith("/smart-files"))) ||
-                              (item.path === "/projects" && (location === "/projects" || location === "/students")) ||
-                              (item.path === "/team" && (location === "/team" || location.startsWith("/team/"))) ||
-                              (item.path !== "/" && location === item.path);
-                            return (
-                              <SidebarMenuItem key={item.path}>
-                                <SidebarMenuButton
-                                  isActive={isActive}
-                                  onClick={() => setLocation(item.path)}
-                                  tooltip={item.label}
-                                  className={`h-8 transition-all rounded-lg text-xs cursor-pointer font-medium
-                                    ${isActive
-                                      ? "bg-[#143E6D]/85 border border-sky-400/50 text-white font-bold shadow-[0_2px_10px_rgba(56,189,248,0.25)]"
-                                      : "text-slate-100 hover:text-white hover:bg-white/[0.12] border border-transparent"
-                                    }`}
-                                >
-                                  {item.icon && (
-                                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.4)]" : "text-sky-300"}`} />
-                                  )}
-                                  <span className="truncate">{item.label}</span>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            );
-                          })}
-                        </SidebarMenu>
-                      </div>
-                    )}
-                  </div>
+                      {IconComponent && (
+                        <IconComponent
+                          className={cn(
+                            "h-4 w-4 shrink-0 transition-transform",
+                            isActive
+                              ? "text-[#F8D279] drop-shadow-[0_0_6px_rgba(248,210,121,0.6)] scale-105"
+                              : "text-[#E0B86C] drop-shadow-[0_0_2px_rgba(224,184,108,0.3)]"
+                          )}
+                        />
+                      )}
+                      <span className="truncate tracking-wide">{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 );
-              })
-            )}
+              })}
+            </SidebarMenu>
           </SidebarContent>
 
-          {/* ── Footer: controls ── */}
-          <SidebarFooter className="bg-slate-950/50 backdrop-blur-md border-t border-white/10 p-2.5 space-y-1.5">
-            {/* Side-by-side Quick Setup & Theme toggle */}
-            <div className="flex items-center gap-1.5 w-full group-data-[collapsible=icon]:flex-col">
-              {/* Quick Setup */}
-              <button
-                onClick={() => setQuickSetupOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 bg-gradient-to-r from-[#F5B544] to-amber-400 hover:from-amber-400 hover:to-yellow-300 transition-all text-[#07162B] font-bold text-xs shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 cursor-pointer min-w-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
-                title="Quick Client Setup"
-              >
-                <Zap className="h-3.5 w-3.5 text-[#07162B] shrink-0" />
-                <span className="truncate group-data-[collapsible=icon]:hidden">
-                  Quick Setup
-                </span>
-              </button>
-
-              {/* Theme toggle */}
-              <button
-                onClick={toggleTheme}
-                title={theme === 'navy' ? 'Switch to Light mode' : 'Switch to Navy mode'}
-                className="flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/[0.14] border border-sky-400/20 bg-[#082043]/70 backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 text-blue-100 hover:text-white text-xs font-medium cursor-pointer shrink-0 shadow-sm group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
-                aria-label="Toggle theme"
-              >
-                {theme === 'navy'
-                  ? <Sun className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                  : <Moon className="h-3.5 w-3.5 text-indigo-400 shrink-0" />}
-                <span className="truncate group-data-[collapsible=icon]:hidden text-[11px]">
-                  {theme === 'navy' ? 'Light' : 'Dark'}
-                </span>
-              </button>
-            </div>
-
-            {/* User profile with Go to Page button */}
-            <div className="flex items-center justify-between gap-1.5 w-full">
+          {/* ── Footer: Compact Employee Pill Matching Reference ── */}
+          <SidebarFooter className="bg-slate-950/60 backdrop-blur-md border-t border-[#152744] px-2 py-2">
+            <div className="flex items-center gap-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 bg-[#082043]/75 backdrop-blur-sm hover:border-sky-400/50 border border-sky-400/20 transition-all flex-1 text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 min-w-0 shadow-md cursor-pointer">
-                    <Avatar className="h-8 w-8 border border-amber-400/40 shrink-0">
-                      <AvatarFallback className="text-xs font-semibold bg-amber-500/20 text-amber-300">
-                        {user?.name?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                      <p className="text-sm font-semibold truncate leading-none text-white">
-                        {user?.name || "-"}
-                      </p>
-                      <p className="text-xs text-blue-100/70 truncate mt-1">
-                        {user?.email || "-"}
-                      </p>
+                  <button className="flex items-center h-8 rounded-md border border-[#172D4D] bg-[#07172E]/90 hover:bg-[#0B1E38] hover:border-[#D4AF37]/50 transition-all flex-1 text-left overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] cursor-pointer shadow-sm group">
+                    {/* Left Star compartment matching reference image */}
+                    <div className="h-full px-2 flex items-center justify-center border-r border-[#152B4B] bg-[#051122]/60 group-hover:bg-[#07172E]/80 transition-colors shrink-0">
+                      <Star className="h-3.5 w-3.5 text-[#D8B467] fill-[#D8B467]/20 shrink-0" />
+                    </div>
+
+                    {/* Employee Name & Up/Down Chevron */}
+                    <div className="flex-1 flex items-center justify-between px-2 min-w-0 relative group-data-[collapsible=icon]:hidden">
+                      <div className="flex items-center gap-1.5 min-w-0 py-0.5">
+                        <span className="text-[12px] font-serif font-medium text-[#F1E8D9] tracking-wide truncate group-hover:text-white transition-colors">
+                          {user?.name || currentEmployee?.name || "Byron Honea"}
+                        </span>
+                      </div>
+                      <ChevronsUpDown className="h-3 w-3 text-[#7E95B3] group-hover:text-white shrink-0 ml-1 transition-colors opacity-70 group-hover:opacity-100" />
+
+                      {/* Subtle golden underline glint matching the reference image */}
+                      <div className="absolute -bottom-0.5 left-2 right-5 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/50 to-transparent pointer-events-none" />
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-[#082043] border border-[#0D4B84] text-white shadow-xl backdrop-blur-md">
+                <DropdownMenuContent align="end" className="w-56 bg-[#082043] border border-[#0D4B84] text-white shadow-xl backdrop-blur-md">
+                  <div className="px-3 py-2 border-b border-white/10">
+                    <p className="text-xs font-semibold text-white truncate">
+                      {user?.name || currentEmployee?.name || "Byron Honea"}
+                    </p>
+                    <p className="text-[11px] text-blue-200/70 truncate mt-0.5">
+                      {user?.email || "Advocate"}
+                    </p>
+                  </div>
+                  <DropdownMenuItem
+                    onClick={() => setLocation("/crew-quarters?tab=profile")}
+                    className="cursor-pointer text-xs focus:bg-white/10"
+                  >
+                    <UserCheck className="mr-2 h-3.5 w-3.5 text-amber-400" />
+                    <span>My Profile & Credentials</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={logout}
-                    className="cursor-pointer text-destructive focus:text-destructive"
+                    className="cursor-pointer text-xs text-rose-400 focus:text-rose-300 focus:bg-rose-500/10"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut className="mr-2 h-3.5 w-3.5" />
                     <span>Sign out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -944,17 +977,17 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <button
                 onClick={() => setIssueReporterOpen(true)}
                 title="Report Issue / Linear Backlog (⌥+F)"
-                className="h-8 w-8 rounded-lg bg-[#082043] hover:border-sky-400/50 border border-[#0D4B84] transition-colors flex items-center justify-center text-white/70 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer shadow-sm"
+                className="h-8 w-8 rounded-md bg-[#07172E] hover:border-[#D4AF37]/40 border border-[#172D4D] transition-colors flex items-center justify-center text-white/60 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer shadow-sm"
               >
-                <Bug className="h-4 w-4 text-rose-400" />
+                <Bug className="h-3.5 w-3.5 text-rose-400" />
               </button>
 
               <button
                 onClick={() => setGoToPageOpen(true)}
                 title="Go to Page"
-                className="h-8 w-8 rounded-lg bg-[#082043] hover:border-sky-400/50 border border-[#0D4B84] transition-colors flex items-center justify-center text-white/70 hover:text-amber-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
+                className="h-8 w-8 rounded-md bg-[#07172E] hover:border-[#D4AF37]/40 border border-[#172D4D] transition-colors flex items-center justify-center text-white/60 hover:text-amber-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
               >
-                <Compass className="h-4.5 w-4.5 text-amber-400" />
+                <Compass className="h-3.5 w-3.5 text-amber-400" />
               </button>
             </div>
           </SidebarFooter>
