@@ -134,13 +134,12 @@ export function CabinetDrawer({
                 ))}
               </div>
               {/* Front retaining rail / drawer lip */}
-              <div className="relative -mt-3.5 sm:-mt-4 lg:-mt-5 z-20 w-full pointer-events-none">
-                <div className="h-[2px] w-full bg-gradient-to-r from-[#4A3414] via-[#FCE09E] to-[#4A3414] shadow-[0_1px_4px_rgba(0,0,0,0.95)]" />
-                <div className="h-5 sm:h-6 w-full bg-gradient-to-b from-[#0F233B] via-[#091728] to-[#020712] border-b border-[#8A6731]/50 shadow-[0_6px_14px_rgba(0,0,0,0.95)] flex items-center justify-between px-3 sm:px-6">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#E5B666]/70 border border-[#422C0A] shadow-xs" />
-                  <div className="h-[1px] w-1/3 bg-gradient-to-r from-transparent via-[#E8B868]/20 to-transparent" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#E5B666]/70 border border-[#422C0A] shadow-xs" />
-                </div>
+              <div className="relative -mt-3.5 sm:-mt-4 lg:-mt-5 z-20 w-full pointer-events-none select-none">
+                <img
+                  src="/decor/shelf-retaining-rail.png"
+                  alt=""
+                  className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)]"
+                />
               </div>
             </div>
           )}
