@@ -1096,7 +1096,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                           type="button"
                           onClick={handleOpenSearch}
                           className="absolute left-0 w-7 h-7 rounded-full flex items-center justify-center text-[#B9CDE3]/80 hover:text-[#F8D279] hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
-                          title="Search students, clients, modules, tools... (Ctrl+K)"
                           aria-label="Search students, clients, modules, tools"
                         >
                           <Search className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
@@ -1127,6 +1126,11 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                               setSearchQuery(e.target.value);
                               setHighlightedIndex(0);
                             }}
+                            onBlur={(e) => {
+                              if (!searchContainerRef.current?.contains(e.relatedTarget as Node)) {
+                                handleCloseSearch();
+                              }
+                            }}
                             onKeyDown={handleSearchKeyDown}
                             placeholder="Search students, tools, modules..."
                             className="w-full h-7 pl-7 pr-6 text-[11px] font-medium bg-[#07162C] border border-[#D4AF37]/60 focus:border-[#F8D279] text-white placeholder-white/40 rounded-full shadow-[0_0_12px_rgba(212,175,55,0.25),inset_0_1px_2px_rgba(0,0,0,0.6)] focus:outline-none focus:ring-1 focus:ring-[#F8D279] transition-all"
@@ -1135,7 +1139,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                             type="button"
                             onClick={handleCloseSearch}
                             className="absolute right-1.5 h-4 w-4 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                            title="Close search (Esc)"
                             aria-label="Close search"
                           >
                             <X className="h-2.5 w-2.5" />
@@ -1143,56 +1146,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                         </div>
                       </div>
 
-                      {/* Results Popover Dropdown */}
-                      {isSearchOpen && (
+                      {/* Results Popover Dropdown — ONLY renders when actively typing a query */}
+                      {isSearchOpen && searchNormalized.length > 0 && (
                         <div
                           className="absolute top-[calc(100%+8px)] -left-2 -right-2 bg-[#061426]/98 border border-[#1C3A60] rounded-xl shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_16px_rgba(212,175,55,0.15)] backdrop-blur-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 text-left"
                           style={{ maxHeight: "380px" }}
                         >
-                          {!searchNormalized ? (
-                            <div className="p-2 space-y-2">
-                              <div className="flex items-center justify-between px-1">
-                                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#8FA3BF]">
-                                  Quick Access
-                                </span>
-                                <span className="text-[9px] font-mono text-white/30 border border-white/10 px-1 rounded">
-                                  ESC
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 gap-1.5">
-                                {[
-                                  { label: "Students", path: "/students", icon: GraduationCap, badge: "PG-004" },
-                                  { label: "Voyage Recorder", path: "/tools/voyage-recorder", icon: Video, badge: "PG-010-REC" },
-                                  { label: "Call Center", path: "/call-center", icon: Headset, badge: "PG-018" },
-                                  { label: "Agreements", path: "/agreements", icon: FileSignature, badge: "PG-046" },
-                                  { label: "Lead Center", path: "/leads", icon: TrendingUp, badge: "PG-003" },
-                                  { label: "First Mate", path: "/first-mate", icon: Sparkles, badge: "PG-037" },
-                                ].map((quick) => {
-                                  const Icon = quick.icon;
-                                  return (
-                                    <button
-                                      key={quick.path}
-                                      type="button"
-                                      onClick={() => handleSelectResult(quick.path)}
-                                      className="flex items-center gap-2 p-2 rounded-lg bg-[#0A1F38]/60 hover:bg-[#122B4D] border border-white/5 hover:border-[#D4AF37]/40 text-left transition-all cursor-pointer group"
-                                    >
-                                      <Icon className="h-3.5 w-3.5 text-[#F8D279] group-hover:scale-110 transition-transform shrink-0" />
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-[11px] font-semibold text-white truncate">{quick.label}</p>
-                                        <p className="text-[9px] font-mono text-[#7890AA] truncate">{quick.badge}</p>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              <div className="pt-1.5 px-1 border-t border-white/5 text-center">
-                                <p className="text-[10px] text-white/40">
-                                  Type to search students, clients, modules, tools...
-                                </p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="p-1.5 max-h-[340px] overflow-y-auto space-y-2 divide-y divide-white/5">
+                          <div className="p-1.5 max-h-[340px] overflow-y-auto space-y-2 divide-y divide-white/5">
                               {/* Students Section */}
                               {filteredStudents.length > 0 && (
                                 <div className="space-y-1">
@@ -1356,7 +1316,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                                 </div>
                               )}
                             </div>
-                          )}
                         </div>
                       )}
                     </div>
