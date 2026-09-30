@@ -57,9 +57,36 @@ export function StudentFileCard({
   const formattedLastInitial = rawLast ? `${rawLast.charAt(0).toUpperCase()}.` : "";
   const displayName = `${formattedFirst} ${formattedLastInitial}`.trim();
 
-  // Grade & School
+  // Grade & Family / Primary Parent
   const gradeText = student.gradeLevel || "3rd Grade";
-  const schoolText = student.schoolName || student.company || "District Elementary";
+
+  // Display what family they're with (e.g. "Sheep Family") or primary parent's name
+  const familyOrParentText = React.useMemo(() => {
+    // 1. Explicit company containing "Family" (e.g. "Sheep Family", "The Sheep Family")
+    if (student.company && /family/i.test(student.company)) {
+      return student.company.trim();
+    }
+    // 2. Student's last name -> "[Last] Family" (e.g. "Sheep Family")
+    if (student.lastName && student.lastName.trim()) {
+      const cleanLast = student.lastName.trim();
+      return `${cleanLast} Family`;
+    }
+    // 3. Primary parent's name (e.g. "Mary Sheep" -> "Sheep Family" or full parent name)
+    if (student.parentName && student.parentName.trim()) {
+      const pName = student.parentName.trim();
+      if (/family/i.test(pName)) return pName;
+      const parts = pName.split(/\s+/);
+      if (parts.length > 1) {
+        return `${parts[parts.length - 1]} Family`;
+      }
+      return pName;
+    }
+    // 4. Fallback to company or generic family label
+    if (student.company && student.company.trim()) {
+      return `${student.company.trim()} Family`;
+    }
+    return "Family File";
+  }, [student.company, student.lastName, student.parentName]);
 
   // Plan Type (IEP or 504)
   const rawPlan = (student.planType || "").toUpperCase();
@@ -276,13 +303,16 @@ export function StudentFileCard({
             </div>
           </div>
 
-          {/* Grade & School */}
+          {/* Grade & Family / Primary Parent */}
           <div className="space-y-0.5">
             <p className="font-serif text-[#3A4556] text-[12px] sm:text-[13px] leading-tight line-clamp-1 font-medium">
               {gradeText}
             </p>
-            <p className="font-sans text-[#5A687C] text-[11px] sm:text-[11.5px] leading-tight truncate line-clamp-1">
-              {schoolText}
+            <p
+              className="font-sans text-[#5A687C] text-[11px] sm:text-[11.5px] leading-tight truncate line-clamp-1 font-medium"
+              title={student.parentName ? `Primary Parent: ${student.parentName}` : familyOrParentText}
+            >
+              {familyOrParentText}
             </p>
           </div>
         </div>

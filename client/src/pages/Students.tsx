@@ -160,11 +160,14 @@ export default function Students() {
 
   const parentMap = useMemo(() => {
     const map = new Map<number, string>();
-    parents.forEach((p: any) => {
-      map.set(p.id, `${p.firstName} ${p.lastName}`.trim());
+    allContacts.forEach((p: any) => {
+      const name = `${p.firstName || ""} ${p.lastName || ""}`.trim();
+      if (name) {
+        map.set(p.id, name);
+      }
     });
     return map;
-  }, [parents]);
+  }, [allContacts]);
 
   // ─── Student Filter & Classification ───
   const isStudent = (c: any) => {
@@ -192,7 +195,7 @@ export default function Students() {
       diagnosis: c.diagnosis,
       iepEligibility: c.iepEligibility,
       parentContactId: c.parentContactId,
-      parentName: c.parentContactId ? parentMap.get(c.parentContactId) || null : null,
+      parentName: (c.parentContactId ? parentMap.get(c.parentContactId) || null : null) || c.secondParentName || null,
       company: c.company,
       pipelineStage: c.pipelineStage,
       accountStatus: c.accountStatus,
