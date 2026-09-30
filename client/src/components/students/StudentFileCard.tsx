@@ -131,7 +131,7 @@ export function StudentFileCard({
       }}
       className={cn(
         "group relative w-full aspect-[439/343] cursor-pointer transition-all duration-200 select-none outline-none",
-        "hover:-translate-y-2.5 hover:z-30 focus-visible:ring-2 focus-visible:ring-[#E9BA6B] rounded-xl",
+        "hover:-translate-y-2.5 hover:z-50 focus-visible:ring-2 focus-visible:ring-[#E9BA6B] rounded-xl",
         className
       )}
     >

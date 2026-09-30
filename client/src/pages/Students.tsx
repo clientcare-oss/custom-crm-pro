@@ -413,7 +413,7 @@ export default function Students() {
                 </div>
 
                 {/* Shelves Rows Span */}
-                <div className="flex-1 py-4 sm:py-6 space-y-4 sm:space-y-5 min-h-[460px]">
+                <div className="flex-1 py-4 sm:py-6 min-h-[460px]">
                   {filteredActive.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <Folder className="w-12 h-12 text-[#7B8EA7]/30 mb-3" />
@@ -425,9 +425,16 @@ export default function Students() {
                       </p>
                     </div>
                   ) : (
-                    // Stepped shelves with cards sitting IN slots, with a physical divider after EACH row
+                    // Stepped shelves with cards sitting IN slots, with each row below overlapping the divider by half of the divider
                     shelfRows.map((row, rowIdx) => (
-                      <div key={rowIdx} className="relative w-full">
+                      <div
+                        key={rowIdx}
+                        className={cn(
+                          "relative w-full transition-all duration-200 hover:z-40 focus-within:z-40",
+                          rowIdx > 0 && "-mt-[11px] sm:-mt-[13px] lg:-mt-[15px]"
+                        )}
+                        style={{ zIndex: 10 + rowIdx }}
+                      >
                         {/* Shelf Row Cards Grid (z-10) — tighter gaps so cards are larger */}
                         <div
                           className="grid gap-1.5 sm:gap-2 lg:gap-2.5 px-1.5 sm:px-3 lg:px-4 relative z-10"

@@ -143,9 +143,16 @@ export function CabinetDrawer({
               </p>
             </div>
           ) : (
-            <div className="space-y-4 sm:space-y-5">
+            <div>
               {drawerRows.map((row, rowIdx) => (
-                <div key={rowIdx} className="relative w-full">
+                <div
+                  key={rowIdx}
+                  className={cn(
+                    "relative w-full transition-all duration-200 hover:z-40 focus-within:z-40",
+                    rowIdx > 0 && "-mt-[11px] sm:-mt-[13px] lg:-mt-[15px]"
+                  )}
+                  style={{ zIndex: 10 + rowIdx }}
+                >
                   <div
                     className="grid gap-1.5 sm:gap-2 lg:gap-2.5 relative z-10"
                     style={{
