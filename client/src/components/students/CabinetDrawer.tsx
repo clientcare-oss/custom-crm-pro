@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronDown, ChevronRight, FileText, Pause, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { StudentFolderCard, type StudentFolderData } from "./StudentFolderCard";
+import { StudentFileCard, type StudentFolderData } from "./StudentFileCard";
 import { CastBrassDrawerHandle, AntiqueBrassNameplate, BrassScrewRivet } from "./CabinetOrnaments";
 
 export type DrawerType = "onboarding" | "paused" | "archived";
@@ -121,7 +121,7 @@ export function CabinetDrawer({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {students.map((student, idx) => (
-                <StudentFolderCard
+                <StudentFileCard
                   key={student.id}
                   student={student}
                   index={idx}

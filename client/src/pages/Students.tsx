@@ -20,10 +20,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { StudentsHeader } from "@/components/students/StudentsHeader";
 import { BrassAlphabetRail } from "@/components/students/BrassAlphabetRail";
-import { StudentFolderCard, type StudentFolderData } from "@/components/students/StudentFolderCard";
+import { StudentFileCard, type StudentFolderData } from "@/components/students/StudentFileCard";
 import { CabinetDrawer, type DrawerType } from "@/components/students/CabinetDrawer";
 import { StudentsListView } from "@/components/students/StudentsListView";
-import { BrassScrewRivet, AntiqueBrassNameplate } from "@/components/students/CabinetOrnaments";
+import { BrassScrewRivet } from "@/components/students/CabinetOrnaments";
+import { ActiveStudentsDrawerBar } from "@/components/students/ActiveStudentsDrawerBar";
 
 export default function Students() {
   const [, setLocation] = useLocation();
@@ -303,6 +304,16 @@ export default function Students() {
           </div>
         </div>
 
+        {/* ─── Active Students Maritime Credenza Rail (Directly Under Header) ─── */}
+        <ActiveStudentsDrawerBar
+          count={filteredActive.length || 42}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+          shelfPage={shelfPage}
+          totalShelfPages={totalShelfPages}
+          onShelfPageChange={setShelfPage}
+        />
+
         {/* ─── Padded Body Section: Credenza Filing Cabinet & Drawers ─── */}
         <div className="flex-1 p-2 sm:p-5 lg:p-7 space-y-5">
           {/* Top Header Badge & Meta */}
@@ -325,74 +336,6 @@ export default function Students() {
 
           {/* ─── Upper Compartment: ACTIVE STUDENTS ─── */}
           <div className="space-y-3">
-            {/* Compartment Control Bar */}
-            <div className="flex items-center justify-between pb-2 border-b border-[#8A6731]/35 flex-wrap gap-3">
-              {/* Left: Antique Brass Nameplate with 4 Corner Rivets */}
-              <div className="flex items-center gap-3">
-                <AntiqueBrassNameplate
-                  icon={Folder}
-                  title="ACTIVE STUDENTS"
-                  count={filteredActive.length || 42}
-                />
-              </div>
-
-              {/* Right: Tactile View Switcher (Cards / List) & Shelf Pagination */}
-              <div className="flex items-center gap-3">
-                {totalShelfPages > 1 && viewMode === "cards" && (
-                  <div className="flex items-center gap-1.5 text-xs text-[#D8B478] bg-[#030914] px-2.5 py-1 rounded-lg border border-[#8A6731]/40">
-                    <button
-                      disabled={shelfPage === 0}
-                      onClick={() => setShelfPage(p => Math.max(0, p - 1))}
-                      className="px-1 text-[#D8B478] hover:text-white disabled:opacity-30 cursor-pointer"
-                    >
-                      ‹
-                    </button>
-                    <span>Shelf {shelfPage + 1} of {totalShelfPages}</span>
-                    <button
-                      disabled={shelfPage >= totalShelfPages - 1}
-                      onClick={() => setShelfPage(p => Math.min(totalShelfPages - 1, p + 1))}
-                      className="px-1 text-[#D8B478] hover:text-white disabled:opacity-30 cursor-pointer"
-                    >
-                      ›
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-serif font-bold uppercase tracking-wider text-[#D8B478]">
-                    View: Cards
-                  </span>
-                  <div className="flex items-center p-0.5 rounded-lg bg-[#030914] border border-[#8A6731]/50 shadow-inner">
-                    <button
-                      type="button"
-                      onClick={() => handleViewModeChange("cards")}
-                      className={cn(
-                        "flex items-center justify-center w-7 h-7 rounded text-xs font-bold transition-all duration-200 cursor-pointer select-none",
-                        viewMode === "cards"
-                          ? "bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] shadow-[0_2px_6px_rgba(216,164,82,0.5)]"
-                          : "text-[#7B8EA7] hover:text-[#F0DFC5]"
-                      )}
-                      title="Cards view"
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5 stroke-[2.4]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleViewModeChange("list")}
-                      className={cn(
-                        "flex items-center justify-center w-7 h-7 rounded text-xs font-bold transition-all duration-200 cursor-pointer select-none",
-                        viewMode === "list"
-                          ? "bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] shadow-[0_2px_6px_rgba(216,164,82,0.5)]"
-                          : "text-[#7B8EA7] hover:text-[#F0DFC5]"
-                      )}
-                      title="List view"
-                    >
-                      <List className="w-3.5 h-3.5 stroke-[2.4]" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Compartment Content: 3 Stepped Physical Wooden Shelves or List */}
             {isLoading ? (
@@ -425,7 +368,7 @@ export default function Students() {
                         {/* Shelf Row */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
                           {row.map((student, colIdx) => (
-                            <StudentFolderCard
+                            <StudentFileCard
                               key={student.id}
                               student={student}
                               index={rowIdx * 5 + colIdx}
