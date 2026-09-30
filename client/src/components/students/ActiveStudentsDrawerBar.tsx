@@ -1,6 +1,7 @@
 import React from "react";
 import { LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
+import PageIdBadge from "@/components/PageIdBadge";
 
 interface ActiveStudentsDrawerBarProps {
   count: number;
@@ -57,8 +58,10 @@ export function ActiveStudentsDrawerBar({
         </div>
       </div>
 
-      {/* ─── Center: Dark Midnight Brushed Wood Plank Span ─── */}
-      <div className="flex-1 h-full min-w-4" />
+      {/* ─── Center: Dark Midnight Brushed Wood Plank Span + Page ID Plaque ─── */}
+      <div className="flex-1 h-full min-w-4 flex items-center justify-center">
+        <PageIdBadge id="PG-004" name="Students Case Registry" />
+      </div>
 
       {/* ─── Right End: View Switcher Capsule + Optional Shelf Pager + Right Hardware ─── */}
       <div className="flex items-center gap-2 sm:gap-3 h-full shrink-0 pr-0">

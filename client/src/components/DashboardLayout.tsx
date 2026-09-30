@@ -467,6 +467,60 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 }
 
+interface SearchDirectoryItem {
+  id: string;
+  name: string;
+  category: "module" | "tool";
+  path: string;
+  badge?: string;
+  keywords: string[];
+  icon: LucideIcon;
+}
+
+function isStudentContact(c: any) {
+  if (!c) return false;
+  const title = (c.jobTitle || "").toLowerCase().trim();
+  if (title.includes("student")) return true;
+  if (c.parentContactId != null && c.parentContactId > 0) return true;
+  if (c.studentStatus || c.gradeLevel || c.schoolName || c.caseId) return true;
+  return false;
+}
+
+const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
+  // Modules
+  { id: "mod-crew", name: "Crew Quarters", category: "module", path: "/", badge: "PG-038", keywords: ["home", "dashboard", "personal", "employee", "my work"], icon: LighthouseCottageIcon as any },
+  { id: "mod-call", name: "Call Center", category: "module", path: "/call-center", badge: "PG-018", keywords: ["calls", "logs", "phone", "dialer", "voice", "caller id", "quo"], icon: Headset },
+  { id: "mod-leads", name: "Lead Center", category: "module", path: "/leads", badge: "PG-003", keywords: ["leads", "prospects", "intake", "pipeline", "discovery call", "forms"], icon: TrendingUp },
+  { id: "mod-calendar", name: "Calendar & Appointments", category: "module", path: "/calendar", badge: "PG-007", keywords: ["schedule", "appointments", "sessions", "coverage", "booking"], icon: Calendar },
+  { id: "mod-students", name: "Students File Cabinet", category: "module", path: "/students", badge: "PG-004", keywords: ["students", "roster", "iep", "504", "cases", "files", "cabinet"], icon: GraduationCap },
+  { id: "mod-contacts", name: "Contacts Directory", category: "module", path: "/contacts", badge: "PG-002", keywords: ["clients", "parents", "directory", "people", "directory", "families"], icon: Users },
+  { id: "mod-advocacy", name: "Advocacy Pipeline", category: "module", path: "/advocacy-pipeline", badge: "PG-039", keywords: ["pipeline", "advocacy", "cases", "stages", "retention"], icon: Workflow },
+  { id: "mod-agreements", name: "Agreements Engine", category: "module", path: "/agreements", badge: "PG-046", keywords: ["contracts", "signatures", "smart files", "agreements", "terms"], icon: FileSignature },
+  { id: "mod-invoices", name: "Invoices & Billing", category: "module", path: "/invoices", badge: "PG-005", keywords: ["invoices", "payments", "receipts", "billing", "charges"], icon: Banknote },
+  { id: "mod-templates", name: "Templates", category: "module", path: "/templates", badge: "PG-011", keywords: ["templates", "forms", "letters", "documents", "email templates"], icon: LayoutTemplate },
+  { id: "mod-reports", name: "Reports & Metrics", category: "module", path: "/metrics", badge: "PG-042", keywords: ["analytics", "metrics", "kpi", "performance", "financials"], icon: Activity },
+  { id: "mod-giving", name: "Giving & Impact", category: "module", path: "/giving", badge: "PG-040", keywords: ["giving", "scholarships", "donations", "charity", "funds", "sponsors"], icon: HandHeart },
+  { id: "mod-settings", name: "Settings", category: "module", path: "/settings", badge: "PG-024", keywords: ["settings", "configuration", "preferences", "receipts", "domain"], icon: Settings },
+  { id: "mod-team", name: "Team Management", category: "module", path: "/team", badge: "PG-019", keywords: ["staff", "employees", "permissions", "roles", "payroll", "equipment"], icon: Shield },
+  { id: "mod-tasks", name: "Tasks Queue", category: "module", path: "/tasks", badge: "PG-009", keywords: ["tasks", "todos", "action items", "reminders", "assignments"], icon: CheckSquare },
+  { id: "mod-messages", name: "Client Messages", category: "module", path: "/messages", badge: "PG-045", keywords: ["sms", "messages", "chat", "inbox", "conversations"], icon: MessageSquare },
+
+  // Tools Hub items
+  { id: "tool-recorder", name: "Voyage Meeting Recorder", category: "tool", path: "/tools/voyage-recorder", badge: "PG-010-REC", keywords: ["voyage", "recorder", "audio", "meeting", "transcription", "screen", "live"], icon: Video },
+  { id: "tool-pwn", name: "PWN Decoder", category: "tool", path: "/tools/pwn-decoder", badge: "PG-010-PWN", keywords: ["pwn", "decoder", "prior written notice", "special ed", "district"], icon: Sparkles },
+  { id: "tool-iep", name: "IEP Comparator", category: "tool", path: "/tools/iep-comparator", badge: "PG-010-IEP", keywords: ["iep", "compare", "diff", "accommodations", "goals", "annual"], icon: Layers },
+  { id: "tool-worksheet", name: "Worksheet Studio", category: "tool", path: "/tools/worksheet-builder", badge: "PG-010-WS", keywords: ["worksheet", "builder", "discovery sheet", "intake form", "studio"], icon: FileText },
+  { id: "tool-complaint", name: "State Complaint Builder", category: "tool", path: "/state-complaint-builder", badge: "PG-020", keywords: ["complaint", "state complaint", "legal", "violation", "idea", "due process"], icon: Shield },
+  { id: "tool-firstmate", name: "First Mate Fast Assist", category: "tool", path: "/first-mate", badge: "PG-037", keywords: ["first mate", "ai", "copilot", "prompt", "fast assist", "guidance"], icon: Sparkles },
+  { id: "tool-bill", name: "Bill Guardian", category: "tool", path: "/bill-guardian", badge: "PG-022", keywords: ["bill guardian", "audit", "invoice scanner", "billing review"], icon: Receipt },
+  { id: "tool-braindump", name: "BrainDump & Quick Notes", category: "tool", path: "/brain-dump", badge: "PG-021", keywords: ["brain dump", "notes", "scratchpad", "ideas", "memos"], icon: Brain },
+  { id: "tool-compass", name: "Case Compass Console", category: "tool", path: "/case-compass", badge: "PG-025", keywords: ["case compass", "progress", "milestones", "visual compass"], icon: Compass },
+  { id: "tool-kb", name: "Knowledge Base", category: "tool", path: "/knowledge-base", badge: "PG-016", keywords: ["knowledge base", "sop", "laws", "guidelines", "research"], icon: BookOpen },
+  { id: "tool-sop", name: "Walkthroughs (SOP)", category: "tool", path: "/walkthroughs", badge: "PG-017", keywords: ["walkthroughs", "sop", "procedures", "call scripts", "steps"], icon: ListChecks },
+  { id: "tool-meeting", name: "Meeting Workspace", category: "tool", path: "/meeting-workspace", badge: "PG-043", keywords: ["meeting", "live meeting", "workspace", "in-session"], icon: Video },
+  { id: "tool-postmeeting", name: "Post-Meeting Review", category: "tool", path: "/post-meeting-review", badge: "PG-044", keywords: ["post meeting", "review", "summary", "follow-up", "action items"], icon: ClipboardList },
+];
+
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
   setSidebarWidth: (width: number) => void;
@@ -479,6 +533,17 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
   const { projectLabel, projectLabelPlural, projectIconKey } = useTerminology();
   const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
+
+  // Global search across students, clients, modules, tools
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  const { data: rawContacts = [] } = trpc.contacts.list.useQuery(undefined, {
+    enabled: !!user && user.role !== "client",
+  });
 
   // Match current user to employee record (by email) for dynamic sidebar and route access
   const currentEmployee = useMemo(() => {
@@ -538,6 +603,185 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const [isResizing, setIsResizing] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [goToPageOpen, setGoToPageOpen] = useState(false);
+
+  // Search open/close & selection handlers
+  const handleOpenSearch = () => {
+    setIsSearchOpen(true);
+    setSearchQuery("");
+    setHighlightedIndex(0);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 60);
+  };
+
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    setHighlightedIndex(0);
+  };
+
+  const handleSelectResult = (path: string) => {
+    setLocation(path);
+    handleCloseSearch();
+  };
+
+  // Close search on click outside
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        handleCloseSearch();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSearchOpen]);
+
+  // Global keyboard shortcut (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (isSearchOpen) {
+          handleCloseSearch();
+        } else {
+          handleOpenSearch();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSearchOpen]);
+
+  const searchNormalized = searchQuery.trim().toLowerCase();
+
+  const { filteredStudents, filteredClients, filteredModules, filteredTools } = useMemo(() => {
+    if (!searchNormalized) {
+      return {
+        filteredStudents: [],
+        filteredClients: [],
+        filteredModules: [],
+        filteredTools: [],
+      };
+    }
+
+    const students: any[] = [];
+    const clients: any[] = [];
+
+    (rawContacts as any[]).forEach((c) => {
+      const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
+      const email = (c.email || "").toLowerCase();
+      const phone = (c.phone || "").toLowerCase();
+      const school = (c.schoolName || "").toLowerCase();
+      const grade = (c.gradeLevel || "").toLowerCase();
+      const caseId = (c.caseId || "").toLowerCase();
+      const diagnosis = (c.diagnosis || "").toLowerCase();
+      const company = (c.company || "").toLowerCase();
+
+      const matches =
+        fullName.includes(searchNormalized) ||
+        email.includes(searchNormalized) ||
+        phone.includes(searchNormalized) ||
+        school.includes(searchNormalized) ||
+        grade.includes(searchNormalized) ||
+        caseId.includes(searchNormalized) ||
+        diagnosis.includes(searchNormalized) ||
+        company.includes(searchNormalized);
+
+      if (matches) {
+        if (isStudentContact(c)) {
+          students.push(c);
+        } else {
+          clients.push(c);
+        }
+      }
+    });
+
+    const modules = SEARCHABLE_DIRECTORY.filter(
+      (item) =>
+        item.category === "module" &&
+        (item.name.toLowerCase().includes(searchNormalized) ||
+          item.badge?.toLowerCase().includes(searchNormalized) ||
+          item.keywords.some((k) => k.toLowerCase().includes(searchNormalized)))
+    );
+
+    const tools = SEARCHABLE_DIRECTORY.filter(
+      (item) =>
+        item.category === "tool" &&
+        (item.name.toLowerCase().includes(searchNormalized) ||
+          item.badge?.toLowerCase().includes(searchNormalized) ||
+          item.keywords.some((k) => k.toLowerCase().includes(searchNormalized)))
+    );
+
+    return {
+      filteredStudents: students.slice(0, 6),
+      filteredClients: clients.slice(0, 6),
+      filteredModules: modules.slice(0, 5),
+      filteredTools: tools.slice(0, 5),
+    };
+  }, [rawContacts, searchNormalized]);
+
+  // Flattened items for keyboard navigation
+  const flatSearchResults = useMemo(() => {
+    const list: { id: string; name: string; path: string; category: string }[] = [];
+    if (!searchNormalized) return list;
+
+    filteredStudents.forEach((s) =>
+      list.push({
+        id: `student-${s.id}`,
+        name: `${s.firstName || ""} ${s.lastName || ""}`.trim() || "Student",
+        path: `/contacts/${s.id}`,
+        category: "Student",
+      })
+    );
+    filteredClients.forEach((c) =>
+      list.push({
+        id: `client-${c.id}`,
+        name: `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Client",
+        path: `/contacts/${c.id}`,
+        category: "Client",
+      })
+    );
+    filteredTools.forEach((t) =>
+      list.push({
+        id: t.id,
+        name: t.name,
+        path: t.path,
+        category: "Tool",
+      })
+    );
+    filteredModules.forEach((m) =>
+      list.push({
+        id: m.id,
+        name: m.name,
+        path: m.path,
+        category: "Module",
+      })
+    );
+    return list;
+  }, [searchNormalized, filteredStudents, filteredClients, filteredTools, filteredModules]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleCloseSearch();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (flatSearchResults.length > 0) {
+        setHighlightedIndex((prev) => (prev + 1) % flatSearchResults.length);
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (flatSearchResults.length > 0) {
+        setHighlightedIndex((prev) => (prev - 1 + flatSearchResults.length) % flatSearchResults.length);
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (flatSearchResults[highlightedIndex]) {
+        handleSelectResult(flatSearchResults[highlightedIndex].path);
+      }
+    }
+  };
 
   // Crew Messages global unread count
   const { data: crewStats } = trpc.crewMessages.getOverviewStats.useQuery(undefined, {
@@ -781,7 +1025,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           disableTransition={isResizing}
         >
           {/* ── Header: Gold Shimmer + Circle Theme Toggle + Collapse Button + Logo & Wordmark ── */}
-          <SidebarHeader className="px-3 pt-3.5 pb-2 bg-transparent border-b border-[#152744] gap-0 relative">
+          <SidebarHeader className="px-3 pt-3.5 pb-2 bg-transparent border-b border-[#152744] gap-0 relative z-40 overflow-visible">
             {/* Top golden accent shimmer line */}
             <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#F7D287] to-transparent shadow-[0_0_10px_rgba(247,210,135,0.75)] pointer-events-none z-30" />
 
@@ -827,19 +1071,295 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 </button>
 
                 {/* Waypoint Advocates Logo & Wordmark */}
-                <div className="flex flex-col items-center gap-1.5">
+                <div className="flex flex-col items-center gap-1.5 w-full">
                   <img
                     src={logoData?.logoUrl || LOGO_URL}
                     alt="Waypoint Advocates"
                     className="h-12 w-12 object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
                   />
-                  <div className="flex flex-col items-center leading-tight">
+                  <div className="flex flex-col items-center leading-tight w-full">
                     <span className="font-serif tracking-[0.24em] text-[#E5C175] text-[15px] font-bold uppercase select-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] pl-1">
                       WAYPOINT
                     </span>
-                    <span className="tracking-[0.28em] text-[#B9CDE3] text-[10.5px] font-semibold uppercase select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] pl-1 mt-0.5">
-                      ADVOCATES
-                    </span>
+
+                    {/* ADVOCATES Row with Expanding Search Bar */}
+                    <div ref={searchContainerRef} className="relative w-full flex items-center justify-center min-h-[28px] mt-0.5">
+                      {/* Normal State: ADVOCATES with Magnifying Glass to its Left, Lined Up Under Moon Icon */}
+                      <div
+                        className={cn(
+                          "w-full relative flex items-center justify-center transition-all duration-200",
+                          isSearchOpen ? "opacity-0 pointer-events-none scale-95" : "opacity-100 scale-100"
+                        )}
+                      >
+                        {/* Magnifying Glass Icon Button (left of ADVOCATES, lined up directly under the moon icon) */}
+                        <button
+                          type="button"
+                          onClick={handleOpenSearch}
+                          className="absolute left-0 w-7 h-7 rounded-full flex items-center justify-center text-[#B9CDE3]/80 hover:text-[#F8D279] hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
+                          title="Search students, clients, modules, tools... (Ctrl+K)"
+                          aria-label="Search students, clients, modules, tools"
+                        >
+                          <Search className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                        </button>
+
+                        {/* Centered ADVOCATES Text */}
+                        <span className="tracking-[0.28em] text-[#B9CDE3] text-[10.5px] font-semibold uppercase select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] pl-1">
+                          ADVOCATES
+                        </span>
+                      </div>
+
+                      {/* Expanding Search Bar (enters from left to right, covering ADVOCATES) */}
+                      <div
+                        className={cn(
+                          "absolute inset-y-0 left-0 right-0 flex items-center transition-all duration-300 ease-out origin-left z-30",
+                          isSearchOpen
+                            ? "w-full opacity-100 scale-x-100 pointer-events-auto"
+                            : "w-0 opacity-0 scale-x-0 pointer-events-none overflow-hidden"
+                        )}
+                      >
+                        <div className="relative w-full flex items-center">
+                          <Search className="absolute left-2.5 h-3 w-3 text-[#E5C175] pointer-events-none drop-shadow-[0_0_4px_rgba(229,193,117,0.4)]" />
+                          <input
+                            ref={searchInputRef}
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => {
+                              setSearchQuery(e.target.value);
+                              setHighlightedIndex(0);
+                            }}
+                            onKeyDown={handleSearchKeyDown}
+                            placeholder="Search students, tools, modules..."
+                            className="w-full h-7 pl-7 pr-6 text-[11px] font-medium bg-[#07162C] border border-[#D4AF37]/60 focus:border-[#F8D279] text-white placeholder-white/40 rounded-full shadow-[0_0_12px_rgba(212,175,55,0.25),inset_0_1px_2px_rgba(0,0,0,0.6)] focus:outline-none focus:ring-1 focus:ring-[#F8D279] transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCloseSearch}
+                            className="absolute right-1.5 h-4 w-4 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            title="Close search (Esc)"
+                            aria-label="Close search"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Results Popover Dropdown */}
+                      {isSearchOpen && (
+                        <div
+                          className="absolute top-[calc(100%+8px)] -left-2 -right-2 bg-[#061426]/98 border border-[#1C3A60] rounded-xl shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_16px_rgba(212,175,55,0.15)] backdrop-blur-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 text-left"
+                          style={{ maxHeight: "380px" }}
+                        >
+                          {!searchNormalized ? (
+                            <div className="p-2 space-y-2">
+                              <div className="flex items-center justify-between px-1">
+                                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#8FA3BF]">
+                                  Quick Access
+                                </span>
+                                <span className="text-[9px] font-mono text-white/30 border border-white/10 px-1 rounded">
+                                  ESC
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {[
+                                  { label: "Students", path: "/students", icon: GraduationCap, badge: "PG-004" },
+                                  { label: "Voyage Recorder", path: "/tools/voyage-recorder", icon: Video, badge: "PG-010-REC" },
+                                  { label: "Call Center", path: "/call-center", icon: Headset, badge: "PG-018" },
+                                  { label: "Agreements", path: "/agreements", icon: FileSignature, badge: "PG-046" },
+                                  { label: "Lead Center", path: "/leads", icon: TrendingUp, badge: "PG-003" },
+                                  { label: "First Mate", path: "/first-mate", icon: Sparkles, badge: "PG-037" },
+                                ].map((quick) => {
+                                  const Icon = quick.icon;
+                                  return (
+                                    <button
+                                      key={quick.path}
+                                      type="button"
+                                      onClick={() => handleSelectResult(quick.path)}
+                                      className="flex items-center gap-2 p-2 rounded-lg bg-[#0A1F38]/60 hover:bg-[#122B4D] border border-white/5 hover:border-[#D4AF37]/40 text-left transition-all cursor-pointer group"
+                                    >
+                                      <Icon className="h-3.5 w-3.5 text-[#F8D279] group-hover:scale-110 transition-transform shrink-0" />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-[11px] font-semibold text-white truncate">{quick.label}</p>
+                                        <p className="text-[9px] font-mono text-[#7890AA] truncate">{quick.badge}</p>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="pt-1.5 px-1 border-t border-white/5 text-center">
+                                <p className="text-[10px] text-white/40">
+                                  Type to search students, clients, modules, tools...
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-1.5 max-h-[340px] overflow-y-auto space-y-2 divide-y divide-white/5">
+                              {/* Students Section */}
+                              {filteredStudents.length > 0 && (
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#F8D279]">
+                                    <GraduationCap className="h-3 w-3" />
+                                    <span>Students ({filteredStudents.length})</span>
+                                  </div>
+                                  {filteredStudents.map((s) => {
+                                    const itemId = `student-${s.id}`;
+                                    const isSelected = flatSearchResults[highlightedIndex]?.id === itemId;
+                                    const studentName = `${s.firstName || ""} ${s.lastName || ""}`.trim() || "Student";
+                                    return (
+                                      <button
+                                        key={itemId}
+                                        type="button"
+                                        onClick={() => handleSelectResult(`/contacts/${s.id}`)}
+                                        className={cn(
+                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                          isSelected
+                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                        )}
+                                      >
+                                        <div className="min-w-0 flex-1 pr-2">
+                                          <p className="text-xs font-semibold text-white truncate">{studentName}</p>
+                                          <p className="text-[10px] text-[#8FA3BF] truncate">
+                                            {s.gradeLevel ? `Grade ${s.gradeLevel}` : "Student"}
+                                            {s.schoolName ? ` • ${s.schoolName}` : ""}
+                                            {s.caseId ? ` • ${s.caseId}` : ""}
+                                          </p>
+                                        </div>
+                                        <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-[#F8D279] border border-amber-500/30 shrink-0">
+                                          {s.planType || "Student"}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Clients Section */}
+                              {filteredClients.length > 0 && (
+                                <div className="space-y-1 pt-1.5">
+                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#79C0FF]">
+                                    <Users className="h-3 w-3" />
+                                    <span>Clients ({filteredClients.length})</span>
+                                  </div>
+                                  {filteredClients.map((c) => {
+                                    const itemId = `client-${c.id}`;
+                                    const isSelected = flatSearchResults[highlightedIndex]?.id === itemId;
+                                    const clientName = `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Client";
+                                    return (
+                                      <button
+                                        key={itemId}
+                                        type="button"
+                                        onClick={() => handleSelectResult(`/contacts/${c.id}`)}
+                                        className={cn(
+                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                          isSelected
+                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                        )}
+                                      >
+                                        <div className="min-w-0 flex-1 pr-2">
+                                          <p className="text-xs font-semibold text-white truncate">{clientName}</p>
+                                          <p className="text-[10px] text-[#8FA3BF] truncate">
+                                            {c.email || c.phone || c.company || "Client Contact"}
+                                          </p>
+                                        </div>
+                                        <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 shrink-0">
+                                          Client
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Advocate Tools Section */}
+                              {filteredTools.length > 0 && (
+                                <div className="space-y-1 pt-1.5">
+                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#E5C175]">
+                                    <Wrench className="h-3 w-3" />
+                                    <span>Advocate Tools ({filteredTools.length})</span>
+                                  </div>
+                                  {filteredTools.map((t) => {
+                                    const isSelected = flatSearchResults[highlightedIndex]?.id === t.id;
+                                    const ToolIcon = t.icon;
+                                    return (
+                                      <button
+                                        key={t.id}
+                                        type="button"
+                                        onClick={() => handleSelectResult(t.path)}
+                                        className={cn(
+                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                          isSelected
+                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                        )}
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
+                                          <ToolIcon className="h-3.5 w-3.5 text-[#F8D279] shrink-0" />
+                                          <p className="text-xs font-semibold text-white truncate">{t.name}</p>
+                                        </div>
+                                        {t.badge && (
+                                          <span className="text-[9px] font-mono text-[#8FA3BF] bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                                            {t.badge}
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* CRM Modules Section */}
+                              {filteredModules.length > 0 && (
+                                <div className="space-y-1 pt-1.5">
+                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#A5C1E5]">
+                                    <Compass className="h-3 w-3" />
+                                    <span>Modules & Pages ({filteredModules.length})</span>
+                                  </div>
+                                  {filteredModules.map((m) => {
+                                    const isSelected = flatSearchResults[highlightedIndex]?.id === m.id;
+                                    const ModIcon = m.icon;
+                                    return (
+                                      <button
+                                        key={m.id}
+                                        type="button"
+                                        onClick={() => handleSelectResult(m.path)}
+                                        className={cn(
+                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                          isSelected
+                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                        )}
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
+                                          <ModIcon className="h-3.5 w-3.5 text-[#A5C1E5] shrink-0" />
+                                          <p className="text-xs font-semibold text-white truncate">{m.name}</p>
+                                        </div>
+                                        {m.badge && (
+                                          <span className="text-[9px] font-mono text-[#8FA3BF] bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                                            {m.badge}
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Empty State */}
+                              {flatSearchResults.length === 0 && (
+                                <div className="py-6 px-3 text-center">
+                                  <Search className="h-5 w-5 text-white/30 mx-auto mb-2" />
+                                  <p className="text-xs font-semibold text-white/80">No results found for "{searchQuery}"</p>
+                                  <p className="text-[10px] text-white/40 mt-1">
+                                    Try searching for a student, parent, tool (e.g. Voyage), or CRM module.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

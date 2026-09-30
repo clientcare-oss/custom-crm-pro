@@ -361,39 +361,22 @@ export default function Students() {
         </div>
 
         {/* ─── Active Students Maritime Credenza Rail (Directly Under Header) ─── */}
-        <ActiveStudentsDrawerBar
-          count={filteredActive.length || 42}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
-          shelfPage={shelfPage}
-          totalShelfPages={totalShelfPages}
-          onShelfPageChange={setShelfPage}
-        />
-
-        {/* ─── Padded Body Section: Credenza Filing Cabinet & Drawers ─── */}
-        <div className="flex-1 p-2 sm:p-5 lg:p-7 space-y-5">
-          {/* Top Header Badge & Meta */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <PageIdBadge id="PG-004" name="Students Case Registry" />
-            </div>
-          </div>
-
-        {/* ─── 3. Large Front-Facing Physical Filing Credenza / Cabinet ─── */}
-        <div className="relative rounded-2xl border-2 border-[#8A6731]/70 bg-gradient-to-b from-[#000E26] via-[#00081C] to-[#000514] p-3 sm:p-5 lg:p-6 shadow-[0_24px_70px_rgba(0,3,12,0.98)] ring-1 ring-[#F7D287]/20 space-y-4">
+        {/* ─── 3. Full-Bleed Front-Facing Physical Filing Credenza / Cabinet ─── */}
+        {/* Touches sidebar on left edge and page end on right edge */}
+        <div className="w-full flex-1 flex flex-col bg-[#00081C] border-t border-b-2 border-[#8A6731]/70 shadow-[0_24px_70px_rgba(0,3,12,0.98)] select-none">
           
-          {/* Top-left and Top-right corner brass bracket accents on outer credenza frame */}
-          <div className="absolute top-2 left-2.5 pointer-events-none hidden sm:block">
-            <BrassScrewRivet className="w-2.5 h-2.5" />
-          </div>
-          <div className="absolute top-2 right-2.5 pointer-events-none hidden sm:block">
-            <BrassScrewRivet className="w-2.5 h-2.5" />
-          </div>
+          {/* Top Credenza Rail & Active Students Bar (Full Width) */}
+          <ActiveStudentsDrawerBar
+            count={filteredActive.length || 42}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+            shelfPage={shelfPage}
+            totalShelfPages={totalShelfPages}
+            onShelfPageChange={setShelfPage}
+          />
 
-          {/* ─── Upper Compartment: ACTIVE STUDENTS ─── */}
-          <div className="space-y-3">
-
-            {/* Compartment Content: 3 Stepped Physical Wooden Shelves or List */}
+          {/* ─── Upper Compartment: ACTIVE STUDENTS (Full-Bleed Stepped Shelves with Recessed Slots) ─── */}
+          <div className="w-full relative flex-1 flex flex-col">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-12 h-12 rounded-full border-2 border-[#E9BA6B] border-t-transparent animate-spin mb-4" />
@@ -401,12 +384,19 @@ export default function Students() {
                 <p className="text-xs text-[#7B8EA7] mt-1">Retrieving archival records from practice database</p>
               </div>
             ) : viewMode === "cards" ? (
-              <div className="relative flex rounded-xl bg-[#00081C] border border-[#8A6731]/40 shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-hidden">
-                {/* Left 3D Perspective Wooden Cheek Wall */}
-                <div className="hidden lg:block w-4 shrink-0 bg-gradient-to-r from-[#00102E] via-[#00081C] to-transparent border-r border-[#8A6731]/30" />
+              <div className="relative w-full flex bg-[#00081C] shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-hidden">
+                {/* Left 3D Perspective Heavy Wooden Cheek Frame */}
+                <div className="hidden lg:block w-5 shrink-0 bg-gradient-to-r from-[#162D4A] via-[#091728] to-transparent border-r-2 border-[#8A6731]/70 shadow-[3px_0_8px_rgba(0,0,0,0.85)] relative">
+                  <div className="absolute top-3 left-1">
+                    <BrassScrewRivet className="w-2.5 h-2.5" />
+                  </div>
+                  <div className="absolute bottom-3 left-1">
+                    <BrassScrewRivet className="w-2.5 h-2.5" />
+                  </div>
+                </div>
 
-                {/* Shelves Rows */}
-                <div className="flex-1 p-3 sm:p-4 space-y-4 min-h-[440px]">
+                {/* Shelves Rows Span */}
+                <div className="flex-1 py-4 sm:py-6 space-y-4 sm:space-y-5 min-h-[460px]">
                   {filteredActive.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <Folder className="w-12 h-12 text-[#7B8EA7]/30 mb-3" />
@@ -418,46 +408,62 @@ export default function Students() {
                       </p>
                     </div>
                   ) : (
-                    // Stepped shelves with 5 folders per tier
+                    // Stepped shelves with 5 folders per tier sitting IN slots
                     shelfRows.map((row, rowIdx) => (
-                      <div key={rowIdx} className="space-y-2.5">
-                        {/* Shelf Row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
+                      <div key={rowIdx} className="relative w-full">
+                        {/* Shelf Row Cards Grid (z-10) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 px-3 sm:px-6 lg:px-8 relative z-10">
                           {row.map((student, colIdx) => (
-                            <StudentFileCard
-                              key={student.id}
-                              student={student}
-                              index={rowIdx * 5 + colIdx}
-                              onClick={() => setLocation(`/contacts/${student.id}`)}
-                              onMarkerChange={handleMarkerChange}
-                            />
+                            <div key={student.id} className="relative">
+                              <StudentFileCard
+                                student={student}
+                                index={rowIdx * 5 + colIdx}
+                                onClick={() => setLocation(`/contacts/${student.id}`)}
+                                onMarkerChange={handleMarkerChange}
+                              />
+                            </div>
                           ))}
                         </div>
 
-                        {/* Physical Wooden Shelf Ledge / Step */}
-                        <div className="relative h-2 w-full rounded-xs bg-gradient-to-r from-[#00081C] via-[#071738] to-[#00081C] border-t border-[#8A6731]/45 shadow-[0_3px_6px_rgba(0,0,0,0.9)]">
-                          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#FFF2D6]/20 to-transparent pointer-events-none" />
+                        {/* Physical Front Retaining Rail / Drawer Shelf Lip overlapping the bottom of cards (z-20) */}
+                        <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 w-full pointer-events-none">
+                          {/* Upper brass highlight bevel */}
+                          <div className="h-[2px] w-full bg-gradient-to-r from-[#4A3414] via-[#FCE09E] to-[#4A3414] shadow-[0_1px_4px_rgba(0,0,0,0.95)]" />
+                          {/* Heavy Wooden Shelf Face with brass corner rivets */}
+                          <div className="h-5 sm:h-6 w-full bg-gradient-to-b from-[#0F233B] via-[#091728] to-[#020712] border-b border-[#8A6731]/50 shadow-[0_6px_14px_rgba(0,0,0,0.95)] flex items-center justify-between px-4 sm:px-8">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#E5B666]/70 border border-[#422C0A] shadow-xs" />
+                            <div className="h-[1px] w-1/3 bg-gradient-to-r from-transparent via-[#E8B868]/20 to-transparent" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#E5B666]/70 border border-[#422C0A] shadow-xs" />
+                          </div>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
 
-                {/* Right 3D Perspective Wooden Cheek Wall */}
-                <div className="hidden lg:block w-4 shrink-0 bg-gradient-to-l from-[#00102E] via-[#00081C] to-transparent border-l border-[#8A6731]/30" />
+                {/* Right 3D Perspective Heavy Wooden Cheek Frame */}
+                <div className="hidden lg:block w-5 shrink-0 bg-gradient-to-l from-[#162D4A] via-[#091728] to-transparent border-l-2 border-[#8A6731]/70 shadow-[-3px_0_8px_rgba(0,0,0,0.85)] relative">
+                  <div className="absolute top-3 right-1">
+                    <BrassScrewRivet className="w-2.5 h-2.5" />
+                  </div>
+                  <div className="absolute bottom-3 right-1">
+                    <BrassScrewRivet className="w-2.5 h-2.5" />
+                  </div>
+                </div>
               </div>
             ) : (
-              <StudentsListView
-                students={filteredActive}
-                onStudentClick={(id) => setLocation(`/contacts/${id}`)}
-                onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
-              />
+              <div className="p-4 sm:p-6">
+                <StudentsListView
+                  students={filteredActive}
+                  onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+                  onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                />
+              </div>
             )}
           </div>
 
-          {/* ─── Lower Filing Drawers (Prominently Stacked Under Active Compartment) ─── */}
-          <div className="space-y-2.5 pt-2">
-
+          {/* ─── Lower Filing Drawers Stack (Full-Bleed Credenza Drawers) ─── */}
+          <div className="w-full divide-y-2 divide-[#8A6731]/40 border-t-2 border-[#8A6731]/60">
             {/* Drawer 1: New / Onboarding */}
             <CabinetDrawer
               type="onboarding"
@@ -682,7 +688,6 @@ export default function Students() {
             </form>
           </DialogContent>
         </Dialog>
-        </div>
       </div>
     </ScopedErrorBoundary>
   );

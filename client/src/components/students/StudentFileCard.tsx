@@ -104,7 +104,7 @@ export function StudentFileCard({
       }}
       className={cn(
         "group relative w-full aspect-[439/343] cursor-pointer transition-all duration-200 select-none outline-none",
-        "hover:-translate-y-1.5 focus-visible:ring-2 focus-visible:ring-[#E9BA6B] rounded-xl",
+        "hover:-translate-y-2.5 hover:z-30 focus-visible:ring-2 focus-visible:ring-[#E9BA6B] rounded-xl",
         className
       )}
     >
@@ -262,7 +262,7 @@ export function StudentFileCard({
             </div>
 
       {/* ─── CARD CONTENT OVERLAY (Positioned precisely on the cream card parchment) ─── */}
-      <div className="absolute top-[16.5%] left-[9%] right-[9%] bottom-[13%] flex flex-col justify-between p-2.5 sm:p-3 z-20 pointer-events-none">
+      <div className="absolute top-[16.5%] left-[9%] right-[9%] bottom-[16.5%] flex flex-col justify-between p-2.5 sm:p-3 z-20 pointer-events-none">
         {/* Top: Student Name + Quiet Chevron */}
         <div>
           <div className="flex items-start justify-between gap-1 mb-0.5">

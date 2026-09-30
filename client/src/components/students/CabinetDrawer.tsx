@@ -45,10 +45,9 @@ export function CabinetDrawer({
   return (
     <div
       className={cn(
-        "relative rounded-xl border transition-all duration-300 overflow-hidden",
+        "w-full relative transition-all duration-300 overflow-hidden",
         "bg-gradient-to-b from-[#000E26] via-[#00081C] to-[#000410]",
-        "border-[#8A6731]/60 shadow-[0_4px_16px_rgba(0,3,10,0.8)]",
-        isOpen && "ring-1 ring-[#F7D287]/30 shadow-[0_12px_32px_rgba(0,3,10,0.95)]",
+        isOpen && "shadow-[0_12px_32px_rgba(0,3,10,0.95)]",
         className
       )}
     >
@@ -110,9 +109,8 @@ export function CabinetDrawer({
       </div>
 
       {/* ─── Drawer Interior Compartment (Smooth Accordion Open) ─── */}
-
       {isOpen && (
-        <div className="px-6 py-6 border-t border-[#8A6731]/30 bg-[#00081C] shadow-[inset_0_12px_32px_rgba(0,0,0,0.95)] animate-in fade-in-50 duration-200">
+        <div className="px-3 sm:px-6 lg:px-8 py-6 border-t-2 border-[#8A6731]/50 bg-[#00081C] shadow-[inset_0_14px_36px_rgba(0,0,0,0.98)] animate-in fade-in-50 duration-200">
           {students.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <IconComponent className="w-10 h-10 text-[#7B8EA7]/30 mb-2" />
@@ -122,16 +120,28 @@ export function CabinetDrawer({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {students.map((student, idx) => (
-                <StudentFileCard
-                  key={student.id}
-                  student={student}
-                  index={idx}
-                  onClick={() => onStudentClick(student.id)}
-                  onMarkerChange={onMarkerChange}
-                />
-              ))}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 relative z-10">
+                {students.map((student, idx) => (
+                  <div key={student.id} className="relative">
+                    <StudentFileCard
+                      student={student}
+                      index={idx}
+                      onClick={() => onStudentClick(student.id)}
+                      onMarkerChange={onMarkerChange}
+                    />
+                  </div>
+                ))}
+              </div>
+              {/* Front retaining rail / drawer lip */}
+              <div className="relative -mt-3.5 sm:-mt-4 lg:-mt-5 z-20 w-full pointer-events-none">
+                <div className="h-[2px] w-full bg-gradient-to-r from-[#4A3414] via-[#FCE09E] to-[#4A3414] shadow-[0_1px_4px_rgba(0,0,0,0.95)]" />
+                <div className="h-5 sm:h-6 w-full bg-gradient-to-b from-[#0F233B] via-[#091728] to-[#020712] border-b border-[#8A6731]/50 shadow-[0_6px_14px_rgba(0,0,0,0.95)] flex items-center justify-between px-3 sm:px-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E5B666]/70 border border-[#422C0A] shadow-xs" />
+                  <div className="h-[1px] w-1/3 bg-gradient-to-r from-transparent via-[#E8B868]/20 to-transparent" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E5B666]/70 border border-[#422C0A] shadow-xs" />
+                </div>
+              </div>
             </div>
           )}
         </div>
