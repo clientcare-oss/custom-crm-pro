@@ -30,7 +30,9 @@ import {
   Clock,
   Heart,
   ExternalLink,
+  Globe,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -99,6 +101,35 @@ export default function GivingOverview() {
             <span>Record Donation</span>
           </Button>
         </div>
+      </div>
+
+      {/* ── Consolidated Giving Subsystem Navigation Ribbon ── */}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#001A41]/90 border border-white/10 overflow-x-auto max-w-full shadow-inner scrollbar-thin">
+        {[
+          { label: "Overview", path: "/giving", icon: HandHeart, active: true },
+          { label: "Supporters & Donors", path: "/giving/supporters", icon: Users, active: false },
+          { label: "Donations", path: "/giving/donations", icon: DollarSign, active: false },
+          { label: "Scholarships", path: "/giving/scholarships", icon: GraduationCap, active: false },
+          { label: "Funds", path: "/giving/funds", icon: Landmark, active: false },
+          { label: "Receipts & Statements", path: "/giving/receipts", icon: Receipt, active: false },
+          { label: "Reports", path: "/giving/reports", icon: BarChart3, active: false },
+          { label: "Website Tools", path: "/giving/website-tools", icon: Globe, active: false },
+        ].map((tab) => (
+          <Link key={tab.path} href={tab.path}>
+            <button
+              type="button"
+              className={cn(
+                "flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer",
+                tab.active
+                  ? "bg-amber-400 text-slate-950 font-bold shadow-sm"
+                  : "text-white/70 hover:text-white hover:bg-white/10"
+              )}
+            >
+              <tab.icon className={cn("h-3.5 w-3.5", tab.active ? "text-slate-950" : "text-amber-400")} />
+              <span>{tab.label}</span>
+            </button>
+          </Link>
+        ))}
       </div>
 
       {/* ── Primary KPI Metrics Grid ── */}
@@ -236,7 +267,7 @@ export default function GivingOverview() {
       </div>
 
       {/* ── Subsystem Hub Shortcuts ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         <Link href="/giving/supporters" className="block">
           <div className="rounded-xl border border-white/10 bg-black/25 hover:bg-white/5 p-3.5 transition-all text-center space-y-1.5 group cursor-pointer">
             <div className="h-8 w-8 rounded-lg bg-blue-500/20 text-blue-300 mx-auto flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -294,6 +325,16 @@ export default function GivingOverview() {
             </div>
             <p className="text-xs font-semibold text-white group-hover:text-amber-300">Reports</p>
             <p className="text-[10px] text-white/50">Form 990 & stats</p>
+          </div>
+        </Link>
+
+        <Link href="/giving/website-tools" className="block">
+          <div className="rounded-xl border border-white/10 bg-black/25 hover:bg-white/5 p-3.5 transition-all text-center space-y-1.5 group cursor-pointer">
+            <div className="h-8 w-8 rounded-lg bg-sky-500/20 text-sky-300 mx-auto flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Globe className="h-4 w-4" />
+            </div>
+            <p className="text-xs font-semibold text-white group-hover:text-amber-300">Website Tools</p>
+            <p className="text-[10px] text-white/50">Forms & embed</p>
           </div>
         </Link>
       </div>

@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   BookOpen, Upload, Search, FileText, Trash2, ExternalLink,
-  FolderOpen, Plus, Tag, X,
+  FolderOpen, Plus, Tag, X, ListChecks,
 } from "lucide-react";
+import PageIdBadge from "@/components/PageIdBadge";
+import Walkthroughs from "./Walkthroughs";
+import { cn } from "@/lib/utils";
 
 const CATEGORY_COLORS = [
   "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
@@ -143,12 +146,76 @@ export default function KnowledgeBase() {
     categoryCounts[cat.name] = allDocs.filter((d) => d.category === cat.name).length;
   }
 
+  // Support ?tab=walkthroughs query param
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [activeTab, setActiveTab] = useState<"docs" | "walkthroughs">(
+    searchParams.get("tab") === "walkthroughs" || searchParams.get("tab") === "sop" ? "walkthroughs" : "docs"
+  );
+
+  const handleTabChange = (tab: "docs" | "walkthroughs") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "walkthroughs") {
+        url.searchParams.set("tab", "walkthroughs");
+      } else {
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
   return (
-    <div className="flex h-full min-h-0">
-      {/* Category Sidebar */}
-      <aside className="w-60 shrink-0 border-r bg-muted/30 p-4 flex flex-col gap-1">
-        <div className="flex items-center justify-between mb-3 px-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Categories</p>
+    <div className="flex flex-col h-full min-h-0 space-y-4">
+      {/* ── Top Consolidated Navigation Switcher ── */}
+      <div className="flex items-center justify-between pb-2 border-b border-border/60 shrink-0 px-2 pt-1">
+        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-xl border border-border/50 shadow-inner">
+          <button
+            type="button"
+            onClick={() => handleTabChange("docs")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+              activeTab === "docs"
+                ? "bg-card text-foreground shadow-sm border border-border/60 font-bold"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+            )}
+          >
+            <BookOpen className="w-3.5 h-3.5 text-primary" />
+            Documents & Resources
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("walkthroughs")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+              activeTab === "walkthroughs"
+                ? "bg-card text-foreground shadow-sm border border-border/60 font-bold"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+            )}
+          >
+            <ListChecks className="w-3.5 h-3.5 text-amber-400" />
+            Walkthroughs (SOPs)
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <PageIdBadge
+            id={activeTab === "walkthroughs" ? "PG-017" : "PG-016"}
+            name={activeTab === "walkthroughs" ? "System Walkthroughs (SOP)" : "Knowledge Base"}
+          />
+        </div>
+      </div>
+
+      {activeTab === "walkthroughs" ? (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <Walkthroughs />
+        </div>
+      ) : (
+        <div className="flex flex-1 h-full min-h-0 overflow-hidden">
+          {/* Category Sidebar */}
+          <aside className="w-60 shrink-0 border-r bg-muted/30 p-4 flex flex-col gap-1 overflow-y-auto">
+            <div className="flex items-center justify-between mb-3 px-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Categories</p>
           <button
             onClick={() => setAddCatOpen(true)}
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -433,5 +500,7 @@ export default function KnowledgeBase() {
         </div>
       </div>
     </div>
-  );
+    )}
+  </div>
+);
 }

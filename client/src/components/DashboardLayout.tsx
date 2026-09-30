@@ -84,10 +84,10 @@ export interface MenuGroup {
   items: MenuItem[];
 }
 
-function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGroup[] {
+function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): MenuGroup[] {
   return [
     {
-      groupLabel: "Overview",
+      groupLabel: "Home",
       items: [
         { 
           icon: LighthouseCottageIcon as any, 
@@ -98,19 +98,30 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       ],
     },
     {
-      groupLabel: "Call Center & Scheduling",
+      groupLabel: "Intake & Scheduling",
       items: [
-        { icon: Headset, label: "Call Center", path: "/call-center" },
+        { 
+          icon: Headset, 
+          label: "Call Center", 
+          path: "/call-center",
+          keywords: ["call center", "calls", "discovery call", "phone", "voicemail", "dialer", "pg-018"]
+        },
+        { 
+          icon: TrendingUp, 
+          label: "Lead Center", 
+          path: "/leads",
+          keywords: ["lead center", "leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
+        },
         { 
           icon: Calendar, 
           label: "Calendar", 
           path: "/calendar",
-          keywords: ["calendar", "appointments", "schedule", "national coverage", "coverage", "time zones", "clocks", "pg-007", "pg-041"],
+          keywords: ["calendar", "appointments", "schedule", "national coverage", "session types", "coverage", "time zones", "clocks", "scheduler", "pg-007", "pg-041", "pg-008"],
         },
       ],
     },
     {
-      groupLabel: "Pipelines",
+      groupLabel: "Advocacy",
       items: [
         { 
           icon: Workflow, 
@@ -119,28 +130,16 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
           keywords: ["advocacy pipeline", "pipeline", "kanban", "stages", "cases", "pg-039"]
         },
         { 
-          icon: TrendingUp, 
-          label: "Lead Center", 
-          path: "/leads",
-          keywords: ["lead center", "leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
+          icon: projectIcon, 
+          label: projectLabelPlural, 
+          path: "/projects",
+          keywords: [projectLabelPlural.toLowerCase(), "cases", "students", "clients", "roster", "directory", "case files", "pg-004"]
         },
-      ],
-    },
-    {
-      groupLabel: "Cases & Clients",
-      items: [
-        { icon: projectIcon, label: projectLabel + "s", path: "/projects" },
-        { icon: Users, label: "Contacts", path: "/contacts" },
-      ],
-    },
-    {
-      groupLabel: "Manage Experiences",
-      items: [
         { 
-          icon: Shield, 
-          label: "Client Portal", 
-          path: "/portal-management",
-          keywords: ["portal", "client portal", "manage experiences", "experiences", "journey", "stages", "parent portal"]
+          icon: Users, 
+          label: "Contacts", 
+          path: "/contacts",
+          keywords: ["contacts", "parents", "educators", "professionals", "directory", "pg-002"]
         },
         { 
           icon: Zap, 
@@ -151,151 +150,105 @@ function buildMenuGroups(projectLabel: string, projectIcon: LucideIcon): MenuGro
       ],
     },
     {
+      groupLabel: "Resources",
+      items: [
+        { 
+          icon: Wrench, 
+          label: "Tools", 
+          path: "/tools",
+          keywords: ["tools", "tools hub", "pwn decoder", "iep comparator", "worksheet builder", "voyage recorder", "first mate", "timeline builder", "pg-010", "pg-037"]
+        },
+        { 
+          icon: BookOpen, 
+          label: "Knowledge Base", 
+          path: "/knowledge-base",
+          keywords: ["knowledge base", "documents", "walkthroughs", "sop", "resources", "articles", "guidelines", "pg-016", "pg-017"]
+        },
+        { 
+          icon: LayoutTemplate, 
+          label: "Templates", 
+          path: "/templates",
+          keywords: ["templates", "documents", "emails", "forms", "letters", "smart files", "pg-011"]
+        },
+      ],
+    },
+    {
       groupLabel: "Business",
       items: [
         { 
           icon: Briefcase, 
           label: "Services", 
           path: "/services",
-          keywords: ["services", "catalog", "pricing", "packages", "pg-035"]
+          keywords: ["services", "catalog", "pricing", "packages", "service allowances", "pg-035"]
         },
         { 
           icon: FileText, 
           label: "Billing", 
           path: "/invoices",
-          keywords: ["billing", "invoices", "payments", "revenue", "pg-005"]
+          keywords: ["billing", "invoices", "payments", "revenue", "bill guardian", "fee tracker", "audit", "pg-005", "pg-022"]
         },
         { 
           icon: FileSignature, 
           label: "Agreements", 
           path: "/agreements",
-          keywords: ["agreements", "contracts", "signatures", "e-sign", "templates", "legal", "pg-046"]
-        },
-        { 
-          icon: Banknote, 
-          label: "Bill Guardian", 
-          path: "/bill-guardian",
-          keywords: ["bill guardian", "audit", "fee tracker", "pg-022"]
+          keywords: ["agreements", "contracts", "signatures", "e-sign", "templates", "legal", "smart files", "pg-046"]
         },
       ],
     },
     {
-      groupLabel: "Advocacy & AI Tools",
-      items: [
-        { icon: MarineRadarIcon as any, label: "First Mate", path: "/first-mate" },
-        { icon: Wrench, label: "Tools", path: "/tools" },
-        { icon: Zap, label: "Automations", path: "/automations" },
-        { icon: Sparkles, label: "AI Connections", path: "/ai-connections" },
-      ],
-    },
-    {
-      groupLabel: "Practice & Operations",
-      items: [
-        { icon: CheckSquare, label: "Tasks", path: "/tasks" },
-        { icon: LayoutTemplate, label: "Templates", path: "/templates" },
-        { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
-        { icon: ListChecks, label: "Walkthroughs (SOP)", path: "/walkthroughs" },
-        { icon: UserCheck, label: "Team", path: "/team" },
-      ],
-    },
-    {
-      groupLabel: "Giving & Impact",
+      groupLabel: "Operations",
       items: [
         { 
-          icon: HandHeart, 
-          label: "Overview", 
-          path: "/giving",
-          keywords: ["giving", "impact", "donations", "nonprofit", "501c3", "overview", "charity", "pg-040"]
+          icon: CheckSquare, 
+          label: "Tasks", 
+          path: "/tasks",
+          keywords: ["tasks", "todos", "action items", "reminders", "pg-009"]
         },
         { 
-          icon: Users, 
-          label: "Supporters", 
-          path: "/giving/supporters",
-          keywords: ["supporters", "donors", "sponsors", "partners", "pg-040-sup"]
-        },
-        { 
-          icon: DollarSign, 
-          label: "Donations", 
-          path: "/giving/donations",
-          keywords: ["donations", "gifts", "contributions", "pg-040-don"]
-        },
-        { 
-          icon: GraduationCap, 
-          label: "Scholarships", 
-          path: "/giving/scholarships",
-          keywords: ["scholarships", "awards", "grants", "iep", "pg-040-sch"]
-        },
-        { 
-          icon: Landmark, 
-          label: "Funds", 
-          path: "/giving/funds",
-          keywords: ["funds", "campaigns", "restricted funds", "endowments", "pg-040-fnd"]
-        },
-        { 
-          icon: Receipt, 
-          label: "Receipts & Statements", 
-          path: "/giving/receipts",
-          keywords: ["receipts", "tax statements", "501c3", "acknowledgments", "letters", "pg-040-rec"]
-        },
-        { 
-          icon: BarChart3, 
-          label: "Reports", 
-          path: "/giving/reports",
-          keywords: ["reports", "giving reports", "form 990", "analytics", "pg-040-rep"]
-        },
-        { 
-          icon: Globe, 
-          label: "Website Tools", 
-          path: "/giving/website-tools",
-          keywords: ["website tools", "donation forms", "donate button", "campaign page", "embed", "progress bar", "public give", "pg-040-web"]
-        },
-      ],
-    },
-    {
-      groupLabel: "Company",
-      items: [
-        { 
-          icon: LighthouseCottageIcon as any, 
-          label: "Crew Quarters", 
-          path: "/crew-quarters",
-          keywords: ["crew quarters", "employee", "team", "home", "pg-038"]
+          icon: Zap, 
+          label: "Automations", 
+          path: "/automations",
+          keywords: ["automations", "triggers", "workflow automation", "actions", "pg-013"]
         },
         { 
           icon: UserCheck, 
-          label: "My Team", 
+          label: "Team", 
           path: "/team",
-          keywords: ["team", "my team", "staff", "employees", "pg-019"]
+          keywords: ["team", "staff", "employees", "workforce", "directory", "management", "pg-019"]
         },
-        { 
-          icon: Layers, 
-          label: "Services", 
-          path: "/services",
-          keywords: ["services", "pricing", "plans", "catalog", "pg-035"]
-        },
+      ],
+    },
+    {
+      groupLabel: "Giving",
+      items: [
         { 
           icon: HandHeart, 
           label: "Giving & Impact", 
           path: "/giving",
-          keywords: ["giving", "impact", "donations", "nonprofit", "501c3", "pg-040"]
-        },
-        { 
-          icon: Activity, 
-          label: "Metrics", 
-          path: "/metrics",
-          keywords: ["metrics", "kpi", "analytics", "lead journey", "revenue", "advocacy hours", "retention", "pg-042"]
-        },
-        { 
-          icon: Settings, 
-          label: "Settings", 
-          path: "/settings",
-          keywords: ["settings", "preferences", "config", "pg-024", "workflow designer", "workflows", "business operations", "process planning"]
+          keywords: ["giving", "impact", "donations", "nonprofit", "501c3", "supporters", "scholarships", "funds", "receipts", "reports", "website tools", "pg-040"]
         },
       ],
     },
     {
-      groupLabel: "System & Config",
+      groupLabel: "Management",
       items: [
-        { icon: Plug, label: "Integrations", path: "/integrations" },
+        { 
+          icon: Activity, 
+          label: "Metrics", 
+          path: "/metrics",
+          keywords: ["metrics", "kpi", "analytics", "lead journey", "revenue", "advocacy hours", "retention", "practice health", "pg-042"]
+        },
+      ],
+    },
+    {
+      groupLabel: "System / Company",
+      items: [
+        { 
+          icon: Settings, 
+          label: "Settings", 
+          path: "/settings",
+          keywords: ["settings", "preferences", "config", "pg-024", "integrations", "ai connections", "portal management", "client portal", "pg-014", "pg-032", "pg-027", "receipts", "tokens", "workflow designer"]
+        },
       ],
     },
   ];
@@ -390,7 +343,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
-  const { projectLabel, projectIconKey } = useTerminology();
+  const { projectLabel, projectLabelPlural, projectIconKey } = useTerminology();
   const projectIcon = ICON_MAP[projectIconKey] ?? GraduationCap;
 
   // Match current user to employee record (by email) for dynamic sidebar and route access
@@ -404,7 +357,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     );
   }, [user?.email]);
 
-  const rawMenuGroups = useMemo(() => buildMenuGroups(projectLabel, projectIcon), [projectLabel, projectIcon]);
+  const rawMenuGroups = useMemo(() => buildMenuGroups(projectLabelPlural, projectIcon), [projectLabelPlural, projectIcon]);
 
   // Dynamically filter sidebar modules according to role permissions and employee overrides
   const menuGroups = useMemo(() => {
@@ -729,11 +682,16 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     (item) =>
       (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
       (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
-      (item.path === "/giving" && (location === "/giving" || location === "/giving/overview")) ||
-      (item.path === "/giving/supporters" && (location === "/giving/supporters" || location === "/sponsors")) ||
-      item.path === location ||
-      (item.path === "/manage-experiences" && location === "/portal-management") ||
-      (item.path === "/portal-management" && location === "/manage-experiences")
+      (item.path === "/giving" && (location === "/giving" || location.startsWith("/giving") || location === "/sponsors")) ||
+      (item.path === "/calendar" && (location === "/calendar" || location === "/appointments" || location === "/national-coverage" || location === "/session-types" || location === "/scheduler")) ||
+      (item.path === "/invoices" && (location === "/invoices" || location === "/bill-guardian")) ||
+      (item.path === "/knowledge-base" && (location === "/knowledge-base" || location === "/walkthroughs")) ||
+      (item.path === "/tools" && (location === "/tools" || location === "/first-mate" || (location.startsWith("/tools/") && !location.startsWith("/tools/state-complaint")))) ||
+      (item.path === "/settings" && (location === "/settings" || location === "/integrations" || location.startsWith("/integrations/") || location === "/ai-connections" || location === "/portal-management" || location === "/manage-experiences")) ||
+      (item.path === "/agreements" && (location === "/agreements" || location === "/contracts" || location.startsWith("/smart-files"))) ||
+      (item.path === "/projects" && (location === "/projects" || location === "/students")) ||
+      (item.path === "/team" && (location === "/team" || location.startsWith("/team/"))) ||
+      item.path === location
   );
   const isMobile = useIsMobile();
 
@@ -881,13 +839,16 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                             const isActive = 
                               (item.path === "/" && (location === "/" || location === "/crew-quarters")) ||
                               (item.path === "/company/dashboard" && (location === "/company/dashboard" || location === "/company-dashboard" || location === "/dashboard")) ||
-                              (item.path === "/giving" && (location === "/giving" || location === "/giving/overview")) ||
-                              (item.path === "/giving/supporters" && (location === "/giving/supporters" || location === "/sponsors")) ||
-                              (item.path !== "/" && item.path !== "/company/dashboard" && item.path !== "/giving" && item.path !== "/giving/supporters" && (
-                                location === item.path ||
-                                (item.path === "/manage-experiences" && (location === "/portal-management" || location.startsWith("/manage-experiences"))) ||
-                                (item.path === "/portal-management" && (location === "/manage-experiences" || location.startsWith("/portal-management")))
-                              ));
+                              (item.path === "/giving" && (location === "/giving" || location.startsWith("/giving") || location === "/sponsors")) ||
+                              (item.path === "/calendar" && (location === "/calendar" || location === "/appointments" || location === "/national-coverage" || location === "/session-types" || location === "/scheduler")) ||
+                              (item.path === "/invoices" && (location === "/invoices" || location === "/bill-guardian")) ||
+                              (item.path === "/knowledge-base" && (location === "/knowledge-base" || location === "/walkthroughs")) ||
+                              (item.path === "/tools" && (location === "/tools" || location === "/first-mate" || (location.startsWith("/tools/") && !location.startsWith("/tools/state-complaint")))) ||
+                              (item.path === "/settings" && (location === "/settings" || location === "/integrations" || location.startsWith("/integrations/") || location === "/ai-connections" || location === "/portal-management" || location === "/manage-experiences")) ||
+                              (item.path === "/agreements" && (location === "/agreements" || location === "/contracts" || location.startsWith("/smart-files"))) ||
+                              (item.path === "/projects" && (location === "/projects" || location === "/students")) ||
+                              (item.path === "/team" && (location === "/team" || location.startsWith("/team/"))) ||
+                              (item.path !== "/" && location === item.path);
                             return (
                               <SidebarMenuItem key={item.path}>
                                 <SidebarMenuButton
@@ -1016,7 +977,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
         )}
-        <main className={cn("flex-1 p-4 relative", location.startsWith("/meeting-workspace") && "p-0 bg-[#000820]")}>
+        <main className={cn("flex-1 p-4 relative", (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]")}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">
               <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-5 shadow-lg shadow-rose-950/40">
@@ -1054,8 +1015,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </ScopedErrorBoundary>
           )}
 
-          {/* Floating Action Buttons (embedded directly in header on First Mate and Call Center) */}
-          {!location.startsWith("/first-mate") && !location.startsWith("/call-center") && !location.startsWith("/call-logs") && (
+          {/* Floating Action Buttons (embedded directly in header on First Mate, Call Center, and Students) */}
+          {!location.startsWith("/first-mate") && !location.startsWith("/call-center") && !location.startsWith("/call-logs") && !location.startsWith("/students") && !location.startsWith("/projects") && (
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
               {user && user.role !== "client" && (
                 <Button
@@ -1201,26 +1162,29 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 }
 
 const PAGE_LIST = [
-  { id: "PG-001", name: "Dashboard", path: "/" },
+  { id: "PG-001", name: "Dashboard / Home Base", path: "/" },
   { id: "PG-002", name: "Contacts", path: "/contacts" },
   { id: "PG-003", name: "Lead Center", path: "/leads" },
   { id: "PG-004", name: "Students", path: "/projects" },
-  { id: "PG-005", name: "Invoices", path: "/invoices" },
-  { id: "PG-006", name: "Contracts", path: "/contracts" },
-  { id: "PG-007", name: "Appointments / Calendar", path: "/calendar" },
+  { id: "PG-005", name: "Invoices & Billing", path: "/invoices" },
+  { id: "PG-006", name: "Contracts (Redirects to /agreements)", path: "/contracts" },
+  { id: "PG-007", name: "Appointments & Calendar", path: "/calendar" },
   { id: "PG-008", name: "Session Types", path: "/calendar?tab=session-types" },
   { id: "PG-009", name: "Tasks", path: "/tasks" },
-  { id: "PG-010", name: "Tools", path: "/tools" },
+  { id: "PG-010", name: "Tools Hub", path: "/tools" },
   { id: "PG-010-REC", name: "Voyage Meeting Recorder", path: "/tools/voyage-recorder" },
+  { id: "PG-010-PWN", name: "PWN Decoder", path: "/tools/pwn-decoder" },
+  { id: "PG-010-IEP", name: "IEP Comparator", path: "/tools/iep-comparator" },
+  { id: "PG-010-WS", name: "Worksheet Studio", path: "/tools/worksheet-builder" },
   { id: "PG-011", name: "Templates", path: "/templates" },
   { id: "PG-012", name: "Lead Forms", path: "/leads/forms" },
   { id: "PG-013", name: "Automations", path: "/automations" },
   { id: "PG-014", name: "Integrations", path: "/integrations" },
   { id: "PG-015", name: "Workflows", path: "/workflows" },
   { id: "PG-016", name: "Knowledge Base", path: "/knowledge-base" },
-  { id: "PG-017", name: "Walkthroughs", path: "/walkthroughs" },
+  { id: "PG-017", name: "Walkthroughs (SOP)", path: "/walkthroughs" },
   { id: "PG-018", name: "Call Center", path: "/call-center" },
-  { id: "PG-019", name: "Team", path: "/team" },
+  { id: "PG-019", name: "Team & Staff Management", path: "/team" },
   { id: "PG-020", name: "State Complaint Builder", path: "/state-complaint-builder" },
   { id: "PG-021", name: "My Notes & Company Notes", path: "/brain-dump" },
   { id: "PG-038-NOT", name: "My Notes (Crew Quarters)", path: "/crew-quarters?tab=notes" },
@@ -1235,8 +1199,24 @@ const PAGE_LIST = [
   { id: "PG-029", name: "Booking", path: "/book" },
   { id: "PG-031", name: "Workspace", path: "/workspace" },
   { id: "PG-032", name: "AI Connections", path: "/ai-connections" },
+  { id: "PG-035", name: "Services Catalog", path: "/services" },
   { id: "PG-037", name: "First Mate", path: "/first-mate" },
   { id: "PG-038", name: "Crew Quarters", path: "/crew-quarters" },
+  { id: "PG-039", name: "Advocacy Pipeline", path: "/advocacy-pipeline" },
+  { id: "PG-040", name: "Giving & Impact Overview", path: "/giving" },
+  { id: "PG-040-SUP", name: "Giving Supporters & Donors", path: "/giving/supporters" },
+  { id: "PG-040-DON", name: "Giving Donations Ledger", path: "/giving/donations" },
+  { id: "PG-040-SCH", name: "Giving Scholarships & Grants", path: "/giving/scholarships" },
+  { id: "PG-040-FND", name: "Giving Charitable Funds", path: "/giving/funds" },
+  { id: "PG-040-REC", name: "Giving Receipts & Statements", path: "/giving/receipts" },
+  { id: "PG-040-REP", name: "Giving Reports & Analytics", path: "/giving/reports" },
+  { id: "PG-040-WEB", name: "Giving Website Tools", path: "/giving/website-tools" },
+  { id: "PG-041", name: "National Coverage", path: "/calendar?tab=coverage" },
+  { id: "PG-042", name: "Waypoint Metrics", path: "/metrics" },
+  { id: "PG-043", name: "Meeting Workspace", path: "/meeting-workspace" },
+  { id: "PG-044", name: "Post-Meeting Review", path: "/post-meeting-review" },
+  { id: "PG-046", name: "Agreements Engine", path: "/agreements" },
+  { id: "PG-047", name: "Payment Receipt Experience", path: "/settings?section=receipts" },
 ];
 
 function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }) {

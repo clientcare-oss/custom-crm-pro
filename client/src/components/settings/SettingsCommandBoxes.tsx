@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Receipt,
   Laptop,
@@ -9,10 +8,11 @@ import {
   CheckCircle2,
   Sparkles,
   ChevronRight,
+  Plug,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export type SettingsSectionKey = "receipts" | "portal" | "admin" | "operations" | "colors";
+export type SettingsSectionKey = "receipts" | "portal" | "admin" | "operations" | "integrations" | "ai" | "colors";
 
 interface SettingsBoxConfig {
   key: SettingsSectionKey;
@@ -87,6 +87,34 @@ export const SETTINGS_BOXES: SettingsBoxConfig[] = [
     highlights: ["Visual Workflow Pipelines", "Automated Case Triggers", "Lifecycle SOP Checklists"],
   },
   {
+    key: "integrations",
+    title: "Integrations & APIs",
+    shortLabel: "Phone & Services",
+    badge: "PG-014",
+    badgeClass: "bg-teal-500/15 text-teal-400 border-teal-500/30",
+    icon: Plug,
+    iconBg: "bg-teal-500/10",
+    iconColor: "text-teal-400",
+    borderActive: "border-teal-400 ring-2 ring-teal-400/20",
+    glowActive: "shadow-[0_0_24px_rgba(20,184,166,0.22)]",
+    description: "Connect external telephony (Quo), custom domain CNAME records, Gmail API, and future CRM hooks.",
+    highlights: ["Quo Phone Telephony Webhook", "Custom Portal CNAME Domain", "Gmail & Email Sync"],
+  },
+  {
+    key: "ai",
+    title: "AI Connections",
+    shortLabel: "AI Engines & Keys",
+    badge: "PG-032",
+    badgeClass: "bg-amber-400/15 text-amber-400 border-amber-400/30",
+    icon: Sparkles,
+    iconBg: "bg-amber-400/10",
+    iconColor: "text-amber-400",
+    borderActive: "border-amber-400 ring-2 ring-amber-400/20",
+    glowActive: "shadow-[0_0_24px_rgba(245,181,68,0.22)]",
+    description: "Manage LLM connections, Cloudflare Workers AI models, OpenAI fallbacks, and advocate prompt directives.",
+    highlights: ["Cloudflare Workers AI", "First Mate Meeting Directives", "Custom Prompt Actions"],
+  },
+  {
     key: "colors",
     title: "Color Tokens & Palette",
     shortLabel: "Design Tokens",
@@ -120,11 +148,11 @@ export function SettingsCommandBoxes({
           <span className="text-foreground">Click a command box to open configuration</span>
         </h2>
         <span className="text-[11px] text-muted-foreground font-mono">
-          5 Core Systems
+          7 Core Systems
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
         {SETTINGS_BOXES.map((box) => {
           const isActive = activeSection === box.key;
           const Icon = box.icon;

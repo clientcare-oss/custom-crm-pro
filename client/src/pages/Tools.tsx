@@ -127,6 +127,58 @@ export default function Tools() {
   // Tools configuration
   const toolsList = [
     {
+      id: "first-mate",
+      title: "First Mate — Live Advocacy Copilot",
+      subtitle: "Sub-second IEP meeting intelligence, dispute alarms, and live guidance.",
+      description: "Live advocacy copilot with rolling conversation memory, substantive disagreement detection, procedural safeguard alerts, and one-click floating pop-out.",
+      btnText: "Launch First Mate →",
+      disabled: false,
+      featured: true,
+      onClick: () => {
+        setLocation("/first-mate");
+      },
+      preview: (
+        <div className="relative w-full h-full flex items-center justify-center bg-slate-950/40 border-b border-white/5 group overflow-hidden">
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+            <Sparkles className="h-3 w-3 text-cyan-400" />
+            PG-037 Copilot
+          </div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12)_0,transparent_70%)]" />
+          <div className="relative z-10 w-full max-w-[270px] flex items-center justify-between px-3 gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="p-2 rounded-lg bg-[#000820]/90 border border-cyan-500/30 shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-cyan-300">Live Guidance</span>
+                  <span className="text-[8px] font-mono text-emerald-400">0.8s FAST</span>
+                </div>
+                <div className="text-[9px] text-slate-300 mt-1 line-clamp-1 italic">"Request prior evaluation raw data..."</div>
+              </div>
+              <div className="p-2 rounded-lg bg-[#000820]/90 border border-amber-500/30 shadow-md">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-[10px] font-bold text-amber-300">Dispute: FBA Refusal</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open('/first-mate/popout', 'firstmate_popout', 'width=440,height=720,menubar=no,toolbar=no');
+                }}
+                className="px-2 py-1 rounded-md bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                title="Launch in Popout Window"
+              >
+                <Monitor className="h-3 w-3" />
+                Pop-out
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       id: "pwn-decoder",
       title: "🧭 PWN Decoder",
       subtitle: "Decode what the district proposed, refused, explained, and may have missed.",

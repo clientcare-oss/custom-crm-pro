@@ -1,19 +1,34 @@
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { contacts } from "../../drizzle/schema";
 import { getDb } from "./connection";
 import { resolveClientLocation } from "../../shared/locationResolver";
+import { queryCloudflareD1 } from "../_core/d1Client";
 
 export async function getContactsByOwner(ownerId?: number) {
-  const cfDb = (globalThis as any).__CF_ENV_DB__;
-  if (cfDb) {
-    try {
-      const stmt = cfDb.prepare("SELECT * FROM contacts ORDER BY id DESC");
-      const { results } = await stmt.all();
-      if (results && Array.isArray(results) && results.length > 0) {
-        return results;
+  const isTest = process.env.NODE_ENV === "test" || Boolean(process.env.VITEST);
+
+  if (!isTest) {
+    const cfDb = (globalThis as any).__CF_ENV_DB__;
+    if (cfDb) {
+      try {
+        const stmt = cfDb.prepare("SELECT * FROM contacts ORDER BY id DESC");
+        const { results } = await stmt.all();
+        if (results && Array.isArray(results) && results.length > 0) {
+          return results;
+        }
+      } catch (e) {
+        console.warn("[getContactsByOwner] CF D1 direct query error:", e);
       }
-    } catch (e) {
-      console.warn("[getContactsByOwner] CF D1 direct query error:", e);
+    }
+
+    // Node server / dev mode / fallback via queryCloudflareD1 (avoids SQLite 100-column projection limit)
+    try {
+      const directResults = await queryCloudflareD1("SELECT * FROM contacts ORDER BY id DESC");
+      if (directResults && Array.isArray(directResults) && directResults.length > 0) {
+        return directResults;
+      }
+    } catch (directErr) {
+      console.warn("[getContactsByOwner] Direct query error, falling back to Drizzle:", directErr);
     }
   }
 
@@ -21,43 +36,68 @@ export async function getContactsByOwner(ownerId?: number) {
   if (!db) return [];
 
   try {
-    // Practice CRM: Return all contacts across the practice
-    return await db
-      .select()
-      .from(contacts)
-      .orderBy(desc(contacts.createdAt));
+    const rawResults = await (db as any).all(sql`SELECT * FROM contacts ORDER BY id DESC`);
+    if (rawResults && Array.isArray(rawResults)) return rawResults;
+  } catch {
+    // fallback
+  }
+
+  try {
+    return await db.select().from(contacts).orderBy(desc(contacts.createdAt));
   } catch (err) {
-    console.warn("[getContactsByOwner] Fallback to unsorted select:", err);
-    try {
-      return await db.select().from(contacts);
-    } catch {
-      return [];
-    }
+    return [];
   }
 }
 
 export async function getContactById(id: number, ownerId?: number) {
-  const cfDb = (globalThis as any).__CF_ENV_DB__;
-  if (cfDb) {
+  const isTest = process.env.NODE_ENV === "test" || Boolean(process.env.VITEST);
+
+  if (!isTest) {
+    const cfDb = (globalThis as any).__CF_ENV_DB__;
+    if (cfDb) {
+      try {
+        const stmt = cfDb.prepare("SELECT * FROM contacts WHERE id = ? LIMIT 1").bind(id);
+        const row = await stmt.first();
+        if (row) return row;
+      } catch (e) {
+        console.warn("[getContactById] CF D1 direct query error:", e);
+      }
+    }
+
+    // Node server / dev mode / fallback via queryCloudflareD1
     try {
-      const stmt = cfDb.prepare("SELECT * FROM contacts WHERE id = ? LIMIT 1").bind(id);
-      const row = await stmt.first();
-      if (row) return row;
-    } catch (e) {
-      console.warn("[getContactById] CF D1 direct query error:", e);
+      const directResults = await queryCloudflareD1("SELECT * FROM contacts WHERE id = ? LIMIT 1", [id]);
+      if (directResults && Array.isArray(directResults) && directResults.length > 0) {
+        return directResults[0];
+      }
+    } catch (directErr) {
+      console.warn("[getContactById] Direct query error, falling back to Drizzle:", directErr);
     }
   }
 
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db
-    .select()
-    .from(contacts)
-    .where(eq(contacts.id, id))
-    .limit(1);
+  try {
+    const rawRows = await (db as any).all(sql`SELECT * FROM contacts WHERE id = ${id} LIMIT 1`);
+    if (rawRows && Array.isArray(rawRows) && rawRows.length > 0) {
+      return rawRows[0];
+    }
+  } catch {
+    // fallback
+  }
 
-  return result.length > 0 ? result[0] : undefined;
+  try {
+    const result = await db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.id, id))
+      .limit(1);
+
+    return result.length > 0 ? result[0] : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function getContactByEmail(email: string) {

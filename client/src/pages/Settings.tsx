@@ -13,6 +13,8 @@ import { ClientPortalSettingsTab } from "@/components/settings/ClientPortalSetti
 import { ColorPaletteTokensTab } from "@/components/settings/ColorPaletteTokensTab";
 import BusinessOperationsSection from "@/components/settings/BusinessOperationsSection";
 import { ReceiptSettingsTab } from "@/components/settings/ReceiptSettingsTab";
+import Integrations from "./Integrations";
+import AiConnections from "./AiConnections";
 
 export default function Settings() {
   const { projectLabel } = useTerminology();
@@ -42,6 +44,8 @@ export default function Settings() {
     if (raw === "receipts" || raw === "receipt") return "receipts";
     if (raw === "portal" || raw === "client-portal") return "portal";
     if (raw === "operations" || raw === "workflows" || raw === "workflow-designer") return "operations";
+    if (raw === "integrations" || raw === "integration" || raw === "quo") return "integrations";
+    if (raw === "ai" || raw === "ai-connections" || raw === "llm") return "ai";
     if (raw === "colors" || raw === "palette" || raw === "tokens") return "colors";
     if (raw === "admin" || raw === "crm") return "admin";
     // Default to clean Admin CRM / Company Profile base rather than raw color dump
@@ -158,7 +162,21 @@ export default function Settings() {
           <BusinessOperationsSection />
         )}
 
-        {/* SECTION 5: Master Color Palette & Design Tokens */}
+        {/* SECTION 5: Integrations & External Services (PG-014) */}
+        {activeSection === "integrations" && (
+          <div className="space-y-4">
+            <Integrations />
+          </div>
+        )}
+
+        {/* SECTION 6: AI Connections & Directives (PG-032) */}
+        {activeSection === "ai" && (
+          <div className="space-y-4">
+            <AiConnections />
+          </div>
+        )}
+
+        {/* SECTION 7: Master Color Palette & Design Tokens */}
         {activeSection === "colors" && (
           <ColorPaletteTokensTab />
         )}

@@ -18,9 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Edit2, DollarSign, Calendar, CheckCircle, Clock } from "lucide-react";
+import { Plus, Loader2, Edit2, DollarSign, Calendar, CheckCircle, Clock, Banknote, FileText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageIdBadge from "@/components/PageIdBadge";
+import BillGuardian from "./BillGuardian";
+import { cn } from "@/lib/utils";
 
 const INVOICE_STATUSES = ["Draft", "Sent", "Paid", "Overdue", "Cancelled"] as const;
 type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
@@ -149,17 +152,79 @@ export default function Invoices() {
     ?.filter((inv) => inv.status === "Sent" || inv.status === "Overdue")
     .reduce((sum, inv) => sum + Number(inv.amount || 0), 0) || 0;
 
+  // Support ?tab=bill-guardian query param
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [activeTab, setActiveTab] = useState<"invoices" | "bill-guardian">(
+    searchParams.get("tab") === "bill-guardian" || searchParams.get("tab") === "guardian" ? "bill-guardian" : "invoices"
+  );
+
+  const handleTabChange = (tab: "invoices" | "bill-guardian") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "bill-guardian") {
+        url.searchParams.set("tab", "bill-guardian");
+      } else {
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
   return (
-    <div className="space-y-6 p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-          <p className="text-muted-foreground">
-            Create and manage invoices, track payments
-          </p>
+    <div className="space-y-6 p-6 md:p-8">
+      {/* ── Top Consolidated Billing Navigation Switcher ── */}
+      <div className="flex items-center justify-between pb-2 border-b border-border/60">
+        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-xl border border-border/50 shadow-inner">
+          <button
+            type="button"
+            onClick={() => handleTabChange("invoices")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all cursor-pointer",
+              activeTab === "invoices"
+                ? "bg-card text-foreground shadow-sm border border-border/60 font-bold"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+            )}
+          >
+            <FileText className="w-4 h-4 text-primary" />
+            Invoices & Payments
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("bill-guardian")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all cursor-pointer",
+              activeTab === "bill-guardian"
+                ? "bg-card text-foreground shadow-sm border border-border/60 font-bold"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+            )}
+          >
+            <Banknote className="w-4 h-4 text-emerald-500" />
+            Bill Guardian — Fee Tracker & Audit
+          </button>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+
+        <PageIdBadge
+          id={activeTab === "bill-guardian" ? "PG-022" : "PG-005"}
+          name={activeTab === "bill-guardian" ? "Bill Guardian" : "Invoices & Billing"}
+        />
+      </div>
+
+      {activeTab === "bill-guardian" ? (
+        <div className="-mx-6 md:-mx-8 -mb-6 md:-mb-8">
+          <BillGuardian />
+        </div>
+      ) : (
+        <>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+              <p className="text-muted-foreground">
+                Create and manage invoices, track payments
+              </p>
+            </div>
+            <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
               onClick={() => {
@@ -417,6 +482,8 @@ export default function Invoices() {
             Create your first invoice to get started
           </p>
         </div>
+      )}
+      </>
       )}
     </div>
   );
