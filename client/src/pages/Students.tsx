@@ -428,9 +428,9 @@ export default function Students() {
                     // Stepped shelves with cards sitting IN slots, with a physical divider after EACH row
                     shelfRows.map((row, rowIdx) => (
                       <div key={rowIdx} className="relative w-full">
-                        {/* Shelf Row Cards Grid (z-10) */}
+                        {/* Shelf Row Cards Grid (z-10) — tighter gaps so cards are larger */}
                         <div
-                          className="grid gap-3 sm:gap-4 px-3 sm:px-6 lg:px-8 relative z-10"
+                          className="grid gap-1.5 sm:gap-2 lg:gap-2.5 px-1.5 sm:px-3 lg:px-4 relative z-10"
                           style={{
                             gridTemplateColumns: `repeat(${shelfCols}, minmax(0, 1fr))`,
                           }}

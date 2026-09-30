@@ -147,7 +147,7 @@ export function CabinetDrawer({
               {drawerRows.map((row, rowIdx) => (
                 <div key={rowIdx} className="relative w-full">
                   <div
-                    className="grid gap-3 sm:gap-4 relative z-10"
+                    className="grid gap-1.5 sm:gap-2 lg:gap-2.5 relative z-10"
                     style={{
                       gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
                     }}

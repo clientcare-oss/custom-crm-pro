@@ -289,27 +289,27 @@ export function StudentFileCard({
             </div>
 
       {/* ─── CARD CONTENT OVERLAY (Positioned precisely on the cream card parchment) ─── */}
-      <div className="absolute top-[16.5%] left-[9%] right-[9%] bottom-[16.5%] flex flex-col justify-between p-2.5 sm:p-3 z-20 pointer-events-none">
+      <div className="absolute top-[13.5%] left-[8%] right-[8%] bottom-[11.5%] flex flex-col justify-between px-2 sm:px-2.5 pt-1 sm:pt-1.5 pb-1 z-20 pointer-events-none">
         {/* Top: Student Name + Quiet Chevron */}
         <div>
           <div className="flex items-start justify-between gap-1 mb-0.5">
-            <h3 className="font-serif font-bold text-[16px] sm:text-[18px] lg:text-[19px] text-[#141B28] tracking-tight leading-tight line-clamp-1 group-hover:text-[#060B14] transition-colors drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">
+            <h3 className="font-serif font-bold text-[15px] sm:text-[17px] lg:text-[18px] text-[#141B28] tracking-tight leading-tight line-clamp-1 group-hover:text-[#060B14] transition-colors drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">
               {displayName}
             </h3>
 
             {/* Quiet Right-Facing Chevron (NOT inside a button) */}
             <div className="text-[#8A9AB0] group-hover:text-[#3A4556] group-hover:translate-x-0.5 transition-all mt-0.5 shrink-0">
-              <ChevronRight className="w-4 h-4 stroke-[2]" />
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
             </div>
           </div>
 
           {/* Grade & Family / Primary Parent */}
           <div className="space-y-0.5">
-            <p className="font-serif text-[#3A4556] text-[12px] sm:text-[13px] leading-tight line-clamp-1 font-medium">
+            <p className="font-serif text-[#3A4556] text-[11.5px] sm:text-[12.5px] leading-tight line-clamp-1 font-medium">
               {gradeText}
             </p>
             <p
-              className="font-sans text-[#5A687C] text-[11px] sm:text-[11.5px] leading-tight truncate line-clamp-1 font-medium"
+              className="font-sans text-[#1B365D] text-[11px] sm:text-[12px] leading-tight truncate line-clamp-1 font-semibold tracking-tight"
               title={student.parentName ? `Primary Parent: ${student.parentName}` : familyOrParentText}
             >
               {familyOrParentText}
@@ -317,12 +317,12 @@ export function StudentFileCard({
           </div>
         </div>
 
-        {/* Bottom Status / Eligibility Printed Labels */}
-        <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#D9CABB]/50">
+        {/* Bottom Status / Eligibility Printed Labels (Firmly anchored with clear separation from family name) */}
+        <div className="flex items-center gap-1.5 pt-1 border-t border-[#D9CABB]/60 mt-auto">
           {/* Plan Type Pill (IEP or 504) */}
           <span
             className={cn(
-              "px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold font-mono tracking-wider uppercase border shadow-[0_1px_1px_rgba(0,0,0,0.06)]",
+              "px-1.5 py-0.5 rounded text-[9.5px] sm:text-[10.5px] font-bold font-mono tracking-wider uppercase border shadow-[0_1px_1px_rgba(0,0,0,0.06)] shrink-0",
               is504
                 ? "bg-[#D6EDE3]/90 text-[#245D47] border-[#A5D0BF]"
                 : "bg-[#E4D9EE]/90 text-[#55386E] border-[#C5B3D4]"
@@ -334,7 +334,7 @@ export function StudentFileCard({
           {/* Diagnosis / Category Pill */}
           <span
             className={cn(
-              "px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold font-mono tracking-wider uppercase border shadow-[0_1px_1px_rgba(0,0,0,0.06)]",
+              "px-1.5 py-0.5 rounded text-[9.5px] sm:text-[10.5px] font-bold font-mono tracking-wider uppercase border shadow-[0_1px_1px_rgba(0,0,0,0.06)] shrink-0",
               diagTag === "SLD" && "bg-[#DDE2ED]/90 text-[#3B4A6C] border-[#B7BFD4]",
               diagTag === "ADHD" && "bg-[#D5ECE1]/90 text-[#225A41] border-[#A6D1BD]",
               diagTag === "ASD" && "bg-[#D6E3F0]/90 text-[#295076] border-[#A7BFDA]",
