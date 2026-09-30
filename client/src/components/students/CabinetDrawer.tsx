@@ -2,6 +2,7 @@ import React from "react";
 import { ChevronDown, ChevronRight, FileText, Pause, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudentFileCard, type StudentFolderData } from "./StudentFileCard";
+import { type MarkerType } from "./MarkerSelectorBox";
 import { CastBrassDrawerHandle, AntiqueBrassNameplate, BrassScrewRivet } from "./CabinetOrnaments";
 
 export type DrawerType = "onboarding" | "paused" | "archived";
@@ -15,6 +16,7 @@ interface CabinetDrawerProps {
   isOpen: boolean;
   onToggle: () => void;
   onStudentClick: (studentId: number) => void;
+  onMarkerChange?: (studentId: number, marker: MarkerType | "none") => void;
   viewMode?: "cards" | "list";
   className?: string;
 }
@@ -34,6 +36,7 @@ export function CabinetDrawer({
   isOpen,
   onToggle,
   onStudentClick,
+  onMarkerChange,
   viewMode = "cards",
   className,
 }: CabinetDrawerProps) {
@@ -43,7 +46,7 @@ export function CabinetDrawer({
     <div
       className={cn(
         "relative rounded-xl border transition-all duration-300 overflow-hidden",
-        "bg-gradient-to-b from-[#0D1E34] via-[#09172A] to-[#040D18]",
+        "bg-gradient-to-b from-[#000E26] via-[#00081C] to-[#000410]",
         "border-[#8A6731]/60 shadow-[0_4px_16px_rgba(0,3,10,0.8)]",
         isOpen && "ring-1 ring-[#F7D287]/30 shadow-[0_12px_32px_rgba(0,3,10,0.95)]",
         className
@@ -109,7 +112,7 @@ export function CabinetDrawer({
       {/* ─── Drawer Interior Compartment (Smooth Accordion Open) ─── */}
 
       {isOpen && (
-        <div className="px-6 py-6 border-t border-[#8A6731]/30 bg-gradient-to-b from-[#02060E] to-[#040C1A] shadow-inner animate-in fade-in-50 duration-200">
+        <div className="px-6 py-6 border-t border-[#8A6731]/30 bg-[#00081C] shadow-[inset_0_12px_32px_rgba(0,0,0,0.95)] animate-in fade-in-50 duration-200">
           {students.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <IconComponent className="w-10 h-10 text-[#7B8EA7]/30 mb-2" />
@@ -126,6 +129,7 @@ export function CabinetDrawer({
                   student={student}
                   index={idx}
                   onClick={() => onStudentClick(student.id)}
+                  onMarkerChange={onMarkerChange}
                 />
               ))}
             </div>

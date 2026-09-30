@@ -22,6 +22,12 @@ import { StudentsHeader } from "@/components/students/StudentsHeader";
 import { BrassAlphabetRail } from "@/components/students/BrassAlphabetRail";
 import { StudentFileCard, type StudentFolderData } from "@/components/students/StudentFileCard";
 import { CabinetDrawer, type DrawerType } from "@/components/students/CabinetDrawer";
+import {
+  type MarkerType,
+  MARKER_OPTIONS,
+  MarkerPreview,
+  MarkerSelectorBox,
+} from "@/components/students/MarkerSelectorBox";
 import { StudentsListView } from "@/components/students/StudentsListView";
 import { BrassScrewRivet } from "@/components/students/CabinetOrnaments";
 import { ActiveStudentsDrawerBar } from "@/components/students/ActiveStudentsDrawerBar";
@@ -59,8 +65,52 @@ export default function Students() {
     localStorage.setItem("waypoint_students_view_mode", mode);
   };
 
+  // ─── Physical Document Markers State (Persisted) ───
+  const [studentMarkers, setStudentMarkers] = useState<Record<number, MarkerType>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("waypoint_student_file_markers") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  const handleMarkerChange = (studentId: number, marker: MarkerType | "none") => {
+    setStudentMarkers((prev) => {
+      const next = { ...prev };
+      if (marker === "none") {
+        delete next[studentId];
+      } else {
+        next[studentId] = marker;
+      }
+      try {
+        localStorage.setItem("waypoint_student_file_markers", JSON.stringify(next));
+      } catch (err) {
+        console.error("Failed to save student markers:", err);
+      }
+      return next;
+    });
+    const label = MARKER_OPTIONS.find((m) => m.id === marker)?.label || marker;
+    toast.success(
+      marker === "none"
+        ? "Physical marker removed from student file"
+        : `${label} attached to student file`
+    );
+  };
+
   // ─── New Student Form State ───
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    firstName: string;
+    lastName: string;
+    company: string;
+    schoolName: string;
+    gradeLevel: string;
+    planType: string;
+    jobTitle: string;
+    email: string;
+    phone: string;
+    parentContactId: string;
+    markerType: MarkerType | "none";
+  }>({
     firstName: "",
     lastName: "",
     company: "",
@@ -71,11 +121,15 @@ export default function Students() {
     email: "",
     phone: "",
     parentContactId: "",
+    markerType: "none",
   });
 
   const createMutation = trpc.contacts.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast.success("Student file successfully added to active cabinet");
+      if (data?.id && formData.markerType && formData.markerType !== "none") {
+        handleMarkerChange(data.id, formData.markerType);
+      }
       refetch();
       setNewStudentOpen(false);
       setFormData({
@@ -89,6 +143,7 @@ export default function Students() {
         email: "",
         phone: "",
         parentContactId: "",
+        markerType: "none",
       });
     },
     onError: (e) => toast.error(e.message || "Failed to add student"),
@@ -147,8 +202,9 @@ export default function Students() {
       needsAttention: c.accountStatus === "On Hold" || c.serviceStatus === "Paused",
       priority: c.pipelineStage === "1st IEP Scheduled" || c.accountStatus === "Renewal Needed",
       bookmarked: c.pipelineStage === "IEP Active",
+      markerType: studentMarkers[c.id],
     }));
-  }, [allContacts, parentMap]);
+  }, [allContacts, parentMap, studentMarkers]);
 
   // ─── Categorization into Cabinet Compartments ───
   const { activeStudents, onboardingStudents, pausedStudents, archivedStudents } = useMemo(() => {
@@ -324,7 +380,7 @@ export default function Students() {
           </div>
 
         {/* ─── 3. Large Front-Facing Physical Filing Credenza / Cabinet ─── */}
-        <div className="relative rounded-2xl border-2 border-[#8A6731]/70 bg-gradient-to-b from-[#0A1A2F] via-[#061224] to-[#020814] p-3 sm:p-5 lg:p-6 shadow-[0_24px_70px_rgba(0,3,12,0.98)] ring-1 ring-[#F7D287]/20 space-y-4">
+        <div className="relative rounded-2xl border-2 border-[#8A6731]/70 bg-gradient-to-b from-[#000E26] via-[#00081C] to-[#000514] p-3 sm:p-5 lg:p-6 shadow-[0_24px_70px_rgba(0,3,12,0.98)] ring-1 ring-[#F7D287]/20 space-y-4">
           
           {/* Top-left and Top-right corner brass bracket accents on outer credenza frame */}
           <div className="absolute top-2 left-2.5 pointer-events-none hidden sm:block">
@@ -345,9 +401,9 @@ export default function Students() {
                 <p className="text-xs text-[#7B8EA7] mt-1">Retrieving archival records from practice database</p>
               </div>
             ) : viewMode === "cards" ? (
-              <div className="relative flex rounded-xl bg-gradient-to-b from-[#020610] via-[#040C1A] to-[#061426] border border-[#8A6731]/40 shadow-[inset_0_12px_36px_rgba(0,0,0,0.95)] overflow-hidden">
+              <div className="relative flex rounded-xl bg-[#00081C] border border-[#8A6731]/40 shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-hidden">
                 {/* Left 3D Perspective Wooden Cheek Wall */}
-                <div className="hidden lg:block w-4 shrink-0 bg-gradient-to-r from-[#0D1F34] via-[#071322] to-transparent border-r border-[#8A6731]/30" />
+                <div className="hidden lg:block w-4 shrink-0 bg-gradient-to-r from-[#00102E] via-[#00081C] to-transparent border-r border-[#8A6731]/30" />
 
                 {/* Shelves Rows */}
                 <div className="flex-1 p-3 sm:p-4 space-y-4 min-h-[440px]">
@@ -373,12 +429,13 @@ export default function Students() {
                               student={student}
                               index={rowIdx * 5 + colIdx}
                               onClick={() => setLocation(`/contacts/${student.id}`)}
+                              onMarkerChange={handleMarkerChange}
                             />
                           ))}
                         </div>
 
                         {/* Physical Wooden Shelf Ledge / Step */}
-                        <div className="relative h-2 w-full rounded-xs bg-gradient-to-r from-[#0C1C30] via-[#1B3554] to-[#0C1C30] border-t border-[#8A6731]/45 shadow-[0_3px_6px_rgba(0,0,0,0.9)]">
+                        <div className="relative h-2 w-full rounded-xs bg-gradient-to-r from-[#00081C] via-[#071738] to-[#00081C] border-t border-[#8A6731]/45 shadow-[0_3px_6px_rgba(0,0,0,0.9)]">
                           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#FFF2D6]/20 to-transparent pointer-events-none" />
                         </div>
                       </div>
@@ -387,7 +444,7 @@ export default function Students() {
                 </div>
 
                 {/* Right 3D Perspective Wooden Cheek Wall */}
-                <div className="hidden lg:block w-4 shrink-0 bg-gradient-to-l from-[#0D1F34] via-[#071322] to-transparent border-l border-[#8A6731]/30" />
+                <div className="hidden lg:block w-4 shrink-0 bg-gradient-to-l from-[#00102E] via-[#00081C] to-transparent border-l border-[#8A6731]/30" />
               </div>
             ) : (
               <StudentsListView
@@ -411,6 +468,7 @@ export default function Students() {
               isOpen={openDrawers.onboarding}
               onToggle={() => toggleDrawer("onboarding")}
               onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+              onMarkerChange={handleMarkerChange}
               viewMode={viewMode}
             />
 
@@ -424,6 +482,7 @@ export default function Students() {
               isOpen={openDrawers.paused}
               onToggle={() => toggleDrawer("paused")}
               onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+              onMarkerChange={handleMarkerChange}
               viewMode={viewMode}
             />
 
@@ -437,6 +496,7 @@ export default function Students() {
               isOpen={openDrawers.archived}
               onToggle={() => toggleDrawer("archived")}
               onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+              onMarkerChange={handleMarkerChange}
               viewMode={viewMode}
             />
           </div>
@@ -572,6 +632,42 @@ export default function Students() {
                   onChange={(val) => setFormData({ ...formData, phone: val })}
                   className="bg-[#050D1A] border-[#B88943]/30 text-white"
                 />
+              </div>
+
+              {/* Physical Document Marker Selection */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-[#CBD7E8]">
+                    Physical Document Marker
+                  </label>
+                  <span className="text-[10px] text-[#8AA2C0] font-normal">Optional file clip</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 p-2 bg-[#050D1A] border border-[#B88943]/30 rounded-xl max-h-36 overflow-y-auto">
+                  {MARKER_OPTIONS.map((opt) => {
+                    const isSelected = formData.markerType === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, markerType: opt.id })}
+                        className={cn(
+                          "flex items-center gap-2 p-1.5 rounded-lg border text-left transition-all cursor-pointer select-none",
+                          isSelected
+                            ? "bg-[#142C4E] border-[#E9BA6B] text-[#FFF3D6] shadow-xs"
+                            : "border-transparent hover:bg-[#0D1D34] text-[#A6BCD6]"
+                        )}
+                      >
+                        <div className="w-5 h-6 flex items-center justify-center shrink-0">
+                          <MarkerPreview type={opt.id} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-medium leading-tight truncate">{opt.label}</p>
+                          <p className="text-[9px] text-[#768DA8] truncate">{opt.reason}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="pt-2">
