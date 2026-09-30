@@ -429,11 +429,11 @@ export default function Students() {
                         </div>
 
                         {/* Physical Front Retaining Rail / Drawer Shelf Lip overlapping the bottom of cards (z-20) */}
-                        <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 w-full pointer-events-none select-none">
+                        <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 w-full pointer-events-none select-none px-1 sm:px-2">
                           <img
                             src="/decor/shelf-retaining-rail.png"
                             alt=""
-                            className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)]"
+                            className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_10px_22px_rgba(0,0,0,0.98)]"
                           />
                         </div>
                       </div>
