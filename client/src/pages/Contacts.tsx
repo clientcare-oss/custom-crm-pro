@@ -143,6 +143,19 @@ export default function Contacts() {
     }
   };
 
+  const handleOpenAddContact = () => {
+    setEditingId(null);
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      company: "",
+      jobTitle: "",
+    });
+    setOpen(true);
+  };
+
   const handleEdit = (contact: any) => {
     setEditingId(contact.id);
     setFormData({
@@ -172,9 +185,9 @@ export default function Contacts() {
             className="w-full relative aspect-[1024/139] max-w-[1440px] mx-auto bg-no-repeat bg-[length:100%_100%] select-none"
             style={{ backgroundImage: "url('/decor/contacts-header-bg.png')" }}
           >
-            {/* Live Interactive Search Pill Input directly over the search bar area (DO NOT ADD FILTERS BUTTON) */}
-            <div className="absolute left-[10.25%] top-[60.4%] w-[46.88%] h-[31.65%] flex items-center">
-              <div className="relative w-full h-full flex items-center">
+            {/* Search Bar + Nice Gold Add Contact Button directly after search bar */}
+            <div className="absolute left-[10.25%] top-[60.4%] right-[30.5%] h-[31.65%] flex items-center gap-2.5 z-20">
+              <div className="relative flex-1 h-full flex items-center min-w-0">
                 <Search className="absolute left-3.5 sm:left-4 h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#7E97B8] pointer-events-none z-10" />
                 <input
                   type="text"
@@ -194,6 +207,17 @@ export default function Contacts() {
                   </button>
                 )}
               </div>
+
+              {/* Nice Gold Add Contact Button */}
+              <Button
+                type="button"
+                onClick={handleOpenAddContact}
+                className="h-full px-3.5 lg:px-4 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B89628] hover:from-[#E5C158] hover:to-[#C9A73A] text-slate-950 font-bold shadow-md hover:shadow-lg transition-all cursor-pointer text-xs sm:text-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap border border-[#F3DB98]/40"
+                title="Add New Contact"
+              >
+                <Plus className="h-4 w-4 stroke-[2.5]" />
+                <span>Add Contact</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -212,24 +236,34 @@ export default function Contacts() {
                 Everyone connected to Waypoint.
               </p>
             </div>
-            <div className="relative flex items-center w-full">
-              <Search className="absolute left-3.5 h-4 w-4 text-[#7E97B8] pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Find a person, school, district, organization..."
-                className="w-full h-10 pl-9.5 pr-8 rounded-full bg-[#030917]/95 border border-[#1e3250] text-xs text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#4B70A6] focus:ring-1 focus:ring-[#4B70A6]/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 p-1 text-[#7E97B8] hover:text-white"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
+            <div className="flex items-center gap-2 w-full">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 h-4 w-4 text-[#7E97B8] pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Find a person, school, district, organization..."
+                  className="w-full h-10 pl-9.5 pr-8 rounded-full bg-[#030917]/95 border border-[#1e3250] text-xs text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#4B70A6] focus:ring-1 focus:ring-[#4B70A6]/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 p-1 text-[#7E97B8] hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <Button
+                type="button"
+                onClick={handleOpenAddContact}
+                className="h-10 px-3.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B89628] hover:from-[#E5C158] hover:to-[#C9A73A] text-slate-950 font-bold shadow-md transition-all cursor-pointer text-xs flex items-center gap-1 shrink-0 whitespace-nowrap border border-[#F3DB98]/40"
+              >
+                <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>Add Contact</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -258,27 +292,13 @@ export default function Contacts() {
 
             <div className="flex items-center gap-3">
               <PageIdBadge id="PG-002" name="Contacts Directory" />
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      setEditingId(null);
-                      setFormData({
-                        firstName: "",
-                        lastName: "",
-                        email: "",
-                        phone: "",
-                        company: "",
-                        jobTitle: "",
-                      });
-                    }}
-                    className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#B89628] hover:from-[#E5C158] hover:to-[#C9A73A] px-4 py-2 font-bold text-slate-950 shadow-md transition-all cursor-pointer text-xs sm:text-sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Contact
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Create / Edit Dialog Modal */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
                   <DialogHeader>
                     <DialogTitle>
                       {editingId ? "Edit Contact" : "Add New Contact"}
@@ -373,9 +393,6 @@ export default function Contacts() {
                   </form>
                 </DialogContent>
               </Dialog>
-            </div>
-          </div>
-        </div>
 
         {/* ─── Contacts Directory Grid Content ─── */}
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto w-full flex-1">
