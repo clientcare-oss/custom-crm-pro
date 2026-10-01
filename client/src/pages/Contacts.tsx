@@ -185,6 +185,16 @@ export default function Contacts() {
             className="w-full relative aspect-[1024/139] max-w-[1440px] mx-auto bg-no-repeat bg-[length:100%_100%] select-none"
             style={{ backgroundImage: "url('/decor/contacts-header-bg.png')" }}
           >
+            {/* Crisp Gold Typography for Contacts & Subtitle (Sharp on any resolution) */}
+            <div className="absolute left-[14%] lg:left-[15%] top-[7%] flex flex-col justify-start z-10 pointer-events-none select-none">
+              <h1 className="font-serif text-[26px] md:text-[30px] lg:text-[34px] xl:text-[38px] font-bold tracking-wide leading-none bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                Contacts
+              </h1>
+              <p className="font-serif text-[11.5px] md:text-[13px] lg:text-[14px] xl:text-[15px] font-medium text-[#E8D1A7] mt-1 lg:mt-1.5 leading-none tracking-normal drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                Everyone connected to Waypoint.
+              </p>
+            </div>
+
             {/* Search Bar + Nice Gold Add Contact Button directly after search bar */}
             <div className="absolute left-[10.25%] top-[60.4%] right-[30.5%] h-[31.65%] flex items-center gap-2.5 z-20">
               <div className="relative flex-1 h-full flex items-center min-w-0">
@@ -229,10 +239,10 @@ export default function Contacts() {
         >
           <div className="relative z-10 flex flex-col gap-3">
             <div>
-              <h1 className="font-serif text-2xl font-bold text-[#F5DCB0] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              <h1 className="font-serif text-2xl font-bold tracking-wide bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                 Contacts
               </h1>
-              <p className="font-serif text-xs text-[#D8B478] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] mt-0.5">
+              <p className="font-serif text-xs font-medium text-[#E8D1A7] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] mt-0.5">
                 Everyone connected to Waypoint.
               </p>
             </div>
