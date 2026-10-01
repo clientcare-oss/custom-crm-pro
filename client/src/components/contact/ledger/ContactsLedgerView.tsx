@@ -453,8 +453,24 @@ export default function ContactsLedgerView({
             )}
           >
             {/* Top Category Filter Tabs Strip */}
-            <div className="flex items-center justify-between gap-1 pb-3 pt-1 border-b border-white/10 select-none">
-              <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="flex flex-col gap-1.5 pb-2.5 pt-0.5 border-b border-white/10 select-none">
+              {/* Total Contacts Count Indicator (Top Centered) */}
+              <div className="flex items-center justify-center gap-2">
+                <span className={cn("h-px w-8 sm:w-12", isLight ? "bg-[#C2AE88]/40" : "bg-[#D4AF37]/25")} />
+                <span
+                  className={cn(
+                    "text-[10px] sm:text-[11px] font-serif font-semibold tracking-wider uppercase",
+                    isLight ? "text-[#73634B]" : "text-[#E8D1A7]"
+                  )}
+                >
+                  {filteredContacts.length}{" "}
+                  {filteredContacts.length === 1 ? "Contact" : "Contacts"} in Directory
+                </span>
+                <span className={cn("h-px w-8 sm:w-12", isLight ? "bg-[#C2AE88]/40" : "bg-[#D4AF37]/25")} />
+              </div>
+
+              {/* 6 Category Filter Buttons: Balanced 3x2 Grid (No Horizontal Scrolling) */}
+              <div className="grid grid-cols-3 gap-1 w-full">
                 {[
                   { id: "all", label: "All" },
                   { id: "families", label: "Families" },
@@ -470,32 +486,22 @@ export default function ContactsLedgerView({
                       type="button"
                       onClick={() => setCategory(t.id as CategoryFilter)}
                       className={cn(
-                        "px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-serif transition-all cursor-pointer whitespace-nowrap",
+                        "py-1 px-1 rounded-lg text-[11px] sm:text-xs font-serif text-center transition-all cursor-pointer truncate",
                         isActive
                           ? isLight
                             ? "bg-[#D9C49D] text-[#1F1404] font-bold shadow-xs border border-[#A6884E]"
                             : "bg-[#091A33]/90 text-[#FFF2D9] font-bold border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.3)]"
                           : isLight
-                          ? "text-[#5C4D38] hover:text-[#1F1404] hover:bg-[#EAE0CA]"
-                          : "text-[#8CA4C4] hover:text-white hover:bg-white/5"
+                          ? "text-[#5C4D38] hover:text-[#1F1404] hover:bg-[#EAE0CA] border border-transparent"
+                          : "text-[#8CA4C4] hover:text-white hover:bg-white/5 border border-transparent"
                       )}
+                      title={t.label}
                     >
                       {t.label}
                     </button>
                   );
                 })}
               </div>
-
-              {/* Total Contacts Count Indicator */}
-              <span
-                className={cn(
-                  "text-[11px] font-serif font-medium shrink-0 ml-1 drop-shadow-xs",
-                  isLight ? "text-[#73634B]" : "text-[#E8D1A7]"
-                )}
-              >
-                {filteredContacts.length}{" "}
-                {filteredContacts.length === 1 ? "contact" : "contacts"}
-              </span>
             </div>
 
             {/* Scrollable Alphabetical Directory List */}
