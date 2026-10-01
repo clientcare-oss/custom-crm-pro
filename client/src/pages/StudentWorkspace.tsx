@@ -112,10 +112,6 @@ export default function StudentWorkspace() {
     return (student as any)?.gtid || (student as any)?.studentIdNumber || "1";
   }, [student]);
 
-  // Left side info block live alignment HUD
-  const [infoOffset, setInfoOffset] = useState({ x: 0, y: 0 });
-  const [hudVisible, setHudVisible] = useState(true);
-
   return (
     <div className="relative w-full min-h-screen overflow-x-hidden overflow-y-auto select-none bg-[#0b0d16] text-slate-100 transition-all font-sans">
       
@@ -259,63 +255,63 @@ export default function StudentWorkspace() {
                 
                 {/* ─── LEFT PANEL: Student Profile & Family (~38% width) ────── */}
                 <div className="lg:col-span-5 relative py-1 sm:py-2">
-                  {/* Movable Info Block Container (Centered on left folio card with live nudge controls) */}
+                  {/* Permanently locked in Left Info Block (X: -34px, Y: -10px) */}
                   <div 
-                    className="w-full max-w-[390px] mx-auto flex flex-col justify-between relative transition-all text-left"
+                    className="w-full max-w-[275px] mx-auto flex flex-col justify-between relative transition-all text-left"
                     style={{
-                      transform: `translate(${infoOffset.x}px, ${infoOffset.y}px)`,
+                      transform: "translate(-34px, -10px)",
                     }}
                   >
                     {/* Golden Glowing Avatar Badge Centered on Top */}
-                    <div className="flex flex-col items-center text-center mb-3">
-                      <div className="relative mb-2 mt-0.5">
-                        <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-2xl shadow-[0_0_24px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/50">
+                    <div className="flex flex-col items-center text-center mb-2.5">
+                      <div className="relative mb-1.5 mt-0.5">
+                        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-xl shadow-[0_0_20px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/50">
                           {studentInitials}
                         </div>
                       </div>
 
                       {/* Student Name */}
                       <h2 
-                        className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                        className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                         style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                       >
                         {fullName}
                       </h2>
 
                       {/* Pill Badges */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/40 text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full">
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/40 text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full">
                           IEP
                         </Badge>
-                        <Badge className="bg-[#093527]/85 text-emerald-300 border border-emerald-500/40 text-[10px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <Badge className="bg-[#093527]/85 text-emerald-300 border border-emerald-500/40 text-[9px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
                           <span>{student?.studentStatus || "Active"}</span>
                         </Badge>
                       </div>
                     </div>
 
-                    {/* ── STUDENT PROFILE Info (Directly on Leather Folio - Zero Card Box) ── */}
-                    <div className="w-full space-y-2 px-1 bg-transparent border-0 shadow-none">
+                    {/* ── STUDENT PROFILE Info (Tight, Transparent on Leather) ── */}
+                    <div className="w-full space-y-1.5 px-0.5 bg-transparent border-0 shadow-none text-[11px]">
                       {/* Section Header */}
-                      <div className="flex items-center justify-between pb-1.5 border-b border-white/15">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 text-[#38BDF8]" />
+                      <div className="flex items-center justify-between pb-1 border-b border-white/15">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1">
+                          <User className="h-3 w-3 text-[#38BDF8]" />
                           <span>STUDENT PROFILE</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => setDetailsModalOpen(true)}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#38BDF8] hover:text-sky-300 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#38BDF8] hover:text-sky-300 transition-colors cursor-pointer"
                         >
-                          <Pencil className="h-3 w-3" />
+                          <Pencil className="h-2.5 w-2.5" />
                           <span>Edit Details</span>
                         </button>
                       </div>
 
                       {/* Age */}
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                          <User className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                      <div className="flex items-center justify-between gap-1.5 py-0.5">
+                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                          <User className="h-3 w-3 text-[#38BDF8] shrink-0" />
                           <span>Age:</span>
                         </div>
                         <span className="font-bold text-white text-right">
@@ -324,9 +320,9 @@ export default function StudentWorkspace() {
                       </div>
 
                       {/* Grade */}
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                          <GraduationCap className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                      <div className="flex items-center justify-between gap-1.5 py-0.5">
+                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                          <GraduationCap className="h-3 w-3 text-[#38BDF8] shrink-0" />
                           <span>Grade:</span>
                         </div>
                         <span className="font-bold text-white text-right">
@@ -335,31 +331,31 @@ export default function StudentWorkspace() {
                       </div>
 
                       {/* School */}
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                          <School className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                      <div className="flex items-center justify-between gap-1.5 py-0.5">
+                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                          <School className="h-3 w-3 text-[#38BDF8] shrink-0" />
                           <span>School:</span>
                         </div>
-                        <span className="font-bold text-white truncate max-w-[200px] text-right" title={student?.schoolName || "Lincoln Elementary"}>
+                        <span className="font-bold text-white truncate max-w-[145px] text-right" title={student?.schoolName || "Lincoln Elementary"}>
                           {student?.schoolName || "Lincoln Elementary"}
                         </span>
                       </div>
 
                       {/* Transfer School */}
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                          <ArrowRight className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                      <div className="flex items-center justify-between gap-1.5 py-0.5">
+                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                          <ArrowRight className="h-3 w-3 text-[#38BDF8] shrink-0" />
                           <span>Transfer School:</span>
                         </div>
-                        <span className="font-bold text-white truncate max-w-[200px] text-right" title={transferSchool}>
+                        <span className="font-bold text-white truncate max-w-[130px] text-right" title={transferSchool}>
                           {transferSchool}
                         </span>
                       </div>
 
                       {/* GTID */}
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                          <ShieldCheck className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                      <div className="flex items-center justify-between gap-1.5 py-0.5">
+                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                          <ShieldCheck className="h-3 w-3 text-[#38BDF8] shrink-0" />
                           <span>GTID:</span>
                         </div>
                         <span className="font-bold text-white font-mono text-right">
@@ -368,42 +364,42 @@ export default function StudentWorkspace() {
                       </div>
 
                       {/* Eligibility */}
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                          <Award className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                      <div className="flex items-center justify-between gap-1.5 py-0.5">
+                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                          <Award className="h-3 w-3 text-[#38BDF8] shrink-0" />
                           <span>Eligibility:</span>
                         </div>
-                        <span className="font-bold text-white text-right truncate max-w-[200px]" title={displayEligibility}>
+                        <span className="font-bold text-white text-right truncate max-w-[140px]" title={displayEligibility}>
                           {displayEligibility}
                         </span>
                       </div>
 
                       {/* Medical Diagnoses */}
                       <div className="pt-1.5 border-t border-white/10">
-                        <div className="flex items-center gap-2 text-slate-300 mb-0.5 text-xs">
-                          <Activity className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                        <div className="flex items-center gap-1.5 text-slate-300 mb-0.5">
+                          <Activity className="h-3 w-3 text-[#38BDF8] shrink-0" />
                           <span>Medical Diagnoses:</span>
                         </div>
-                        <div className="pl-5.5">
-                          <span className="font-bold text-white text-left block leading-snug break-words text-xs" title={displayMedicalDiagnoses}>
+                        <div className="pl-4">
+                          <span className="font-bold text-white text-left block leading-snug break-words text-[10.5px]" title={displayMedicalDiagnoses}>
                             {displayMedicalDiagnoses}
                           </span>
                         </div>
                       </div>
 
                       {/* Client Time (from Screenshot) */}
-                      <div className="pt-1.5 border-t border-white/10 text-xs">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 text-slate-300">
-                            <Globe className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                      <div className="pt-1.5 border-t border-white/10">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-1.5 text-slate-300">
+                            <Globe className="h-3 w-3 text-[#38BDF8] shrink-0" />
                             <span>Client Time:</span>
                             <strong className="text-white font-semibold">{clientTime}</strong>
-                            <span className="text-white/60 text-[11px]">(Eastern)</span>
+                            <span className="text-white/60 text-[10px]">(Eastern)</span>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between pl-5.5 pt-0.5 text-[11px]">
+                        <div className="flex items-center justify-between pl-4 pt-0.5 text-[10px]">
                           <span className="text-slate-400">Same time as you</span>
-                          <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-[9px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             Good to call
                           </span>
@@ -411,9 +407,9 @@ export default function StudentWorkspace() {
                       </div>
 
                       {/* Parent / Guardian Row */}
-                      <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <User className="h-3.5 w-3.5 text-white/50" />
+                      <div className="pt-1.5 border-t border-white/10 flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <User className="h-3 w-3 text-white/50" />
                           <span>Parent: <strong className="text-white">{parentName}</strong></span>
                         </div>
                         <a href={`tel:${parentPhone}`} className="text-sky-300 hover:text-amber-300 transition-colors font-medium">
@@ -874,117 +870,6 @@ export default function StudentWorkspace() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* ─── Interactive Left Info Block Alignment HUD ─────────────────────── */}
-      {hudVisible && (
-        <div className="fixed bottom-6 left-6 z-50 bg-[#06152b]/95 border-2 border-amber-400 text-white p-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex flex-col gap-2.5 max-w-xs sm:max-w-sm">
-          <div className="flex items-center justify-between border-b border-white/15 pb-1.5">
-            <div className="flex items-center gap-2">
-              <Move className="h-4 w-4 text-amber-400" />
-              <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">
-                Left Card Alignment HUD
-              </span>
-            </div>
-            <button 
-              onClick={() => setHudVisible(false)} 
-              className="text-white/40 hover:text-white text-xs px-1 cursor-pointer"
-              title="Close HUD"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between text-xs font-mono bg-black/40 px-3 py-1.5 rounded-lg border border-white/10">
-            <span>Offset X: <strong className="text-amber-300">{infoOffset.x > 0 ? `+${infoOffset.x}` : infoOffset.x}px</strong></span>
-            <span>Offset Y: <strong className="text-amber-300">{infoOffset.y > 0 ? `+${infoOffset.y}` : infoOffset.y}px</strong></span>
-          </div>
-
-          {/* Nudge Buttons */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex items-center gap-1 justify-center bg-white/5 p-1 rounded-lg">
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, x: p.x - 5 }))}
-                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
-                title="Nudge Left 5px"
-              >
-                ◄ -5
-              </button>
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, x: p.x - 1 }))}
-                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
-                title="Nudge Left 1px"
-              >
-                -1
-              </button>
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, x: p.x + 1 }))}
-                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
-                title="Nudge Right 1px"
-              >
-                +1
-              </button>
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, x: p.x + 5 }))}
-                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
-                title="Nudge Right 5px"
-              >
-                +5 ►
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1 justify-center bg-white/5 p-1 rounded-lg">
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, y: p.y - 5 }))}
-                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
-                title="Nudge Up 5px"
-              >
-                ▲ -5
-              </button>
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, y: p.y - 1 }))}
-                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
-                title="Nudge Up 1px"
-              >
-                -1
-              </button>
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, y: p.y + 1 }))}
-                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
-                title="Nudge Down 1px"
-              >
-                +1
-              </button>
-              <button 
-                onClick={() => setInfoOffset(p => ({ ...p, y: p.y + 5 }))}
-                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
-                title="Nudge Down 5px"
-              >
-                +5 ▼
-              </button>
-            </div>
-          </div>
-
-          {/* Reset and Lock In */}
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              onClick={() => setInfoOffset({ x: 0, y: 0 })}
-              className="py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 text-xs font-semibold cursor-pointer"
-            >
-              Reset (0,0)
-            </button>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`X: ${infoOffset.x}px, Y: ${infoOffset.y}px`);
-                alert(`Left Card Coordinates copied to clipboard:\nX: ${infoOffset.x}px\nY: ${infoOffset.y}px\n\nPaste this in our chat and I'll lock it in permanently!`);
-              }}
-              className="flex-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Check className="h-3.5 w-3.5" />
-              <span>Lock In & Copy Coordinates</span>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
