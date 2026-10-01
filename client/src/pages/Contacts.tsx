@@ -153,39 +153,43 @@ export default function Contacts() {
 
   return (
     <ScopedErrorBoundary moduleName="Contacts">
-      <div className="min-h-full bg-[#07152B] text-[#F0DFC5] flex flex-col">
-        {/* ─── Top Full-Bleed Photographic Header Banner ─── */}
-        {/* Desktop & Tablet View (Exact 1024:175 photographic header) */}
-        <div className="hidden md:block w-full overflow-hidden bg-[#07152B] relative z-0">
-          <div
-            className="w-full relative aspect-[1024/175] bg-no-repeat bg-[length:100%_100%] select-none"
-            style={{ backgroundImage: "url('/decor/contacts-header-bg.png')" }}
-          >
-            {/* Rule E: Page ID Badge in top-right */}
-            <div className="absolute top-2.5 right-4 z-20">
-              <PageIdBadge id="PG-002" name="Contacts Directory" />
-            </div>
+      <div
+        className="min-h-screen w-full relative bg-[#07152B] text-[#F0DFC5] flex flex-col"
+        style={{
+          backgroundImage: "url('/decor/contacts-desk-bg.jpg')",
+          backgroundSize: "100% auto",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center top",
+        }}
+      >
+        {/* ─── Top Header Deck: Title, Search Bar, Add Contact Button, Page ID Badge ─── */}
+        <div className="w-full relative z-20 px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2 select-none">
+          {/* Rule E: Page ID Badge in top-right */}
+          <div className="absolute top-4 right-4 sm:right-6 z-30">
+            <PageIdBadge id="PG-002" name="Contacts Directory" />
+          </div>
 
-            {/* Crisp Gold Typography for Contacts & Subtitle (Sharp on any resolution) */}
-            <div className="absolute left-[14%] lg:left-[15%] top-[7%] flex flex-col justify-start z-10 pointer-events-none select-none">
-              <h1 className="font-serif text-[26px] md:text-[30px] lg:text-[34px] xl:text-[38px] font-bold tracking-wide leading-none bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+          <div className="flex flex-col gap-3 sm:gap-3.5 max-w-7xl">
+            {/* Crisp Gold Typography for Contacts & Subtitle */}
+            <div className="flex flex-col justify-start">
+              <h1 className="font-serif text-2xl sm:text-3xl lg:text-[36px] font-bold tracking-wide leading-none bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                 Contacts
               </h1>
-              <p className="font-serif text-[11.5px] md:text-[13px] lg:text-[14px] xl:text-[15px] font-medium text-[#E8D1A7] mt-1 lg:mt-1.5 leading-none tracking-normal drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+              <p className="font-serif text-xs sm:text-sm lg:text-[14px] font-medium text-[#E8D1A7] mt-1.5 leading-none tracking-normal drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                 Everyone connected to Waypoint.
               </p>
             </div>
 
-            {/* Search Bar + Nice Gold Add Contact Button directly after search bar */}
-            <div className="absolute left-[10.25%] top-[48%] right-[30.5%] h-[25.2%] flex items-center gap-2.5 z-20">
-              <div className="relative flex-1 h-full flex items-center min-w-0">
-                <Search className="absolute left-3.5 sm:left-4 h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#7E97B8] pointer-events-none z-10" />
+            {/* Search Bar + Gold Add Contact Button */}
+            <div className="flex items-center gap-2.5 max-w-2xl">
+              <div className="relative flex-1 h-10 sm:h-11 flex items-center min-w-0">
+                <Search className="absolute left-3.5 sm:left-4 h-4 w-4 text-[#7E97B8] pointer-events-none z-10" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Find a person, school, district, organization..."
-                  className="w-full h-full pl-9 sm:pl-10 pr-8 sm:pr-9 rounded-full bg-[#030917]/95 border border-[#1e3250] text-xs sm:text-sm lg:text-[14px] text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#4B70A6] focus:ring-1 focus:ring-[#4B70A6]/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] cursor-text select-text"
+                  className="w-full h-full pl-10 pr-9 rounded-full bg-[#030917]/95 border border-[#1e3250] text-xs sm:text-sm lg:text-[14px] text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#4B70A6] focus:ring-1 focus:ring-[#4B70A6]/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] cursor-text select-text"
                 />
                 {searchQuery && (
                   <button
@@ -199,57 +203,10 @@ export default function Contacts() {
                 )}
               </div>
 
-              {/* Old-World Forged Brass Plaque Add Contact Button with Corner Bolts */}
+              {/* Old-World Forged Brass Plaque Add Contact Button */}
               <MetalPlaqueButton
                 onClick={handleOpenAddContact}
-                title="Add New Contact"
-              >
-                Add Contact
-              </MetalPlaqueButton>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile View (< md) */}
-        <div
-          className="md:hidden w-full relative border-b border-[#18283F] shadow-[0_8px_24px_rgba(0,0,0,0.9)] overflow-hidden bg-[#07152B] bg-no-repeat bg-cover bg-right px-4 py-5"
-          style={{ backgroundImage: "url('/decor/contacts-header-bg.png')" }}
-        >
-          <div className="relative z-10 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-serif text-2xl font-bold tracking-wide bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
-                  Contacts
-                </h1>
-                <p className="font-serif text-xs font-medium text-[#E8D1A7] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] mt-0.5">
-                  Everyone connected to Waypoint.
-                </p>
-              </div>
-              <PageIdBadge id="PG-002" name="Contacts Directory" />
-            </div>
-            <div className="flex items-center gap-2 w-full">
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 h-4 w-4 text-[#7E97B8] pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Find a person, school, district, organization..."
-                  className="w-full h-10 pl-9.5 pr-8 rounded-full bg-[#030917]/95 border border-[#1e3250] text-xs text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#4B70A6] focus:ring-1 focus:ring-[#4B70A6]/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 p-1 text-[#7E97B8] hover:text-white"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-              <MetalPlaqueButton
-                onClick={handleOpenAddContact}
-                className="h-10"
+                className="h-10 sm:h-11"
                 title="Add New Contact"
               >
                 Add Contact
@@ -358,8 +315,8 @@ export default function Contacts() {
                 </DialogContent>
               </Dialog>
 
-        {/* ─── Main Content: Full-Bleed Ledger Book View Overlapping Header Banner ─── */}
-        <div className="-mt-5 sm:-mt-7 lg:-mt-9 relative z-10 drop-shadow-[0_-12px_24px_rgba(0,0,0,0.9)]">
+        {/* ─── Main Content: Ledger Book Resting on Executive Desk ─── */}
+        <div className="w-full relative z-10 mt-1 sm:mt-2 pb-6 drop-shadow-[0_12px_32px_rgba(0,0,0,0.85)]">
           <ContactsLedgerView
             contacts={contacts || []}
             searchQuery={searchQuery}

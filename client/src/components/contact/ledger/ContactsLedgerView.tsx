@@ -297,10 +297,10 @@ export default function ContactsLedgerView({
       style={{
         backgroundImage: `url(${
           isLight
-            ? "/decor/contacts-ledger-light.jpg"
-            : "/decor/contacts-ledger-dark.jpg"
+            ? "/decor/contacts-ledger-light.png"
+            : "/decor/contacts-ledger-dark.png"
         })`,
-        backgroundColor: "#07152B",
+        backgroundColor: "transparent",
         backgroundSize: "100% 100%",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center top",
