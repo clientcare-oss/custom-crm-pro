@@ -157,10 +157,14 @@ export default function StudentWorkspace() {
         </div>
 
         {/* ─── Folio Area (Tabs + Leather Desk Pad) ─────────────────────────── */}
-        <div className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20">
-          
-          {/* Folio Index Tabs (connected directly onto the top rim of the desk pad) */}
-          <div className="flex items-end justify-start gap-1.5 pl-12 sm:pl-16 md:pl-20 -mb-[2px] relative z-20 overflow-x-auto no-scrollbar">
+        <motion.div 
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20"
+        >
+          {/* Folio Index Tabs (connected physically directly onto the top rim of the leather desk pad) */}
+          <div className="flex items-end justify-start gap-1.5 pl-12 sm:pl-16 md:pl-20 -mb-[4px] relative z-30 overflow-x-auto no-scrollbar">
             {[
               { id: "overview", label: "Overview", icon: User },
               { id: "timeline", label: "Timeline", icon: Clock },
@@ -177,10 +181,10 @@ export default function StudentWorkspace() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    "relative flex items-center gap-2 px-4 sm:px-5 py-2 rounded-t-lg text-xs font-semibold tracking-wide transition-all border-t border-x cursor-pointer",
+                    "relative flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-t-lg text-xs font-semibold tracking-wide transition-all border-t border-x cursor-pointer",
                     isActive
-                      ? "bg-[#032146] text-white border-sky-400/40 z-30 border-b-0 pb-2.5 shadow-none"
-                      : "bg-[#03152d]/90 text-white/60 hover:text-white/95 hover:bg-[#051e40] border-white/15 border-b border-b-[#032146] z-10"
+                      ? "bg-[#032146] text-white border-sky-400/50 z-30 border-b-0 pb-3 shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
+                      : "bg-[#02132b]/95 text-white/60 hover:text-white/95 hover:bg-[#051e40] border-white/15 border-b border-b-[#032146] z-20 pb-2"
                   )}
                 >
                   <Icon className={cn("h-3.5 w-3.5", isActive ? "text-amber-400" : "text-white/50")} />
@@ -197,13 +201,10 @@ export default function StudentWorkspace() {
           </div>
 
           {/* ─── The Real Textured Leather Folio Desk Pad (Transparent Outer Container) ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+          <div
             className="relative w-full bg-transparent overflow-visible shadow-none border-0"
             style={{
-              backgroundImage: "url('/decor/student-workspace-folio.png')",
+              backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev1')",
               backgroundSize: "100% 100%",
               backgroundPosition: "center center",
               backgroundRepeat: "no-repeat",
@@ -503,8 +504,8 @@ export default function StudentWorkspace() {
                 </div>
               </div>
             )}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* ─── Student Details Modal ─────────────────────────────────────────── */}
