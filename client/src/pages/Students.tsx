@@ -392,97 +392,99 @@ export default function Students() {
             onShelfPageChange={setShelfPage}
           />
 
-          {/* ─── Physical Credenza Body Framed by Authentic 3D Side Pillars ─── */}
+          {/* ─── Upper Compartment: ACTIVE STUDENTS (Framed by Left & Right 3D Side Barriers) ─── */}
           <div className="w-full relative flex-1 flex flex-row items-stretch">
-            {/* Left 3D Side Pillar (Bumps directly flush under the Active Students drawer piece, extends to bottom of page) */}
+            {/* Left 3D Side Barrier (Bumps directly under Active Students bar, rich wood texture, brass bolt on peg at bottom) */}
             <CabinetSidePillar side="left" />
 
-            {/* Central Credenza Body: Upper Active Compartment + Lower Filing Drawers */}
+            {/* Central Credenza Active Students Compartment */}
             <div className="flex-1 min-w-0 flex flex-col">
-              {/* ─── Upper Compartment: ACTIVE STUDENTS (Full-Bleed Stepped Shelves with Recessed Slots) ─── */}
-              <div className="w-full relative flex-1 flex flex-col">
-                {isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-12 h-12 rounded-full border-2 border-[#E9BA6B] border-t-transparent animate-spin mb-4" />
-                    <p className="font-serif text-sm font-bold text-[#E9BA6B]">Opening Student Filing Cabinet...</p>
-                    <p className="text-xs text-[#7B8EA7] mt-1">Retrieving archival records from practice database</p>
-                  </div>
-                ) : viewMode === "cards" ? (
-                  <div className="relative w-full flex bg-[#00081C] shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-hidden">
-                    {/* Shelves Rows Span */}
-                    <div className="flex-1 py-4 sm:py-6 min-h-[460px]">
-                      {filteredActive.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-center">
-                          <Folder className="w-12 h-12 text-[#7B8EA7]/30 mb-3" />
-                          <p className="font-serif text-base font-bold text-[#F0DFC5]">No active files match current criteria</p>
-                          <p className="text-xs text-[#7B8EA7] mt-1">
-                            {searchQuery || selectedLetter !== "ALL"
-                              ? "Try clearing the search query or alphabet filter."
-                              : "Click '+ New Student' in the header to add your first student file."}
-                          </p>
-                        </div>
-                      ) : (
-                        // Stepped shelves with cards sitting IN slots, with each row below overlapping the divider by half of the divider
-                        shelfRows.map((row, rowIdx) => (
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="w-12 h-12 rounded-full border-2 border-[#E9BA6B] border-t-transparent animate-spin mb-4" />
+                  <p className="font-serif text-sm font-bold text-[#E9BA6B]">Opening Student Filing Cabinet...</p>
+                  <p className="text-xs text-[#7B8EA7] mt-1">Retrieving archival records from practice database</p>
+                </div>
+              ) : viewMode === "cards" ? (
+                <div className="relative w-full flex bg-[#00081C] shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-hidden">
+                  {/* Shelves Rows Span */}
+                  <div className="flex-1 py-4 sm:py-6 min-h-[460px]">
+                    {filteredActive.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <Folder className="w-12 h-12 text-[#7B8EA7]/30 mb-3" />
+                        <p className="font-serif text-base font-bold text-[#F0DFC5]">No active files match current criteria</p>
+                        <p className="text-xs text-[#7B8EA7] mt-1">
+                          {searchQuery || selectedLetter !== "ALL"
+                            ? "Try clearing the search query or alphabet filter."
+                            : "Click '+ New Student' in the header to add your first student file."}
+                        </p>
+                      </div>
+                    ) : (
+                      // Stepped shelves with cards sitting IN slots, with each row below overlapping the divider by half of the divider
+                      shelfRows.map((row, rowIdx) => (
+                        <div
+                          key={rowIdx}
+                          className={cn(
+                            "relative w-full transition-all duration-200 hover:z-40 focus-within:z-40",
+                            rowIdx > 0 && "-mt-[11px] sm:-mt-[13px] lg:-mt-[15px]"
+                          )}
+                          style={{ zIndex: 10 + rowIdx }}
+                        >
+                          {/* Shelf Row Cards Grid (z-10) — tighter gaps so cards are larger */}
                           <div
-                            key={rowIdx}
-                            className={cn(
-                              "relative w-full transition-all duration-200 hover:z-40 focus-within:z-40",
-                              rowIdx > 0 && "-mt-[11px] sm:-mt-[13px] lg:-mt-[15px]"
-                            )}
-                            style={{ zIndex: 10 + rowIdx }}
+                            className="grid gap-1.5 sm:gap-2 lg:gap-2.5 px-1.5 sm:px-3 lg:px-4 relative z-10"
+                            style={{
+                              gridTemplateColumns: `repeat(${shelfCols}, minmax(0, 1fr))`,
+                            }}
                           >
-                            {/* Shelf Row Cards Grid (z-10) — tighter gaps so cards are larger */}
-                            <div
-                              className="grid gap-1.5 sm:gap-2 lg:gap-2.5 px-1.5 sm:px-3 lg:px-4 relative z-10"
-                              style={{
-                                gridTemplateColumns: `repeat(${shelfCols}, minmax(0, 1fr))`,
-                              }}
-                            >
-                              {row.map((student, colIdx) => (
-                                <div key={student.id} className="relative">
-                                  <StudentFileCard
-                                    student={student}
-                                    index={rowIdx * shelfCols + colIdx}
-                                    onClick={() => setLocation(`/contacts/${student.id}`)}
-                                    onMarkerChange={handleMarkerChange}
-                                  />
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Physical Front Retaining Rail / Drawer Shelf Lip overlapping the bottom of cards (z-20) */}
-                            <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 w-full pointer-events-none select-none px-1 sm:px-2">
-                              <img
-                                src="/decor/shelf-retaining-rail.png"
-                                alt=""
-                                className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_10px_22px_rgba(0,0,0,0.98)]"
-                              />
-                            </div>
+                            {row.map((student, colIdx) => (
+                              <div key={student.id} className="relative">
+                                <StudentFileCard
+                                  student={student}
+                                  index={rowIdx * shelfCols + colIdx}
+                                  onClick={() => setLocation(`/contacts/${student.id}`)}
+                                  onMarkerChange={handleMarkerChange}
+                                />
+                              </div>
+                            ))}
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 sm:p-6">
-                    <StudentsListView
-                      students={filteredActive}
-                      onStudentClick={(id) => setLocation(`/contacts/${id}`)}
-                      onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
-                    />
-                  </div>
-                )}
-              </div>
 
-              {/* ─── Lower Filing Drawers Stack (Full-Bleed Credenza Drawers) ─── */}
-              <div className="w-full divide-y-2 divide-[#8A6731]/40 border-t-2 border-[#8A6731]/60">
-                {/* Drawer 1: New / Onboarding */}
-                <CabinetDrawer
-                  type="onboarding"
-                  title="NEW / ONBOARDING"
-                  subtitle="Recently enrolled students completing intake and records review"
-                  count={filteredOnboarding.length || 3}
+                          {/* Physical Front Retaining Rail / Drawer Shelf Lip overlapping the bottom of cards (z-20) */}
+                          <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 w-full pointer-events-none select-none px-1 sm:px-2">
+                            <img
+                              src="/decor/shelf-retaining-rail.png"
+                              alt=""
+                              className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_10px_22px_rgba(0,0,0,0.98)]"
+                            />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 sm:p-6">
+                  <StudentsListView
+                    students={filteredActive}
+                    onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+                    onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right 3D Side Barrier (Bumps directly under Active Students bar, rich wood texture, brass bolt on peg at bottom) */}
+            <CabinetSidePillar side="right" />
+          </div>
+
+          {/* ─── Lower Filing Drawers Stack (Full-Bleed Credenza Drawers) ─── */}
+          <div className="w-full divide-y-2 divide-[#8A6731]/40 border-t-2 border-[#8A6731]/60">
+            {/* Drawer 1: New / Onboarding */}
+            <CabinetDrawer
+              type="onboarding"
+              title="NEW / ONBOARDING"
+              subtitle="Recently enrolled students completing intake and records review"
+              count={filteredOnboarding.length || 3}
                   students={filteredOnboarding}
                   isOpen={openDrawers.onboarding}
                   onToggle={() => toggleDrawer("onboarding")}
@@ -520,11 +522,6 @@ export default function Students() {
                 />
               </div>
             </div>
-
-            {/* Right 3D Side Pillar (Bumps directly flush under the Active Students drawer piece, extends to bottom of page) */}
-            <CabinetSidePillar side="right" />
-          </div>
-        </div>
 
         {/* ─── Add New Student Modal Workflow ─── */}
         <Dialog open={newStudentOpen} onOpenChange={setNewStudentOpen}>
