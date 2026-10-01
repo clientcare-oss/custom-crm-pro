@@ -480,6 +480,7 @@ export default function Students() {
                 students={displayedListStudents}
                 onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                 onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                onMarkerChange={handleMarkerChange}
               />
             )}
           </div>

@@ -2,17 +2,23 @@ import React, { useState, useMemo } from "react";
 import {
   ChevronsUpDown,
   Calendar,
-  FileText,
   MoreHorizontal,
   LayoutList,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StudentFolderData } from "./StudentFileCard";
+import {
+  MarkerType,
+  MarkerSelectorPopover,
+  MarkerPreview,
+} from "./MarkerSelectorBox";
 
 interface StudentsListViewProps {
   students: StudentFolderData[];
   onStudentClick: (studentId: number) => void;
   onParentClick?: (parentId: number) => void;
+  onMarkerChange?: (studentId: number, marker: MarkerType | "none") => void;
   className?: string;
 }
 
@@ -27,6 +33,7 @@ export function StudentsListView({
   students,
   onStudentClick,
   onParentClick,
+  onMarkerChange,
   className,
 }: StudentsListViewProps) {
   const [sortField, setSortField] = useState<SortField>("student");
@@ -218,29 +225,36 @@ export function StudentsListView({
                     {displayName}
                   </span>
 
-                  {/* File Marker / Document / Alert badge */}
-                  {isNeedsAttention ? (
-                    <span
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#EF4444] text-white text-[10px] font-bold shadow-[0_0_8px_rgba(239,68,68,0.6)] shrink-0"
-                      title="Needs Attention / Priority Alert"
+                  {/* Physical Marker / Popover Button: Same as Card View */}
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 flex items-center ml-1"
+                  >
+                    <MarkerSelectorPopover
+                      currentMarker={student.markerType}
+                      studentName={displayName}
+                      onSelect={(newMarker) => onMarkerChange?.(student.id, newMarker)}
                     >
-                      !
-                    </span>
-                  ) : index % 2 === 1 ? (
-                    <span
-                      className="inline-flex items-center text-[#C084FC] shrink-0"
-                      title="Evaluation Notes"
-                    >
-                      <FileText className="w-4 h-4 stroke-[2.2]" />
-                    </span>
-                  ) : (
-                    <span
-                      className="inline-flex items-center text-[#38BDF8] shrink-0"
-                      title="IEP Documents Attached"
-                    >
-                      <FileText className="w-4 h-4 stroke-[2.2]" />
-                    </span>
-                  )}
+                      {student.markerType ? (
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          className="cursor-pointer transition-transform hover:scale-110 active:scale-95 outline-none flex items-center justify-center"
+                          title={`Marker: ${student.markerType} (Click to change or remove)`}
+                        >
+                          <MarkerPreview type={student.markerType} />
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          title="Attach physical marker"
+                          className="w-5 h-5 rounded-md bg-[#07172E]/90 hover:bg-[#132A4A] border border-[#C8A464]/50 hover:border-[#F3CD80] text-[#E5C175] hover:text-white flex items-center justify-center shadow-xs cursor-pointer transition-all duration-150"
+                        >
+                          <Plus className="w-3 h-3 stroke-[2.5]" />
+                        </button>
+                      )}
+                    </MarkerSelectorPopover>
+                  </div>
                 </div>
 
                 <span className="text-xs text-[#7B8EA7] truncate">
