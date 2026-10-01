@@ -471,13 +471,7 @@ export default function Students() {
                   />
                 </div>
               )}
-            </div>
 
-            {/* Right 3D Side Barrier (Bumps directly under Active Students bar, rich wood texture, brass bolt on peg at bottom) */}
-            <CabinetSidePillar side="right" />
-          </div>
-
-          {/* ─── Lower Filing Drawers Stack (Full-Bleed Credenza Drawers) ─── */}
           <div className="w-full divide-y-2 divide-[#8A6731]/40 border-t-2 border-[#8A6731]/60">
             {/* Drawer 1: New / Onboarding */}
             <CabinetDrawer
@@ -522,6 +516,11 @@ export default function Students() {
                 />
               </div>
             </div>
+
+            {/* Right 3D Side Barrier (Bumps directly under Active Students bar, rich wood texture, brass bolt on peg at bottom) */}
+            <CabinetSidePillar side="right" />
+          </div>
+        </div>
 
         {/* ─── Add New Student Modal Workflow ─── */}
         <Dialog open={newStudentOpen} onOpenChange={setNewStudentOpen}>
