@@ -34,6 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MetalCornerBolt } from "@/components/ui/MetalPlaqueButton";
 
 export interface ContactItem {
   id: number;
@@ -887,53 +888,111 @@ export default function ContactsLedgerView({
                     </DropdownMenu>
                   </div>
 
-                  {/* Calling Safety & Time Zone Strip */}
+                  {/* Forged Metal Chronometer & Calling Safety Plaque */}
                   <div
                     className={cn(
-                      "flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl border text-xs font-serif transition-all shadow-xs",
+                      "relative overflow-hidden rounded-xl border transition-all select-none px-3 sm:px-3.5 py-2",
+                      // 3D Metal Plaque Body
                       isLight
-                        ? "bg-[#EFE3C8]/85 border-[#C7B594] text-[#2E1E05]"
-                        : "bg-[#06152B]/90 border-[#182C48] text-[#E0ECFC]"
+                        ? "bg-gradient-to-b from-[#F9F1DC] via-[#EADBBD] to-[#CEBA92] border-[#8C6418] shadow-[0_3px_8px_rgba(70,45,10,0.22),inset_0_1px_1px_rgba(255,255,255,0.9),inset_0_-1px_1.5px_rgba(0,0,0,0.15)] ring-1 ring-[#FFEAA3]/50"
+                        : "bg-gradient-to-b from-[#132847] via-[#0B1A30] to-[#050E1C] border-[#B88E35] shadow-[0_4px_16px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,235,170,0.35),inset_0_-1.5px_2px_rgba(0,0,0,0.85)] ring-1 ring-[#FFEAA3]/25"
                     )}
                     title={`${callingStatus.recommendation}${diffHours !== 0 ? ` · ${diffText}` : ""}`}
                   >
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <Clock className="h-3.5 w-3.5 text-[#E5C175] shrink-0" />
-                      <span className="text-[11px] font-medium opacity-80">Local Time:</span>
-                      <span className="font-mono font-bold text-xs">{contactTime.timeString}</span>
-                      <span className="text-[10px] font-sans font-semibold text-[#E5C175] uppercase tracking-wider">
-                        ({contactTime.tzAbbr})
-                      </span>
-                      {diffHours !== 0 && (
-                        <span className="text-[10px] opacity-70 hidden sm:inline">
-                          · {diffText}
-                        </span>
-                      )}
-                    </div>
+                    {/* Top specular reflection hairline */}
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#FFEAA3]/60 to-transparent pointer-events-none" />
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span
+                    {/* 4 Corner Bolts */}
+                    <MetalCornerBolt className="top-1 left-1.5" />
+                    <MetalCornerBolt className="top-1 right-1.5" />
+                    <MetalCornerBolt className="bottom-1 left-1.5" />
+                    <MetalCornerBolt className="bottom-1 right-1.5" />
+
+                    <div className="flex items-center justify-between gap-2 pl-2 sm:pl-2.5 pr-2 sm:pr-2.5">
+                      {/* Left: Chronometer & Time Display */}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={cn(
+                            "w-6 h-6 rounded-full flex items-center justify-center shrink-0 border",
+                            isLight
+                              ? "bg-[#EFE2C6] border-[#A88849] text-[#5A3E09] shadow-xs"
+                              : "bg-[#061224] border-[#D4AF37]/50 text-[#FCE09E] shadow-[0_0_8px_rgba(212,175,55,0.3)]"
+                          )}
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                        </div>
+
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={cn(
+                              "text-[10px] uppercase font-serif font-bold tracking-wider",
+                              isLight ? "text-[#5C4212]" : "text-[#E8D1A7]"
+                            )}
+                          >
+                            Local Time:
+                          </span>
+                          <span
+                            className={cn(
+                              "font-mono font-bold text-xs sm:text-sm tracking-tight",
+                              isLight ? "text-[#1F1404]" : "text-[#FFFFFF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                            )}
+                          >
+                            {contactTime.timeString}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[10px] font-sans font-bold px-1.5 py-0.5 rounded border tracking-wider",
+                              isLight
+                                ? "bg-[#DFCB9F] border-[#9E7D3F] text-[#3D2704]"
+                                : "bg-[#040C1A] border-[#D4AF37]/40 text-[#FCE09E]"
+                            )}
+                          >
+                            {contactTime.tzAbbr}
+                          </span>
+                          {diffHours !== 0 && (
+                            <span
+                              className={cn(
+                                "text-[10px] font-serif font-medium hidden sm:inline",
+                                isLight ? "text-[#735828]" : "text-[#A9C1DE]"
+                              )}
+                            >
+                              · {diffText}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Jewel Enamel Safety Badge */}
+                      <div
                         className={cn(
-                          "w-2 h-2 rounded-full shrink-0",
+                          "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border shrink-0 transition-all shadow-xs",
                           callingStatus.status === "green"
-                            ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.85)] animate-pulse"
+                            ? isLight
+                              ? "bg-[#D1F2DD] border-[#38A169] text-[#0D4D28]"
+                              : "bg-gradient-to-r from-emerald-950/90 to-[#022417] border-emerald-500/60 text-emerald-300 shadow-[inset_0_1px_2px_rgba(110,231,183,0.3),0_0_10px_rgba(16,185,129,0.25)]"
                             : callingStatus.status === "yellow"
-                            ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.85)]"
-                            : "bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.85)]"
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          "text-xs font-bold tracking-tight whitespace-nowrap",
-                          callingStatus.status === "green"
-                            ? "text-emerald-400"
-                            : callingStatus.status === "yellow"
-                            ? "text-amber-400"
-                            : "text-rose-400"
+                            ? isLight
+                              ? "bg-[#FEF0C7] border-[#D97706] text-[#78350F]"
+                              : "bg-gradient-to-r from-amber-950/90 to-[#291A04] border-amber-500/60 text-amber-300 shadow-[inset_0_1px_2px_rgba(252,211,77,0.3),0_0_10px_rgba(245,158,11,0.25)]"
+                            : isLight
+                            ? "bg-[#FEE4E2] border-[#E11D48] text-[#881337]"
+                            : "bg-gradient-to-r from-rose-950/90 to-[#2A050D] border-rose-500/60 text-rose-300 shadow-[inset_0_1px_2px_rgba(253,164,175,0.3),0_0_10px_rgba(244,63,94,0.25)]"
                         )}
                       >
-                        {callingStatus.label}
-                      </span>
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full shrink-0 ring-1",
+                            callingStatus.status === "green"
+                              ? "bg-emerald-400 ring-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.95)] animate-pulse"
+                              : callingStatus.status === "yellow"
+                              ? "bg-amber-400 ring-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.95)]"
+                              : "bg-rose-400 ring-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.95)]"
+                          )}
+                        />
+                        <span className="text-xs font-serif font-bold tracking-tight whitespace-nowrap">
+                          {callingStatus.label}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
