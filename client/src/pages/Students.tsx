@@ -29,7 +29,6 @@ import {
   MarkerSelectorBox,
 } from "@/components/students/MarkerSelectorBox";
 import { StudentsListView } from "@/components/students/StudentsListView";
-import { ActiveStudentsDrawerBar } from "@/components/students/ActiveStudentsDrawerBar";
 import { CabinetSidePillar } from "@/components/students/CabinetSidePillar";
 
 export default function Students() {
@@ -51,6 +50,7 @@ export default function Students() {
 
   // Drawer expansion states
   const [openDrawers, setOpenDrawers] = useState<Record<DrawerType, boolean>>({
+    active: true,
     onboarding: false,
     paused: false,
     archived: false,
@@ -377,27 +377,25 @@ export default function Students() {
           </div>
         </div>
 
-        {/* ─── Active Students Maritime Credenza Rail (Directly Under Header) ─── */}
         {/* ─── 3. Full-Bleed Front-Facing Physical Filing Credenza / Cabinet ─── */}
         {/* Touches sidebar on left edge and page end on right edge */}
         <div className="w-full flex-1 flex flex-col bg-[#00081C] border-t border-b-2 border-[#8A6731]/70 shadow-[0_24px_70px_rgba(0,3,12,0.98)] select-none">
           
-          {/* Top Credenza Rail & Active Students Bar (Full Width) */}
-          <ActiveStudentsDrawerBar
-            count={filteredActive.length || 42}
-            viewMode={viewMode}
-            onViewModeChange={handleViewModeChange}
-            shelfPage={shelfPage}
-            totalShelfPages={totalShelfPages}
-            onShelfPageChange={setShelfPage}
-          />
+          {/* Replacement Piece for Old Top: Touching sidebar on left and end of page on right */}
+          <div className="w-full relative z-30 select-none overflow-hidden shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.95)]">
+            <img
+              src="/decor/cabinet-top-molding.png"
+              alt="Cabinet Top Molding"
+              className="w-full h-[54px] sm:h-[60px] md:h-[66px] object-fill pointer-events-none select-none block"
+            />
+          </div>
 
-          {/* ─── Upper Compartment: ACTIVE STUDENTS (Framed by Left & Right 3D Side Barriers) ─── */}
+          {/* ─── Physical Filing Cabinet Drawers (Framed by Left & Right 3D Side Barriers) ─── */}
           <div className="w-full relative flex-1 flex flex-row items-stretch">
-            {/* Left 3D Side Barrier (Bumps directly under Active Students bar, rich wood texture, brass bolt on peg at bottom) */}
+            {/* Left 3D Side Barrier (Rich wood texture, brass bolt on peg at bottom) */}
             <CabinetSidePillar side="left" />
 
-            {/* Central Credenza Active Students Compartment */}
+            {/* Central Credenza Drawers Stack */}
             <div className="flex-1 min-w-0 flex flex-col">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -405,119 +403,82 @@ export default function Students() {
                   <p className="font-serif text-sm font-bold text-[#E9BA6B]">Opening Student Filing Cabinet...</p>
                   <p className="text-xs text-[#7B8EA7] mt-1">Retrieving archival records from practice database</p>
                 </div>
-              ) : viewMode === "cards" ? (
-                <div className="relative w-full flex bg-[#00081C] shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-visible">
-                  {/* Shelves Rows Span */}
-                  <div className="flex-1 py-4 sm:py-6 min-h-[460px]">
-                    {filteredActive.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <Folder className="w-12 h-12 text-[#7B8EA7]/30 mb-3" />
-                        <p className="font-serif text-base font-bold text-[#F0DFC5]">No active files match current criteria</p>
-                        <p className="text-xs text-[#7B8EA7] mt-1">
-                          {searchQuery || selectedLetter !== "ALL"
-                            ? "Try clearing the search query or alphabet filter."
-                            : "Click '+ New Student' in the header to add your first student file."}
-                        </p>
-                      </div>
-                    ) : (
-                      // Stepped shelves with cards sitting IN slots, with each row below overlapping the divider by half of the divider
-                      shelfRows.map((row, rowIdx) => (
-                        <div
-                          key={rowIdx}
-                          className={cn(
-                            "relative w-full transition-all duration-200 hover:z-40 focus-within:z-40",
-                            rowIdx > 0 && "-mt-[11px] sm:-mt-[13px] lg:-mt-[15px]"
-                          )}
-                          style={{ zIndex: 10 + rowIdx }}
-                        >
-                          {/* Shelf Row Cards Grid (z-10) — tighter gaps so cards are larger */}
-                          <div
-                            className="grid gap-1.5 sm:gap-2 lg:gap-2.5 px-1.5 sm:px-3 lg:px-4 relative z-10"
-                            style={{
-                              gridTemplateColumns: `repeat(${shelfCols}, minmax(0, 1fr))`,
-                            }}
-                          >
-                            {row.map((student, colIdx) => (
-                              <div key={student.id} className="relative">
-                                <StudentFileCard
-                                  student={student}
-                                  index={rowIdx * shelfCols + colIdx}
-                                  onClick={() => setLocation(`/contacts/${student.id}`)}
-                                  onMarkerChange={handleMarkerChange}
-                                />
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Physical Front Retaining Rail / Drawer Shelf Lip overlapping the bottom of cards (z-20) */}
-                          <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 -mx-1 sm:-mx-2 w-[calc(100%+8px)] sm:w-[calc(100%+16px)] pointer-events-none select-none px-0">
-                            <img
-                              src="/decor/shelf-retaining-rail.png"
-                              alt=""
-                              className="w-full h-[22px] sm:h-[26px] lg:h-[30px] object-fill pointer-events-none select-none drop-shadow-[0_10px_22px_rgba(0,0,0,0.98)]"
-                            />
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
               ) : (
-                <div className="p-4 sm:p-6">
-                  <StudentsListView
+                <div className="w-full divide-y-2 divide-[#8A6731]/40">
+                  {/* Drawer 0: Active Students (Directly Above New / Onboarding) */}
+                  <CabinetDrawer
+                    type="active"
+                    title="ACTIVE STUDENTS"
+                    subtitle="Current active IEP advocacy cases and ongoing representations"
+                    count={filteredActive.length || 42}
                     students={filteredActive}
+                    isOpen={openDrawers.active}
+                    onToggle={() => toggleDrawer("active")}
                     onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                     onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                    onMarkerChange={handleMarkerChange}
+                    viewMode={viewMode}
+                  />
+
+                  {/* Drawer 1: New / Onboarding */}
+                  <CabinetDrawer
+                    type="onboarding"
+                    title="NEW / ONBOARDING"
+                    subtitle="Recently enrolled students completing intake and records review"
+                    count={filteredOnboarding.length || 3}
+                    students={filteredOnboarding}
+                    isOpen={openDrawers.onboarding}
+                    onToggle={() => toggleDrawer("onboarding")}
+                    onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+                    onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                    onMarkerChange={handleMarkerChange}
+                    viewMode={viewMode}
+                  />
+
+                  {/* Drawer 2: Paused */}
+                  <CabinetDrawer
+                    type="paused"
+                    title="PAUSED"
+                    subtitle="Student cases on hold, awaiting school evaluations, or seasonal hiatus"
+                    count={filteredPaused.length || 2}
+                    students={filteredPaused}
+                    isOpen={openDrawers.paused}
+                    onToggle={() => toggleDrawer("paused")}
+                    onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+                    onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                    onMarkerChange={handleMarkerChange}
+                    viewMode={viewMode}
+                  />
+
+                  {/* Drawer 3: Archived */}
+                  <CabinetDrawer
+                    type="archived"
+                    title="ARCHIVED"
+                    subtitle="Closed student advocacy files, historical records, and graduated cases"
+                    count={filteredArchived.length || 18}
+                    students={filteredArchived}
+                    isOpen={openDrawers.archived}
+                    onToggle={() => toggleDrawer("archived")}
+                    onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+                    onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                    onMarkerChange={handleMarkerChange}
+                    viewMode={viewMode}
                   />
                 </div>
               )}
 
-          <div className="w-full divide-y-2 divide-[#8A6731]/40 border-t-2 border-[#8A6731]/60">
-            {/* Drawer 1: New / Onboarding */}
-            <CabinetDrawer
-              type="onboarding"
-              title="NEW / ONBOARDING"
-              subtitle="Recently enrolled students completing intake and records review"
-              count={filteredOnboarding.length || 3}
-                  students={filteredOnboarding}
-                  isOpen={openDrawers.onboarding}
-                  onToggle={() => toggleDrawer("onboarding")}
-                  onStudentClick={(id) => setLocation(`/contacts/${id}`)}
-                  onMarkerChange={handleMarkerChange}
-                  viewMode={viewMode}
-                />
-
-                {/* Drawer 2: Paused */}
-                <CabinetDrawer
-                  type="paused"
-                  title="PAUSED"
-                  subtitle="Student cases on hold, awaiting school evaluations, or seasonal hiatus"
-                  count={filteredPaused.length || 2}
-                  students={filteredPaused}
-                  isOpen={openDrawers.paused}
-                  onToggle={() => toggleDrawer("paused")}
-                  onStudentClick={(id) => setLocation(`/contacts/${id}`)}
-                  onMarkerChange={handleMarkerChange}
-                  viewMode={viewMode}
-                />
-
-                {/* Drawer 3: Archived */}
-                <CabinetDrawer
-                  type="archived"
-                  title="ARCHIVED"
-                  subtitle="Closed student advocacy files, historical records, and graduated cases"
-                  count={filteredArchived.length || 18}
-                  students={filteredArchived}
-                  isOpen={openDrawers.archived}
-                  onToggle={() => toggleDrawer("archived")}
-                  onStudentClick={(id) => setLocation(`/contacts/${id}`)}
-                  onMarkerChange={handleMarkerChange}
-                  viewMode={viewMode}
+              {/* ─── Horizontal Bottom Piece of the Credenza ─── */}
+              {/* Exact same width/thickness as the side pieces (h-[18px] sm:h-[28px] lg:h-[34px]), perfectly aligned with bottom corner squares */}
+              <div className="w-[calc(100%+18px)] sm:w-[calc(100%+28px)] lg:w-[calc(100%+34px)] h-[18px] sm:h-[28px] lg:h-[34px] -ml-[9px] sm:-ml-[14px] lg:-ml-[17px] -mr-[9px] sm:-mr-[14px] lg:-mr-[17px] relative z-[1] shrink-0 overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.95)]">
+                <img
+                  src="/decor/credenza-bottom-rail.png"
+                  alt="Credenza Bottom Rail"
+                  className="w-full h-full object-fill pointer-events-none select-none block"
                 />
               </div>
             </div>
 
-            {/* Right 3D Side Barrier (Bumps directly under Active Students bar, rich wood texture, brass bolt on peg at bottom) */}
+            {/* Right 3D Side Barrier */}
             <CabinetSidePillar side="right" />
           </div>
         </div>

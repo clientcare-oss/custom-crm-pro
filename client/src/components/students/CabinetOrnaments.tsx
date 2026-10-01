@@ -218,12 +218,14 @@ export function BrassScrewRivet({ className = "w-2.5 h-2.5" }: { className?: str
 }
 
 /**
- * Antique Brass Nameplate with 4 authentic corner rivets, icon, title, and dark pill badge
+ * Antique Brass Nameplate with authentic card catalog label frame, corner screw rivets,
+ * aged parchment paper insert, document icon, letterpress serif title, and dark navy pill badge.
  */
 interface AntiqueBrassNameplateProps {
-  icon: React.ElementType;
+  icon?: React.ElementType;
   title: string;
   count: number | string;
+  type?: "active" | "onboarding" | "paused" | "archived";
   className?: string;
 }
 
@@ -231,34 +233,64 @@ export function AntiqueBrassNameplate({
   icon: IconComponent,
   title,
   count,
+  type = "onboarding",
   className = "",
 }: AntiqueBrassNameplateProps) {
   return (
     <div
-      className={`relative inline-flex items-center gap-3 px-6 py-2 rounded-lg border border-[#B88943] bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#8C6225] shadow-[0_4px_14px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.85)] select-none ${className}`}
+      className={`relative inline-flex items-center h-[38px] p-[3px] rounded-[4px] border border-[#5E3B0D] bg-gradient-to-b from-[#F5DE9B] via-[#C99849] to-[#7A5119] shadow-[0_3px_10px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.7)] select-none ${className}`}
     >
-      {/* 4 corner brass slotted screw rivets positioned precisely at the 4 corners */}
-      <div className="absolute top-1 left-1.5 pointer-events-none">
-        <BrassScrewRivet className="w-2.5 h-2.5" />
+      {/* 4 Corner Brass Screws with slotted heads on the frame corners */}
+      <div className="absolute top-[1.5px] left-[2px] pointer-events-none z-20">
+        <BrassScrewRivet className="w-2 h-2" />
       </div>
-      <div className="absolute top-1 right-1.5 pointer-events-none">
-        <BrassScrewRivet className="w-2.5 h-2.5" />
+      <div className="absolute top-[1.5px] right-[2px] pointer-events-none z-20">
+        <BrassScrewRivet className="w-2 h-2" />
       </div>
-      <div className="absolute bottom-1 left-1.5 pointer-events-none">
-        <BrassScrewRivet className="w-2.5 h-2.5" />
+      <div className="absolute bottom-[1.5px] left-[2px] pointer-events-none z-20">
+        <BrassScrewRivet className="w-2 h-2" />
       </div>
-      <div className="absolute bottom-1 right-1.5 pointer-events-none">
-        <BrassScrewRivet className="w-2.5 h-2.5" />
+      <div className="absolute bottom-[1.5px] right-[2px] pointer-events-none z-20">
+        <BrassScrewRivet className="w-2 h-2" />
       </div>
 
-      {/* Plate Content */}
-      <div className="flex items-center gap-2.5 px-1">
-        <IconComponent className="w-4.5 h-4.5 text-[#1A1208] fill-[#1A1208]/20 stroke-[2.4]" />
-        <span className="font-serif font-black tracking-wider text-xs sm:text-[13px] text-[#1A1208] uppercase">
+      {/* Recessed Aged Parchment Paper Insert */}
+      <div className="relative flex items-center gap-2.5 sm:gap-3 h-full px-3.5 sm:px-4 py-0.5 rounded-[2px] bg-gradient-to-b from-[#F7E7CD] via-[#EED5A9] to-[#DEBA82] border border-[#6B4715]/75 shadow-[inset_0_2px_4px_rgba(50,30,10,0.5),inset_0_-1px_1px_rgba(255,255,255,0.35)]">
+        {/* Document/Category Icon */}
+        <div className="shrink-0 text-[#3D240E] flex items-center justify-center">
+          {type === "active" ? (
+            <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4.5 h-4.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
+              <path d="M9 2.5L1.5 6.5L9 10.5L16.5 6.5L9 2.5Z" fill="#3D240E" />
+              <path d="M4.5 8.2V12.8C4.5 12.8 6.2 15 9 15C11.8 15 13.5 12.8 13.5 12.8V8.2" stroke="#3D240E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M15.5 7V12.5" stroke="#663F1B" strokeWidth="1.2" strokeLinecap="round" />
+              <circle cx="15.5" cy="13" r="0.9" fill="#663F1B" />
+            </svg>
+          ) : type === "onboarding" ? (
+            <svg viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
+              <path
+                d="M2 1C1.44772 1 1 1.44772 1 2V16C1 16.5523 1.44772 17 2 17H14C14.5523 17 15 16.5523 15 16V5.5L10.5 1H2Z"
+                fill="#3D240E"
+              />
+              <path
+                d="M10.5 1V5H14.5L10.5 1Z"
+                fill="#663F1B"
+              />
+              <line x1="3.5" y1="8" x2="12.5" y2="8" stroke="#EED5A9" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="3.5" y1="11" x2="12.5" y2="11" stroke="#EED5A9" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="3.5" y1="14" x2="8.5" y2="14" stroke="#EED5A9" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          ) : IconComponent ? (
+            <IconComponent className="w-4 h-4 text-[#3D240E] fill-[#3D240E]/20 stroke-[2.2] drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]" />
+          ) : null}
+        </div>
+
+        {/* Serif Letterpressed Title */}
+        <span className="font-serif font-bold tracking-[0.16em] text-xs sm:text-[12.5px] text-[#291708] uppercase whitespace-nowrap drop-shadow-[0_1px_0px_rgba(255,255,255,0.45)]">
           {title}
         </span>
-        {/* Dark inset record count pill badge */}
-        <span className="px-3 py-0.5 rounded-full bg-[#050D1A] text-[#FCE09E] text-xs font-mono font-bold border border-[#B88943]/60 shadow-inner">
+
+        {/* Dark Midnight Inset Count Pill */}
+        <span className="shrink-0 px-2.5 sm:px-3 py-0.5 rounded-full bg-[#081528] text-[#F3E5D0] text-[11px] sm:text-[12px] font-mono font-bold border border-[#7D5B27]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.85)]">
           {count}
         </span>
       </div>
@@ -267,56 +299,100 @@ export function AntiqueBrassNameplate({
 }
 
 /**
- * Solid heavy cast-brass horizontal drawer pull handle matching reference image
+ * Solid heavy cast-brass horizontal drawer pull handle with circular rosette escutcheons
+ * matching the nautical vintage campaign furniture drawer reference image.
  */
-export function CastBrassDrawerHandle({ className = "w-48 h-6" }: { className?: string }) {
+export function CastBrassDrawerHandle({ className = "w-52 h-8" }: { className?: string }) {
   return (
-    <div className={`relative flex items-center justify-center ${className} drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)]`}>
-      <svg viewBox="0 0 220 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        {/* Left mounting plate with 2 brass screws */}
-        <rect x="12" y="2" width="18" height="24" rx="3" fill="url(#h-plate)" stroke="#4A310A" strokeWidth="1.2" />
-        <circle cx="21" cy="7" r="2.2" fill="#241604" />
-        <circle cx="21" cy="21" r="2.2" fill="#241604" />
-
-        {/* Right mounting plate with 2 brass screws */}
-        <rect x="190" y="2" width="18" height="24" rx="3" fill="url(#h-plate)" stroke="#4A310A" strokeWidth="1.2" />
-        <circle cx="199" cy="7" r="2.2" fill="#241604" />
-        <circle cx="199" cy="21" r="2.2" fill="#241604" />
-
-        {/* Left connecting bracket post */}
-        <path d="M28 8L44 11V17L28 20V8Z" fill="url(#h-post)" stroke="#382508" strokeWidth="1" />
-        {/* Right connecting bracket post */}
-        <path d="M192 8L176 11V17L192 20V8Z" fill="url(#h-post)" stroke="#382508" strokeWidth="1" />
-
-        {/* Solid heavy horizontal grip bar */}
-        <rect x="40" y="8" width="140" height="12" rx="5" fill="url(#h-bar)" stroke="#4A310A" strokeWidth="1.2" />
-        {/* Upper metallic glint highlight */}
-        <line x1="44" y1="10.5" x2="176" y2="10.5" stroke="#FFF7E6" strokeWidth="1.5" strokeLinecap="round" opacity="0.95" />
-        {/* Lower shadow reflection line */}
-        <line x1="44" y1="17.5" x2="176" y2="17.5" stroke="#2B1B04" strokeWidth="1.5" strokeLinecap="round" opacity="0.95" />
-
+    <div className={`relative flex items-center justify-center select-none pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.92)] ${className}`}>
+      <svg viewBox="0 0 240 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
         <defs>
-          <linearGradient id="h-plate" x1="12" y1="2" x2="30" y2="26" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FFF2D6" />
-            <stop offset="0.3" stopColor="#E9BA6B" />
-            <stop offset="0.8" stopColor="#B88943" />
-            <stop offset="1" stopColor="#5E3F0F" />
+          {/* Rosette brass radial gradient */}
+          <radialGradient id="rosette-brass" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+            <stop offset="0%" stopColor="#FFF4DB" />
+            <stop offset="35%" stopColor="#E5B55E" />
+            <stop offset="70%" stopColor="#9C6B22" />
+            <stop offset="100%" stopColor="#4A2F08" />
+          </radialGradient>
+
+          {/* Rosette outer rim bevel */}
+          <linearGradient id="rosette-bevel" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFF6DE" />
+            <stop offset="50%" stopColor="#B37D28" />
+            <stop offset="100%" stopColor="#2E1B04" />
           </linearGradient>
-          <linearGradient id="h-post" x1="28" y1="8" x2="44" y2="20" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FCE09E" />
-            <stop offset="0.5" stopColor="#B88943" />
-            <stop offset="1" stopColor="#4A310A" />
+
+          {/* Handle bar horizontal brass metallic gradient */}
+          <linearGradient id="handle-bar-brass" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFF8E7" />
+            <stop offset="15%" stopColor="#F5CE7B" />
+            <stop offset="50%" stopColor="#C9943B" />
+            <stop offset="85%" stopColor="#7E5215" />
+            <stop offset="100%" stopColor="#301A03" />
           </linearGradient>
-          <linearGradient id="h-bar" x1="40" y1="8" x2="40" y2="20" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FFF2D6" />
-            <stop offset="0.25" stopColor="#F7D287" />
-            <stop offset="0.6" stopColor="#B88943" />
-            <stop offset="0.9" stopColor="#7E551B" />
-            <stop offset="1" stopColor="#3E2606" />
+
+          {/* Curved elbow gradient left */}
+          <linearGradient id="elbow-left" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#8C5C1A" />
+            <stop offset="50%" stopColor="#E2B157" />
+            <stop offset="100%" stopColor="#FFF4DB" />
+          </linearGradient>
+
+          {/* Curved elbow gradient right */}
+          <linearGradient id="elbow-right" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stopColor="#8C5C1A" />
+            <stop offset="50%" stopColor="#E2B157" />
+            <stop offset="100%" stopColor="#FFF4DB" />
           </linearGradient>
         </defs>
+
+        {/* ── Left Circular Rosette Escutcheon ── */}
+        <g id="left-rosette">
+          <circle cx="28" cy="16" r="11" fill="#020814" opacity="0.6" />
+          <circle cx="28" cy="16" r="10.5" fill="url(#rosette-bevel)" stroke="#382105" strokeWidth="0.8" />
+          <circle cx="28" cy="16" r="8" fill="url(#rosette-brass)" stroke="#52340A" strokeWidth="0.6" />
+          <circle cx="28" cy="16" r="5.5" stroke="#FFF7E0" strokeWidth="0.5" opacity="0.75" />
+          {/* 4 rosette perimeter screw notches */}
+          <circle cx="28" cy="8.5" r="0.9" fill="#241402" />
+          <circle cx="28" cy="23.5" r="0.9" fill="#241402" />
+          <circle cx="20.5" cy="16" r="0.9" fill="#241402" />
+          <circle cx="35.5" cy="16" r="0.9" fill="#241402" />
+          {/* Central post boss */}
+          <circle cx="28" cy="16" r="3.8" fill="url(#rosette-bevel)" stroke="#2B1703" strokeWidth="0.7" />
+        </g>
+
+        {/* ── Right Circular Rosette Escutcheon ── */}
+        <g id="right-rosette">
+          <circle cx="212" cy="16" r="11" fill="#020814" opacity="0.6" />
+          <circle cx="212" cy="16" r="10.5" fill="url(#rosette-bevel)" stroke="#382105" strokeWidth="0.8" />
+          <circle cx="212" cy="16" r="8" fill="url(#rosette-brass)" stroke="#52340A" strokeWidth="0.6" />
+          <circle cx="212" cy="16" r="5.5" stroke="#FFF7E0" strokeWidth="0.5" opacity="0.75" />
+          {/* 4 rosette perimeter screw notches */}
+          <circle cx="212" cy="8.5" r="0.9" fill="#241402" />
+          <circle cx="212" cy="23.5" r="0.9" fill="#241402" />
+          <circle cx="204.5" cy="16" r="0.9" fill="#241402" />
+          <circle cx="219.5" cy="16" r="0.9" fill="#241402" />
+          {/* Central post boss */}
+          <circle cx="212" cy="16" r="3.8" fill="url(#rosette-bevel)" stroke="#2B1703" strokeWidth="0.7" />
+        </g>
+
+        {/* ── Connecting Stems / Curved Brackets ── */}
+        <path d="M28 12.5 C36 12.5 42 11 50 11 L50 21 C42 21 36 19.5 28 19.5 Z" fill="url(#elbow-left)" stroke="#4A2F08" strokeWidth="0.8" />
+        <path d="M212 12.5 C204 12.5 198 11 190 11 L190 21 C198 21 204 19.5 212 19.5 Z" fill="url(#elbow-right)" stroke="#4A2F08" strokeWidth="0.8" />
+
+        {/* ── Main Horizontal Cast-Brass Bar ── */}
+        <rect x="46" y="10.5" width="148" height="11" rx="4" fill="url(#handle-bar-brass)" stroke="#4A2F08" strokeWidth="1" />
+
+        {/* Top Glint Highlight Line */}
+        <line x1="50" y1="12" x2="190" y2="12" stroke="#FFFDF5" strokeWidth="1.2" strokeLinecap="round" opacity="0.95" />
+        {/* Secondary Warm Glint */}
+        <line x1="54" y1="13.2" x2="186" y2="13.2" stroke="#FFE7AF" strokeWidth="0.8" strokeLinecap="round" opacity="0.8" />
+
+        {/* Bottom Underside Core Shadow */}
+        <line x1="49" y1="19.8" x2="191" y2="19.8" stroke="#2B1602" strokeWidth="1.4" strokeLinecap="round" opacity="0.9" />
       </svg>
     </div>
   );
 }
+
 

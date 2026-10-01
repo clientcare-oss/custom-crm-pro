@@ -61,7 +61,7 @@ export function CabinetSidePillar({ side, className }: CabinetSidePillarProps) {
   return (
     <div
       className={cn(
-        "w-[18px] sm:w-[28px] lg:w-[34px] shrink-0 relative flex flex-col z-[1] pointer-events-none select-none self-stretch",
+        "w-[18px] sm:w-[28px] lg:w-[34px] shrink-0 relative flex flex-col z-[10] pointer-events-none select-none self-stretch",
         "brightness-[0.92] contrast-[1.06]",
         isLeft
           ? "shadow-[4px_0_12px_rgba(0,0,0,0.85)]"
@@ -80,12 +80,12 @@ export function CabinetSidePillar({ side, className }: CabinetSidePillarProps) {
         }}
       />
 
-      {/* ─── Bottom Brass Rivet Cap (Anchored to the very bottom of the credenza) ─── */}
-      <div className={cn("w-full h-[39px] shrink-0", !isLeft && "scale-x-[-1]")}>
+      {/* ─── Bottom Brass Rivet Cap (True square matching pillar width, anchored to very bottom) ─── */}
+      <div className={cn("w-full h-[18px] sm:h-[28px] lg:h-[34px] shrink-0", !isLeft && "scale-x-[-1]")}>
         <img
           src="/decor/cabinet-pillar-bottom-cap.png"
           alt=""
-          className="w-full h-[39px] object-cover pointer-events-none select-none"
+          className="w-full h-full object-cover pointer-events-none select-none"
         />
       </div>
     </div>
