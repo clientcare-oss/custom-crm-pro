@@ -208,9 +208,9 @@ export function StudentsListView({
                   <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 flex items-center justify-center p-[2px] bg-gradient-to-b from-[#3E280E] via-[#7D5826] to-[#BFA162] shadow-[0_2px_6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.35)]">
                     <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-b from-[#8F6A3D] via-[#C39F6D] to-[#DDBB86] shadow-[inset_0_3px_5px_rgba(0,0,0,0.7),inset_0_-1px_2px_rgba(255,255,255,0.4)] border border-[#523717]/60">
                       <span
-                        className="font-serif font-bold text-base sm:text-[17px] text-[#080709] select-none leading-none pt-0.5"
+                        className="font-serif font-bold text-base sm:text-[17px] text-[#161008] select-none leading-none pt-0.5 antialiased"
                         style={{
-                          textShadow: "0px -1px 1px rgba(0, 0, 0, 0.95), 0px 1px 1px rgba(255, 235, 195, 0.85)",
+                          textShadow: "0 1px 0 rgba(255, 245, 220, 0.5)",
                         }}
                       >
                         {initial}
