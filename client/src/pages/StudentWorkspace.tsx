@@ -157,7 +157,7 @@ export default function StudentWorkspace() {
         </div>
 
         {/* ─── Folio Area (Tabs + Leather Desk Pad) ─────────────────────────── */}
-        <div className="w-full max-w-[1240px] xl:max-w-[1380px] 2xl:max-w-[1500px] mx-auto mt-6 sm:mt-8 px-6 flex flex-col relative z-20">
+        <div className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20">
           
           {/* Folio Index Tabs (sitting right on top of the desk pad) */}
           <div className="flex items-end justify-start gap-1 px-6 -mb-[1px] relative z-20 overflow-x-auto no-scrollbar">
@@ -179,7 +179,7 @@ export default function StudentWorkspace() {
                   className={cn(
                     "relative flex items-center gap-2 px-4 sm:px-5 py-2 rounded-t-lg text-xs font-semibold tracking-wide transition-all border-t border-x cursor-pointer",
                     isActive
-                      ? "bg-[#0b284e] text-white border-white/25 z-20 border-b-0 pb-2.5 shadow-[0_-3px_10px_rgba(0,0,0,0.4)]"
+                      ? "bg-[#0b284e] text-white border-white/25 z-20 border-b-0 pb-2.5 shadow-none"
                       : "bg-[#061427]/85 text-white/60 hover:text-white/90 hover:bg-[#081a33] border-white/10 border-b border-b-white/20 z-10"
                   )}
                 >
@@ -196,12 +196,12 @@ export default function StudentWorkspace() {
             })}
           </div>
 
-          {/* ─── The Real Textured Leather Folio Desk Pad ───────────────────── */}
+          {/* ─── The Real Textured Leather Folio Desk Pad (Transparent Outer Container) ── */}
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="relative w-full rounded-2xl overflow-visible shadow-[0_20px_50px_rgba(0,0,0,0.7)]"
+            className="relative w-full bg-transparent overflow-visible shadow-none border-0"
             style={{
               backgroundImage: "url('/decor/student-workspace-folio.png')",
               backgroundSize: "100% 100%",
