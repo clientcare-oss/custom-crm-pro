@@ -276,7 +276,7 @@ export default function ContactsLedgerView({
     <div
       className={cn(
         "w-full flex-1 relative overflow-hidden select-none transition-all",
-        "min-h-[calc(100vh-140px)]"
+        "min-h-[max(920px,calc(100vh-120px))] lg:min-h-[max(950px,calc(100vh-120px))]"
       )}
       style={{
         backgroundImage: `url(${
@@ -324,7 +324,7 @@ export default function ContactsLedgerView({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           <div
             className={cn(
-              "w-full lg:w-[47.2%] h-full pt-[4.2%] pb-[5%] pl-[5.5%] pr-[2.5%] flex flex-col z-10",
+              "w-full lg:w-[47.2%] h-full pt-[3.2%] pb-[4%] pl-[5.5%] pr-[2.5%] flex flex-col z-10",
               mobileTab === "dossier" ? "hidden lg:flex" : "flex"
             )}
           >
@@ -599,12 +599,12 @@ export default function ContactsLedgerView({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           <div
             className={cn(
-              "w-full lg:w-[41.8%] h-full pt-[4.2%] pb-[5%] pl-[2%] pr-[3.5%] flex flex-col z-10",
+              "w-full lg:w-[41.8%] h-full pt-[3.2%] pb-[4%] pl-[2%] pr-[3.5%] flex flex-col z-10",
               mobileTab === "directory" ? "hidden lg:flex" : "flex"
             )}
           >
             {dossierContact ? (
-              <div className="h-full flex flex-col justify-between overflow-y-auto pr-1 select-none">
+              <div className="h-full flex flex-col justify-between select-none">
                 {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
@@ -1038,7 +1038,7 @@ export default function ContactsLedgerView({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           {/* ALPHABET THUMB INDEX RAIL (Far Right Edge: 🏠, A through Z)        */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          <div className="w-[6.2%] h-full pt-[8.8%] pb-[5.5%] flex flex-col items-center justify-between z-20 select-none">
+          <div className="w-[6.2%] h-full pt-[6.8%] pb-[4.2%] flex flex-col items-center justify-between z-20 select-none">
             {ALPHABET.map((letter) => {
               const isHome = letter === "HOME";
               const isSelected =
