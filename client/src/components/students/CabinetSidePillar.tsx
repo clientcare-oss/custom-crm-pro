@@ -63,8 +63,8 @@ export function CabinetSidePillar({ side, className }: CabinetSidePillarProps) {
       className={cn(
         "w-[22px] sm:w-[30px] lg:w-[36px] shrink-0 relative flex flex-col z-[25] pointer-events-none select-none self-stretch",
         isLeft
-          ? "border-r-2 border-[#8A6731]/50 shadow-[5px_0_16px_rgba(0,0,0,0.92)]"
-          : "border-l-2 border-[#8A6731]/50 shadow-[-5px_0_16px_rgba(0,0,0,0.92)]",
+          ? "shadow-[5px_0_16px_rgba(0,0,0,0.92)]"
+          : "shadow-[-5px_0_16px_rgba(0,0,0,0.92)]",
         className
       )}
     >
@@ -79,11 +79,11 @@ export function CabinetSidePillar({ side, className }: CabinetSidePillarProps) {
         }}
       />
 
-      {/* ─── Bottom Metal Collar Bracket & 3D Brass Bolt on Peg ─── */}
+      {/* ─── Bottom Metal Collar Bracket & 3D Brass Bolt on Peg (No brown border line) ─── */}
       <div
         className={cn(
           "w-full shrink-0 flex flex-col items-center justify-end pb-2 pt-2 relative z-20",
-          "border-t-2 border-[#B88943]/80 bg-gradient-to-b from-[#2B1B0A] via-[#140D05] to-[#0A0502]",
+          "bg-gradient-to-b from-[#241708] via-[#140D05] to-[#0A0502]",
           "shadow-[0_-3px_10px_rgba(0,0,0,0.85)]"
         )}
       >
