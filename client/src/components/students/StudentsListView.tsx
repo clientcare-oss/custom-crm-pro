@@ -204,10 +204,15 @@ export function StudentsListView({
               >
                 {/* Student: Avatar + Name + Marker + Grade & School Subtitle */}
                 <div className="flex items-center gap-3 min-w-0">
-                  {/* Metallic 3D Brass Coin Avatar */}
-                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 flex items-center justify-center p-[2px] bg-gradient-to-b from-[#FFF2CE] via-[#D8A654] to-[#7A5016] shadow-[0_2px_6px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.8)]">
-                    <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-br from-[#F5D89A] via-[#E2B766] to-[#C89440] border border-[#6A4712]/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]">
-                      <span className="font-serif font-bold text-sm sm:text-base text-[#241705] drop-shadow-[0_1px_0_rgba(255,255,255,0.4)]">
+                  {/* Metallic 3D Brass Coin Avatar (Recessed / Depressed Letter) */}
+                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 flex items-center justify-center p-[2px] bg-gradient-to-b from-[#3E280E] via-[#7D5826] to-[#BFA162] shadow-[0_2px_6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.35)]">
+                    <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-b from-[#8F6A3D] via-[#C39F6D] to-[#DDBB86] shadow-[inset_0_3px_5px_rgba(0,0,0,0.7),inset_0_-1px_2px_rgba(255,255,255,0.4)] border border-[#523717]/60">
+                      <span
+                        className="font-serif font-bold text-base sm:text-[17px] text-[#080709] select-none leading-none pt-0.5"
+                        style={{
+                          textShadow: "0px -1px 1px rgba(0, 0, 0, 0.95), 0px 1px 1px rgba(255, 235, 195, 0.85)",
+                        }}
+                      >
                         {initial}
                       </span>
                     </div>
