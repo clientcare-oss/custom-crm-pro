@@ -191,8 +191,8 @@ export function StudentsListView({
             className={cn(
               "group w-full grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border transition-all cursor-pointer gap-2 sm:gap-4",
               index % 2 === 0
-                ? "bg-gradient-to-b from-[#1C334A] via-[#142639] to-[#0E1B29] border-[#1D3650] shadow-[inset_0_1px_0_rgba(80,130,185,0.38),inset_0_-1px_0_rgba(0,0,0,0.65),0_2px_5px_rgba(0,0,0,0.45)] hover:from-[#223E5A] hover:via-[#192F47] hover:to-[#122335] hover:border-[#27486B]"
-                : "bg-gradient-to-b from-[#0B1522] via-[#070D16] to-[#04080E] border-[#0A1624] shadow-[inset_0_1px_0_rgba(45,75,110,0.22),inset_0_-1px_0_rgba(0,0,0,0.7),0_2px_5px_rgba(0,0,0,0.45)] hover:from-[#101D2E] hover:via-[#0B1520] hover:to-[#070E17] hover:border-[#14283D]"
+                ? "bg-gradient-to-b from-[#1C3A62] via-[#142D4E] to-[#0E223D] border-[#224876] shadow-[inset_0_1px_0_rgba(100,160,230,0.4),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#23487A] hover:via-[#193760] hover:to-[#122C4D] hover:border-[#3368A8]"
+                : "bg-gradient-to-b from-[#132A48] via-[#0E2038] to-[#09172A] border-[#18355A] shadow-[inset_0_1px_0_rgba(75,130,195,0.3),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#19355A] hover:via-[#132948] hover:to-[#0C1F37] hover:border-[#254E82]"
             )}
           >
             {/* Student: Avatar + Name + Marker + Grade & School Subtitle */}
