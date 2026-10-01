@@ -20,12 +20,17 @@ import { validatePhone, formatPhone } from "@/lib/phone";
 import ClientCallControls from "@/components/quo/ClientCallControls";
 import PageIdBadge from "@/components/PageIdBadge";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
+import MetalPlaqueButton from "@/components/ui/MetalPlaqueButton";
+import WaypointPillTab from "@/components/ui/WaypointPillTab";
+
+type ContactCategory = "all" | "parents" | "school" | "portal" | "students";
 
 export default function Contacts() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ContactCategory>("all");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -44,12 +49,38 @@ export default function Contacts() {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredContacts = useMemo(() => {
+  const categoryCounts = useMemo(() => {
+    if (!contacts) return { all: 0, parents: 0, school: 0, portal: 0, students: 0 };
+    const all = contacts.filter((c: any) => c.jobTitle !== "Student").length;
+    const parents = contacts.filter((c: any) => c.jobTitle === "Parent" || (!c.jobTitle && !c.company)).length;
+    const school = contacts.filter((c: any) => c.jobTitle && c.jobTitle !== "Parent" && c.jobTitle !== "Student").length;
+    const portal = contacts.filter((c: any) => Boolean(c.portalUserId)).length;
+    const students = contacts.filter((c: any) => c.jobTitle === "Student").length;
+    return { all, parents, school, portal, students };
+  }, [contacts]);
+
+  const categorizedContacts = useMemo(() => {
     if (!contacts) return [];
-    const base = contacts.filter((c: any) => c.jobTitle !== "Student");
-    if (!searchQuery.trim()) return base;
+    switch (selectedCategory) {
+      case "parents":
+        return contacts.filter((c: any) => c.jobTitle === "Parent" || (!c.jobTitle && !c.company));
+      case "school":
+        return contacts.filter((c: any) => c.jobTitle && c.jobTitle !== "Parent" && c.jobTitle !== "Student");
+      case "portal":
+        return contacts.filter((c: any) => Boolean(c.portalUserId));
+      case "students":
+        return contacts.filter((c: any) => c.jobTitle === "Student");
+      case "all":
+      default:
+        return contacts.filter((c: any) => c.jobTitle !== "Student");
+    }
+  }, [contacts, selectedCategory]);
+
+  const filteredContacts = useMemo(() => {
+    if (!categorizedContacts) return [];
+    if (!searchQuery.trim()) return categorizedContacts;
     const q = searchQuery.toLowerCase().trim();
-    return base.filter((c: any) => {
+    return categorizedContacts.filter((c: any) => {
       const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
       const email = (c.email || "").toLowerCase();
       const phone = (c.phone || "").toLowerCase();
@@ -63,7 +94,7 @@ export default function Contacts() {
         jobTitle.includes(q)
       );
     });
-  }, [contacts, searchQuery]);
+  }, [categorizedContacts, searchQuery]);
 
   const createMutation = trpc.contacts.create.useMutation({
     onSuccess: () => {
@@ -218,16 +249,13 @@ export default function Contacts() {
                 )}
               </div>
 
-              {/* Nice Gold Add Contact Button */}
-              <Button
-                type="button"
+              {/* Old-World Forged Brass Plaque Add Contact Button with Corner Bolts */}
+              <MetalPlaqueButton
                 onClick={handleOpenAddContact}
-                className="h-full px-3.5 lg:px-4 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B89628] hover:from-[#E5C158] hover:to-[#C9A73A] text-slate-950 font-bold shadow-md hover:shadow-lg transition-all cursor-pointer text-xs sm:text-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap border border-[#F3DB98]/40"
                 title="Add New Contact"
               >
-                <Plus className="h-4 w-4 stroke-[2.5]" />
-                <span>Add Contact</span>
-              </Button>
+                Add Contact
+              </MetalPlaqueButton>
             </div>
           </div>
         </div>
@@ -266,41 +294,63 @@ export default function Contacts() {
                   </button>
                 )}
               </div>
-              <Button
-                type="button"
+              <MetalPlaqueButton
                 onClick={handleOpenAddContact}
-                className="h-10 px-3.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B89628] hover:from-[#E5C158] hover:to-[#C9A73A] text-slate-950 font-bold shadow-md transition-all cursor-pointer text-xs flex items-center gap-1 shrink-0 whitespace-nowrap border border-[#F3DB98]/40"
+                className="h-10"
+                title="Add New Contact"
               >
-                <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-                <span>Add Contact</span>
-              </Button>
+                Add Contact
+              </MetalPlaqueButton>
             </div>
           </div>
         </div>
 
-        {/* ─── Directory Status & Control Strip ─── */}
+        {/* ─── Directory Category Filter Tabs & Control Strip ─── */}
         <div className="w-full bg-[#030B18] border-b border-[#18283F] px-4 sm:px-6 lg:px-8 py-3">
           <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
+              <WaypointPillTab
+                label="All Contacts"
+                count={categoryCounts.all}
+                active={selectedCategory === "all"}
+                onClick={() => setSelectedCategory("all")}
+              />
+              <WaypointPillTab
+                label="Parents & Clients"
+                count={categoryCounts.parents}
+                active={selectedCategory === "parents"}
+                onClick={() => setSelectedCategory("parents")}
+              />
+              <WaypointPillTab
+                label="School & District"
+                count={categoryCounts.school}
+                active={selectedCategory === "school"}
+                onClick={() => setSelectedCategory("school")}
+              />
+              <WaypointPillTab
+                label="Portal Active"
+                count={categoryCounts.portal}
+                active={selectedCategory === "portal"}
+                onClick={() => setSelectedCategory("portal")}
+              />
+              <WaypointPillTab
+                label="Students"
+                count={categoryCounts.students}
+                active={selectedCategory === "students"}
+                onClick={() => setSelectedCategory("students")}
+              />
+            </div>
+
             <div className="flex items-center gap-3">
-              <span className="font-serif text-xs font-semibold text-[#D8B478] tracking-wider uppercase drop-shadow-xs">
-                Master Directory
-              </span>
-              <span className="text-xs text-[#9BB2CF] bg-[#07152A] px-2.5 py-1 rounded-full border border-[#1A3152]">
-                {filteredContacts.length} {filteredContacts.length === 1 ? "Contact" : "Contacts"}
-                {searchQuery ? ` matching "${searchQuery}"` : " total"}
-              </span>
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="text-xs text-[#D8B478] hover:text-white underline cursor-pointer"
+                  className="text-xs font-serif text-[#D8B478] hover:text-white underline cursor-pointer"
                 >
-                  Clear filter
+                  Clear search ({filteredContacts.length} found)
                 </button>
               )}
-            </div>
-
-            <div className="flex items-center gap-3">
               <PageIdBadge id="PG-002" name="Contacts Directory" />
             </div>
           </div>
@@ -384,21 +434,23 @@ export default function Contacts() {
                       />
                     </div>
                     <div className="flex gap-2 pt-4">
-                      <Button
+                      <MetalPlaqueButton
                         type="submit"
                         disabled={
                           createMutation.isPending || updateMutation.isPending
                         }
-                        className="flex-1 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-50"
+                        className="w-full h-11"
                       >
                         {createMutation.isPending || updateMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin text-[#241703]" /> Saving...
+                          </span>
                         ) : editingId ? (
                           "Update Contact"
                         ) : (
                           "Create Contact"
                         )}
-                      </Button>
+                      </MetalPlaqueButton>
                     </div>
                   </form>
                 </DialogContent>
@@ -506,31 +558,31 @@ export default function Contacts() {
                       <div className="flex gap-2">
                         <Button
                           onClick={() => setLocation(`/client-portal?preview=true&parentContactId=${contact.id}`)}
-                          variant="outline"
+                          variant="waypointOutline"
                           size="sm"
-                          className="flex-1 rounded-lg border border-amber-500/40 bg-amber-500/5 px-2.5 py-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 shadow-sm transition-all flex items-center justify-center"
+                          className="flex-1 px-3 py-1.5 text-xs flex items-center justify-center"
                         >
-                          <ExternalLink className="h-3.5 w-3.5 mr-1 shrink-0" /> View Portal Preview
+                          <ExternalLink className="h-3.5 w-3.5 mr-1 text-[#E5C175] shrink-0" /> View Portal Preview
                         </Button>
                         <div className="flex gap-1">
                           <Button
                             onClick={() => handleEdit(contact)}
-                            variant="outline"
+                            variant="waypointOutline"
                             size="sm"
-                            className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-white/10"
+                            className="rounded-xl px-2.5 py-1.5 text-sm"
                             title="Edit Contact"
                           >
-                            <Edit2 className="h-4 w-4 text-white/70" />
+                            <Edit2 className="h-3.5 w-3.5 text-[#D8CABA]" />
                           </Button>
                           <Button
                             onClick={() => handleDelete(contact.id)}
                             variant="outline"
                             size="sm"
                             disabled={deleteMutation.isPending}
-                            className="rounded-lg bg-red-950/20 border border-red-500/30 hover:bg-red-950/40 px-2.5 py-1.5 text-sm font-semibold text-red-400 shadow-sm transition-all disabled:opacity-50"
+                            className="rounded-xl bg-red-950/20 border border-red-500/30 hover:bg-red-950/50 hover:border-red-500/50 px-2.5 py-1.5 text-sm text-red-300 shadow-sm transition-all disabled:opacity-50"
                             title="Delete Contact"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -540,11 +592,11 @@ export default function Contacts() {
                         return (
                           <Button
                             onClick={() => setLocation(targetPath)}
-                            variant="outline"
+                            variant="waypointPill"
                             size="sm"
-                            className="w-full rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-xs font-bold text-amber-500 hover:text-amber-400 shadow-sm transition-all hover:bg-amber-500/10 flex items-center justify-center cursor-pointer"
+                            className="w-full px-3 py-2 text-xs flex items-center justify-center cursor-pointer"
                           >
-                            <Compass className="h-3.5 w-3.5 mr-1 shrink-0" /> {student ? "Open Student Case" : "View Contact Details"}
+                            <Compass className="h-3.5 w-3.5 mr-1.5 text-[#FCE09E] shrink-0" /> {student ? "Open Student Case" : "View Contact Details"}
                           </Button>
                         );
                       })()}

@@ -19,6 +19,12 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        goldPlaque:
+          "relative font-serif font-black uppercase tracking-wider text-[#241703] bg-gradient-to-b from-[#FFF2B2] via-[#E2BE58] via-[#C59B2E] to-[#8C6212] border border-[#5E420C] ring-1 ring-[#FFEAA3]/60 shadow-[0_4px_12px_rgba(0,0,0,0.85),0_1px_2px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.9),inset_0_-2px_2px_rgba(70,45,10,0.7)] hover:brightness-110 hover:shadow-[0_0_16px_rgba(229,193,117,0.65),0_4px_14px_rgba(0,0,0,0.9)] active:scale-[0.98] active:translate-y-[1px]",
+        waypointPill:
+          "font-serif font-bold tracking-wide rounded-2xl border border-[#E5C175] bg-gradient-to-b from-[#142B49] via-[#0E2038] to-[#081527] text-[#FFF4DD] shadow-[0_0_14px_rgba(229,193,117,0.35),inset_0_1px_1px_rgba(255,255,255,0.2),0_2px_6px_rgba(0,0,0,0.7)] hover:brightness-110 hover:shadow-[0_0_18px_rgba(229,193,117,0.5)] active:scale-[0.98]",
+        waypointOutline:
+          "font-serif font-medium tracking-wide rounded-2xl border border-[#23354E] hover:border-[#D4B886]/70 bg-[#061220]/90 hover:bg-[#0B1E34] text-[#D8CABA] hover:text-[#FFF4DD] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04),0_2px_4px_rgba(0,0,0,0.5)] active:scale-[0.98]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

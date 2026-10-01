@@ -19,6 +19,7 @@ import { validatePhone, formatPhone } from "@/lib/phone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { StudentsHeader } from "@/components/students/StudentsHeader";
+import WaypointPillTab from "@/components/ui/WaypointPillTab";
 import { BrassAlphabetRail } from "@/components/students/BrassAlphabetRail";
 import { StudentFileCard, type StudentFolderData } from "@/components/students/StudentFileCard";
 import { CabinetDrawer, type DrawerType } from "@/components/students/CabinetDrawer";
@@ -442,29 +443,13 @@ export default function Students() {
                 { id: "paused", label: "Paused", count: filteredPaused.length },
                 { id: "archived", label: "Archived", count: filteredArchived.length },
               ].map((tab) => (
-                <button
+                <WaypointPillTab
                   key={tab.id}
-                  type="button"
+                  label={tab.label}
+                  count={tab.count}
+                  active={listCategory === tab.id}
                   onClick={() => setListCategory(tab.id as any)}
-                  className={cn(
-                    "flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-xs font-serif transition-all cursor-pointer whitespace-nowrap tracking-wide",
-                    listCategory === tab.id
-                      ? "border border-[#E5C175] bg-gradient-to-b from-[#142B49] via-[#0E2038] to-[#081527] text-[#FFF4DD] font-semibold shadow-[0_0_12px_rgba(229,193,117,0.32),inset_0_1px_1px_rgba(255,255,255,0.18),0_2px_5px_rgba(0,0,0,0.6)]"
-                      : "border border-[#92836E]/70 hover:border-[#D4B886] bg-[#061220]/90 hover:bg-[#0B1E34] text-[#E5D7BF] hover:text-[#FFF4DD] font-medium shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_2px_4px_rgba(0,0,0,0.5)]"
-                  )}
-                >
-                  <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">{tab.label}</span>
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold tracking-tight transition-all",
-                      listCategory === tab.id
-                        ? "bg-[#040E1E] border border-[#E5C175] text-[#FCE09E] shadow-[0_0_8px_rgba(229,193,117,0.35)]"
-                        : "bg-[#020813] border border-[#6B5A42]/60 text-[#CDB694]"
-                    )}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
+                />
               ))}
               </div>
             </div>
