@@ -25,7 +25,7 @@ export function ActiveStudentsDrawerBar({
   return (
     <div
       className={cn(
-        "w-full relative h-[56px] min-h-[56px] flex items-center justify-between border-t border-[#8A6731]/45 border-b border-[#010612] shadow-[0_8px_24px_rgba(0,0,0,0.95)] overflow-hidden select-none bg-[#051327]",
+        "w-full relative z-30 h-[56px] min-h-[56px] flex items-center justify-between border-t border-[#8A6731]/45 border-b border-[#010612] shadow-[0_8px_24px_rgba(0,0,0,0.95)] overflow-hidden select-none bg-[#051327]",
         className
       )}
       style={{
