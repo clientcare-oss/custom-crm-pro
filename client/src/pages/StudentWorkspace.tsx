@@ -163,8 +163,8 @@ export default function StudentWorkspace() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20"
         >
-          {/* Folio Index Tabs (connected physically directly onto the top rim of the leather desk pad) */}
-          <div className="flex items-end justify-start gap-1.5 pl-12 sm:pl-16 md:pl-20 -mb-[4px] relative z-30 overflow-x-auto no-scrollbar">
+          {/* Folio Index Tabs (seated directly on the blue line of the portfolio) */}
+          <div className="flex items-end justify-start gap-1.5 pl-5 sm:pl-7 md:pl-8 -mb-[42px] relative z-30 overflow-x-auto no-scrollbar">
             {[
               { id: "overview", label: "Overview", icon: User },
               { id: "timeline", label: "Timeline", icon: Clock },
@@ -204,7 +204,7 @@ export default function StudentWorkspace() {
           <div
             className="relative w-full bg-transparent overflow-visible shadow-none border-0"
             style={{
-              backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev1')",
+              backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev2')",
               backgroundSize: "100% 100%",
               backgroundPosition: "center center",
               backgroundRepeat: "no-repeat",
@@ -212,7 +212,7 @@ export default function StudentWorkspace() {
           >
             {/* Tab Content Display */}
             {activeTab === "overview" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10">
+              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-12 sm:pt-14">
                 
                 {/* ─── LEFT PANEL: Student Profile & Family (~38% width) ────── */}
                 <div className="lg:col-span-5 sm:px-6 py-2 flex flex-col justify-between relative">
