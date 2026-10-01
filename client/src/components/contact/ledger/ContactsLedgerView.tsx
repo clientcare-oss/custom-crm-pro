@@ -394,19 +394,29 @@ export default function ContactsLedgerView({
             {/* Scrollable Alphabetical Directory List */}
             <div className="flex-1 overflow-y-auto pr-1.5 pt-3 space-y-4 custom-scrollbar">
               {groupedContacts.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-75">
+                <div className="w-full flex flex-col items-center text-center pt-14 sm:pt-20 px-6 select-none">
+                  <div
+                    className={cn(
+                      "w-12 h-12 rounded-full flex items-center justify-center border mb-3 shadow-xs",
+                      isLight
+                        ? "bg-[#EAE0CA] border-[#C2AE88] text-[#523F1F]"
+                        : "bg-[#091D38]/80 border-[#1E4377] text-[#D4AF37]"
+                    )}
+                  >
+                    <Users className="h-5 w-5" />
+                  </div>
                   <p
                     className={cn(
-                      "font-serif text-sm font-semibold",
-                      isLight ? "text-[#4A3B29]" : "text-[#E8D1A7]"
+                      "font-serif text-base sm:text-lg font-bold",
+                      isLight ? "text-[#3D2908]" : "text-[#FFF0D4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
                     )}
                   >
                     No contacts found
                   </p>
                   <p
                     className={cn(
-                      "text-xs mt-1 max-w-xs",
-                      isLight ? "text-[#6B5A45]" : "text-[#7B92B0]"
+                      "text-xs sm:text-[13px] mt-1.5 max-w-xs leading-relaxed",
+                      isLight ? "text-[#6B5A45]" : "text-[#A3B8D4]"
                     )}
                   >
                     {selectedLetter && selectedLetter !== "HOME"
@@ -1031,19 +1041,29 @@ export default function ContactsLedgerView({
                 </div>
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-75">
+              <div className="w-full flex flex-col items-center text-center pt-14 sm:pt-20 px-6 select-none">
+                <div
+                  className={cn(
+                    "w-12 h-12 rounded-full flex items-center justify-center border mb-3 shadow-xs",
+                    isLight
+                      ? "bg-[#EAE0CA] border-[#C2AE88] text-[#523F1F]"
+                      : "bg-[#091D38]/80 border-[#1E4377] text-[#D4AF37]"
+                  )}
+                >
+                  <Star className="h-5 w-5" />
+                </div>
                 <p
                   className={cn(
-                    "font-serif text-base font-bold",
-                    isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
+                    "font-serif text-base sm:text-lg font-bold",
+                    isLight ? "text-[#3D2908]" : "text-[#FFF0D4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
                   )}
                 >
                   Select a contact
                 </p>
                 <p
                   className={cn(
-                    "text-xs mt-1 max-w-xs",
-                    isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
+                    "text-xs sm:text-[13px] mt-1.5 max-w-xs leading-relaxed",
+                    isLight ? "text-[#6B5A45]" : "text-[#A3B8D4]"
                   )}
                 >
                   Click any entry from the left directory page to open their full dossier here.
