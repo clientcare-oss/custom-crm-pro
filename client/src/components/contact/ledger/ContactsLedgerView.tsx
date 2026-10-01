@@ -897,22 +897,75 @@ export default function ContactsLedgerView({
                   )}
                 </div>
 
-                {/* 3. 3-Card Activity & Relationship Strip (Moved directly under Parent of box) */}
-                <div className="grid grid-cols-[0.95fr_1.1fr_1.32fr] gap-2 select-none pt-0.5">
-                  {/* Card 1: Last Contact */}
+                {/* 3. Activity & Relationship Cards (Spacious 2-column layout so no words or names truncate) */}
+                <div className="grid grid-cols-2 gap-2.5 select-none pt-0.5">
+                  {/* Card 1: Next Event (Full width: Event, Date, and Student name have plenty of space) */}
                   <div
                     className={cn(
-                      "p-3 rounded-2xl border flex flex-col justify-between min-h-[96px]",
+                      "col-span-2 p-3 sm:p-3.5 rounded-2xl border transition-all flex flex-col justify-between min-h-[86px]",
                       isLight
-                        ? "bg-[#EFE3C8]/80 border-[#C7B594]"
-                        : "bg-[#07162C]/80 border-[#182C48]"
+                        ? "bg-[#EFE3C8]/80 border-[#C7B594] shadow-xs"
+                        : "bg-[#07162C]/80 border-[#182C48] shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-[#D4AF37] shrink-0" />
+                        <span
+                          className={cn(
+                            "text-[10.5px] font-serif font-bold uppercase tracking-wider",
+                            isLight ? "text-[#5C451D]" : "text-[#C7B596]"
+                          )}
+                        >
+                          Next Event
+                        </span>
+                      </div>
+                      <span
+                        className={cn(
+                          "text-xs font-serif font-semibold",
+                          isLight ? "text-[#785412]" : "text-[#D4AF37]"
+                        )}
+                      >
+                        Oct 14, 2024
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p
+                        className={cn(
+                          "font-serif text-sm font-bold leading-tight",
+                          isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
+                        )}
+                      >
+                        IEP Meeting
+                      </p>
+                      {dossierStudents.length > 0 && (
+                        <p
+                          className={cn(
+                            "text-xs font-medium",
+                            isLight ? "text-[#785412]" : "text-[#E5C175]"
+                          )}
+                        >
+                          Student: {dossierStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card 2: Last Contact (Expanded width so date never wraps) */}
+                  <div
+                    className={cn(
+                      "p-3 sm:p-3.5 rounded-2xl border transition-all flex flex-col justify-between min-h-[82px]",
+                      isLight
+                        ? "bg-[#EFE3C8]/80 border-[#C7B594] shadow-xs"
+                        : "bg-[#07162C]/80 border-[#182C48] shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
                     )}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       <Clock className="h-3.5 w-3.5 text-[#D4AF37] shrink-0" />
                       <span
                         className={cn(
-                          "text-[10px] font-serif font-bold uppercase tracking-wider",
+                          "text-[10px] font-serif font-bold uppercase tracking-wider whitespace-nowrap",
                           isLight ? "text-[#5C451D]" : "text-[#C7B596]"
                         )}
                       >
@@ -922,7 +975,7 @@ export default function ContactsLedgerView({
                     <div>
                       <p
                         className={cn(
-                          "font-serif text-xs sm:text-[13px] font-bold leading-tight",
+                          "font-serif text-xs sm:text-sm font-bold leading-tight whitespace-nowrap",
                           isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
                         )}
                       >
@@ -930,7 +983,7 @@ export default function ContactsLedgerView({
                       </p>
                       <p
                         className={cn(
-                          "text-[10px] sm:text-[10.5px] mt-0.5",
+                          "text-[10.5px] mt-0.5",
                           isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
                         )}
                       >
@@ -939,63 +992,13 @@ export default function ContactsLedgerView({
                     </div>
                   </div>
 
-                  {/* Card 2: Next Event (With student name under next event) */}
+                  {/* Card 3: Relationship (Expanded width so RELATIONSHIP fits with room to spare) */}
                   <div
                     className={cn(
-                      "p-3 rounded-2xl border flex flex-col justify-between min-h-[96px]",
+                      "p-3 sm:p-3.5 rounded-2xl border transition-all flex flex-col justify-between min-h-[82px]",
                       isLight
-                        ? "bg-[#EFE3C8]/80 border-[#C7B594]"
-                        : "bg-[#07162C]/80 border-[#182C48]"
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Calendar className="h-3.5 w-3.5 text-[#D4AF37] shrink-0" />
-                      <span
-                        className={cn(
-                          "text-[10px] font-serif font-bold uppercase tracking-wider",
-                          isLight ? "text-[#5C451D]" : "text-[#C7B596]"
-                        )}
-                      >
-                        Next Event
-                      </span>
-                    </div>
-                    <div>
-                      <p
-                        className={cn(
-                          "font-serif text-xs sm:text-[13px] font-bold leading-tight truncate",
-                          isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
-                        )}
-                      >
-                        IEP Meeting
-                      </p>
-                      <p
-                        className={cn(
-                          "text-[10px] sm:text-[10.5px] mt-0.5",
-                          isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
-                        )}
-                      >
-                        Oct 14, 2024
-                      </p>
-                      {dossierStudents.length > 0 && (
-                        <p
-                          className={cn(
-                            "text-[10px] sm:text-[10.5px] mt-0.5 font-medium truncate",
-                            isLight ? "text-[#785412]" : "text-[#E5C175]"
-                          )}
-                        >
-                          {dossierStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Card 3: Relationship (Wider column to fit the word RELATIONSHIP comfortably) */}
-                  <div
-                    className={cn(
-                      "p-3 rounded-2xl border flex flex-col justify-between min-h-[96px]",
-                      isLight
-                        ? "bg-[#EFE3C8]/80 border-[#C7B594]"
-                        : "bg-[#07162C]/80 border-[#182C48]"
+                        ? "bg-[#EFE3C8]/80 border-[#C7B594] shadow-xs"
+                        : "bg-[#07162C]/80 border-[#182C48] shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
                     )}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
@@ -1012,7 +1015,7 @@ export default function ContactsLedgerView({
                     <div>
                       <p
                         className={cn(
-                          "font-serif text-xs sm:text-[13px] font-bold leading-tight truncate",
+                          "font-serif text-xs sm:text-sm font-bold leading-tight truncate",
                           isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
                         )}
                       >
@@ -1020,7 +1023,7 @@ export default function ContactsLedgerView({
                       </p>
                       <p
                         className={cn(
-                          "text-[10px] sm:text-[10.5px] mt-0.5 truncate",
+                          "text-[10.5px] mt-0.5 truncate",
                           isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
                         )}
                       >
