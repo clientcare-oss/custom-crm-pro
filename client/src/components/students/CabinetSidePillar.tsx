@@ -61,14 +61,15 @@ export function CabinetSidePillar({ side, className }: CabinetSidePillarProps) {
   return (
     <div
       className={cn(
-        "w-[22px] sm:w-[30px] lg:w-[36px] shrink-0 relative flex flex-col z-[1] pointer-events-none select-none self-stretch",
+        "w-[18px] sm:w-[28px] lg:w-[34px] shrink-0 relative flex flex-col z-[1] pointer-events-none select-none self-stretch",
+        "brightness-[0.92] contrast-[1.06]",
         isLeft
-          ? "shadow-[5px_0_16px_rgba(0,0,0,0.92)]"
-          : "shadow-[-5px_0_16px_rgba(0,0,0,0.92)]",
+          ? "shadow-[4px_0_12px_rgba(0,0,0,0.85)]"
+          : "shadow-[-4px_0_12px_rgba(0,0,0,0.85)]",
         className
       )}
     >
-      {/* ─── Seamless Vertical Rich Walnut Wood Grain Shaft (Runs behind top bar, tiles continuously) ─── */}
+      {/* ─── Seamless Vertical Dark Navy Wooden Shaft (Runs behind top bar, tiles continuously) ─── */}
       <div
         className={cn("flex-1 w-full", !isLeft && "scale-x-[-1]")}
         style={{
@@ -79,15 +80,13 @@ export function CabinetSidePillar({ side, className }: CabinetSidePillarProps) {
         }}
       />
 
-      {/* ─── Bottom Metal Collar Bracket & 3D Brass Bolt on Peg (No brown border line) ─── */}
-      <div
-        className={cn(
-          "w-full shrink-0 flex flex-col items-center justify-end pb-2 pt-2 relative z-20",
-          "bg-gradient-to-b from-[#241708] via-[#140D05] to-[#0A0502]",
-          "shadow-[0_-3px_10px_rgba(0,0,0,0.85)]"
-        )}
-      >
-        <BrassPegBolt className="w-4 h-4 sm:w-5 sm:h-5 lg:w-5.5 lg:h-5.5" />
+      {/* ─── Bottom Brass Rivet Cap (Anchored to the very bottom of the credenza) ─── */}
+      <div className={cn("w-full h-[39px] shrink-0", !isLeft && "scale-x-[-1]")}>
+        <img
+          src="/decor/cabinet-pillar-bottom-cap.png"
+          alt=""
+          className="w-full h-[39px] object-cover pointer-events-none select-none"
+        />
       </div>
     </div>
   );
