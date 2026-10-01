@@ -316,7 +316,7 @@ export default function Contacts() {
               </Dialog>
 
         {/* ─── Main Content: Ledger Book Resting on Executive Desk ─── */}
-        <div className="w-full relative z-10 mt-1 sm:mt-2 pb-6 drop-shadow-[0_12px_32px_rgba(0,0,0,0.85)]">
+        <div className="w-full relative z-10 -mt-4 sm:-mt-6 lg:-mt-7 pb-6 drop-shadow-[0_12px_32px_rgba(0,0,0,0.85)]">
           <ContactsLedgerView
             contacts={contacts || []}
             searchQuery={searchQuery}
