@@ -663,7 +663,7 @@ export default function ContactsLedgerView({
 
                     {/* Contact Header Content */}
                     <div className="flex-1 min-w-0">
-                      {/* Top Line: Tags & Badges (Active Family, Sponsor, Add Tag) */}
+                      {/* Top Line: Tags & Badges (Active Family + Student Name) */}
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
                         {activeBadge && (
                           <span
@@ -677,31 +677,23 @@ export default function ContactsLedgerView({
                             {activeBadge.label}
                           </span>
                         )}
-                        {dossierContact.company && (
-                          <span
-                            className={cn(
-                              "px-2.5 py-0.5 rounded-full text-[10.5px] font-serif font-medium border truncate max-w-[180px]",
-                              isLight
-                                ? "bg-[#EFE3C8] text-[#3D2908] border-[#C7B594]"
-                                : "bg-[#091D38] text-[#93C5FD] border-[#1D4E89]"
-                            )}
-                          >
-                            {dossierContact.company}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => onEditContact(dossierContact)}
-                          className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold border transition-all cursor-pointer",
-                            isLight
-                              ? "border-dashed border-[#A6884E] text-[#634816] hover:bg-[#EAE0CA]"
-                              : "border-dashed border-[#2B548A] text-[#9BB7DC] hover:text-[#FFF2D9] hover:bg-white/5"
-                          )}
-                          title="Add or edit tags"
-                        >
-                          + Add Tag
-                        </button>
+
+                        {/* Student Name Tag (placed where Add Tag was) */}
+                        {dossierStudents.length > 0 &&
+                          dossierStudents.map((st) => (
+                            <span
+                              key={st.id}
+                              className={cn(
+                                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-serif font-medium tracking-tight whitespace-nowrap border shadow-xs",
+                                isLight
+                                  ? "bg-[#EFE3C8] text-[#3D2908] border-[#C7B594]"
+                                  : "bg-[#091D38] text-[#93C5FD] border-[#1D4E89]"
+                              )}
+                            >
+                              <GraduationCap className="h-3 w-3 text-[#E5C175]" />
+                              <span>{st.firstName} {st.lastName}</span>
+                            </span>
+                          ))}
                       </div>
 
                       {/* Parent / Contact Name (Dropped down, uninhibited full width) */}
@@ -714,17 +706,8 @@ export default function ContactsLedgerView({
                         {dossierContact.firstName} {dossierContact.lastName}
                       </h2>
 
-                      {/* Subtitle: Linked student relationship or job title */}
-                      {dossierStudents.length > 0 ? (
-                        <p
-                          className={cn(
-                            "text-xs sm:text-[13px] truncate mt-1 font-medium",
-                            isLight ? "text-[#736046]" : "text-[#E5C175]"
-                          )}
-                        >
-                          Parent of {dossierStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}
-                        </p>
-                      ) : dossierContact.jobTitle ? (
+                      {/* Professional subtitle (only if no linked students, e.g. advocate or school personnel) */}
+                      {dossierStudents.length === 0 && dossierContact.jobTitle && (
                         <p
                           className={cn(
                             "font-serif text-xs sm:text-sm font-medium mt-1 truncate",
@@ -733,7 +716,7 @@ export default function ContactsLedgerView({
                         >
                           {dossierContact.jobTitle}
                         </p>
-                      ) : null}
+                      )}
                     </div>
                   </div>
 
