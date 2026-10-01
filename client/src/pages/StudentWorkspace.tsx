@@ -173,7 +173,6 @@ export default function StudentWorkspace() {
           >
             {[
               { id: "overview", label: "Overview", icon: User },
-              { id: "timeline", label: "Timeline", icon: Clock },
               { id: "communication", label: "Communication", icon: MessageSquare },
               { id: "tasks", label: "Tasks", icon: CheckSquare },
               { id: "notes", label: "Notes", icon: FileText },
@@ -451,7 +450,7 @@ export default function StudentWorkspace() {
                       </div>
 
                       <Button
-                        onClick={() => setActiveTab("timeline")}
+                        onClick={() => setActiveTab("more")}
                         variant="outline"
                         size="sm"
                         className="bg-transparent hover:bg-white/5 border-white/20 text-white text-xs sm:text-sm font-semibold rounded-lg h-8 px-3 gap-2 cursor-pointer"
@@ -476,19 +475,179 @@ export default function StudentWorkspace() {
               </div>
             )}
 
+            {/* ─── MORE TAB WORKSPACE: Clean Portfolio Desk for Timeline & Future Items ── */}
+            {activeTab === "more" && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8 gap-6">
+                
+                {/* ── LEFT PANEL: Case Timeline & Milestone Activity (~58% width) ── */}
+                <div className="lg:col-span-7 sm:px-4 py-2 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-white/15">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-md">
+                          <Clock className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 
+                            className="text-lg sm:text-xl font-bold text-white tracking-wide drop-shadow-sm"
+                            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                          >
+                            Case Timeline & Milestones
+                          </h3>
+                          <p className="text-xs text-white/60">
+                            Advocacy timeline and chronological activity log for {fullName}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                        Live Timeline
+                      </Badge>
+                    </div>
+
+                    {/* Timeline Activity Trail */}
+                    <div className="space-y-3 relative pl-5 border-l-2 border-amber-400/30 my-3">
+                      <div className="relative">
+                        <div className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-amber-400 ring-4 ring-[#032146] shadow-[0_0_8px_rgba(217,163,53,0.8)]" />
+                        <div className="p-3.5 rounded-xl bg-[#020b18]/45 border border-white/15 hover:border-amber-400/30 transition-all">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs sm:text-sm font-semibold text-white">Initial Intake & Assessment Completed</span>
+                            <span className="text-[10px] text-amber-300/80 font-mono">{clientTime} · Today</span>
+                          </div>
+                          <p className="text-xs text-white/70 mt-1">
+                            Discovery intake records recorded. Case assigned to advocacy team for review.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-sky-400 ring-4 ring-[#032146]" />
+                        <div className="p-3.5 rounded-xl bg-[#020b18]/45 border border-white/15 hover:border-sky-400/30 transition-all">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs sm:text-sm font-semibold text-white">IEP Document Ingestion</span>
+                            <span className="text-[10px] text-sky-300/80 font-mono">Recent Milestone</span>
+                          </div>
+                          <p className="text-xs text-white/70 mt-1">
+                            Current IEP & accommodations cataloged. Goal tracking initialized.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-emerald-400 ring-4 ring-[#032146]" />
+                        <div className="p-3.5 rounded-xl bg-[#020b18]/30 border border-white/10">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs sm:text-sm font-semibold text-white/90">Case Compass Baseline Configured</span>
+                            <span className="text-[10px] text-emerald-300/80 font-mono">Baseline</span>
+                          </div>
+                          <p className="text-xs text-white/60 mt-1">
+                            Dispute probability set. First Mate live meeting assistance ready.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Footer on Left Panel */}
+                  <div className="pt-4 flex items-center justify-between border-t border-white/15 mt-3">
+                    <span className="text-xs text-white/50">
+                      Timeline synced with Case ID #{student?.caseId || studentId}
+                    </span>
+                    <Button
+                      onClick={() => setActiveTab("overview")}
+                      variant="outline"
+                      size="sm"
+                      className="bg-transparent hover:bg-white/10 border-white/20 text-white text-xs h-8 px-3 rounded-lg cursor-pointer"
+                    >
+                      Return to Overview Desk
+                    </Button>
+                  </div>
+                </div>
+
+                {/* ── RIGHT PANEL: Clean Canvas / Slots for More Items (~42% width) ── */}
+                <div className="lg:col-span-5 sm:px-4 py-2 flex flex-col justify-between space-y-4">
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-white/15">
+                      <div>
+                        <h4 className="text-xs font-bold text-white tracking-wider uppercase">
+                          Portfolio Space & Modules
+                        </h4>
+                        <p className="text-[11px] text-white/50">Clean portfolio slots for additional items</p>
+                      </div>
+                      <Badge className="bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[10px] font-medium">
+                        More Canvas
+                      </Badge>
+                    </div>
+
+                    {/* Quick Student File Reference Card */}
+                    <div className="p-4 rounded-xl bg-[#020b18]/45 border border-white/15 hover:border-white/25 transition-all">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="text-xs font-bold text-white flex items-center gap-2">
+                          <User className="h-4 w-4 text-amber-400" />
+                          <span>Student File Reference</span>
+                        </span>
+                        <Button 
+                          onClick={() => setDetailsModalOpen(true)}
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-[11px] text-amber-300 hover:text-amber-200 hover:bg-white/10 rounded-md cursor-pointer"
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-black/25 p-2.5 rounded-lg border border-white/5">
+                          <span className="text-white/40 block text-[9px] uppercase font-bold">Grade & School</span>
+                          <span className="text-white font-medium">{student?.gradeLevel || "5th Grade"} · {student?.schoolName || "Lincoln Elementary"}</span>
+                        </div>
+                        <div className="bg-black/25 p-2.5 rounded-lg border border-white/5">
+                          <span className="text-white/40 block text-[9px] uppercase font-bold">Parent Contact</span>
+                          <span className="text-white font-medium">{parentName}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Open Portfolio Slot Card (Clean space ready for things Byron wants to put on it) */}
+                    <div className="p-5 rounded-xl border border-dashed border-white/25 bg-white/[0.02] flex flex-col items-center justify-center text-center py-8">
+                      <div className="w-10 h-10 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-white/40 mb-2.5">
+                        <MoreHorizontal className="h-5 w-5" />
+                      </div>
+                      <p className="text-xs font-semibold text-white/90">Clean Folio Space</p>
+                      <p className="text-[11px] text-white/50 mt-1 max-w-[260px]">
+                        This tab of the portfolio is ready for any additional tools, notes, or widgets you want to place here.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Legacy Workspace Button */}
+                  <div className="pt-2">
+                    <Button
+                      onClick={() => setLocation(`/archived/students/${studentId}`)}
+                      variant="outline"
+                      className="w-full border-white/15 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 text-xs rounded-xl h-9 cursor-pointer"
+                    >
+                      Open Legacy Workspace (PG-030-ARC)
+                    </Button>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
             {/* Fallback View for Other Tabs */}
-            {activeTab !== "overview" && (
+            {activeTab !== "overview" && activeTab !== "more" && (
               <div className="p-12 min-h-[480px] flex flex-col items-center justify-center text-center space-y-4">
                 <div className="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-lg">
-                  {activeTab === "timeline" && <Clock className="h-7 w-7" />}
                   {activeTab === "communication" && <MessageSquare className="h-7 w-7" />}
                   {activeTab === "tasks" && <CheckSquare className="h-7 w-7" />}
                   {activeTab === "notes" && <FileText className="h-7 w-7" />}
                   {activeTab === "documents" && <Folder className="h-7 w-7" />}
-                  {activeTab === "more" && <MoreHorizontal className="h-7 w-7" />}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white capitalize">{activeTab} Workspace</h3>
+                  <h3 className="text-xl font-bold text-white capitalize">
+                    {activeTab} Workspace
+                  </h3>
                   <p className="text-xs text-white/60 mt-1 max-w-md">
                     Active section for {fullName}. You can also reference the original 11-tab legacy console anytime.
                   </p>
@@ -496,14 +655,14 @@ export default function StudentWorkspace() {
                 <div className="flex items-center gap-3 pt-2">
                   <Button
                     onClick={() => setActiveTab("overview")}
-                    className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl h-9 px-4"
+                    className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl h-9 px-4 cursor-pointer"
                   >
                     Return to Overview Desk
                   </Button>
                   <Button
                     onClick={() => setLocation(`/archived/students/${studentId}`)}
                     variant="outline"
-                    className="border-white/20 text-white bg-white/5 hover:bg-white/10 text-xs rounded-xl h-9 px-4"
+                    className="border-white/20 text-white bg-white/5 hover:bg-white/10 text-xs rounded-xl h-9 px-4 cursor-pointer"
                   >
                     Open Legacy Workspace (PG-030-ARC)
                   </Button>
