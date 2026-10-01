@@ -447,19 +447,19 @@ export default function Students() {
                   type="button"
                   onClick={() => setListCategory(tab.id as any)}
                   className={cn(
-                    "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                    "flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-xs font-serif transition-all cursor-pointer whitespace-nowrap tracking-wide",
                     listCategory === tab.id
-                      ? "bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] shadow-[0_2px_8px_rgba(216,164,82,0.4)]"
-                      : "bg-[#051327]/80 text-[#7E97B8] hover:text-[#E2EDF8] hover:bg-[#0E2344] border border-[#23436B]/50"
+                      ? "border border-[#E5C175] bg-gradient-to-b from-[#142B49] via-[#0E2038] to-[#081527] text-[#FFF4DD] font-semibold shadow-[0_0_12px_rgba(229,193,117,0.32),inset_0_1px_1px_rgba(255,255,255,0.18),0_2px_5px_rgba(0,0,0,0.6)]"
+                      : "border border-[#92836E]/70 hover:border-[#D4B886] bg-[#061220]/90 hover:bg-[#0B1E34] text-[#E5D7BF] hover:text-[#FFF4DD] font-medium shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_2px_4px_rgba(0,0,0,0.5)]"
                   )}
                 >
-                  <span>{tab.label}</span>
+                  <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">{tab.label}</span>
                   <span
                     className={cn(
-                      "px-1.5 py-0.5 rounded-full text-[10px] font-mono",
+                      "px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold tracking-tight transition-all",
                       listCategory === tab.id
-                        ? "bg-[#1A1208]/20 text-[#1A1208]"
-                        : "bg-[#030914] text-[#A6C2E2]"
+                        ? "bg-[#040E1E] border border-[#E5C175] text-[#FCE09E] shadow-[0_0_8px_rgba(229,193,117,0.35)]"
+                        : "bg-[#020813] border border-[#6B5A42]/60 text-[#CDB694]"
                     )}
                   >
                     {tab.count}
