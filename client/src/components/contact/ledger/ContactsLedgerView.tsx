@@ -635,7 +635,7 @@ export default function ContactsLedgerView({
                 {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
                 <div className="space-y-4">
                   <div className="flex items-start gap-3.5 min-w-0">
-                    {/* Large Initials Avatar with Gold Star Emblem */}
+                    {/* Large Initials Avatar */}
                     <div className="relative shrink-0">
                       <div
                         className={cn(
@@ -646,18 +646,6 @@ export default function ContactsLedgerView({
                         )}
                       >
                         {getInitials(dossierContact.firstName, dossierContact.lastName)}
-                      </div>
-
-                      {/* Gold Star Badge (at 4 o'clock) */}
-                      <div
-                        className={cn(
-                          "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-xs",
-                          isLight
-                            ? "bg-[#D4AF37] border-[#5E420C] text-slate-950"
-                            : "bg-gradient-to-br from-[#FCE09E] to-[#B89230] border-[#3D2704] text-[#1F1202]"
-                        )}
-                      >
-                        <Star className="h-3 w-3 fill-current" />
                       </div>
                     </div>
 
