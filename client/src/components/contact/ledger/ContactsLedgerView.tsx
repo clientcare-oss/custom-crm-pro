@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   Phone,
@@ -21,6 +21,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { formatPhone } from "@/lib/phone";
 import {
+  getTimeInZone,
+  getCallingStatus,
+  detectTimeZoneFromLocation,
+  getFriendlyTimeZoneName,
+  getTimeDifferenceHours,
+  formatTimeDifferenceText,
+} from "@shared/timezones";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -41,6 +49,57 @@ export interface ContactItem {
   caseId?: string | null;
   notes?: string | null;
   createdAt?: string | Date;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  confirmedTimeZone?: string | null;
+  timezone?: string | null;
+  preferredCallingStartTime?: string | null;
+  preferredCallingEndTime?: string | null;
+  mayCallOutsidePreferredHours?: boolean | null;
+}
+
+const AREA_CODE_TIMEZONE_MAP: Record<string, string> = {
+  // Eastern
+  "201": "America/New_York", "202": "America/New_York", "203": "America/New_York",
+  "404": "America/New_York", "678": "America/New_York", "770": "America/New_York", "470": "America/New_York",
+  "212": "America/New_York", "315": "America/New_York", "516": "America/New_York", "718": "America/New_York",
+  "914": "America/New_York", "917": "America/New_York", "617": "America/New_York", "508": "America/New_York",
+  "215": "America/New_York", "412": "America/New_York", "216": "America/New_York", "614": "America/New_York",
+  "305": "America/New_York", "407": "America/New_York", "813": "America/New_York", "904": "America/New_York",
+  "704": "America/New_York", "919": "America/New_York", "803": "America/New_York", "843": "America/New_York",
+  "703": "America/New_York", "804": "America/New_York", "410": "America/New_York", "301": "America/New_York",
+  // Central
+  "312": "America/Chicago", "773": "America/Chicago", "872": "America/Chicago",
+  "214": "America/Chicago", "469": "America/Chicago", "972": "America/Chicago",
+  "713": "America/Chicago", "281": "America/Chicago", "832": "America/Chicago",
+  "512": "America/Chicago", "210": "America/Chicago", "615": "America/Chicago",
+  "901": "America/Chicago", "314": "America/Chicago", "816": "America/Chicago",
+  "612": "America/Chicago", "651": "America/Chicago", "414": "America/Chicago",
+  "504": "America/Chicago", "205": "America/Chicago", "251": "America/Chicago",
+  // Mountain
+  "303": "America/Denver", "720": "America/Denver", "801": "America/Denver",
+  "385": "America/Denver", "505": "America/Denver", "208": "America/Denver",
+  "480": "America/Phoenix", "602": "America/Phoenix", "623": "America/Phoenix", "520": "America/Phoenix",
+  // Pacific
+  "206": "America/Los_Angeles", "253": "America/Los_Angeles", "425": "America/Los_Angeles",
+  "503": "America/Los_Angeles", "971": "America/Los_Angeles",
+  "213": "America/Los_Angeles", "310": "America/Los_Angeles", "323": "America/Los_Angeles",
+  "415": "America/Los_Angeles", "510": "America/Los_Angeles", "650": "America/Los_Angeles",
+  "619": "America/Los_Angeles", "858": "America/Los_Angeles", "916": "America/Los_Angeles",
+  "702": "America/Los_Angeles", "775": "America/Los_Angeles",
+  // Alaska & Hawaii
+  "907": "America/Anchorage",
+  "808": "Pacific/Honolulu",
+};
+
+function getTimeZoneFromPhone(phone?: string | null): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  const clean = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (clean.length < 3) return null;
+  const areaCode = clean.slice(0, 3);
+  return AREA_CODE_TIMEZONE_MAP[areaCode] || null;
 }
 
 export interface ContactsLedgerViewProps {
@@ -286,6 +345,55 @@ export default function ContactsLedgerView({
   };
 
   const activeBadge = dossierContact ? getContactBadge(dossierContact) : null;
+
+  // Live clock tick (every 30 seconds)
+  const [liveNow, setLiveNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setLiveNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Time Zone Intelligence for active dossier contact
+  const dossierTimeZone = useMemo(() => {
+    if (!dossierContact) return "America/New_York";
+    if (dossierContact.confirmedTimeZone) return dossierContact.confirmedTimeZone;
+    if (dossierContact.timezone) return dossierContact.timezone;
+    if (dossierContact.city || dossierContact.state || dossierContact.zipCode) {
+      const detected = detectTimeZoneFromLocation(
+        dossierContact.city || undefined,
+        dossierContact.state || undefined,
+        dossierContact.zipCode || undefined
+      );
+      if (detected?.timeZone) return detected.timeZone;
+    }
+    const fromPhone = getTimeZoneFromPhone(dossierContact.phone);
+    if (fromPhone) return fromPhone;
+    return "America/New_York";
+  }, [dossierContact]);
+
+  const contactTime = useMemo(() => {
+    return getTimeInZone(dossierTimeZone, liveNow);
+  }, [dossierTimeZone, liveNow]);
+
+  const callingStatus = useMemo(() => {
+    return getCallingStatus(
+      dossierTimeZone,
+      {
+        preferredStart: dossierContact?.preferredCallingStartTime,
+        preferredEnd: dossierContact?.preferredCallingEndTime,
+        mayCallOutsidePreferred: dossierContact?.mayCallOutsidePreferredHours ?? false,
+      },
+      liveNow
+    );
+  }, [dossierTimeZone, dossierContact, liveNow]);
+
+  const diffHours = useMemo(() => {
+    return getTimeDifferenceHours(dossierTimeZone, "America/New_York", liveNow);
+  }, [dossierTimeZone, liveNow]);
+
+  const diffText = useMemo(() => {
+    return formatTimeDifferenceText(diffHours);
+  }, [diffHours]);
 
   return (
     <div
@@ -801,6 +909,56 @@ export default function ContactsLedgerView({
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </div>
+
+                  {/* Calling Safety & Time Zone Strip */}
+                  <div
+                    className={cn(
+                      "flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl border text-xs font-serif transition-all shadow-xs",
+                      isLight
+                        ? "bg-[#EFE3C8]/85 border-[#C7B594] text-[#2E1E05]"
+                        : "bg-[#06152B]/90 border-[#182C48] text-[#E0ECFC]"
+                    )}
+                    title={`${callingStatus.recommendation}${diffHours !== 0 ? ` · ${diffText}` : ""}`}
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Clock className="h-3.5 w-3.5 text-[#E5C175] shrink-0" />
+                      <span className="text-[11px] font-medium opacity-80">Local Time:</span>
+                      <span className="font-mono font-bold text-xs">{contactTime.timeString}</span>
+                      <span className="text-[10px] font-sans font-semibold text-[#E5C175] uppercase tracking-wider">
+                        ({contactTime.tzAbbr})
+                      </span>
+                      {diffHours !== 0 && (
+                        <span className="text-[10px] opacity-70 hidden sm:inline">
+                          · {diffText}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full shrink-0",
+                          callingStatus.status === "green"
+                            ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.85)] animate-pulse"
+                            : callingStatus.status === "yellow"
+                            ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.85)]"
+                            : "bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.85)]"
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "text-xs font-bold tracking-tight whitespace-nowrap",
+                          callingStatus.status === "green"
+                            ? "text-emerald-400"
+                            : callingStatus.status === "yellow"
+                            ? "text-amber-400"
+                            : "text-rose-400"
+                        )}
+                      >
+                        {callingStatus.label}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
