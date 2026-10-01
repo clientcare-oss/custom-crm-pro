@@ -144,7 +144,6 @@ export default function StudentWorkspace() {
         backgroundSize: "cover",
         backgroundPosition: "top center",
         backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
       }}
     >
       {/* ─── Top Clearance Area (leaves & lamp 100% visible) ───────────────── */}
