@@ -16,6 +16,7 @@ import {
   Trash2,
   Home,
   Check,
+  GraduationCap,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -152,12 +153,19 @@ export default function ContactsLedgerView({
         const phone = (c.phone || "").toLowerCase();
         const company = (c.company || "").toLowerCase();
         const jobTitle = (c.jobTitle || "").toLowerCase();
+        // Also match if any linked child has this name (e.g. searching student finds their parent!)
+        const matchesChild = contacts.some(
+          (child) =>
+            child.parentContactId === c.id &&
+            `${child.firstName || ""} ${child.lastName || ""}`.toLowerCase().includes(q)
+        );
         const match =
           fullName.includes(q) ||
           email.includes(q) ||
           phone.includes(q) ||
           company.includes(q) ||
-          jobTitle.includes(q);
+          jobTitle.includes(q) ||
+          matchesChild;
         if (!match) return false;
       }
 
@@ -195,7 +203,11 @@ export default function ContactsLedgerView({
 
   // Selected contact for the right-page dossier
   const [selectedContactId, setSelectedContactId] = useState<number | null>(() => {
-    return contacts[0]?.id ?? null;
+    // Prefer selecting a parent / primary family contact over a student
+    const firstParent = contacts.find(
+      (c) => (c.jobTitle || "").toLowerCase() !== "student" && !c.parentContactId
+    );
+    return firstParent?.id ?? contacts[0]?.id ?? null;
   });
 
   // Keep selected contact synced if list changes
@@ -204,7 +216,10 @@ export default function ContactsLedgerView({
       const found = contacts.find((c) => c.id === selectedContactId);
       if (found) return found;
     }
-    return filteredContacts[0] || contacts[0] || null;
+    const firstParent = filteredContacts.find(
+      (c) => (c.jobTitle || "").toLowerCase() !== "student" && !c.parentContactId
+    );
+    return firstParent || filteredContacts[0] || contacts[0] || null;
   }, [contacts, selectedContactId, filteredContacts]);
 
   // Linked students or parent for the active contact
@@ -218,6 +233,36 @@ export default function ContactsLedgerView({
     return contacts.find((c) => c.id === activeContact.parentContactId);
   }, [contacts, activeContact]);
 
+  // Determine if activeContact is a student
+  const isStudent = useMemo(() => {
+    if (!activeContact) return false;
+    return (
+      (activeContact.jobTitle || "").toLowerCase() === "student" ||
+      Boolean(activeContact.parentContactId)
+    );
+  }, [activeContact]);
+
+  // dossierContact: The primary contact person displayed at the top of the dossier.
+  // PER USER SPECIFICATION: In family cases, the parent/guardian is ALWAYS up top
+  // because that is the actual contact whom the advocate calls and messages for this case!
+  const dossierContact = useMemo(() => {
+    if (!activeContact) return null;
+    if (isStudent && parentContact) {
+      return parentContact;
+    }
+    return activeContact;
+  }, [activeContact, isStudent, parentContact]);
+
+  // dossierStudents: The student(s) linked to this dossier case
+  const dossierStudents = useMemo(() => {
+    if (!activeContact) return [];
+    if (isStudent && parentContact) {
+      const allKids = contacts.filter((c) => c.parentContactId === parentContact.id);
+      return allKids.length > 0 ? allKids : [activeContact];
+    }
+    return linkedStudents;
+  }, [activeContact, isStudent, parentContact, contacts, linkedStudents]);
+
   // Initials generator
   const getInitials = (first?: string | null, last?: string | null) => {
     const f = (first || "").trim()[0] || "";
@@ -225,7 +270,7 @@ export default function ContactsLedgerView({
     return (f + l).toUpperCase() || "WP";
   };
 
-  const activeBadge = activeContact ? getContactBadge(activeContact) : null;
+  const activeBadge = dossierContact ? getContactBadge(dossierContact) : null;
 
   return (
     <div
@@ -432,8 +477,18 @@ export default function ContactsLedgerView({
                                     isLight ? "text-[#5C4A32]" : "text-[#8CA4C4]"
                                   )}
                                 >
-                                  {contact.jobTitle || "Contact"}{" "}
-                                  {contact.company ? `· ${contact.company}` : ""}
+                                  {contact.jobTitle === "Student" && contact.parentContactId
+                                    ? `Student · Child of ${(() => {
+                                        const p = contacts.find((c) => c.id === contact.parentContactId);
+                                        return p ? `${p.firstName} ${p.lastName}` : "Parent";
+                                      })()}`
+                                    : (() => {
+                                        const kids = contacts.filter((c) => c.parentContactId === contact.id);
+                                        if (kids.length > 0) {
+                                          return `Parent of ${kids.map((k) => `${k.firstName} ${k.lastName}`).join(", ")}`;
+                                        }
+                                        return `${contact.jobTitle || "Contact"}${contact.company ? ` · ${contact.company}` : ""}`;
+                                      })()}
                                 </p>
                               </div>
                             </div>
@@ -548,7 +603,7 @@ export default function ContactsLedgerView({
               mobileTab === "directory" ? "hidden lg:flex" : "flex"
             )}
           >
-            {activeContact ? (
+            {dossierContact ? (
               <div className="h-full flex flex-col justify-between overflow-y-auto pr-1 select-none">
                 {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
                 <div className="space-y-4">
@@ -564,7 +619,7 @@ export default function ContactsLedgerView({
                               : "bg-gradient-to-br from-[#0F2647] to-[#040C1A] text-[#FFF2D9] border-[#E5C175] shadow-[0_0_16px_rgba(229,193,117,0.35)]"
                           )}
                         >
-                          {getInitials(activeContact.firstName, activeContact.lastName)}
+                          {getInitials(dossierContact.firstName, dossierContact.lastName)}
                         </div>
 
                         {/* Gold Star Badge (at 4 o'clock) */}
@@ -588,7 +643,7 @@ export default function ContactsLedgerView({
                             isLight ? "text-[#1C1405]" : "text-[#FFF2D9]"
                           )}
                         >
-                          {activeContact.firstName} {activeContact.lastName}
+                          {dossierContact.firstName} {dossierContact.lastName}
                         </h2>
 
                         <p
@@ -597,21 +652,17 @@ export default function ContactsLedgerView({
                             isLight ? "text-[#5C4A32]" : "text-[#C7B596]"
                           )}
                         >
-                          {activeContact.jobTitle || "Parent / Guardian"}
+                          {dossierContact.jobTitle || (dossierStudents.length > 0 ? "Parent / Guardian" : "Contact")}
                         </p>
 
-                        {(linkedStudents.length > 0 || parentContact) && (
+                        {dossierStudents.length > 0 && (
                           <p
                             className={cn(
-                              "text-xs truncate mt-0.5",
-                              isLight ? "text-[#736046]" : "text-[#8CA4C4]"
+                              "text-xs truncate mt-0.5 font-medium",
+                              isLight ? "text-[#736046]" : "text-[#E5C175]"
                             )}
                           >
-                            {linkedStudents.length > 0
-                              ? `Parent of ${linkedStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}`
-                              : parentContact
-                              ? `Child of ${parentContact.firstName} ${parentContact.lastName}`
-                              : ""}
+                            Parent of {dossierStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}
                           </p>
                         )}
                       </div>
@@ -634,9 +685,9 @@ export default function ContactsLedgerView({
 
                   {/* Quick Action Buttons Bar: Call, Email, Message, Dropdown Menu */}
                   <div className="flex items-center gap-2 pt-1 flex-wrap">
-                    {activeContact.phone ? (
+                    {dossierContact.phone ? (
                       <a
-                        href={`tel:${activeContact.phone}`}
+                        href={`tel:${dossierContact.phone}`}
                         className={cn(
                           "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
                           isLight
@@ -658,9 +709,9 @@ export default function ContactsLedgerView({
                       </button>
                     )}
 
-                    {activeContact.email ? (
+                    {dossierContact.email ? (
                       <a
-                        href={`mailto:${activeContact.email}`}
+                        href={`mailto:${dossierContact.email}`}
                         className={cn(
                           "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
                           isLight
@@ -719,7 +770,7 @@ export default function ContactsLedgerView({
                         <DropdownMenuItem
                           onClick={() =>
                             setLocation(
-                              `/client-portal?preview=true&parentContactId=${activeContact.id}`
+                              `/client-portal?preview=true&parentContactId=${dossierContact.id}`
                             )
                           }
                           className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
@@ -728,14 +779,14 @@ export default function ContactsLedgerView({
                           <span>View Portal Preview</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => onEditContact(activeContact)}
+                          onClick={() => onEditContact(dossierContact)}
                           className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
                         >
                           <Edit2 className="h-3.5 w-3.5 text-[#93C5FD]" />
                           <span>Edit Contact</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => onDeleteContact(activeContact.id)}
+                          onClick={() => onDeleteContact(dossierContact.id)}
                           className="flex items-center gap-2 cursor-pointer hover:bg-red-950/60 text-red-400 text-xs py-2 rounded-lg"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -746,7 +797,7 @@ export default function ContactsLedgerView({
                   </div>
                 </div>
 
-                {/* 2. Middle Section: Linked Students / Parent Section */}
+                {/* 2. Middle Section: Linked Student Case(s) */}
                 <div
                   className={cn(
                     "my-4 p-3.5 rounded-2xl border transition-all select-none",
@@ -757,18 +808,14 @@ export default function ContactsLedgerView({
                 >
                   <div className="flex items-center justify-between gap-2 mb-2.5">
                     <div className="flex items-center gap-1.5">
-                      <LinkIcon className="h-3.5 w-3.5 text-[#D4AF37]" />
+                      <GraduationCap className="h-4 w-4 text-[#D4AF37]" />
                       <span
                         className={cn(
                           "font-serif text-xs font-bold uppercase tracking-wider",
                           isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
                         )}
                       >
-                        {linkedStudents.length > 0
-                          ? "Parent of"
-                          : parentContact
-                          ? "Linked Parent"
-                          : "Connected Case"}
+                        {dossierStudents.length > 1 ? "Linked Students" : "Linked Student"}
                       </span>
                     </div>
 
@@ -780,13 +827,13 @@ export default function ContactsLedgerView({
                         isLight ? "text-[#785412] hover:text-[#2E1D02]" : "text-[#D4AF37] hover:text-white"
                       )}
                     >
-                      View All
+                      All Students
                     </button>
                   </div>
 
-                  {linkedStudents.length > 0 ? (
+                  {dossierStudents.length > 0 ? (
                     <div className="space-y-2">
-                      {linkedStudents.map((student) => (
+                      {dossierStudents.map((student) => (
                         <div
                           key={student.id}
                           onClick={() => setLocation(`/contacts/${student.id}`)}
@@ -823,55 +870,13 @@ export default function ContactsLedgerView({
                                   isLight ? "text-[#63533E]" : "text-[#8CA4C4]"
                                 )}
                               >
-                                Student Case File
+                                Student Case File · Click to Open
                               </p>
                             </div>
                           </div>
                           <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
                         </div>
                       ))}
-                    </div>
-                  ) : parentContact ? (
-                    <div
-                      onClick={() => setSelectedContactId(parentContact.id)}
-                      className={cn(
-                        "flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-pointer group",
-                        isLight
-                          ? "bg-[#F8EFE0] hover:bg-[#FFF8ED] border-[#D1BE9B]"
-                          : "bg-[#040E1E]/90 hover:bg-[#091D38] border-[#1E375C]"
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={cn(
-                            "w-8 h-8 rounded-full flex items-center justify-center font-serif font-bold text-xs border shrink-0",
-                            isLight
-                              ? "bg-[#D9C49D] text-[#2E1E05] border-[#A88C56]"
-                              : "bg-[#0A233D] text-[#FCE09E] border-[#1F548A]"
-                          )}
-                        >
-                          {getInitials(parentContact.firstName, parentContact.lastName)}
-                        </div>
-                        <div>
-                          <h5
-                            className={cn(
-                              "font-serif text-xs sm:text-sm font-bold leading-tight group-hover:text-[#D4AF37] transition-colors",
-                              isLight ? "text-[#1C1405]" : "text-[#F4E8D3]"
-                            )}
-                          >
-                            {parentContact.firstName} {parentContact.lastName}
-                          </h5>
-                          <p
-                            className={cn(
-                              "text-[10.5px] mt-0.5",
-                              isLight ? "text-[#63533E]" : "text-[#8CA4C4]"
-                            )}
-                          >
-                            Parent / Guardian
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
                     </div>
                   ) : (
                     <p
@@ -880,7 +885,7 @@ export default function ContactsLedgerView({
                         isLight ? "text-[#7B6A53]" : "text-[#7990AF]"
                       )}
                     >
-                      No linked student or parent cases recorded yet.
+                      No linked student cases recorded for this contact.
                     </p>
                   )}
                 </div>
@@ -994,7 +999,7 @@ export default function ContactsLedgerView({
                           isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
                         )}
                       >
-                        {activeContact.jobTitle || "Parent / Guardian"}
+                        {dossierContact.jobTitle || (dossierStudents.length > 0 ? "Parent / Guardian" : "Contact")}
                       </p>
                       <p
                         className={cn(
@@ -1002,7 +1007,7 @@ export default function ContactsLedgerView({
                           isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
                         )}
                       >
-                        {activeContact.company || "Waypoint Client"}
+                        {dossierContact.company || (dossierStudents.length > 0 ? "Waypoint Client Family" : "Waypoint Contact")}
                       </p>
                     </div>
                   </div>
