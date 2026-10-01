@@ -106,17 +106,17 @@ export function StudentsListView({
 
   return (
     <div className={cn("w-full px-1.5 sm:px-2 select-none flex flex-col space-y-1.5", className)}>
-      {/* ─── List Header Mounted On Rounded Executive Navy Bar ─── */}
-      <div className="w-full grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border border-[#08121C] bg-gradient-to-b from-[#182A3C] via-[#112233] to-[#0D1A27] shadow-[inset_0_1px_0_rgba(56,92,128,0.45),inset_0_-1px_0_rgba(0,0,0,0.65),0_3px_8px_rgba(0,0,0,0.5)] text-xs font-serif text-[#CBD7E8] tracking-wide mb-1 gap-2 sm:gap-4">
+      {/* ─── List Header Mounted On Rounded Executive Navy Bar (Brighter than Rows) ─── */}
+      <div className="w-full grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border border-[#2B4B72] bg-gradient-to-b from-[#254263] via-[#1A334E] to-[#13263A] shadow-[inset_0_1px_0_rgba(135,185,245,0.5),inset_0_-1px_0_rgba(0,0,0,0.65),0_3px_10px_rgba(0,0,0,0.55)] text-xs font-serif text-[#E2EDF8] tracking-wide mb-1 gap-2 sm:gap-4">
         {/* Student */}
         <button
           type="button"
           onClick={() => toggleSort("student")}
           className="flex items-center gap-1.5 hover:text-white cursor-pointer transition-colors text-left font-serif min-w-0"
         >
-          <span className="text-[#38BDF8] font-serif text-sm shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">⚓</span>
-          <span className="truncate font-medium text-[#F0DFC5]">Student</span>
-          <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
+          <span className="text-[#38BDF8] font-serif text-sm shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">⚓</span>
+          <span className="truncate font-semibold text-[#FFFFFF] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Student</span>
+          <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0] shrink-0" />
         </button>
 
         {/* Plan Type */}
@@ -126,8 +126,8 @@ export function StudentsListView({
             onClick={() => toggleSort("plan")}
             className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif"
           >
-            <span className="border-b-2 border-[#E9BA6B] pb-0.5 font-semibold text-[#F0DFC5]">Plan</span>
-            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696]" />
+            <span className="border-b-2 border-[#F3CD80] pb-0.5 font-bold text-[#FDF4E3] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Plan</span>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0]" />
           </button>
         </div>
 
@@ -138,8 +138,8 @@ export function StudentsListView({
             onClick={() => toggleSort("status")}
             className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif"
           >
-            <span className="text-[#CBD7E8]">Status</span>
-            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696]" />
+            <span className="font-medium text-[#E2EDF8] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Status</span>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0]" />
           </button>
         </div>
 
@@ -149,8 +149,8 @@ export function StudentsListView({
           onClick={() => toggleSort("meeting")}
           className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif min-w-0"
         >
-          <span className="truncate text-[#CBD7E8]">Next Meeting</span>
-          <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
+          <span className="truncate font-medium text-[#E2EDF8] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Next Meeting</span>
+          <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0] shrink-0" />
         </button>
 
         {/* Last Activity */}
@@ -159,13 +159,13 @@ export function StudentsListView({
           onClick={() => toggleSort("activity")}
           className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif min-w-0"
         >
-          <span className="truncate text-[#CBD7E8]">Last Activity</span>
-          <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
+          <span className="truncate font-medium text-[#E2EDF8] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Last Activity</span>
+          <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0] shrink-0" />
         </button>
 
         {/* Far Right Badge */}
         <div className="flex justify-end">
-          <div className="w-7 h-7 rounded-md flex items-center justify-center border border-[#E9BA6B]/50 text-[#E9BA6B] bg-[#0A1A30]/80 shadow-xs shrink-0">
+          <div className="w-7 h-7 rounded-md flex items-center justify-center border border-[#E9BA6B]/70 text-[#E9BA6B] bg-[#122742] shadow-[0_1px_3px_rgba(0,0,0,0.6)] shrink-0">
             <LayoutList className="w-3.5 h-3.5" />
           </div>
         </div>
