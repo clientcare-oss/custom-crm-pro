@@ -79,43 +79,44 @@ export default function StudentWorkspace() {
   const parentPhone = parent?.phone || student?.phone || "(404) 555-0199";
 
   return (
-    <div className="relative w-full min-h-screen overflow-x-hidden overflow-y-auto select-none bg-[#051124] text-slate-100 transition-all font-sans">
+    <div className="relative w-full min-h-screen overflow-x-hidden overflow-y-auto select-none bg-[#0b0d16] text-slate-100 transition-all font-sans">
       
-      {/* ─── 100% Pinned Full-Bleed Desk Surface Background ───────────────── */}
-      {/* Using 100% 100% ensures the plant (top-left) and lamp (top-right) are NEVER cropped out */}
+      {/* ─── Desk Surface Background Canvas (Scrolls 1:1 with page) ─────────── */}
       <div
-        className="fixed inset-y-0 right-0 z-0 pointer-events-none select-none overflow-hidden"
+        className="absolute top-0 left-0 right-0 z-0 pointer-events-none select-none"
         style={{
-          left: "var(--sidebar-width, 0px)",
           backgroundImage: "url('/decor/student-workspace-bg.jpg')",
-          backgroundSize: "100% 100%",
-          backgroundPosition: "top left",
+          backgroundSize: "100% auto",
+          backgroundPosition: "top center",
           backgroundRepeat: "no-repeat",
-          transform: "translateZ(0)",
-          willChange: "transform",
+          minHeight: "100vh",
+          height: "100%",
         }}
       />
 
       {/* ─── Interactive Desk Workspace Canvas ────────────────────────────── */}
       <div className="relative z-10 w-full min-h-screen flex flex-col justify-start pb-16">
         
-        {/* Top Section: Header Bar centered between the Plant (left) and the Lamp (right) */}
-        <div className="w-full max-w-[1100px] xl:max-w-[1240px] 2xl:max-w-[1360px] mx-auto pt-6 px-6">
-          <header 
-            className="flex items-center justify-between px-6 py-2.5 rounded-xl bg-[#071933] border border-white/15 shadow-[0_8px_24px_rgba(0,0,0,0.6)]"
-            style={{ transform: "translateZ(0)", willChange: "transform" }}
-          >
+        {/* Top Section: Invisible Header Bar sitting above the glowing blue line, bounded between vines and lamp */}
+        <div 
+          className="w-full pt-3 sm:pt-4 md:pt-5 pb-2 relative z-20"
+          style={{
+            paddingLeft: "max(110px, 13%)",
+            paddingRight: "max(110px, 14%)",
+          }}
+        >
+          <header className="flex items-center justify-between w-full bg-transparent border-0 shadow-none px-0 py-1">
             
             {/* Left: Title & Breadcrumbs */}
             <div className="flex items-center gap-3.5">
               <h1 
-                className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
                 Student Workspace
               </h1>
-              <span className="text-white/30 text-lg font-light">|</span>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-white/75">
+              <span className="text-sky-300/40 text-lg font-light">|</span>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-sky-100/90 font-medium drop-shadow-sm">
                 <button 
                   onClick={() => setLocation("/students")}
                   className="hover:text-amber-300 transition-colors cursor-pointer"
@@ -123,7 +124,7 @@ export default function StudentWorkspace() {
                   Students
                 </button>
                 <span className="text-white/40">/</span>
-                <span className="text-white/95 font-medium">{fullName}</span>
+                <span className="text-white font-semibold">{fullName}</span>
               </div>
             </div>
 
@@ -136,9 +137,9 @@ export default function StudentWorkspace() {
                   const targetUrl = student?.caseId ? `/portal?caseId=${student.caseId}` : `/portal`;
                   window.open(targetUrl, "_blank");
                 }}
-                className="bg-[#0b2447] hover:bg-[#12315b] border-white/20 text-white text-xs font-medium rounded-lg h-8 px-3.5 gap-2 transition-all shadow-sm cursor-pointer"
+                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3.5 gap-2 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
               >
-                <Eye className="h-3.5 w-3.5 text-white/80" />
+                <Eye className="h-3.5 w-3.5 text-sky-300" />
                 <span>Preview Parent Portal</span>
               </Button>
 
@@ -146,7 +147,7 @@ export default function StudentWorkspace() {
                 variant="outline"
                 size="icon"
                 onClick={() => setLocation(`/archived/students/${studentId}`)}
-                className="h-8 w-8 rounded-lg bg-[#0b2447] hover:bg-[#12315b] border-white/20 text-white/80 hover:text-white transition-all shadow-sm cursor-pointer"
+                className="h-8 w-8 rounded-lg bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-200 hover:text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
                 title="More options & Legacy Workspace (PG-030-ARC)"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -156,7 +157,7 @@ export default function StudentWorkspace() {
         </div>
 
         {/* ─── Folio Area (Tabs + Leather Desk Pad) ─────────────────────────── */}
-        <div className="w-full max-w-[1240px] xl:max-w-[1380px] 2xl:max-w-[1500px] mx-auto mt-4 px-6 flex flex-col">
+        <div className="w-full max-w-[1240px] xl:max-w-[1380px] 2xl:max-w-[1500px] mx-auto mt-6 sm:mt-8 px-6 flex flex-col relative z-20">
           
           {/* Folio Index Tabs (sitting right on top of the desk pad) */}
           <div className="flex items-end justify-start gap-1 px-6 -mb-[1px] relative z-20 overflow-x-auto no-scrollbar">
