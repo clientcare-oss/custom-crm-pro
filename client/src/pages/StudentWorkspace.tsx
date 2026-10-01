@@ -89,10 +89,10 @@ export default function StudentWorkspace() {
       }}
     >
       {/* ─── Top Clearance Area (leaves & lamp 100% visible) ───────────────── */}
-      <div className="w-full max-w-[1500px] 2xl:max-w-[1640px] mx-auto pt-7 pb-12 px-6 sm:px-8 flex flex-col gap-5">
+      <div className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto pt-6 pb-12 px-2 sm:px-4 flex flex-col gap-4">
         
         {/* Top Header Row (Floats cleanly below plants & lamp) */}
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between px-2">
           {/* Title & Breadcrumbs */}
           <div className="flex items-center gap-3.5">
             <h1 
@@ -123,7 +123,7 @@ export default function StudentWorkspace() {
                 const targetUrl = student?.caseId ? `/portal?caseId=${student.caseId}` : `/portal`;
                 window.open(targetUrl, "_blank");
               }}
-              className="bg-[#0b1c36]/85 hover:bg-[#122b52] border-white/20 text-white text-xs sm:text-sm font-medium rounded-lg h-9 px-4 gap-2 backdrop-blur-md transition-all shadow-md cursor-pointer"
+              className="bg-[#0b1c36]/80 hover:bg-[#122b52] border-white/20 text-white text-xs sm:text-sm font-medium rounded-lg h-9 px-4 gap-2 backdrop-blur-md transition-all shadow-md cursor-pointer"
             >
               <Eye className="h-4 w-4 text-white/80" />
               <span>Preview Parent Portal</span>
@@ -133,7 +133,7 @@ export default function StudentWorkspace() {
               variant="outline"
               size="icon"
               onClick={() => setLocation(`/archived/students/${studentId}`)}
-              className="h-9 w-9 rounded-lg bg-[#0b1c36]/85 hover:bg-[#122b52] border-white/20 text-white/80 hover:text-white backdrop-blur-md transition-all shadow-md cursor-pointer"
+              className="h-9 w-9 rounded-lg bg-[#0b1c36]/80 hover:bg-[#122b52] border-white/20 text-white/80 hover:text-white backdrop-blur-md transition-all shadow-md cursor-pointer"
               title="More options & Legacy Workspace (PG-030-ARC)"
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -161,8 +161,8 @@ export default function StudentWorkspace() {
                 className={cn(
                   "relative flex items-center gap-2 px-5 py-2.5 rounded-t-xl text-xs sm:text-sm font-semibold tracking-wide transition-all border-t border-x cursor-pointer",
                   isActive
-                    ? "bg-[#0c284e] text-white border-white/25 shadow-[0_-4px_14px_rgba(0,0,0,0.55)] z-20 border-b-0 pb-3"
-                    : "bg-[#061427]/90 text-white/60 hover:text-white/95 hover:bg-[#081a33] border-white/10 border-b border-b-white/20 z-10"
+                    ? "bg-[#0b254a] text-white border-white/25 z-20 border-b-0 pb-3 shadow-[0_-4px_10px_rgba(0,0,0,0.3)]"
+                    : "bg-[#061427]/80 text-white/60 hover:text-white/95 hover:bg-[#081a33] border-white/10 border-b border-b-white/20 z-10"
                 )}
               >
                 <Icon className={cn("h-4 w-4", isActive ? "text-amber-400" : "text-white/50")} />
@@ -178,12 +178,12 @@ export default function StudentWorkspace() {
           })}
         </div>
 
-        {/* ─── The Real Textured Leather Folio Desk Pad ─────────────────────── */}
+        {/* ─── The Real Textured Leather Folio Desk Pad (Transparent Outer Container) ── */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative w-full rounded-2xl overflow-visible shadow-[0_30px_70px_rgba(0,0,0,0.85)]"
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="relative w-full bg-transparent overflow-visible"
           style={{
             backgroundImage: "url('/decor/student-workspace-folio.png')",
             backgroundSize: "100% 100%",
@@ -193,59 +193,59 @@ export default function StudentWorkspace() {
         >
           {/* Tab Content Display */}
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[680px] p-6 sm:p-8 md:p-10 lg:p-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 lg:p-12">
               
               {/* ─── LEFT PANEL: Student Profile & Family (~38% width) ──────── */}
-              <div className="lg:col-span-5 sm:px-8 py-4 flex flex-col justify-between relative">
+              <div className="lg:col-span-5 sm:px-8 py-3 flex flex-col justify-between relative">
                 <div className="flex flex-col items-center text-center">
                   
                   {/* Golden Glowing Avatar Badge */}
-                  <div className="relative mb-4 mt-1">
-                    <div className="w-24 h-24 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-3xl shadow-[0_0_28px_rgba(212,175,55,0.45)] ring-4 ring-[#081b35]/70">
+                  <div className="relative mb-3.5 mt-1">
+                    <div className="w-22 h-22 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-2xl sm:text-3xl shadow-[0_0_24px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/40">
                       {studentInitials}
                     </div>
                   </div>
 
                   {/* Student Name & School */}
                   <h2 
-                    className="text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                     style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     {fullName}
                   </h2>
-                  <p className="text-sm text-white/80 mt-1.5 drop-shadow-sm">
+                  <p className="text-xs sm:text-sm text-white/80 mt-1 drop-shadow-sm">
                     {student?.gradeLevel ? `${student.gradeLevel} Grade` : "5th Grade"} · {student?.schoolName || "Lincoln Elementary"}
                   </p>
 
                   {/* Pill Badges */}
-                  <div className="flex items-center gap-2.5 mt-3.5">
-                    <Badge className="bg-[#123159]/90 text-sky-200 hover:bg-[#123159] border border-sky-400/40 text-[11px] font-bold tracking-wider px-3 py-0.5 rounded-full shadow-sm">
+                  <div className="flex items-center gap-2 mt-3">
+                    <Badge className="bg-[#123159]/80 text-sky-200 hover:bg-[#123159] border border-sky-400/40 text-[10px] sm:text-[11px] font-bold tracking-wider px-2.5 py-0.5 rounded-full">
                       IEP
                     </Badge>
-                    <Badge className="bg-[#093527]/90 text-emerald-300 hover:bg-[#093527] border border-emerald-500/40 text-[11px] font-medium px-3 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                    <Badge className="bg-[#093527]/80 text-emerald-300 hover:bg-[#093527] border border-emerald-500/40 text-[10px] sm:text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <span>{student?.studentStatus || "Active"}</span>
                     </Badge>
                   </div>
 
                   {/* Subtle Ornamental Divider */}
-                  <div className="w-full flex items-center justify-center my-6">
+                  <div className="w-full flex items-center justify-center my-5">
                     <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
-                    <div className="w-2 h-2 rotate-45 border border-amber-400/50 bg-amber-400/30 mx-2.5" />
+                    <div className="w-1.5 h-1.5 rotate-45 border border-amber-400/50 bg-amber-400/30 mx-2" />
                     <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
                   </div>
 
                   {/* Parent / Guardian Info */}
-                  <div className="w-full text-left space-y-2.5 px-3">
-                    <p className="text-[11px] font-bold tracking-widest uppercase text-white/50">
+                  <div className="w-full text-left space-y-2 px-2">
+                    <p className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-white/50">
                       PARENT / GUARDIAN
                     </p>
-                    <div className="flex items-center gap-3 text-sm text-white/95">
-                      <User className="h-4 w-4 text-white/60 shrink-0" />
+                    <div className="flex items-center gap-2.5 text-xs sm:text-sm text-white/95">
+                      <User className="h-3.5 w-3.5 text-white/60 shrink-0" />
                       <span className="font-semibold">{parentName}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-white/95">
-                      <Phone className="h-4 w-4 text-white/60 shrink-0" />
+                    <div className="flex items-center gap-2.5 text-xs sm:text-sm text-white/95">
+                      <Phone className="h-3.5 w-3.5 text-white/60 shrink-0" />
                       <a href={`tel:${parentPhone}`} className="hover:text-amber-300 transition-colors">
                         {parentPhone}
                       </a>
@@ -255,10 +255,10 @@ export default function StudentWorkspace() {
                   {/* Student Details Button */}
                   <button
                     onClick={() => setDetailsModalOpen(true)}
-                    className="w-full mt-6 py-3 px-5 rounded-xl bg-gradient-to-r from-[#0d2242]/90 to-[#122e56]/90 hover:from-[#13305c] hover:to-[#1a4078] border border-[#D4AF37]/60 text-white text-xs sm:text-sm font-semibold flex items-center justify-between shadow-lg transition-all cursor-pointer group"
+                    className="w-full mt-5 py-2.5 px-4 rounded-xl bg-[#0b2447]/60 hover:bg-[#102f5c]/80 border border-[#D4AF37]/50 text-white text-xs sm:text-sm font-semibold flex items-center justify-between transition-all cursor-pointer group shadow-sm"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="p-1 rounded bg-amber-400/20 text-amber-300 text-sm">🪪</span>
+                    <div className="flex items-center gap-2">
+                      <span className="p-1 rounded bg-amber-400/20 text-amber-300 text-xs">🪪</span>
                       <span>Student details</span>
                     </div>
                     <ChevronRight className="h-4 w-4 text-white/60 group-hover:translate-x-0.5 transition-transform" />
@@ -266,15 +266,15 @@ export default function StudentWorkspace() {
                 </div>
 
                 {/* Left Panel Footer: Call status, Portal, Plan */}
-                <div className="mt-8 pt-6 border-t border-white/10 space-y-2.5 text-xs sm:text-sm px-3">
+                <div className="mt-6 pt-5 border-t border-white/10 space-y-2 text-xs sm:text-sm px-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white/60">
-                      <Clock className="h-4 w-4" />
+                    <div className="flex items-center gap-1.5 text-white/60">
+                      <Clock className="h-3.5 w-3.5" />
                       <span>Client time</span>
                     </div>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <span className="text-white font-medium">{clientTime} Eastern</span>
-                      <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         Good to call
                       </span>
@@ -294,29 +294,29 @@ export default function StudentWorkspace() {
               </div>
 
               {/* ─── RIGHT PANEL: Current Focus & Action Center (~62% width) ── */}
-              <div className="lg:col-span-7 sm:px-8 py-4 flex flex-col justify-between">
+              <div className="lg:col-span-7 sm:px-8 py-3 flex flex-col justify-between">
                 <div>
                   {/* Current Focus Banner */}
-                  <div className="space-y-1.5">
-                    <p className="text-[11px] font-bold tracking-widest uppercase text-sky-300/90 drop-shadow">
+                  <div className="space-y-1">
+                    <p className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-sky-300/90 drop-shadow">
                       CURRENT FOCUS
                     </p>
                     <h3 
-                      className="text-3xl sm:text-[34px] font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
+                      className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
                       style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
                       {compass?.currentStatus || "Prepare for the next IEP meeting"}
                     </h3>
-                    <p className="text-sm text-white/80 drop-shadow">
+                    <p className="text-xs sm:text-sm text-white/80 drop-shadow">
                       {compass?.nextStep || "Review records and organize parent concerns."}
                     </p>
                   </div>
 
                   {/* Primary Action Buttons */}
-                  <div className="flex flex-wrap items-center gap-3.5 mt-5">
+                  <div className="flex flex-wrap items-center gap-3 mt-4">
                     <Button
                       onClick={() => setLocation(`/meeting-workspace/${studentId}`)}
-                      className="bg-gradient-to-r from-[#0d2242] to-[#14325c] hover:from-[#13305c] hover:to-[#1a4078] text-white border border-[#D4AF37]/80 font-semibold text-xs sm:text-sm rounded-xl h-11 px-6 gap-2.5 shadow-lg cursor-pointer"
+                      className="bg-gradient-to-r from-[#0d2242] to-[#14325c] hover:from-[#13305c] hover:to-[#1a4078] text-white border border-[#D4AF37]/80 font-semibold text-xs sm:text-sm rounded-xl h-10 px-5 gap-2 shadow-md cursor-pointer"
                     >
                       <Calendar className="h-4 w-4 text-amber-300" />
                       <span>Prepare for Meeting</span>
@@ -325,35 +325,35 @@ export default function StudentWorkspace() {
                     <Button
                       onClick={() => setLocation(`/post-meeting-review/${studentId}`)}
                       variant="outline"
-                      className="bg-[#081a33]/85 hover:bg-[#0c2447] text-white/95 hover:text-white border-white/20 font-semibold text-xs sm:text-sm rounded-xl h-11 px-6 gap-2.5 shadow-sm cursor-pointer"
+                      className="bg-[#081a33]/60 hover:bg-[#0c2447] text-white/95 hover:text-white border-white/20 font-semibold text-xs sm:text-sm rounded-xl h-10 px-5 gap-2 shadow-sm cursor-pointer"
                     >
                       <FileText className="h-4 w-4 text-white/75" />
                       <span>Post-Meeting Review</span>
                     </Button>
                   </div>
 
-                  {/* Middle Cards: Next Meeting & Next Actions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-7">
+                  {/* Middle Cards: Next Meeting & Next Actions (Transparent overlay on leather) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     
                     {/* Card 1: Next Meeting */}
-                    <div className="rounded-xl bg-[#040e1d]/80 border border-white/10 p-5 flex flex-col justify-between min-h-[180px] shadow-inner">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-white/50">
+                    <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-4 flex flex-col justify-between min-h-[160px]">
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-white/50">
                         <Calendar className="h-3.5 w-3.5" />
                         <span>NEXT MEETING</span>
                       </div>
 
                       {nextAppointment ? (
-                        <div className="my-2.5 space-y-1">
-                          <p className="text-base font-bold text-white">{nextAppointment.title || "IEP Review Session"}</p>
+                        <div className="my-2 space-y-1">
+                          <p className="text-sm sm:text-base font-bold text-white">{nextAppointment.title || "IEP Review Session"}</p>
                           <p className="text-xs sm:text-sm text-amber-300 font-medium">
                             {new Date(nextAppointment.date!).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                           </p>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center text-center my-2.5 space-y-1.5">
-                          <Calendar className="h-7 w-7 text-white/35" />
-                          <p className="text-sm font-semibold text-white/95">No meeting scheduled</p>
-                          <p className="text-xs text-white/55 max-w-[220px]">
+                        <div className="flex flex-col items-center text-center my-2 space-y-1">
+                          <Calendar className="h-6 w-6 text-white/35" />
+                          <p className="text-xs sm:text-sm font-semibold text-white/95">No meeting scheduled</p>
+                          <p className="text-[11px] text-white/55 max-w-[220px]">
                             Schedule a meeting to keep this case on track.
                           </p>
                         </div>
@@ -363,7 +363,7 @@ export default function StudentWorkspace() {
                         onClick={() => setScheduleModalOpen(true)}
                         size="sm"
                         variant="outline"
-                        className="w-full mt-2.5 bg-[#091b35]/85 hover:bg-[#0f2a52] border-[#D4AF37]/60 text-white text-xs sm:text-sm font-semibold rounded-lg h-9 gap-2 cursor-pointer shadow-sm"
+                        className="w-full mt-2 bg-[#091b35]/60 hover:bg-[#0f2a52] border-[#D4AF37]/50 text-white text-xs font-semibold rounded-lg h-8 gap-2 cursor-pointer"
                       >
                         <Calendar className="h-3.5 w-3.5 text-amber-300" />
                         <span>Schedule meeting</span>
@@ -371,13 +371,13 @@ export default function StudentWorkspace() {
                     </div>
 
                     {/* Card 2: Next Actions */}
-                    <div className="rounded-xl bg-[#040e1d]/80 border border-white/10 p-5 flex flex-col justify-between min-h-[180px] shadow-inner">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-white/50 mb-3">
+                    <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-4 flex flex-col justify-between min-h-[160px]">
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-white/50 mb-2.5">
                         <CheckSquare className="h-3.5 w-3.5" />
                         <span>NEXT ACTIONS</span>
                       </div>
 
-                      <div className="space-y-2.5">
+                      <div className="space-y-2">
                         {[
                           { id: "review-iep", label: "Review latest IEP" },
                           { id: "confirm-priorities", label: "Confirm parent priorities" },
@@ -388,13 +388,13 @@ export default function StudentWorkspace() {
                             <button
                               key={action.id}
                               onClick={() => toggleAction(action.id)}
-                              className="w-full flex items-center gap-3 text-left text-xs sm:text-sm text-white/90 hover:text-white transition-colors cursor-pointer group"
+                              className="w-full flex items-center gap-2.5 text-left text-xs sm:text-sm text-white/90 hover:text-white transition-colors cursor-pointer group"
                             >
                               <div className={cn(
-                                "w-4.5 h-4.5 rounded border flex items-center justify-center transition-all",
+                                "w-4 h-4 rounded border flex items-center justify-center transition-all",
                                 isDone 
                                   ? "bg-amber-400 border-amber-300 text-slate-950 font-bold" 
-                                  : "border-white/30 group-hover:border-amber-300 bg-black/30"
+                                  : "border-white/30 group-hover:border-amber-300 bg-black/20"
                               )}>
                                 {isDone && <CheckCircle2 className="h-3.5 w-3.5" />}
                               </div>
@@ -406,21 +406,21 @@ export default function StudentWorkspace() {
                         })}
                       </div>
 
-                      <div className="pt-2 text-xs text-white/40">
+                      <div className="pt-1.5 text-[11px] text-white/40">
                         {Object.values(checkedActions).filter(Boolean).length} of 3 completed
                       </div>
                     </div>
                   </div>
 
                   {/* Bottom Card: Recent Activity */}
-                  <div className="rounded-xl bg-[#040e1d]/80 border border-white/10 p-4 mt-5 flex items-center justify-between shadow-inner">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-white/50">
+                  <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-3.5 mt-4 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-white/50">
                         <FileText className="h-3.5 w-3.5" />
                         <span>RECENT ACTIVITY</span>
                       </div>
-                      <div className="flex items-center gap-2.5 text-xs sm:text-sm text-white/75">
-                        <Clock className="h-4 w-4 text-white/40" />
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-white/75">
+                        <Clock className="h-3.5 w-3.5 text-white/40" />
                         <span>Case updates appear here.</span>
                       </div>
                     </div>
@@ -429,21 +429,21 @@ export default function StudentWorkspace() {
                       onClick={() => setActiveTab("timeline")}
                       variant="outline"
                       size="sm"
-                      className="bg-transparent hover:bg-white/5 border-white/20 text-white text-xs sm:text-sm font-semibold rounded-lg h-9 px-3.5 gap-2 cursor-pointer"
+                      className="bg-transparent hover:bg-white/5 border-white/20 text-white text-xs sm:text-sm font-semibold rounded-lg h-8 px-3 gap-2 cursor-pointer"
                     >
-                      <Clock className="h-4 w-4 text-white/70" />
+                      <Clock className="h-3.5 w-3.5 text-white/70" />
                       <span>View timeline</span>
                     </Button>
                   </div>
                 </div>
 
                 {/* Bottom Center Hanging Tab */}
-                <div className="flex justify-center -mb-11 mt-6 relative z-30">
+                <div className="flex justify-center -mb-10 mt-5 relative z-30">
                   <button
                     onClick={() => setDetailsModalOpen(true)}
-                    className="flex items-center gap-2.5 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0c2242] to-[#122e54] border border-[#D4AF37]/80 text-white text-xs sm:text-sm font-bold shadow-[0_4px_20px_rgba(0,0,0,0.65)] hover:from-[#102c54] hover:to-[#183c6e] transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-[#0c2242] to-[#122e54] border border-[#D4AF37]/80 text-white text-xs sm:text-sm font-bold shadow-md hover:from-[#102c54] hover:to-[#183c6e] transition-all cursor-pointer"
                   >
-                    <FileText className="h-4 w-4 text-amber-300" />
+                    <FileText className="h-3.5 w-3.5 text-amber-300" />
                     <span>Case details</span>
                   </button>
                 </div>
