@@ -291,8 +291,8 @@ export default function ContactsLedgerView({
   return (
     <div
       className={cn(
-        "w-full flex-1 relative overflow-hidden select-none transition-all",
-        "h-[740px] sm:h-[780px] lg:h-[820px] min-h-[720px]"
+        "w-full flex-shrink-0 relative overflow-hidden select-none",
+        "h-[740px] sm:h-[780px] lg:h-[820px] min-h-[740px] sm:min-h-[780px] lg:min-h-[820px] max-h-[740px] sm:max-h-[780px] lg:max-h-[820px]"
       )}
       style={{
         backgroundImage: `url(${
