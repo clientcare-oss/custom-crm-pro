@@ -180,7 +180,7 @@ export default function Contacts() {
       <div className="min-h-full bg-[#020712] text-[#F0DFC5] flex flex-col">
         {/* ─── Top Full-Bleed Photographic Header Banner ─── */}
         {/* Desktop & Tablet View (Exact 1024:139 photographic header from mockup) */}
-        <div className="hidden md:block w-full border-b border-[#8A6731]/40 shadow-[0_12px_36px_rgba(0,0,0,0.95)] overflow-hidden bg-[#020B18]">
+        <div className="hidden md:block w-full border-b border-[#18283F] shadow-[0_12px_36px_rgba(0,0,0,0.95)] overflow-hidden bg-[#020B18]">
           <div
             className="w-full relative aspect-[1024/139] max-w-[1440px] mx-auto bg-no-repeat bg-[length:100%_100%] select-none"
             style={{ backgroundImage: "url('/decor/contacts-header-bg.png')" }}
@@ -234,7 +234,7 @@ export default function Contacts() {
 
         {/* Mobile View (< md) */}
         <div
-          className="md:hidden w-full relative border-b border-[#8A6731]/40 shadow-[0_8px_24px_rgba(0,0,0,0.9)] overflow-hidden bg-[#020B18] bg-no-repeat bg-cover bg-right px-4 py-5"
+          className="md:hidden w-full relative border-b border-[#18283F] shadow-[0_8px_24px_rgba(0,0,0,0.9)] overflow-hidden bg-[#020B18] bg-no-repeat bg-cover bg-right px-4 py-5"
           style={{ backgroundImage: "url('/decor/contacts-header-bg.png')" }}
         >
           <div className="relative z-10 flex flex-col gap-3">
