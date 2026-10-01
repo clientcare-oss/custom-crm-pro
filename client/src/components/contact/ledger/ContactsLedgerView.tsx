@@ -14,11 +14,10 @@ import {
   ExternalLink,
   Edit2,
   Trash2,
-  Sun,
-  Moon,
   Home,
   Check,
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { formatPhone } from "@/lib/phone";
 import {
@@ -75,9 +74,9 @@ export default function ContactsLedgerView({
 }: ContactsLedgerViewProps) {
   const [, setLocation] = useLocation();
 
-  // Ledger theme: "dark" (deep navy leather) or "light" (antique vellum parchment)
-  const [ledgerTheme, setLedgerTheme] = useState<"dark" | "light">("dark");
-  const isLight = ledgerTheme === "light";
+  // CRM Global Theme: "navy" (dark leather) or "blue" (antique vellum parchment)
+  const { theme } = useTheme();
+  const isLight = theme === "blue";
 
   // Category filter
   const [category, setCategory] = useState<CategoryFilter>("all");
@@ -229,90 +228,52 @@ export default function ContactsLedgerView({
   const activeBadge = activeContact ? getContactBadge(activeContact) : null;
 
   return (
-    <div className="w-full flex flex-col items-center justify-start p-2 sm:p-4 md:p-6 lg:p-8 select-none">
-      {/* ─── Top Ledger Toolbar & Theme Toggle ─── */}
-      <div className="w-full max-w-[1400px] mb-3 flex items-center justify-between gap-3 px-2">
-        <div className="flex items-center gap-2">
-          {/* Mobile Tab Switcher */}
-          <div className="lg:hidden flex items-center bg-[#071324] p-1 rounded-xl border border-[#1b2d45]">
-            <button
-              type="button"
-              onClick={() => setMobileTab("directory")}
-              className={cn(
-                "px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all",
-                mobileTab === "directory"
-                  ? "bg-[#D4AF37] text-slate-950 shadow-sm"
-                  : "text-[#C5B495] hover:text-white"
-              )}
-            >
-              Index Directory
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileTab("dossier")}
-              className={cn(
-                "px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all",
-                mobileTab === "dossier"
-                  ? "bg-[#D4AF37] text-slate-950 shadow-sm"
-                  : "text-[#C5B495] hover:text-white"
-              )}
-            >
-              Contact Dossier
-            </button>
-          </div>
-        </div>
-
-        {/* Theme Selector: Dark Leather / Antique Parchment */}
-        <div className="flex items-center gap-2 bg-[#06101E]/90 border border-[#1B2F4C] p-1 rounded-full shadow-md">
-          <button
-            type="button"
-            onClick={() => setLedgerTheme("dark")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-serif font-bold transition-all cursor-pointer",
-              !isLight
-                ? "bg-gradient-to-r from-[#182C48] to-[#0A182E] text-[#FFF2D9] border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.3)]"
-                : "text-[#8BA1C2] hover:text-white"
-            )}
-            title="Dark Leather Ledger"
-          >
-            <Moon className="h-3.5 w-3.5 text-[#F3D193]" />
-            <span className="hidden sm:inline">Dark Leather</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setLedgerTheme("light")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-serif font-bold transition-all cursor-pointer",
-              isLight
-                ? "bg-[#EFE3C8] text-[#2B1B08] border border-[#B89650] shadow-sm"
-                : "text-[#8BA1C2] hover:text-white"
-            )}
-            title="Light Parchment Ledger"
-          >
-            <Sun className="h-3.5 w-3.5 text-[#B87A18]" />
-            <span className="hidden sm:inline">Light Parchment</span>
-          </button>
-        </div>
+    <div
+      className={cn(
+        "w-full flex-1 relative overflow-hidden select-none transition-all",
+        "min-h-[calc(100vh-140px)]"
+      )}
+      style={{
+        backgroundImage: `url(${
+          isLight
+            ? "/decor/contacts-ledger-light.jpg"
+            : "/decor/contacts-ledger-dark.jpg"
+        })`,
+        backgroundSize: "100% 100%",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center top",
+      }}
+    >
+      {/* Mobile Tab Switcher (Visible only on < lg screens) */}
+      <div className="lg:hidden absolute top-2 right-3 z-30 flex items-center bg-[#071324]/90 backdrop-blur-sm p-1 rounded-xl border border-[#1b2d45] shadow-lg">
+        <button
+          type="button"
+          onClick={() => setMobileTab("directory")}
+          className={cn(
+            "px-2.5 py-1 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer",
+            mobileTab === "directory"
+              ? "bg-[#D4AF37] text-slate-950 shadow-sm"
+              : "text-[#C5B495] hover:text-white"
+          )}
+        >
+          Directory
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("dossier")}
+          className={cn(
+            "px-2.5 py-1 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer",
+            mobileTab === "dossier"
+              ? "bg-[#D4AF37] text-slate-950 shadow-sm"
+              : "text-[#C5B495] hover:text-white"
+          )}
+        >
+          Dossier
+        </button>
       </div>
 
-      {/* ─── Open Ledger Book Spread Container ─── */}
-      <div
-        className={cn(
-          "w-full max-w-[1400px] relative rounded-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.95),0_4px_16px_rgba(0,0,0,0.8)] border border-[#8C6D33]/50 transition-all",
-          "aspect-[1024/788] min-h-[680px]"
-        )}
-        style={{
-          backgroundImage: `url(${
-            isLight
-              ? "/decor/contacts-ledger-light.jpg"
-              : "/decor/contacts-ledger-dark.jpg"
-          })`,
-          backgroundSize: "100% 100%",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        {/* ─── Inner Spread Grid: Left Page, Spine, Right Page, Alphabet Rail ─── */}
-        <div className="absolute inset-0 flex">
+      {/* ─── Inner Spread Grid: Left Page, Spine, Right Page, Alphabet Rail ─── */}
+      <div className="absolute inset-0 flex">
           {/* ═══════════════════════════════════════════════════════════════════ */}
           {/* LEFT PAGE: Category Tabs + Alphabetical Contacts Directory         */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
@@ -1110,6 +1071,5 @@ export default function ContactsLedgerView({
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
