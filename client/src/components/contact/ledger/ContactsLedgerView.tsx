@@ -1039,7 +1039,7 @@ export default function ContactsLedgerView({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           {/* ALPHABET THUMB INDEX RAIL (Far Right Edge: 🏠, A through Z)        */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          <div className="w-[6.2%] h-full pt-[6.8%] pb-[4.2%] flex flex-col items-center justify-between z-20 select-none">
+          <div className="w-[6.2%] h-full pt-[4.8%] pb-[3.8%] flex flex-col items-center justify-between z-20 select-none">
             {ALPHABET.map((letter) => {
               const isHome = letter === "HOME";
               const isSelected =
