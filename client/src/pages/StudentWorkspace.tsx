@@ -3,13 +3,14 @@ import { trpc } from "@/lib/trpc";
 import { 
   Eye, MoreHorizontal, User, Clock, MessageSquare, 
   CheckSquare, FileText, Folder, Calendar, Phone, 
-  ChevronRight, CheckCircle2
+  ChevronRight, CheckCircle2, Sliders, Move, Copy, Check, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export default function StudentWorkspace() {
@@ -19,6 +20,40 @@ export default function StudentWorkspace() {
 
   // Active top index tab
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "communication" | "tasks" | "notes" | "documents" | "more">("overview");
+
+  // Interactive free-move tab positioning (saved in localStorage for Byron's live tuning)
+  const [tabOffsetX, setTabOffsetX] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("workspace_tabs_offset_x");
+      if (saved !== null) return parseInt(saved, 10);
+    }
+    return 24; // starting left offset in px
+  });
+
+  const [tabOffsetY, setTabOffsetY] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("workspace_tabs_offset_y");
+      if (saved !== null) return parseInt(saved, 10);
+    }
+    return 16; // starting overlap in px
+  });
+
+  const [showNudgeControls, setShowNudgeControls] = useState<boolean>(true);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+
+  const updateTabX = (val: number) => {
+    setTabOffsetX(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("workspace_tabs_offset_x", val.toString());
+    }
+  };
+
+  const updateTabY = (val: number) => {
+    setTabOffsetY(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("workspace_tabs_offset_y", val.toString());
+    }
+  };
 
   // Local checklist state for default actions
   const [checkedActions, setCheckedActions] = useState<Record<string, boolean>>({
@@ -163,8 +198,14 @@ export default function StudentWorkspace() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20"
         >
-          {/* Folio Index Tabs (seated directly on the blue line of the portfolio) */}
-          <div className="flex items-end justify-start gap-1.5 pl-5 sm:pl-7 md:pl-8 -mb-[42px] relative z-30 overflow-x-auto no-scrollbar">
+          {/* Folio Index Tabs (Free-move enabled with live X & Y offsets) */}
+          <div 
+            className="flex items-end justify-start gap-1.5 relative z-30 overflow-x-auto no-scrollbar transition-all"
+            style={{
+              paddingLeft: `${tabOffsetX}px`,
+              marginBottom: `-${tabOffsetY}px`,
+            }}
+          >
             {[
               { id: "overview", label: "Overview", icon: User },
               { id: "timeline", label: "Timeline", icon: Clock },
@@ -204,7 +245,7 @@ export default function StudentWorkspace() {
           <div
             className="relative w-full bg-transparent overflow-visible shadow-none border-0"
             style={{
-              backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev2')",
+              backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
               backgroundSize: "100% 100%",
               backgroundPosition: "center center",
               backgroundRepeat: "no-repeat",
@@ -212,7 +253,7 @@ export default function StudentWorkspace() {
           >
             {/* Tab Content Display */}
             {activeTab === "overview" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-12 sm:pt-14">
+              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
                 
                 {/* ─── LEFT PANEL: Student Profile & Family (~38% width) ────── */}
                 <div className="lg:col-span-5 sm:px-6 py-2 flex flex-col justify-between relative">
@@ -602,6 +643,123 @@ export default function StudentWorkspace() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Byron's Free-Move Tab Alignment HUD ───────────────────────────── */}
+      <div className="fixed bottom-6 left-6 z-50 select-none">
+        {showNudgeControls ? (
+          <div className="bg-[#06152b]/95 border-2 border-amber-400/60 text-white rounded-2xl p-4 shadow-2xl backdrop-blur-xl w-80 flex flex-col gap-3.5">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <div className="flex items-center gap-2">
+                <Sliders className="h-4 w-4 text-amber-400" />
+                <span className="text-xs font-bold tracking-tight text-white">Free-Move Tabs Nudge</span>
+              </div>
+              <button 
+                onClick={() => setShowNudgeControls(false)}
+                className="text-white/40 hover:text-white transition-colors cursor-pointer"
+                title="Minimize controller"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Readout coordinates */}
+            <div className="flex items-center justify-between bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono">
+              <span className="text-sky-300">X: <strong className="text-white">{tabOffsetX}px</strong> (Left)</span>
+              <span className="text-amber-300">Y: <strong className="text-white">{tabOffsetY}px</strong> (Down)</span>
+            </div>
+
+            {/* Horizontal X Slider */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-white/80">
+                <span>Move Left / Right</span>
+                <span className="text-sky-400 font-mono">{tabOffsetX}px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => updateTabX(Math.max(0, tabOffsetX - 2))}
+                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-xs font-mono cursor-pointer"
+                  title="Nudge left"
+                >
+                  -2
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="120"
+                  step="1"
+                  value={tabOffsetX}
+                  onChange={(e) => updateTabX(parseInt(e.target.value, 10))}
+                  className="w-full accent-amber-400 cursor-pointer h-1.5 rounded-lg bg-slate-700"
+                />
+                <button
+                  onClick={() => updateTabX(Math.min(120, tabOffsetX + 2))}
+                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-xs font-mono cursor-pointer"
+                  title="Nudge right"
+                >
+                  +2
+                </button>
+              </div>
+            </div>
+
+            {/* Vertical Y Overlap Slider */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-white/80">
+                <span>Move Up / Down to Blue Line</span>
+                <span className="text-amber-400 font-mono">{tabOffsetY}px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => updateTabY(Math.max(0, tabOffsetY - 2))}
+                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-xs font-mono cursor-pointer"
+                  title="Nudge up"
+                >
+                  -2
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value={tabOffsetY}
+                  onChange={(e) => updateTabY(parseInt(e.target.value, 10))}
+                  className="w-full accent-amber-400 cursor-pointer h-1.5 rounded-lg bg-slate-700"
+                />
+                <button
+                  onClick={() => updateTabY(Math.min(60, tabOffsetY + 2))}
+                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-xs font-mono cursor-pointer"
+                  title="Nudge down"
+                >
+                  +2
+                </button>
+              </div>
+            </div>
+
+            {/* Action: Copy Coordinates / Ready to Lock In */}
+            <Button
+              onClick={() => {
+                const text = `Lock in tabs: X=${tabOffsetX}px, Y=${tabOffsetY}px`;
+                navigator.clipboard.writeText(text);
+                setIsCopied(true);
+                toast.success(`Copied! "${text}". Just tell me to lock it in!`);
+                setTimeout(() => setIsCopied(false), 2500);
+              }}
+              className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs h-8 rounded-xl shadow-md gap-1.5 cursor-pointer"
+            >
+              {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              <span>{isCopied ? "Values Copied!" : "Lock In / Copy Coordinates"}</span>
+            </Button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowNudgeControls(true)}
+            className="flex items-center gap-2 bg-[#06152b]/90 border border-amber-400/50 hover:border-amber-400 text-amber-300 hover:text-white px-3.5 py-2 rounded-xl shadow-xl backdrop-blur-md text-xs font-bold transition-all cursor-pointer"
+          >
+            <Sliders className="h-3.5 w-3.5 text-amber-400" />
+            <span>Nudge Tabs (X:{tabOffsetX}px, Y:{tabOffsetY}px)</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
