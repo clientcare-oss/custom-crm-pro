@@ -284,6 +284,7 @@ export default function ContactsLedgerView({
             ? "/decor/contacts-ledger-light.jpg"
             : "/decor/contacts-ledger-dark.jpg"
         })`,
+        backgroundColor: "#07152B",
         backgroundSize: "100% 100%",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center top",

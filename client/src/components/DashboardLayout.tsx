@@ -1483,7 +1483,11 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
         )}
-        <main className={cn("flex-1 p-4 relative", (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects" || location === "/contacts") && "p-0 bg-[#020712]")}>
+        <main className={cn(
+          "flex-1 p-4 relative",
+          (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
+          location === "/contacts" && "p-0 bg-[#07152B]"
+        )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">
               <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-5 shadow-lg shadow-rose-950/40">
