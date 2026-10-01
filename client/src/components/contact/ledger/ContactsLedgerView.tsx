@@ -201,6 +201,22 @@ export default function ContactsLedgerView({
     return groups;
   }, [filteredContacts]);
 
+  // Set of letters that have contacts under the current category & search query
+  const availableLetters = useMemo(() => {
+    const letters = new Set<string>();
+    contacts.forEach((c) => {
+      if (!matchCategory(c, category)) return;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
+        if (!fullName.includes(q)) return;
+      }
+      const initial = (c.lastName || c.firstName || "").trim()[0]?.toUpperCase();
+      if (initial) letters.add(initial);
+    });
+    return letters;
+  }, [contacts, category, searchQuery]);
+
   // Selected contact for the right-page dossier
   const [selectedContactId, setSelectedContactId] = useState<number | null>(() => {
     // Prefer selecting a parent / primary family contact over a student
@@ -1037,14 +1053,26 @@ export default function ContactsLedgerView({
           </div>
 
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          {/* ALPHABET THUMB INDEX RAIL (Far Right Edge: 🏠, A through Z)        */}
+          {/* CUSTOM UI ALPHABET THUMB INDEX TABS                                 */}
+          {/* 100% UI component: decoupled from background, scales dynamically   */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          <div className="w-[6.2%] h-full pt-[4.8%] pb-[3.8%] flex flex-col items-center justify-between z-20 select-none">
+          <div className="w-[5.8%] lg:w-[5.2%] xl:w-[4.8%] h-full pt-[4.2%] pb-[3.6%] pr-0.5 sm:pr-1 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
             {ALPHABET.map((letter) => {
               const isHome = letter === "HOME";
               const isSelected =
                 (isHome && selectedLetter === "HOME") ||
                 (!isHome && selectedLetter === letter);
+              const hasContacts = isHome || availableLetters.has(letter);
+              const letterCount = isHome
+                ? contacts.filter((c) => matchCategory(c, category)).length
+                : contacts.filter(
+                    (c) =>
+                      matchCategory(c, category) &&
+                      (c.lastName || c.firstName || "")
+                        .trim()
+                        .toUpperCase()
+                        .startsWith(letter)
+                  ).length;
 
               return (
                 <button
@@ -1055,21 +1083,41 @@ export default function ContactsLedgerView({
                     setMobileTab("directory");
                   }}
                   className={cn(
-                    "w-full flex-1 flex items-center justify-center transition-all cursor-pointer font-serif select-none",
+                    "w-full flex-1 flex items-center justify-center transition-all cursor-pointer font-serif select-none relative group",
+                    "rounded-l-md border-y border-l text-[10px] sm:text-[11px] xl:text-[12px]",
                     isSelected
                       ? isLight
-                        ? "bg-[#D4AF37] text-slate-950 font-black text-[11px] sm:text-xs rounded-l-md shadow-sm border-l-2 border-[#5E420C]"
-                        : "bg-gradient-to-r from-[#FCE09E] to-[#B89230] text-[#1F1404] font-black text-[11px] sm:text-xs rounded-l-md shadow-[0_0_12px_rgba(252,224,158,0.7)] border-l-2 border-[#FFE8A3]"
+                        ? "bg-gradient-to-r from-[#D4AF37] via-[#E5BF65] to-[#B89230] text-[#1F1202] font-black border-[#5E420C] shadow-[0_2px_8px_rgba(94,66,12,0.35)] -translate-x-1 sm:-translate-x-1.5 z-30 scale-105"
+                        : "bg-gradient-to-r from-[#FFE8B3] via-[#F5B544] to-[#C78F2E] text-[#1A0F02] font-black border-[#FFF2D0] shadow-[0_0_12px_rgba(245,181,68,0.7),inset_0_1px_1px_rgba(255,255,255,0.8)] -translate-x-1 sm:-translate-x-1.5 z-30 scale-105"
                       : isLight
-                      ? "text-[#4A3B29] hover:text-[#1F1404] hover:bg-[#D9C49D]/50 text-[9px] sm:text-[10px] font-bold"
-                      : "text-[#C5D5EB]/80 hover:text-white hover:bg-white/10 text-[9px] sm:text-[10px] font-semibold"
+                      ? cn(
+                          "bg-[#E8DAC0]/90 hover:bg-[#D9C4A0] border-[#C2AE88] text-[#523F1F] hover:text-[#1F1404] hover:-translate-x-0.5",
+                          !hasContacts && "opacity-40 hover:opacity-80"
+                        )
+                      : cn(
+                          "bg-[#071933]/90 hover:bg-[#0E2C57] border-[#183A6B]/70 text-[#9BB7DC] hover:text-[#FFF2D9] hover:-translate-x-0.5",
+                          !hasContacts && "opacity-40 hover:opacity-85 text-[#6782A8]"
+                        )
                   )}
-                  title={isHome ? "All Letters" : `Filter by letter ${letter}`}
+                  title={
+                    isHome
+                      ? `All Contacts (${contacts.filter((c) => matchCategory(c, category)).length})`
+                      : `${letter} (${letterCount} ${
+                          letterCount === 1 ? "contact" : "contacts"
+                        })`
+                  }
                 >
                   {isHome ? (
                     <Home className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   ) : (
-                    <span>{letter}</span>
+                    <span className={cn(isSelected ? "font-black" : hasContacts ? "font-bold" : "font-medium")}>
+                      {letter}
+                    </span>
+                  )}
+
+                  {/* Active Indicator Micro-pip */}
+                  {isSelected && (
+                    <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white shadow-xs pointer-events-none" />
                   )}
                 </button>
               );
