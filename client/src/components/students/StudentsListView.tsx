@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import {
-  Star,
   ChevronsUpDown,
   Calendar,
   FileText,
@@ -32,24 +31,6 @@ export function StudentsListView({
 }: StudentsListViewProps) {
   const [sortField, setSortField] = useState<SortField>("student");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [starredIds, setStarredIds] = useState<Record<number, boolean>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("waypoint_starred_students") || "{}");
-    } catch {
-      return {};
-    }
-  });
-
-  const toggleStar = (e: React.MouseEvent, id: number) => {
-    e.stopPropagation();
-    setStarredIds((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try {
-        localStorage.setItem("waypoint_starred_students", JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-  };
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -131,22 +112,17 @@ export function StudentsListView({
       )}
     >
       <div className="w-full">
-        {/* ─── Table Header Bar (Optimized without Grade and School columns for zero horizontal scrolling) ─── */}
-        <div className="grid grid-cols-[44px_minmax(190px,2fr)_110px_150px_minmax(150px,1.2fr)_minmax(170px,1.3fr)_44px] items-center px-3 sm:px-4 py-3 text-xs font-serif text-[#CBD7E8] tracking-wide border-b border-[#0D1E36]/90 mb-2">
-          {/* Star column */}
-          <div className="flex items-center justify-center">
-            <Star className="w-4 h-4 text-[#E5A83B]" />
-          </div>
-
+        {/* ─── Table Header Bar (Star, Grade, and School removed so all columns fit on screen) ─── */}
+        <div className="grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-3 sm:px-4 py-3 text-xs font-serif text-[#CBD7E8] tracking-wide border-b border-[#0D1E36]/90 mb-2 gap-2 sm:gap-3">
           {/* Student */}
           <button
             type="button"
             onClick={() => toggleSort("student")}
-            className="flex items-center gap-1.5 hover:text-white cursor-pointer transition-colors text-left font-serif"
+            className="flex items-center gap-1.5 hover:text-white cursor-pointer transition-colors text-left font-serif min-w-0"
           >
-            <span className="text-[#627D9E] font-serif text-sm">⚓</span>
-            <span>Student</span>
-            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696]" />
+            <span className="text-[#627D9E] font-serif text-sm shrink-0">⚓</span>
+            <span className="truncate">Student</span>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
           </button>
 
           {/* Plan Type */}
@@ -156,7 +132,7 @@ export function StudentsListView({
               onClick={() => toggleSort("plan")}
               className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif"
             >
-              <span className="border-b-2 border-[#E9BA6B] pb-0.5 font-semibold text-[#F0DFC5]">Plan Type</span>
+              <span className="border-b-2 border-[#E9BA6B] pb-0.5 font-semibold text-[#F0DFC5]">Plan</span>
               <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696]" />
             </button>
           </div>
@@ -177,36 +153,35 @@ export function StudentsListView({
           <button
             type="button"
             onClick={() => toggleSort("meeting")}
-            className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif"
+            className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif min-w-0"
           >
-            <span>Next Meeting</span>
-            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696]" />
+            <span className="truncate">Next Meeting</span>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
           </button>
 
           {/* Last Activity */}
           <button
             type="button"
             onClick={() => toggleSort("activity")}
-            className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif"
+            className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif min-w-0"
           >
-            <span>Last Activity</span>
-            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696]" />
+            <span className="truncate">Last Activity</span>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
           </button>
 
           {/* Far Right Badge */}
           <div className="flex justify-end">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center border border-[#E9BA6B]/50 text-[#E9BA6B] bg-[#0A1A30]/60 shadow-xs">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center border border-[#E9BA6B]/50 text-[#E9BA6B] bg-[#0A1A30]/60 shadow-xs shrink-0">
               <LayoutList className="w-3.5 h-3.5" />
             </div>
           </div>
         </div>
 
-        {/* ─── Table Row Cards (Full-Width Responsive Cards with No Horizontal Scrollbar) ─── */}
+        {/* ─── Table Row Cards (Guaranteed 100% Fit With No Right-Side Cutoff) ─── */}
         <div className="space-y-1.5">
           {sortedStudents.map((student, index) => {
             const displayName = formatStudentName(student.firstName, student.lastName);
             const initial = (student.firstName || "S").charAt(0).toUpperCase();
-            const isStarred = Boolean(starredIds[student.id] ?? student.bookmarked ?? (index % 2 === 0));
             const isNeedsAttention = student.needsAttention || student.priority || (index === 2);
             const meeting = getMeetingInfo(student, index);
             const activity = getActivityInfo(student, index);
@@ -220,26 +195,10 @@ export function StudentsListView({
               <div
                 key={student.id}
                 onClick={() => onStudentClick(student.id)}
-                className="group grid grid-cols-[44px_minmax(190px,2fr)_110px_150px_minmax(150px,1.2fr)_minmax(170px,1.3fr)_44px] items-center px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-[#142640]/90 bg-[#061122]/95 hover:bg-[#0A1A33] hover:border-[#21436F] transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)]"
+                className="group grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-[#142640]/90 bg-[#061122]/95 hover:bg-[#0A1A33] hover:border-[#21436F] transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] gap-2 sm:gap-3"
               >
-                {/* Star Column */}
-                <div className="flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={(e) => toggleStar(e, student.id)}
-                    className="p-1 rounded hover:bg-white/5 cursor-pointer transition-transform active:scale-90"
-                    title={isStarred ? "Remove from starred" : "Star student file"}
-                  >
-                    {isStarred ? (
-                      <Star className="w-4 h-4 fill-[#E5A83B] text-[#E5A83B] drop-shadow-[0_1px_4px_rgba(229,168,59,0.5)]" />
-                    ) : (
-                      <Star className="w-4 h-4 text-[#435C7A] hover:text-[#E5A83B] stroke-[1.7]" />
-                    )}
-                  </button>
-                </div>
-
                 {/* Student: Avatar + Name + Marker + Grade & School Subtitle */}
-                <div className="flex items-center gap-3 min-w-0 pr-2">
+                <div className="flex items-center gap-3 min-w-0">
                   {/* Metallic 3D Brass Coin Avatar */}
                   <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 flex items-center justify-center p-[2px] bg-gradient-to-b from-[#FFF2CE] via-[#D8A654] to-[#7A5016] shadow-[0_2px_6px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.8)]">
                     <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-br from-[#F5D89A] via-[#E2B766] to-[#C89440] border border-[#6A4712]/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]">
@@ -281,28 +240,28 @@ export function StudentsListView({
                       )}
                     </div>
 
-                    <span className="text-xs text-[#7B8EA7] truncate max-w-[240px]">
+                    <span className="text-xs text-[#7B8EA7] truncate">
                       {subtitleText}
                     </span>
                   </div>
                 </div>
 
                 {/* Plan Type Pill */}
-                <div className="flex justify-center">
-                  <span className="rounded-full px-4 py-1 text-xs font-semibold bg-[#132847] border border-[#234575] text-[#8CB4E8] shadow-inner tracking-wider uppercase">
+                <div className="flex justify-center shrink-0">
+                  <span className="rounded-full px-3 py-1 text-xs font-semibold bg-[#132847] border border-[#234575] text-[#8CB4E8] shadow-inner tracking-wider uppercase">
                     {student.planType && student.planType !== "No IEP/504 Yet" ? student.planType : "IEP"}
                   </span>
                 </div>
 
                 {/* Status Capsule Pill */}
-                <div className="flex justify-center">
+                <div className="flex justify-center shrink-0">
                   {isNeedsAttention ? (
-                    <span className="rounded-full px-3 py-1 text-xs font-medium bg-[#38111A]/90 border border-[#7F1D1D] text-[#F87171] flex items-center gap-1.5 shadow-[0_0_10px_rgba(239,68,68,0.15)] whitespace-nowrap">
+                    <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-[#38111A]/90 border border-[#7F1D1D] text-[#F87171] flex items-center gap-1.5 shadow-[0_0_10px_rgba(239,68,68,0.15)] whitespace-nowrap">
                       <span className="w-2 h-2 rounded-full bg-[#EF4444] shadow-[0_0_8px_#EF4444] shrink-0" />
-                      <span>Needs Attention</span>
+                      <span className="truncate">Needs Attention</span>
                     </span>
                   ) : (
-                    <span className="rounded-full px-3 py-1 text-xs font-medium bg-[#08291A]/90 border border-[#14532D] text-[#4ADE80] flex items-center gap-1.5 shadow-[0_0_10px_rgba(34,197,94,0.12)] whitespace-nowrap">
+                    <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-[#08291A]/90 border border-[#14532D] text-[#4ADE80] flex items-center gap-1.5 shadow-[0_0_10px_rgba(34,197,94,0.12)] whitespace-nowrap">
                       <span className="w-2 h-2 rounded-full bg-[#22C55E] shadow-[0_0_8px_#22C55E] shrink-0" />
                       <span>Active</span>
                     </span>
@@ -310,30 +269,30 @@ export function StudentsListView({
                 </div>
 
                 {/* Next Meeting */}
-                <div className="flex items-center gap-2 pr-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <Calendar className="w-4 h-4 text-[#E5B866] shrink-0" />
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs sm:text-sm font-medium text-[#F0DFC5] whitespace-nowrap">
+                    <span className="text-xs sm:text-sm font-medium text-[#F0DFC5] whitespace-nowrap truncate">
                       {meeting.date}
                     </span>
-                    <span className="text-[11px] text-[#7B8EA7] whitespace-nowrap">
+                    <span className="text-[11px] text-[#7B8EA7] whitespace-nowrap truncate">
                       {meeting.type}
                     </span>
                   </div>
                 </div>
 
                 {/* Last Activity */}
-                <div className="flex flex-col min-w-0 pr-2">
-                  <span className="text-xs sm:text-sm font-medium text-[#CBD7E8] whitespace-nowrap">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs sm:text-sm font-medium text-[#CBD7E8] whitespace-nowrap truncate">
                     {activity.time}
                   </span>
-                  <span className="text-[11px] text-[#7B8EA7] whitespace-nowrap truncate max-w-[190px]">
+                  <span className="text-[11px] text-[#7B8EA7] whitespace-nowrap truncate">
                     {activity.note}
                   </span>
                 </div>
 
                 {/* Action Dots */}
-                <div className="flex justify-end">
+                <div className="flex justify-end shrink-0">
                   <button
                     type="button"
                     onClick={(e) => {
