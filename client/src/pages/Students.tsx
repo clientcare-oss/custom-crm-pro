@@ -429,11 +429,12 @@ export default function Students() {
           </div>
         </div>
 
-        {/* ─── 3. Content Area: Clean Table List View OR Full-Bleed Physical Filing Credenza ─── */}
+        {/* ─── 3. Content Area: Clean Full-Bleed Table List View OR Full-Bleed Physical Filing Credenza ─── */}
         {viewMode === "list" ? (
-          <div className="w-full flex-1 max-w-[1300px] xl:max-w-[1340px] mx-auto px-3 sm:px-6 py-6 sm:py-8">
+          <div className="w-full flex-1 flex flex-col pt-3 pb-12">
             {/* Category Filter Tabs */}
-            <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 select-none">
+            <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 mb-3">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
               {[
                 { id: "all", label: "All Students", count: allFilteredStudents.length },
                 { id: "active", label: "Active Cases", count: filteredActive.length },
@@ -465,6 +466,7 @@ export default function Students() {
                   </span>
                 </button>
               ))}
+              </div>
             </div>
 
             {isLoading ? (
