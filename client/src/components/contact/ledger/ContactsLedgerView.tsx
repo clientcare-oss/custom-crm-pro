@@ -1266,7 +1266,7 @@ export default function ContactsLedgerView({
           {/* CUSTOM UI ALPHABET THUMB INDEX TABS                                 */}
           {/* 100% UI component: decoupled from background, scales dynamically   */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          <div className="w-[5.6%] lg:w-[5.0%] xl:w-[4.6%] h-full pt-[7.8%] lg:pt-[8.5%] pb-[7.5%] lg:pb-[8.2%] pr-1 sm:pr-1.5 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
+          <div className="w-[5.8%] lg:w-[5.2%] xl:w-[4.8%] h-full pt-[7.8%] lg:pt-[8.5%] pb-[7.5%] lg:pb-[8.2%] pr-0 sm:pr-0.5 translate-x-1.5 sm:translate-x-2 lg:translate-x-2.5 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
             {ALPHABET.map((letter) => {
               const isHome = letter === "HOME";
               const isSelected =
