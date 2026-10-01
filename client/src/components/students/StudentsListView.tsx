@@ -189,19 +189,19 @@ export function StudentsListView({
             key={student.id}
             onClick={() => onStudentClick(student.id)}
             className={cn(
-              "group w-full grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl border transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] gap-2 sm:gap-4",
+              "group w-full grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border transition-all cursor-pointer gap-2 sm:gap-4",
               index % 2 === 0
-                ? "bg-[#13202C] border-[#1A2E44]/80 hover:bg-[#182837] hover:border-[#233F5D]"
-                : "bg-[#0A151F] border-[#102030]/80 hover:bg-[#0E1D2A] hover:border-[#1A314A]"
+                ? "bg-gradient-to-b from-[#182A3C] via-[#112233] to-[#0D1A27] border-[#08121C] shadow-[inset_0_1px_0_rgba(56,92,128,0.35),inset_0_-1px_0_rgba(0,0,0,0.6),0_2px_5px_rgba(0,0,0,0.45)] hover:from-[#1D3247] hover:via-[#162A3E] hover:to-[#102030] hover:border-[#1C3550]"
+                : "bg-gradient-to-b from-[#12202F] via-[#0B1724] to-[#071019] border-[#060D15] shadow-[inset_0_1px_0_rgba(40,70,100,0.28),inset_0_-1px_0_rgba(0,0,0,0.6),0_2px_5px_rgba(0,0,0,0.45)] hover:from-[#172738] hover:via-[#0F1E2D] hover:to-[#0A1520] hover:border-[#152B42]"
             )}
           >
             {/* Student: Avatar + Name + Marker + Grade & School Subtitle */}
             <div className="flex items-center gap-3 min-w-0">
               {/* Metallic 3D Brass Coin Avatar (Recessed / Depressed Letter) */}
-              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 flex items-center justify-center p-[2px] bg-gradient-to-b from-[#3E280E] via-[#7D5826] to-[#BFA162] shadow-[0_2px_6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.35)]">
-                <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-b from-[#8F6A3D] via-[#C39F6D] to-[#DDBB86] shadow-[inset_0_3px_5px_rgba(0,0,0,0.7),inset_0_-1px_2px_rgba(255,255,255,0.4)] border border-[#523717]/60">
+              <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full shrink-0 flex items-center justify-center p-[2px] bg-gradient-to-b from-[#3E280E] via-[#7D5826] to-[#BFA162] shadow-[0_2px_5px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.35)]">
+                <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-b from-[#8F6A3D] via-[#C39F6D] to-[#DDBB86] shadow-[inset_0_2px_4px_rgba(0,0,0,0.7),inset_0_-1px_1px_rgba(255,255,255,0.4)] border border-[#523717]/60">
                   <span
-                    className="font-serif font-bold text-base sm:text-[17px] text-[#161008] select-none leading-none pt-0.5 antialiased"
+                    className="font-serif font-bold text-sm sm:text-[15px] text-[#161008] select-none leading-none pt-0.5 antialiased"
                     style={{
                       textShadow: "0 1px 0 rgba(255, 245, 220, 0.5)",
                     }}
