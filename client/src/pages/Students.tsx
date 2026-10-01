@@ -406,7 +406,7 @@ export default function Students() {
                   <p className="text-xs text-[#7B8EA7] mt-1">Retrieving archival records from practice database</p>
                 </div>
               ) : viewMode === "cards" ? (
-                <div className="relative w-full flex bg-[#00081C] shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-hidden">
+                <div className="relative w-full flex bg-[#00081C] shadow-[inset_0_14px_40px_rgba(0,0,0,0.98)] overflow-visible">
                   {/* Shelves Rows Span */}
                   <div className="flex-1 py-4 sm:py-6 min-h-[460px]">
                     {filteredActive.length === 0 ? (
@@ -450,7 +450,7 @@ export default function Students() {
                           </div>
 
                           {/* Physical Front Retaining Rail / Drawer Shelf Lip overlapping the bottom of cards (z-20) */}
-                          <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 w-full pointer-events-none select-none px-1 sm:px-2">
+                          <div className="relative -mt-3.5 sm:-mt-4.5 lg:-mt-5.5 z-20 -mx-1 sm:-mx-2 w-[calc(100%+8px)] sm:w-[calc(100%+16px)] pointer-events-none select-none px-0">
                             <img
                               src="/decor/shelf-retaining-rail.png"
                               alt=""

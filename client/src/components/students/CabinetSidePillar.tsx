@@ -61,7 +61,7 @@ export function CabinetSidePillar({ side, className }: CabinetSidePillarProps) {
   return (
     <div
       className={cn(
-        "w-[22px] sm:w-[30px] lg:w-[36px] shrink-0 relative flex flex-col z-10 pointer-events-none select-none self-stretch",
+        "w-[22px] sm:w-[30px] lg:w-[36px] shrink-0 relative flex flex-col z-[25] pointer-events-none select-none self-stretch",
         isLeft
           ? "border-r-2 border-[#8A6731]/50 shadow-[5px_0_16px_rgba(0,0,0,0.92)]"
           : "border-l-2 border-[#8A6731]/50 shadow-[-5px_0_16px_rgba(0,0,0,0.92)]",

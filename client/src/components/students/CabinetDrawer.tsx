@@ -171,7 +171,7 @@ export function CabinetDrawer({
                     ))}
                   </div>
                   {/* Front retaining rail / drawer lip after EACH card row */}
-                  <div className="relative -mt-3.5 sm:-mt-4 lg:-mt-5 z-20 w-full pointer-events-none select-none px-1 sm:px-2">
+                  <div className="relative -mt-3.5 sm:-mt-4 lg:-mt-5 z-20 -mx-1 sm:-mx-2 w-[calc(100%+8px)] sm:w-[calc(100%+16px)] pointer-events-none select-none px-0">
                     <img
                       src="/decor/shelf-retaining-rail.png"
                       alt=""
