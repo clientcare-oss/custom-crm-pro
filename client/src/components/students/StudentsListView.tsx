@@ -106,16 +106,16 @@ export function StudentsListView({
 
   return (
     <div className={cn("w-full px-1.5 sm:px-2 select-none flex flex-col space-y-1.5", className)}>
-      {/* ─── Full-Bleed Table Header Bar (Touches Screen Sides With No Outer Box) ─── */}
-      <div className="w-full grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-4 sm:px-6 py-2.5 text-xs font-serif text-[#CBD7E8] tracking-wide border-b border-[#0D1E36]/90 mb-1 gap-2 sm:gap-4">
+      {/* ─── List Header Mounted On Rounded Executive Navy Bar ─── */}
+      <div className="w-full grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border border-[#08121C] bg-gradient-to-b from-[#182A3C] via-[#112233] to-[#0D1A27] shadow-[inset_0_1px_0_rgba(56,92,128,0.45),inset_0_-1px_0_rgba(0,0,0,0.65),0_3px_8px_rgba(0,0,0,0.5)] text-xs font-serif text-[#CBD7E8] tracking-wide mb-1 gap-2 sm:gap-4">
         {/* Student */}
         <button
           type="button"
           onClick={() => toggleSort("student")}
           className="flex items-center gap-1.5 hover:text-white cursor-pointer transition-colors text-left font-serif min-w-0"
         >
-          <span className="text-[#627D9E] font-serif text-sm shrink-0">⚓</span>
-          <span className="truncate">Student</span>
+          <span className="text-[#38BDF8] font-serif text-sm shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">⚓</span>
+          <span className="truncate font-medium text-[#F0DFC5]">Student</span>
           <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
         </button>
 
@@ -138,7 +138,7 @@ export function StudentsListView({
             onClick={() => toggleSort("status")}
             className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif"
           >
-            <span>Status</span>
+            <span className="text-[#CBD7E8]">Status</span>
             <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696]" />
           </button>
         </div>
@@ -149,7 +149,7 @@ export function StudentsListView({
           onClick={() => toggleSort("meeting")}
           className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif min-w-0"
         >
-          <span className="truncate">Next Meeting</span>
+          <span className="truncate text-[#CBD7E8]">Next Meeting</span>
           <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
         </button>
 
@@ -159,13 +159,13 @@ export function StudentsListView({
           onClick={() => toggleSort("activity")}
           className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors font-serif min-w-0"
         >
-          <span className="truncate">Last Activity</span>
+          <span className="truncate text-[#CBD7E8]">Last Activity</span>
           <ChevronsUpDown className="w-3.5 h-3.5 text-[#5D7696] shrink-0" />
         </button>
 
         {/* Far Right Badge */}
         <div className="flex justify-end">
-          <div className="w-7 h-7 rounded-md flex items-center justify-center border border-[#E9BA6B]/50 text-[#E9BA6B] bg-[#0A1A30]/60 shadow-xs shrink-0">
+          <div className="w-7 h-7 rounded-md flex items-center justify-center border border-[#E9BA6B]/50 text-[#E9BA6B] bg-[#0A1A30]/80 shadow-xs shrink-0">
             <LayoutList className="w-3.5 h-3.5" />
           </div>
         </div>
