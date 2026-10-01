@@ -153,15 +153,18 @@ export default function Contacts() {
 
   return (
     <ScopedErrorBoundary moduleName="Contacts">
-      <div
-        className="min-h-screen w-full relative bg-[#07152B] text-[#F0DFC5] flex flex-col"
-        style={{
-          backgroundImage: "url('/decor/contacts-desk-bg.png?v=20261001-png')",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center top",
-        }}
-      >
+      <div className="min-h-screen w-full relative bg-[#07152B] text-[#F0DFC5] flex flex-col">
+        {/* Fixed Viewport Desk Background: Locks to screen viewport so the full desk, lamp, books, and pen fit 100% in view */}
+        <div
+          className="fixed inset-0 pointer-events-none z-0"
+          style={{
+            backgroundImage: "url('/decor/contacts-desk-bg.png?v=20261001-v4')",
+            backgroundSize: "100% 100%",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+
         {/* ─── Top Header Deck: Title, Search Bar, Add Contact Button, Page ID Badge ─── */}
         <div className="w-full relative z-20 px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2 select-none">
           {/* Rule E: Page ID Badge in top-right */}
