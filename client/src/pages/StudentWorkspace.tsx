@@ -91,17 +91,8 @@ export default function StudentWorkspace() {
           backgroundSize: "100% 100%",
           backgroundPosition: "top left",
           backgroundRepeat: "no-repeat",
-        }}
-      />
-      
-      {/* Fallback surface on scrollable content */}
-      <div
-        className="absolute inset-0 z-0 pointer-events-none select-none opacity-40"
-        style={{
-          backgroundImage: "url('/decor/student-workspace-bg.jpg')",
-          backgroundSize: "100% 100%",
-          backgroundPosition: "top left",
-          backgroundRepeat: "no-repeat",
+          transform: "translateZ(0)",
+          willChange: "transform",
         }}
       />
 
@@ -110,7 +101,10 @@ export default function StudentWorkspace() {
         
         {/* Top Section: Header Bar centered between the Plant (left) and the Lamp (right) */}
         <div className="w-full max-w-[1100px] xl:max-w-[1240px] 2xl:max-w-[1360px] mx-auto pt-6 px-6">
-          <header className="flex items-center justify-between px-6 py-2.5 rounded-xl bg-[#06162d]/80 border border-white/10 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
+          <header 
+            className="flex items-center justify-between px-6 py-2.5 rounded-xl bg-[#071933] border border-white/15 shadow-[0_8px_24px_rgba(0,0,0,0.6)]"
+            style={{ transform: "translateZ(0)", willChange: "transform" }}
+          >
             
             {/* Left: Title & Breadcrumbs */}
             <div className="flex items-center gap-3.5">
@@ -142,7 +136,7 @@ export default function StudentWorkspace() {
                   const targetUrl = student?.caseId ? `/portal?caseId=${student.caseId}` : `/portal`;
                   window.open(targetUrl, "_blank");
                 }}
-                className="bg-[#0a203f]/80 hover:bg-[#122e56] border-white/20 text-white text-xs font-medium rounded-lg h-8 px-3.5 gap-2 backdrop-blur-md transition-all shadow-sm cursor-pointer"
+                className="bg-[#0b2447] hover:bg-[#12315b] border-white/20 text-white text-xs font-medium rounded-lg h-8 px-3.5 gap-2 transition-all shadow-sm cursor-pointer"
               >
                 <Eye className="h-3.5 w-3.5 text-white/80" />
                 <span>Preview Parent Portal</span>
@@ -152,7 +146,7 @@ export default function StudentWorkspace() {
                 variant="outline"
                 size="icon"
                 onClick={() => setLocation(`/archived/students/${studentId}`)}
-                className="h-8 w-8 rounded-lg bg-[#0a203f]/80 hover:bg-[#122e56] border-white/20 text-white/80 hover:text-white backdrop-blur-md transition-all shadow-sm cursor-pointer"
+                className="h-8 w-8 rounded-lg bg-[#0b2447] hover:bg-[#12315b] border-white/20 text-white/80 hover:text-white transition-all shadow-sm cursor-pointer"
                 title="More options & Legacy Workspace (PG-030-ARC)"
               >
                 <MoreHorizontal className="h-4 w-4" />
