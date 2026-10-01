@@ -1486,6 +1486,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         <main className={cn(
           "flex-1 p-4 relative",
           (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
+          (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
           location === "/contacts" && "p-0 bg-[#07152B]"
         )}>
           {currentForbiddenModule ? (

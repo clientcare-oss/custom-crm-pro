@@ -26,6 +26,7 @@ import Messages from "./pages/Messages";
 import PortalManagement from "./pages/PortalManagement";
 import CaseCompassAdmin from "./pages/CaseCompassAdmin";
 import ContactDetail from "./pages/ContactDetail";
+import StudentWorkspace from "./pages/StudentWorkspace";
 import Students from "./pages/Students";
 import Tasks from "./pages/Tasks";
 import Tools from "./pages/Tools";
@@ -191,9 +192,9 @@ function Router() {
           <Route path="/archived/students/:id" component={LegacyStudentWorkspace} />
           <Route path="/archived/student-workspace/:id" component={LegacyStudentWorkspace} />
           <Route path="/archived/contacts/:id" component={LegacyStudentWorkspace} />
-          <Route path="/contacts/:id" component={ContactDetail} />
-          <Route path="/students/:id" component={ContactDetail} />
-          <Route path="/project-workspace/:id" component={ContactDetail} />
+          <Route path="/contacts/:id" component={StudentWorkspace} />
+          <Route path="/students/:id" component={StudentWorkspace} />
+          <Route path="/project-workspace/:id" component={StudentWorkspace} />
           <Route path="/contacts" component={Contacts} />
           <Route path="/students" component={Students} />
           <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
