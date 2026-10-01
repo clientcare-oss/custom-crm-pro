@@ -292,7 +292,7 @@ export default function ContactsLedgerView({
     <div
       className={cn(
         "w-full flex-1 relative overflow-hidden select-none transition-all",
-        "min-h-[max(920px,calc(100vh-120px))] lg:min-h-[max(950px,calc(100vh-120px))]"
+        "h-[740px] sm:h-[780px] lg:h-[820px] min-h-[720px]"
       )}
       style={{
         backgroundImage: `url(${
@@ -621,7 +621,7 @@ export default function ContactsLedgerView({
             )}
           >
             {dossierContact ? (
-              <div className="h-full flex flex-col justify-between select-none">
+              <div className="h-full flex flex-col justify-between select-none overflow-y-auto custom-scrollbar pr-1">
                 {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
