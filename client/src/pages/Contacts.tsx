@@ -157,7 +157,7 @@ export default function Contacts() {
         className="min-h-screen w-full relative bg-[#07152B] text-[#F0DFC5] flex flex-col"
         style={{
           backgroundImage: "url('/decor/contacts-desk-bg.jpg?v=20261001-v3')",
-          backgroundSize: "100% 100%",
+          backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center top",
         }}
