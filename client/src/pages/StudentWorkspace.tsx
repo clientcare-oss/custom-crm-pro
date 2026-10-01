@@ -2,68 +2,15 @@ import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { 
   ArrowLeft, Eye, MoreHorizontal, User, Clock, MessageSquare, 
-  CheckSquare, FileText, Folder, MoreVertical, Calendar, Phone, 
-  ExternalLink, ChevronRight, School, GraduationCap, CheckCircle2, 
-  Circle, Plus, ShieldCheck, Sparkles, BookOpen, Layers
+  CheckSquare, FileText, Folder, Calendar, Phone, 
+  ChevronRight, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-
-// ─── Brass Metallic Corner Hardware Component ────────────────────────────────
-function BrassCorner({ position }: { position: "top-left" | "top-right" | "bottom-left" | "bottom-right" }) {
-  const rotation = {
-    "top-left": "rotate-0",
-    "top-right": "rotate-90",
-    "bottom-right": "rotate-180",
-    "bottom-left": "-rotate-90",
-  }[position];
-
-  const posClass = {
-    "top-left": "-top-1.5 -left-1.5",
-    "top-right": "-top-1.5 -right-1.5",
-    "bottom-right": "-bottom-1.5 -right-1.5",
-    "bottom-left": "-bottom-1.5 -left-1.5",
-  }[position];
-
-  return (
-    <div className={cn("absolute z-30 pointer-events-none select-none", posClass)}>
-      <div className={cn("relative w-7 h-7 transform origin-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]", rotation)}>
-        {/* L-bracket metal path */}
-        <svg viewBox="0 0 28 28" fill="none" className="w-full h-full">
-          <defs>
-            <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFF1BD" />
-              <stop offset="35%" stopColor="#D4AF37" />
-              <stop offset="70%" stopColor="#8A6715" />
-              <stop offset="100%" stopColor="#E5C158" />
-            </linearGradient>
-            <filter id="bracketShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0.5" dy="0.5" stdDeviation="0.5" floodColor="#000" floodOpacity="0.8"/>
-            </filter>
-          </defs>
-          {/* Beveled bracket plate */}
-          <path
-            d="M2 2 H14 V6 H6 V14 H2 Z"
-            fill="url(#brassGrad)"
-            stroke="#5c4308"
-            strokeWidth="0.75"
-          />
-          {/* Corner bevel line */}
-          <line x1="2" y1="2" x2="6" y2="6" stroke="#FFF7D6" strokeWidth="0.6" opacity="0.8" />
-          {/* Rivet Screws */}
-          <circle cx="4" cy="10" r="1" fill="#422f04" stroke="#FFF7D6" strokeWidth="0.3" />
-          <circle cx="10" cy="4" r="1" fill="#422f04" stroke="#FFF7D6" strokeWidth="0.3" />
-          <circle cx="4" cy="4" r="1.1" fill="#2d1f02" stroke="#FFDF73" strokeWidth="0.35" />
-        </svg>
-      </div>
-    </div>
-  );
-}
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -87,11 +34,6 @@ export default function StudentWorkspace() {
   // Queries
   const { data, isLoading } = trpc.contacts.detail.useQuery(
     { id: studentId },
-    { enabled: !!studentId }
-  );
-
-  const { data: studentTasks = [] } = trpc.tasks.getByStudent.useQuery(
-    { studentContactId: studentId },
     { enabled: !!studentId }
   );
 
@@ -147,7 +89,7 @@ export default function StudentWorkspace() {
       }}
     >
       {/* ─── Top Clearance Area (leaves & lamp 100% visible) ───────────────── */}
-      <div className="w-full max-w-[1240px] mx-auto pt-7 pb-4 px-6 flex flex-col gap-5">
+      <div className="w-full max-w-[1280px] mx-auto pt-7 pb-10 px-6 flex flex-col gap-4">
         
         {/* Top Header Row (Floats cleanly below plants & lamp) */}
         <header className="flex items-center justify-between">
@@ -200,7 +142,7 @@ export default function StudentWorkspace() {
         </header>
 
         {/* ─── Folio Index Tabs (sitting on top of the desk pad) ─────────────── */}
-        <div className="flex items-end justify-start gap-1 px-4 -mb-[1px] relative z-20 overflow-x-auto no-scrollbar">
+        <div className="flex items-end justify-start gap-1 px-5 -mb-[1px] relative z-20 overflow-x-auto no-scrollbar">
           {[
             { id: "overview", label: "Overview", icon: User },
             { id: "timeline", label: "Timeline", icon: Clock },
@@ -219,8 +161,8 @@ export default function StudentWorkspace() {
                 className={cn(
                   "relative flex items-center gap-2 px-4 py-2 rounded-t-lg text-xs font-semibold tracking-wide transition-all border-t border-x cursor-pointer",
                   isActive
-                    ? "bg-[#091b35] text-white border-white/25 shadow-[0_-4px_12px_rgba(0,0,0,0.5)] z-20 border-b-0 pb-2.5"
-                    : "bg-[#061226]/80 text-white/60 hover:text-white/90 hover:bg-[#081830] border-white/10 border-b border-b-white/20 z-10"
+                    ? "bg-[#0c284e] text-white border-white/25 shadow-[0_-4px_12px_rgba(0,0,0,0.5)] z-20 border-b-0 pb-2.5"
+                    : "bg-[#061427]/85 text-white/60 hover:text-white/90 hover:bg-[#081a33] border-white/10 border-b border-b-white/20 z-10"
                 )}
               >
                 <Icon className={cn("h-3.5 w-3.5", isActive ? "text-amber-400" : "text-white/50")} />
@@ -236,74 +178,74 @@ export default function StudentWorkspace() {
           })}
         </div>
 
-        {/* ─── The Executive Desk Mat / Leather Folio ────────────────────────── */}
+        {/* ─── The Real Textured Leather Folio Desk Pad ─────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative rounded-2xl bg-gradient-to-b from-[#081b35] to-[#041021] border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15)] backdrop-blur-xl"
+          className="relative w-full rounded-2xl overflow-visible shadow-[0_25px_60px_rgba(0,0,0,0.85)]"
+          style={{
+            backgroundImage: "url('/decor/student-workspace-folio.png')",
+            backgroundSize: "100% 100%",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+          }}
         >
-          {/* 4 Gold Brass Corner Hardware Brackets */}
-          <BrassCorner position="top-left" />
-          <BrassCorner position="top-right" />
-          <BrassCorner position="bottom-left" />
-          <BrassCorner position="bottom-right" />
-
           {/* Tab Content Display */}
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[580px]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[580px] p-4 sm:p-6 md:p-8">
               
-              {/* ─── LEFT PANEL: Student Profile & Family (approx 35%) ──────── */}
-              <div className="lg:col-span-4 p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/10 relative">
+              {/* ─── LEFT PANEL: Student Profile & Family (~38% width) ──────── */}
+              <div className="lg:col-span-5 sm:px-6 py-4 flex flex-col justify-between relative">
                 <div className="flex flex-col items-center text-center">
                   
                   {/* Golden Glowing Avatar Badge */}
-                  <div className="relative mb-4">
-                    <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-2xl shadow-[0_0_24px_rgba(212,175,55,0.35)] ring-4 ring-[#081b35]">
+                  <div className="relative mb-3 mt-1">
+                    <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-2xl shadow-[0_0_24px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/60">
                       {studentInitials}
                     </div>
                   </div>
 
                   {/* Student Name & School */}
                   <h2 
-                    className="text-2xl font-bold tracking-tight text-white drop-shadow"
+                    className="text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                     style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     {fullName}
                   </h2>
-                  <p className="text-xs text-white/70 mt-1">
+                  <p className="text-xs text-white/75 mt-1 drop-shadow-sm">
                     {student?.gradeLevel ? `${student.gradeLevel} Grade` : "5th Grade"} · {student?.schoolName || "Lincoln Elementary"}
                   </p>
 
                   {/* Pill Badges */}
                   <div className="flex items-center gap-2 mt-3">
-                    <Badge className="bg-[#163863] text-sky-200 hover:bg-[#163863] border border-sky-400/30 text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full">
+                    <Badge className="bg-[#123159]/90 text-sky-200 hover:bg-[#123159] border border-sky-400/40 text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full shadow-sm">
                       IEP
                     </Badge>
-                    <Badge className="bg-[#0b3329] text-emerald-300 hover:bg-[#0b3329] border border-emerald-500/40 text-[10px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                    <Badge className="bg-[#093527]/90 text-emerald-300 hover:bg-[#093527] border border-emerald-500/40 text-[10px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <span>{student?.studentStatus || "Active"}</span>
                     </Badge>
                   </div>
 
                   {/* Subtle Ornamental Divider */}
-                  <div className="w-full flex items-center justify-center my-6">
+                  <div className="w-full flex items-center justify-center my-5">
                     <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
-                    <div className="w-1.5 h-1.5 rotate-45 border border-amber-400/40 bg-amber-400/20 mx-2" />
+                    <div className="w-1.5 h-1.5 rotate-45 border border-amber-400/50 bg-amber-400/30 mx-2" />
                     <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
                   </div>
 
                   {/* Parent / Guardian Info */}
-                  <div className="w-full text-left space-y-2">
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-white/40">
+                  <div className="w-full text-left space-y-2 px-2">
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-white/50">
                       PARENT / GUARDIAN
                     </p>
-                    <div className="flex items-center gap-2.5 text-xs text-white/90">
-                      <User className="h-3.5 w-3.5 text-white/50 shrink-0" />
+                    <div className="flex items-center gap-2.5 text-xs text-white/95">
+                      <User className="h-3.5 w-3.5 text-white/60 shrink-0" />
                       <span className="font-semibold">{parentName}</span>
                     </div>
-                    <div className="flex items-center gap-2.5 text-xs text-white/90">
-                      <Phone className="h-3.5 w-3.5 text-white/50 shrink-0" />
+                    <div className="flex items-center gap-2.5 text-xs text-white/95">
+                      <Phone className="h-3.5 w-3.5 text-white/60 shrink-0" />
                       <a href={`tel:${parentPhone}`} className="hover:text-amber-300 transition-colors">
                         {parentPhone}
                       </a>
@@ -313,18 +255,18 @@ export default function StudentWorkspace() {
                   {/* Student Details Button */}
                   <button
                     onClick={() => setDetailsModalOpen(true)}
-                    className="w-full mt-6 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#0d2242] to-[#122e56] hover:from-[#13305c] hover:to-[#1a4078] border border-[#D4AF37]/50 text-white text-xs font-semibold flex items-center justify-between shadow-md transition-all cursor-pointer group"
+                    className="w-full mt-5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#0d2242]/90 to-[#122e56]/90 hover:from-[#13305c] hover:to-[#1a4078] border border-[#D4AF37]/60 text-white text-xs font-semibold flex items-center justify-between shadow-lg transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="p-1 rounded bg-amber-400/10 text-amber-300 text-xs">🪪</span>
+                      <span className="p-1 rounded bg-amber-400/20 text-amber-300 text-xs">🪪</span>
                       <span>Student details</span>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-white/50 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="h-4 w-4 text-white/60 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
 
                 {/* Left Panel Footer: Call status, Portal, Plan */}
-                <div className="mt-8 pt-6 border-t border-white/10 space-y-2.5 text-xs">
+                <div className="mt-7 pt-5 border-t border-white/10 space-y-2 text-xs px-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-white/60">
                       <Clock className="h-3.5 w-3.5" />
@@ -332,7 +274,7 @@ export default function StudentWorkspace() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-white font-medium">{clientTime} Eastern</span>
-                      <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         Good to call
                       </span>
@@ -351,30 +293,30 @@ export default function StudentWorkspace() {
                 </div>
               </div>
 
-              {/* ─── RIGHT PANEL: Current Focus & Action Center (approx 65%) ── */}
-              <div className="lg:col-span-8 p-8 flex flex-col justify-between">
+              {/* ─── RIGHT PANEL: Current Focus & Action Center (~62% width) ── */}
+              <div className="lg:col-span-7 sm:px-6 py-4 flex flex-col justify-between">
                 <div>
                   {/* Current Focus Banner */}
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-sky-300/80">
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-sky-300/90 drop-shadow">
                       CURRENT FOCUS
                     </p>
                     <h3 
-                      className="text-2xl font-bold tracking-tight text-white drop-shadow"
+                      className="text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                       style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
                       {compass?.currentStatus || "Prepare for the next IEP meeting"}
                     </h3>
-                    <p className="text-xs text-white/70">
+                    <p className="text-xs text-white/75 drop-shadow">
                       {compass?.nextStep || "Review records and organize parent concerns."}
                     </p>
                   </div>
 
                   {/* Primary Action Buttons */}
-                  <div className="flex flex-wrap items-center gap-3 mt-5">
+                  <div className="flex flex-wrap items-center gap-3 mt-4">
                     <Button
                       onClick={() => setLocation(`/meeting-workspace/${studentId}`)}
-                      className="bg-gradient-to-r from-[#0d2242] to-[#14325c] hover:from-[#13305c] hover:to-[#1a4078] text-white border border-[#D4AF37]/70 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-lg cursor-pointer"
+                      className="bg-gradient-to-r from-[#0d2242] to-[#14325c] hover:from-[#13305c] hover:to-[#1a4078] text-white border border-[#D4AF37]/75 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-lg cursor-pointer"
                     >
                       <Calendar className="h-4 w-4 text-amber-300" />
                       <span>Prepare for Meeting</span>
@@ -383,7 +325,7 @@ export default function StudentWorkspace() {
                     <Button
                       onClick={() => setLocation(`/post-meeting-review/${studentId}`)}
                       variant="outline"
-                      className="bg-[#081a33]/60 hover:bg-[#0c2447] text-white/90 hover:text-white border-white/20 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-sm cursor-pointer"
+                      className="bg-[#081a33]/80 hover:bg-[#0c2447] text-white/90 hover:text-white border-white/20 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-sm cursor-pointer"
                     >
                       <FileText className="h-4 w-4 text-white/70" />
                       <span>Post-Meeting Review</span>
@@ -391,10 +333,10 @@ export default function StudentWorkspace() {
                   </div>
 
                   {/* Middle Cards: Next Meeting & Next Actions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-7">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     
                     {/* Card 1: Next Meeting */}
-                    <div className="rounded-xl bg-[#061427]/70 border border-white/10 p-5 flex flex-col justify-between min-h-[170px]">
+                    <div className="rounded-xl bg-[#040e1d]/75 border border-white/10 p-4 flex flex-col justify-between min-h-[160px] shadow-inner">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
                         <Calendar className="h-3 w-3" />
                         <span>NEXT MEETING</span>
@@ -421,7 +363,7 @@ export default function StudentWorkspace() {
                         onClick={() => setScheduleModalOpen(true)}
                         size="sm"
                         variant="outline"
-                        className="w-full mt-2 bg-[#091b35]/60 hover:bg-[#0f2a52] border-[#D4AF37]/50 text-white text-xs font-semibold rounded-lg h-8 gap-2 cursor-pointer"
+                        className="w-full mt-2 bg-[#091b35]/80 hover:bg-[#0f2a52] border-[#D4AF37]/60 text-white text-xs font-semibold rounded-lg h-8 gap-2 cursor-pointer shadow-sm"
                       >
                         <Calendar className="h-3.5 w-3.5 text-amber-300" />
                         <span>Schedule meeting</span>
@@ -429,13 +371,13 @@ export default function StudentWorkspace() {
                     </div>
 
                     {/* Card 2: Next Actions */}
-                    <div className="rounded-xl bg-[#061427]/70 border border-white/10 p-5 flex flex-col justify-between min-h-[170px]">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50 mb-3">
+                    <div className="rounded-xl bg-[#040e1d]/75 border border-white/10 p-4 flex flex-col justify-between min-h-[160px] shadow-inner">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50 mb-2.5">
                         <CheckSquare className="h-3 w-3" />
                         <span>NEXT ACTIONS</span>
                       </div>
 
-                      <div className="space-y-2.5">
+                      <div className="space-y-2">
                         {[
                           { id: "review-iep", label: "Review latest IEP" },
                           { id: "confirm-priorities", label: "Confirm parent priorities" },
@@ -452,7 +394,7 @@ export default function StudentWorkspace() {
                                 "w-4 h-4 rounded border flex items-center justify-center transition-all",
                                 isDone 
                                   ? "bg-amber-400 border-amber-300 text-slate-950 font-bold" 
-                                  : "border-white/30 group-hover:border-amber-300 bg-black/20"
+                                  : "border-white/30 group-hover:border-amber-300 bg-black/30"
                               )}>
                                 {isDone && <CheckCircle2 className="h-3 w-3" />}
                               </div>
@@ -471,7 +413,7 @@ export default function StudentWorkspace() {
                   </div>
 
                   {/* Bottom Card: Recent Activity */}
-                  <div className="rounded-xl bg-[#061427]/70 border border-white/10 p-4 mt-5 flex items-center justify-between">
+                  <div className="rounded-xl bg-[#040e1d]/75 border border-white/10 p-3.5 mt-4 flex items-center justify-between shadow-inner">
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
                         <FileText className="h-3 w-3" />
@@ -496,10 +438,10 @@ export default function StudentWorkspace() {
                 </div>
 
                 {/* Bottom Center Hanging Tab */}
-                <div className="flex justify-center -mb-12 mt-6">
+                <div className="flex justify-center -mb-9 mt-5 relative z-30">
                   <button
                     onClick={() => setDetailsModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-[#0c2242] to-[#122e54] border border-[#D4AF37]/60 text-white text-xs font-bold shadow-xl hover:from-[#102c54] hover:to-[#183c6e] transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-[#0c2242] to-[#122e54] border border-[#D4AF37]/75 text-white text-xs font-bold shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:from-[#102c54] hover:to-[#183c6e] transition-all cursor-pointer"
                   >
                     <FileText className="h-3.5 w-3.5 text-amber-300" />
                     <span>Case details</span>
