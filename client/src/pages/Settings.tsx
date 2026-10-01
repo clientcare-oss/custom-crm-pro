@@ -13,6 +13,7 @@ import { ClientPortalSettingsTab } from "@/components/settings/ClientPortalSetti
 import { ColorPaletteTokensTab } from "@/components/settings/ColorPaletteTokensTab";
 import BusinessOperationsSection from "@/components/settings/BusinessOperationsSection";
 import { ReceiptSettingsTab } from "@/components/settings/ReceiptSettingsTab";
+import { ArchivedPagesSettingsTab } from "@/components/settings/ArchivedPagesSettingsTab";
 import Integrations from "./Integrations";
 import AiConnections from "./AiConnections";
 
@@ -47,6 +48,7 @@ export default function Settings() {
     if (raw === "integrations" || raw === "integration" || raw === "quo") return "integrations";
     if (raw === "ai" || raw === "ai-connections" || raw === "llm") return "ai";
     if (raw === "colors" || raw === "palette" || raw === "tokens") return "colors";
+    if (raw === "archived" || raw === "archived-pages" || raw === "legacy") return "archived";
     if (raw === "admin" || raw === "crm") return "admin";
     // Default to clean Admin CRM / Company Profile base rather than raw color dump
     return "admin";
@@ -179,6 +181,11 @@ export default function Settings() {
         {/* SECTION 7: Master Color Palette & Design Tokens */}
         {activeSection === "colors" && (
           <ColorPaletteTokensTab />
+        )}
+
+        {/* SECTION 8: Archived Pages & Reference Consoles (PG-030-ARC) */}
+        {activeSection === "archived" && (
+          <ArchivedPagesSettingsTab />
         )}
       </div>
     </div>

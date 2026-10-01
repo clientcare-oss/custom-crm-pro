@@ -9,10 +9,11 @@ import {
   Sparkles,
   ChevronRight,
   Plug,
+  Archive,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export type SettingsSectionKey = "receipts" | "portal" | "admin" | "operations" | "integrations" | "ai" | "colors";
+export type SettingsSectionKey = "receipts" | "portal" | "admin" | "operations" | "integrations" | "ai" | "colors" | "archived";
 
 interface SettingsBoxConfig {
   key: SettingsSectionKey;
@@ -128,6 +129,20 @@ export const SETTINGS_BOXES: SettingsBoxConfig[] = [
     description: "Master palette tokens, dark & light mode contrast rules, hex copy reference, and surface elevation dictionary.",
     highlights: ["Exact Hex Code Swatches", "Dark vs Light Mode Matrix", "Surface Contrast Hierarchy"],
   },
+  {
+    key: "archived",
+    title: "Archived Pages",
+    shortLabel: "Legacy Workspaces",
+    badge: "PG-030-ARC",
+    badgeClass: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    icon: Archive,
+    iconBg: "bg-purple-500/10",
+    iconColor: "text-purple-400",
+    borderActive: "border-purple-400 ring-2 ring-purple-400/20",
+    glowActive: "shadow-[0_0_24px_rgba(168,85,247,0.22)]",
+    description: "Preserved legacy workspaces and reference consoles kept for feature parity while designing new versions.",
+    highlights: ["PG-030: Legacy Student Workspace", "Full Case Telemetry & 11 Sub-Tabs", "Direct Interactive Reference"],
+  },
 ];
 
 interface SettingsCommandBoxesProps {
@@ -148,11 +163,11 @@ export function SettingsCommandBoxes({
           <span className="text-foreground">Click a command box to open configuration</span>
         </h2>
         <span className="text-[11px] text-muted-foreground font-mono">
-          7 Core Systems
+          8 Core Systems
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 2xl:grid-cols-8 gap-3">
         {SETTINGS_BOXES.map((box) => {
           const isActive = activeSection === box.key;
           const Icon = box.icon;

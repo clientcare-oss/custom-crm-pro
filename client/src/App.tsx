@@ -80,6 +80,7 @@ import MeetingWorkspace from "./pages/MeetingWorkspace";
 import PostMeetingReview from "./pages/PostMeetingReview";
 import PwnDecoder from "./pages/PwnDecoder";
 import ReceiptView from "./pages/ReceiptView";
+import LegacyStudentWorkspace from "./pages/archived/LegacyStudentWorkspace";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -185,6 +186,11 @@ function Router() {
           <Route path="/company/dashboard" component={CompanyDashboard} />
           <Route path="/company-dashboard" component={CompanyDashboard} />
           <Route path="/dashboard" component={CompanyDashboard} />
+          {/* Archived Workspaces (PG-030-ARC) */}
+          <Route path="/archived/pg-030" component={LegacyStudentWorkspace} />
+          <Route path="/archived/students/:id" component={LegacyStudentWorkspace} />
+          <Route path="/archived/student-workspace/:id" component={LegacyStudentWorkspace} />
+          <Route path="/archived/contacts/:id" component={LegacyStudentWorkspace} />
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/students/:id" component={ContactDetail} />
           <Route path="/project-workspace/:id" component={ContactDetail} />
