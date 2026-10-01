@@ -1056,7 +1056,7 @@ export default function ContactsLedgerView({
           {/* CUSTOM UI ALPHABET THUMB INDEX TABS                                 */}
           {/* 100% UI component: decoupled from background, scales dynamically   */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          <div className="w-[5.8%] lg:w-[5.2%] xl:w-[4.8%] h-full pt-[4.2%] pb-[3.6%] pr-0.5 sm:pr-1 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
+          <div className="w-[6%] lg:w-[5.4%] xl:w-[5%] h-full pt-[4.2%] pb-[3.6%] pr-1 sm:pr-1.5 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
             {ALPHABET.map((letter) => {
               const isHome = letter === "HOME";
               const isSelected =
@@ -1083,21 +1083,16 @@ export default function ContactsLedgerView({
                     setMobileTab("directory");
                   }}
                   className={cn(
-                    "w-full flex-1 flex items-center justify-center transition-all cursor-pointer font-serif select-none relative group",
-                    "rounded-l-md border-y border-l text-[10px] sm:text-[11px] xl:text-[12px]",
+                    "w-full flex-1 flex items-center justify-center transition-all duration-150 cursor-pointer font-serif select-none relative group",
+                    // Shape: Flat left edge attached to book, curved die-cut right edge protruding out
+                    "rounded-l-none rounded-r-md sm:rounded-r-lg border-y border-r border-l-0 text-[10px] sm:text-[11px] xl:text-[12px]",
                     isSelected
                       ? isLight
-                        ? "bg-gradient-to-r from-[#D4AF37] via-[#E5BF65] to-[#B89230] text-[#1F1202] font-black border-[#5E420C] shadow-[0_2px_8px_rgba(94,66,12,0.35)] -translate-x-1 sm:-translate-x-1.5 z-30 scale-105"
-                        : "bg-gradient-to-r from-[#FFE8B3] via-[#F5B544] to-[#C78F2E] text-[#1A0F02] font-black border-[#FFF2D0] shadow-[0_0_12px_rgba(245,181,68,0.7),inset_0_1px_1px_rgba(255,255,255,0.8)] -translate-x-1 sm:-translate-x-1.5 z-30 scale-105"
+                        ? "bg-gradient-to-r from-[#D4AF37] via-[#E5BF65] to-[#B89230] text-[#1F1202] font-black border-[#5E420C] shadow-[0_2px_8px_rgba(94,66,12,0.35)] translate-x-1 sm:translate-x-1.5 z-30 scale-105"
+                        : "bg-gradient-to-r from-[#FFE8B3] via-[#F5B544] to-[#C78F2E] text-[#1A0F02] font-black border-[#FFF2D0] shadow-[0_0_14px_rgba(245,181,68,0.7),inset_0_1px_1px_rgba(255,255,255,0.8)] translate-x-1 sm:translate-x-1.5 z-30 scale-105"
                       : isLight
-                      ? cn(
-                          "bg-[#E8DAC0]/90 hover:bg-[#D9C4A0] border-[#C2AE88] text-[#523F1F] hover:text-[#1F1404] hover:-translate-x-0.5",
-                          !hasContacts && "opacity-40 hover:opacity-80"
-                        )
-                      : cn(
-                          "bg-[#071933]/90 hover:bg-[#0E2C57] border-[#183A6B]/70 text-[#9BB7DC] hover:text-[#FFF2D9] hover:-translate-x-0.5",
-                          !hasContacts && "opacity-40 hover:opacity-85 text-[#6782A8]"
-                        )
+                      ? "bg-[#EFE4CE] hover:bg-[#FFF8EC] border-[#C4B18B] text-[#3B2506] hover:text-black hover:translate-x-0.5 hover:shadow-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]"
+                      : "bg-[#091D38] hover:bg-[#12335E] border-[#1E4377] text-[#F3E5CC] hover:text-white hover:translate-x-0.5 hover:shadow-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
                   )}
                   title={
                     isHome
@@ -1110,14 +1105,23 @@ export default function ContactsLedgerView({
                   {isHome ? (
                     <Home className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   ) : (
-                    <span className={cn(isSelected ? "font-black" : hasContacts ? "font-bold" : "font-medium")}>
+                    <span
+                      className={cn(
+                        "transition-colors",
+                        isSelected
+                          ? "font-black"
+                          : hasContacts
+                          ? "font-bold text-[#FFF5E0] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                          : "font-bold text-[#E2D4BE] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                      )}
+                    >
                       {letter}
                     </span>
                   )}
 
-                  {/* Active Indicator Micro-pip */}
+                  {/* Active Indicator Micro-pip on curved right edge */}
                   {isSelected && (
-                    <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white shadow-xs pointer-events-none" />
+                    <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#1A0F02] shadow-xs pointer-events-none" />
                   )}
                 </button>
               );
