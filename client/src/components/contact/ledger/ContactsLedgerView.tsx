@@ -16,7 +16,6 @@ import {
   Trash2,
   Home,
   Check,
-  GraduationCap,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -651,7 +650,7 @@ export default function ContactsLedgerView({
 
                     {/* Contact Header Content */}
                     <div className="flex-1 min-w-0">
-                      {/* Top Line: Tags & Badges (Active Family + Student Name) */}
+                      {/* Top Line: Tags & Badges (Active Family, etc.) */}
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
                         {activeBadge && (
                           <span
@@ -665,23 +664,6 @@ export default function ContactsLedgerView({
                             {activeBadge.label}
                           </span>
                         )}
-
-                        {/* Student Name Tag (placed where Add Tag was) */}
-                        {dossierStudents.length > 0 &&
-                          dossierStudents.map((st) => (
-                            <span
-                              key={st.id}
-                              className={cn(
-                                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-serif font-medium tracking-tight whitespace-nowrap border shadow-xs",
-                                isLight
-                                  ? "bg-[#EFE3C8] text-[#3D2908] border-[#C7B594]"
-                                  : "bg-[#091D38] text-[#93C5FD] border-[#1D4E89]"
-                              )}
-                            >
-                              <GraduationCap className="h-3 w-3 text-[#E5C175]" />
-                              <span>{st.firstName} {st.lastName}</span>
-                            </span>
-                          ))}
                       </div>
 
                       {/* Parent / Contact Name (Dropped down, uninhibited full width) */}
@@ -833,14 +815,14 @@ export default function ContactsLedgerView({
                 >
                   <div className="flex items-center justify-between gap-2 mb-2.5">
                     <div className="flex items-center gap-1.5">
-                      <GraduationCap className="h-4 w-4 text-[#D4AF37]" />
+                      <LinkIcon className="h-4 w-4 text-[#D4AF37]" />
                       <span
                         className={cn(
                           "font-serif text-xs font-bold uppercase tracking-wider",
                           isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
                         )}
                       >
-                        {dossierStudents.length > 1 ? "Linked Students" : "Linked Student"}
+                        Parent of
                       </span>
                     </div>
 
