@@ -341,7 +341,7 @@ export default function ContactsLedgerView({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           <div
             className={cn(
-              "w-full lg:w-[47.2%] h-full pt-[3.2%] pb-[4%] pl-[5.5%] pr-[2.5%] flex flex-col z-10",
+              "w-full lg:w-[47.2%] h-full pt-[7.8%] lg:pt-[8.5%] pb-[7.5%] lg:pb-[8.2%] pl-[5.5%] pr-[2.5%] flex flex-col z-10",
               mobileTab === "dossier" ? "hidden lg:flex" : "flex"
             )}
           >
@@ -616,7 +616,7 @@ export default function ContactsLedgerView({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           <div
             className={cn(
-              "w-full lg:w-[41.8%] h-full pt-[3.2%] pb-[4%] pl-[2%] pr-[3.5%] flex flex-col z-10",
+              "w-full lg:w-[41.8%] h-full pt-[7.8%] lg:pt-[8.5%] pb-[7.5%] lg:pb-[8.2%] pl-[2%] pr-[3.5%] flex flex-col z-10",
               mobileTab === "directory" ? "hidden lg:flex" : "flex"
             )}
           >
@@ -1056,7 +1056,7 @@ export default function ContactsLedgerView({
           {/* CUSTOM UI ALPHABET THUMB INDEX TABS                                 */}
           {/* 100% UI component: decoupled from background, scales dynamically   */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          <div className="w-[5.6%] lg:w-[5.0%] xl:w-[4.6%] h-full pt-[4.2%] pb-[3.6%] pr-1 sm:pr-1.5 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
+          <div className="w-[5.6%] lg:w-[5.0%] xl:w-[4.6%] h-full pt-[7.8%] lg:pt-[8.5%] pb-[7.5%] lg:pb-[8.2%] pr-1 sm:pr-1.5 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
             {ALPHABET.map((letter) => {
               const isHome = letter === "HOME";
               const isSelected =
