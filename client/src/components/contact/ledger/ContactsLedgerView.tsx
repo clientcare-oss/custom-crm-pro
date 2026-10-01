@@ -630,121 +630,71 @@ export default function ContactsLedgerView({
             )}
           >
             {dossierContact ? (
-              <div className="h-full flex flex-col justify-between select-none overflow-y-auto custom-scrollbar pr-1">
-                {/* Top Section: Header & Parent of Box grouped together tightly */}
-                <div className="space-y-2.5">
-                  {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      {/* Large Initials Avatar */}
-                      <div className="relative shrink-0">
-                        <div
-                          className={cn(
-                            "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-serif font-black text-xl sm:text-2xl border-2 shadow-lg",
-                            isLight
-                              ? "bg-gradient-to-br from-[#EFE0C2] to-[#C9B388] text-[#291802] border-[#8C6418]"
-                              : "bg-gradient-to-br from-[#0F2647] to-[#040C1A] text-[#FFF2D9] border-[#E5C175] shadow-[0_0_16px_rgba(229,193,117,0.35)]"
-                          )}
-                        >
-                          {getInitials(dossierContact.firstName, dossierContact.lastName)}
-                        </div>
-                      </div>
-
-                      {/* Contact Header Content */}
-                      <div className="flex-1 min-w-0">
-                        {/* Top Line: Tags & Badges (Active Family, etc.) */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
-                          {activeBadge && (
-                            <span
-                              className={cn(
-                                "px-2.5 py-0.5 rounded-full text-[11px] font-serif font-bold tracking-tight whitespace-nowrap shadow-xs",
-                                isLight
-                                  ? "bg-[#E5BF65] text-[#291A04] border border-[#8C6418]"
-                                  : "bg-[#33220A] text-[#FCE09E] border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.25)]"
-                              )}
-                            >
-                              {activeBadge.label}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Parent / Contact Name (Dropped down, uninhibited full width) */}
-                        <h2
-                          className={cn(
-                            "font-serif text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight truncate leading-tight drop-shadow-xs",
-                            isLight ? "text-[#1C1405]" : "text-[#FFF2D9]"
-                          )}
-                        >
-                          {dossierContact.firstName} {dossierContact.lastName}
-                        </h2>
-
-                        {/* Professional subtitle (only if no linked students, e.g. advocate or school personnel) */}
-                        {dossierStudents.length === 0 && dossierContact.jobTitle && (
-                          <p
-                            className={cn(
-                              "font-serif text-xs sm:text-sm font-medium mt-1 truncate",
-                              isLight ? "text-[#5C4A32]" : "text-[#C7B596]"
-                            )}
-                          >
-                            {dossierContact.jobTitle}
-                          </p>
+              <div className="h-full flex flex-col space-y-3 select-none overflow-y-auto custom-scrollbar pr-1">
+                {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3.5 min-w-0">
+                    {/* Large Initials Avatar */}
+                    <div className="relative shrink-0">
+                      <div
+                        className={cn(
+                          "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-serif font-black text-xl sm:text-2xl border-2 shadow-lg",
+                          isLight
+                            ? "bg-gradient-to-br from-[#EFE0C2] to-[#C9B388] text-[#291802] border-[#8C6418]"
+                            : "bg-gradient-to-br from-[#0F2647] to-[#040C1A] text-[#FFF2D9] border-[#E5C175] shadow-[0_0_16px_rgba(229,193,117,0.35)]"
                         )}
+                      >
+                        {getInitials(dossierContact.firstName, dossierContact.lastName)}
                       </div>
                     </div>
 
-                    {/* Quick Action Buttons Bar: Call, Email, Message, Dropdown Menu */}
-                    <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-                      {dossierContact.phone ? (
-                        <a
-                          href={`tel:${dossierContact.phone}`}
+                    {/* Contact Header Content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Top Line: Tags & Badges (Active Family, etc.) */}
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
+                        {activeBadge && (
+                          <span
+                            className={cn(
+                              "px-2.5 py-0.5 rounded-full text-[11px] font-serif font-bold tracking-tight whitespace-nowrap shadow-xs",
+                              isLight
+                                ? "bg-[#E5BF65] text-[#291A04] border border-[#8C6418]"
+                                : "bg-[#33220A] text-[#FCE09E] border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.25)]"
+                            )}
+                          >
+                            {activeBadge.label}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Parent / Contact Name (Dropped down, uninhibited full width) */}
+                      <h2
+                        className={cn(
+                          "font-serif text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight truncate leading-tight drop-shadow-xs",
+                          isLight ? "text-[#1C1405]" : "text-[#FFF2D9]"
+                        )}
+                      >
+                        {dossierContact.firstName} {dossierContact.lastName}
+                      </h2>
+
+                      {/* Professional subtitle (only if no linked students, e.g. advocate or school personnel) */}
+                      {dossierStudents.length === 0 && dossierContact.jobTitle && (
+                        <p
                           className={cn(
-                            "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
-                            isLight
-                              ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
-                              : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
+                            "font-serif text-xs sm:text-sm font-medium mt-1 truncate",
+                            isLight ? "text-[#5C4A32]" : "text-[#C7B596]"
                           )}
                         >
-                          <Phone className="h-3.5 w-3.5 text-[#E5C175]" />
-                          <span>Call</span>
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-medium opacity-40 border border-white/10"
-                        >
-                          <Phone className="h-3.5 w-3.5" />
-                          <span>Call</span>
-                        </button>
+                          {dossierContact.jobTitle}
+                        </p>
                       )}
+                    </div>
+                  </div>
 
-                      {dossierContact.email ? (
-                        <a
-                          href={`mailto:${dossierContact.email}`}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
-                            isLight
-                              ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
-                              : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
-                          )}
-                        >
-                          <Mail className="h-3.5 w-3.5 text-[#E5C175]" />
-                          <span>Email</span>
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-medium opacity-40 border border-white/10"
-                        >
-                          <Mail className="h-3.5 w-3.5" />
-                          <span>Email</span>
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => setLocation("/messages")}
+                  {/* Quick Action Buttons Bar: Call, Email, Message, Dropdown Menu */}
+                  <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                    {dossierContact.phone ? (
+                      <a
+                        href={`tel:${dossierContact.phone}`}
                         className={cn(
                           "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
                           isLight
@@ -752,167 +702,214 @@ export default function ContactsLedgerView({
                             : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
                         )}
                       >
-                        <MessageSquare className="h-3.5 w-3.5 text-[#E5C175]" />
-                        <span>Message</span>
-                      </button>
-
-                      {/* More Actions Dropdown Menu */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className={cn(
-                              "p-2 rounded-xl border transition-all cursor-pointer shadow-xs",
-                              isLight
-                                ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
-                                : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
-                            )}
-                            title="More options"
-                          >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="bg-[#051124] border border-[#1E3A63] text-[#F0DFC5] rounded-xl shadow-2xl p-1 min-w-[190px]"
-                        >
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setLocation(
-                                `/client-portal?preview=true&parentContactId=${dossierContact.id}`
-                              )
-                            }
-                            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5 text-[#E5C175]" />
-                            <span>View Portal Preview</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onEditContact(dossierContact)}
-                            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
-                          >
-                            <Edit2 className="h-3.5 w-3.5 text-[#93C5FD]" />
-                            <span>Edit Contact</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDeleteContact(dossierContact.id)}
-                            className="flex items-center gap-2 cursor-pointer hover:bg-red-950/60 text-red-400 text-xs py-2 rounded-lg"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            <span>Delete Contact</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  {/* 2. Middle Section: Linked Student Case(s) (Parent of) */}
-                  <div
-                    className={cn(
-                      "p-3 sm:p-3.5 rounded-2xl border transition-all select-none",
-                      isLight
-                        ? "bg-[#EFE4CA]/80 border-[#C7B594] shadow-xs"
-                        : "bg-[#07172C]/75 border-[#182C48] shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <div className="flex items-center gap-1.5">
-                        <LinkIcon className="h-4 w-4 text-[#D4AF37]" />
-                        <span
-                          className={cn(
-                            "font-serif text-xs font-bold uppercase tracking-wider",
-                            isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
-                          )}
-                        >
-                          Parent of
-                        </span>
-                      </div>
-
+                        <Phone className="h-3.5 w-3.5 text-[#E5C175]" />
+                        <span>Call</span>
+                      </a>
+                    ) : (
                       <button
                         type="button"
-                        onClick={() => setLocation("/students")}
-                        className={cn(
-                          "text-[11px] font-serif font-semibold underline cursor-pointer",
-                          isLight ? "text-[#785412] hover:text-[#2E1D02]" : "text-[#D4AF37] hover:text-white"
-                        )}
+                        disabled
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-medium opacity-40 border border-white/10"
                       >
-                        All Students
+                        <Phone className="h-3.5 w-3.5" />
+                        <span>Call</span>
                       </button>
-                    </div>
+                    )}
 
-                    {dossierStudents.length > 0 ? (
-                      <div className="space-y-2">
-                        {dossierStudents.map((student) => (
-                          <div
-                            key={student.id}
-                            onClick={() => setLocation(`/contacts/${student.id}`)}
-                            className={cn(
-                              "flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-pointer group",
-                              isLight
-                                ? "bg-[#F8EFE0] hover:bg-[#FFF8ED] border-[#D1BE9B]"
-                                : "bg-[#040E1E]/90 hover:bg-[#091D38] border-[#1E375C]"
-                            )}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <div
-                                className={cn(
-                                  "w-8 h-8 rounded-full flex items-center justify-center font-serif font-bold text-xs border shrink-0",
-                                  isLight
-                                    ? "bg-[#D9C49D] text-[#2E1E05] border-[#A88C56]"
-                                    : "bg-[#0A233D] text-[#93C5FD] border-[#1F548A]"
-                                )}
-                              >
-                                {getInitials(student.firstName, student.lastName)}
-                              </div>
-                              <div>
-                                <h5
-                                  className={cn(
-                                    "font-serif text-xs sm:text-sm font-bold leading-tight group-hover:text-[#D4AF37] transition-colors",
-                                    isLight ? "text-[#1C1405]" : "text-[#F4E8D3]"
-                                  )}
-                                >
-                                  {student.firstName} {student.lastName}
-                                </h5>
-                                <p
-                                  className={cn(
-                                    "text-[10.5px] mt-0.5",
-                                    isLight ? "text-[#63533E]" : "text-[#8CA4C4]"
-                                  )}
-                                >
-                                  Student Case File · Click to Open
-                                </p>
-                              </div>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p
+                    {dossierContact.email ? (
+                      <a
+                        href={`mailto:${dossierContact.email}`}
                         className={cn(
-                          "text-xs italic py-2 text-center",
-                          isLight ? "text-[#7B6A53]" : "text-[#7990AF]"
+                          "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
+                          isLight
+                            ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
+                            : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
                         )}
                       >
-                        No linked student cases recorded for this contact.
-                      </p>
+                        <Mail className="h-3.5 w-3.5 text-[#E5C175]" />
+                        <span>Email</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-medium opacity-40 border border-white/10"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        <span>Email</span>
+                      </button>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/messages")}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
+                        isLight
+                          ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
+                          : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
+                      )}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5 text-[#E5C175]" />
+                      <span>Message</span>
+                    </button>
+
+                    {/* More Actions Dropdown Menu */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            "p-2 rounded-xl border transition-all cursor-pointer shadow-xs",
+                            isLight
+                              ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
+                              : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
+                          )}
+                          title="More options"
+                        >
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-[#051124] border border-[#1E3A63] text-[#F0DFC5] rounded-xl shadow-2xl p-1 min-w-[190px]"
+                      >
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setLocation(
+                              `/client-portal?preview=true&parentContactId=${dossierContact.id}`
+                            )
+                          }
+                          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 text-[#E5C175]" />
+                          <span>View Portal Preview</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onEditContact(dossierContact)}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
+                        >
+                          <Edit2 className="h-3.5 w-3.5 text-[#93C5FD]" />
+                          <span>Edit Contact</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onDeleteContact(dossierContact.id)}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-red-950/60 text-red-400 text-xs py-2 rounded-lg"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Delete Contact</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 
-                {/* 3. Bottom 3-Card Activity & Relationship Strip */}
-                <div className="grid grid-cols-3 gap-2 select-none">
+                {/* 2. Middle Section: Linked Student Case(s) (Parent of) */}
+                <div
+                  className={cn(
+                    "p-3 sm:p-3.5 rounded-2xl border transition-all select-none",
+                    isLight
+                      ? "bg-[#EFE4CA]/80 border-[#C7B594] shadow-xs"
+                      : "bg-[#07172C]/75 border-[#182C48] shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <LinkIcon className="h-4 w-4 text-[#D4AF37]" />
+                      <span
+                        className={cn(
+                          "font-serif text-xs font-bold uppercase tracking-wider",
+                          isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
+                        )}
+                      >
+                        Parent of
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/students")}
+                      className={cn(
+                        "text-[11px] font-serif font-semibold underline cursor-pointer",
+                        isLight ? "text-[#785412] hover:text-[#2E1D02]" : "text-[#D4AF37] hover:text-white"
+                      )}
+                    >
+                      All Students
+                    </button>
+                  </div>
+
+                  {dossierStudents.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {dossierStudents.map((student) => (
+                        <div
+                          key={student.id}
+                          onClick={() => setLocation(`/contacts/${student.id}`)}
+                          className={cn(
+                            "flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-pointer group",
+                            isLight
+                              ? "bg-[#F8EFE0] hover:bg-[#FFF8ED] border-[#D1BE9B]"
+                              : "bg-[#040E1E]/90 hover:bg-[#091D38] border-[#1E375C]"
+                          )}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={cn(
+                                "w-8 h-8 rounded-full flex items-center justify-center font-serif font-bold text-xs border shrink-0",
+                                isLight
+                                  ? "bg-[#D9C49D] text-[#2E1E05] border-[#A88C56]"
+                                  : "bg-[#0A233D] text-[#93C5FD] border-[#1F548A]"
+                              )}
+                            >
+                              {getInitials(student.firstName, student.lastName)}
+                            </div>
+                            <div>
+                              <h5
+                                className={cn(
+                                  "font-serif text-xs sm:text-sm font-bold leading-tight group-hover:text-[#D4AF37] transition-colors",
+                                  isLight ? "text-[#1C1405]" : "text-[#F4E8D3]"
+                                )}
+                              >
+                                {student.firstName} {student.lastName}
+                              </h5>
+                              <p
+                                className={cn(
+                                  "text-[10.5px] mt-0.5",
+                                  isLight ? "text-[#63533E]" : "text-[#8CA4C4]"
+                                )}
+                              >
+                                Student Case File · Click to Open
+                              </p>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p
+                      className={cn(
+                        "text-xs italic py-2 text-center",
+                        isLight ? "text-[#7B6A53]" : "text-[#7990AF]"
+                      )}
+                    >
+                      No linked student cases recorded for this contact.
+                    </p>
+                  )}
+                </div>
+
+                {/* 3. 3-Card Activity & Relationship Strip (Moved directly under Parent of box) */}
+                <div className="grid grid-cols-[0.95fr_1.1fr_1.32fr] gap-2 select-none pt-0.5">
                   {/* Card 1: Last Contact */}
                   <div
                     className={cn(
-                      "p-2.5 rounded-xl border flex flex-col justify-between",
+                      "p-3 rounded-2xl border flex flex-col justify-between min-h-[96px]",
                       isLight
                         ? "bg-[#EFE3C8]/80 border-[#C7B594]"
                         : "bg-[#07162C]/80 border-[#182C48]"
                     )}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Clock className="h-3 w-3 text-[#D4AF37]" />
+                      <Clock className="h-3.5 w-3.5 text-[#D4AF37] shrink-0" />
                       <span
                         className={cn(
                           "text-[10px] font-serif font-bold uppercase tracking-wider",
@@ -925,7 +922,7 @@ export default function ContactsLedgerView({
                     <div>
                       <p
                         className={cn(
-                          "font-serif text-xs font-bold leading-tight",
+                          "font-serif text-xs sm:text-[13px] font-bold leading-tight",
                           isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
                         )}
                       >
@@ -933,7 +930,7 @@ export default function ContactsLedgerView({
                       </p>
                       <p
                         className={cn(
-                          "text-[10px] mt-0.5",
+                          "text-[10px] sm:text-[10.5px] mt-0.5",
                           isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
                         )}
                       >
@@ -942,17 +939,17 @@ export default function ContactsLedgerView({
                     </div>
                   </div>
 
-                  {/* Card 2: Next Event */}
+                  {/* Card 2: Next Event (With student name under next event) */}
                   <div
                     className={cn(
-                      "p-2.5 rounded-xl border flex flex-col justify-between",
+                      "p-3 rounded-2xl border flex flex-col justify-between min-h-[96px]",
                       isLight
                         ? "bg-[#EFE3C8]/80 border-[#C7B594]"
                         : "bg-[#07162C]/80 border-[#182C48]"
                     )}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Calendar className="h-3 w-3 text-[#D4AF37]" />
+                      <Calendar className="h-3.5 w-3.5 text-[#D4AF37] shrink-0" />
                       <span
                         className={cn(
                           "text-[10px] font-serif font-bold uppercase tracking-wider",
@@ -965,7 +962,7 @@ export default function ContactsLedgerView({
                     <div>
                       <p
                         className={cn(
-                          "font-serif text-xs font-bold leading-tight",
+                          "font-serif text-xs sm:text-[13px] font-bold leading-tight truncate",
                           isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
                         )}
                       >
@@ -973,29 +970,39 @@ export default function ContactsLedgerView({
                       </p>
                       <p
                         className={cn(
-                          "text-[10px] mt-0.5",
+                          "text-[10px] sm:text-[10.5px] mt-0.5",
                           isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
                         )}
                       >
                         Oct 14, 2024
                       </p>
+                      {dossierStudents.length > 0 && (
+                        <p
+                          className={cn(
+                            "text-[10px] sm:text-[10.5px] mt-0.5 font-medium truncate",
+                            isLight ? "text-[#785412]" : "text-[#E5C175]"
+                          )}
+                        >
+                          {dossierStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* Card 3: Relationship */}
+                  {/* Card 3: Relationship (Wider column to fit the word RELATIONSHIP comfortably) */}
                   <div
                     className={cn(
-                      "p-2.5 rounded-xl border flex flex-col justify-between",
+                      "p-3 rounded-2xl border flex flex-col justify-between min-h-[96px]",
                       isLight
                         ? "bg-[#EFE3C8]/80 border-[#C7B594]"
                         : "bg-[#07162C]/80 border-[#182C48]"
                     )}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Users className="h-3 w-3 text-[#D4AF37]" />
+                      <Users className="h-3.5 w-3.5 text-[#D4AF37] shrink-0" />
                       <span
                         className={cn(
-                          "text-[10px] font-serif font-bold uppercase tracking-wider",
+                          "text-[10px] font-serif font-bold uppercase tracking-wider whitespace-nowrap",
                           isLight ? "text-[#5C451D]" : "text-[#C7B596]"
                         )}
                       >
@@ -1005,19 +1012,23 @@ export default function ContactsLedgerView({
                     <div>
                       <p
                         className={cn(
-                          "font-serif text-xs font-bold leading-tight truncate",
+                          "font-serif text-xs sm:text-[13px] font-bold leading-tight truncate",
                           isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
                         )}
                       >
-                        {dossierContact.jobTitle || (dossierStudents.length > 0 ? "Parent / Guardian" : "Contact")}
+                        {dossierContact.jobTitle || (dossierStudents.length > 0 ? "Parent" : "Contact")}
                       </p>
                       <p
                         className={cn(
-                          "text-[10px] mt-0.5 truncate",
+                          "text-[10px] sm:text-[10.5px] mt-0.5 truncate",
                           isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
                         )}
                       >
-                        {dossierContact.company || (dossierStudents.length > 0 ? "Waypoint Client Family" : "Waypoint Contact")}
+                        {dossierContact.company && dossierContact.company !== "Test Family"
+                          ? dossierContact.company
+                          : dossierStudents.length > 0
+                          ? "Client Family"
+                          : "Waypoint Contact"}
                       </p>
                     </div>
                   </div>
