@@ -3,7 +3,9 @@ import { trpc } from "@/lib/trpc";
 import { 
   Eye, MoreHorizontal, User, Clock, MessageSquare, 
   CheckSquare, FileText, Folder, Calendar, Phone, 
-  ChevronRight, CheckCircle2
+  ChevronRight, CheckCircle2, GraduationCap, School, 
+  ArrowRight, ShieldCheck, Award, Activity, Globe, 
+  Pencil, Move, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +79,42 @@ export default function StudentWorkspace() {
   const fullName = student ? `${student.firstName} ${student.lastName}` : "Alex Smith";
   const parentName = parent ? `${parent.firstName} ${parent.lastName}` : (student?.parentName || "Sarah Smith");
   const parentPhone = parent?.phone || student?.phone || "(404) 555-0199";
+
+  const calculatedAge = useMemo(() => {
+    if (!student?.dateOfBirth) return "14";
+    const dob = new Date(student.dateOfBirth);
+    if (isNaN(dob.getTime())) return student.dateOfBirth || "14";
+    const diffMs = Date.now() - dob.getTime();
+    const ageDt = new Date(diffMs);
+    return Math.abs(ageDt.getUTCFullYear() - 1970).toString();
+  }, [student?.dateOfBirth]);
+
+  const cleanGrade = useMemo(() => {
+    if (!student?.gradeLevel) return "5th Grade";
+    const g = student.gradeLevel.trim();
+    if (/^\d+$/.test(g)) return `${g}th Grade`;
+    return g;
+  }, [student?.gradeLevel]);
+
+  const displayEligibility = useMemo(() => {
+    return (student as any)?.iepEligibility || (student as any)?.eligibilityCategory || (student as any)?.primaryEligibility || "Autism";
+  }, [student]);
+
+  const displayMedicalDiagnoses = useMemo(() => {
+    return (student as any)?.medicalDiagnoses || (student as any)?.diagnosis || "ADHD & Specific Learning Disability (Dyslexia)";
+  }, [student]);
+
+  const transferSchool = useMemo(() => {
+    return student?.previousSchool || "The Lovett School";
+  }, [student?.previousSchool]);
+
+  const gtidValue = useMemo(() => {
+    return (student as any)?.gtid || (student as any)?.studentIdNumber || "1";
+  }, [student]);
+
+  // Left side info block live alignment HUD
+  const [infoOffset, setInfoOffset] = useState({ x: 0, y: 0 });
+  const [hudVisible, setHudVisible] = useState(true);
 
   return (
     <div className="relative w-full min-h-screen overflow-x-hidden overflow-y-auto select-none bg-[#0b0d16] text-slate-100 transition-all font-sans">
@@ -220,99 +258,168 @@ export default function StudentWorkspace() {
               <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
                 
                 {/* ─── LEFT PANEL: Student Profile & Family (~38% width) ────── */}
-                <div className="lg:col-span-5 sm:px-6 py-2 flex flex-col justify-between relative">
-                  <div className="flex flex-col items-center text-center">
-                    
-                    {/* Golden Glowing Avatar Badge */}
-                    <div className="relative mb-3 mt-1">
-                      <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-2xl shadow-[0_0_24px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/50">
-                        {studentInitials}
+                <div className="lg:col-span-5 relative py-1 sm:py-2">
+                  {/* Movable Info Block Container (Centered on left folio card with live nudge controls) */}
+                  <div 
+                    className="w-full max-w-[390px] mx-auto flex flex-col justify-between relative transition-all text-left"
+                    style={{
+                      transform: `translate(${infoOffset.x}px, ${infoOffset.y}px)`,
+                    }}
+                  >
+                    {/* Golden Glowing Avatar Badge Centered on Top */}
+                    <div className="flex flex-col items-center text-center mb-3">
+                      <div className="relative mb-2 mt-0.5">
+                        <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-2xl shadow-[0_0_24px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/50">
+                          {studentInitials}
+                        </div>
+                      </div>
+
+                      {/* Student Name */}
+                      <h2 
+                        className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                      >
+                        {fullName}
+                      </h2>
+
+                      {/* Pill Badges */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/40 text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full">
+                          IEP
+                        </Badge>
+                        <Badge className="bg-[#093527]/85 text-emerald-300 border border-emerald-500/40 text-[10px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>{student?.studentStatus || "Active"}</span>
+                        </Badge>
                       </div>
                     </div>
 
-                    {/* Student Name & School */}
-                    <h2 
-                      className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
-                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                    >
-                      {fullName}
-                    </h2>
-                    <p className="text-xs sm:text-sm text-white/75 mt-1 drop-shadow-sm">
-                      {student?.gradeLevel ? `${student.gradeLevel} Grade` : "5th Grade"} · {student?.schoolName || "Lincoln Elementary"}
-                    </p>
-
-                    {/* Pill Badges */}
-                    <div className="flex items-center gap-2 mt-3">
-                      <Badge className="bg-[#123159]/85 text-sky-200 hover:bg-[#123159] border border-sky-400/40 text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full">
-                        IEP
-                      </Badge>
-                      <Badge className="bg-[#093527]/85 text-emerald-300 hover:bg-[#093527] border border-emerald-500/40 text-[10px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>{student?.studentStatus || "Active"}</span>
-                      </Badge>
-                    </div>
-
-                    {/* Subtle Ornamental Divider */}
-                    <div className="w-full flex items-center justify-center my-5">
-                      <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
-                      <div className="w-1.5 h-1.5 rotate-45 border border-amber-400/50 bg-amber-400/30 mx-2" />
-                      <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
-                    </div>
-
-                    {/* Parent / Guardian Info */}
-                    <div className="w-full text-left space-y-2 px-2">
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-white/50">
-                        PARENT / GUARDIAN
-                      </p>
-                      <div className="flex items-center gap-2.5 text-xs sm:text-sm text-white/95">
-                        <User className="h-3.5 w-3.5 text-white/60 shrink-0" />
-                        <span className="font-semibold">{parentName}</span>
+                    {/* ── STUDENT PROFILE Info (Directly on Leather Folio - Zero Card Box) ── */}
+                    <div className="w-full space-y-2 px-1 bg-transparent border-0 shadow-none">
+                      {/* Section Header */}
+                      <div className="flex items-center justify-between pb-1.5 border-b border-white/15">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 text-[#38BDF8]" />
+                          <span>STUDENT PROFILE</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setDetailsModalOpen(true)}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#38BDF8] hover:text-sky-300 transition-colors cursor-pointer"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          <span>Edit Details</span>
+                        </button>
                       </div>
-                      <div className="flex items-center gap-2.5 text-xs sm:text-sm text-white/95">
-                        <Phone className="h-3.5 w-3.5 text-white/60 shrink-0" />
-                        <a href={`tel:${parentPhone}`} className="hover:text-amber-300 transition-colors">
+
+                      {/* Age */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                          <User className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                          <span>Age:</span>
+                        </div>
+                        <span className="font-bold text-white text-right">
+                          {calculatedAge}
+                        </span>
+                      </div>
+
+                      {/* Grade */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                          <GraduationCap className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                          <span>Grade:</span>
+                        </div>
+                        <span className="font-bold text-white text-right">
+                          {cleanGrade}
+                        </span>
+                      </div>
+
+                      {/* School */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                          <School className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                          <span>School:</span>
+                        </div>
+                        <span className="font-bold text-white truncate max-w-[200px] text-right" title={student?.schoolName || "Lincoln Elementary"}>
+                          {student?.schoolName || "Lincoln Elementary"}
+                        </span>
+                      </div>
+
+                      {/* Transfer School */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                          <ArrowRight className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                          <span>Transfer School:</span>
+                        </div>
+                        <span className="font-bold text-white truncate max-w-[200px] text-right" title={transferSchool}>
+                          {transferSchool}
+                        </span>
+                      </div>
+
+                      {/* GTID */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                          <ShieldCheck className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                          <span>GTID:</span>
+                        </div>
+                        <span className="font-bold text-white font-mono text-right">
+                          {gtidValue}
+                        </span>
+                      </div>
+
+                      {/* Eligibility */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                          <Award className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                          <span>Eligibility:</span>
+                        </div>
+                        <span className="font-bold text-white text-right truncate max-w-[200px]" title={displayEligibility}>
+                          {displayEligibility}
+                        </span>
+                      </div>
+
+                      {/* Medical Diagnoses */}
+                      <div className="pt-1.5 border-t border-white/10">
+                        <div className="flex items-center gap-2 text-slate-300 mb-0.5 text-xs">
+                          <Activity className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                          <span>Medical Diagnoses:</span>
+                        </div>
+                        <div className="pl-5.5">
+                          <span className="font-bold text-white text-left block leading-snug break-words text-xs" title={displayMedicalDiagnoses}>
+                            {displayMedicalDiagnoses}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Client Time (from Screenshot) */}
+                      <div className="pt-1.5 border-t border-white/10 text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Globe className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                            <span>Client Time:</span>
+                            <strong className="text-white font-semibold">{clientTime}</strong>
+                            <span className="text-white/60 text-[11px]">(Eastern)</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pl-5.5 pt-0.5 text-[11px]">
+                          <span className="text-slate-400">Same time as you</span>
+                          <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            Good to call
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Parent / Guardian Row */}
+                      <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <User className="h-3.5 w-3.5 text-white/50" />
+                          <span>Parent: <strong className="text-white">{parentName}</strong></span>
+                        </div>
+                        <a href={`tel:${parentPhone}`} className="text-sky-300 hover:text-amber-300 transition-colors font-medium">
                           {parentPhone}
                         </a>
                       </div>
-                    </div>
-
-                    {/* Student Details Button */}
-                    <button
-                      onClick={() => setDetailsModalOpen(true)}
-                      className="w-full mt-5 py-2.5 px-4 rounded-xl bg-[#0b2447]/65 hover:bg-[#102f5c]/80 border border-[#D4AF37]/50 text-white text-xs font-semibold flex items-center justify-between transition-all cursor-pointer group shadow-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="p-1 rounded bg-amber-400/20 text-amber-300 text-xs">🪪</span>
-                        <span>Student details</span>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-white/60 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  </div>
-
-                  {/* Left Panel Footer: Call status, Portal, Plan */}
-                  <div className="mt-6 pt-5 border-t border-white/10 space-y-2 text-xs px-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-white/60">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>Client time</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">{clientTime} Eastern</span>
-                        <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          Good to call
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-white/60">Portal</span>
-                      <span className="text-emerald-400 font-semibold">Active</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-white/60">Plan</span>
-                      <span className="text-white/85 font-medium">{student?.plan || "Not selected"}</span>
                     </div>
                   </div>
                 </div>
@@ -767,6 +874,117 @@ export default function StudentWorkspace() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Interactive Left Info Block Alignment HUD ─────────────────────── */}
+      {hudVisible && (
+        <div className="fixed bottom-6 left-6 z-50 bg-[#06152b]/95 border-2 border-amber-400 text-white p-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex flex-col gap-2.5 max-w-xs sm:max-w-sm">
+          <div className="flex items-center justify-between border-b border-white/15 pb-1.5">
+            <div className="flex items-center gap-2">
+              <Move className="h-4 w-4 text-amber-400" />
+              <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">
+                Left Card Alignment HUD
+              </span>
+            </div>
+            <button 
+              onClick={() => setHudVisible(false)} 
+              className="text-white/40 hover:text-white text-xs px-1 cursor-pointer"
+              title="Close HUD"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between text-xs font-mono bg-black/40 px-3 py-1.5 rounded-lg border border-white/10">
+            <span>Offset X: <strong className="text-amber-300">{infoOffset.x > 0 ? `+${infoOffset.x}` : infoOffset.x}px</strong></span>
+            <span>Offset Y: <strong className="text-amber-300">{infoOffset.y > 0 ? `+${infoOffset.y}` : infoOffset.y}px</strong></span>
+          </div>
+
+          {/* Nudge Buttons */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="flex items-center gap-1 justify-center bg-white/5 p-1 rounded-lg">
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, x: p.x - 5 }))}
+                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
+                title="Nudge Left 5px"
+              >
+                ◄ -5
+              </button>
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, x: p.x - 1 }))}
+                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
+                title="Nudge Left 1px"
+              >
+                -1
+              </button>
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, x: p.x + 1 }))}
+                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
+                title="Nudge Right 1px"
+              >
+                +1
+              </button>
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, x: p.x + 5 }))}
+                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
+                title="Nudge Right 5px"
+              >
+                +5 ►
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 justify-center bg-white/5 p-1 rounded-lg">
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, y: p.y - 5 }))}
+                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
+                title="Nudge Up 5px"
+              >
+                ▲ -5
+              </button>
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, y: p.y - 1 }))}
+                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
+                title="Nudge Up 1px"
+              >
+                -1
+              </button>
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, y: p.y + 1 }))}
+                className="px-1.5 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white cursor-pointer"
+                title="Nudge Down 1px"
+              >
+                +1
+              </button>
+              <button 
+                onClick={() => setInfoOffset(p => ({ ...p, y: p.y + 5 }))}
+                className="px-2 py-1 rounded bg-[#0b2447] hover:bg-[#123159] border border-white/20 text-white font-bold cursor-pointer"
+                title="Nudge Down 5px"
+              >
+                +5 ▼
+              </button>
+            </div>
+          </div>
+
+          {/* Reset and Lock In */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => setInfoOffset({ x: 0, y: 0 })}
+              className="py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 text-xs font-semibold cursor-pointer"
+            >
+              Reset (0,0)
+            </button>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`X: ${infoOffset.x}px, Y: ${infoOffset.y}px`);
+                alert(`Left Card Coordinates copied to clipboard:\nX: ${infoOffset.x}px\nY: ${infoOffset.y}px\n\nPaste this in our chat and I'll lock it in permanently!`);
+              }}
+              className="flex-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Check className="h-3.5 w-3.5" />
+              <span>Lock In & Copy Coordinates</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
