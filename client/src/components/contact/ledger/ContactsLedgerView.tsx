@@ -57,6 +57,7 @@ export interface ContactItem {
   preferredCallingStartTime?: string | null;
   preferredCallingEndTime?: string | null;
   mayCallOutsidePreferredHours?: boolean | null;
+  relationship?: string | null;
 }
 
 const AREA_CODE_TIMEZONE_MAP: Record<string, string> = {
@@ -100,6 +101,16 @@ function getTimeZoneFromPhone(phone?: string | null): string | null {
   if (clean.length < 3) return null;
   const areaCode = clean.slice(0, 3);
   return AREA_CODE_TIMEZONE_MAP[areaCode] || null;
+}
+
+export function isStudentContact(c?: ContactItem | null): boolean {
+  if (!c) return false;
+  if (c.parentContactId != null) return true;
+  const title = (c.jobTitle || "").toLowerCase().trim();
+  if (title === "student") return true;
+  const rel = (c.relationship || "").toLowerCase().trim();
+  if (rel === "student" || rel === "child") return true;
+  return false;
 }
 
 export interface ContactsLedgerViewProps {
@@ -163,9 +174,6 @@ export default function ContactsLedgerView({
     if (title.includes("director") || comp.includes("district") || comp.includes("county")) {
       return { label: "District", type: "district" as const };
     }
-    if (title === "student") {
-      return { label: "Student", type: "student" as const };
-    }
     if (c.portalUserId || title === "parent" || (!c.jobTitle && !c.company)) {
       return { label: "★ Active Family", type: "active-family" as const };
     }
@@ -180,7 +188,7 @@ export default function ContactsLedgerView({
     const comp = (c.company || "").toLowerCase();
 
     if (cat === "families") {
-      return badge.type === "active-family" || badge.type === "student" || title.includes("parent");
+      return badge.type === "active-family" || title.includes("parent");
     }
     if (cat === "schools") {
       return badge.type === "school" || comp.includes("school") || comp.includes("elementary") || comp.includes("high");
@@ -200,7 +208,9 @@ export default function ContactsLedgerView({
   // Filtered contacts based on category, search, and letter
   const filteredContacts = useMemo(() => {
     return contacts.filter((c) => {
-      // Exclude students from main directory list if they have a parent, unless specifically in Student category
+      // Students are NOT contacts — they are solely a linked project case or file
+      if (isStudentContact(c)) return false;
+
       if (!matchCategory(c, category)) return false;
 
       // Search query filter
@@ -263,11 +273,19 @@ export default function ContactsLedgerView({
   const availableLetters = useMemo(() => {
     const letters = new Set<string>();
     contacts.forEach((c) => {
+      // Students are NOT contacts — they are solely a linked project case or file
+      if (isStudentContact(c)) return;
       if (!matchCategory(c, category)) return;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
-        if (!fullName.includes(q)) return;
+        // Also match if any linked student has this name
+        const matchesChild = contacts.some(
+          (child) =>
+            child.parentContactId === c.id &&
+            `${child.firstName || ""} ${child.lastName || ""}`.toLowerCase().includes(q)
+        );
+        if (!fullName.includes(q) && !matchesChild) return;
       }
       const initial = (c.lastName || c.firstName || "").trim()[0]?.toUpperCase();
       if (initial) letters.add(initial);
@@ -275,67 +293,31 @@ export default function ContactsLedgerView({
     return letters;
   }, [contacts, category, searchQuery]);
 
-  // Selected contact for the right-page dossier
+  // Selected contact for the right-page dossier (always a true contact, never a student)
   const [selectedContactId, setSelectedContactId] = useState<number | null>(() => {
-    // Prefer selecting a parent / primary family contact over a student
-    const firstParent = contacts.find(
-      (c) => (c.jobTitle || "").toLowerCase() !== "student" && !c.parentContactId
-    );
-    return firstParent?.id ?? contacts[0]?.id ?? null;
+    const firstContact = contacts.find((c) => !isStudentContact(c));
+    return firstContact?.id ?? null;
   });
 
   // Keep selected contact synced if list changes
   const activeContact = useMemo(() => {
     if (selectedContactId) {
-      const found = contacts.find((c) => c.id === selectedContactId);
+      const found = contacts.find((c) => c.id === selectedContactId && !isStudentContact(c));
       if (found) return found;
     }
-    const firstParent = filteredContacts.find(
-      (c) => (c.jobTitle || "").toLowerCase() !== "student" && !c.parentContactId
-    );
-    return firstParent || filteredContacts[0] || contacts[0] || null;
+    const firstContact = filteredContacts.find((c) => !isStudentContact(c));
+    return firstContact || contacts.find((c) => !isStudentContact(c)) || null;
   }, [contacts, selectedContactId, filteredContacts]);
 
-  // Linked students or parent for the active contact
-  const linkedStudents = useMemo(() => {
-    if (!activeContact) return [];
-    return contacts.filter((c) => c.parentContactId === activeContact.id);
-  }, [contacts, activeContact]);
-
-  const parentContact = useMemo(() => {
-    if (!activeContact || !activeContact.parentContactId) return null;
-    return contacts.find((c) => c.id === activeContact.parentContactId);
-  }, [contacts, activeContact]);
-
-  // Determine if activeContact is a student
-  const isStudent = useMemo(() => {
-    if (!activeContact) return false;
-    return (
-      (activeContact.jobTitle || "").toLowerCase() === "student" ||
-      Boolean(activeContact.parentContactId)
-    );
-  }, [activeContact]);
-
   // dossierContact: The primary contact person displayed at the top of the dossier.
-  // PER USER SPECIFICATION: In family cases, the parent/guardian is ALWAYS up top
-  // because that is the actual contact whom the advocate calls and messages for this case!
-  const dossierContact = useMemo(() => {
-    if (!activeContact) return null;
-    if (isStudent && parentContact) {
-      return parentContact;
-    }
-    return activeContact;
-  }, [activeContact, isStudent, parentContact]);
+  // Active contact is already guaranteed to be a contact (never a student).
+  const dossierContact = activeContact;
 
-  // dossierStudents: The student(s) linked to this dossier case
+  // dossierStudents: The linked student case(s) / files for this contact
   const dossierStudents = useMemo(() => {
     if (!activeContact) return [];
-    if (isStudent && parentContact) {
-      const allKids = contacts.filter((c) => c.parentContactId === parentContact.id);
-      return allKids.length > 0 ? allKids : [activeContact];
-    }
-    return linkedStudents;
-  }, [activeContact, isStudent, parentContact, contacts, linkedStudents]);
+    return contacts.filter((c) => c.parentContactId === activeContact.id);
+  }, [activeContact, contacts]);
 
   // Initials generator
   const getInitials = (first?: string | null, last?: string | null) => {
@@ -617,18 +599,13 @@ export default function ContactsLedgerView({
                                     isLight ? "text-[#5C4A32]" : "text-[#8CA4C4]"
                                   )}
                                 >
-                                  {contact.jobTitle === "Student" && contact.parentContactId
-                                    ? `Student · Child of ${(() => {
-                                        const p = contacts.find((c) => c.id === contact.parentContactId);
-                                        return p ? `${p.firstName} ${p.lastName}` : "Parent";
-                                      })()}`
-                                    : (() => {
-                                        const kids = contacts.filter((c) => c.parentContactId === contact.id);
-                                        if (kids.length > 0) {
-                                          return `Parent of ${kids.map((k) => `${k.firstName} ${k.lastName}`).join(", ")}`;
-                                        }
-                                        return `${contact.jobTitle || "Contact"}${contact.company ? ` · ${contact.company}` : ""}`;
-                                      })()}
+                                  {(() => {
+                                    const kids = contacts.filter((c) => c.parentContactId === contact.id);
+                                    if (kids.length > 0) {
+                                      return `Parent of ${kids.map((k) => `${k.firstName} ${k.lastName}`).join(", ")}`;
+                                    }
+                                    return `${contact.jobTitle || "Contact"}${contact.company ? ` · ${contact.company}` : ""}`;
+                                  })()}
                                 </p>
                               </div>
                             </div>
@@ -693,18 +670,6 @@ export default function ContactsLedgerView({
                                   )}
                                 >
                                   District
-                                </span>
-                              )}
-                              {badge.type === "student" && (
-                                <span
-                                  className={cn(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold whitespace-nowrap",
-                                    isLight
-                                      ? "bg-[#C8F0D8] text-[#08331B] border border-[#48A86C]"
-                                      : "bg-[#092B1C] text-[#6EE7B7] border border-[#176644]"
-                                  )}
-                                >
-                                  Student
                                 </span>
                               )}
 
