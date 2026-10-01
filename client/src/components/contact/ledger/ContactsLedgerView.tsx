@@ -634,80 +634,107 @@ export default function ContactsLedgerView({
               <div className="h-full flex flex-col justify-between select-none overflow-y-auto custom-scrollbar pr-1">
                 {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      {/* Large Initials Avatar with Gold Star Emblem */}
-                      <div className="relative shrink-0">
-                        <div
-                          className={cn(
-                            "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-serif font-black text-xl sm:text-2xl border-2 shadow-lg",
-                            isLight
-                              ? "bg-gradient-to-br from-[#EFE0C2] to-[#C9B388] text-[#291802] border-[#8C6418]"
-                              : "bg-gradient-to-br from-[#0F2647] to-[#040C1A] text-[#FFF2D9] border-[#E5C175] shadow-[0_0_16px_rgba(229,193,117,0.35)]"
-                          )}
-                        >
-                          {getInitials(dossierContact.firstName, dossierContact.lastName)}
-                        </div>
-
-                        {/* Gold Star Badge (at 4 o'clock) */}
-                        <div
-                          className={cn(
-                            "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-xs",
-                            isLight
-                              ? "bg-[#D4AF37] border-[#5E420C] text-slate-950"
-                              : "bg-gradient-to-br from-[#FCE09E] to-[#B89230] border-[#3D2704] text-[#1F1202]"
-                          )}
-                        >
-                          <Star className="h-3 w-3 fill-current" />
-                        </div>
+                  <div className="flex items-start gap-3.5 min-w-0">
+                    {/* Large Initials Avatar with Gold Star Emblem */}
+                    <div className="relative shrink-0">
+                      <div
+                        className={cn(
+                          "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-serif font-black text-xl sm:text-2xl border-2 shadow-lg",
+                          isLight
+                            ? "bg-gradient-to-br from-[#EFE0C2] to-[#C9B388] text-[#291802] border-[#8C6418]"
+                            : "bg-gradient-to-br from-[#0F2647] to-[#040C1A] text-[#FFF2D9] border-[#E5C175] shadow-[0_0_16px_rgba(229,193,117,0.35)]"
+                        )}
+                      >
+                        {getInitials(dossierContact.firstName, dossierContact.lastName)}
                       </div>
 
-                      {/* Contact Name & Subtitles */}
-                      <div className="min-w-0">
-                        <h2
-                          className={cn(
-                            "font-serif text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight truncate leading-tight drop-shadow-xs",
-                            isLight ? "text-[#1C1405]" : "text-[#FFF2D9]"
-                          )}
-                        >
-                          {dossierContact.firstName} {dossierContact.lastName}
-                        </h2>
-
-                        <p
-                          className={cn(
-                            "font-serif text-xs sm:text-sm font-medium mt-0.5 truncate",
-                            isLight ? "text-[#5C4A32]" : "text-[#C7B596]"
-                          )}
-                        >
-                          {dossierContact.jobTitle || (dossierStudents.length > 0 ? "Parent / Guardian" : "Contact")}
-                        </p>
-
-                        {dossierStudents.length > 0 && (
-                          <p
-                            className={cn(
-                              "text-xs truncate mt-0.5 font-medium",
-                              isLight ? "text-[#736046]" : "text-[#E5C175]"
-                            )}
-                          >
-                            Parent of {dossierStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}
-                          </p>
+                      {/* Gold Star Badge (at 4 o'clock) */}
+                      <div
+                        className={cn(
+                          "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-xs",
+                          isLight
+                            ? "bg-[#D4AF37] border-[#5E420C] text-slate-950"
+                            : "bg-gradient-to-br from-[#FCE09E] to-[#B89230] border-[#3D2704] text-[#1F1202]"
                         )}
+                      >
+                        <Star className="h-3 w-3 fill-current" />
                       </div>
                     </div>
 
-                    {/* Active Family Pill Badge */}
-                    {activeBadge && (
-                      <span
+                    {/* Contact Header Content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Top Line: Tags & Badges (Active Family, Sponsor, Add Tag) */}
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
+                        {activeBadge && (
+                          <span
+                            className={cn(
+                              "px-2.5 py-0.5 rounded-full text-[11px] font-serif font-bold tracking-tight whitespace-nowrap shadow-xs",
+                              isLight
+                                ? "bg-[#E5BF65] text-[#291A04] border border-[#8C6418]"
+                                : "bg-[#33220A] text-[#FCE09E] border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.25)]"
+                            )}
+                          >
+                            {activeBadge.label}
+                          </span>
+                        )}
+                        {dossierContact.company && (
+                          <span
+                            className={cn(
+                              "px-2.5 py-0.5 rounded-full text-[10.5px] font-serif font-medium border truncate max-w-[180px]",
+                              isLight
+                                ? "bg-[#EFE3C8] text-[#3D2908] border-[#C7B594]"
+                                : "bg-[#091D38] text-[#93C5FD] border-[#1D4E89]"
+                            )}
+                          >
+                            {dossierContact.company}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onEditContact(dossierContact)}
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold border transition-all cursor-pointer",
+                            isLight
+                              ? "border-dashed border-[#A6884E] text-[#634816] hover:bg-[#EAE0CA]"
+                              : "border-dashed border-[#2B548A] text-[#9BB7DC] hover:text-[#FFF2D9] hover:bg-white/5"
+                          )}
+                          title="Add or edit tags"
+                        >
+                          + Add Tag
+                        </button>
+                      </div>
+
+                      {/* Parent / Contact Name (Dropped down, uninhibited full width) */}
+                      <h2
                         className={cn(
-                          "px-2.5 py-1 rounded-full text-xs font-serif font-bold shrink-0 tracking-tight whitespace-nowrap",
-                          isLight
-                            ? "bg-[#E5BF65] text-[#291A04] border border-[#8C6418] shadow-xs"
-                            : "bg-[#33220A] text-[#FCE09E] border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.25)]"
+                          "font-serif text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight truncate leading-tight drop-shadow-xs",
+                          isLight ? "text-[#1C1405]" : "text-[#FFF2D9]"
                         )}
                       >
-                        {activeBadge.label}
-                      </span>
-                    )}
+                        {dossierContact.firstName} {dossierContact.lastName}
+                      </h2>
+
+                      {/* Subtitle: Linked student relationship or job title */}
+                      {dossierStudents.length > 0 ? (
+                        <p
+                          className={cn(
+                            "text-xs sm:text-[13px] truncate mt-1 font-medium",
+                            isLight ? "text-[#736046]" : "text-[#E5C175]"
+                          )}
+                        >
+                          Parent of {dossierStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}
+                        </p>
+                      ) : dossierContact.jobTitle ? (
+                        <p
+                          className={cn(
+                            "font-serif text-xs sm:text-sm font-medium mt-1 truncate",
+                            isLight ? "text-[#5C4A32]" : "text-[#C7B596]"
+                          )}
+                        >
+                          {dossierContact.jobTitle}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
 
                   {/* Quick Action Buttons Bar: Call, Email, Message, Dropdown Menu */}
