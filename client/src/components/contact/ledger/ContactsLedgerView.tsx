@@ -151,8 +151,8 @@ export default function ContactsLedgerView({
   // Category filter
   const [category, setCategory] = useState<CategoryFilter>("all");
 
-  // Alphabet thumb index selection (null = all letters, or 'H', etc.)
-  const [selectedLetter, setSelectedLetter] = useState<string | null>("H");
+  // Alphabet thumb index selection ("HOME" = all letters, or 'A', 'B', etc.)
+  const [selectedLetter, setSelectedLetter] = useState<string | null>("HOME");
 
   // Mobile page view tab: "directory" (left page) or "dossier" (right page)
   const [mobileTab, setMobileTab] = useState<"directory" | "dossier">("directory");
@@ -466,7 +466,12 @@ export default function ContactsLedgerView({
                     <button
                       key={t.id}
                       type="button"
-                      onClick={() => setCategory(t.id as CategoryFilter)}
+                      onClick={() => {
+                        setCategory(t.id as CategoryFilter);
+                        if (t.id === "all") {
+                          setSelectedLetter("HOME");
+                        }
+                      }}
                       className={cn(
                         "py-1 px-1 rounded-lg text-[11px] sm:text-xs font-serif text-center transition-all cursor-pointer truncate",
                         isActive
