@@ -155,10 +155,10 @@ export default function Contacts() {
     <ScopedErrorBoundary moduleName="Contacts">
       <div className="min-h-full bg-[#07152B] text-[#F0DFC5] flex flex-col">
         {/* ─── Top Full-Bleed Photographic Header Banner ─── */}
-        {/* Desktop & Tablet View (Exact 1024:139 photographic header from mockup) */}
-        <div className="hidden md:block w-full border-b border-[#18283F] shadow-[0_12px_36px_rgba(0,0,0,0.95)] overflow-hidden bg-[#07152B]">
+        {/* Desktop & Tablet View (Exact 1024:175 photographic header) */}
+        <div className="hidden md:block w-full overflow-hidden bg-[#07152B] relative z-0">
           <div
-            className="w-full relative aspect-[1024/139] bg-no-repeat bg-[length:100%_100%] select-none"
+            className="w-full relative aspect-[1024/175] bg-no-repeat bg-[length:100%_100%] select-none"
             style={{ backgroundImage: "url('/decor/contacts-header-bg.png')" }}
           >
             {/* Rule E: Page ID Badge in top-right */}
@@ -177,7 +177,7 @@ export default function Contacts() {
             </div>
 
             {/* Search Bar + Nice Gold Add Contact Button directly after search bar */}
-            <div className="absolute left-[10.25%] top-[60.4%] right-[30.5%] h-[31.65%] flex items-center gap-2.5 z-20">
+            <div className="absolute left-[10.25%] top-[48%] right-[30.5%] h-[25.2%] flex items-center gap-2.5 z-20">
               <div className="relative flex-1 h-full flex items-center min-w-0">
                 <Search className="absolute left-3.5 sm:left-4 h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#7E97B8] pointer-events-none z-10" />
                 <input
@@ -358,14 +358,16 @@ export default function Contacts() {
                 </DialogContent>
               </Dialog>
 
-        {/* ─── Main Content: Full-Bleed Ledger Book View Bumping Directly to Header ─── */}
-        <ContactsLedgerView
-          contacts={contacts || []}
-          searchQuery={searchQuery}
-          onEditContact={handleEdit}
-          onDeleteContact={handleDelete}
-          onOpenAddContact={handleOpenAddContact}
-        />
+        {/* ─── Main Content: Full-Bleed Ledger Book View Overlapping Header Banner ─── */}
+        <div className="-mt-5 sm:-mt-7 lg:-mt-9 relative z-10 drop-shadow-[0_-12px_24px_rgba(0,0,0,0.9)]">
+          <ContactsLedgerView
+            contacts={contacts || []}
+            searchQuery={searchQuery}
+            onEditContact={handleEdit}
+            onDeleteContact={handleDelete}
+            onOpenAddContact={handleOpenAddContact}
+          />
+        </div>
       </div>
     </ScopedErrorBoundary>
   );
