@@ -1056,7 +1056,7 @@ export default function ContactsLedgerView({
           {/* CUSTOM UI ALPHABET THUMB INDEX TABS                                 */}
           {/* 100% UI component: decoupled from background, scales dynamically   */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          <div className="w-[6%] lg:w-[5.4%] xl:w-[5%] h-full pt-[4.2%] pb-[3.6%] pr-1 sm:pr-1.5 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
+          <div className="w-[5.6%] lg:w-[5.0%] xl:w-[4.6%] h-full pt-[4.2%] pb-[3.6%] pr-1 sm:pr-1.5 flex flex-col items-stretch justify-between z-20 select-none gap-[1px]">
             {ALPHABET.map((letter) => {
               const isHome = letter === "HOME";
               const isSelected =
@@ -1083,16 +1083,18 @@ export default function ContactsLedgerView({
                     setMobileTab("directory");
                   }}
                   className={cn(
-                    "w-full flex-1 flex items-center justify-center transition-all duration-150 cursor-pointer font-serif select-none relative group",
-                    // Shape: Flat left edge attached to book, curved die-cut right edge protruding out
+                    "w-full flex-1 flex items-center justify-center transition-colors duration-150 cursor-pointer font-serif select-none relative group",
+                    // Shape: Flat left edge attached directly to the book, curved die-cut right edge
                     "rounded-l-none rounded-r-md sm:rounded-r-lg border-y border-r border-l-0 text-[10px] sm:text-[11px] xl:text-[12px]",
+                    // Seam shadow on the left edge so tab appears naturally bound under the page
+                    "before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-black/30 before:pointer-events-none",
                     isSelected
                       ? isLight
-                        ? "bg-gradient-to-r from-[#D4AF37] via-[#E5BF65] to-[#B89230] text-[#1F1202] font-black border-[#5E420C] shadow-[0_2px_8px_rgba(94,66,12,0.35)] translate-x-1 sm:translate-x-1.5 z-30 scale-105"
-                        : "bg-gradient-to-r from-[#FFE8B3] via-[#F5B544] to-[#C78F2E] text-[#1A0F02] font-black border-[#FFF2D0] shadow-[0_0_14px_rgba(245,181,68,0.7),inset_0_1px_1px_rgba(255,255,255,0.8)] translate-x-1 sm:translate-x-1.5 z-30 scale-105"
+                        ? "bg-gradient-to-r from-[#D4AF37] via-[#E5BF65] to-[#B89230] text-[#1F1202] font-black border-[#5E420C] shadow-[0_2px_10px_rgba(94,66,12,0.4),inset_0_1px_1px_rgba(255,255,255,0.8)] z-30"
+                        : "bg-gradient-to-r from-[#FFE8B3] via-[#F5B544] to-[#C78F2E] text-[#1A0F02] font-black border-[#FFF2D0] shadow-[0_0_14px_rgba(245,181,68,0.75),inset_0_1px_1px_rgba(255,255,255,0.9)] z-30"
                       : isLight
-                      ? "bg-[#EFE4CE] hover:bg-[#FFF8EC] border-[#C4B18B] text-[#3B2506] hover:text-black hover:translate-x-0.5 hover:shadow-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]"
-                      : "bg-[#091D38] hover:bg-[#12335E] border-[#1E4377] text-[#F3E5CC] hover:text-white hover:translate-x-0.5 hover:shadow-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                      ? "bg-[#EFE4CE] hover:bg-[#FFF8EC] border-[#C4B18B] text-[#3B2506] hover:text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]"
+                      : "bg-[#091D38] hover:bg-[#12335E] border-[#1E4377] text-[#F3E5CC] hover:text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
                   )}
                   title={
                     isHome
@@ -1119,9 +1121,9 @@ export default function ContactsLedgerView({
                     </span>
                   )}
 
-                  {/* Active Indicator Micro-pip on curved right edge */}
+                  {/* Active Indicator Micro-pip inside right edge */}
                   {isSelected && (
-                    <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#1A0F02] shadow-xs pointer-events-none" />
+                    <span className="absolute right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#1A0F02]/80 shadow-xs pointer-events-none" />
                   )}
                 </button>
               );
