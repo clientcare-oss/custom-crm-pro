@@ -783,12 +783,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     }
   };
 
-  // Crew Messages global unread count
-  const { data: crewStats } = trpc.crewMessages.getOverviewStats.useQuery(undefined, {
-    enabled: !!user && user.role !== "client",
-    refetchInterval: 15000,
-  });
-  const crewUnreadCount = crewStats?.unreadTotal || 0;
 
 
 
@@ -1527,34 +1521,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </ScopedErrorBoundary>
           )}
 
-          {/* Floating Action Buttons (embedded directly in header on First Mate, Call Center, and Students) */}
-          {!location.startsWith("/first-mate") && !location.startsWith("/call-center") && !location.startsWith("/call-logs") && !location.startsWith("/students") && !location.startsWith("/projects") && (
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-              {user && user.role !== "client" && (
-                <Button
-                  onClick={() => setLocation("/crew-quarters?tab=messages")}
-                  className="h-8 px-2.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 hover:text-white border border-sky-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer relative"
-                  title="Crew Messages"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Crew Messages</span>
-                  {crewUnreadCount > 0 && (
-                    <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-xs">
-                      {crewUnreadCount}
-                    </span>
-                  )}
-                </Button>
-              )}
 
-              <Button
-                onClick={() => setIssueReporterOpen(true)}
-                className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer"
-                title="Report Issue / Feedback to Linear Backlog (⌥+F)"
-              >
-                <Bug className="w-3.5 h-3.5" /> Feedback & Issues
-              </Button>
-            </div>
-          )}
         </main>
       </SidebarInset>
 

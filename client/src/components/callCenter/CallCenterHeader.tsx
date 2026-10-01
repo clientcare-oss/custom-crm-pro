@@ -1,5 +1,4 @@
-import React from "react";
-import { Headset, RefreshCw, Bug, Phone } from "lucide-react";
+import { Headset, RefreshCw, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -101,14 +100,6 @@ export function CallCenterHeader({
           </span>
         </div>
 
-        {/* 3. Red Developer Bug / Feedback & Issues Button — perfectly aligned on the top line */}
-        <Button
-          onClick={() => window.dispatchEvent(new CustomEvent("open-issue-reporter"))}
-          className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-lg text-xs font-bold gap-1.5 shadow-xs transition-all cursor-pointer shrink-0"
-          title="Report Issue / Feedback to Linear Backlog (⌥+F)"
-        >
-          <Bug className="w-3.5 h-3.5" /> Feedback & Issues
-        </Button>
       </div>
     </header>
   );

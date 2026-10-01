@@ -40,8 +40,8 @@ export const ServicesHeader: React.FC<ServicesHeaderProps> = ({
 }) => {
   return (
     <div className="space-y-2.5">
-      {/* Top Title & Primary Actions with clearance for floating Feedback & Issues button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:pr-40">
+      {/* Top Title & Primary Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">

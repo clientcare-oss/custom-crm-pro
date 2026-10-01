@@ -25,7 +25,6 @@ import {
   HelpCircle,
   Lightbulb,
   BookOpen,
-  Bug,
   Lock,
   CheckCircle2,
   X,
@@ -471,16 +470,6 @@ export default function FirstMate() {
             </Badge>
           </button>
 
-          {/* 4. Feedback & Issues */}
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new CustomEvent("open-issue-reporter"))}
-            className="h-8 px-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap shadow-xs"
-            title="Report Issue / Feedback to Linear Backlog (⌥+F)"
-          >
-            <Bug className="w-3.5 h-3.5 text-rose-500" />
-            <span>Feedback & Issues</span>
-          </button>
         </div>
       </header>
 
