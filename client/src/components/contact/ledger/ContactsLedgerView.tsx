@@ -1,0 +1,1115 @@
+import React, { useState, useMemo } from "react";
+import { useLocation } from "wouter";
+import {
+  Phone,
+  Mail,
+  MessageSquare,
+  MoreHorizontal,
+  Link as LinkIcon,
+  ChevronRight,
+  Clock,
+  Calendar,
+  Users,
+  Star,
+  ExternalLink,
+  Edit2,
+  Trash2,
+  Sun,
+  Moon,
+  Home,
+  Check,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { formatPhone } from "@/lib/phone";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export interface ContactItem {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  jobTitle?: string | null;
+  portalUserId?: number | null;
+  portalAccess?: string | null;
+  parentContactId?: number | null;
+  caseId?: string | null;
+  notes?: string | null;
+  createdAt?: string | Date;
+}
+
+export interface ContactsLedgerViewProps {
+  contacts: ContactItem[];
+  searchQuery: string;
+  onEditContact: (contact: ContactItem) => void;
+  onDeleteContact: (id: number) => void;
+  onOpenAddContact: () => void;
+}
+
+const ALPHABET = [
+  "HOME",
+  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+  "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+];
+
+type CategoryFilter =
+  | "all"
+  | "families"
+  | "schools"
+  | "districts"
+  | "professionals"
+  | "team";
+
+export default function ContactsLedgerView({
+  contacts,
+  searchQuery,
+  onEditContact,
+  onDeleteContact,
+  onOpenAddContact,
+}: ContactsLedgerViewProps) {
+  const [, setLocation] = useLocation();
+
+  // Ledger theme: "dark" (deep navy leather) or "light" (antique vellum parchment)
+  const [ledgerTheme, setLedgerTheme] = useState<"dark" | "light">("dark");
+  const isLight = ledgerTheme === "light";
+
+  // Category filter
+  const [category, setCategory] = useState<CategoryFilter>("all");
+
+  // Alphabet thumb index selection (null = all letters, or 'H', etc.)
+  const [selectedLetter, setSelectedLetter] = useState<string | null>("H");
+
+  // Mobile page view tab: "directory" (left page) or "dossier" (right page)
+  const [mobileTab, setMobileTab] = useState<"directory" | "dossier">("directory");
+
+  // Helper to determine contact badge / classification
+  const getContactBadge = (c: ContactItem) => {
+    const title = (c.jobTitle || "").toLowerCase();
+    const comp = (c.company || "").toLowerCase();
+
+    if (comp.includes("waypoint") || title.includes("advocate") || title.includes("founder")) {
+      return { label: "Team", type: "team" as const };
+    }
+    if (title.includes("psychologist") || title.includes("slp") || title.includes("therap") || title.includes("attorney")) {
+      return { label: "Professional", type: "professional" as const };
+    }
+    if (title.includes("case manager") || title.includes("teacher") || comp.includes("elementary") || comp.includes("high school") || comp.includes("middle school")) {
+      return { label: "School Staff", type: "school" as const };
+    }
+    if (title.includes("director") || comp.includes("district") || comp.includes("county")) {
+      return { label: "District", type: "district" as const };
+    }
+    if (title === "student") {
+      return { label: "Student", type: "student" as const };
+    }
+    if (c.portalUserId || title === "parent" || (!c.jobTitle && !c.company)) {
+      return { label: "★ Active Family", type: "active-family" as const };
+    }
+    return { label: "Contact", type: "default" as const };
+  };
+
+  // Helper to match category filter
+  const matchCategory = (c: ContactItem, cat: CategoryFilter) => {
+    if (cat === "all") return true;
+    const badge = getContactBadge(c);
+    const title = (c.jobTitle || "").toLowerCase();
+    const comp = (c.company || "").toLowerCase();
+
+    if (cat === "families") {
+      return badge.type === "active-family" || badge.type === "student" || title.includes("parent");
+    }
+    if (cat === "schools") {
+      return badge.type === "school" || comp.includes("school") || comp.includes("elementary") || comp.includes("high");
+    }
+    if (cat === "districts") {
+      return badge.type === "district" || comp.includes("district") || comp.includes("county");
+    }
+    if (cat === "professionals") {
+      return badge.type === "professional";
+    }
+    if (cat === "team") {
+      return badge.type === "team";
+    }
+    return true;
+  };
+
+  // Filtered contacts based on category, search, and letter
+  const filteredContacts = useMemo(() => {
+    return contacts.filter((c) => {
+      // Exclude students from main directory list if they have a parent, unless specifically in Student category
+      if (!matchCategory(c, category)) return false;
+
+      // Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
+        const email = (c.email || "").toLowerCase();
+        const phone = (c.phone || "").toLowerCase();
+        const company = (c.company || "").toLowerCase();
+        const jobTitle = (c.jobTitle || "").toLowerCase();
+        const match =
+          fullName.includes(q) ||
+          email.includes(q) ||
+          phone.includes(q) ||
+          company.includes(q) ||
+          jobTitle.includes(q);
+        if (!match) return false;
+      }
+
+      // Letter filter
+      if (selectedLetter && selectedLetter !== "HOME") {
+        const lastInitial = (c.lastName || c.firstName || "")[0]?.toUpperCase();
+        if (lastInitial !== selectedLetter) return false;
+      }
+
+      return true;
+    });
+  }, [contacts, category, searchQuery, selectedLetter]);
+
+  // Group contacts alphabetically by last name initial
+  const groupedContacts = useMemo(() => {
+    // Sort contacts by lastName, firstName
+    const sorted = [...filteredContacts].sort((a, b) => {
+      const lastA = (a.lastName || a.firstName || "").toLowerCase();
+      const lastB = (b.lastName || b.firstName || "").toLowerCase();
+      return lastA.localeCompare(lastB);
+    });
+
+    const groups: { letter: string; items: ContactItem[] }[] = [];
+    sorted.forEach((item) => {
+      const letter = (item.lastName || item.firstName || "?")[0]?.toUpperCase() || "?";
+      const existing = groups.find((g) => g.letter === letter);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        groups.push({ letter, items: [item] });
+      }
+    });
+    return groups;
+  }, [filteredContacts]);
+
+  // Selected contact for the right-page dossier
+  const [selectedContactId, setSelectedContactId] = useState<number | null>(() => {
+    return contacts[0]?.id ?? null;
+  });
+
+  // Keep selected contact synced if list changes
+  const activeContact = useMemo(() => {
+    if (selectedContactId) {
+      const found = contacts.find((c) => c.id === selectedContactId);
+      if (found) return found;
+    }
+    return filteredContacts[0] || contacts[0] || null;
+  }, [contacts, selectedContactId, filteredContacts]);
+
+  // Linked students or parent for the active contact
+  const linkedStudents = useMemo(() => {
+    if (!activeContact) return [];
+    return contacts.filter((c) => c.parentContactId === activeContact.id);
+  }, [contacts, activeContact]);
+
+  const parentContact = useMemo(() => {
+    if (!activeContact || !activeContact.parentContactId) return null;
+    return contacts.find((c) => c.id === activeContact.parentContactId);
+  }, [contacts, activeContact]);
+
+  // Initials generator
+  const getInitials = (first?: string | null, last?: string | null) => {
+    const f = (first || "").trim()[0] || "";
+    const l = (last || "").trim()[0] || "";
+    return (f + l).toUpperCase() || "WP";
+  };
+
+  const activeBadge = activeContact ? getContactBadge(activeContact) : null;
+
+  return (
+    <div className="w-full flex flex-col items-center justify-start p-2 sm:p-4 md:p-6 lg:p-8 select-none">
+      {/* ─── Top Ledger Toolbar & Theme Toggle ─── */}
+      <div className="w-full max-w-[1400px] mb-3 flex items-center justify-between gap-3 px-2">
+        <div className="flex items-center gap-2">
+          {/* Mobile Tab Switcher */}
+          <div className="lg:hidden flex items-center bg-[#071324] p-1 rounded-xl border border-[#1b2d45]">
+            <button
+              type="button"
+              onClick={() => setMobileTab("directory")}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all",
+                mobileTab === "directory"
+                  ? "bg-[#D4AF37] text-slate-950 shadow-sm"
+                  : "text-[#C5B495] hover:text-white"
+              )}
+            >
+              Index Directory
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab("dossier")}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all",
+                mobileTab === "dossier"
+                  ? "bg-[#D4AF37] text-slate-950 shadow-sm"
+                  : "text-[#C5B495] hover:text-white"
+              )}
+            >
+              Contact Dossier
+            </button>
+          </div>
+        </div>
+
+        {/* Theme Selector: Dark Leather / Antique Parchment */}
+        <div className="flex items-center gap-2 bg-[#06101E]/90 border border-[#1B2F4C] p-1 rounded-full shadow-md">
+          <button
+            type="button"
+            onClick={() => setLedgerTheme("dark")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-serif font-bold transition-all cursor-pointer",
+              !isLight
+                ? "bg-gradient-to-r from-[#182C48] to-[#0A182E] text-[#FFF2D9] border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.3)]"
+                : "text-[#8BA1C2] hover:text-white"
+            )}
+            title="Dark Leather Ledger"
+          >
+            <Moon className="h-3.5 w-3.5 text-[#F3D193]" />
+            <span className="hidden sm:inline">Dark Leather</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setLedgerTheme("light")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-serif font-bold transition-all cursor-pointer",
+              isLight
+                ? "bg-[#EFE3C8] text-[#2B1B08] border border-[#B89650] shadow-sm"
+                : "text-[#8BA1C2] hover:text-white"
+            )}
+            title="Light Parchment Ledger"
+          >
+            <Sun className="h-3.5 w-3.5 text-[#B87A18]" />
+            <span className="hidden sm:inline">Light Parchment</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Open Ledger Book Spread Container ─── */}
+      <div
+        className={cn(
+          "w-full max-w-[1400px] relative rounded-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.95),0_4px_16px_rgba(0,0,0,0.8)] border border-[#8C6D33]/50 transition-all",
+          "aspect-[1024/788] min-h-[680px]"
+        )}
+        style={{
+          backgroundImage: `url(${
+            isLight
+              ? "/decor/contacts-ledger-light.jpg"
+              : "/decor/contacts-ledger-dark.jpg"
+          })`,
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {/* ─── Inner Spread Grid: Left Page, Spine, Right Page, Alphabet Rail ─── */}
+        <div className="absolute inset-0 flex">
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* LEFT PAGE: Category Tabs + Alphabetical Contacts Directory         */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          <div
+            className={cn(
+              "w-full lg:w-[47.2%] h-full pt-[4.2%] pb-[5%] pl-[5.5%] pr-[2.5%] flex flex-col z-10",
+              mobileTab === "dossier" ? "hidden lg:flex" : "flex"
+            )}
+          >
+            {/* Top Category Filter Tabs Strip */}
+            <div className="flex items-center justify-between gap-1 pb-3 pt-1 border-b border-white/10 select-none">
+              <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "families", label: "Families" },
+                  { id: "schools", label: "Schools" },
+                  { id: "districts", label: "Districts" },
+                  { id: "professionals", label: "Professionals" },
+                  { id: "team", label: "Team" },
+                ].map((t) => {
+                  const isActive = category === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setCategory(t.id as CategoryFilter)}
+                      className={cn(
+                        "px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-serif transition-all cursor-pointer whitespace-nowrap",
+                        isActive
+                          ? isLight
+                            ? "bg-[#D9C49D] text-[#1F1404] font-bold shadow-xs border border-[#A6884E]"
+                            : "bg-[#091A33]/90 text-[#FFF2D9] font-bold border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.3)]"
+                          : isLight
+                          ? "text-[#5C4D38] hover:text-[#1F1404] hover:bg-[#EAE0CA]"
+                          : "text-[#8CA4C4] hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Total Contacts Count Indicator */}
+              <span
+                className={cn(
+                  "text-[11px] font-serif font-medium shrink-0 ml-1 drop-shadow-xs",
+                  isLight ? "text-[#73634B]" : "text-[#E8D1A7]"
+                )}
+              >
+                {filteredContacts.length}{" "}
+                {filteredContacts.length === 1 ? "contact" : "contacts"}
+              </span>
+            </div>
+
+            {/* Scrollable Alphabetical Directory List */}
+            <div className="flex-1 overflow-y-auto pr-1.5 pt-3 space-y-4 custom-scrollbar">
+              {groupedContacts.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-75">
+                  <p
+                    className={cn(
+                      "font-serif text-sm font-semibold",
+                      isLight ? "text-[#4A3B29]" : "text-[#E8D1A7]"
+                    )}
+                  >
+                    No contacts found
+                  </p>
+                  <p
+                    className={cn(
+                      "text-xs mt-1 max-w-xs",
+                      isLight ? "text-[#6B5A45]" : "text-[#7B92B0]"
+                    )}
+                  >
+                    {selectedLetter && selectedLetter !== "HOME"
+                      ? `No contacts with initial "${selectedLetter}" in this category.`
+                      : "Try clearing your search or picking another filter."}
+                  </p>
+                </div>
+              ) : (
+                groupedContacts.map((group) => (
+                  <div key={group.letter} className="space-y-1.5">
+                    {/* Section Initial Header with Gold Rule */}
+                    <div className="flex items-center gap-2 pt-1 pb-1">
+                      <span
+                        className={cn(
+                          "font-serif text-base sm:text-lg font-bold drop-shadow-xs",
+                          isLight ? "text-[#8B5E14]" : "text-[#FCE09E]"
+                        )}
+                      >
+                        {group.letter}
+                      </span>
+                      <div
+                        className={cn(
+                          "flex-1 h-[1px]",
+                          isLight
+                            ? "bg-gradient-to-r from-[#B89650]/50 to-transparent"
+                            : "bg-gradient-to-r from-[#D4AF37]/40 via-[#8A6731]/30 to-transparent"
+                        )}
+                      />
+                    </div>
+
+                    {/* Contacts under this letter */}
+                    <div className="space-y-1.5">
+                      {group.items.map((contact) => {
+                        const isSelected = activeContact?.id === contact.id;
+                        const badge = getContactBadge(contact);
+                        const initials = getInitials(contact.firstName, contact.lastName);
+
+                        return (
+                          <div
+                            key={contact.id}
+                            onClick={() => {
+                              setSelectedContactId(contact.id);
+                              setMobileTab("dossier");
+                            }}
+                            className={cn(
+                              "w-full rounded-xl px-2.5 sm:px-3 py-2 flex items-center justify-between gap-2.5 cursor-pointer transition-all text-left group select-none",
+                              isSelected
+                                ? isLight
+                                  ? "bg-[#D8C29A]/80 border border-[#8C6418] shadow-[0_2px_8px_rgba(140,100,24,0.25)]"
+                                  : "bg-[#0B1E38]/85 border border-[#E5C175] shadow-[0_0_12px_rgba(229,193,117,0.32),inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                                : isLight
+                                ? "hover:bg-[#E2D4BC]/60 border border-transparent"
+                                : "hover:bg-[#07172C]/60 border border-transparent"
+                            )}
+                          >
+                            {/* Left: Initials Avatar + Name & Subtitle */}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className={cn(
+                                  "w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-serif font-bold text-xs sm:text-sm shrink-0 border transition-all",
+                                  isSelected
+                                    ? isLight
+                                      ? "bg-[#4A3205] text-[#FFE8A3] border-[#8C6418] shadow-xs"
+                                      : "bg-[#051124] text-[#FCE09E] border-[#E5C175] shadow-[0_0_8px_rgba(229,193,117,0.35)]"
+                                    : isLight
+                                    ? "bg-[#D2BD93] text-[#2E1E05] border-[#9E7F47]"
+                                    : "bg-[#051020] text-[#CBD5E1] border-[#1E3554] group-hover:border-[#D4AF37]/50"
+                                )}
+                              >
+                                {initials}
+                              </div>
+
+                              <div className="min-w-0">
+                                <h4
+                                  className={cn(
+                                    "font-serif text-xs sm:text-sm font-bold truncate leading-tight",
+                                    isLight ? "text-[#1C1405]" : "text-[#F8F1E4]"
+                                  )}
+                                >
+                                  {contact.lastName}, {contact.firstName}
+                                </h4>
+                                <p
+                                  className={cn(
+                                    "text-[10.5px] sm:text-[11.5px] truncate leading-tight mt-0.5",
+                                    isLight ? "text-[#5C4A32]" : "text-[#8CA4C4]"
+                                  )}
+                                >
+                                  {contact.jobTitle || "Contact"}{" "}
+                                  {contact.company ? `· ${contact.company}` : ""}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Right: Role Badge & Arrow */}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {badge.type === "active-family" && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-serif font-bold tracking-tight whitespace-nowrap",
+                                    isLight
+                                      ? "bg-[#E5BF65] text-[#291A04] border border-[#8C6418]"
+                                      : "bg-[#33220A] text-[#FCE09E] border border-[#E5C175]/60"
+                                  )}
+                                >
+                                  ★ Active Family
+                                </span>
+                              )}
+                              {badge.type === "team" && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold whitespace-nowrap",
+                                    isLight
+                                      ? "bg-[#B4D3F7] text-[#0A264D] border border-[#528AC9]"
+                                      : "bg-[#091D3B] text-[#93C5FD] border border-[#1D4E89]"
+                                  )}
+                                >
+                                  Team
+                                </span>
+                              )}
+                              {badge.type === "professional" && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold whitespace-nowrap",
+                                    isLight
+                                      ? "bg-[#D8C7F0] text-[#261042] border border-[#8C63BF]"
+                                      : "bg-[#1E112E] text-[#D8B4FE] border border-[#552B80]"
+                                  )}
+                                >
+                                  Professional
+                                </span>
+                              )}
+                              {badge.type === "school" && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold whitespace-nowrap",
+                                    isLight
+                                      ? "bg-[#BEE5F5] text-[#052A3B] border border-[#4899BD]"
+                                      : "bg-[#0A2338] text-[#7DD3FC] border border-[#1A5B8A]"
+                                  )}
+                                >
+                                  School Staff
+                                </span>
+                              )}
+                              {badge.type === "district" && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold whitespace-nowrap",
+                                    isLight
+                                      ? "bg-[#C4EFE7] text-[#06332C] border border-[#44A392]"
+                                      : "bg-[#082B29] text-[#5EEAD4] border border-[#14665E]"
+                                  )}
+                                >
+                                  District
+                                </span>
+                              )}
+                              {badge.type === "student" && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-serif font-semibold whitespace-nowrap",
+                                    isLight
+                                      ? "bg-[#C8F0D8] text-[#08331B] border border-[#48A86C]"
+                                      : "bg-[#092B1C] text-[#6EE7B7] border border-[#176644]"
+                                  )}
+                                >
+                                  Student
+                                </span>
+                              )}
+
+                              <ChevronRight
+                                className={cn(
+                                  "h-3.5 w-3.5 transition-transform",
+                                  isSelected
+                                    ? isLight
+                                      ? "text-[#8C6418] translate-x-0.5"
+                                      : "text-[#FCE09E] translate-x-0.5"
+                                    : "text-white/30 group-hover:text-white/60"
+                                )}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* CENTER BOOK SPINE (Visual divider & stitching)                     */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          <div className="hidden lg:block w-[4.8%] h-full pointer-events-none select-none" />
+
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* RIGHT PAGE: Selected Contact Dossier                               */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          <div
+            className={cn(
+              "w-full lg:w-[41.8%] h-full pt-[4.2%] pb-[5%] pl-[2%] pr-[3.5%] flex flex-col z-10",
+              mobileTab === "directory" ? "hidden lg:flex" : "flex"
+            )}
+          >
+            {activeContact ? (
+              <div className="h-full flex flex-col justify-between overflow-y-auto pr-1 select-none">
+                {/* 1. Dossier Header: Avatar + Name + Subtitle + Action Buttons */}
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                      {/* Large Initials Avatar with Gold Star Emblem */}
+                      <div className="relative shrink-0">
+                        <div
+                          className={cn(
+                            "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-serif font-black text-xl sm:text-2xl border-2 shadow-lg",
+                            isLight
+                              ? "bg-gradient-to-br from-[#EFE0C2] to-[#C9B388] text-[#291802] border-[#8C6418]"
+                              : "bg-gradient-to-br from-[#0F2647] to-[#040C1A] text-[#FFF2D9] border-[#E5C175] shadow-[0_0_16px_rgba(229,193,117,0.35)]"
+                          )}
+                        >
+                          {getInitials(activeContact.firstName, activeContact.lastName)}
+                        </div>
+
+                        {/* Gold Star Badge (at 4 o'clock) */}
+                        <div
+                          className={cn(
+                            "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-xs",
+                            isLight
+                              ? "bg-[#D4AF37] border-[#5E420C] text-slate-950"
+                              : "bg-gradient-to-br from-[#FCE09E] to-[#B89230] border-[#3D2704] text-[#1F1202]"
+                          )}
+                        >
+                          <Star className="h-3 w-3 fill-current" />
+                        </div>
+                      </div>
+
+                      {/* Contact Name & Subtitles */}
+                      <div className="min-w-0">
+                        <h2
+                          className={cn(
+                            "font-serif text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight truncate leading-tight drop-shadow-xs",
+                            isLight ? "text-[#1C1405]" : "text-[#FFF2D9]"
+                          )}
+                        >
+                          {activeContact.firstName} {activeContact.lastName}
+                        </h2>
+
+                        <p
+                          className={cn(
+                            "font-serif text-xs sm:text-sm font-medium mt-0.5 truncate",
+                            isLight ? "text-[#5C4A32]" : "text-[#C7B596]"
+                          )}
+                        >
+                          {activeContact.jobTitle || "Parent / Guardian"}
+                        </p>
+
+                        {(linkedStudents.length > 0 || parentContact) && (
+                          <p
+                            className={cn(
+                              "text-xs truncate mt-0.5",
+                              isLight ? "text-[#736046]" : "text-[#8CA4C4]"
+                            )}
+                          >
+                            {linkedStudents.length > 0
+                              ? `Parent of ${linkedStudents.map((s) => `${s.firstName} ${s.lastName}`).join(", ")}`
+                              : parentContact
+                              ? `Child of ${parentContact.firstName} ${parentContact.lastName}`
+                              : ""}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Active Family Pill Badge */}
+                    {activeBadge && (
+                      <span
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-xs font-serif font-bold shrink-0 tracking-tight whitespace-nowrap",
+                          isLight
+                            ? "bg-[#E5BF65] text-[#291A04] border border-[#8C6418] shadow-xs"
+                            : "bg-[#33220A] text-[#FCE09E] border border-[#E5C175]/60 shadow-[0_0_8px_rgba(229,193,117,0.25)]"
+                        )}
+                      >
+                        {activeBadge.label}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Quick Action Buttons Bar: Call, Email, Message, Dropdown Menu */}
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    {activeContact.phone ? (
+                      <a
+                        href={`tel:${activeContact.phone}`}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
+                          isLight
+                            ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
+                            : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
+                        )}
+                      >
+                        <Phone className="h-3.5 w-3.5 text-[#E5C175]" />
+                        <span>Call</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-medium opacity-40 border border-white/10"
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                        <span>Call</span>
+                      </button>
+                    )}
+
+                    {activeContact.email ? (
+                      <a
+                        href={`mailto:${activeContact.email}`}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
+                          isLight
+                            ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
+                            : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
+                        )}
+                      >
+                        <Mail className="h-3.5 w-3.5 text-[#E5C175]" />
+                        <span>Email</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-medium opacity-40 border border-white/10"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        <span>Email</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/messages")}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all border cursor-pointer shadow-xs",
+                        isLight
+                          ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
+                          : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
+                      )}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5 text-[#E5C175]" />
+                      <span>Message</span>
+                    </button>
+
+                    {/* More Actions Dropdown Menu */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            "p-2 rounded-xl border transition-all cursor-pointer shadow-xs",
+                            isLight
+                              ? "bg-[#EAE0CA] hover:bg-[#D9C7A7] text-[#2B1C05] border-[#9E8353]"
+                              : "bg-[#091D38]/90 hover:bg-[#0E2C54] text-[#E0ECFC] border-[#1D3D69]"
+                          )}
+                          title="More options"
+                        >
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-[#051124] border border-[#1E3A63] text-[#F0DFC5] rounded-xl shadow-2xl p-1 min-w-[190px]"
+                      >
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setLocation(
+                              `/client-portal?preview=true&parentContactId=${activeContact.id}`
+                            )
+                          }
+                          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 text-[#E5C175]" />
+                          <span>View Portal Preview</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onEditContact(activeContact)}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
+                        >
+                          <Edit2 className="h-3.5 w-3.5 text-[#93C5FD]" />
+                          <span>Edit Contact</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onDeleteContact(activeContact.id)}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-red-950/60 text-red-400 text-xs py-2 rounded-lg"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Delete Contact</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                {/* 2. Middle Section: Linked Students / Parent Section */}
+                <div
+                  className={cn(
+                    "my-4 p-3.5 rounded-2xl border transition-all select-none",
+                    isLight
+                      ? "bg-[#EFE4CA]/80 border-[#C7B594] shadow-xs"
+                      : "bg-[#07172C]/75 border-[#182C48] shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <LinkIcon className="h-3.5 w-3.5 text-[#D4AF37]" />
+                      <span
+                        className={cn(
+                          "font-serif text-xs font-bold uppercase tracking-wider",
+                          isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
+                        )}
+                      >
+                        {linkedStudents.length > 0
+                          ? "Parent of"
+                          : parentContact
+                          ? "Linked Parent"
+                          : "Connected Case"}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/students")}
+                      className={cn(
+                        "text-[11px] font-serif font-semibold underline cursor-pointer",
+                        isLight ? "text-[#785412] hover:text-[#2E1D02]" : "text-[#D4AF37] hover:text-white"
+                      )}
+                    >
+                      View All
+                    </button>
+                  </div>
+
+                  {linkedStudents.length > 0 ? (
+                    <div className="space-y-2">
+                      {linkedStudents.map((student) => (
+                        <div
+                          key={student.id}
+                          onClick={() => setLocation(`/contacts/${student.id}`)}
+                          className={cn(
+                            "flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-pointer group",
+                            isLight
+                              ? "bg-[#F8EFE0] hover:bg-[#FFF8ED] border-[#D1BE9B]"
+                              : "bg-[#040E1E]/90 hover:bg-[#091D38] border-[#1E375C]"
+                          )}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={cn(
+                                "w-8 h-8 rounded-full flex items-center justify-center font-serif font-bold text-xs border shrink-0",
+                                isLight
+                                  ? "bg-[#D9C49D] text-[#2E1E05] border-[#A88C56]"
+                                  : "bg-[#0A233D] text-[#93C5FD] border-[#1F548A]"
+                              )}
+                            >
+                              {getInitials(student.firstName, student.lastName)}
+                            </div>
+                            <div>
+                              <h5
+                                className={cn(
+                                  "font-serif text-xs sm:text-sm font-bold leading-tight group-hover:text-[#D4AF37] transition-colors",
+                                  isLight ? "text-[#1C1405]" : "text-[#F4E8D3]"
+                                )}
+                              >
+                                {student.firstName} {student.lastName}
+                              </h5>
+                              <p
+                                className={cn(
+                                  "text-[10.5px] mt-0.5",
+                                  isLight ? "text-[#63533E]" : "text-[#8CA4C4]"
+                                )}
+                              >
+                                Student Case File
+                              </p>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : parentContact ? (
+                    <div
+                      onClick={() => setSelectedContactId(parentContact.id)}
+                      className={cn(
+                        "flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-pointer group",
+                        isLight
+                          ? "bg-[#F8EFE0] hover:bg-[#FFF8ED] border-[#D1BE9B]"
+                          : "bg-[#040E1E]/90 hover:bg-[#091D38] border-[#1E375C]"
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center font-serif font-bold text-xs border shrink-0",
+                            isLight
+                              ? "bg-[#D9C49D] text-[#2E1E05] border-[#A88C56]"
+                              : "bg-[#0A233D] text-[#FCE09E] border-[#1F548A]"
+                          )}
+                        >
+                          {getInitials(parentContact.firstName, parentContact.lastName)}
+                        </div>
+                        <div>
+                          <h5
+                            className={cn(
+                              "font-serif text-xs sm:text-sm font-bold leading-tight group-hover:text-[#D4AF37] transition-colors",
+                              isLight ? "text-[#1C1405]" : "text-[#F4E8D3]"
+                            )}
+                          >
+                            {parentContact.firstName} {parentContact.lastName}
+                          </h5>
+                          <p
+                            className={cn(
+                              "text-[10.5px] mt-0.5",
+                              isLight ? "text-[#63533E]" : "text-[#8CA4C4]"
+                            )}
+                          >
+                            Parent / Guardian
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                  ) : (
+                    <p
+                      className={cn(
+                        "text-xs italic py-2 text-center",
+                        isLight ? "text-[#7B6A53]" : "text-[#7990AF]"
+                      )}
+                    >
+                      No linked student or parent cases recorded yet.
+                    </p>
+                  )}
+                </div>
+
+                {/* 3. Bottom 3-Card Activity & Relationship Strip */}
+                <div className="grid grid-cols-3 gap-2 select-none">
+                  {/* Card 1: Last Contact */}
+                  <div
+                    className={cn(
+                      "p-2.5 rounded-xl border flex flex-col justify-between",
+                      isLight
+                        ? "bg-[#EFE3C8]/80 border-[#C7B594]"
+                        : "bg-[#07162C]/80 border-[#182C48]"
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Clock className="h-3 w-3 text-[#D4AF37]" />
+                      <span
+                        className={cn(
+                          "text-[10px] font-serif font-bold uppercase tracking-wider",
+                          isLight ? "text-[#5C451D]" : "text-[#C7B596]"
+                        )}
+                      >
+                        Last Contact
+                      </span>
+                    </div>
+                    <div>
+                      <p
+                        className={cn(
+                          "font-serif text-xs font-bold leading-tight",
+                          isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
+                        )}
+                      >
+                        Sep 28, 2024
+                      </p>
+                      <p
+                        className={cn(
+                          "text-[10px] mt-0.5",
+                          isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
+                        )}
+                      >
+                        Email
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Next Event */}
+                  <div
+                    className={cn(
+                      "p-2.5 rounded-xl border flex flex-col justify-between",
+                      isLight
+                        ? "bg-[#EFE3C8]/80 border-[#C7B594]"
+                        : "bg-[#07162C]/80 border-[#182C48]"
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Calendar className="h-3 w-3 text-[#D4AF37]" />
+                      <span
+                        className={cn(
+                          "text-[10px] font-serif font-bold uppercase tracking-wider",
+                          isLight ? "text-[#5C451D]" : "text-[#C7B596]"
+                        )}
+                      >
+                        Next Event
+                      </span>
+                    </div>
+                    <div>
+                      <p
+                        className={cn(
+                          "font-serif text-xs font-bold leading-tight",
+                          isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
+                        )}
+                      >
+                        IEP Meeting
+                      </p>
+                      <p
+                        className={cn(
+                          "text-[10px] mt-0.5",
+                          isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
+                        )}
+                      >
+                        Oct 14, 2024
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Relationship */}
+                  <div
+                    className={cn(
+                      "p-2.5 rounded-xl border flex flex-col justify-between",
+                      isLight
+                        ? "bg-[#EFE3C8]/80 border-[#C7B594]"
+                        : "bg-[#07162C]/80 border-[#182C48]"
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Users className="h-3 w-3 text-[#D4AF37]" />
+                      <span
+                        className={cn(
+                          "text-[10px] font-serif font-bold uppercase tracking-wider",
+                          isLight ? "text-[#5C451D]" : "text-[#C7B596]"
+                        )}
+                      >
+                        Relationship
+                      </span>
+                    </div>
+                    <div>
+                      <p
+                        className={cn(
+                          "font-serif text-xs font-bold leading-tight truncate",
+                          isLight ? "text-[#1F1505]" : "text-[#FFF2D9]"
+                        )}
+                      >
+                        {activeContact.jobTitle || "Parent / Guardian"}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-[10px] mt-0.5 truncate",
+                          isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
+                        )}
+                      >
+                        {activeContact.company || "Waypoint Client"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-75">
+                <p
+                  className={cn(
+                    "font-serif text-base font-bold",
+                    isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
+                  )}
+                >
+                  Select a contact
+                </p>
+                <p
+                  className={cn(
+                    "text-xs mt-1 max-w-xs",
+                    isLight ? "text-[#6B5A45]" : "text-[#8CA4C4]"
+                  )}
+                >
+                  Click any entry from the left directory page to open their full dossier here.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* ALPHABET THUMB INDEX RAIL (Far Right Edge: 🏠, A through Z)        */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          <div className="w-[6.2%] h-full pt-[8.8%] pb-[5.5%] flex flex-col items-center justify-between z-20 select-none">
+            {ALPHABET.map((letter) => {
+              const isHome = letter === "HOME";
+              const isSelected =
+                (isHome && selectedLetter === "HOME") ||
+                (!isHome && selectedLetter === letter);
+
+              return (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => {
+                    setSelectedLetter(isHome ? "HOME" : letter);
+                    setMobileTab("directory");
+                  }}
+                  className={cn(
+                    "w-full flex-1 flex items-center justify-center transition-all cursor-pointer font-serif select-none",
+                    isSelected
+                      ? isLight
+                        ? "bg-[#D4AF37] text-slate-950 font-black text-[11px] sm:text-xs rounded-l-md shadow-sm border-l-2 border-[#5E420C]"
+                        : "bg-gradient-to-r from-[#FCE09E] to-[#B89230] text-[#1F1404] font-black text-[11px] sm:text-xs rounded-l-md shadow-[0_0_12px_rgba(252,224,158,0.7)] border-l-2 border-[#FFE8A3]"
+                      : isLight
+                      ? "text-[#4A3B29] hover:text-[#1F1404] hover:bg-[#D9C49D]/50 text-[9px] sm:text-[10px] font-bold"
+                      : "text-[#C5D5EB]/80 hover:text-white hover:bg-white/10 text-[9px] sm:text-[10px] font-semibold"
+                  )}
+                  title={isHome ? "All Letters" : `Filter by letter ${letter}`}
+                >
+                  {isHome ? (
+                    <Home className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                  ) : (
+                    <span>{letter}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

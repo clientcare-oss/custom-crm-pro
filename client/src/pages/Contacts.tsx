@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit2, Loader2, Mail, Phone, ExternalLink, Compass, Search, X } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Mail, Phone, ExternalLink, Compass, Search, X, BookOpen, LayoutGrid } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -22,6 +22,8 @@ import PageIdBadge from "@/components/PageIdBadge";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import MetalPlaqueButton from "@/components/ui/MetalPlaqueButton";
 import WaypointPillTab from "@/components/ui/WaypointPillTab";
+import ContactsLedgerView from "@/components/contact/ledger/ContactsLedgerView";
+import { cn } from "@/lib/utils";
 
 type ContactCategory = "all" | "parents" | "school" | "portal" | "students";
 
@@ -31,6 +33,7 @@ export default function Contacts() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ContactCategory>("all");
+  const [viewMode, setViewMode] = useState<"ledger" | "grid">("ledger");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -342,6 +345,38 @@ export default function Contacts() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* View Switcher: Ledger Book vs Cards Grid */}
+              <div className="flex items-center bg-[#071324] p-1 rounded-xl border border-[#1b2d45]">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("ledger")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer",
+                    viewMode === "ledger"
+                      ? "bg-[#D4AF37] text-slate-950 shadow-sm"
+                      : "text-[#8CA4C4] hover:text-white"
+                  )}
+                  title="Open Ledger Book View"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>Ledger Book</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer",
+                    viewMode === "grid"
+                      ? "bg-[#D4AF37] text-slate-950 shadow-sm"
+                      : "text-[#8CA4C4] hover:text-white"
+                  )}
+                  title="Standard Cards Grid View"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  <span>Cards Grid</span>
+                </button>
+              </div>
+
               {searchQuery && (
                 <button
                   type="button"
@@ -456,8 +491,17 @@ export default function Contacts() {
                 </DialogContent>
               </Dialog>
 
-        {/* ─── Contacts Directory Grid Content ─── */}
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto w-full flex-1">
+        {/* ─── Main Content: Ledger Book View OR Standard Cards Grid View ─── */}
+        {viewMode === "ledger" ? (
+          <ContactsLedgerView
+            contacts={contacts || []}
+            searchQuery={searchQuery}
+            onEditContact={handleEdit}
+            onDeleteContact={handleDelete}
+            onOpenAddContact={handleOpenAddContact}
+          />
+        ) : (
+          <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto w-full flex-1">
           {isLoading ? (
             <div className="flex items-center justify-center rounded-xl border border-[#1E3352] bg-[#040D1B]/50 p-16">
               <Loader2 className="h-7 w-7 animate-spin text-amber-400" />
@@ -640,6 +684,7 @@ export default function Contacts() {
             </div>
           )}
         </div>
+        )}
       </div>
     </ScopedErrorBoundary>
   );
