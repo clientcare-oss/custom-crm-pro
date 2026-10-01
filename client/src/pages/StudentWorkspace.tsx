@@ -564,16 +564,7 @@ export default function StudentWorkspace() {
                     </div>
                   </div>
 
-                  {/* Bottom Center Hanging Tab */}
-                  <div className="flex justify-center -mb-10 mt-5 relative z-30">
-                    <button
-                      onClick={() => setDetailsModalOpen(true)}
-                      className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-[#0c2242] to-[#122e54] border border-[#D4AF37]/80 text-white text-xs sm:text-sm font-bold shadow-md hover:from-[#102c54] hover:to-[#183c6e] transition-all cursor-pointer"
-                    >
-                      <FileText className="h-3.5 w-3.5 text-amber-300" />
-                      <span>Case details</span>
-                    </button>
-                  </div>
+
                 </div>
               </div>
             )}
