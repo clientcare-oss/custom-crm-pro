@@ -195,7 +195,12 @@ export function StudentsListView({
               <div
                 key={student.id}
                 onClick={() => onStudentClick(student.id)}
-                className="group grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-[#142640]/90 bg-[#061122]/95 hover:bg-[#0A1A33] hover:border-[#21436F] transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] gap-2 sm:gap-3"
+                className={cn(
+                  "group grid grid-cols-[minmax(0,2fr)_80px_134px_minmax(0,1.2fr)_minmax(0,1.2fr)_40px] items-center px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] gap-2 sm:gap-3",
+                  index % 2 === 0
+                    ? "bg-[#13202C] border-[#1A2E44]/80 hover:bg-[#182837] hover:border-[#233F5D]"
+                    : "bg-[#0A151F] border-[#102030]/80 hover:bg-[#0E1D2A] hover:border-[#1A314A]"
+                )}
               >
                 {/* Student: Avatar + Name + Marker + Grade & School Subtitle */}
                 <div className="flex items-center gap-3 min-w-0">
