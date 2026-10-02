@@ -35,14 +35,10 @@ export function GivingDeskHeader({
 
   return (
     <div className="w-full space-y-3.5 select-none relative z-10 pt-1 sm:pt-2">
-      {/* ─── Clean Header Row: Blue GIVING & IMPACT Plaque + Action Buttons (No brown box) ─── */}
-      <div className="relative w-full flex flex-col md:flex-row md:items-center justify-between gap-3 px-2 sm:px-4 min-h-[84px]">
-        
-        {/* Left Spacing: Reserves room for the lantern and books in the shelf header */}
-        <div className="w-20 lg:w-48 xl:w-60 shrink-0 hidden md:block pointer-events-none" />
-
+      {/* ─── Clean Header Row: Centered Blue GIVING & IMPACT Plaque ─── */}
+      <div className="relative w-full flex items-center justify-center min-h-[84px]">
         {/* Center: Blue GIVING & IMPACT Navy Leather Plaque with Double Gold Wire */}
-        <div className="flex-1 max-w-md sm:max-w-lg lg:max-w-xl mx-auto text-center px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-[#091D3C] via-[#05142B] to-[#020A17] border-2 border-[#C5A059] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)] relative">
+        <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl text-center px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-[#091D3C] via-[#05142B] to-[#020A17] border-2 border-[#C5A059] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)] relative">
           {/* 4 Corner Brass Rivets */}
           <div className="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-[#FFE394] ring-1 ring-black/70 shadow-xs" />
           <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#FFE394] ring-1 ring-black/70 shadow-xs" />
@@ -70,37 +66,6 @@ export function GivingDeskHeader({
           >
             Creating Brighter Tomorrows Together
           </p>
-        </div>
-
-        {/* Right: Primary Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0 self-center md:self-auto justify-end w-auto lg:w-60 z-20">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onOpen501c3}
-            className="border-[#C5A059]/70 bg-[#160D06]/90 text-[#F5E6CA] hover:bg-[#2A180C] hover:text-white text-xs font-semibold h-8 px-2.5 gap-1.5 shadow-md cursor-pointer whitespace-nowrap"
-          >
-            <Settings className="h-3.5 w-3.5 text-[#FAD77B]" />
-            <span className="hidden xl:inline">Manage 501(c)(3)</span>
-          </Button>
-
-          <Button
-            type="button"
-            onClick={onOpenScholarship}
-            className="bg-gradient-to-b from-[#D4AF37] to-[#A37B1D] hover:from-[#E4BF47] hover:to-[#B38B2D] text-[#120B04] font-bold text-xs h-8 px-2.5 sm:px-3 gap-1.5 shadow-md cursor-pointer whitespace-nowrap"
-          >
-            <GraduationCap className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Scholarship</span>
-          </Button>
-
-          <Button
-            type="button"
-            onClick={onRecordDonation}
-            className="bg-gradient-to-b from-[#2E8B57] to-[#1E6038] hover:from-[#359B62] hover:to-[#226C3E] text-white font-bold text-xs h-8 px-2.5 sm:px-3 gap-1.5 shadow-md cursor-pointer whitespace-nowrap"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Donation</span>
-          </Button>
         </div>
       </div>
 

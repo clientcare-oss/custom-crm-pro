@@ -95,9 +95,9 @@ export default function GivingOverview() {
         backgroundImage: "radial-gradient(ellipse at 50% 0%, #29180C 0%, #150B05 50%, #0A0502 100%)",
       }}
     >
-      {/* ─── Hanging Shelf Decor & Cascading Ivy Asset (Behind everything at z-0) ───
-          Spans edge-to-edge touching left sidebar, right edge, and top, layered behind all interactive elements */}
-      <div className="absolute top-0 left-0 right-0 w-full pointer-events-none select-none z-0 flex justify-center overflow-visible">
+      {/* ─── Hanging Shelf Decor & Cascading Ivy Overlap Asset (In front at z-20 with pointer-events-none) ───
+          Spans edge-to-edge touching left sidebar, right edge, and top, overlapping the sides with cascading ivy */}
+      <div className="absolute top-0 left-0 right-0 w-full pointer-events-none select-none z-20 flex justify-center overflow-visible">
         <img
           src="/decor/giving-shelf-header.png"
           alt="Antique shelf with glowing lantern, astrolabe, and cascading ivy"
