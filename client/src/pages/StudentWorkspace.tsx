@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { StudentProfileDossier } from "@/components/students/StudentProfileDossier";
 import { TactileStickyNotesBoard } from "@/components/students/TactileStickyNotesBoard";
+import { FolioCornerBrackets } from "@/components/students/FolioCornerBrackets";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -266,6 +267,9 @@ export default function StudentWorkspace() {
               backgroundRepeat: "no-repeat",
             }}
           >
+            {/* Rigid Photorealistic Brass Corner Brackets — Never Stretches Across Tabs */}
+            <FolioCornerBrackets />
+
             {/* Tab Content Display */}
             {activeTab === "overview" && (
               <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
