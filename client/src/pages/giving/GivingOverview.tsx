@@ -95,6 +95,15 @@ export default function GivingOverview() {
         backgroundImage: "radial-gradient(ellipse at 50% 0%, #29180C 0%, #150B05 50%, #0A0502 100%)",
       }}
     >
+      {/* ─── Hanging Shelf Decor & Cascading Ivy Overlap Asset (Z-20 pointer-events-none) ─── */}
+      <div className="absolute top-0 left-0 right-0 w-full pointer-events-none select-none z-20 flex justify-center overflow-visible">
+        <img
+          src="/decor/giving-shelf-header.png"
+          alt="Antique shelf with glowing lantern, astrolabe, and cascading ivy"
+          className="w-full max-w-[1600px] h-auto object-contain object-top drop-shadow-[0_12px_28px_rgba(0,0,0,0.85)] opacity-95"
+        />
+      </div>
+
       {/* ─── Top Ambient Shelf & Central Navy Plaque with 8 Navigation Buttons ─── */}
       <GivingDeskHeader
         onOpen501c3={() => setModal501c3Open(true)}
@@ -103,7 +112,7 @@ export default function GivingOverview() {
       />
 
       {/* ─── Row 1: Top 6 KPI Metric Cards in Parchment & Brass ─── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3.5 relative z-10">
         {kpiMetrics.map((kpi, idx) => {
           const Icon = kpi.icon;
           const BadgeIcon = kpi.badgeIcon;
@@ -141,34 +150,44 @@ export default function GivingOverview() {
       </div>
 
       {/* ─── Row 2: Charts & Analytics (Giving Overview + Funds Allocation) ─── */}
-      <GivingOverviewCharts
-        oneTimeTotal={16000}
-        monthlyTotal={500}
-        scholarshipsTotal={24750}
-        otherTotal={6200}
-      />
+      <div className="relative z-10">
+        <GivingOverviewCharts
+          oneTimeTotal={16000}
+          monthlyTotal={500}
+          scholarshipsTotal={24750}
+          otherTotal={6200}
+        />
+      </div>
 
       {/* ─── Row 3: Ledgers (Recent Donations, Active Scholarships, Top Supporters) ─── */}
-      <GivingLedgersRow
-        recentDonations={stats?.recentDonations}
-        recentScholarships={stats?.recentScholarships}
-      />
+      <div className="relative z-10">
+        <GivingLedgersRow
+          recentDonations={stats?.recentDonations}
+          recentScholarships={stats?.recentScholarships}
+        />
+      </div>
 
       {/* ─── Row 4: Recent Impact & Active Programs ─── */}
-      <GivingImpactAndPrograms />
+      <div className="relative z-10">
+        <GivingImpactAndPrograms />
+      </div>
 
       {/* ─── Row 5: Fund Management & Needs Attention (8) ─── */}
-      <GivingFundsAndAttention
-        onOpenFundsModal={() => setLocation("/giving/funds")}
-      />
+      <div className="relative z-10">
+        <GivingFundsAndAttention
+          onOpenFundsModal={() => setLocation("/giving/funds")}
+        />
+      </div>
 
       {/* ─── Row 6: Quick Actions & Website Tools ─── */}
-      <GivingActionsAndTools
-        onOpenDonation={() => setLocation("/giving/donations")}
-        onOpenSupporter={() => setLocation("/giving/supporters")}
-        onOpenScholarship={() => setScholarshipModalOpen(true)}
-        onOpenFund={() => setLocation("/giving/funds")}
-      />
+      <div className="relative z-10">
+        <GivingActionsAndTools
+          onOpenDonation={() => setLocation("/giving/donations")}
+          onOpenSupporter={() => setLocation("/giving/supporters")}
+          onOpenScholarship={() => setScholarshipModalOpen(true)}
+          onOpenFund={() => setLocation("/giving/funds")}
+        />
+      </div>
 
       {/* ─── Modals ─── */}
       <Manage501c3Modal

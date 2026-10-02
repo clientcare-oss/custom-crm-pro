@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { 
   HandHeart, Users, DollarSign, GraduationCap, 
   Landmark, Receipt, BarChart3, Globe, Settings, 
-  Plus, Compass
+  Plus 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,45 +34,16 @@ export function GivingDeskHeader({
   ];
 
   return (
-    <div className="w-full space-y-4 select-none">
-      {/* ─── Upper Ambient Desk Shelf & Central Executive Plaque ─── */}
-      <div className="relative w-full rounded-2xl overflow-hidden border border-[#523B1E]/60 bg-gradient-to-r from-[#170C05] via-[#231409] to-[#120904] p-3 sm:p-5 shadow-[0_6px_24px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-        
-        {/* Subtle Ambient Shelf Texture Overlay */}
-        <div 
-          className="absolute inset-0 bg-cover bg-top opacity-35 mix-blend-luminosity pointer-events-none"
-          style={{ backgroundImage: "url('/decor/giving-shelf-banner.jpg')" }}
-        />
-
-        {/* Ambient Warm Lantern Glow on the Left */}
-        <div className="absolute left-0 top-0 bottom-0 w-48 bg-gradient-to-r from-amber-500/20 via-amber-400/5 to-transparent pointer-events-none" />
-
-        {/* Decorative Shelf Vignette / Background Accents */}
+    <div className="w-full space-y-4 select-none relative z-10 pt-2 sm:pt-4">
+      {/* ─── Upper Ambient Desk Shelf Bar & Central Executive Plaque ─── */}
+      <div className="relative w-full rounded-2xl border border-[#523B1E]/60 bg-gradient-to-r from-[#170C05]/90 via-[#231409]/95 to-[#120904]/90 p-3 sm:p-5 shadow-[0_6px_24px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.1)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           
-          {/* Left: Vintage Books & Lantern Ambient Cluster */}
-          <div className="flex items-center gap-3.5">
-            {/* Antique Lantern Visual Cue */}
-            <div className="relative w-12 h-14 rounded-lg bg-gradient-to-b from-[#2A1C0E] to-[#140C06] border border-[#8C6511]/70 flex flex-col items-center justify-center shadow-lg shrink-0">
-              <div className="w-4 h-4 rounded-full bg-amber-300 shadow-[0_0_16px_#F59E0B,0_0_24px_#D97706] animate-pulse" />
-              <div className="absolute inset-x-2 bottom-1.5 h-[1.5px] bg-[#D4AF37]/50" />
-            </div>
-
-            {/* Stacked Leather Book Spines */}
-            <div className="hidden lg:flex flex-col gap-0.5 text-[9px] font-serif font-bold tracking-wider text-amber-200/80">
-              <div className="px-2 py-0.5 rounded-sm bg-[#162740] border-l-2 border-amber-400/60 shadow-xs">FAMILIES</div>
-              <div className="px-2 py-0.5 rounded-sm bg-[#301614] border-l-2 border-amber-400/60 shadow-xs">ADVOCACY</div>
-              <div className="px-2 py-0.5 rounded-sm bg-[#1C2C1D] border-l-2 border-amber-400/60 shadow-xs">BRIGHTER FUTURES</div>
-            </div>
-
-            {/* Antique Maritime Compass Accent */}
-            <div className="hidden xl:flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#2D1E0F] to-[#120B04] border border-[#C5A059]/60 shadow-md text-[#D4AF37]">
-              <Compass className="w-5 h-5 animate-[spin_60s_linear_infinite]" />
-            </div>
-          </div>
+          {/* Left spacing area (Reserved for the shelf lantern & books overlay) */}
+          <div className="w-24 sm:w-48 lg:w-64 shrink-0 hidden md:block pointer-events-none" />
 
           {/* Center: Majestic GIVING & IMPACT Navy Leather Plaque with Double Gold Wire */}
-          <div className="flex-1 max-w-xl mx-auto text-center px-4 py-3 rounded-xl bg-gradient-to-b from-[#091D3C] via-[#05142B] to-[#020A17] border-2 border-[#C5A059] shadow-[0_4px_16px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.25)] relative">
+          <div className="flex-1 max-w-lg lg:max-w-xl mx-auto text-center px-4 py-3 rounded-xl bg-gradient-to-b from-[#091D3C] via-[#05142B] to-[#020A17] border-2 border-[#C5A059] shadow-[0_4px_16px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.25)] relative">
             {/* 4 Corner Brass Rivets */}
             <div className="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-[#FFE394] ring-1 ring-black/70 shadow-xs" />
             <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#FFE394] ring-1 ring-black/70 shadow-xs" />
@@ -102,21 +73,13 @@ export function GivingDeskHeader({
             </p>
           </div>
 
-          {/* Right: Wood Stamp / Slogan & Primary Action Buttons */}
-          <div className="flex items-center gap-2.5 shrink-0 self-center md:self-auto">
-            {/* Wooden Slogan Block */}
-            <div className="hidden 2xl:flex flex-col items-center justify-center px-3 py-1.5 rounded-md bg-[#2B190E] border border-[#8C6511]/50 text-[10px] font-serif uppercase tracking-widest text-[#EBD6B0] shadow-inner text-center">
-              <span>REAL PEOPLE</span>
-              <span className="text-[#C9A04B] font-bold">BRIGHTER TOMORROWS</span>
-              <span>♡</span>
-            </div>
-
-            {/* Action Buttons */}
+          {/* Right: Action Buttons & Spacing */}
+          <div className="flex items-center gap-2.5 shrink-0 self-center md:self-auto justify-end w-auto sm:w-auto lg:w-64">
             <Button
               type="button"
               variant="outline"
               onClick={onOpen501c3}
-              className="border-[#C5A059]/70 bg-[#160D06]/80 text-[#F5E6CA] hover:bg-[#2A180C] hover:text-white text-xs font-semibold h-8 px-2.5 gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
+              className="border-[#C5A059]/70 bg-[#160D06]/85 text-[#F5E6CA] hover:bg-[#2A180C] hover:text-white text-xs font-semibold h-8 px-2.5 gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
             >
               <Settings className="h-3.5 w-3.5 text-[#FAD77B]" />
               <span className="hidden sm:inline">Manage 501(c)(3)</span>
