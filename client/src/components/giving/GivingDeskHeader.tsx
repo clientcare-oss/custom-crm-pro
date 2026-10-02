@@ -105,8 +105,8 @@ export function GivingDeskHeader({
         </div>
       </div>
 
-      {/* ─── Consolidated 8-Destination Physical Navigation Control Plates (Tight Instrument Cluster) ─── */}
-      <div className="w-full max-w-[880px] mx-auto grid grid-cols-4 md:grid-cols-8 gap-[2px] sm:gap-[3px] p-[2.5px] rounded-[8px] bg-[#000814]/95 border border-[#3A2C18]/70 shadow-[0_4px_16px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(0,0,0,0.9)]">
+      {/* ─── Consolidated 8-Destination Physical Navigation Control Plates (Behind header leaves at z-10) ─── */}
+      <div className="w-full max-w-[880px] mx-auto grid grid-cols-4 md:grid-cols-8 gap-[2px] sm:gap-[3px] p-[2.5px] rounded-[8px] bg-[#000814]/95 border border-[#3A2C18]/70 shadow-[0_4px_16px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(0,0,0,0.9)] relative z-10">
         {navigationTabs.map((tab) => {
           const isActive = location === tab.path || (tab.path === "/giving" && location === "/giving/overview");
 
