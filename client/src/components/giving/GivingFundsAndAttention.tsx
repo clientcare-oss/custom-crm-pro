@@ -82,7 +82,7 @@ export function GivingFundsAndAttention({ onOpenFundsModal }: GivingFundsAndAtte
             return (
               <div
                 key={idx}
-                className="p-3.5 rounded-xl bg-[#EFE4CC]/75 border border-[#D5C1A0] flex flex-col items-center text-center shadow-2xs hover:bg-[#EAE0C4] transition-colors"
+                className="p-3.5 rounded-xl bg-[#E2CEAA]/75 border border-[#BFA064]/60 flex flex-col items-center text-center shadow-2xs hover:bg-[#D5BD92] transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-[#18395E] text-[#FCD77B] flex items-center justify-center mb-2 shadow-xs">
                   <Icon className="w-4 h-4" />

@@ -60,7 +60,7 @@ export function GivingActionsAndTools({
                 key={idx}
                 type="button"
                 onClick={action.onClick}
-                className="p-3 rounded-xl bg-[#EFE4CC]/80 border border-[#D5C1A0] hover:bg-[#EAE0C4] hover:border-[#C5A059] flex flex-col items-center justify-center text-center gap-1.5 transition-all shadow-2xs cursor-pointer select-none group"
+                className="p-3 rounded-xl bg-[#E2CEAA]/75 border border-[#BFA064]/60 hover:bg-[#D5BD92] hover:border-[#A38140] flex flex-col items-center justify-center text-center gap-1.5 transition-all shadow-2xs cursor-pointer select-none group"
               >
                 <div className="w-8 h-8 rounded-full bg-[#18395E] text-[#FCD77B] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
                   <Icon className="w-4 h-4" />
@@ -91,7 +91,7 @@ export function GivingActionsAndTools({
             const Icon = tool.icon;
             return (
               <Link key={idx} href={tool.path}>
-                <div className="p-3 rounded-xl bg-[#EFE4CC]/80 border border-[#D5C1A0] hover:bg-[#EAE0C4] hover:border-[#C5A059] flex flex-col items-center justify-center text-center gap-1.5 transition-all shadow-2xs cursor-pointer select-none group h-full">
+                <div className="p-3 rounded-xl bg-[#E2CEAA]/75 border border-[#BFA064]/60 hover:bg-[#D5BD92] hover:border-[#A38140] flex flex-col items-center justify-center text-center gap-1.5 transition-all shadow-2xs cursor-pointer select-none group h-full">
                   <div className="w-8 h-8 rounded-full bg-[#18395E] text-[#FCD77B] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
                     <Icon className="w-4 h-4" />
                   </div>

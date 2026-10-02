@@ -21,12 +21,12 @@ export function GivingParchmentCard({
     <div
       className={cn(
         "relative rounded-[14px] p-4 text-[#1B2838] transition-all select-none",
-        // Warm aged parchment gradient
-        "bg-gradient-to-b from-[#FAF4E8] via-[#F3E9D5] to-[#EDE0C4]",
-        // Antique brass / burnished gold border
-        "border border-[#C5A059]/75",
-        // Physical layered shadow and fine paper bevel
-        "shadow-[0_4px_16px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.75),inset_0_-1px_2px_rgba(95,65,25,0.15)]",
+        // Warm authentic light parchment paper gradient (toned down from stark white)
+        "bg-gradient-to-b from-[#F2E5CE] via-[#E8D7BA] to-[#DCBE94]",
+        // Antique brass / warm paper edge border
+        "border border-[#BFA064]/85",
+        // Warm physical layered shadow and soft antique bevel (no harsh white shine)
+        "shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_1px_1.5px_rgba(255,248,225,0.4),inset_0_-1px_2px_rgba(70,50,15,0.18)]",
         className
       )}
       {...props}

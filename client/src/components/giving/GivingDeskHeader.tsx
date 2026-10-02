@@ -70,17 +70,17 @@ export function GivingDeskHeader({
       </div>
 
       {/* ─── Consolidated 8-Destination Navigation Ribbon (Midnight Navy & Satin Brass) ─── */}
-      <div className="w-full p-1.5 rounded-xl bg-gradient-to-b from-[#0B1E3B] via-[#061429] to-[#020914] border border-[#C5A059]/60 shadow-[0_6px_20px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.15)] flex items-center justify-between gap-1.5 overflow-x-auto scrollbar-thin">
+      <div className="w-full p-1 sm:p-1.5 rounded-xl bg-gradient-to-b from-[#0B1E3B] via-[#061429] to-[#020914] border border-[#C5A059]/60 shadow-[0_6px_20px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.15)] grid grid-cols-4 md:flex md:items-stretch md:justify-between gap-1 sm:gap-1.5">
         {navigationTabs.map((tab) => {
           const isActive = location === tab.path || (tab.path === "/giving" && location === "/giving/overview");
           const Icon = tab.icon;
 
           return (
-            <Link key={tab.path} href={tab.path} className="flex-1 min-w-[105px]">
+            <Link key={tab.path} href={tab.path} className="flex-1 min-w-0">
               <button
                 type="button"
                 className={cn(
-                  "w-full h-[52px] rounded-lg px-2.5 py-1.5 flex flex-col items-center justify-center gap-1 text-center transition-all cursor-pointer select-none",
+                  "w-full h-[44px] sm:h-[48px] rounded-lg px-1 sm:px-2 py-1 flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center transition-all cursor-pointer select-none",
                   isActive
                     ? "bg-gradient-to-b from-[#C59B3F] via-[#A67C26] to-[#7D5A12] text-[#FFFDF8] border border-[#FDE69E]/85 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),0_2px_8px_rgba(0,0,0,0.6)]"
                     : "bg-gradient-to-b from-[#0E2447]/80 to-[#051329]/90 hover:from-[#133261]/85 hover:to-[#081C3D]/95 text-[#E6DAC3] border border-[#1E3F6D]/80 hover:border-[#2C5996] shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.4)]"
@@ -88,12 +88,12 @@ export function GivingDeskHeader({
               >
                 <Icon
                   className={cn(
-                    "w-4 h-4 shrink-0 transition-colors",
+                    "w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-colors",
                     isActive ? "text-[#FFF6D6] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" : "text-[#E5B74E] group-hover:text-amber-200"
                   )}
                 />
                 <span className={cn(
-                  "text-[11px] leading-tight font-medium truncate max-w-full",
+                  "text-[10px] sm:text-[11px] leading-tight font-medium truncate max-w-full px-0.5",
                   isActive ? "font-bold text-white tracking-wide" : "text-[#D2C5AB]"
                 )}>
                   {tab.label}
