@@ -508,11 +508,11 @@ export default function StudentWorkspace() {
               "shadow-[0_16px_40px_rgba(0,0,0,0.85),0_4px_12px_rgba(0,0,0,0.65),inset_0_1.5px_0.5px_rgba(255,235,175,0.45),inset_1px_0_0_rgba(255,235,175,0.2),inset_0_-2.5px_2px_rgba(0,0,0,0.95)]"
             )}
           >
-            {/* ─── Saddle Band 1: Fixed Top Cap (120px locked at top: 0, tabs never disconnect) ─── */}
+            {/* ─── Saddle Band 1: Fixed Top Cap (120px locked at top: 0, zero gap) ─── */}
             <div 
               className="absolute top-0 left-0 right-0 h-[120px] pointer-events-none select-none z-0 rounded-t-2xl overflow-hidden"
               style={{
-                backgroundImage: "url('/decor/folio-band-top.png')",
+                backgroundImage: "url('/decor/folio-band-top.png?v=20261002-pure')",
                 backgroundSize: "100% 120px",
                 backgroundPosition: "top center",
                 backgroundRepeat: "no-repeat",
@@ -523,7 +523,7 @@ export default function StudentWorkspace() {
             <div 
               className="absolute left-0 right-0 top-[119px] bottom-[99px] pointer-events-none select-none z-0"
               style={{
-                backgroundImage: "url('/decor/folio-band-middle.png')",
+                backgroundImage: "url('/decor/folio-band-middle.png?v=20261002-pure')",
                 backgroundSize: "100% 100%",
                 backgroundPosition: "center center",
                 backgroundRepeat: "no-repeat",
@@ -534,7 +534,7 @@ export default function StudentWorkspace() {
             <div 
               className="absolute bottom-0 left-0 right-0 h-[100px] pointer-events-none select-none z-0 rounded-b-2xl overflow-hidden"
               style={{
-                backgroundImage: "url('/decor/folio-band-bottom.png')",
+                backgroundImage: "url('/decor/folio-band-bottom.png?v=20261002-pure')",
                 backgroundSize: "100% 100px",
                 backgroundPosition: "bottom center",
                 backgroundRepeat: "no-repeat",
