@@ -735,12 +735,21 @@ export default function StudentWorkspace() {
             {/* ─── NOTES TAB: Clean 12-Column Canvas on Ornate Navy Leather Frame ─── */}
             {activeTab === "notes" && (
               <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
-                {/* Left Panel (Col 5) */}
+                {/* ─── LEFT PANEL: Exact Overview Grid Boundaries (~38% width) ────── */}
                 <div className="lg:col-span-5 relative py-1 sm:py-2">
+                  <div 
+                    className="w-full max-w-[275px] mx-auto flex flex-col justify-between relative transition-all text-left min-h-[480px]"
+                    style={{
+                      transform: "translate(-34px, -10px)",
+                    }}
+                  >
+                    {/* Left Panel Content Boundary */}
+                  </div>
                 </div>
 
-                {/* Right Panel (Col 7) */}
-                <div className="lg:col-span-7 flex flex-col justify-between sm:pl-4 md:pl-6 py-1 sm:py-2">
+                {/* ─── RIGHT PANEL: Exact Overview Grid Boundaries (~62% width) ────── */}
+                <div className="lg:col-span-7 sm:px-6 py-2 flex flex-col justify-between min-h-[480px]">
+                  {/* Right Panel Content Boundary */}
                 </div>
               </div>
             )}
