@@ -210,11 +210,10 @@ export default function StudentWorkspace() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20"
         >
-          {/* Folio Index Tabs (Permanently locked in: Overview left anchor at X=36px, seated at Y=21px) */}
+          {/* Folio Index Tabs: seated at Y=21px, pushed right to clear top-left brass bracket */}
           <div 
-            className="flex items-end justify-start gap-[2px] relative z-30 overflow-x-auto no-scrollbar"
+            className="flex items-end justify-start gap-[2px] relative z-30 overflow-x-auto no-scrollbar pl-14 sm:pl-16 md:pl-[68px]"
             style={{
-              paddingLeft: "36px",
               marginBottom: "-21px",
             }}
           >
