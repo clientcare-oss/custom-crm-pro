@@ -19,6 +19,98 @@ import { StudentProfileDossier } from "@/components/students/StudentProfileDossi
 import { TactileStickyNotesBoard } from "@/components/students/TactileStickyNotesBoard";
 import { FolioCornerBrackets } from "@/components/students/FolioCornerBrackets";
 
+interface TactileCommandTileProps {
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  badgeText: string;
+  badgeTone?: "amber" | "sky" | "purple" | "emerald" | "rose" | "blue" | "red" | "cyan" | "teal";
+  title: string;
+  description: string;
+  isExternal?: boolean;
+}
+
+function TactileCommandTile({
+  onClick,
+  icon: Icon,
+  badgeText,
+  badgeTone = "amber",
+  title,
+  description,
+  isExternal = false,
+}: TactileCommandTileProps) {
+  const toneClasses = {
+    amber: "bg-gradient-to-b from-amber-500/25 to-amber-950/40 text-amber-200 border-amber-400/60 shadow-[inset_0_1px_1px_rgba(255,235,175,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    sky: "bg-gradient-to-b from-sky-500/25 to-sky-950/40 text-sky-200 border-sky-400/60 shadow-[inset_0_1px_1px_rgba(186,230,253,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    purple: "bg-gradient-to-b from-purple-500/25 to-purple-950/40 text-purple-200 border-purple-400/60 shadow-[inset_0_1px_1px_rgba(233,213,255,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    emerald: "bg-gradient-to-b from-emerald-500/25 to-emerald-950/40 text-emerald-200 border-emerald-400/60 shadow-[inset_0_1px_1px_rgba(167,243,208,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    rose: "bg-gradient-to-b from-rose-500/25 to-rose-950/40 text-rose-200 border-rose-400/60 shadow-[inset_0_1px_1px_rgba(254,205,211,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    blue: "bg-gradient-to-b from-blue-500/25 to-blue-950/40 text-blue-200 border-blue-400/60 shadow-[inset_0_1px_1px_rgba(191,219,254,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    red: "bg-gradient-to-b from-red-500/25 to-red-950/40 text-red-200 border-red-400/60 shadow-[inset_0_1px_1px_rgba(254,202,202,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    cyan: "bg-gradient-to-b from-cyan-500/25 to-cyan-950/40 text-cyan-200 border-cyan-400/60 shadow-[inset_0_1px_1px_rgba(165,243,252,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+    teal: "bg-gradient-to-b from-teal-500/25 to-teal-950/40 text-teal-200 border-teal-400/60 shadow-[inset_0_1px_1px_rgba(153,246,228,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]",
+  }[badgeTone] || "bg-gradient-to-b from-amber-500/25 to-amber-950/40 text-amber-200 border-amber-400/60 shadow-[inset_0_1px_1px_rgba(255,235,175,0.35),inset_0_-1px_1px_rgba(0,0,0,0.7),0_1px_3px_rgba(0,0,0,0.6)]";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group relative flex flex-col justify-between p-4 rounded-xl text-left select-none cursor-pointer",
+        "bg-[radial-gradient(ellipse_at_25%_15%,rgba(212,175,55,0.12)_0%,transparent_65%),linear-gradient(180deg,#0e2c56_0%,#071a36_55%,#020b17_100%)]",
+        "border border-[#c59e45]/55 hover:border-[#ffd54f]",
+        "shadow-[0_6px_20px_-2px_rgba(0,0,0,0.8),0_2px_4px_rgba(0,0,0,0.6),inset_0_1.5px_0.5px_rgba(255,240,190,0.4),inset_1px_0_0.5px_rgba(255,240,190,0.2),inset_0_-2px_1.5px_rgba(0,0,0,0.95),inset_-1px_0_1px_rgba(0,0,0,0.7)]",
+        "hover:shadow-[0_12px_28px_-3px_rgba(0,0,0,0.85),0_0_22px_rgba(212,175,55,0.28),inset_0_1.5px_0.5px_rgba(255,255,255,0.65),inset_0_-2px_1.5px_rgba(0,0,0,0.95)]",
+        "hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[0_2px_4px_rgba(0,0,0,0.95),inset_0_2.5px_5px_rgba(0,0,0,0.85),inset_0_-1px_0.5px_rgba(255,235,175,0.2)]",
+        "transition-all duration-150 overflow-hidden"
+      )}
+    >
+      {/* Authentic Machined Brass Counterbored Fastener Rivet with Slotted Head */}
+      <div 
+        className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full bg-black/60 ring-1 ring-black/85 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.95)] opacity-80 group-hover:opacity-100 transition-opacity" 
+        title="Structural brass fastener"
+      >
+        <div className="w-2 h-2 rounded-full bg-[radial-gradient(circle_at_30%_25%,#fff7d6_0%,#e5b94c_35%,#966c14_70%,#3d2800_100%)] shadow-[0_1px_2px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)] flex items-center justify-center">
+          <div className="w-1.5 h-[0.6px] bg-[#2a1a00] rotate-45" />
+        </div>
+      </div>
+
+      {/* Top Row: Die-Struck Brass Medallion + Foil Badge */}
+      <div className="flex items-start justify-between gap-2 mb-3 pr-2">
+        <div className="relative w-10 h-10 rounded-xl bg-gradient-to-b from-[#1b3a63] via-[#092040] to-[#020b17] border-2 border-[#c59e45]/75 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.45),inset_0_-1.5px_2px_rgba(0,0,0,0.9),0_4px_10px_rgba(0,0,0,0.7)] flex items-center justify-center shrink-0 group-hover:border-[#ffd54f] group-hover:shadow-[0_0_16px_rgba(212,175,55,0.55),inset_0_1.5px_1px_rgba(255,255,255,0.65)] transition-all ring-1 ring-black/60 ring-offset-1 ring-offset-[#071933]">
+          <Icon className="w-5 h-5 text-amber-300 drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.95)]" />
+        </div>
+
+        <span className={cn(
+          "inline-flex items-center text-[9.5px] font-bold px-2 py-0.5 rounded-[4px] uppercase tracking-wider border backdrop-blur-xs",
+          toneClasses
+        )}>
+          {badgeText}
+        </span>
+      </div>
+
+      {/* Bottom Content: Title + Subtext + Arrow */}
+      <div>
+        <div className="flex items-center justify-between">
+          <span 
+            className="font-bold text-white text-[13.5px] sm:text-sm tracking-tight group-hover:text-[#F2CD80] transition-colors line-clamp-1 drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.95)]"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            {title}
+          </span>
+          {isExternal ? (
+            <ArrowUpRight className="w-3.5 h-3.5 text-amber-300/70 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-1.5" />
+          ) : (
+            <ArrowRight className="w-3.5 h-3.5 text-amber-300/70 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
+          )}
+        </div>
+        <p className="text-[11px] text-white/70 group-hover:text-white/95 transition-colors line-clamp-2 mt-1 leading-snug drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+          {description}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
   const studentId = parseInt(params.id ?? "0", 10);
@@ -475,364 +567,184 @@ export default function StudentWorkspace() {
 
                   {/* ─── 4-Column Tactile Button Grid ────────────────────────────── */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4">
-                    
                     {/* 1. Prepare for Meeting */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/meeting-workspace/${studentId}`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-amber-400/15 border border-amber-400/35 flex items-center justify-center text-amber-300 group-hover:scale-105 group-hover:border-amber-300 transition-all shrink-0">
-                          <Calendar className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Live Meeting
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Prepare for Meeting
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Live IEP meeting workspace, agenda review, and real-time guidance.
-                        </p>
-                      </div>
-                    </button>
+                      icon={Calendar}
+                      badgeText="Live Meeting"
+                      badgeTone="amber"
+                      title="Prepare for Meeting"
+                      description="Live IEP meeting workspace, agenda review, and real-time guidance."
+                    />
 
                     {/* 2. Post-Meeting Review */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/post-meeting-review/${studentId}`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-sky-400/15 border border-sky-400/35 flex items-center justify-center text-sky-300 group-hover:scale-105 group-hover:border-sky-300 transition-all shrink-0">
-                          <CheckSquare className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-sky-400/15 text-sky-300 border border-sky-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Debrief
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Post-Meeting Review
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Post-meeting debrief, action item assignments, and PWN follow-ups.
-                        </p>
-                      </div>
-                    </button>
+                      icon={CheckSquare}
+                      badgeText="Debrief"
+                      badgeTone="sky"
+                      title="Post-Meeting Review"
+                      description="Post-meeting debrief, action item assignments, and PWN follow-ups."
+                    />
 
                     {/* 3. Voyage Audio Recorder */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/tools/voyage-recorder`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-purple-400/15 border border-purple-400/35 flex items-center justify-center text-purple-300 group-hover:scale-105 group-hover:border-purple-300 transition-all shrink-0">
-                          <Mic className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-purple-400/15 text-purple-300 border border-purple-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Audio AI
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Voyage Audio Recorder
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Live audio speech-to-text recording, transcript logs, and AI assist.
-                        </p>
-                      </div>
-                    </button>
+                      icon={Mic}
+                      badgeText="Audio AI"
+                      badgeTone="purple"
+                      title="Voyage Audio Recorder"
+                      description="Live audio speech-to-text recording, transcript logs, and AI assist."
+                    />
 
                     {/* 4. Case Compass Console */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/case-compass`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-400/15 border border-emerald-400/35 flex items-center justify-center text-emerald-300 group-hover:scale-105 group-hover:border-emerald-300 transition-all shrink-0">
-                          <Compass className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Strategy
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Case Compass Console
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Strategic advocacy radar, dispute likelihood, and operational state.
-                        </p>
-                      </div>
-                    </button>
+                      icon={Compass}
+                      badgeText="Strategy"
+                      badgeTone="emerald"
+                      title="Case Compass Console"
+                      description="Strategic advocacy radar, dispute likelihood, and operational state."
+                    />
 
                     {/* 5. PWN Legal Decoder */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/tools/pwn-decoder`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-rose-400/15 border border-rose-400/35 flex items-center justify-center text-rose-300 group-hover:scale-105 group-hover:border-rose-300 transition-all shrink-0">
-                          <FileSearch className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-rose-400/15 text-rose-300 border border-rose-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Legal Analysis
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            PWN Legal Decoder
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Analyze Prior Written Notices for IDEA procedural compliance.
-                        </p>
-                      </div>
-                    </button>
+                      icon={FileSearch}
+                      badgeText="Legal Analysis"
+                      badgeTone="rose"
+                      title="PWN Legal Decoder"
+                      description="Analyze Prior Written Notices for IDEA procedural compliance."
+                    />
 
                     {/* 6. IEP Draft Comparator */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/tools/iep-comparator`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-blue-400/15 border border-blue-400/35 flex items-center justify-center text-blue-300 group-hover:scale-105 group-hover:border-blue-300 transition-all shrink-0">
-                          <GitCompare className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-blue-400/15 text-blue-300 border border-blue-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Comparator
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            IEP Draft Comparator
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Side-by-side diff comparison between past and present IEP drafts.
-                        </p>
-                      </div>
-                    </button>
+                      icon={GitCompare}
+                      badgeText="Comparator"
+                      badgeTone="blue"
+                      title="IEP Draft Comparator"
+                      description="Side-by-side diff comparison between past and present IEP drafts."
+                    />
 
                     {/* 7. State Complaint Builder */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/state-complaint-builder`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-red-400/15 border border-red-400/35 flex items-center justify-center text-red-300 group-hover:scale-105 group-hover:border-red-300 transition-all shrink-0">
-                          <Gavel className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-red-400/15 text-red-300 border border-red-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Due Process
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            State Complaint Builder
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Draft formal state complaints against school district for violations.
-                        </p>
-                      </div>
-                    </button>
+                      icon={Gavel}
+                      badgeText="Due Process"
+                      badgeTone="red"
+                      title="State Complaint Builder"
+                      description="Draft formal state complaints against school district for violations."
+                    />
 
                     {/* 8. Worksheet Studio */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/tools/worksheet-builder`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-cyan-400/15 border border-cyan-400/35 flex items-center justify-center text-cyan-300 group-hover:scale-105 group-hover:border-cyan-300 transition-all shrink-0">
-                          <BookOpen className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-cyan-400/15 text-cyan-300 border border-cyan-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Templates
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Worksheet Studio
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Build custom advocacy worksheets, IEP checklists, and intake templates.
-                        </p>
-                      </div>
-                    </button>
+                      icon={BookOpen}
+                      badgeText="Templates"
+                      badgeTone="cyan"
+                      title="Worksheet Studio"
+                      description="Build custom advocacy worksheets, IEP checklists, and intake templates."
+                    />
 
                     {/* 9. Smart Files Suite */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/smart-files`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-amber-400/15 border border-amber-400/35 flex items-center justify-center text-amber-300 group-hover:scale-105 group-hover:border-amber-300 transition-all shrink-0">
-                          <FileSignature className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Agreements
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Smart Files & Contracts
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Client proposals, advocacy agreements, and electronic signatures.
-                        </p>
-                      </div>
-                    </button>
+                      icon={FileSignature}
+                      badgeText="Agreements"
+                      badgeTone="amber"
+                      title="Smart Files & Contracts"
+                      description="Client proposals, advocacy agreements, and electronic signatures."
+                    />
 
                     {/* 10. Financials & Billing Guardian */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/invoices`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-400/15 border border-emerald-400/35 flex items-center justify-center text-emerald-300 group-hover:scale-105 group-hover:border-emerald-300 transition-all shrink-0">
-                          <DollarSign className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Billing
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Invoices & Billing Guardian
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Client ledger, invoices, hourly rate tracking, and payment receipts.
-                        </p>
-                      </div>
-                    </button>
+                      icon={DollarSign}
+                      badgeText="Billing"
+                      badgeTone="emerald"
+                      title="Invoices & Billing Guardian"
+                      description="Client ledger, invoices, hourly rate tracking, and payment receipts."
+                    />
 
                     {/* 11. Quo Telephony & Call Logs */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => setLocation(`/call-center`)}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-sky-400/15 border border-sky-400/35 flex items-center justify-center text-sky-300 group-hover:scale-105 group-hover:border-sky-300 transition-all shrink-0">
-                          <PhoneCall className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-sky-400/15 text-sky-300 border border-sky-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Telephony
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Quo Telephony & Call Logs
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Inbound & outbound call recordings, call durations, and notes.
-                        </p>
-                      </div>
-                    </button>
+                      icon={PhoneCall}
+                      badgeText="Telephony"
+                      badgeTone="sky"
+                      title="Quo Telephony & Call Logs"
+                      description="Inbound & outbound call recordings, call durations, and notes."
+                    />
 
                     {/* 12. Preview Parent Portal */}
-                    <button
-                      type="button"
+                    <TactileCommandTile
                       onClick={() => {
                         const targetUrl = student?.caseId ? `/portal?caseId=${student.caseId}` : `/portal`;
                         window.open(targetUrl, "_blank");
                       }}
-                      className="group relative flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-[#0c2447]/90 via-[#071933]/95 to-[#020b18] border border-sky-400/25 hover:border-[#D4AF37]/90 hover:from-[#11315e]/90 hover:to-[#041228] transition-all duration-200 text-left shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_15px_rgba(212,175,55,0.15)] hover:-translate-y-0.5 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-teal-400/15 border border-teal-400/35 flex items-center justify-center text-teal-300 group-hover:scale-105 group-hover:border-teal-300 transition-all shrink-0">
-                          <Eye className="w-4.5 h-4.5" />
-                        </div>
-                        <Badge className="bg-teal-400/15 text-teal-300 border border-teal-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Parent Portal
-                        </Badge>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-white text-sm group-hover:text-[#F2CD80] transition-colors line-clamp-1">
-                            Preview Parent Portal
-                          </span>
-                          <ArrowUpRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#F2CD80] group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                        </div>
-                        <p className="text-[11px] text-white/60 group-hover:text-white/80 transition-colors line-clamp-2 mt-1 leading-snug">
-                          Launch parent-facing client experience in a new tab with live case data.
-                        </p>
-                      </div>
-                    </button>
-
+                      icon={Eye}
+                      badgeText="Parent Portal"
+                      badgeTone="teal"
+                      title="Preview Parent Portal"
+                      description="Launch parent-facing client experience in a new tab with live case data."
+                      isExternal
+                    />
                   </div>
 
-                  {/* ─── Bottom Feature Banner: Full 11-Tab Monolithic Legacy Workspace ── */}
-                  <div className="mt-6 pt-5 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-[#031d42]/60 via-[#06295c]/60 to-[#021532]/60 border border-[#D4AF37]/30 rounded-xl p-4 sm:p-5 shadow-lg">
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-[#F2CD80] shadow-md shrink-0">
-                        <Layers className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm sm:text-base font-bold text-white">
-                            Complete 11-Tab Legacy Workspace (PG-030-ARC)
-                          </h4>
-                          <Badge className="bg-purple-500/20 text-purple-300 border border-purple-400/30 text-[10px] font-bold">
-                            All 11 Modules
-                          </Badge>
+                  {/* ─── Bottom Feature Banner: Full 11-Tab Monolithic Legacy Workspace Plaque ── */}
+                  <div className="mt-6 pt-5 border-t border-white/15">
+                    <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-[#031d42] via-[#072a5e] to-[#021532] border-2 border-[#D4AF37] ring-1 ring-[#ffd54f]/35 shadow-[0_10px_28px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.45),inset_0_-2px_2px_rgba(0,0,0,0.9)] rounded-xl p-4 sm:p-5 overflow-hidden">
+                      
+                      {/* 4 Corner Machined Brass Structural Fasteners with Slotted Drive */}
+                      <div className="absolute top-2.5 left-2.5 w-3 h-3 rounded-full bg-black/60 ring-1 ring-black/85 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.95)] opacity-85" title="Machined fastener">
+                        <div className="w-2 h-2 rounded-full bg-[radial-gradient(circle_at_30%_25%,#fff7d6_0%,#e5b94c_35%,#966c14_70%,#3d2800_100%)] shadow-[0_1px_2px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)] flex items-center justify-center">
+                          <div className="w-1.5 h-[0.6px] bg-[#2a1a00] rotate-45" />
                         </div>
-                        <p className="text-xs text-white/65 mt-0.5">
-                          Access Service Allowances, IEP Document Blocks, Case Participants, Legal Representation, and Telephony.
-                        </p>
                       </div>
-                    </div>
+                      <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full bg-black/60 ring-1 ring-black/85 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.95)] opacity-85" title="Machined fastener">
+                        <div className="w-2 h-2 rounded-full bg-[radial-gradient(circle_at_30%_25%,#fff7d6_0%,#e5b94c_35%,#966c14_70%,#3d2800_100%)] shadow-[0_1px_2px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)] flex items-center justify-center">
+                          <div className="w-1.5 h-[0.6px] bg-[#2a1a00] -rotate-45" />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-2.5 left-2.5 w-3 h-3 rounded-full bg-black/60 ring-1 ring-black/85 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.95)] opacity-85" title="Machined fastener">
+                        <div className="w-2 h-2 rounded-full bg-[radial-gradient(circle_at_30%_25%,#fff7d6_0%,#e5b94c_35%,#966c14_70%,#3d2800_100%)] shadow-[0_1px_2px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)] flex items-center justify-center">
+                          <div className="w-1.5 h-[0.6px] bg-[#2a1a00] -rotate-45" />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-2.5 right-2.5 w-3 h-3 rounded-full bg-black/60 ring-1 ring-black/85 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.95)] opacity-85" title="Machined fastener">
+                        <div className="w-2 h-2 rounded-full bg-[radial-gradient(circle_at_30%_25%,#fff7d6_0%,#e5b94c_35%,#966c14_70%,#3d2800_100%)] shadow-[0_1px_2px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)] flex items-center justify-center">
+                          <div className="w-1.5 h-[0.6px] bg-[#2a1a00] rotate-45" />
+                        </div>
+                      </div>
 
-                    <Button
-                      onClick={() => setLocation(`/archived/students/${studentId}`)}
-                      className="bg-gradient-to-r from-amber-500 to-[#D4AF37] hover:from-amber-400 hover:to-[#e2bf4b] text-slate-950 font-bold text-xs rounded-xl h-10 px-5 gap-2 shadow-md cursor-pointer shrink-0 w-full sm:w-auto"
-                    >
-                      <span>Open Legacy Workspace</span>
-                      <ArrowUpRight className="h-4 w-4" />
-                    </Button>
+                      <div className="flex items-center gap-3.5 pl-3 sm:pl-4">
+                        <div className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#21436e] via-[#0e274a] to-[#041226] border-2 border-[#D4AF37] ring-1 ring-black/60 flex items-center justify-center text-[#F2CD80] shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.45),0_3px_8px_rgba(0,0,0,0.7)] shrink-0">
+                          <Layers className="h-6 w-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm sm:text-base font-bold text-white drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.95)]">
+                              Complete 11-Tab Legacy Workspace (PG-030-ARC)
+                            </h4>
+                            <span className="bg-purple-500/20 text-purple-200 border border-purple-400/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+                              All 11 Modules
+                            </span>
+                          </div>
+                          <p className="text-xs text-white/75 mt-0.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                            Access Service Allowances, IEP Document Blocks, Case Participants, Legal Representation, and Telephony.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={() => setLocation(`/archived/students/${studentId}`)}
+                        className="bg-gradient-to-b from-[#ffe58f] via-[#d4af37] to-[#8c6508] hover:from-[#fff0ad] hover:to-[#a37910] text-slate-950 font-black text-xs rounded-xl h-10 px-5 gap-2 shadow-[0_4px_14px_rgba(0,0,0,0.7),inset_0_1.5px_1px_rgba(255,255,255,0.85),inset_0_-1.5px_2px_rgba(0,0,0,0.6)] border border-[#fff2b2] cursor-pointer shrink-0 w-full sm:w-auto active:translate-y-0.5 active:shadow-[0_1px_3px_rgba(0,0,0,0.95),inset_0_2px_4px_rgba(0,0,0,0.7)] transition-all"
+                      >
+                        <span>Open Legacy Workspace</span>
+                        <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
+                      </Button>
+                    </div>
                   </div>
 
                 </div>
