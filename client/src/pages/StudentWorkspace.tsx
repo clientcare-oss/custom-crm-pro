@@ -761,31 +761,6 @@ export default function StudentWorkspace() {
             {activeTab === "more" && (
               <div className="w-full min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8 flex flex-col justify-between">
                 <div>
-                  {/* Top Hub Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-white/15 gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-md shrink-0">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 
-                          className="text-xl sm:text-2xl font-bold text-white tracking-wide drop-shadow-sm flex items-center gap-2"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          <span>Advocate Command Hub & Extended Tools</span>
-                        </h3>
-                        <p className="text-xs sm:text-sm text-white/65 mt-0.5">
-                          Direct 1-click access to all specialized IEP tools, meeting consoles, and case management modules.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                      <Badge className="bg-[#0e274a]/90 text-amber-300 border border-amber-400/35 text-[11px] font-medium px-3 py-1 rounded-lg shadow-sm">
-                        Case #{student?.caseId || studentId} · {fullName}
-                      </Badge>
-                    </div>
-                  </div>
 
                   {/* ─── 4-Column Tactile Button Grid ────────────────────────────── */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4">
