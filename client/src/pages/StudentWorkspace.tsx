@@ -304,11 +304,11 @@ export default function StudentWorkspace() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20"
         >
-          {/* Folio Index Tabs: seated at Y=21px, pushed right to clear top-left brass bracket */}
+          {/* Folio Index Tabs: flush with desk pad top frame, pushed right to clear top-left brass bracket */}
           <div 
             className="flex items-end justify-start gap-[2px] relative z-30 overflow-x-auto no-scrollbar pl-14 sm:pl-16 md:pl-[68px]"
             style={{
-              marginBottom: "-21px",
+              marginBottom: "-2px",
             }}
           >
             {[
@@ -356,9 +356,9 @@ export default function StudentWorkspace() {
               "shadow-[0_16px_40px_rgba(0,0,0,0.85),0_4px_12px_rgba(0,0,0,0.65),inset_0_1.5px_0.5px_rgba(255,235,175,0.45),inset_1px_0_0_rgba(255,235,175,0.2),inset_0_-2.5px_2px_rgba(0,0,0,0.95)]"
             )}
             style={{
-              backgroundImage: "url('/decor/folio-leather-clean.png')",
+              backgroundImage: "url('/decor/folio-leather-pure.png')",
               backgroundSize: "cover",
-              backgroundPosition: "center center",
+              backgroundPosition: "center top",
               backgroundRepeat: "no-repeat",
             }}
           >
