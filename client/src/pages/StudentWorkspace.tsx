@@ -5,7 +5,7 @@ import {
   CheckSquare, FileText, Folder, Calendar, Phone, 
   ChevronRight, CheckCircle2, GraduationCap, School, 
   ArrowRight, ShieldCheck, Award, Activity, Globe, 
-  Pencil, Move, Check
+  Pencil, Move, Check, Undo2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -152,14 +152,19 @@ export default function StudentWorkspace() {
               <button
                 type="button"
                 onClick={() => setLocation("/students")}
-                className="text-xl sm:text-2xl font-bold tracking-tight text-white/80 hover:text-[#F2CD80] transition-colors cursor-pointer select-none bg-transparent p-0 border-0 shadow-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                className="flex flex-col items-center justify-center group cursor-pointer select-none bg-transparent p-0 border-0 transition-all text-center"
                 title="Back to Student Workspaces list"
               >
-                Back to List
+                <span 
+                  className="text-xs sm:text-[13px] font-normal tracking-wide text-white/70 group-hover:text-[#F2CD80] transition-colors leading-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  Back to list
+                </span>
+                <Undo2 className="w-3.5 h-3.5 text-amber-300/80 group-hover:text-[#F2CD80] group-hover:-translate-x-0.5 transition-all mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
               </button>
 
-              <span className="text-sky-300/40 text-lg sm:text-xl font-light select-none">|</span>
+              <span className="text-sky-300/40 text-lg sm:text-xl font-light select-none pb-0.5">|</span>
 
               <h1 
                 className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
