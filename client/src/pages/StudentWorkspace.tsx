@@ -348,35 +348,34 @@ export default function StudentWorkspace() {
             })}
           </div>
 
-          {/* ─── Rebuilt Executive Navy Leather Folio Desk Pad (Zero Image Distortion) ── */}
-          <div 
-            className={cn(
-              "relative w-full rounded-2xl overflow-visible min-h-[580px]",
-              "border-2 border-[#c59e45]/75",
-              "shadow-[0_16px_40px_rgba(0,0,0,0.85),0_4px_12px_rgba(0,0,0,0.65),inset_0_1.5px_0.5px_rgba(255,235,175,0.45),inset_1px_0_0_rgba(255,235,175,0.2),inset_0_-2.5px_2px_rgba(0,0,0,0.95)]"
-            )}
-            style={{
-              backgroundImage: "url('/decor/folio-leather-clean.png')",
-              backgroundSize: "cover",
-              backgroundPosition: "center top",
-              backgroundRepeat: "no-repeat",
-            }}
-          >
-            {/* Ambient Lighting & Saddle Dye Vignette Overlay */}
-            <div 
-              className="absolute inset-0 rounded-2xl pointer-events-none select-none z-0" 
+          {/* ─── The Real Textured Leather Folio Desk Pad (Multi-Layer Animated Container) ── */}
+          <div className="relative w-full bg-[#02132d] rounded-2xl overflow-visible shadow-none border-0 min-h-[580px]">
+            {/* Background Layer 1: Standard Executive Navy Leather Folio (Permanent Solid Base) */}
+            <div
+              className="absolute inset-0 pointer-events-none select-none z-0 rounded-2xl"
               style={{
-                background: "radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.05) 0%, transparent 65%), linear-gradient(180deg, rgba(3,19,45,0.15) 0%, rgba(2,11,24,0.55) 100%)",
+                backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
+                backgroundSize: "100% 100%",
+                backgroundPosition: "center center",
+                backgroundRepeat: "no-repeat",
               }}
             />
 
-            {/* Outer Precision Gold Foil Perimeter Inlay (16px from edge, passes under corner brackets) */}
-            <div className="absolute inset-3 sm:inset-4 md:inset-[16px] rounded-xl border border-[#D4AF37]/50 pointer-events-none select-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.6)] z-10" />
+            {/* Background Layer 2: Notes Tab Ornate Gold-Border Navy Leather Folio (Fades in directly on top of solid base) */}
+            <motion.div
+              initial={false}
+              animate={{ opacity: activeTab === "notes" ? 1 : 0 }}
+              transition={{ duration: 0.28, ease: "easeInOut" }}
+              className="absolute inset-0 pointer-events-none select-none z-0 rounded-2xl"
+              style={{
+                backgroundImage: "url('/decor/new-notes-tab.png?v=20261002-v1')",
+                backgroundSize: "100% 100%",
+                backgroundPosition: "center center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
 
-            {/* Inner Fine Hairline Gold Piping (22px from edge) */}
-            <div className="absolute inset-4 sm:inset-5 md:inset-[22px] rounded-lg border border-[#D4AF37]/20 pointer-events-none select-none z-10" />
-
-            {/* Rigid Photorealistic Brass Corner Brackets — Floating at z-30 Above All Layers */}
+            {/* Rigid Photorealistic Brass Corner Brackets — Floating at z-30 Above All Backgrounds */}
             <FolioCornerBrackets />
 
             {/* Tab Content Display with Smooth Page-Turn Dissolve */}
