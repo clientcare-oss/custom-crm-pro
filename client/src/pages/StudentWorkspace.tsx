@@ -356,10 +356,10 @@ export default function StudentWorkspace() {
               "shadow-[0_16px_40px_rgba(0,0,0,0.85),0_4px_12px_rgba(0,0,0,0.65),inset_0_1.5px_0.5px_rgba(255,235,175,0.45),inset_1px_0_0_rgba(255,235,175,0.2),inset_0_-2.5px_2px_rgba(0,0,0,0.95)]"
             )}
             style={{
-              backgroundImage: "url('/decor/folio-leather-clean.png')",
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
-              backgroundRepeat: "no-repeat",
+              backgroundColor: "#02132d",
+              backgroundImage: "url('/decor/folio-leather-texture.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "360px 360px",
             }}
           >
             {/* Ambient Lighting & Saddle Dye Vignette Overlay */}
@@ -410,6 +410,23 @@ export default function StudentWorkspace() {
                     clientTime={clientTime}
                     onEditDetails={() => setDetailsModalOpen(true)}
                   />
+
+                  {/* ─── Authentic Leather Folio Spine / Vertical Seam Divider ─── */}
+                  <div className="hidden lg:flex absolute right-8 lg:right-10 -top-3 -bottom-3 w-[6px] flex-col items-center justify-between pointer-events-none select-none z-20">
+                    {/* Top Brass Anchor Accent */}
+                    <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#ffe082] via-[#d4af37] to-[#6b4700] ring-1 ring-black/70 shadow-[0_1px_2px_rgba(0,0,0,0.9)] opacity-85" />
+
+                    {/* Vertical Debossed Seam Groove with Double Specular Line */}
+                    <div className="w-[2px] h-full flex justify-between my-1">
+                      {/* Dark Debossed Groove Shadow */}
+                      <div className="w-[1px] h-full bg-gradient-to-b from-transparent via-[#010814] to-transparent shadow-[-1px_0_0_rgba(255,255,255,0.06)]" />
+                      {/* Warm Gold / Burnished Brass Milled Seam */}
+                      <div className="w-[1px] h-full bg-gradient-to-b from-transparent via-[#D4AF37]/50 to-transparent shadow-[1px_0_1px_rgba(0,0,0,0.8)]" />
+                    </div>
+
+                    {/* Bottom Brass Anchor Accent */}
+                    <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#ffe082] via-[#d4af37] to-[#6b4700] ring-1 ring-black/70 shadow-[0_1px_2px_rgba(0,0,0,0.9)] opacity-85" />
+                  </div>
                 </div>
 
                 {/* ─── RIGHT PANEL: Current Focus & Action Center (~62% width) ── */}
