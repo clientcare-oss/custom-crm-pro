@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { StudentProfileDossier } from "@/components/students/StudentProfileDossier";
@@ -348,22 +348,50 @@ export default function StudentWorkspace() {
             })}
           </div>
 
-          {/* ─── The Real Textured Leather Folio Desk Pad (Transparent Outer Container) ── */}
-          <div
-            className="relative w-full bg-transparent overflow-visible shadow-none border-0"
-            style={{
-              backgroundImage: activeTab === "notes"
-                ? "url('/decor/new-notes-tab.png?v=20261002-v1')"
-                : "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
-              backgroundSize: "100% 100%",
-              backgroundPosition: "center center",
-              backgroundRepeat: "no-repeat",
-            }}
-          >
-            {/* Rigid Photorealistic Brass Corner Brackets — Never Stretches Across Tabs */}
+          {/* ─── The Real Textured Leather Folio Desk Pad (Multi-Layer Animated Container) ── */}
+          <div className="relative w-full bg-transparent overflow-visible shadow-none border-0 min-h-[580px]">
+            {/* Background Layer 1: Standard Executive Navy Leather Folio (Preloaded, Smooth Fade) */}
+            <motion.div
+              initial={false}
+              animate={{ opacity: activeTab === "notes" ? 0 : 1 }}
+              transition={{ duration: 0.32, ease: "easeInOut" }}
+              className="absolute inset-0 pointer-events-none select-none z-0"
+              style={{
+                backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
+                backgroundSize: "100% 100%",
+                backgroundPosition: "center center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
+
+            {/* Background Layer 2: Notes Tab Ornate Gold-Border Navy Leather Folio (Preloaded, Smooth Fade) */}
+            <motion.div
+              initial={false}
+              animate={{ opacity: activeTab === "notes" ? 1 : 0 }}
+              transition={{ duration: 0.32, ease: "easeInOut" }}
+              className="absolute inset-0 pointer-events-none select-none z-0"
+              style={{
+                backgroundImage: "url('/decor/new-notes-tab.png?v=20261002-v1')",
+                backgroundSize: "100% 100%",
+                backgroundPosition: "center center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
+
+            {/* Rigid Photorealistic Brass Corner Brackets — Floating at z-30 Above All Backgrounds */}
             <FolioCornerBrackets />
 
-            {/* Tab Content Display */}
+            {/* Tab Content Display with Smooth Page-Turn Dissolve */}
+            <div className="relative z-10 w-full min-h-[540px] xl:min-h-[580px]">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="w-full h-full"
+                >
             {activeTab === "overview" && (
               <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
                 
@@ -812,6 +840,9 @@ export default function StudentWorkspace() {
                 </div>
               </div>
             )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         </motion.div>
       </div>
