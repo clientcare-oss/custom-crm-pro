@@ -105,8 +105,8 @@ export function GivingDeskHeader({
         </div>
       </div>
 
-      {/* ─── Consolidated 8-Destination Physical Navigation Control Plates ─── */}
-      <div className="w-full grid grid-cols-4 md:grid-cols-8 gap-1.5 sm:gap-2">
+      {/* ─── Consolidated 8-Destination Physical Navigation Control Plates (Closely Clustered Console) ─── */}
+      <div className="w-full max-w-[1040px] mx-auto grid grid-cols-4 md:grid-cols-8 gap-1 sm:gap-1.5 px-0.5">
         {navigationTabs.map((tab) => {
           const isActive = location === tab.path || (tab.path === "/giving" && location === "/giving/overview");
 
