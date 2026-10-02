@@ -599,7 +599,8 @@ export default function StudentWorkspace() {
                 <TactileStickyNotesBoard
                   studentId={studentId}
                   studentName={fullName}
-                  projectId={projects[0]?.id}
+                  projectId={projects[0]?.id || effectiveProjectId}
+                  appointments={appointments as any}
                   onProjectCreated={() => {
                     utils.contacts.detail.invalidate({ id: studentId });
                   }}

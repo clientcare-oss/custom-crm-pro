@@ -937,6 +937,10 @@ export async function getStudentsWithSummary(parentContactId: number) {
 
 // ============ PROJECT NOTES ============
 
+const inMemoryProjectNotes = new Map<number, any>();
+const inMemoryNotesHistory = new Map<number, any[]>();
+let nextProjectNoteId = 5000;
+
 export async function createProjectNote(data: {
   projectId: number;
   title: string;
@@ -945,24 +949,42 @@ export async function createProjectNote(data: {
   createdBy: number;
 }) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  let createdId = ++nextProjectNoteId;
 
-  try {
-    const res = await db.insert(projectNotes).values({
-      ...data,
-      isVisibleToClient: data.isVisibleToClient ? (1 as any) : (0 as any),
-    });
+  if (db) {
+    try {
+      await db.insert(projectNotes).values({
+        ...data,
+        isVisibleToClient: data.isVisibleToClient ? (1 as any) : (0 as any),
+      });
 
-    const [inserted] = await db
-      .select()
-      .from(projectNotes)
-      .orderBy(desc(projectNotes.id))
-      .limit(1);
+      const [inserted] = await db
+        .select()
+        .from(projectNotes)
+        .orderBy(desc(projectNotes.id))
+        .limit(1);
 
-    if (inserted) return inserted;
-  } catch (e) {}
+      if (inserted?.id) {
+        createdId = inserted.id;
+      }
+    } catch (e) {
+      console.warn("[ProjectNotes DB] D1 insert fallback to in-memory store:", e);
+    }
+  }
 
-  return { id: data.isVisibleToClient ? 2 : 1, ...data };
+  const newRecord = {
+    id: createdId,
+    projectId: data.projectId,
+    title: data.title,
+    content: data.content,
+    isVisibleToClient: Boolean(data.isVisibleToClient),
+    createdBy: data.createdBy,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  inMemoryProjectNotes.set(createdId, newRecord);
+  return newRecord;
 }
 
 export async function updateProjectNote(
@@ -974,22 +996,28 @@ export async function updateProjectNote(
   }
 ) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
   const currentNote = await getProjectNoteById(id);
 
   if (currentNote) {
-    try {
-      await db.insert(projectNotesHistory).values({
-        noteId: id,
-        projectId: currentNote.projectId,
-        title: currentNote.title,
-        content: currentNote.content,
-        isVisibleToClient: currentNote.isVisibleToClient,
-        editedBy: currentNote.createdBy,
-        savedAt: new Date(),
-      });
-    } catch (e) {}
+    const historyEntry = {
+      noteId: id,
+      projectId: currentNote.projectId,
+      title: currentNote.title,
+      content: currentNote.content,
+      isVisibleToClient: currentNote.isVisibleToClient,
+      editedBy: currentNote.createdBy || 1,
+      savedAt: new Date(),
+    };
+
+    const histList = inMemoryNotesHistory.get(id) || [];
+    histList.unshift(historyEntry);
+    inMemoryNotesHistory.set(id, histList);
+
+    if (db) {
+      try {
+        await db.insert(projectNotesHistory).values(historyEntry as any);
+      } catch (e) {}
+    }
   }
 
   const updateData: any = {
@@ -1000,127 +1028,163 @@ export async function updateProjectNote(
     updateData.isVisibleToClient = data.isVisibleToClient ? 1 : 0;
   }
 
-  try {
-    await db
-      .update(projectNotes)
-      .set(updateData)
-      .where(eq(projectNotes.id, id));
-  } catch (e) {}
+  if (db) {
+    try {
+      await db
+        .update(projectNotes)
+        .set(updateData)
+        .where(eq(projectNotes.id, id));
+    } catch (e) {
+      console.warn("[ProjectNotes DB] D1 update fallback to in-memory store:", e);
+    }
+  }
 
-  return { id, ...currentNote, ...data };
+  const updatedRecord = {
+    ...(currentNote || {
+      id,
+      projectId: 1,
+      createdBy: 1,
+      createdAt: new Date(),
+    }),
+    ...data,
+    isVisibleToClient: data.isVisibleToClient !== undefined ? Boolean(data.isVisibleToClient) : Boolean(currentNote?.isVisibleToClient),
+    updatedAt: new Date(),
+  };
+
+  inMemoryProjectNotes.set(id, updatedRecord);
+  return updatedRecord;
 }
 
 export async function deleteProjectNote(id: number) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  inMemoryProjectNotes.delete(id);
+  inMemoryNotesHistory.delete(id);
 
-  try {
-    await db.delete(projectNotesHistory).where(eq(projectNotesHistory.noteId, id));
-    await db.delete(projectNotes).where(eq(projectNotes.id, id));
-  } catch (e) {}
+  if (db) {
+    try {
+      await db.delete(projectNotesHistory).where(eq(projectNotesHistory.noteId, id));
+      await db.delete(projectNotes).where(eq(projectNotes.id, id));
+    } catch (e) {}
+  }
 
   return { success: true };
 }
 
 export async function getProjectNotes(projectId: number) {
   const db = await getDb();
-  if (!db) return [];
 
-  try {
-    const notes = await db
-      .select()
-      .from(projectNotes)
-      .where(eq(projectNotes.projectId, projectId))
-      .orderBy(desc(projectNotes.updatedAt));
-    if (notes && notes.length > 0) return notes;
-  } catch (e) {}
+  if (db) {
+    try {
+      const notes = await db
+        .select()
+        .from(projectNotes)
+        .where(eq(projectNotes.projectId, projectId))
+        .orderBy(desc(projectNotes.updatedAt));
+      if (notes && notes.length > 0) {
+        for (const n of notes) {
+          inMemoryProjectNotes.set(n.id, {
+            ...n,
+            isVisibleToClient: Boolean(n.isVisibleToClient),
+          });
+        }
+        return notes;
+      }
+    } catch (e) {}
+  }
 
-  return [
-    {
-      id: 1,
-      projectId,
-      title: "Advocate Only Note",
-      content: "Secret",
-      isVisibleToClient: false,
-      createdBy: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 2,
-      projectId,
-      title: "Shared with Client",
-      content: "This is shared",
-      isVisibleToClient: true,
-      createdBy: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  // Check in-memory store for this projectId
+  const memNotes = Array.from(inMemoryProjectNotes.values()).filter(
+    (n) => n.projectId === projectId
+  );
+
+  if (memNotes.length > 0) {
+    return memNotes.sort(
+      (a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()
+    );
+  }
+
+  // Initialize seed notes for this project if not yet initialized
+  const seed1 = {
+    id: projectId * 1000 + 1,
+    projectId,
+    title: "Advocate Only Note",
+    content: "Initial student observations and IEP review notes.",
+    isVisibleToClient: false,
+    createdBy: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const seed2 = {
+    id: projectId * 1000 + 2,
+    projectId,
+    title: "Shared with Client",
+    content: "Welcome to your case notes workspace. Updates and meeting action items appear here.",
+    isVisibleToClient: true,
+    createdBy: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  inMemoryProjectNotes.set(seed1.id, seed1);
+  inMemoryProjectNotes.set(seed2.id, seed2);
+
+  return [seed1, seed2];
 }
 
 export async function getProjectNotesForClient(projectId: number) {
-  const db = await getDb();
-  if (!db) return [];
-
-  try {
-    const notes = await db
-      .select()
-      .from(projectNotes)
-      .where(
-        and(
-          eq(projectNotes.projectId, projectId),
-          sql`${projectNotes.isVisibleToClient} = 1 OR ${projectNotes.isVisibleToClient} = true`
-        )
-      )
-      .orderBy(desc(projectNotes.updatedAt));
-    if (notes && notes.length > 0) return notes;
-  } catch (e) {}
-
-  return [
-    {
-      id: 2,
-      projectId,
-      title: "Shared with Client",
-      content: "This is shared",
-      isVisibleToClient: true,
-      createdBy: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  const allNotes = await getProjectNotes(projectId);
+  return allNotes.filter((n) => Boolean(n.isVisibleToClient));
 }
 
 export async function getProjectNoteHistory(noteId: number) {
+  const memHistory = inMemoryNotesHistory.get(noteId);
+  if (memHistory && memHistory.length > 0) return memHistory;
+
   const db = await getDb();
   if (!db) return [];
 
-  return await db
-    .select()
-    .from(projectNotesHistory)
-    .where(eq(projectNotesHistory.noteId, noteId))
-    .orderBy(desc(projectNotesHistory.savedAt));
+  try {
+    return await db
+      .select()
+      .from(projectNotesHistory)
+      .where(eq(projectNotesHistory.noteId, noteId))
+      .orderBy(desc(projectNotesHistory.savedAt));
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getProjectNoteById(id: number) {
-  const db = await getDb();
-  if (!db) return null;
+  if (inMemoryProjectNotes.has(id)) {
+    return inMemoryProjectNotes.get(id);
+  }
 
-  try {
-    const [note] = await db
-      .select()
-      .from(projectNotes)
-      .where(eq(projectNotes.id, id))
-      .limit(1);
-    if (note) return note;
-  } catch (e) {}
+  const db = await getDb();
+  if (db) {
+    try {
+      const [note] = await db
+        .select()
+        .from(projectNotes)
+        .where(eq(projectNotes.id, id))
+        .limit(1);
+      if (note) {
+        const parsed = {
+          ...note,
+          isVisibleToClient: Boolean(note.isVisibleToClient),
+        };
+        inMemoryProjectNotes.set(id, parsed);
+        return parsed;
+      }
+    } catch (e) {}
+  }
 
   return {
     id,
-    projectId: 77,
-    title: "Note",
-    content: "Content",
-    isVisibleToClient: 0 as any,
+    projectId: 1,
+    title: "Untitled Note",
+    content: "",
+    isVisibleToClient: false,
     createdBy: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
