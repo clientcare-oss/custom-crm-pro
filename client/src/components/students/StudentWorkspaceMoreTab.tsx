@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { 
-  CalendarCheck2, SquarePen, Compass, Users, 
+  SquarePen, Compass, Users, 
   UsersRound, ClipboardCheck, Landmark, Wrench, 
   CalendarDays, Clock, Coins, Link2 
 } from "lucide-react";
@@ -22,20 +22,55 @@ interface WorkspaceItem {
   external?: boolean;
 }
 
+/**
+ * Custom satin-brass calendar icon matching the reference image:
+ * Top hanger tabs, rounded outer calendar frame, horizontal header dividing line,
+ * and distinct square day cells.
+ */
+function TimelineCalendarIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      {/* Top hanger tabs */}
+      <line x1="8" y1="2.2" x2="8" y2="5.5" strokeWidth="2.2" />
+      <line x1="16" y1="2.2" x2="16" y2="5.5" strokeWidth="2.2" />
+      
+      {/* Outer rounded calendar container */}
+      <rect x="3.5" y="4.5" width="17" height="16" rx="2.5" />
+      
+      {/* Header divider line */}
+      <line x1="3.5" y1="9.5" x2="20.5" y2="9.5" />
+      
+      {/* Day square cells directly matching the portfolio reference layout */}
+      <rect x="6.5" y="12" width="2.4" height="2.2" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="10.8" y="12" width="2.4" height="2.2" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15.1" y="12" width="2.4" height="2.2" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="6.5" y="15.8" width="2.4" height="2.2" rx="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function StudentWorkspaceMoreTab({
   studentId,
   caseId,
   studentName,
 }: StudentWorkspaceMoreTabProps) {
   const [, setLocation] = useLocation();
-  const [selectedId, setSelectedId] = useState<string>("meeting-workspace");
+  const [selectedId, setSelectedId] = useState<string>("activity-timeline");
 
   const items: WorkspaceItem[] = useMemo(() => [
     {
       id: "activity-timeline",
       title: "Activity Timeline",
       description: "Every case action in one place.",
-      icon: CalendarCheck2,
+      icon: TimelineCalendarIcon,
       onClick: () => {
         setSelectedId("activity-timeline");
         setLocation(`/contacts/${studentId}?tab=activity-timeline`);
@@ -167,52 +202,61 @@ export function StudentWorkspaceMoreTab({
 
   return (
     <div className="w-full min-h-[500px] p-5 sm:p-7 md:p-8 select-none">
-      {/* ─── 4-Column Grid: Exactly matching mockup with no header or searchbar ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+      {/* ─── Grid: Responsive columns allowing long titles like "Activity Timeline" to fit on 1 line ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 sm:gap-4">
         {items.map((item) => {
           const Icon = item.icon;
           const isSelected = selectedId === item.id;
 
           return (
-            <div
+            <button
               key={item.id}
-              role="button"
-              tabIndex={0}
+              type="button"
               onClick={item.onClick}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  item.onClick();
-                }
-              }}
               className={cn(
-                "group relative flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-150 cursor-pointer select-none text-left",
-                isSelected
-                  ? "border-2 border-[#D4AF37] ring-1 ring-amber-400/40 bg-[#081e3e] shadow-[0_0_18px_rgba(212,175,55,0.25),inset_0_1px_1px_rgba(255,255,255,0.15)]"
-                  : "border border-blue-900/60 bg-[#05152b]/90 hover:bg-[#092040]/90 hover:border-blue-700/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),0_4px_12px_rgba(0,0,0,0.5)]"
+                // Base layout & dimensions: identical padding, height, and alignment across all buttons
+                "group relative w-full h-[88px] min-h-[88px] rounded-[12px] px-5 py-3 flex items-center gap-[18px]",
+                "text-left select-none cursor-pointer transition-all duration-150 ease-out",
+                // Keyboard focus outline in restrained warm brass
+                "focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-[#D4AF37]/90 focus-visible:border-[#C59E45]",
+                // Surface: Translucent midnight-navy leather letting the portfolio texture subtly show through
+                "bg-gradient-to-b from-[#0c2449]/55 via-[#071933]/65 to-[#030e20]/80 backdrop-blur-[1.5px]",
+                // Thin muted steel-blue edge
+                "border border-[#1d3f6d]/80",
+                // Layered shadows: faint top highlight, bottom dark edge, soft external shadow beneath
+                "shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.18),inset_0_-1.5px_2px_rgba(0,0,0,0.85),0_4px_14px_rgba(0,0,0,0.55),0_1px_3px_rgba(0,0,0,0.65)]",
+                // Hover: Gently brightens leather surface and edge
+                "hover:from-[#112f5a]/65 hover:via-[#092244]/75 hover:to-[#051328]/85",
+                "hover:border-[#2b5894]/85",
+                "hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.24),inset_0_-1.5px_2px_rgba(0,0,0,0.85),0_6px_18px_rgba(0,0,0,0.65),0_1px_3px_rgba(0,0,0,0.7)]",
+                // Pressed state: Slightly compresses shadow to feel physically pressed
+                "active:translate-y-[0.5px] active:shadow-[inset_0_1.5px_2.5px_rgba(0,0,0,0.9),0_1px_2px_rgba(0,0,0,0.5)]",
+                // Selected state: Restrained brass outline
+                isSelected && "border-[#C59E45]/85 ring-1 ring-[#D4AF37]/50 shadow-[0_0_14px_rgba(212,175,55,0.22),inset_0_1px_1px_rgba(255,255,255,0.18),inset_0_-1.5px_2px_rgba(0,0,0,0.85)]"
               )}
             >
-              {/* Gold Metallic Icon */}
-              <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 text-[#f3c258] group-hover:text-amber-300 group-hover:scale-105 transition-all">
-                <Icon className="w-7 h-7 sm:w-8 sm:h-8 stroke-[1.8] drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.9)]" />
+              {/* ─── Consistent 56px-wide icon area directly on button surface (no square box) ─── */}
+              <div className="w-[56px] min-w-[56px] h-full flex items-center justify-center shrink-0">
+                <Icon className="w-[36px] h-[36px] sm:w-[38px] sm:h-[38px] text-[#F1CB6C] stroke-[1.9] drop-shadow-[0_2px_3.5px_rgba(0,0,0,0.85)] group-hover:text-[#FDE295] group-hover:scale-[1.03] transition-all" />
               </div>
 
-              {/* Text Header & Subtitle */}
-              <div className="min-w-0 flex-1">
+              {/* ─── Content Area: Left-aligned, refined serif title & muted blue description ─── */}
+              <div className="min-w-0 flex-1 flex flex-col justify-center text-left">
                 <h4
-                  className="text-sm sm:text-[15px] font-bold text-white tracking-wide group-hover:text-[#fcedb8] transition-colors leading-tight"
+                  className="font-medium text-[15.5px] lg:text-[16px] text-[#F7F2E8] tracking-normal leading-tight whitespace-nowrap drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.85)] group-hover:text-[#FFF8EE] transition-colors"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
                   {item.title}
                 </h4>
-                <p className="text-[11.5px] sm:text-xs text-blue-200/60 leading-tight mt-0.5 group-hover:text-blue-200/80 transition-colors">
+                <p className="text-[12px] lg:text-[12.5px] text-[#93AECD] leading-[1.35] mt-1 line-clamp-2 group-hover:text-[#A8C4E6] transition-colors">
                   {item.description}
                 </p>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
     </div>
   );
 }
+
