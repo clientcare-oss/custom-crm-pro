@@ -89,27 +89,30 @@ export default function GivingOverview() {
 
   return (
     <div 
-      className="min-h-screen w-full p-4 sm:p-6 md:p-8 space-y-5 select-none relative overflow-x-hidden"
+      className="min-h-screen w-full select-none relative overflow-x-hidden"
       style={{
         backgroundColor: "#110903",
         backgroundImage: "radial-gradient(ellipse at 50% 0%, #29180C 0%, #150B05 50%, #0A0502 100%)",
       }}
     >
-      {/* ─── Hanging Shelf Decor & Cascading Ivy Overlap Asset (Z-20 pointer-events-none) ─── */}
+      {/* ─── Hanging Shelf Decor & Cascading Ivy Overlap Asset ───
+          Spans edge-to-edge: touches the left sidebar on the left, right edge on the right, and the very top of the window */}
       <div className="absolute top-0 left-0 right-0 w-full pointer-events-none select-none z-20 flex justify-center overflow-visible">
         <img
           src="/decor/giving-shelf-header.png"
           alt="Antique shelf with glowing lantern, astrolabe, and cascading ivy"
-          className="w-full max-w-[1600px] h-auto object-contain object-top drop-shadow-[0_12px_28px_rgba(0,0,0,0.85)] opacity-95"
+          className="w-full h-auto object-cover object-top drop-shadow-[0_12px_28px_rgba(0,0,0,0.85)]"
         />
       </div>
 
-      {/* ─── Top Ambient Shelf & Central Navy Plaque with 8 Navigation Buttons ─── */}
-      <GivingDeskHeader
-        onOpen501c3={() => setModal501c3Open(true)}
-        onOpenScholarship={() => setScholarshipModalOpen(true)}
-        onRecordDonation={() => setLocation("/giving/donations")}
-      />
+      {/* ─── Main Content Deck with Horizontal Padding & Central Alignment ─── */}
+      <div className="w-full px-4 sm:px-6 md:px-8 pb-12 pt-2 sm:pt-4 space-y-5 relative z-10 max-w-[1720px] mx-auto">
+        {/* ─── Top Ambient Shelf & Central Navy Plaque with 8 Navigation Buttons ─── */}
+        <GivingDeskHeader
+          onOpen501c3={() => setModal501c3Open(true)}
+          onOpenScholarship={() => setScholarshipModalOpen(true)}
+          onRecordDonation={() => setLocation("/giving/donations")}
+        />
 
       {/* ─── Row 1: Top 6 KPI Metric Cards in Parchment & Brass ─── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3.5 relative z-10">
@@ -199,6 +202,8 @@ export default function GivingOverview() {
         open={scholarshipModalOpen}
         onOpenChange={setScholarshipModalOpen}
       />
+      </div>
     </div>
   );
 }
+
