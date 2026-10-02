@@ -95,9 +95,9 @@ export default function GivingOverview() {
         backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
       }}
     >
-      {/* ─── Hanging Shelf Decor & Cascading Ivy Overlap Asset (In front at z-20 with pointer-events-none) ───
-          Spans edge-to-edge touching left sidebar, right edge, and top, overlapping the sides with cascading ivy */}
-      <div className="absolute top-0 left-0 right-0 w-full pointer-events-none select-none z-20 flex justify-center overflow-visible">
+      {/* ─── Hanging Shelf Decor & Cascading Ivy Overlap Asset (Ambient backdrop at z-10 with pointer-events-none) ───
+          Spans edge-to-edge touching left sidebar, right edge, and top */}
+      <div className="absolute top-0 left-0 right-0 w-full pointer-events-none select-none z-10 flex justify-center overflow-visible">
         <img
           src="/decor/giving-shelf-header.png"
           alt="Antique shelf with glowing lantern, astrolabe, and cascading ivy"
@@ -105,8 +105,8 @@ export default function GivingOverview() {
         />
       </div>
 
-      {/* ─── Main Content Deck with Horizontal Padding & Central Alignment ─── */}
-      <div className="w-full px-4 sm:px-6 md:px-8 pb-12 pt-2 sm:pt-4 space-y-5 relative z-10 max-w-[1720px] mx-auto">
+      {/* ─── Main Content Deck with Horizontal Padding & Central Alignment (In front at z-20) ─── */}
+      <div className="w-full px-4 sm:px-6 md:px-8 pb-12 pt-2 sm:pt-4 space-y-5 relative z-20 max-w-[1720px] mx-auto">
         {/* ─── Top Ambient Shelf & Central Navy Plaque with 8 Navigation Buttons ─── */}
         <GivingDeskHeader
           onOpen501c3={() => setModal501c3Open(true)}

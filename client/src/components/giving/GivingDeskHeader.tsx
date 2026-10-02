@@ -34,11 +34,11 @@ export function GivingDeskHeader({
   ];
 
   return (
-    <div className="w-full space-y-3.5 select-none relative z-10 pt-1 sm:pt-2">
-      {/* ─── Clean Header Row: Centered Blue GIVING & IMPACT Plaque ─── */}
-      <div className="relative w-full flex items-center justify-center min-h-[84px]">
+    <div className="w-full space-y-3.5 select-none relative z-20 pt-1 sm:pt-2">
+      {/* ─── Clean Header Row: Centered Blue GIVING & IMPACT Plaque (Brought to front at z-30) ─── */}
+      <div className="relative z-30 w-full flex items-center justify-center min-h-[84px]">
         {/* Center: Blue GIVING & IMPACT Navy Leather Plaque with Double Gold Wire */}
-        <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl text-center px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-[#091D3C] via-[#05142B] to-[#020A17] border-2 border-[#C5A059] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)] relative">
+        <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl text-center px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-[#091D3C] via-[#05142B] to-[#020A17] border-2 border-[#C5A059] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)] relative z-30">
           {/* 4 Corner Brass Rivets */}
           <div className="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-[#FFE394] ring-1 ring-black/70 shadow-xs" />
           <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#FFE394] ring-1 ring-black/70 shadow-xs" />
