@@ -89,10 +89,10 @@ export default function GivingOverview() {
 
   return (
     <div 
-      className="min-h-screen w-full select-none relative overflow-x-hidden"
+      className="min-h-screen w-full select-none relative overflow-x-hidden bg-[#07162B]"
       style={{
-        backgroundColor: "#110903",
-        backgroundImage: "radial-gradient(ellipse at 50% 0%, #29180C 0%, #150B05 50%, #0A0502 100%)",
+        backgroundColor: "#07162B",
+        backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
       }}
     >
       {/* ─── Hanging Shelf Decor & Cascading Ivy Overlap Asset (In front at z-20 with pointer-events-none) ───

@@ -1546,7 +1546,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
           (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
           location === "/contacts" && "p-0 bg-[#07152B]",
-          (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#110903]"
+          (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]"
         )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">
