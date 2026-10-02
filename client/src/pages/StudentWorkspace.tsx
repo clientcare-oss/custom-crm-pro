@@ -246,7 +246,7 @@ export default function StudentWorkspace() {
             className="relative w-full bg-transparent overflow-visible shadow-none border-0"
             style={{
               backgroundImage: activeTab === "notes"
-                ? "url('/decor/ornate-navy-leather-ui-frame.png?v=20261001-notes')"
+                ? "url('/decor/ornate-navy-leather-ui-frame.png?v=20261001-notes-perfect')"
                 : "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
               backgroundSize: "100% 100%",
               backgroundPosition: "center center",
