@@ -356,10 +356,10 @@ export default function StudentWorkspace() {
               "shadow-[0_16px_40px_rgba(0,0,0,0.85),0_4px_12px_rgba(0,0,0,0.65),inset_0_1.5px_0.5px_rgba(255,235,175,0.45),inset_1px_0_0_rgba(255,235,175,0.2),inset_0_-2.5px_2px_rgba(0,0,0,0.95)]"
             )}
             style={{
-              backgroundColor: "#02132d",
-              backgroundImage: "url('/decor/folio-leather-texture.png')",
-              backgroundRepeat: "repeat",
-              backgroundSize: "360px 360px",
+              backgroundImage: "url('/decor/folio-leather-clean.png')",
+              backgroundSize: "cover",
+              backgroundPosition: "center top",
+              backgroundRepeat: "no-repeat",
             }}
           >
             {/* Ambient Lighting & Saddle Dye Vignette Overlay */}
