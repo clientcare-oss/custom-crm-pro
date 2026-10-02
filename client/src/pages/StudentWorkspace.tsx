@@ -13,7 +13,6 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { NotesSection } from "@/components/NotesSection";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -733,57 +732,15 @@ export default function StudentWorkspace() {
               </div>
             )}
 
-            {/* ─── NOTES TAB: Ornate Navy Leather Framed Case Notes Workspace ─────── */}
+            {/* ─── NOTES TAB: Clean 12-Column Canvas on Ornate Navy Leather Frame ─── */}
             {activeTab === "notes" && (
-              <div className="min-h-[540px] xl:min-h-[580px] p-6 sm:p-10 md:p-12 flex flex-col justify-between">
-                <div className="space-y-4 max-w-5xl mx-auto w-full">
-                  {/* Ornate Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-white/15">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-md">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 
-                          className="text-lg sm:text-2xl font-bold text-white tracking-wide drop-shadow-sm"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          Case Notes & Advocacy Log
-                        </h3>
-                        <p className="text-xs text-white/60">
-                          Observations, IEP meeting minutes, and internal notes for {fullName}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                        Notes Workspace
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Notes Content */}
-                  <div className="pt-2">
-                    <NotesSection 
-                      projectId={effectiveProjectId} 
-                      studentName={student?.firstName || fullName} 
-                    />
-                  </div>
+              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
+                {/* Left Panel (Col 5) */}
+                <div className="lg:col-span-5 relative py-1 sm:py-2">
                 </div>
 
-                {/* Footer Return */}
-                <div className="pt-4 flex items-center justify-between border-t border-white/15 mt-6 max-w-5xl mx-auto w-full">
-                  <span className="text-xs text-white/50">
-                    Notes synced with Case #{student?.caseId || studentId}
-                  </span>
-                  <Button
-                    onClick={() => setActiveTab("overview")}
-                    variant="outline"
-                    size="sm"
-                    className="bg-transparent hover:bg-white/10 border-white/20 text-white text-xs h-8 px-3 rounded-lg cursor-pointer"
-                  >
-                    Return to Overview Desk
-                  </Button>
+                {/* Right Panel (Col 7) */}
+                <div className="lg:col-span-7 flex flex-col justify-between sm:pl-4 md:pl-6 py-1 sm:py-2">
                 </div>
               </div>
             )}
