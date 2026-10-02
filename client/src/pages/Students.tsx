@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { Folder, LayoutGrid, List, Plus } from "lucide-react";
+import { Folder, LayoutGrid, List, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import PageIdBadge from "@/components/PageIdBadge";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import {
@@ -336,8 +337,6 @@ export default function Students() {
           {/* Row 1: Header Navigation Controls (Pushed left to give room for wide search box without touching leaves) */}
           <div className="relative z-10 w-full pl-3 sm:pl-16 md:pl-20 lg:pl-28 xl:pl-32 pr-3 sm:pr-20 md:pr-24 lg:pr-32 xl:pr-36 pt-4 sm:pt-5">
             <StudentsHeader
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
               sortOrder={sortOrder}
               onSortChange={setSortOrder}
               onNewStudentClick={() => setNewStudentOpen(true)}
@@ -358,16 +357,13 @@ export default function Students() {
           {/* Row 2: Alphabetical Brass Rail & View Controls (Lifted up into the deep blue nautical chart space) */}
           <div className="relative z-10 w-full pl-3 sm:pl-16 md:pl-20 lg:pl-28 xl:pl-32 pr-3 sm:pr-20 md:pr-24 lg:pr-32 xl:pr-36 pb-12 sm:pb-16 lg:pb-20 xl:pb-24">
             <div className="max-w-[1300px] xl:max-w-[1340px] mx-auto">
-              <PageIdBadge id="PG-004" name="Students Case Registry" />
+              <PageIdBadge id="PG-004" name="Student Workspaces" />
 
-              {/* View Switcher & Rail Header Bar (Placed above alpha bar) */}
-              <div className="flex items-center justify-between gap-3 mb-2.5 sm:mb-3">
-                {/* Left: Master Registry Index Status */}
-                <div className="flex items-center gap-2 select-none">
-                  <span className="font-serif text-xs font-semibold text-[#D8B478] tracking-wider uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                    Master Registry Index
-                  </span>
-                  {selectedLetter !== "ALL" && (
+              {/* Coherent Line: Search Bar + View Mode Switcher Box (Nudged slightly right) */}
+              <div className="relative flex items-center justify-center gap-2.5 sm:gap-3 mb-2.5 sm:mb-3 translate-x-2.5 sm:translate-x-4 md:translate-x-5 -translate-y-1.5 sm:-translate-y-2.5 md:-translate-y-3">
+                {/* Active Letter Filter Pill (Anchored to left so center line remains strictly balanced) */}
+                {selectedLetter !== "ALL" && (
+                  <div className="absolute left-0 hidden xl:flex items-center gap-1.5 select-none">
                     <span className="inline-flex items-center gap-1.5 text-xs font-serif text-[#C4D7ED] bg-[#061427]/90 px-2.5 py-0.5 rounded-full border border-[#8A6731]/40 shadow-xs">
                       Letter <span className="font-bold text-[#F2CD80]">{selectedLetter}</span>
                       <button
@@ -379,20 +375,45 @@ export default function Students() {
                         ×
                       </button>
                     </span>
+                  </div>
+                )}
+
+                {/* Search Bar: Sized and positioned clear of the compass rose */}
+                <div className="relative flex items-center w-full max-w-[210px] xs:max-w-[250px] sm:max-w-[280px] md:max-w-[320px]">
+                  <Search className="absolute left-3 w-4 h-4 text-[#7E97B8] pointer-events-none" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search students..."
+                    className={cn(
+                      "w-full h-10 pl-8.5 sm:pl-9 pr-8 rounded-xl text-xs sm:text-sm text-[#F0F6FC] placeholder:text-[#6E87A8]",
+                      "bg-[#040B17]/92 border border-[#8A6731]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.7),0_4px_16px_rgba(0,0,0,0.6)]",
+                      "focus:border-[#F2CD80] focus:ring-1 focus:ring-[#F2CD80]/40 transition-all"
+                    )}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2 p-1 rounded hover:bg-white/10 text-[#7E97B8] hover:text-white cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   )}
                 </div>
 
-                {/* Right: Tactile Brass Cards / List View Switcher Capsule */}
-                <div className="flex items-center p-1 rounded-xl border border-[#8A6731]/60 bg-[#051327]/90 shadow-[0_4px_16px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.08)] backdrop-blur-md">
-                  <span className="font-serif text-xs text-[#9BB1CC] px-2.5 hidden sm:inline select-none tracking-wide">
+                {/* Center: Tactile Brass Cards / List View Switcher Capsule (Directly next to the search bar) */}
+                <div className="flex items-center p-1 h-10 rounded-xl border border-[#8A6731]/60 bg-[#051327]/90 shadow-[0_4px_16px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.08)] backdrop-blur-md shrink-0">
+                  <span className="font-serif text-xs text-[#9BB1CC] px-2 hidden sm:inline select-none tracking-wide">
                     View:
                   </span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 h-full">
                     <button
                       type="button"
                       onClick={() => handleViewModeChange("cards")}
                       className={cn(
-                        "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer select-none",
+                        "flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-lg text-xs font-serif font-bold transition-all cursor-pointer select-none",
                         viewMode === "cards"
                           ? "bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] shadow-[0_2px_6px_rgba(216,164,82,0.45),inset_0_1px_1px_rgba(255,255,255,0.7)]"
                           : "text-[#7E97B8] hover:text-[#E2EDF8] hover:bg-[#12233B]/50"
@@ -407,7 +428,7 @@ export default function Students() {
                       type="button"
                       onClick={() => handleViewModeChange("list")}
                       className={cn(
-                        "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer select-none",
+                        "flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-lg text-xs font-serif font-bold transition-all cursor-pointer select-none",
                         viewMode === "list"
                           ? "bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] shadow-[0_2px_6px_rgba(216,164,82,0.45),inset_0_1px_1px_rgba(255,255,255,0.7)]"
                           : "text-[#7E97B8] hover:text-[#E2EDF8] hover:bg-[#12233B]/50"

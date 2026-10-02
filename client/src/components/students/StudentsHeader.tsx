@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Search, SlidersHorizontal, Plus, X, ChevronDown } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { SlidersHorizontal, Plus, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -10,8 +9,6 @@ import {
 import { cn } from "@/lib/utils";
 
 interface StudentsHeaderProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
   sortOrder?: "asc" | "desc";
   onSortChange?: (order: "asc" | "desc") => void;
   onNewStudentClick: () => void;
@@ -25,8 +22,6 @@ interface StudentsHeaderProps {
 }
 
 export function StudentsHeader({
-  searchQuery,
-  onSearchChange,
   sortOrder = "asc",
   onSortChange,
   onNewStudentClick,
@@ -43,7 +38,7 @@ export function StudentsHeader({
   return (
     <div
       className={cn(
-        "relative flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-1 sm:px-2 py-1",
+        "relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 sm:px-2 py-1",
         className
       )}
     >
@@ -52,41 +47,15 @@ export function StudentsHeader({
         {/* Title & Subtitle */}
         <div className="select-none pr-1">
           <h1 className="font-serif text-[26px] sm:text-[32px] md:text-[34px] font-bold text-white tracking-wide leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
-            Students
+            Student Workspaces
           </h1>
           <p className="font-serif text-[13px] sm:text-sm text-[#94ADC9] mt-1.5 leading-none tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-            All student cases and workspaces
+            Select a student to enter their advocacy workspace.
           </p>
         </div>
       </div>
 
-      {/* ─── 2. CENTER: Sleek Maritime Search Pill (Expanded & Made More Readable) ─── */}
-      <div className="flex-1 max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-1 sm:mx-3 z-10">
-        <div className="relative flex items-center">
-          <Search className="absolute left-3.5 w-4.5 h-4.5 text-[#7E97B8] pointer-events-none" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search students, schools, or keywords..."
-            className={cn(
-              "w-full h-10 sm:h-11 pl-10 pr-9 rounded-lg text-sm sm:text-[15px] text-[#F0F6FC] placeholder:text-[#6E87A8]",
-              "bg-[#040B17]/92 border border-[#243654] shadow-[inset_0_2px_4px_rgba(0,0,0,0.7)]",
-              "focus:border-[#4B70A6] focus:ring-2 focus:ring-[#4B70A6]/40 transition-all"
-            )}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => onSearchChange("")}
-              className="absolute right-3 p-1 rounded hover:bg-white/10 text-[#7E97B8] hover:text-white cursor-pointer"
-              title="Clear search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ─── 3. RIGHT: Filters and + New Student ─── */}
+      {/* ─── 2. RIGHT: Filters and + New Student ─── */}
       <div className="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap z-10">
         {/* Filters Popover */}
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>

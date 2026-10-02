@@ -60,7 +60,7 @@ export function ActiveStudentsDrawerBar({
 
       {/* ─── Center: Dark Midnight Brushed Wood Plank Span + Page ID Plaque ─── */}
       <div className="flex-1 h-full min-w-4 flex items-center justify-center">
-        <PageIdBadge id="PG-004" name="Students Case Registry" />
+        <PageIdBadge id="PG-004" name="Student Workspaces" />
       </div>
 
       {/* ─── Right End: View Switcher Capsule + Optional Shelf Pager + Right Hardware ─── */}
