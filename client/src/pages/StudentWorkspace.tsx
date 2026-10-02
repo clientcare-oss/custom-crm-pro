@@ -201,7 +201,7 @@ export default function StudentWorkspace() {
         >
           {/* Folio Index Tabs (Permanently locked in: Overview left anchor at X=36px, seated at Y=21px) */}
           <div 
-            className="flex items-end justify-start gap-1.5 relative z-30 overflow-x-auto no-scrollbar"
+            className="flex items-end justify-start gap-2 relative z-30 overflow-x-auto no-scrollbar"
             style={{
               paddingLeft: "36px",
               marginBottom: "-21px",
@@ -222,20 +222,23 @@ export default function StudentWorkspace() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    "relative flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-t-lg text-xs font-semibold tracking-wide transition-all border-t border-x cursor-pointer",
+                    "relative flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-t-[6px] text-xs sm:text-[13.5px] transition-all cursor-pointer select-none",
+                    "border-t border-x",
                     isActive
-                      ? "bg-[#032146] text-white border-sky-400/50 z-30 border-b-0 pb-3 shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
-                      : "bg-[#02132b]/95 text-white/60 hover:text-white/95 hover:bg-[#051e40] border-white/15 border-b border-b-[#032146] z-20 pb-2"
+                      ? "bg-gradient-to-b from-[#032556] via-[#021d45] to-[#011432] text-white border-t-[#3b82f6]/70 border-x-[#194479] z-30 pb-3 shadow-[0_-3px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(125,185,255,0.4)]"
+                      : "bg-gradient-to-b from-[#021a3b] via-[#021532] to-[#010e24] text-[#e2e8f0]/85 hover:text-white hover:from-[#03224c] hover:to-[#01132e] border-t-[#1f487a]/60 border-x-[#143358]/60 z-20 pb-2.5 shadow-[0_-2px_6px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(70,130,210,0.25)]"
                   )}
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+                  }}
                 >
-                  <Icon className={cn("h-3.5 w-3.5", isActive ? "text-amber-400" : "text-white/50")} />
-                  <span>{tab.label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTabUnderline"
-                      className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 rounded-t-full shadow-[0_0_8px_rgba(217,163,53,0.85)]"
-                    />
-                  )}
+                  <Icon 
+                    className="h-4 w-4 text-white/95 shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" 
+                    strokeWidth={1.75} 
+                  />
+                  <span className="font-normal tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                    {tab.label}
+                  </span>
                 </button>
               );
             })}
