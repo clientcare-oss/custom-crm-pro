@@ -1,13 +1,11 @@
 import React from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import PageIdBadge from "@/components/PageIdBadge";
-import { Button } from "@/components/ui/button";
+import { GivingNavButton } from "./GivingNavButton";
 import { 
-  HandHeart, Users, DollarSign, GraduationCap, 
-  Landmark, Receipt, BarChart3, Globe, Settings, 
-  Plus 
+  HandHeart, Users, GraduationCap, 
+  Landmark, Receipt, BarChart3, Globe 
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface GivingDeskHeaderProps {
   onOpen501c3: () => void;
@@ -24,17 +22,55 @@ export function GivingDeskHeader({
 
   const navigationTabs = [
     { label: "Overview", path: "/giving", icon: HandHeart },
-    { label: "Supporters & Donors", path: "/giving/supporters", icon: Users },
-    { label: "Donations", path: "/giving/donations", icon: DollarSign },
+    { 
+      label: (
+        <>
+          <span className="block">Supporters &</span>
+          <span className="block">Donors</span>
+        </>
+      ), 
+      path: "/giving/supporters", 
+      icon: Users 
+    },
+    { 
+      label: "Donations", 
+      path: "/giving/donations", 
+      customIcon: (
+        <span 
+          className="text-[19px] sm:text-[21px] font-bold font-serif leading-none text-[#F4EBD9] drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] select-none"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          $
+        </span>
+      )
+    },
     { label: "Scholarships", path: "/giving/scholarships", icon: GraduationCap },
     { label: "Funds", path: "/giving/funds", icon: Landmark },
-    { label: "Receipts & Statements", path: "/giving/receipts", icon: Receipt },
+    { 
+      label: (
+        <>
+          <span className="block">Receipts &</span>
+          <span className="block">Statements</span>
+        </>
+      ), 
+      path: "/giving/receipts", 
+      icon: Receipt 
+    },
     { label: "Reports", path: "/giving/reports", icon: BarChart3 },
-    { label: "Website Tools", path: "/giving/website-tools", icon: Globe },
+    { 
+      label: (
+        <>
+          <span className="block">Website</span>
+          <span className="block">Tools</span>
+        </>
+      ), 
+      path: "/giving/website-tools", 
+      icon: Globe 
+    },
   ];
 
   return (
-    <div className="w-full space-y-3.5 select-none relative z-20 pt-1 sm:pt-2">
+    <div className="w-full space-y-3 select-none relative z-20 pt-1 sm:pt-2">
       {/* ─── Clean Header Row: Centered Blue GIVING & IMPACT Plaque (Brought to front at z-30) ─── */}
       <div className="relative z-30 w-full flex items-center justify-center min-h-[84px]">
         {/* Center: Blue GIVING & IMPACT Navy Leather Plaque with Double Gold Wire */}
@@ -69,37 +105,20 @@ export function GivingDeskHeader({
         </div>
       </div>
 
-      {/* ─── Consolidated 8-Destination Navigation Ribbon (Midnight Navy & Satin Brass) ─── */}
-      <div className="w-full p-1 sm:p-1.5 rounded-xl bg-gradient-to-b from-[#0B1E3B] via-[#061429] to-[#020914] border border-[#C5A059]/60 shadow-[0_6px_20px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.15)] grid grid-cols-4 md:flex md:items-stretch md:justify-between gap-1 sm:gap-1.5">
+      {/* ─── Consolidated 8-Destination Physical Navigation Control Plates ─── */}
+      <div className="w-full grid grid-cols-4 md:grid-cols-8 gap-1.5 sm:gap-2">
         {navigationTabs.map((tab) => {
           const isActive = location === tab.path || (tab.path === "/giving" && location === "/giving/overview");
-          const Icon = tab.icon;
 
           return (
-            <Link key={tab.path} href={tab.path} className="flex-1 min-w-0">
-              <button
-                type="button"
-                className={cn(
-                  "w-full h-[44px] sm:h-[48px] rounded-lg px-1 sm:px-2 py-1 flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center transition-all cursor-pointer select-none",
-                  isActive
-                    ? "bg-gradient-to-b from-[#C59B3F] via-[#A67C26] to-[#7D5A12] text-[#FFFDF8] border border-[#FDE69E]/85 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),0_2px_8px_rgba(0,0,0,0.6)]"
-                    : "bg-gradient-to-b from-[#0E2447]/80 to-[#051329]/90 hover:from-[#133261]/85 hover:to-[#081C3D]/95 text-[#E6DAC3] border border-[#1E3F6D]/80 hover:border-[#2C5996] shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.4)]"
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-colors",
-                    isActive ? "text-[#FFF6D6] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" : "text-[#E5B74E] group-hover:text-amber-200"
-                  )}
-                />
-                <span className={cn(
-                  "text-[10px] sm:text-[11px] leading-tight font-medium truncate max-w-full px-0.5",
-                  isActive ? "font-bold text-white tracking-wide" : "text-[#D2C5AB]"
-                )}>
-                  {tab.label}
-                </span>
-              </button>
-            </Link>
+            <GivingNavButton
+              key={tab.path}
+              label={tab.label}
+              path={tab.path}
+              isActive={isActive}
+              icon={tab.icon}
+              customIcon={tab.customIcon}
+            />
           );
         })}
       </div>
