@@ -156,12 +156,12 @@ export default function StudentWorkspace() {
                 title="Back to Student Workspaces list"
               >
                 <span 
-                  className="text-xs sm:text-[13px] font-normal tracking-wide text-white/70 group-hover:text-[#F2CD80] transition-colors leading-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                  className="text-base sm:text-lg md:text-xl font-medium tracking-tight text-white/90 group-hover:text-[#F2CD80] transition-colors leading-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
                   Back to list
                 </span>
-                <Undo2 className="w-3.5 h-3.5 text-amber-300/80 group-hover:text-[#F2CD80] group-hover:-translate-x-0.5 transition-all mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+                <Undo2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-300/90 group-hover:text-[#F2CD80] group-hover:-translate-x-0.5 transition-all mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
               </button>
 
               <span className="text-sky-300/40 text-lg sm:text-xl font-light select-none pb-0.5">|</span>
