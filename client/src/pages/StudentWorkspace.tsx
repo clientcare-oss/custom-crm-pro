@@ -138,9 +138,9 @@ export default function StudentWorkspace() {
       const saved = localStorage.getItem("waypoint_student_workspace_tab_coords");
       if (saved) return JSON.parse(saved);
     } catch {}
-    return { x: 68, y: -2, gap: 2 };
+    return { x: 46, y: -18, gap: 2 };
   });
-  const [showTabCalibrator, setShowTabCalibrator] = useState(true);
+  const [showTabCalibrator, setShowTabCalibrator] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
 
   const updateTabOffset = (next: { x: number; y: number; gap: number }) => {
@@ -413,12 +413,12 @@ export default function StudentWorkspace() {
 
                 {/* Reset */}
                 <button
-                  onClick={() => updateTabOffset({ x: 68, y: -2, gap: 2 })}
+                  onClick={() => updateTabOffset({ x: 46, y: -18, gap: 2 })}
                   className="flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/15 rounded-lg text-white/70 hover:text-white cursor-pointer text-[11px] transition-all"
-                  title="Reset to default (68px, -2px, 2px)"
+                  title="Reset to locked coordinates (46px, -18px, 2px)"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  <span>Reset</span>
+                  <span>Reset (Locked)</span>
                 </button>
 
                 {/* Copy Coordinates */}
