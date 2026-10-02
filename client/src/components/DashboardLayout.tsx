@@ -1147,9 +1147,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                         >
                           <MessageSquare className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                           {hasUnreadMessages && (
-                            <span className="absolute top-0.5 right-0.5 flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400 shadow-[0_0_6px_rgba(245,181,68,0.9)]" />
+                            <span className="absolute -top-0.5 -left-0.5 flex h-2.5 w-2.5 pointer-events-none">
+                              {/* Outer expanding ping ring */}
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-90" />
+                              {/* Secondary soft pulsating halo */}
+                              <span className="animate-pulse absolute inline-flex -inset-1 rounded-full bg-amber-400/50 blur-[2px]" />
+                              {/* Glowing core */}
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gradient-to-tr from-amber-500 to-amber-300 border border-[#07162C] shadow-[0_0_8px_#F5B544,0_0_14px_rgba(245,181,68,0.95)]" />
                             </span>
                           )}
                         </button>
