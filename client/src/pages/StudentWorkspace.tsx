@@ -201,7 +201,7 @@ export default function StudentWorkspace() {
         >
           {/* Folio Index Tabs (Permanently locked in: Overview left anchor at X=36px, seated at Y=21px) */}
           <div 
-            className="flex items-end justify-start gap-1 relative z-30 overflow-x-auto no-scrollbar"
+            className="flex items-end justify-start gap-[2px] relative z-30 overflow-x-auto no-scrollbar"
             style={{
               paddingLeft: "36px",
               marginBottom: "-21px",
