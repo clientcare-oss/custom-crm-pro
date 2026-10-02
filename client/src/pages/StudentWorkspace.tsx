@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { StudentProfileDossier } from "@/components/students/StudentProfileDossier";
+import { TactileStickyNotesBoard } from "@/components/students/TactileStickyNotesBoard";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -34,6 +35,8 @@ export default function StudentWorkspace() {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
+  const utils = trpc.useUtils();
+
   // Queries
   const { data, isLoading } = trpc.contacts.detail.useQuery(
     { id: studentId },
@@ -44,6 +47,7 @@ export default function StudentWorkspace() {
   const parent = data?.parentContact;
   const compass = data?.compass;
   const appointments = data?.appointments || [];
+  const projects = (data as any)?.projects || [];
   const effectiveProjectId = (data as any)?.projects?.[0]?.id || studentId;
 
   // Toggle action checkbox
@@ -589,32 +593,17 @@ export default function StudentWorkspace() {
               </div>
             )}
 
-            {/* ─── NOTES TAB: Clean 12-Column Canvas on Ornate Navy Leather Frame ─── */}
+            {/* ─── NOTES TAB: Tactile Yellow Sticky Notes Board on Ornate Navy Leather Frame ─── */}
             {activeTab === "notes" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
-                {/* ─── LEFT PANEL: Same Student Profile Dossier as Overview ────── */}
-                <div className="lg:col-span-5 relative py-1 sm:py-2">
-                  <StudentProfileDossier
-                    student={student}
-                    studentInitials={studentInitials}
-                    fullName={fullName}
-                    parentName={parentName}
-                    parentPhone={parentPhone}
-                    calculatedAge={calculatedAge}
-                    cleanGrade={cleanGrade}
-                    transferSchool={transferSchool}
-                    gtidValue={gtidValue}
-                    displayEligibility={displayEligibility}
-                    displayMedicalDiagnoses={displayMedicalDiagnoses}
-                    clientTime={clientTime}
-                    onEditDetails={() => setDetailsModalOpen(true)}
-                  />
-                </div>
-
-                {/* ─── RIGHT PANEL: Exact Overview Grid Boundaries (~62% width) ────── */}
-                <div className="lg:col-span-7 sm:px-6 py-2 flex flex-col justify-between min-h-[480px]">
-                  {/* Clean Right Side Canvas ready for Byron's instructions */}
-                </div>
+              <div className="w-full min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
+                <TactileStickyNotesBoard
+                  studentId={studentId}
+                  studentName={fullName}
+                  projectId={projects[0]?.id}
+                  onProjectCreated={() => {
+                    utils.contacts.detail.invalidate({ id: studentId });
+                  }}
+                />
               </div>
             )}
 
