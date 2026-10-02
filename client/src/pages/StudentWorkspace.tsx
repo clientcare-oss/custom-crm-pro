@@ -7,8 +7,10 @@ import {
   ArrowRight, ShieldCheck, Award, Activity, Globe, 
   Pencil, Move, Check, Undo2, Mic, Compass, 
   FileSearch, GitCompare, Gavel, BookOpen, FileSignature, 
-  DollarSign, PhoneCall, Layers, ArrowUpRight
+  DollarSign, PhoneCall, Layers, ArrowUpRight,
+  Copy, SlidersHorizontal, RotateCcw
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
@@ -129,6 +131,32 @@ export default function StudentWorkspace() {
   // Modal dialog states
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+
+  // ─── Interactive Tab Positioning Calibration (Live Nudge Tool) ───
+  const [tabOffset, setTabOffset] = useState<{ x: number; y: number; gap: number }>(() => {
+    try {
+      const saved = localStorage.getItem("waypoint_student_workspace_tab_coords");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { x: 68, y: -2, gap: 2 };
+  });
+  const [showTabCalibrator, setShowTabCalibrator] = useState(true);
+  const [copiedCoords, setCopiedCoords] = useState(false);
+
+  const updateTabOffset = (next: { x: number; y: number; gap: number }) => {
+    setTabOffset(next);
+    try {
+      localStorage.setItem("waypoint_student_workspace_tab_coords", JSON.stringify(next));
+    } catch {}
+  };
+
+  const handleCopyCoords = () => {
+    const text = `X: ${tabOffset.x}px, Y: ${tabOffset.y}px, Gap: ${tabOffset.gap}px`;
+    navigator.clipboard.writeText(text);
+    setCopiedCoords(true);
+    toast.success(`Coordinates copied to clipboard: ${text}`);
+    setTimeout(() => setCopiedCoords(false), 2500);
+  };
 
   const utils = trpc.useUtils();
 
@@ -304,11 +332,132 @@ export default function StudentWorkspace() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-[96vw] xl:max-w-[94vw] 2xl:max-w-[1720px] mx-auto mt-6 sm:mt-8 px-2 sm:px-4 md:px-6 flex flex-col relative z-20"
         >
-          {/* Folio Index Tabs: flush with desk pad top frame, pushed right to clear top-left brass bracket */}
+          {/* ─── Live Tab Position Calibration Controller ─────────────────────── */}
+          <div className="flex items-center justify-between mb-2 px-1">
+            {showTabCalibrator ? (
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-[#031530]/95 backdrop-blur-md border border-[#D4AF37]/50 shadow-2xl rounded-xl px-3 sm:px-4 py-2 text-xs text-white z-40 select-none">
+                <div className="flex items-center gap-2 pr-2 border-r border-white/15">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="font-bold text-[#f4d068] tracking-wide text-[11px] uppercase">
+                    Tab Calibrator
+                  </span>
+                </div>
+
+                {/* X Position (Left / Right) */}
+                <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/10">
+                  <span className="text-white/60 font-mono text-[11px]">X:</span>
+                  <span className="font-bold text-amber-300 font-mono min-w-[36px] text-center">{tabOffset.x}px</span>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, x: tabOffset.x - 5 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                    title="Nudge Left 5px"
+                  >-5</button>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, x: tabOffset.x - 1 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[11px] cursor-pointer"
+                    title="Nudge Left 1px"
+                  >-</button>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, x: tabOffset.x + 1 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[11px] cursor-pointer"
+                    title="Nudge Right 1px"
+                  >+</button>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, x: tabOffset.x + 5 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                    title="Nudge Right 5px"
+                  >+5</button>
+                </div>
+
+                {/* Y Position (Up / Down) */}
+                <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/10">
+                  <span className="text-white/60 font-mono text-[11px]">Y:</span>
+                  <span className="font-bold text-amber-300 font-mono min-w-[36px] text-center">{tabOffset.y}px</span>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, y: tabOffset.y - 5 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                    title="Nudge Up 5px"
+                  >-5</button>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, y: tabOffset.y - 1 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[11px] cursor-pointer"
+                    title="Nudge Up 1px"
+                  >-</button>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, y: tabOffset.y + 1 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[11px] cursor-pointer"
+                    title="Nudge Down 1px"
+                  >+</button>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, y: tabOffset.y + 5 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                    title="Nudge Down 5px"
+                  >+5</button>
+                </div>
+
+                {/* Gap Spacing */}
+                <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/10">
+                  <span className="text-white/60 font-mono text-[11px]">Gap:</span>
+                  <span className="font-bold text-amber-300 font-mono min-w-[28px] text-center">{tabOffset.gap}px</span>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, gap: Math.max(0, tabOffset.gap - 1) })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[11px] cursor-pointer"
+                    title="Decrease Gap 1px"
+                  >-</button>
+                  <button 
+                    onClick={() => updateTabOffset({ ...tabOffset, gap: tabOffset.gap + 1 })} 
+                    className="w-5 h-5 bg-white/10 hover:bg-white/20 active:scale-95 rounded flex items-center justify-center font-bold text-[11px] cursor-pointer"
+                    title="Increase Gap 1px"
+                  >+</button>
+                </div>
+
+                {/* Reset */}
+                <button
+                  onClick={() => updateTabOffset({ x: 68, y: -2, gap: 2 })}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/15 rounded-lg text-white/70 hover:text-white cursor-pointer text-[11px] transition-all"
+                  title="Reset to default (68px, -2px, 2px)"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset</span>
+                </button>
+
+                {/* Copy Coordinates */}
+                <button
+                  onClick={handleCopyCoords}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500/25 to-amber-600/35 hover:from-amber-500/40 hover:to-amber-600/50 active:scale-95 border border-amber-400/60 rounded-lg text-amber-300 font-semibold cursor-pointer text-[11px] shadow-sm transition-all"
+                  title="Copy current coordinates to clipboard"
+                >
+                  {copiedCoords ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedCoords ? "Copied!" : "Lock in (Copy)"}</span>
+                </button>
+
+                {/* Minimize Toggle */}
+                <button
+                  onClick={() => setShowTabCalibrator(false)}
+                  className="ml-auto w-6 h-6 flex items-center justify-center rounded text-white/40 hover:text-white hover:bg-white/10 cursor-pointer"
+                  title="Minimize tuner"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowTabCalibrator(true)}
+                className="flex items-center gap-1.5 px-3 py-1 bg-[#031530]/90 backdrop-blur-md border border-[#D4AF37]/50 rounded-lg text-amber-300 text-xs font-semibold hover:bg-[#031530] shadow-lg cursor-pointer transition-all z-40"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Adjust Tab Coordinates (X: {tabOffset.x}px, Y: {tabOffset.y}px)</span>
+              </button>
+            )}
+          </div>
+
+          {/* Folio Index Tabs: Live Calibrated Positioning */}
           <div 
-            className="flex items-end justify-start gap-[2px] relative z-30 overflow-x-auto no-scrollbar pl-14 sm:pl-16 md:pl-[68px]"
+            className="flex items-end justify-start relative z-30 overflow-x-auto no-scrollbar"
             style={{
-              marginBottom: "-2px",
+              paddingLeft: `${tabOffset.x}px`,
+              marginBottom: `${tabOffset.y}px`,
+              gap: `${tabOffset.gap}px`,
             }}
           >
             {[
