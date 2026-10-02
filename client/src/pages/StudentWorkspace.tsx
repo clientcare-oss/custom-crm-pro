@@ -349,13 +349,10 @@ export default function StudentWorkspace() {
           </div>
 
           {/* ─── The Real Textured Leather Folio Desk Pad (Multi-Layer Animated Container) ── */}
-          <div className="relative w-full bg-transparent overflow-visible shadow-none border-0 min-h-[580px]">
-            {/* Background Layer 1: Standard Executive Navy Leather Folio (Preloaded, Smooth Fade) */}
-            <motion.div
-              initial={false}
-              animate={{ opacity: activeTab === "notes" ? 0 : 1 }}
-              transition={{ duration: 0.32, ease: "easeInOut" }}
-              className="absolute inset-0 pointer-events-none select-none z-0"
+          <div className="relative w-full bg-[#02132d] rounded-2xl overflow-visible shadow-none border-0 min-h-[580px]">
+            {/* Background Layer 1: Standard Executive Navy Leather Folio (Permanent Solid Base) */}
+            <div
+              className="absolute inset-0 pointer-events-none select-none z-0 rounded-2xl"
               style={{
                 backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
                 backgroundSize: "100% 100%",
@@ -364,12 +361,12 @@ export default function StudentWorkspace() {
               }}
             />
 
-            {/* Background Layer 2: Notes Tab Ornate Gold-Border Navy Leather Folio (Preloaded, Smooth Fade) */}
+            {/* Background Layer 2: Notes Tab Ornate Gold-Border Navy Leather Folio (Fades in directly on top of solid base) */}
             <motion.div
               initial={false}
               animate={{ opacity: activeTab === "notes" ? 1 : 0 }}
-              transition={{ duration: 0.32, ease: "easeInOut" }}
-              className="absolute inset-0 pointer-events-none select-none z-0"
+              transition={{ duration: 0.28, ease: "easeInOut" }}
+              className="absolute inset-0 pointer-events-none select-none z-0 rounded-2xl"
               style={{
                 backgroundImage: "url('/decor/new-notes-tab.png?v=20261002-v1')",
                 backgroundSize: "100% 100%",
