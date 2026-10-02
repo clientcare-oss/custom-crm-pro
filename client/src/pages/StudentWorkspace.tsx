@@ -222,7 +222,7 @@ export default function StudentWorkspace() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    "relative flex items-center gap-2.5 px-4.5 sm:px-5.5 py-2.5 rounded-t-[10px] text-xs sm:text-[13.5px] transition-all cursor-pointer select-none",
+                    "relative flex items-center gap-2.5 px-4.5 sm:px-5.5 py-2.5 rounded-t-[3.5px] text-xs sm:text-[13.5px] transition-all cursor-pointer select-none",
                     "border border-b-0",
                     isActive
                       ? "bg-gradient-to-b from-[#032556] via-[#021d45] to-[#011432] text-white border-[#2b64a8]/80 z-30 pb-3 shadow-[0_-3px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(147,197,253,0.45)]"
