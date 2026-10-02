@@ -70,7 +70,7 @@ export function GivingDeskHeader({
   ];
 
   return (
-    <div className="w-full space-y-3 select-none relative z-20 pt-1 sm:pt-2">
+    <div className="w-full space-y-3 select-none relative pt-1 sm:pt-2">
       {/* ─── Clean Header Row: Centered Blue GIVING & IMPACT Plaque (Brought to front at z-30) ─── */}
       <div className="relative z-30 w-full flex items-center justify-center min-h-[84px]">
         {/* Center: Blue GIVING & IMPACT Navy Leather Plaque with Double Gold Wire */}
