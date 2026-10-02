@@ -53,6 +53,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { LighthouseCottageIcon } from "@/components/ui/LighthouseCottageIcon";
 import { MarineRadarIcon } from "@/components/ui/MarineRadarIcon";
+import { getTestUnreadState } from "@/lib/testUnreadHelper";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -560,7 +561,25 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     enabled: !!user,
     refetchInterval: 15000,
   });
-  const unreadMessageCount = (crewStats?.unreadTotal || 0) + (Array.isArray(unreadClientMsgs) ? unreadClientMsgs.length : 0);
+
+  // Simulated unread message tester state
+  const [testUnreadActive, setTestUnreadActive] = useState(() => getTestUnreadState());
+  useEffect(() => {
+    const handleTestChange = (e: any) => {
+      setTestUnreadActive(e?.detail?.active ?? getTestUnreadState());
+    };
+    window.addEventListener("waypoint-test-unread-changed", handleTestChange);
+    window.addEventListener("storage", handleTestChange);
+    return () => {
+      window.removeEventListener("waypoint-test-unread-changed", handleTestChange);
+      window.removeEventListener("storage", handleTestChange);
+    };
+  }, []);
+
+  const unreadMessageCount =
+    (crewStats?.unreadTotal || 0) +
+    (Array.isArray(unreadClientMsgs) ? unreadClientMsgs.length : 0) +
+    (testUnreadActive ? 1 : 0);
   const hasUnreadMessages = unreadMessageCount > 0;
 
   // Match current user to employee record (by email) for dynamic sidebar and route access

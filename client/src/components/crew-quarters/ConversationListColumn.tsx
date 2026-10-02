@@ -15,9 +15,13 @@ import {
   Compass,
   GraduationCap,
   Sparkles,
+  Bell,
 } from "lucide-react";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import PageIdBadge from "@/components/PageIdBadge";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { getTestUnreadState, setTestUnreadState } from "@/lib/testUnreadHelper";
 
 interface ConversationListColumnProps {
   conversations: {
@@ -43,6 +47,32 @@ export default function ConversationListColumn({
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [caseThreadsOpen, setCaseThreadsOpen] = useState(true);
+
+  // Unread notification alert tester
+  const [testUnread, setTestUnread] = useState(() => getTestUnreadState());
+
+  useEffect(() => {
+    const handleUpdate = (e: any) => {
+      setTestUnread(e?.detail?.active ?? getTestUnreadState());
+    };
+    window.addEventListener("waypoint-test-unread-changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("waypoint-test-unread-changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  const handleToggleTestUnread = () => {
+    const next = !testUnread;
+    setTestUnread(next);
+    setTestUnreadState(next);
+    if (next) {
+      toast.info("Simulated unread message alert activated! Check the sidebar messages icon.");
+    } else {
+      toast.success("Simulated unread alert turned off.");
+    }
+  };
 
   // Saved width in localStorage or default compact width (170px)
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -181,6 +211,34 @@ export default function ConversationListColumn({
           <Edit3 className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{sidebarWidth < 145 ? "New" : "New Message"}</span>
         </Button>
+
+        {/* 🧪 Unread Notification Alert Tester */}
+        <button
+          type="button"
+          onClick={handleToggleTestUnread}
+          className={cn(
+            "w-full h-7 px-2 rounded-xl text-[10px] sm:text-[11px] font-bold tracking-wide flex items-center justify-between transition-all cursor-pointer select-none border min-w-0",
+            testUnread
+              ? "bg-amber-500/20 border-amber-400/70 text-amber-200 shadow-[0_0_12px_rgba(245,181,68,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)]"
+              : "bg-[#020b18]/80 border-sky-500/25 text-slate-300 hover:text-white hover:border-sky-400/50 hover:bg-[#061833]"
+          )}
+          title="Toggle a simulated unread message to test the pulsing sidebar messages icon"
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            <Bell className={cn("w-3 h-3 shrink-0", testUnread ? "text-amber-300 animate-bounce" : "text-sky-300/70")} />
+            <span className="truncate">{sidebarWidth < 155 ? "Test Alert" : "Test Unread Alert"}</span>
+          </div>
+          <span
+            className={cn(
+              "text-[8.5px] font-black px-1.5 py-0.2 rounded-full uppercase shrink-0 transition-all",
+              testUnread
+                ? "bg-amber-400 text-slate-950 shadow-[0_0_8px_rgba(251,191,36,0.9)] animate-pulse"
+                : "bg-slate-800/80 text-slate-400 border border-slate-700/60"
+            )}
+          >
+            {testUnread ? "PULSING" : "OFF"}
+          </span>
+        </button>
       </div>
 
       {/* Scrollable Conversation Lists */}

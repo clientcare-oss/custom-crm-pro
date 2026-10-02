@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
-import { MessageSquare, Send, User } from "lucide-react";
+import { MessageSquare, Send, User, Bell } from "lucide-react";
 import RichTextEditor from "@/components/RichTextEditor";
 import PageIdBadge from "@/components/PageIdBadge";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { getTestUnreadState, setTestUnreadState } from "@/lib/testUnreadHelper";
 
 interface Contact {
   id: number;
@@ -91,11 +93,36 @@ export default function Messages() {
     return unreadMessages.filter((m: Message) => m.senderId === contactId).length;
   };
 
+  const [testUnread, setTestUnread] = useState(() => getTestUnreadState());
+
+  useEffect(() => {
+    const handleUpdate = (e: any) => {
+      setTestUnread(e?.detail?.active ?? getTestUnreadState());
+    };
+    window.addEventListener("waypoint-test-unread-changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("waypoint-test-unread-changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  const handleToggleTestUnread = () => {
+    const next = !testUnread;
+    setTestUnread(next);
+    setTestUnreadState(next);
+    if (next) {
+      toast.info("Simulated unread message alert activated! Look at the messages icon in the sidebar.");
+    } else {
+      toast.success("Simulated unread alert turned off.");
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-4 p-6">
       {/* Contacts Sidebar */}
       <Card className="w-80 flex flex-col">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 space-y-2.5">
           <CardTitle className="text-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
@@ -103,6 +130,34 @@ export default function Messages() {
             </div>
             <PageIdBadge id="PG-045" name="Client Messages" inline />
           </CardTitle>
+
+          {/* 🧪 Unread Notification Alert Tester */}
+          <button
+            type="button"
+            onClick={handleToggleTestUnread}
+            className={cn(
+              "w-full h-7 px-2.5 rounded-lg text-xs font-semibold tracking-wide flex items-center justify-between transition-all cursor-pointer select-none border",
+              testUnread
+                ? "bg-amber-500/20 border-amber-400/70 text-amber-200 shadow-[0_0_12px_rgba(245,181,68,0.35)]"
+                : "bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+            )}
+            title="Toggle a simulated unread message to test the pulsing sidebar messages icon"
+          >
+            <div className="flex items-center gap-1.5">
+              <Bell className={cn("w-3.5 h-3.5", testUnread ? "text-amber-400 animate-bounce" : "text-muted-foreground")} />
+              <span>Test Unread Alert</span>
+            </div>
+            <span
+              className={cn(
+                "text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase",
+                testUnread
+                  ? "bg-amber-400 text-slate-950 shadow-[0_0_8px_rgba(251,191,36,0.9)] animate-pulse"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {testUnread ? "PULSING" : "OFF"}
+            </span>
+          </button>
         </CardHeader>
         <CardContent className="flex-1 p-0 overflow-hidden">
           <ScrollArea className="h-full">
