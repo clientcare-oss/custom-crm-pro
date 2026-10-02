@@ -363,14 +363,20 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       icon: projectIcon,
       label: projectLabelPlural || "Students",
       path: "/students",
-      isActive: (loc) => loc === "/students" || loc.startsWith("/students/") || loc === "/projects" || loc.startsWith("/projects/"),
+      isActive: (loc) =>
+        loc === "/students" ||
+        loc.startsWith("/students/") ||
+        loc === "/projects" ||
+        loc.startsWith("/projects/") ||
+        loc.startsWith("/contacts/") ||
+        loc.startsWith("/project-workspace/"),
     },
     {
       id: "contacts",
       icon: Users,
       label: "Contacts",
       path: "/contacts",
-      isActive: (loc) => loc === "/contacts" || (loc.startsWith("/contacts/") && !loc.startsWith("/contacts/new")),
+      isActive: (loc) => loc === "/contacts" || loc === "/contacts/new",
     },
     {
       id: "advocacy",

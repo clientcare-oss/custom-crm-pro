@@ -143,25 +143,26 @@ export default function StudentWorkspace() {
         >
           <header className="flex items-center justify-between w-full bg-transparent border-0 shadow-none px-0 py-1">
             
-            {/* Left: Title & Breadcrumbs */}
-            <div className="flex items-center gap-3.5">
+            {/* Left: Back to List + Student Workspace Title */}
+            <div className="flex items-center gap-3 sm:gap-3.5">
+              <button
+                type="button"
+                onClick={() => setLocation("/students")}
+                className="text-xl sm:text-2xl font-bold tracking-tight text-white/80 hover:text-[#F2CD80] transition-colors cursor-pointer select-none bg-transparent p-0 border-0 shadow-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                title="Back to Student Workspaces list"
+              >
+                Back to List
+              </button>
+
+              <span className="text-sky-300/40 text-lg sm:text-xl font-light select-none">|</span>
+
               <h1 
                 className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
                 Student Workspace
               </h1>
-              <span className="text-sky-300/40 text-lg font-light">|</span>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-sky-100/90 font-medium drop-shadow-sm">
-                <button 
-                  onClick={() => setLocation("/students")}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
-                >
-                  Students
-                </button>
-                <span className="text-white/40">/</span>
-                <span className="text-white font-semibold">{fullName}</span>
-              </div>
             </div>
 
             {/* Right: Actions */}
