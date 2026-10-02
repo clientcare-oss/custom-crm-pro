@@ -551,6 +551,18 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     enabled: !!user && user.role !== "client",
   });
 
+  // Query unread messages for staff / team members
+  const { data: crewStats } = trpc.crewMessages.getOverviewStats.useQuery(undefined, {
+    enabled: !!user && user.role !== "client",
+    refetchInterval: 15000,
+  });
+  const { data: unreadClientMsgs = [] } = trpc.messages.unread.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 15000,
+  });
+  const unreadMessageCount = (crewStats?.unreadTotal || 0) + (Array.isArray(unreadClientMsgs) ? unreadClientMsgs.length : 0);
+  const hasUnreadMessages = unreadMessageCount > 0;
+
   // Match current user to employee record (by email) for dynamic sidebar and route access
   const currentEmployee = useMemo(() => {
     if (!user?.email) return null;
@@ -1105,6 +1117,23 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                         <span className="tracking-[0.28em] text-[#B9CDE3] text-[10.5px] font-semibold uppercase select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] pl-1">
                           ADVOCATES
                         </span>
+
+                        {/* Messages Icon Button (right of ADVOCATES, directly under the close/collapse button) */}
+                        <button
+                          type="button"
+                          onClick={() => setLocation("/crew-quarters?tab=messages")}
+                          className="absolute right-0 w-7 h-7 rounded-full flex items-center justify-center text-[#B9CDE3]/80 hover:text-[#F8D279] hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
+                          aria-label="Team member messages"
+                          title={hasUnreadMessages ? `${unreadMessageCount} new message${unreadMessageCount > 1 ? "s" : ""} — click to view` : "Team Member Messages"}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                          {hasUnreadMessages && (
+                            <span className="absolute top-0.5 right-0.5 flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400 shadow-[0_0_6px_rgba(245,181,68,0.9)]" />
+                            </span>
+                          )}
+                        </button>
                       </div>
 
                       {/* Expanding Search Bar (enters from left to right, covering ADVOCATES) */}
