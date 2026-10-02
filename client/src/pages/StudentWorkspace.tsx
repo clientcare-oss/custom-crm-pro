@@ -988,58 +988,16 @@ export default function StudentWorkspace() {
 
             {/* ─── NOTES TAB: Tactile Yellow Sticky Notes Board on Ornate Navy Leather Frame ─── */}
             {activeTab === "notes" && (
-              <div className="w-full min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8 flex flex-col justify-between">
-                <div>
-                  {/* Top Hub Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-white/15 gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-md shrink-0">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 
-                          className="text-xl sm:text-2xl font-bold text-white tracking-wide drop-shadow-sm flex items-center gap-2"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          <span>Advocate Working Notes & Strategy Board</span>
-                        </h3>
-                        <p className="text-xs sm:text-sm text-white/65 mt-0.5">
-                          Tactile case stickies, quick thoughts, IEP observations, and strategy memos.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                      <Badge className="bg-[#0e274a]/90 text-amber-300 border border-amber-400/35 text-[11px] font-medium px-3 py-1 rounded-lg shadow-sm">
-                        Case #{student?.caseId || studentId} · {fullName}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Tactile Sticky Notes Board */}
-                  <TactileStickyNotesBoard
-                    studentId={studentId}
-                    studentName={fullName}
-                    projectId={projects[0]?.id || effectiveProjectId}
-                    appointments={appointments as any}
-                    onProjectCreated={() => {
-                      utils.contacts.detail.invalidate({ id: studentId });
-                    }}
-                  />
-                </div>
-
-                {/* Footer Return Button */}
-                <div className="pt-4 flex items-center justify-between border-t border-white/10 mt-6 text-xs text-white/50">
-                  <span>Waypoint Advocates · Case #{student?.caseId || studentId}</span>
-                  <Button
-                    onClick={() => setActiveTab("overview")}
-                    variant="outline"
-                    size="sm"
-                    className="bg-transparent hover:bg-white/10 border-white/20 text-white text-xs h-8 px-3 rounded-lg cursor-pointer"
-                  >
-                    Return to Overview Desk
-                  </Button>
-                </div>
+              <div className="w-full min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
+                <TactileStickyNotesBoard
+                  studentId={studentId}
+                  studentName={fullName}
+                  projectId={projects[0]?.id || effectiveProjectId}
+                  appointments={appointments as any}
+                  onProjectCreated={() => {
+                    utils.contacts.detail.invalidate({ id: studentId });
+                  }}
+                />
               </div>
             )}
 
