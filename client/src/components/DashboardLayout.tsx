@@ -1147,13 +1147,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                         >
                           <MessageSquare className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                           {hasUnreadMessages && (
-                            <span className="absolute -top-0.5 -left-0.5 flex h-2.5 w-2.5 pointer-events-none">
-                              {/* Outer expanding ping ring */}
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-90" />
-                              {/* Secondary soft pulsating halo */}
-                              <span className="animate-pulse absolute inline-flex -inset-1 rounded-full bg-amber-400/50 blur-[2px]" />
-                              {/* Glowing core */}
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gradient-to-tr from-amber-500 to-amber-300 border border-[#07162C] shadow-[0_0_8px_#F5B544,0_0_14px_rgba(245,181,68,0.95)]" />
+                            <span className="absolute -top-1 -left-1 flex h-3 w-3 items-center justify-center pointer-events-none">
+                              {/* Continuous circular ripple waves expanding outward and fading */}
+                              <span className="absolute h-full w-full rounded-full border-2 border-amber-400 bg-amber-400/35 animate-ripple-out pointer-events-none" />
+                              <span className="absolute h-full w-full rounded-full border border-amber-300 bg-amber-300/25 animate-ripple-out-delay pointer-events-none" />
+
+                              {/* Center anchor amber jewel dot */}
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-tr from-amber-500 via-amber-400 to-[#FFF3B0] border border-[#051124] shadow-[0_0_8px_#F5B544,0_0_14px_rgba(245,181,68,0.95)]" />
                             </span>
                           )}
                         </button>
