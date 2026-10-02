@@ -326,11 +326,11 @@ export default function StudentWorkspace() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    "relative flex items-center gap-2.5 px-4.5 sm:px-5.5 py-2.5 rounded-t-[3.5px] text-xs sm:text-[13.5px] transition-all cursor-pointer select-none",
+                    "relative flex items-center gap-2.5 px-4.5 sm:px-5.5 py-2.5 rounded-t-[3.5px] text-xs sm:text-[13.5px] transition-colors cursor-pointer select-none",
                     "border border-b-0",
                     isActive
-                      ? "bg-gradient-to-b from-[#032556] via-[#021d45] to-[#011432] text-white border-[#2b64a8]/80 z-30 pb-3 shadow-[0_-3px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(147,197,253,0.45)]"
-                      : "bg-gradient-to-b from-[#021a3b] via-[#021532] to-[#010e24] text-[#e2e8f0]/85 hover:text-white hover:from-[#03224c] hover:to-[#01132e] border-[#1a4478]/70 z-20 pb-2.5 shadow-[0_-2px_6px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(96,165,250,0.3)]"
+                      ? "bg-gradient-to-b from-[#032556] via-[#021d45] to-[#011432] text-white border-[#2b64a8]/80 z-30 shadow-[0_-3px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(147,197,253,0.45)]"
+                      : "bg-gradient-to-b from-[#021a3b] via-[#021532] to-[#010e24] text-[#e2e8f0]/85 hover:text-white hover:from-[#03224c] hover:to-[#01132e] border-[#1a4478]/70 z-20 shadow-[0_-2px_6px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(96,165,250,0.3)]"
                   )}
                   style={{
                     fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
@@ -379,15 +379,15 @@ export default function StudentWorkspace() {
             {/* Rigid Photorealistic Brass Corner Brackets — Floating at z-30 Above All Layers */}
             <FolioCornerBrackets />
 
-            {/* Tab Content Display with Smooth Page-Turn Dissolve */}
+            {/* Tab Content Display with Stable Zero-Shake Dissolve */}
             <div className="relative z-10 w-full min-h-[540px] xl:min-h-[580px]">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={activeTab}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.16, ease: "linear" }}
                   className="w-full h-full"
                 >
             {activeTab === "overview" && (
