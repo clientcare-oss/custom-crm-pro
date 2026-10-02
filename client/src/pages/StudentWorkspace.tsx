@@ -13,6 +13,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { NotesSection } from "@/components/NotesSection";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -43,6 +44,7 @@ export default function StudentWorkspace() {
   const parent = data?.parentContact;
   const compass = data?.compass;
   const appointments = data?.appointments || [];
+  const effectiveProjectId = (data as any)?.projects?.[0]?.id || studentId;
 
   // Toggle action checkbox
   const toggleAction = (key: string) => {
@@ -243,7 +245,9 @@ export default function StudentWorkspace() {
           <div
             className="relative w-full bg-transparent overflow-visible shadow-none border-0"
             style={{
-              backgroundImage: "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
+              backgroundImage: activeTab === "notes"
+                ? "url('/decor/ornate-navy-leather-ui-frame.png?v=20261001-notes')"
+                : "url('/decor/student-workspace-folio-v2.png?v=20261001-rev3')",
               backgroundSize: "100% 100%",
               backgroundPosition: "center center",
               backgroundRepeat: "no-repeat",
@@ -729,13 +733,67 @@ export default function StudentWorkspace() {
               </div>
             )}
 
+            {/* ─── NOTES TAB: Ornate Navy Leather Framed Case Notes Workspace ─────── */}
+            {activeTab === "notes" && (
+              <div className="min-h-[540px] xl:min-h-[580px] p-6 sm:p-10 md:p-12 flex flex-col justify-between">
+                <div className="space-y-4 max-w-5xl mx-auto w-full">
+                  {/* Ornate Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-white/15">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-md">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 
+                          className="text-lg sm:text-2xl font-bold text-white tracking-wide drop-shadow-sm"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          Case Notes & Advocacy Log
+                        </h3>
+                        <p className="text-xs text-white/60">
+                          Observations, IEP meeting minutes, and internal notes for {fullName}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                        Notes Workspace
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Notes Content */}
+                  <div className="pt-2">
+                    <NotesSection 
+                      projectId={effectiveProjectId} 
+                      studentName={student?.firstName || fullName} 
+                    />
+                  </div>
+                </div>
+
+                {/* Footer Return */}
+                <div className="pt-4 flex items-center justify-between border-t border-white/15 mt-6 max-w-5xl mx-auto w-full">
+                  <span className="text-xs text-white/50">
+                    Notes synced with Case #{student?.caseId || studentId}
+                  </span>
+                  <Button
+                    onClick={() => setActiveTab("overview")}
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent hover:bg-white/10 border-white/20 text-white text-xs h-8 px-3 rounded-lg cursor-pointer"
+                  >
+                    Return to Overview Desk
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Fallback View for Other Tabs */}
-            {activeTab !== "overview" && activeTab !== "more" && (
+            {(activeTab === "communication" || activeTab === "tasks" || activeTab === "documents" || activeTab === "timeline") && (
               <div className="p-12 min-h-[480px] flex flex-col items-center justify-center text-center space-y-4">
                 <div className="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-lg">
                   {activeTab === "communication" && <MessageSquare className="h-7 w-7" />}
                   {activeTab === "tasks" && <CheckSquare className="h-7 w-7" />}
-                  {activeTab === "notes" && <FileText className="h-7 w-7" />}
                   {activeTab === "documents" && <Folder className="h-7 w-7" />}
                 </div>
                 <div>
