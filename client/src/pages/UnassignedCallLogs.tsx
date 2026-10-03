@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, PhoneCall, ChevronUp } from "lucide-react";
 import { useActiveCall } from "@/contexts/ActiveCallContext";
+import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
+import PageIdBadge from "@/components/PageIdBadge";
 
 // Subcomponents
 import { CallCenterHeader } from "@/components/callCenter/CallCenterHeader";
@@ -266,8 +268,9 @@ export default function UnassignedCallLogs() {
   const webhookUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/quo/webhook`;
 
   return (
-    <div className="min-h-screen bg-[#000821] text-slate-100 px-2 sm:px-3 pt-0 pb-6 space-y-3 sm:space-y-3.5">
-      {/* Top Header */}
+    <ScopedErrorBoundary moduleName="Call Center">
+      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] px-2 sm:px-3 pt-0 pb-6 space-y-3 sm:space-y-3.5">
+        {/* Top Header */}
       <CallCenterHeader
         callsTodayCount={callsTodayCount}
         activeFilter={activeStatFilter}
@@ -415,22 +418,22 @@ export default function UnassignedCallLogs() {
       />
 
       {/* Operational Call Workspace Bar & Toggle Button */}
-      <div className="flex items-center justify-between gap-4 flex-wrap bg-[#000821] border border-sky-500/20 rounded-2xl p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-4 flex-wrap bg-[#05142B]/95 border border-[#3A2C18] rounded-2xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#020A17] border border-[#C5A059]/40 flex items-center justify-center text-[#FFE394] flex-shrink-0 shadow-inner">
             <PhoneCall className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-white tracking-tight">OPERATIONAL WORKSPACE</span>
-              <span className="text-xs text-slate-400 font-mono">PG-018 · Dynamic Call Brain</span>
+              <span className="font-serif text-sm font-bold text-[#FFF4D4] tracking-tight">OPERATIONAL WORKSPACE</span>
+              <PageIdBadge id="PG-018" variant="inline" />
               {call.isActive && (
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
                   Active Session
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#C6B697] mt-0.5">
               {showCallWorkspace
                 ? "Interactive caller identification, live SOP guidance, and call wrap-up actions."
                 : "Operational call workspace is minimized. Click 'Show Call Workspace' to open."}
@@ -444,9 +447,9 @@ export default function UnassignedCallLogs() {
               size="sm"
               variant="ghost"
               onClick={() => setShowFirstMateAssist(!showFirstMateAssist)}
-              className="text-xs text-sky-400 hover:text-sky-300 hover:bg-sky-950/40 rounded-xl"
+              className="text-xs text-[#C5A059] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent hover:border-[#3A2C18] rounded-xl transition-colors cursor-pointer"
             >
-              <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
+              <Sparkles className="h-3.5 w-3.5 mr-1.5 text-[#FFE394]" />
               {showFirstMateAssist ? "Hide First Mate Live Assist" : "Show First Mate Live Assist"}
             </Button>
           )}
@@ -464,8 +467,8 @@ export default function UnassignedCallLogs() {
               }
             }}
             className={showCallWorkspace
-              ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-4 py-2 rounded-xl gap-1.5 cursor-pointer"
-              : "bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.3)] gap-1.5 cursor-pointer"
+              ? "border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] font-bold text-xs px-4 py-2 rounded-xl gap-1.5 cursor-pointer shadow-md transition-colors"
+              : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs px-4 py-2 rounded-xl border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] gap-1.5 cursor-pointer hover:brightness-110 transition-all"
             }
           >
             {showCallWorkspace ? (
@@ -586,5 +589,6 @@ export default function UnassignedCallLogs() {
         />
       )}
     </div>
+    </ScopedErrorBoundary>
   );
 }

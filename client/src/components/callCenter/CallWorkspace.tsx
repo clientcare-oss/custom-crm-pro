@@ -4,16 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Sparkles,
   PhoneCall,
-  UserCheck,
-  HelpCircle,
-  BookOpen,
-  ArrowDown,
-  CheckCircle2,
   FileEdit,
   ChevronUp,
 } from "lucide-react";
+import PageIdBadge from "@/components/PageIdBadge";
 import { CallerIdentitySelector } from "./CallerIdentitySelector";
 import { CallTypeSelector } from "./CallTypeSelector";
 import { CallFlowPanel } from "./CallFlowPanel";
@@ -34,10 +29,9 @@ interface CallWorkspaceProps {
 
 export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
   onAddNewContactRequest,
-  onCallInQuo,
   onCloseWorkspace,
 }) => {
-  const { call, setGeneralNotes, endCallSession } = useActiveCall();
+  const { call, setGeneralNotes } = useActiveCall();
 
   // Drawer / Modal states
   const [guideDrawerOpen, setGuideDrawerOpen] = useState(false);
@@ -47,9 +41,9 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
     const el = document.getElementById("wrap-up-call-section");
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-      el.classList.add("ring-2", "ring-amber-400", "transition-all", "duration-500");
+      el.classList.add("ring-2", "ring-[#C5A059]", "transition-all", "duration-500");
       setTimeout(() => {
-        el.classList.remove("ring-2", "ring-amber-400");
+        el.classList.remove("ring-2", "ring-[#C5A059]");
       }, 1500);
     }
   };
@@ -60,88 +54,86 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
   const isAdvocacyCase = call.callType === "Advocacy / Case Question" && !isDiscoveryMode;
 
   return (
-    <div id="call-workspace" className="space-y-6 scroll-mt-6">
+    <div id="call-workspace" className="space-y-6 scroll-mt-6 select-none">
       {/* Top Banner: Call Workspace Workflow Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-sky-500/30 bg-gradient-to-r from-[#071933] via-[#0B254A] to-[#081C38] p-6 shadow-2xl">
-        <div className="absolute top-0 right-0 transform translate-x-8 -translate-y-8 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="relative overflow-hidden rounded-2xl border border-[#3A2C18] bg-[#05142B]/95 p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <Badge className="bg-amber-400/20 text-amber-300 border-amber-400/40 text-xs px-3 py-1 font-bold">
+              <Badge className="bg-[#020A17] text-[#FFE394] border border-[#3A2C18] text-xs px-3 py-1 font-bold">
                 OPERATIONAL WORKSPACE
               </Badge>
-              <span className="text-xs text-slate-400 font-mono">PG-018 · Dynamic Call Brain</span>
+              <PageIdBadge id="PG-018" />
               {onCloseWorkspace && (
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={onCloseWorkspace}
-                  className="h-6 px-2 text-xs text-slate-400 hover:text-white hover:bg-white/10 rounded-lg ml-2"
+                  className="h-6 px-2 text-xs text-[#A69371] hover:text-[#FFF4D4] hover:bg-[#07162B] rounded-lg ml-2 cursor-pointer"
                 >
                   <ChevronUp className="h-3.5 w-3.5 mr-1" />
                   Hide Workspace
                 </Button>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-              <PhoneCall className="h-7 w-7 text-amber-400" />
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#FFF4D4] tracking-tight flex items-center gap-3">
+              <PhoneCall className="h-7 w-7 text-[#C5A059]" />
               <span>CALL WORKSPACE</span>
             </h1>
-            <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-sm text-[#C6B697] mt-1 max-w-2xl leading-relaxed">
               Waypoint CRM is the workflow brain around the phone call. Identify the caller, select the reason, follow the guided SOP, and log follow-up actions effortlessly.
             </p>
           </div>
 
-          {/* Workflow Breadcrumb Indicator: Who is this? → Why are they calling? → Show me what to do */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#040D1A]/90 p-3 rounded-xl border border-slate-800 text-xs shadow-inner">
+          {/* Workflow Breadcrumb Indicator */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#020A17] p-3 rounded-xl border border-[#3A2C18] text-xs shadow-inner">
             <div className="flex items-center gap-1.5">
               <div
                 className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                   call.callerCategory
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400"
-                    : "bg-amber-400/20 text-amber-300 border border-amber-400 animate-pulse"
+                    ? "bg-[#04241B] text-[#6EE7B7] border border-[#059669]"
+                    : "bg-[#2D1B00] text-[#FDE047] border border-[#A35900] animate-pulse"
                 }`}
               >
                 1
               </div>
-              <span className={call.callerCategory ? "text-emerald-300 font-semibold" : "text-amber-200 font-medium"}>
+              <span className={call.callerCategory ? "text-[#6EE7B7] font-semibold" : "text-[#FFE394] font-medium"}>
                 Who is this?
               </span>
             </div>
 
-            <span className="text-slate-600 hidden sm:inline">→</span>
+            <span className="text-[#3A2C18] hidden sm:inline">→</span>
 
             <div className="flex items-center gap-1.5">
               <div
                 className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                   call.callType
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400"
+                    ? "bg-[#04241B] text-[#6EE7B7] border border-[#059669]"
                     : call.callerCategory
-                    ? "bg-amber-400/20 text-amber-300 border border-amber-400 animate-pulse"
-                    : "bg-slate-800 text-slate-500 border border-slate-700"
+                    ? "bg-[#2D1B00] text-[#FDE047] border border-[#A35900] animate-pulse"
+                    : "bg-[#000814] text-[#A69371] border border-[#3A2C18]"
                 }`}
               >
                 2
               </div>
-              <span className={call.callType ? "text-emerald-300 font-semibold" : call.callerCategory ? "text-amber-200 font-medium" : "text-slate-500"}>
+              <span className={call.callType ? "text-[#6EE7B7] font-semibold" : call.callerCategory ? "text-[#FFE394] font-medium" : "text-[#A69371]"}>
                 Why calling?
               </span>
             </div>
 
-            <span className="text-slate-600 hidden sm:inline">→</span>
+            <span className="text-[#3A2C18] hidden sm:inline">→</span>
 
             <div className="flex items-center gap-1.5">
               <div
                 className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                   call.callType
-                    ? "bg-sky-500/20 text-sky-300 border border-sky-400"
-                    : "bg-slate-800 text-slate-500 border border-slate-700"
+                    ? "bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B]"
+                    : "bg-[#000814] text-[#A69371] border border-[#3A2C18]"
                 }`}
               >
                 3
               </div>
-              <span className={call.callType ? "text-sky-300 font-semibold" : "text-slate-500"}>
+              <span className={call.callType ? "text-[#FFE394] font-semibold" : "text-[#A69371]"}>
                 Show what to do
               </span>
             </div>
@@ -165,34 +157,34 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
       {isDiscoveryMode && (
         <div className="animate-in fade-in slide-in-from-top-3 duration-300 space-y-4">
           {call.leadId ? (
-            <div className="rounded-2xl border border-amber-500/30 bg-[#07162B] p-5 shadow-2xl">
-              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3 flex-wrap gap-2">
+            <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B] p-5 shadow-2xl">
+              <div className="flex items-center justify-between mb-4 border-b border-[#3A2C18] pb-3 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-amber-400/20 text-amber-300 border-amber-400/40 text-xs font-bold">
+                  <Badge className="bg-[#020A17] text-[#FFE394] border border-[#3A2C18] text-xs font-bold">
                     ACTIVE DISCOVERY CALL CANVAS
                   </Badge>
-                  <span className="text-xs text-slate-300 font-mono">PG-018 · PG-003-DC Embedded</span>
+                  <span className="text-xs text-[#C6B697] font-mono">PG-018 ↔ PG-003-DC Embedded</span>
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-[#A69371]">
                   Real-time synchronization with Lead Center and student records.
                 </div>
               </div>
               <DiscoveryCall
                 leadId={call.leadId}
                 embedded={true}
-                onCallCompleted={(data) => {
+                onCallCompleted={() => {
                   toast.success("Discovery call completed and synced to lead record!");
                   scrollToWrapUp();
                 }}
               />
             </div>
           ) : (
-            <div className="p-8 rounded-2xl border border-amber-400/40 bg-[#0a1829] text-center space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mx-auto">
+            <div className="p-8 rounded-2xl border border-[#3A2C18] bg-[#020A17] text-center space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-xl bg-[#000814] border border-[#3A2C18] flex items-center justify-center text-[#C5A059] mx-auto">
                 <PhoneCall className="h-6 w-6" />
               </div>
-              <h3 className="text-base font-bold text-white">Select a Lead to Activate Discovery Call</h3>
-              <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+              <h3 className="text-base font-serif font-bold text-[#FFF4D4]">Select a Lead to Activate Discovery Call</h3>
+              <p className="text-xs text-[#C6B697] max-w-md mx-auto leading-relaxed">
                 Choose the prospective parent or scheduled call in Section 1 above to load their student record, custom discovery questionnaire, and pricing workflows.
               </p>
             </div>
@@ -219,15 +211,15 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
       )}
 
       {/* PERSISTENT GENERAL CALL NOTES SECTION */}
-      <Card className="p-5 rounded-2xl border border-slate-800 bg-[#07162B] shadow-xl space-y-3">
+      <Card className="p-5 rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-xl space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileEdit className="h-4 w-4 text-amber-400" />
-            <h3 className="text-sm font-bold text-white tracking-tight">
+            <FileEdit className="h-4 w-4 text-[#C5A059]" />
+            <h3 className="text-sm font-serif font-bold text-[#FFF4D4] tracking-tight">
               General Call Notes
             </h3>
           </div>
-          <span className="text-xs text-slate-500">Auto-saved to active session</span>
+          <span className="text-xs text-[#A69371]">Auto-saved to active session</span>
         </div>
 
         <textarea
@@ -235,7 +227,7 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
           value={call.generalNotes || ""}
           onChange={(e) => setGeneralNotes(e.target.value)}
           placeholder="Document general conversation notes, parent comments, or advocate recommendations here..."
-          className="w-full text-xs rounded-xl bg-[#040D1A] border border-slate-800 p-3 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-amber-400/50 resize-y"
+          className="w-full text-xs rounded-xl bg-[#020A17] border border-[#3A2C18] p-3 text-[#FFF4D4] placeholder:text-[#A69371] focus:outline-hidden focus:border-[#C5A059] resize-y"
         />
       </Card>
 
