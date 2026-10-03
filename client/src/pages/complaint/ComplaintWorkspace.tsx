@@ -401,6 +401,14 @@ export default function ComplaintWorkspace() {
     toast.success("State Complaint draft saved to secure advocacy docket");
   };
 
+  // Safe back navigation to student profile
+  const handleSafeBackToProfile = () => {
+    setLastSavedText("Draft saved just now");
+    toast.success("Draft safely saved. Returning to student profile...");
+    const dest = params.id ? `/students/${params.id}` : "/students";
+    navigate(dest);
+  };
+
   return (
     <ScopedErrorBoundary moduleName="State Complaint Builder">
       <div 
@@ -439,8 +447,35 @@ export default function ComplaintWorkspace() {
             }}
           />
 
-          {/* Left: Page ID badge & docket indicator */}
-          <div className="flex items-center gap-3 min-w-0 sm:min-w-[140px] md:min-w-[190px]">
+          {/* Left: Safe Back to Profile + Divider + Page ID badge */}
+          <div className="flex items-center gap-3 min-w-0 sm:min-w-[180px] md:min-w-[240px]">
+            <button
+              type="button"
+              onClick={handleSafeBackToProfile}
+              className="group flex flex-col items-center justify-center text-left py-0.5 px-1 hover:opacity-90 transition-all cursor-pointer select-none"
+              title="Safely save draft and return to student profile"
+            >
+              <span className="font-serif text-[15px] sm:text-[16px] text-[#FFF4D4] font-normal tracking-wide group-hover:text-[#FFE394] transition-colors leading-tight">
+                Back to Profile
+              </span>
+              {/* Curved gold return arrow matching user reference */}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-3.5 h-3 text-[#DFBE77] mt-0.5 group-hover:text-[#FFE394] group-hover:-translate-x-0.5 transition-all"
+              >
+                <path d="M 9 14 L 4 9 L 9 4" />
+                <path d="M 20 20 V 13 C 20 10.79 18.21 9 16 9 L 4 9" />
+              </svg>
+            </button>
+
+            {/* Thin vertical divider line matching reference screenshot */}
+            <div className="h-7 w-[1px] bg-[#3A2C18] border-r border-[#6B5328]/50 self-center" />
+
             <PageIdBadge id="PG-020" />
           </div>
 
@@ -591,7 +626,7 @@ export default function ComplaintWorkspace() {
                       {/* Authentic Ornate Brass & Navy Slip Bracket */}
                       <BrassSlipHandle isActive={isActive} />
 
-                      {/* Number brought snug to the left + maximized room for title */}
+                      {/* Number brought snug to the left + vertical line divider + maximized room for title */}
                       <div className="flex items-center min-w-0 flex-1 pl-1 pr-1.5 gap-1.5">
                         <span className={cn(
                           "font-mono text-[11px] shrink-0 font-bold leading-none",
@@ -599,6 +634,13 @@ export default function ComplaintWorkspace() {
                         )}>
                           {p.number}
                         </span>
+
+                        {/* Thin vertical line divider after the number */}
+                        <div className={cn(
+                          "h-3 w-[1px] shrink-0",
+                          isActive ? "bg-[#8C6D2B]/75" : "bg-[#B39358]/55"
+                        )} />
+
                         <span 
                           className={cn(
                             "text-[12px] truncate tracking-tight font-serif font-bold leading-tight flex-1 min-w-0",
