@@ -940,42 +940,6 @@ export default function ComplaintWorkspace() {
                 backgroundAttachment: "local",
               }}
             >
-              
-              {/* Floating Parchment Capsule Pill (tightened distance to document) */}
-              <div 
-                style={{
-                  backgroundImage: "url('/decor/fine-parchment.jpg')",
-                  backgroundSize: "cover",
-                }}
-                className="flex items-center border border-[#B39358] rounded-md shadow-[0_3px_10px_rgba(0,0,0,0.65)] p-0.5 mb-2 z-20 shrink-0"
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = activePageId === "cover" ? "complaint" : "cover";
-                    setActivePageId(next);
-                    if (next === "cover") setActiveToolbarTab("cover");
-                    else setActiveToolbarTab("edit");
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1 text-xs font-serif font-bold text-[#1A120A] hover:bg-black/[0.05] rounded transition-colors cursor-pointer"
-                >
-                  <FileText className="w-3.5 h-3.5 text-[#6E4F18]" />
-                  <span>{activePage.title}</span>
-                  <ChevronDown className="w-3 h-3 text-[#6E4F18]" />
-                </button>
-
-                <div className="w-[1px] h-4 bg-[#B39358]/60 mx-1" />
-
-                <button
-                  type="button"
-                  onClick={() => setIsEditCoverModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1 text-xs font-serif font-bold text-[#1A120A] hover:bg-black/[0.05] rounded transition-colors cursor-pointer"
-                >
-                  <Pencil className="w-3 h-3 text-[#6E4F18]" />
-                  <span>Edit details</span>
-                </button>
-              </div>
-
               {/* ── PARCHMENT LETTER DOCUMENT SHEET ─────────────────────── */}
               {/* Uses pristine fine parchment texture with zero dark brown bands and calm lighter center for reading */}
               <div
@@ -1040,118 +1004,102 @@ export default function ComplaintWorkspace() {
 
                     {/* Metadata Table Form Grid (2 Columns) */}
                     <div className="max-w-md sm:max-w-lg mx-auto w-full my-auto py-6 sm:py-8 shrink-0">
-                      <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[180px_1fr] gap-y-3 sm:gap-y-3.5 text-left text-xs sm:text-sm font-serif">
+                      <div className="grid grid-cols-[140px_1fr] sm:grid-cols-[170px_1fr] gap-y-2.5 sm:gap-y-3 text-left text-xs sm:text-sm font-serif">
                         
                         {/* Student */}
-                        <div className="font-bold text-[#1A120A]">Student:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span>{caseDetails.studentName}</span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">Student:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.studentName}
+                            onChange={(e) => handleQuickFieldUpdate("studentName", e.target.value)}
+                            placeholder="Student Full Legal Name"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)]"
+                          />
                         </div>
 
                         {/* Date of Birth */}
-                        <div className="font-bold text-[#1A120A]">Date of birth:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span className={caseDetails.studentDob ? "text-[#2B1F11]" : "text-[#8C7A60] italic"}>
-                            {caseDetails.studentDob || "[Add date of birth]"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-70 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">Date of birth:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.studentDob}
+                            onChange={(e) => handleQuickFieldUpdate("studentDob", e.target.value)}
+                            placeholder="MM/DD/YYYY"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
+                          />
                         </div>
 
                         {/* Grade */}
-                        <div className="font-bold text-[#1A120A]">Grade:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span>{caseDetails.grade}</span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">Grade:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.grade}
+                            onChange={(e) => handleQuickFieldUpdate("grade", e.target.value)}
+                            placeholder="e.g. 4th grade"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs"
+                          />
                         </div>
 
                         {/* School */}
-                        <div className="font-bold text-[#1A120A]">School:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span className={caseDetails.school ? "text-[#2B1F11]" : "text-[#8C7A60] italic"}>
-                            {caseDetails.school || "[Add school]"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-70 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">School:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.school}
+                            onChange={(e) => handleQuickFieldUpdate("school", e.target.value)}
+                            placeholder="e.g. Elementary / High School"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
+                          />
                         </div>
 
                         {/* District */}
-                        <div className="font-bold text-[#1A120A]">District:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span>{caseDetails.district}</span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">District:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.district}
+                            onChange={(e) => handleQuickFieldUpdate("district", e.target.value)}
+                            placeholder="e.g. County School District"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs"
+                          />
                         </div>
 
                         {/* Parent / Guardian */}
-                        <div className="font-bold text-[#1A120A]">Parent / Guardian:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span className={caseDetails.parentName ? "text-[#2B1F11]" : "text-[#8C7A60] italic"}>
-                            {caseDetails.parentName || "[Add parent name]"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-70 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">Parent / Guardian:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.parentName}
+                            onChange={(e) => handleQuickFieldUpdate("parentName", e.target.value)}
+                            placeholder="Parent or Guardian name"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
+                          />
                         </div>
 
                         {/* Prepared by */}
-                        <div className="font-bold text-[#1A120A]">Prepared by:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span>{caseDetails.preparedBy}</span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">Prepared by:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.preparedBy}
+                            onChange={(e) => handleQuickFieldUpdate("preparedBy", e.target.value)}
+                            placeholder="e.g. Waypoint Advocates"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs"
+                          />
                         </div>
 
                         {/* Submission date */}
-                        <div className="font-bold text-[#1A120A]">Submission date:</div>
-                        <div className="text-[#2B1F11] font-medium flex items-center justify-between group">
-                          <span className={caseDetails.submissionDate ? "text-[#2B1F11]" : "text-[#8C7A60] italic"}>
-                            {caseDetails.submissionDate || "[Add date]"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditCoverModalOpen(true)}
-                            className="opacity-70 group-hover:opacity-100 transition-opacity text-[#8C7A60] hover:text-[#1A120A] p-0.5 cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
+                        <div className="font-bold text-[#1A120A] self-center">Submission date:</div>
+                        <div>
+                          <input
+                            type="text"
+                            value={caseDetails.submissionDate}
+                            onChange={(e) => handleQuickFieldUpdate("submissionDate", e.target.value)}
+                            placeholder="MM/DD/YYYY"
+                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
+                          />
                         </div>
 
                       </div>
