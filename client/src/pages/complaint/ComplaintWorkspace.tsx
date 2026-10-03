@@ -446,9 +446,9 @@ export default function ComplaintWorkspace() {
           }}
         />
 
-        {/* ── TOP HEADER BAR (Executive Admiralty Navy & Brass) ─────────────── */}
+        {/* ── TOP HEADER BAR (Full-width edge-to-edge, zero buffer) ─────────── */}
         <header 
-          className="relative z-30 flex items-center justify-between px-5 sm:px-6 py-2 mx-3 mt-2.5 rounded-[14px] border-x border-[#3A2C18] border-t border-[#DFBE77] border-b border-[#5E4215] bg-gradient-to-b from-[#092144] via-[#061836] to-[#04142B] shadow-[inset_0_1px_0_rgba(255,245,200,0.45),0_4px_16px_rgba(0,0,0,0.7)]"
+          className="relative z-30 flex items-center justify-between px-4 sm:px-6 py-2 w-full border-b border-[#5E4215] bg-gradient-to-b from-[#092144] via-[#061836] to-[#04142B] shadow-[0_4px_16px_rgba(0,0,0,0.7)]"
           style={{
             backgroundImage: "url('/decor/folio-leather-texture.png')",
             backgroundRepeat: "repeat",
