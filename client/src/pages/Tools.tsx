@@ -4,6 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PageIdBadge from "@/components/PageIdBadge";
+import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import {
   Wand2, Search, Star, Calendar, Video, FileText, CheckCircle2, Play, Lock,
   PenTool, ShieldCheck, Target, Puzzle, LineChart, Compass, Sparkles,
@@ -662,540 +664,553 @@ export default function Tools() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-slate-100 p-6 md:p-8">
-      <div className="max-w-6xl mx-auto w-full space-y-10">
-        {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/25 shadow-md shadow-indigo-500/5">
-            <Wand2 className="h-6 w-6 text-indigo-400" />
+    <ScopedErrorBoundary moduleName="Tools Hub">
+      <div 
+        className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100 p-6 md:p-8"
+        style={{
+          backgroundColor: "#07162B",
+          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
+        }}
+      >
+        <div className="max-w-6xl mx-auto w-full space-y-10">
+          {/* Top Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#3A2C18] pb-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#020A17] border border-[#3A2C18] shadow-md shadow-black/40">
+                <Wand2 className="h-6 w-6 text-[#FFE394]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-wide text-[#FFF4D4]">Tools Hub</h1>
+                  <PageIdBadge id="PG-010" />
+                  {contactId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocation(`/contacts/${contactId}`)}
+                      className="inline-flex items-center gap-1 text-[11px] h-7 py-1 bg-[#020A17] border-[#3A2C18] hover:bg-[#07162B] text-[#C6B697] hover:text-[#FFF4D4]"
+                    >
+                      <ArrowLeft className="h-3 w-3" />
+                      Back to Student
+                    </Button>
+                  )}
+                </div>
+                <p className="text-sm text-[#C6B697] mt-1">
+                  Powerful tools to help you prepare, compare, and advocate with confidence.
+                </p>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A69371]" />
+              <Input
+                type="text"
+                placeholder="Search tools..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 pr-4 py-2 w-full bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] rounded-xl text-sm focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]"
+              />
+            </div>
           </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-white">Tools</h1>
-              {contactId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setLocation(`/contacts/${contactId}`)}
-                  className="inline-flex items-center gap-1 text-[11px] h-7 py-1 border-white/10 hover:bg-white/5 text-slate-300"
-                >
-                  <ArrowLeft className="h-3 w-3" />
-                  Back to Student
-                </Button>
+
+          {/* Student Context Banner */}
+          {contactId && (
+            <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 px-5 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.6)] flex items-center gap-3">
+              <FileText className="h-4 w-4 text-[#C5A059] flex-shrink-0" />
+              {isLoading ? (
+                <span className="text-sm text-[#C6B697] flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#FFE394]" />
+                  Loading student details...
+                </span>
+              ) : contact ? (
+                <span className="text-sm text-[#C6B697]">
+                  Active Session Student:{" "}
+                  <span className="font-semibold font-serif text-[#FFF4D4]">
+                    {(contact as any).contact?.firstName ?? (contact as any).firstName}{" "}
+                    {(contact as any).contact?.lastName ?? (contact as any).lastName}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-sm text-[#C6B697]">Student #{contactId}</span>
               )}
             </div>
-            <p className="text-sm text-slate-400 mt-1">
-              Powerful tools to help you prepare, compare, and advocate with confidence.
-            </p>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            type="text"
-            placeholder="Search tools..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-4 py-2 w-full bg-slate-900/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-      </div>
-
-      {/* Student Context Banner */}
-      {contactId && (
-        <div className="rounded-xl border border-white/5 bg-slate-900/30 px-5 py-3 flex items-center gap-3">
-          <FileText className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-          {isLoading ? (
-            <span className="text-sm text-slate-400 flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Loading student details...
-            </span>
-          ) : contact ? (
-            <span className="text-sm text-slate-200">
-              Active Session Student:{" "}
-              <span className="font-semibold text-white">
-                {(contact as any).contact?.firstName ?? (contact as any).firstName}{" "}
-                {(contact as any).contact?.lastName ?? (contact as any).lastName}
-              </span>
-            </span>
-          ) : (
-            <span className="text-sm text-slate-400">Student #{contactId}</span>
           )}
-        </div>
-      )}
 
-      {/* Main Grid Section (3 Columns on desktop) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
-        {filteredTools.map((tool) => (
-          <div 
-            key={tool.id} 
-            className="flex flex-col bg-[#07162B]/40 border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/2 transition-all group max-w-sm mx-auto w-full ring-1 ring-indigo-500/20"
-          >
-            {/* Visual Preview Illustration block */}
-            <div className="h-44 sm:h-48 w-full flex-shrink-0">
-              {tool.preview}
-            </div>
-
-            {/* Card Body */}
-            <div className="p-5 flex flex-col flex-grow justify-between space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold font-serif text-white tracking-tight group-hover:text-indigo-300 transition-colors">
-                  {tool.title}
-                </h3>
-                {(tool as any).subtitle && (
-                  <p className="text-xs font-semibold text-amber-300/90 leading-snug">
-                    {(tool as any).subtitle}
-                  </p>
-                )}
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  {tool.description}
-                </p>
-              </div>
-
-              {/* Action Button */}
-              <div className="flex items-center gap-2 text-left pt-1">
-                <Button
-                  size="sm"
-                  onClick={tool.onClick}
-                  disabled={tool.disabled}
-                  className={`w-auto inline-flex bg-slate-900/60 hover:bg-indigo-650/10 text-slate-350 hover:text-white border border-white/10 rounded-lg px-4 py-1.5 items-center gap-1.5 text-xs font-bold tracking-wide transition-all ${
-                    tool.disabled ? "opacity-35 cursor-not-allowed border-white/5" : "hover:border-indigo-500/35 hover:shadow-sm"
-                  }`}
-                >
-                  {tool.btnText}
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                </Button>
-
-                {tool.id === "voyage-recorder" && (
-                  <Button
-                    size="sm"
-                    onClick={() => setLocation(contactId ? `/tools/voyage-recorder?contactId=${contactId}` : "/tools/voyage-recorder")}
-                    className="h-8 w-8 inline-flex bg-slate-900/60 hover:bg-indigo-650/10 text-slate-350 hover:text-white border border-white/10 rounded-lg items-center justify-center transition-all hover:border-indigo-500/35 hover:shadow-sm"
-                    title="Configure Recorder Specs & Settings"
-                  >
-                    <Settings2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Quick Tools Row */}
-      <div className="space-y-4 pt-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-          Quick Tools
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {filteredQuickTools.map((qt) => {
-            const Icon = qt.icon;
-            return (
-              <Card
-                key={qt.title}
-                onClick={qt.onClick}
-                className="flex items-center justify-between p-4 bg-[#07162B]/30 border-white/5 rounded-xl hover:border-indigo-500/20 hover:bg-[#07162B]/60 transition-all cursor-pointer group"
+          {/* Main Grid Section (3 Columns on desktop) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
+            {filteredTools.map((tool) => (
+              <div 
+                key={tool.id} 
+                className="flex flex-col bg-[#05142B]/90 border border-[#3A2C18] hover:border-[#C5A059]/60 rounded-xl overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.95)] transition-all group max-w-sm mx-auto w-full"
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-all">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white leading-tight">
-                      {qt.title}
-                    </h4>
-                    <p className="text-[10px] text-slate-400 leading-normal">
-                      {qt.description}
+                {/* Visual Preview Illustration block */}
+                <div className="h-44 sm:h-48 w-full flex-shrink-0 bg-[#020A17]/80 border-b border-[#3A2C18]/60">
+                  {tool.preview}
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 flex flex-col flex-grow justify-between space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold font-serif text-[#FFF4D4] tracking-tight group-hover:text-[#FFE394] transition-colors">
+                      {tool.title}
+                    </h3>
+                    {(tool as any).subtitle && (
+                      <p className="text-xs font-semibold text-[#DFBE77] leading-snug">
+                        {(tool as any).subtitle}
+                      </p>
+                    )}
+                    <p className="text-xs text-[#C6B697] leading-relaxed">
+                      {tool.description}
                     </p>
                   </div>
-                </div>
-                <ArrowRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-              </Card>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* Bottom Callout Banner */}
-      <div className="pt-4">
-        <div className="relative rounded-2xl border border-indigo-500/10 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden">
-          {/* Subtle background glow */}
-          <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
-          
-          <div className="flex items-start md:items-center gap-4 relative z-10">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
-              <Compass className="h-6 w-6 animate-spin-slow" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">Everything you need. All in one place.</h3>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-xl">
-                Waypoint gives you the tools, insights, and confidence to advocate for your child every step of the way.
-              </p>
-            </div>
+                  {/* Action Button */}
+                  <div className="flex items-center gap-2 text-left pt-1">
+                    <Button
+                      size="sm"
+                      onClick={tool.onClick}
+                      disabled={tool.disabled}
+                      className={`w-auto inline-flex rounded-lg px-4 py-1.5 items-center gap-1.5 text-xs font-bold tracking-wide transition-all ${
+                        tool.disabled
+                          ? "opacity-35 cursor-not-allowed bg-[#020A17] text-[#A69371] border border-[#3A2C18]"
+                          : tool.featured
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-110"
+                          : "bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18] hover:border-[#C5A059]/60 shadow-sm"
+                      }`}
+                    >
+                      {tool.btnText}
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                    </Button>
+
+                    {tool.id === "voyage-recorder" && (
+                      <Button
+                        size="sm"
+                        onClick={() => setLocation(contactId ? `/tools/voyage-recorder?contactId=${contactId}` : "/tools/voyage-recorder")}
+                        className="h-8 w-8 inline-flex bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18] hover:border-[#C5A059]/60 rounded-lg items-center justify-center transition-all shadow-sm"
+                        title="Configure Recorder Specs & Settings"
+                      >
+                        <Settings2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="relative z-10 self-start md:self-auto">
-            <Button
-              onClick={() => {
-                import("sonner").then(({ toast }) =>
-                  toast.info("Showing release notes and updates soon!")
+          {/* Quick Tools Row */}
+          <div className="space-y-4 pt-4">
+            <p className="text-xs font-serif font-bold uppercase tracking-widest text-[#FFE394]">
+              Quick Tools
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {filteredQuickTools.map((qt) => {
+                const Icon = qt.icon;
+                return (
+                  <Card
+                    key={qt.title}
+                    onClick={qt.onClick}
+                    className="flex items-center justify-between p-4 bg-[#05142B]/90 border-[#3A2C18] rounded-xl hover:border-[#C5A059]/60 hover:bg-[#071B38] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-[#020A17] border border-[#3A2C18]/60 text-[#C5A059] group-hover:text-[#FFE394] transition-all">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#FFF4D4] leading-tight">
+                          {qt.title}
+                        </h4>
+                        <p className="text-[10px] text-[#C6B697] leading-normal">
+                          {qt.description}
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-[#C6B697]/50 group-hover:text-[#FFE394] group-hover:translate-x-0.5 transition-all" />
+                  </Card>
                 );
-              }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-lg text-xs shadow-md shadow-indigo-600/10 flex items-center gap-2 transition-all hover:scale-102"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              See What's New
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* IEP Comparison Modal */}
-      {isComparisonOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#07162B] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col p-6 space-y-6 relative shadow-2xl text-slate-200">
-            {/* Header */}
-            <div className="flex items-start justify-between border-b border-white/5 pb-4">
-              <div>
-                <h3 className="text-lg font-bold font-serif text-white">IEP / 504 Comparison Analyzer</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Upload a previous version and a current version to run a side-by-side comparison.
-                </p>
-              </div>
-              <button 
-                onClick={() => {
-                  setIsComparisonOpen(false);
-                  setIsAnalyzing(false);
-                  setAnalysisResult(false);
-                }}
-                className="text-slate-400 hover:text-white text-xs bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full border border-white/5 transition-all"
-              >
-                Close
-              </button>
+              })}
             </div>
+          </div>
 
-            {/* Main content */}
-            {!analysisResult ? (
-              <div className="space-y-6">
-                {/* Drag and Drop Zone row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Previous Version */}
-                  <div className="border border-dashed border-white/10 rounded-xl p-5 bg-slate-900/40 flex flex-col items-center justify-center text-center space-y-3 min-h-[140px] relative">
-                    <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
-                      <FileText className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-white">Previous IEP Version</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5 max-w-[180px] mx-auto truncate">
-                        {prevFile || "Drag and drop or browse to upload"}
-                      </p>
-                    </div>
-                    <input 
-                      type="file" 
-                      accept=".pdf"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setPrevFile(e.target.files[0].name);
-                        }
-                      }}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    {prevFile && (
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setPrevFile(null);
-                        }}
-                        className="text-[10px] text-rose-450 hover:underline relative z-25 cursor-pointer"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Current Version */}
-                  <div className="border border-dashed border-white/10 rounded-xl p-5 bg-slate-900/40 flex flex-col items-center justify-center text-center space-y-3 min-h-[140px] relative">
-                    <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400">
-                      <FileText className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-white">Current IEP Version</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5 max-w-[180px] mx-auto truncate">
-                        {currFile || "Drag and drop or browse to upload"}
-                      </p>
-                    </div>
-                    <input 
-                      type="file" 
-                      accept=".pdf"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setCurrFile(e.target.files[0].name);
-                        }
-                      }}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    {currFile && (
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setCurrFile(null);
-                        }}
-                        className="text-[10px] text-rose-455 hover:underline relative z-25 cursor-pointer"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
+          {/* Bottom Callout Banner */}
+          <div className="pt-4">
+            <div className="relative rounded-xl border border-[#3A2C18] bg-gradient-to-r from-[#05142B] via-[#092244] to-[#05142B] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+              {/* Subtle background glow */}
+              <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-[#C5A059]/5 blur-3xl pointer-events-none" />
+              
+              <div className="flex items-start md:items-center gap-4 relative z-10">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#020A17] border border-[#3A2C18] text-[#FFE394] shrink-0 shadow-md">
+                  <Compass className="h-6 w-6" />
                 </div>
-
-                {/* Analysis Info */}
-                <div className="bg-indigo-950/20 border border-indigo-500/10 rounded-xl p-4 flex gap-3 text-left">
-                  <Compass className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-xs font-bold text-indigo-300">Waypoint AI Comparison Engine</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                      Waypoint will parse both documents, highlight additions and deletions, and categorize FAPE variances, accommodations changes, and modified services side-by-side.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Submit Action */}
-                <div className="flex justify-end pt-2">
-                  <Button
-                    onClick={() => {
-                      if (!prevFile || !currFile) {
-                        import("sonner").then(({ toast }) =>
-                          toast.error("Please select or upload both documents first.")
-                        );
-                        return;
-                      }
-                      setIsAnalyzing(true);
-                      setTimeout(() => {
-                        setIsAnalyzing(false);
-                        setAnalysisResult(true);
-                      }, 2500);
-                    }}
-                    disabled={isAnalyzing}
-                    className="bg-indigo-650 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs flex items-center gap-2 shadow-md"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Analyzing and comparing documents...
-                      </>
-                    ) : (
-                      <>
-                        <GitCompare className="h-3.5 w-3.5" />
-                        Run AI Comparison
-                      </>
-                    )}
-                  </Button>
+                <div>
+                  <h3 className="text-base font-serif font-bold text-[#FFF4D4]">Everything you need. All in one place.</h3>
+                  <p className="text-xs text-[#C6B697] mt-1 leading-relaxed max-w-xl">
+                    Waypoint gives you the tools, insights, and confidence to advocate for your child every step of the way.
+                  </p>
                 </div>
               </div>
-            ) : (
-              /* Display Mock Analysis results */
-              <div className="space-y-5 text-left">
-                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
-                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-450">
-                    <CheckCircle2 className="h-4 w-4" />
-                    AI Comparison Completed Successfully!
+
+              <div className="relative z-10 self-start md:self-auto">
+                <Button
+                  onClick={() => {
+                    import("sonner").then(({ toast }) =>
+                      toast.info("Showing release notes and updates soon!")
+                    );
+                  }}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold px-5 py-2.5 rounded-lg text-xs shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 flex items-center gap-2 transition-all hover:brightness-110"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  See What's New
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* IEP Comparison Modal */}
+          {isComparisonOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+              <div className="bg-[#05142B] border border-[#3A2C18] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col p-6 space-y-6 relative shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-[#FFF4D4]">
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-[#3A2C18] pb-4">
+                  <div>
+                    <h3 className="text-lg font-bold font-serif text-[#FFF4D4]">IEP / 504 Comparison Analyzer</h3>
+                    <p className="text-xs text-[#C6B697] mt-1">
+                      Upload a previous version and a current version to run a side-by-side comparison.
+                    </p>
                   </div>
                   <button 
-                    onClick={() => setAnalysisResult(false)}
-                    className="text-xs text-indigo-300 hover:underline"
+                    onClick={() => {
+                      setIsComparisonOpen(false);
+                      setIsAnalyzing(false);
+                      setAnalysisResult(false);
+                    }}
+                    className="text-[#C6B697] hover:text-[#FFF4D4] text-xs bg-[#020A17] hover:bg-[#07162B] px-3 py-1 rounded-full border border-[#3A2C18] transition-all cursor-pointer"
                   >
-                    Compare other files
+                    Close
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Changes Summary</h4>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-slate-900/60 p-3 rounded-lg border border-white/5 text-center">
-                      <span className="text-lg font-bold text-emerald-400">3</span>
-                      <span className="text-[10px] text-slate-450 block mt-0.5">Additions</span>
+                {/* Main content */}
+                {!analysisResult ? (
+                  <div className="space-y-6">
+                    {/* Drag and Drop Zone row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Previous Version */}
+                      <div className="border border-dashed border-[#3A2C18] rounded-xl p-5 bg-[#020A17]/80 flex flex-col items-center justify-center text-center space-y-3 min-h-[140px] relative">
+                        <div className="p-2 rounded-lg bg-[#05142B] border border-[#3A2C18] text-[#FFE394]">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-[#FFF4D4]">Previous IEP Version</p>
+                          <p className="text-[10px] text-[#C6B697] mt-0.5 max-w-[180px] mx-auto truncate">
+                            {prevFile || "Drag and drop or browse to upload"}
+                          </p>
+                        </div>
+                        <input 
+                          type="file" 
+                          accept=".pdf"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setPrevFile(e.target.files[0].name);
+                            }
+                          }}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        {prevFile && (
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setPrevFile(null);
+                            }}
+                            className="text-[10px] text-rose-400 hover:underline relative z-25 cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Current Version */}
+                      <div className="border border-dashed border-[#3A2C18] rounded-xl p-5 bg-[#020A17]/80 flex flex-col items-center justify-center text-center space-y-3 min-h-[140px] relative">
+                        <div className="p-2 rounded-lg bg-[#05142B] border border-[#3A2C18] text-teal-400">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-[#FFF4D4]">Current IEP Version</p>
+                          <p className="text-[10px] text-[#C6B697] mt-0.5 max-w-[180px] mx-auto truncate">
+                            {currFile || "Drag and drop or browse to upload"}
+                          </p>
+                        </div>
+                        <input 
+                          type="file" 
+                          accept=".pdf"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setCurrFile(e.target.files[0].name);
+                            }
+                          }}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        {currFile && (
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrFile(null);
+                            }}
+                            className="text-[10px] text-rose-400 hover:underline relative z-25 cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="bg-slate-900/60 p-3 rounded-lg border border-white/5 text-center">
-                      <span className="text-lg font-bold text-rose-450">1</span>
-                      <span className="text-[10px] text-slate-450 block mt-0.5">Deletions</span>
+
+                    {/* Analysis Info */}
+                    <div className="bg-[#020A17]/80 border border-[#3A2C18] rounded-xl p-4 flex gap-3 text-left">
+                      <Compass className="h-5 w-5 text-[#FFE394] shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-xs font-serif font-bold text-[#FFF4D4]">Waypoint AI Comparison Engine</h4>
+                        <p className="text-[11px] text-[#C6B697] mt-0.5 leading-relaxed">
+                          Waypoint will parse both documents, highlight additions and deletions, and categorize FAPE variances, accommodations changes, and modified services side-by-side.
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-slate-900/60 p-3 rounded-lg border border-white/5 text-center">
-                      <span className="text-lg font-bold text-amber-400">2</span>
-                      <span className="text-[10px] text-slate-450 block mt-0.5">Modifications</span>
+
+                    {/* Submit Action */}
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        onClick={() => {
+                          if (!prevFile || !currFile) {
+                            import("sonner").then(({ toast }) =>
+                              toast.error("Please select or upload both documents first.")
+                            );
+                            return;
+                          }
+                          setIsAnalyzing(true);
+                          setTimeout(() => {
+                            setIsAnalyzing(false);
+                            setAnalysisResult(true);
+                          }, 2500);
+                        }}
+                        disabled={isAnalyzing}
+                        className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold px-6 py-2.5 rounded-lg text-xs flex items-center gap-2 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-110 cursor-pointer"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Analyzing and comparing documents...
+                          </>
+                        ) : (
+                          <>
+                            <GitCompare className="h-3.5 w-3.5" />
+                            Run AI Comparison
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
-                </div>
-
-                {/* Diff Preview Rows */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Detailed Variance Analysis</h4>
-                  <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-                    {/* Diff 1 */}
-                    <div className="border border-white/5 bg-slate-900/30 rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Accommodation Added</span>
-                        <span className="text-[9px] text-slate-500">Page 4 · Section IV</span>
+                ) : (
+                  /* Display Mock Analysis results */
+                  <div className="space-y-5 text-left">
+                    <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                        <CheckCircle2 className="h-4 w-4" />
+                        AI Comparison Completed Successfully!
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        "Student will receive extra time (double time) on all math quizzes, exams, and standardized testing assessments."
-                      </p>
+                      <button 
+                        onClick={() => setAnalysisResult(false)}
+                        className="text-xs text-[#FFE394] hover:underline cursor-pointer"
+                      >
+                        Compare other files
+                      </button>
                     </div>
 
-                    {/* Diff 2 */}
-                    <div className="border border-white/5 bg-slate-900/30 rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-450 border border-rose-500/20">Service Reduced</span>
-                        <span className="text-[9px] text-slate-500">Page 7 · Section VII</span>
-                      </div>
-                      <p className="text-xs text-slate-350 leading-relaxed line-through">
-                        "Occupational therapy group sessions: 60 minutes per week."
-                      </p>
-                      <p className="text-xs text-emerald-400 leading-relaxed font-semibold">
-                        + "Occupational therapy individual sessions: 30 minutes per week."
-                      </p>
-                    </div>
-
-                    {/* Diff 3 */}
-                    <div className="border border-white/5 bg-slate-900/30 rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold font-serif">Goal Modified</span>
-                        <span className="text-[9px] text-slate-500">Page 11 · Section IX</span>
-                      </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        Modified accuracy criteria for conversational turns target from 80% to 90% over consecutive trial weeks.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Voyage Meeting Recorder Modal */}
-      {isRecorderOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#07162B] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden flex flex-col p-6 space-y-6 relative shadow-2xl text-slate-200">
-            {/* Header */}
-            <div className="flex items-start justify-between border-b border-white/5 pb-4">
-              <div>
-                <h3 className="text-lg font-bold font-serif text-white flex items-center gap-2">
-                  <Mic className="h-5 w-5 text-rose-500 animate-pulse" />
-                  Voyage Live Meeting Recorder
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Record your IEP meeting to auto-transcribe, analyze key decisions, and sync with files.
-                </p>
-              </div>
-              <button 
-                onClick={() => {
-                  setIsRecorderOpen(false);
-                  setIsRecording(false);
-                }}
-                className="text-slate-400 hover:text-white text-xs bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full border border-white/5 transition-all"
-              >
-                Close
-              </button>
-            </div>
-
-            {/* Recorder Controls */}
-            <div className="flex flex-col items-center justify-center space-y-6 py-4">
-              {isRecording ? (
-                /* Recording Mode */
-                <div className="space-y-6 w-full flex flex-col items-center">
-                  {/* Timer & Pulsing Waveform */}
-                  <div className="text-center">
-                    <span className="text-4xl font-mono font-bold text-white tracking-widest">
-                      {Math.floor(recordDuration / 60).toString().padStart(2, '0')}:
-                      {(recordDuration % 60).toString().padStart(2, '0')}
-                    </span>
-                    <span className="text-[10px] text-rose-450 font-bold uppercase tracking-wider block mt-1 animate-pulse">
-                      ● Recording Meeting Capture
-                    </span>
-                  </div>
-
-                  {/* Live Stream Preview or Pulsing Waveform Fallback */}
-                  {stream ? (
-                    <div className="w-full max-w-sm aspect-video bg-black/90 rounded-xl overflow-hidden border border-white/10 relative shadow-lg">
-                      <video
-                        ref={videoRef}
-                        className="w-full h-full object-contain"
-                        autoPlay
-                        playsInline
-                        muted
-                      />
-                      <div className="absolute top-2 left-2 bg-rose-600/90 text-white text-[8px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                        Live Capturing
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-serif font-bold uppercase tracking-wider text-[#FFE394]">Changes Summary</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-[#020A17]/80 p-3 rounded-lg border border-[#3A2C18] text-center">
+                          <span className="text-lg font-bold text-emerald-400">3</span>
+                          <span className="text-[10px] text-[#C6B697] block mt-0.5">Additions</span>
+                        </div>
+                        <div className="bg-[#020A17]/80 p-3 rounded-lg border border-[#3A2C18] text-center">
+                          <span className="text-lg font-bold text-rose-400">1</span>
+                          <span className="text-[10px] text-[#C6B697] block mt-0.5">Deletions</span>
+                        </div>
+                        <div className="bg-[#020A17]/80 p-3 rounded-lg border border-[#3A2C18] text-center">
+                          <span className="text-lg font-bold text-[#FFE394]">2</span>
+                          <span className="text-[10px] text-[#C6B697] block mt-0.5">Modifications</span>
+                        </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="flex items-end gap-1.5 h-12 justify-center">
-                      <div className="w-1.5 h-6 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                      <div className="w-1.5 h-12 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
-                      <div className="w-1.5 h-8 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                      <div className="w-1.5 h-10 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-                      <div className="w-1.5 h-4 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
-                    </div>
-                  )}
 
-                  {/* Live Transcript Stream */}
-                  <div className="w-full bg-slate-950/60 rounded-xl border border-white/5 p-4 h-48 overflow-y-auto space-y-3 text-left">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block border-b border-white/5 pb-1">Live Transcript Stream</span>
-                    {liveTranscript.length === 0 ? (
-                      <p className="text-[11px] text-slate-500 italic animate-pulse">Waiting for speech input...</p>
-                    ) : (
-                      liveTranscript.map((line, idx) => {
-                        const [speaker, text] = line.split(": ");
-                        return (
-                          <div key={idx} className="text-xs space-y-0.5 animate-slide-up">
-                            <span className="font-semibold text-indigo-300">{speaker}:</span>
-                            <p className="text-slate-350 leading-relaxed">{text}</p>
+                    {/* Diff Preview Rows */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-serif font-bold uppercase tracking-wider text-[#FFE394]">Detailed Variance Analysis</h4>
+                      <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                        {/* Diff 1 */}
+                        <div className="border border-[#3A2C18]/60 bg-[#020A17]/80 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Accommodation Added</span>
+                            <span className="text-[9px] text-[#A69371]">Page 4 · Section IV</span>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
+                          <p className="text-xs text-[#E8DCC4] leading-relaxed">
+                            "Student will receive extra time (double time) on all math quizzes, exams, and standardized testing assessments."
+                          </p>
+                        </div>
 
-                  {/* Stop Button */}
-                  <Button
-                    onClick={handleStopRecording}
-                    className="bg-rose-650 hover:bg-rose-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow-md shadow-rose-600/10 flex items-center gap-2 transition-all hover:scale-102"
-                  >
-                    Stop & Save Recording
-                  </Button>
-                </div>
-              ) : (
-                /* Ready State */
-                <div className="space-y-6 w-full flex flex-col items-center text-center">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 hover:scale-105 hover:bg-rose-500/20 transition-all cursor-pointer shadow-lg shadow-rose-500/5 group"
-                      onClick={handleStartRecording}
-                    >
-                      <Monitor className="h-8 w-8 text-rose-455 group-hover:scale-110 transition-transform animate-pulse" />
+                        {/* Diff 2 */}
+                        <div className="border border-[#3A2C18]/60 bg-[#020A17]/80 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">Service Reduced</span>
+                            <span className="text-[9px] text-[#A69371]">Page 7 · Section VII</span>
+                          </div>
+                          <p className="text-xs text-[#C6B697] leading-relaxed line-through">
+                            "Occupational therapy group sessions: 60 minutes per week."
+                          </p>
+                          <p className="text-xs text-emerald-400 leading-relaxed font-semibold">
+                            + "Occupational therapy individual sessions: 30 minutes per week."
+                          </p>
+                        </div>
+
+                        {/* Diff 3 */}
+                        <div className="border border-[#3A2C18]/60 bg-[#020A17]/80 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#DFBE77]/10 text-[#FFE394] border border-[#DFBE77]/30 font-semibold font-serif">Goal Modified</span>
+                            <span className="text-[9px] text-[#A69371]">Page 11 · Section IX</span>
+                          </div>
+                          <p className="text-xs text-[#E8DCC4] leading-relaxed">
+                            Modified accuracy criteria for conversational turns target from 80% to 90% over consecutive trial weeks.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    {/* Concentric ripple circles */}
-                    <div className="absolute -inset-2 rounded-full border border-rose-500/10 animate-ping pointer-events-none" />
                   </div>
+                )}
+              </div>
+            </div>
+          )}
 
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-bold text-white">Start Screen Recording</h4>
-                    <p className="text-[11px] text-slate-400 max-w-[280px]">
-                      Click the icon to select your active meeting window or screen to capture and transcribing.
+          {/* Voyage Meeting Recorder Modal */}
+          {isRecorderOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+              <div className="bg-[#05142B] border border-[#3A2C18] rounded-2xl w-full max-w-lg overflow-hidden flex flex-col p-6 space-y-6 relative shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-[#FFF4D4]">
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-[#3A2C18] pb-4">
+                  <div>
+                    <h3 className="text-lg font-bold font-serif text-[#FFF4D4] flex items-center gap-2">
+                      <Mic className="h-5 w-5 text-rose-500 animate-pulse" />
+                      Voyage Live Meeting Recorder
+                    </h3>
+                    <p className="text-xs text-[#C6B697] mt-1">
+                      Record your IEP meeting to auto-transcribe, analyze key decisions, and sync with files.
                     </p>
                   </div>
+                  <button 
+                    onClick={() => {
+                      setIsRecorderOpen(false);
+                      setIsRecording(false);
+                    }}
+                    className="text-[#C6B697] hover:text-[#FFF4D4] text-xs bg-[#020A17] hover:bg-[#07162B] px-3 py-1 rounded-full border border-[#3A2C18] transition-all cursor-pointer"
+                  >
+                    Close
+                  </button>
                 </div>
-              )}
+
+                {/* Recorder Controls */}
+                <div className="flex flex-col items-center justify-center space-y-6 py-4">
+                  {isRecording ? (
+                    /* Recording Mode */
+                    <div className="space-y-6 w-full flex flex-col items-center">
+                      {/* Timer & Pulsing Waveform */}
+                      <div className="text-center">
+                        <span className="text-4xl font-mono font-bold text-[#FFF4D4] tracking-widest">
+                          {Math.floor(recordDuration / 60).toString().padStart(2, '0')}:
+                          {(recordDuration % 60).toString().padStart(2, '0')}
+                        </span>
+                        <span className="text-[10px] text-rose-400 font-bold uppercase tracking-wider block mt-1 animate-pulse">
+                          ● Recording Meeting Capture
+                        </span>
+                      </div>
+
+                      {/* Live Stream Preview or Pulsing Waveform Fallback */}
+                      {stream ? (
+                        <div className="w-full max-w-sm aspect-video bg-black/90 rounded-xl overflow-hidden border border-[#3A2C18] relative shadow-lg">
+                          <video
+                            ref={videoRef}
+                            className="w-full h-full object-contain"
+                            autoPlay
+                            playsInline
+                            muted
+                          />
+                          <div className="absolute top-2 left-2 bg-rose-600/90 text-white text-[8px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                            Live Capturing
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-end gap-1.5 h-12 justify-center">
+                          <div className="w-1.5 h-6 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                          <div className="w-1.5 h-12 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+                          <div className="w-1.5 h-8 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                          <div className="w-1.5 h-10 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                          <div className="w-1.5 h-4 bg-rose-500 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
+                        </div>
+                      )}
+
+                      {/* Live Transcript Stream */}
+                      <div className="w-full bg-[#020A17] rounded-xl border border-[#3A2C18] p-4 h-48 overflow-y-auto space-y-3 text-left">
+                        <span className="text-[9px] font-bold text-[#A69371] uppercase tracking-widest block border-b border-[#3A2C18]/60 pb-1">Live Transcript Stream</span>
+                        {liveTranscript.length === 0 ? (
+                          <p className="text-[11px] text-[#A69371] italic animate-pulse">Waiting for speech input...</p>
+                        ) : (
+                          liveTranscript.map((line, idx) => {
+                            const [speaker, text] = line.split(": ");
+                            return (
+                              <div key={idx} className="text-xs space-y-0.5 animate-slide-up">
+                                <span className="font-semibold text-[#FFE394]">{speaker}:</span>
+                                <p className="text-[#C6B697] leading-relaxed">{text}</p>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Stop Button */}
+                      <Button
+                        onClick={handleStopRecording}
+                        className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow-md shadow-rose-600/20 flex items-center gap-2 transition-all hover:scale-102 cursor-pointer"
+                      >
+                        Stop & Save Recording
+                      </Button>
+                    </div>
+                  ) : (
+                    /* Ready State */
+                    <div className="space-y-6 w-full flex flex-col items-center text-center">
+                      <div className="relative">
+                        <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 hover:scale-105 hover:bg-rose-500/20 transition-all cursor-pointer shadow-lg shadow-rose-500/5 group"
+                          onClick={handleStartRecording}
+                        >
+                          <Monitor className="h-8 w-8 text-rose-400 group-hover:scale-110 transition-transform animate-pulse" />
+                        </div>
+                        {/* Concentric ripple circles */}
+                        <div className="absolute -inset-2 rounded-full border border-rose-500/10 animate-ping pointer-events-none" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold text-[#FFF4D4]">Start Screen Recording</h4>
+                        <p className="text-[11px] text-[#C6B697] max-w-[280px]">
+                          Click the icon to select your active meeting window or screen to capture and transcribing.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
-  </div>
-);
+      </div>
+    </ScopedErrorBoundary>
+  );
 }
