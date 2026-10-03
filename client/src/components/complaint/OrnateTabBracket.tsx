@@ -32,7 +32,7 @@ export function OrnateTabBracket({
         className={cn(
           "relative flex items-center justify-center shrink-0 pointer-events-none select-none transition-all duration-200",
           isActive
-            ? "scale-[1.04] drop-shadow-[0_0_10px_rgba(255,215,100,0.55)]"
+            ? "scale-[1.04]"
             : "opacity-95 group-hover:opacity-100 group-hover:scale-[1.02]",
           className
         )}
@@ -41,23 +41,15 @@ export function OrnateTabBracket({
           width: `${(pixelHeight * 702) / 1762}px`,
         }}
       >
-        {/* Layer 1: Contact Drop-Shadow onto card */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            filter: "drop-shadow(2px 3px 6px rgba(0, 0, 0, 0.85))",
-          }}
-        >
-          {/* Layer 2: True-Alpha Clean 3D Rendered Hardware Piece (No Checkerboard) */}
-          <img
-            src="/decor/ornate-bracket-clean.png"
-            alt="Ornate Brass & Navy Tab Bracket"
-            className={cn(
-              "w-full h-full object-contain pointer-events-none select-none transition-all duration-200",
-              isActive ? "brightness-110 contrast-105" : "brightness-95 contrast-100 group-hover:brightness-105"
-            )}
-          />
-        </div>
+        {/* Layer 2: True-Alpha Clean 3D Rendered Hardware Piece without grey shadow */}
+        <img
+          src="/decor/ornate-bracket-clean.png"
+          alt="Ornate Brass & Navy Tab Bracket"
+          className={cn(
+            "w-full h-full object-contain pointer-events-none select-none transition-all duration-200",
+            isActive ? "brightness-110 contrast-105" : "brightness-95 contrast-100 group-hover:brightness-105"
+          )}
+        />
       </div>
     );
   }
@@ -79,16 +71,9 @@ export function OrnateTabBracket({
         viewBox="0 0 100 200"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full overflow-visible drop-shadow-[2px_3px_5px_rgba(0,0,0,0.85)]"
+        className="w-full h-full overflow-visible"
       >
         <defs>
-          <filter id={`shadow_${uid}`} x="-20%" y="-15%" width="150%" height="135%" filterUnits="userSpaceOnUse">
-            <feDropShadow dx="3" dy="4" stdDeviation="3.5" floodColor="#000000" floodOpacity="0.8" />
-          </filter>
-
-          <filter id={`handleShadow_${uid}`} x="-30%" y="-20%" width="160%" height="140%">
-            <feDropShadow dx="2" dy="2" stdDeviation="2" floodColor="#180C02" floodOpacity="0.9" />
-          </filter>
 
           <linearGradient id={`brassBevel_${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#FFF2B8" />
