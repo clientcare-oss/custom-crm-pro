@@ -503,7 +503,7 @@ export default function ComplaintWorkspace() {
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#020A17]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
@@ -602,7 +602,7 @@ export default function ComplaintWorkspace() {
 
           {/* ── CENTER COLUMN: Parchment Writing Stage ──────────────────── */}
           <main 
-            className="flex-1 flex flex-col rounded-[18px] border border-[#3A2C18] bg-[#020A17]/95 shadow-2xl relative min-w-0 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+            className="flex-1 flex flex-col rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative min-w-0 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
             style={{
               backgroundImage: "url('/decor/folio-leather-texture.png')",
               backgroundRepeat: "repeat",
@@ -785,11 +785,11 @@ export default function ComplaintWorkspace() {
             {/* ── Scrollable Document Canvas Viewport ───────────────────── */}
             {/* Tightened space above paper, quiet navy scrollbar with muted brass thumb */}
             <div 
-              className="flex-1 relative overflow-y-auto overflow-x-hidden pt-2.5 pb-6 px-4 sm:px-6 flex flex-col items-center bg-[#000820]/95 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-[#000820] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm hover:[&::-webkit-scrollbar-thumb]:bg-[#7A5A28]"
+              className="flex-1 relative overflow-y-auto overflow-x-hidden pt-2.5 pb-6 px-4 sm:px-6 flex flex-col items-center bg-[#041633] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-[#031024] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm hover:[&::-webkit-scrollbar-thumb]:bg-[#7A5A28]"
               style={{
-                backgroundImage: "url('/decor/folio-leather-texture.png')",
-                backgroundRepeat: "repeat",
-                backgroundSize: "240px",
+                backgroundImage: "radial-gradient(ellipse at 50% 35%, rgba(18, 52, 96, 0.72) 0%, rgba(7, 25, 54, 0.88) 60%, rgba(3, 14, 32, 0.98) 100%), url('/decor/folio-leather-texture.png')",
+                backgroundRepeat: "no-repeat, repeat",
+                backgroundSize: "100% 100%, 240px",
               }}
             >
               
@@ -1073,16 +1073,31 @@ export default function ComplaintWorkspace() {
               </div>
             </div>
 
-            {/* Bottom Floating Control Bar (aligned, zero overlap, rounded bottom) */}
-            <div className="px-8 py-2 border-t border-[#3A2C18] bg-[#020A17]/95 flex flex-wrap items-center justify-between gap-3 relative z-20 rounded-b-[18px]">
+            {/* Bottom Floating Control Bar (Admiralty Navy leather, aligned, zero overlap, rounded bottom) */}
+            <div 
+              className="px-6 sm:px-8 py-2 border-t border-[#1C3E6B]/80 bg-gradient-to-r from-[#031D42] via-[#062452] to-[#031D42] flex items-center justify-between gap-2.5 relative z-20 rounded-b-[18px] shadow-[inset_0_1px_0_rgba(147,197,253,0.18),0_-4px_14px_rgba(0,0,0,0.5)] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+              style={{
+                backgroundImage: "url('/decor/folio-leather-texture.png')",
+                backgroundRepeat: "repeat",
+                backgroundSize: "220px",
+              }}
+            >
+              {/* Top seam debossed groove */}
+              <div 
+                className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none"
+                style={{
+                  background: "linear-gradient(180deg, rgba(0,4,10,0.85) 0%, rgba(17,32,54,0.3) 100%)",
+                  boxShadow: "0 1px 0 rgba(147,197,253,0.12)",
+                }}
+              />
               
               {/* Left: Pagination Controls: < 1 / 18 > */}
-              <div className="flex items-center gap-1 bg-[#05142B] border border-[#3A2C18] rounded-md px-2 py-1 shadow-sm">
+              <div className="flex items-center gap-1 bg-[#020F24]/90 border border-[#1E3B66]/80 rounded-md px-2 py-1 shadow-sm shrink-0">
                 <button
                   type="button"
                   disabled={activePageIndex <= 0}
                   onClick={() => setActivePageId(pages[activePageIndex - 1].id)}
-                  className="p-1 rounded hover:bg-white/[0.08] text-[#C6B697] hover:text-[#FFF4D4] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className="p-1 rounded hover:bg-white/[0.08] text-[#DFBE77] hover:text-[#FFF4D4] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   title="Previous page"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
@@ -1094,7 +1109,7 @@ export default function ComplaintWorkspace() {
                   type="button"
                   disabled={activePageIndex >= pages.length - 1}
                   onClick={() => setActivePageId(pages[activePageIndex + 1].id)}
-                  className="p-1 rounded hover:bg-white/[0.08] text-[#C6B697] hover:text-[#FFF4D4] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className="p-1 rounded hover:bg-white/[0.08] text-[#DFBE77] hover:text-[#FFF4D4] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   title="Next page"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -1102,7 +1117,7 @@ export default function ComplaintWorkspace() {
               </div>
 
               {/* Center: View Mode Presets */}
-              <div className="hidden md:flex items-center bg-[#05142B] border border-[#3A2C18] rounded-md p-0.5 shadow-sm text-xs">
+              <div className="hidden md:flex items-center bg-[#020F24]/90 border border-[#1E3B66]/80 rounded-md p-0.5 shadow-sm text-xs shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode("fit-width")}
@@ -1145,7 +1160,7 @@ export default function ComplaintWorkspace() {
               </div>
 
               {/* Right: Zoom & Focus & Panel Controls */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Index Toggle Button */}
                 <Button
                   type="button"
@@ -1153,10 +1168,10 @@ export default function ComplaintWorkspace() {
                   size="sm"
                   onClick={() => setIsIndexCollapsed(!isIndexCollapsed)}
                   className={cn(
-                    "border-[#3A2C18] text-xs h-7 px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md transition-colors",
+                    "border-[#1E3B66]/80 text-xs h-7 px-2 sm:px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md transition-colors",
                     isIndexCollapsed 
-                      ? "bg-[#05142B] text-[#D8C7A5] hover:text-[#FFF4D4]" 
-                      : "bg-[#0A2447] text-[#FFF4D4] border-[#4B6B94]"
+                      ? "bg-[#020F24]/90 text-[#D8C7A5] hover:text-[#FFF4D4]" 
+                      : "bg-[#082347] text-[#FFF4D4] border-[#386299]"
                   )}
                   title={isIndexCollapsed ? "Show Index" : "Hide Index"}
                 >
@@ -1171,10 +1186,10 @@ export default function ComplaintWorkspace() {
                   size="sm"
                   onClick={() => setIsToolsCollapsed(!isToolsCollapsed)}
                   className={cn(
-                    "border-[#3A2C18] text-xs h-7 px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md transition-colors",
+                    "border-[#1E3B66]/80 text-xs h-7 px-2 sm:px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md transition-colors",
                     isToolsCollapsed 
-                      ? "bg-[#05142B] text-[#D8C7A5] hover:text-[#FFF4D4]" 
-                      : "bg-[#0A2447] text-[#FFF4D4] border-[#4B6B94]"
+                      ? "bg-[#020F24]/90 text-[#D8C7A5] hover:text-[#FFF4D4]" 
+                      : "bg-[#082347] text-[#FFF4D4] border-[#386299]"
                   )}
                   title={isToolsCollapsed ? "Show Tools" : "Hide Tools"}
                 >
@@ -1182,7 +1197,7 @@ export default function ComplaintWorkspace() {
                   <span className="hidden sm:inline">{isToolsCollapsed ? "Tools" : "Hide Tools"}</span>
                 </Button>
 
-                <div className="flex items-center bg-[#05142B] border border-[#3A2C18] rounded-md px-1.5 py-0.5 shadow-sm">
+                <div className="flex items-center bg-[#020F24]/90 border border-[#1E3B66]/80 rounded-md px-1.5 py-0.5 shadow-sm">
                   <button
                     type="button"
                     onClick={() => setZoomLevel((z) => Math.max(70, z - 10))}
@@ -1191,7 +1206,7 @@ export default function ComplaintWorkspace() {
                   >
                     <ZoomOut className="w-3 h-3" />
                   </button>
-                  <span className="font-mono text-xs text-[#FFF4D4] px-2 font-medium">
+                  <span className="font-mono text-xs text-[#FFF4D4] px-1.5 sm:px-2 font-medium">
                     {zoomLevel}%
                   </span>
                   <button
@@ -1209,10 +1224,10 @@ export default function ComplaintWorkspace() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsFocusMode(!isFocusMode)}
-                  className="border-[#3A2C18] bg-[#05142B] text-[#D8C7A5] hover:text-[#FFF4D4] text-xs h-7 px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md"
+                  className="border-[#1E3B66]/80 bg-[#020F24]/90 text-[#D8C7A5] hover:text-[#FFF4D4] text-xs h-7 px-2 sm:px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md"
                 >
                   {isFocusMode ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
-                  <span>Focus mode</span>
+                  <span className="hidden sm:inline">Focus mode</span>
                 </Button>
               </div>
 
@@ -1225,7 +1240,7 @@ export default function ComplaintWorkspace() {
           {/* ── RIGHT COLUMN: Cover tools Panel (matching reference mockup) ── */}
           {!isFocusMode && !isToolsCollapsed && (
             <aside 
-              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#020A17]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",

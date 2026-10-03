@@ -323,7 +323,12 @@ export default function FloatingUtilityDock() {
       {/* Radar | AI | Timer | Page ID — all in a single horizontal capsule */}
       <aside
         aria-label="Waypoint Utilities Dock"
-        className="fixed bottom-3 right-3 z-50 flex items-center select-none"
+        className={cn(
+          "fixed z-50 flex items-center select-none transition-all duration-300",
+          location.startsWith("/state-complaint-builder") || location.startsWith("/complaint")
+            ? "bottom-2 right-14"
+            : "bottom-3 right-3"
+        )}
       >
         <div
           className={cn(
