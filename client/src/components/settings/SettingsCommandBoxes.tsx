@@ -157,12 +157,12 @@ export function SettingsCommandBoxes({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-[#C6B697] flex items-center gap-2">
           <span>Company Settings Architecture</span>
-          <span className="text-slate-500">•</span>
-          <span className="text-foreground">Click a command box to open configuration</span>
+          <span className="text-[#3A2C18]">•</span>
+          <span className="text-[#DFBE77]">Click a command box to open configuration</span>
         </h2>
-        <span className="text-[11px] text-muted-foreground font-mono">
+        <span className="text-[11px] text-[#A69371] font-mono px-2 py-0.5 rounded-md bg-[#020A17] border border-[#3A2C18]">
           8 Core Systems
         </span>
       </div>
@@ -176,51 +176,51 @@ export function SettingsCommandBoxes({
             <div
               key={box.key}
               onClick={() => onSelectSection(box.key)}
-              className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+              className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                 isActive
-                  ? `bg-card ${box.borderActive} ${box.glowActive}`
-                  : "bg-card/70 border-border/70 hover:border-border hover:bg-card hover:shadow-md"
+                  ? "bg-[#071E3D] border-2 border-[#FFE394] shadow-[0_0_24px_rgba(197,160,89,0.35),0_8px_24px_rgba(0,0,0,0.85)]"
+                  : "bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/60 hover:bg-[#071A35]"
               }`}
             >
               {/* Active corner accent indicator */}
               {isActive && (
                 <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none overflow-hidden">
-                  <div className="absolute -top-6 -right-6 w-12 h-12 bg-primary/20 rotate-45" />
+                  <div className="absolute -top-6 -right-6 w-12 h-12 bg-gradient-to-br from-[#FFE394] to-[#C5A059] opacity-30 rotate-45" />
                 </div>
               )}
 
               <div>
                 <div className="flex items-center justify-between gap-1 mb-2.5">
                   <div
-                    className={`w-9 h-9 rounded-xl ${box.iconBg} border border-white/5 flex items-center justify-center ${box.iconColor} transition-transform group-hover:scale-110`}
+                    className="w-9 h-9 rounded-xl bg-[#020A17] border border-[#3A2C18] flex items-center justify-center text-[#FFE394] transition-transform group-hover:scale-110 shadow-inner"
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <Badge
                     variant="outline"
-                    className={`text-[9px] font-bold px-1.5 py-0.5 ${box.badgeClass}`}
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#020A17] border border-[#3A2C18] text-[#FFE394]"
                   >
                     {box.badge}
                   </Badge>
                 </div>
 
-                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                <h3 className="text-sm font-serif font-bold text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors flex items-center gap-1.5">
                   <span>{box.title}</span>
                 </h3>
-                <p className="text-[10px] font-semibold text-primary/90 mt-0.5">
+                <p className="text-[10px] font-semibold text-[#DFBE77] mt-0.5">
                   {box.shortLabel}
                 </p>
 
-                <p className="text-[11px] text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                <p className="text-[11px] text-[#C6B697] mt-2 line-clamp-2 leading-relaxed">
                   {box.description}
                 </p>
               </div>
 
-              <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-[10px]">
-                <span className={isActive ? "font-bold text-primary flex items-center gap-1" : "text-muted-foreground"}>
+              <div className="mt-3 pt-2.5 border-t border-[#3A2C18]/60 flex items-center justify-between text-[10px]">
+                <span className={isActive ? "font-bold text-[#FFE394] flex items-center gap-1" : "text-[#A69371] group-hover:text-[#C6B697]"}>
                   {isActive ? (
                     <>
-                      <CheckCircle2 className="w-3 h-3 text-primary" />
+                      <CheckCircle2 className="w-3 h-3 text-[#FFE394]" />
                       Active View
                     </>
                   ) : (
@@ -229,7 +229,7 @@ export function SettingsCommandBoxes({
                 </span>
                 <ChevronRight
                   className={`w-3.5 h-3.5 transition-transform ${
-                    isActive ? "translate-x-0.5 text-primary" : "text-muted-foreground group-hover:translate-x-1"
+                    isActive ? "translate-x-0.5 text-[#FFE394]" : "text-[#A69371] group-hover:translate-x-1 group-hover:text-[#C6B697]"
                   }`}
                 />
               </div>

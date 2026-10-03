@@ -77,66 +77,73 @@ export default function Settings() {
   }, []);
 
   return (
-    <div className="space-y-6 p-6 md:p-8 max-w-6xl mx-auto font-sans">
-      {/* ── TOP HEADER & TELEMETRY ────────────────────────────────────────── */}
-      <div className="space-y-3 border-b border-border pb-5">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-amber-400/10 border border-amber-400/25 p-2.5 text-amber-500">
-              <Settings2 className="h-6 w-6" />
+    <div 
+      className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100"
+      style={{
+        backgroundColor: "#07162B",
+        backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
+      }}
+    >
+      <div className="w-full px-4 sm:px-6 md:px-8 py-8 space-y-6 max-w-7xl mx-auto">
+        {/* ── TOP HEADER & TELEMETRY ────────────────────────────────────────── */}
+        <div className="space-y-4 border-b border-[#3A2C18]/80 pb-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3.5">
+              <div className="rounded-xl bg-[#05142B] border border-[#3A2C18] p-3 text-[#FFE394] shadow-[0_4px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                <Settings2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-serif font-black tracking-tight text-[#FFF4D4] flex items-center gap-2">
+                  Company Settings Dashboard
+                </h1>
+                <p className="text-[#C6B697] text-xs md:text-sm mt-0.5 font-sans">
+                  Executive command center for Waypoint Advocates. Configure billing receipts, client portal, CRM operations, and master tokens.
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
-                Company Settings Dashboard
-              </h1>
-              <p className="text-muted-foreground text-xs md:text-sm mt-0.5">
-                Executive command center for Waypoint Advocates. Configure billing receipts, client portal, CRM operations, and master tokens.
-              </p>
+            <PageIdBadge id="PG-024" name="Company Settings Hub" />
+          </div>
+
+          {/* Live Practice Telemetry Pill Bar */}
+          <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <Building className="w-3.5 h-3.5 text-[#DFBE77]" />
+                <span className="text-[#A69371]">Advocacy Practice:</span>
+                <span className="font-bold text-[#FFF4D4]">Waypoint Advocates</span>
+              </div>
+
+              <span className="text-[#3A2C18] hidden sm:inline">•</span>
+
+              <div className="flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[#A69371]">Phone:</span>
+                <span className="font-bold text-[#FFF4D4] font-mono">{displayPhone}</span>
+              </div>
+
+              <span className="text-[#3A2C18] hidden sm:inline">•</span>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#A69371]">Primary Case Label:</span>
+                <Badge variant="outline" className="text-[10px] font-bold bg-[#020A17] text-[#FFE394] border-[#3A2C18]">
+                  {projectLabel}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 shadow-xs">
+                ✓ Systems Operational
+              </span>
             </div>
           </div>
-          <PageIdBadge id="PG-024" name="Company Settings Hub" />
         </div>
 
-        {/* Live Practice Telemetry Pill Bar */}
-        <div className="rounded-xl border border-border/80 bg-card/60 p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <Building className="w-3.5 h-3.5 text-primary" />
-              <span className="text-muted-foreground">Advocacy Practice:</span>
-              <span className="font-bold text-foreground">Waypoint Advocates</span>
-            </div>
-
-            <span className="text-slate-600 hidden sm:inline">•</span>
-
-            <div className="flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-muted-foreground">Phone:</span>
-              <span className="font-bold text-foreground font-mono">{displayPhone}</span>
-            </div>
-
-            <span className="text-slate-600 hidden sm:inline">•</span>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">Primary Case Label:</span>
-              <Badge variant="outline" className="text-[10px] font-bold bg-primary/10 text-primary border-primary/25">
-                {projectLabel}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              ✓ Systems Operational
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 5 EXECUTIVE COMMAND BOXES ACROSS THE TOP ──────────────────────── */}
-      <SettingsCommandBoxes
-        activeSection={activeSection}
-        onSelectSection={handleSectionChange}
-      />
+        {/* ── 8 EXECUTIVE COMMAND BOXES ACROSS THE TOP ──────────────────────── */}
+        <SettingsCommandBoxes
+          activeSection={activeSection}
+          onSelectSection={handleSectionChange}
+        />
 
       {/* ── ACTIVE SECTION WORKSPACE ──────────────────────────────────────── */}
       <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -189,5 +196,6 @@ export default function Settings() {
         )}
       </div>
     </div>
-  );
+  </div>
+);
 }

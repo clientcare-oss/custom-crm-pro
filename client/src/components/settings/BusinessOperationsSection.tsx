@@ -147,13 +147,13 @@ export function BusinessOperationsSection() {
   return (
     <div className="space-y-6">
       {/* ── SUB-TAB NAVIGATION: COMPANY NOTES vs WORKFLOW DESIGNER ── */}
-      <div className="flex items-center gap-2 border-b border-border/60 pb-3 flex-wrap">
+      <div className="flex items-center gap-2 border-b border-[#3A2C18]/60 pb-3 flex-wrap">
         <button
           onClick={() => setActiveSubTab("company_notes")}
           className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === "company_notes"
-              ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
-              : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
+              : "border border-[#3A2C18] bg-[#020A17] text-[#C6B697] hover:bg-[#07162B] hover:text-[#FFF4D4]"
           }`}
         >
           <Building className="w-4 h-4" />
@@ -164,8 +164,8 @@ export function BusinessOperationsSection() {
           onClick={() => setActiveSubTab("workflows")}
           className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === "workflows"
-              ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
-              : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
+              : "border border-[#3A2C18] bg-[#020A17] text-[#C6B697] hover:bg-[#07162B] hover:text-[#FFF4D4]"
           }`}
         >
           <GitBranch className="w-4 h-4" />
@@ -184,80 +184,80 @@ export function BusinessOperationsSection() {
       {activeSubTab === "workflows" && (
         <>
           {/* ── ARCHITECTURAL DISTINCTION CALLOUT ─────────────────────────────── */}
-          <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-slate-900/60 to-slate-900/40 p-5 shadow-sm space-y-3">
+          <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-3">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#020A17] border border-[#3A2C18] flex items-center justify-center text-[#FFE394] shrink-0">
                   <Network className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                  <h2 className="text-lg font-serif font-bold text-[#FFF4D4] tracking-tight flex items-center gap-2">
                     Business Operations · Workflow Designer
                   </h2>
-              <p className="text-xs text-slate-300">
-                Visual process planning, lifecycle mapping, and operational decision trees for executive leadership.
-              </p>
+                  <p className="text-xs text-[#C6B697]">
+                    Visual process planning, lifecycle mapping, and operational decision trees for executive leadership.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setLocation("/workflows")}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 px-4 rounded-xl gap-2 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Launch Fullscreen Designer
+                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    onClick={handleOpenCreate}
+                    className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs h-9 px-3.5 rounded-xl gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-[#DFBE77]" />
+                    New Workflow
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* System Clarity: Automations vs Workflow Designer */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
+              <div className="p-3 rounded-xl bg-[#020A17]/80 border border-[#3A2C18]/80 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-[#DFBE77]">
+                  <Workflow className="w-3.5 h-3.5" />
+                  <span>Automations Engine (Operational System)</span>
+                </div>
+                <p className="text-[#C6B697] text-[11px] leading-relaxed">
+                  Executable system triggers, webhooks, and automated background tasks that run automatically when CRM events occur. Located in the main tools suite.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#020A17]/80 border border-[#3A2C18]/80 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+                  <GitBranch className="w-3.5 h-3.5" />
+                  <span>Workflow Designer (Administrative Planning)</span>
+                </div>
+                <p className="text-[#C6B697] text-[11px] leading-relaxed">
+                  Visual business architecture and flowchart canvas. Used by CEO and Management to model standard operating procedures, decision gates, and service lifecycles.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setLocation("/workflows")}
-              className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-9 px-4 rounded-xl gap-2 shadow-sm"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Launch Fullscreen Designer
-            </Button>
-            {isAdmin && (
-              <Button
-                variant="outline"
-                onClick={handleOpenCreate}
-                className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 text-xs h-9 px-3.5 rounded-xl gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                New Workflow
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* System Clarity: Automations vs Workflow Designer */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
-          <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-sky-400">
-              <Workflow className="w-3.5 h-3.5" />
-              <span>Automations Engine (Operational System)</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Executable system triggers, webhooks, and automated background tasks that run automatically when CRM events occur. Located in the main tools suite.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-emerald-400">
-              <GitBranch className="w-3.5 h-3.5" />
-              <span>Workflow Designer (Administrative Planning)</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Visual business architecture and flowchart canvas. Used by CEO and Management to model standard operating procedures, decision gates, and service lifecycles.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── WORKFLOWS LIST & REPOSITORY ────────────────────────────────────── */}
-      <Card className="rounded-2xl border border-border shadow-sm">
-        <CardHeader className="pb-3 border-b border-border/60">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <FolderGit2 className="h-4 w-4 text-emerald-500" />
-                Active Company Process Workflows
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Business workflows saved across the organization. Click any workflow to view or edit in the interactive canvas.
-              </CardDescription>
-            </div>
+          {/* ── WORKFLOWS LIST & REPOSITORY ────────────────────────────────────── */}
+          <Card className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+            <CardHeader className="pb-3 border-b border-[#3A2C18]/60">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+                    <FolderGit2 className="h-4 w-4 text-[#FFE394]" />
+                    Active Company Process Workflows
+                  </CardTitle>
+                  <CardDescription className="text-xs text-[#C6B697]">
+                    Business workflows saved across the organization. Click any workflow to view or edit in the interactive canvas.
+                  </CardDescription>
+                </div>
             <Badge variant="outline" className="text-xs font-mono self-start sm:self-auto">
               {workflows.length} {workflows.length === 1 ? "Workflow" : "Workflows"}
             </Badge>

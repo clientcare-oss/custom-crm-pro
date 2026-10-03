@@ -91,32 +91,32 @@ function ReferralProgramSettingsCard() {
   };
 
   return (
-    <Card className="rounded-2xl border border-border shadow-sm">
-      <CardHeader className="pb-4">
+    <Card className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+      <CardHeader className="pb-4 border-b border-[#3A2C18]/60">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Gift className="h-5 w-5 text-amber-500" />
+            <CardTitle className="text-lg font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+              <Gift className="h-5 w-5 text-[#FFE394]" />
               Waypoint Referral & Credit Settings
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs text-[#C6B697] mt-0.5">
               Configure the default client referral program (&quot;Give $25. Get $25.&quot;) and Waypoint Credit rules.
             </CardDescription>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#020A17] text-[#FFE394] border border-[#3A2C18]">
             No Cash Value Enforced
           </span>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 pt-5">
         {isLoading ? (
-          <p className="text-xs text-muted-foreground">Loading referral program settings...</p>
+          <p className="text-xs text-[#A69371]">Loading referral program settings...</p>
         ) : (
           <>
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/40">
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-[#3A2C18] bg-[#020A17]/80">
               <div className="space-y-0.5">
-                <div className="text-xs font-bold text-foreground">Referral Program Active</div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs font-bold text-[#FFF4D4]">Referral Program Active</div>
+                <div className="text-[11px] text-[#C6B697]">
                   When enabled, existing clients can generate referral links and earn Waypoint Credit.
                 </div>
               </div>
@@ -125,88 +125,88 @@ function ReferralProgramSettingsCard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#A69371]">
                   New Client Discount ($)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-bold">$</span>
+                  <span className="absolute left-3 top-2.5 text-xs text-[#DFBE77] font-bold">$</span>
                   <Input
                     type="number"
                     min="0"
                     step="1"
                     value={newClientDiscount}
                     onChange={(e) => setNewClientDiscount(e.target.value)}
-                    className="pl-7 text-xs font-mono"
+                    className="pl-7 text-xs font-mono bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] focus:border-[#C5A059]"
                     placeholder="25"
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-[#C6B697]">
                   Deducted automatically from the new client&apos;s first eligible payment.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#A69371]">
                   Referring Client Credit ($)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-bold">$</span>
+                  <span className="absolute left-3 top-2.5 text-xs text-[#DFBE77] font-bold">$</span>
                   <Input
                     type="number"
                     min="0"
                     step="1"
                     value={referrerCredit}
                     onChange={(e) => setReferrerCredit(e.target.value)}
-                    className="pl-7 text-xs font-mono"
+                    className="pl-7 text-xs font-mono bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] focus:border-[#C5A059]"
                     placeholder="25"
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-[#C6B697]">
                   Issued to the referring client as Waypoint Credit upon successful qualification.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div className="p-3 rounded-xl border border-border bg-background space-y-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="p-3 rounded-lg border border-[#3A2C18]/80 bg-[#020A17]/80 space-y-1">
+                <span className="text-[10px] font-bold text-[#A69371] uppercase tracking-wider">
                   Qualification Trigger
                 </span>
-                <p className="text-xs font-bold text-foreground">First Eligible Payment</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">
+                <p className="text-xs font-serif font-bold text-[#FFF4D4]">First Eligible Payment</p>
+                <p className="text-[10px] text-[#C6B697] leading-tight">
                   Credit is only issued when referred client successfully completes their first payment.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl border border-border bg-background space-y-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="p-3 rounded-lg border border-[#3A2C18]/80 bg-[#020A17]/80 space-y-1">
+                <span className="text-[10px] font-bold text-[#A69371] uppercase tracking-wider">
                   Credit Type
                 </span>
-                <p className="text-xs font-bold text-foreground">Waypoint Credit</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">
+                <p className="text-xs font-serif font-bold text-[#FFF4D4]">Waypoint Credit</p>
+                <p className="text-[10px] text-[#C6B697] leading-tight">
                   Functions like store credit applied against invoices. Cannot reduce balances below $0.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl border border-border bg-background space-y-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="p-3 rounded-lg border border-[#3A2C18]/80 bg-[#020A17]/80 space-y-1">
+                <span className="text-[10px] font-bold text-[#A69371] uppercase tracking-wider">
                   Cash Value
                 </span>
-                <p className="text-xs font-bold text-amber-500">NONE</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">
+                <p className="text-xs font-serif font-bold text-[#FFE394]">NONE</p>
+                <p className="text-[10px] text-[#C6B697] leading-tight">
                   Cannot be cashed out, withdrawn, or transferred between clients.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <p className="text-[11px] text-muted-foreground italic">
+            <div className="flex items-center justify-between pt-3 border-t border-[#3A2C18]/60">
+              <p className="text-[11px] text-[#C6B697] italic">
                 Default offer: &quot;Give ${newClientDiscount || "25"}. Get ${referrerCredit || "25"}.&quot;
               </p>
               <Button
                 onClick={handleSave}
                 disabled={updateSettingsMutation.isPending}
-                className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs px-5 h-8 shadow-xs cursor-pointer"
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs px-5 h-8 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 cursor-pointer"
               >
                 {updateSettingsMutation.isPending ? "Saving..." : "Save Referral Settings"}
               </Button>
@@ -325,24 +325,24 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-slate-900/60 to-emerald-900/20 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
+      <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Advocate CRM Environment</span>
-            <Badge variant="outline" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">
+            <span className="text-xs font-bold text-[#DFBE77] uppercase tracking-wider">Advocate CRM Environment</span>
+            <Badge variant="outline" className="bg-[#020A17] text-[#FFE394] border border-[#3A2C18] text-[10px]">
               Admin Core
             </Badge>
           </div>
-          <h3 className="text-base font-bold text-foreground">
+          <h3 className="text-base font-serif font-bold text-[#FFF4D4]">
             Settings that shape Byron & staff workspace
           </h3>
-          <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
+          <p className="text-xs text-[#C6B697] max-w-2xl leading-relaxed">
             Configure your practice terminology (e.g. &quot;Students&quot;, &quot;Clients&quot;, or &quot;Projects&quot;), practice business phone, sidebar icon badges, and company brand logo.
           </p>
         </div>
         <a href="/contacts">
-          <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-8 shrink-0 cursor-pointer">
-            <Users className="h-3.5 w-3.5 mr-1.5" />
+          <Button size="sm" className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] font-bold text-xs h-8 shrink-0 cursor-pointer shadow-sm">
+            <Users className="h-3.5 w-3.5 mr-1.5 text-[#DFBE77]" />
             Go to Contacts (PG-002)
           </Button>
         </a>
@@ -350,19 +350,19 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Practice Phone Number Section */}
-        <Card className="rounded-2xl border border-border shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Phone className="h-5 w-5 text-emerald-500" />
+        <Card className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+          <CardHeader className="pb-4 border-b border-[#3A2C18]/60">
+            <CardTitle className="text-base font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+              <Phone className="h-5 w-5 text-[#FFE394]" />
               Practice Business Phone Number
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs text-[#C6B697] mt-0.5">
               Displayed on client confirmation receipts, call summaries, and the parent portal.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-5">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#A69371]">
                 Phone Number
               </label>
               <div className="flex gap-2">
@@ -370,41 +370,41 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
                   value={phoneValue}
                   onChange={(e) => setPhoneValue(e.target.value)}
                   placeholder="e.g. (404) 555-0199 or 1-800-555-0100"
-                  className="flex-1 text-xs md:text-sm"
+                  className="flex-1 text-xs md:text-sm bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] focus:border-[#C5A059]"
                   type="tel"
                 />
                 <Button
                   onClick={handlePhoneSave}
                   disabled={setPhoneMutation.isPending}
-                  className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold px-5 cursor-pointer"
+                  className="shrink-0 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs px-5 h-9 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 cursor-pointer"
                 >
                   {setPhoneMutation.isPending ? "Saving..." : "Save Phone"}
                 </Button>
               </div>
               {phoneData?.phone && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium pt-1">
+                <div className="text-xs text-emerald-400 bg-[#020A17] border border-emerald-500/30 p-2.5 rounded-lg flex items-center gap-1.5 font-medium mt-2">
                   <CheckCircle className="h-3.5 w-3.5" />
-                  Currently active: <span className="font-bold">{phoneData.phone}</span>
-                </p>
+                  Currently active: <span className="font-bold text-[#FFF4D4] font-mono">{phoneData.phone}</span>
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
 
         {/* Company Logo Section */}
-        <Card className="rounded-2xl border border-border shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Building className="h-5 w-5 text-emerald-500" />
+        <Card className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+          <CardHeader className="pb-4 border-b border-[#3A2C18]/60">
+            <CardTitle className="text-base font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+              <Building className="h-5 w-5 text-[#FFE394]" />
               Company Brand & Logo Asset
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs text-[#C6B697] mt-0.5">
               Displayed in the CRM header, sidebar, and client payment receipt experience.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-5">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#A69371]">
                 Logo Image URL
               </label>
               <div className="flex gap-2">
@@ -412,12 +412,12 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
                   value={logoUrlValue}
                   onChange={(e) => setLogoUrlValue(e.target.value)}
                   placeholder="e.g. https://example.com/logo.png or upload below"
-                  className="flex-1 text-xs md:text-sm"
+                  className="flex-1 text-xs md:text-sm bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] focus:border-[#C5A059]"
                 />
                 <Button
                   onClick={handleLogoSave}
                   disabled={setLogoMutation.isPending}
-                  className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold px-5 cursor-pointer"
+                  className="shrink-0 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs px-5 h-9 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 cursor-pointer"
                 >
                   {setLogoMutation.isPending ? "Saving..." : "Save Logo"}
                 </Button>
@@ -438,16 +438,16 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
                     variant="outline"
                     disabled={uploadingLogo}
                     onClick={() => document.getElementById("logo-upload-input")?.click()}
-                    className="text-xs font-semibold cursor-pointer"
+                    className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs font-semibold cursor-pointer"
                   >
                     {uploadingLogo ? "Uploading..." : "Upload Logo File"}
                   </Button>
                 </div>
 
                 {logoUrlValue && (
-                  <div className="flex items-center gap-3 p-2 rounded-xl bg-muted border border-border">
-                    <span className="text-xs text-muted-foreground font-semibold">Preview:</span>
-                    <div className="h-10 w-10 rounded-lg border border-border bg-[#00102F] p-1 flex items-center justify-center">
+                  <div className="flex items-center gap-3 p-2 rounded-xl bg-[#020A17] border border-[#3A2C18]">
+                    <span className="text-xs text-[#A69371] font-semibold">Preview:</span>
+                    <div className="h-10 w-10 rounded-lg border border-[#3A2C18] bg-[#00102F] p-1 flex items-center justify-center">
                       <img
                         src={logoUrlValue}
                         alt="Logo Preview"
@@ -466,20 +466,20 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
       </div>
 
       {/* Practice Terminology Section */}
-      <Card className="rounded-2xl border border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
+      <Card className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+        <CardHeader className="pb-4 border-b border-[#3A2C18]/60">
+          <CardTitle className="text-lg font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+            <Target className="h-5 w-5 text-[#FFE394]" />
             Practice Case Terminology
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-[#C6B697] mt-0.5">
             Choose what Byron&apos;s CRM calls an individual client record (e.g. &quot;Student&quot;, &quot;Case&quot;, &quot;Project&quot;).
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-5">
           <div>
-            <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Active Terminology: <span className="text-primary font-bold text-sm normal-case">{projectLabel}</span>
+            <p className="mb-3 text-xs font-semibold text-[#A69371] uppercase tracking-wider">
+              Active Terminology: <span className="text-[#FFE394] font-serif font-bold text-sm normal-case">{projectLabel}</span>
             </p>
 
             {/* Preset options */}
@@ -492,12 +492,12 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
                     onClick={() => handleSelect(option.value)}
                     className={`flex items-center justify-between rounded-xl border px-4 py-3 text-xs font-bold transition-all text-left cursor-pointer ${
                       isActive
-                        ? "border-primary bg-primary/10 text-primary shadow-xs"
-                        : "border-border bg-background text-foreground hover:bg-muted"
+                        ? "border-2 border-[#FFE394] bg-[#071E3D] text-[#FFF4D4] shadow-[0_0_15px_rgba(197,160,89,0.3)]"
+                        : "border border-[#3A2C18] bg-[#020A17] text-[#C6B697] hover:border-[#C5A059]/60 hover:text-[#FFF4D4]"
                     }`}
                   >
                     <span>{option.label}</span>
-                    {isActive && <CheckCircle className="h-4 w-4 shrink-0 text-primary" />}
+                    {isActive && <CheckCircle className="h-4 w-4 shrink-0 text-[#FFE394]" />}
                   </button>
                 );
               })}
@@ -505,8 +505,8 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
           </div>
 
           {/* Custom label input */}
-          <div className="space-y-2 pt-3 border-t border-border">
-            <label className="text-xs font-bold text-foreground">Custom Terminology</label>
+          <div className="space-y-2 pt-3 border-t border-[#3A2C18]/60">
+            <label className="text-xs font-bold text-[#FFF4D4]">Custom Terminology</label>
             <div className="flex gap-2">
               <VoiceInput
                 value={customValue}
@@ -515,11 +515,11 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
                   setSelected("__custom__");
                 }}
                 placeholder="e.g. Advocacy File, IEP Case"
-                className="flex-1 text-xs"
+                className="flex-1 text-xs bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] focus:border-[#C5A059]"
               />
               <Button
                 onClick={handleCustomSave}
-                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold cursor-pointer"
+                className="shrink-0 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs px-5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 cursor-pointer"
               >
                 Apply Custom
               </Button>
@@ -529,17 +529,17 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
       </Card>
 
       {/* Icon Picker Section */}
-      <Card className="rounded-2xl border border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Compass className="h-5 w-5 text-primary" />
+      <Card className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+        <CardHeader className="pb-4 border-b border-[#3A2C18]/60">
+          <CardTitle className="text-lg font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+            <Compass className="h-5 w-5 text-[#FFE394]" />
             Sidebar Case Icon
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-[#C6B697] mt-0.5">
             Choose the icon shown next to the {projectLabel}s navigation tab in the CRM sidebar.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-5">
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {ICON_OPTIONS.map((opt) => {
               const IconComp = ICON_COMPONENT_MAP[opt.key];
@@ -554,13 +554,13 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
                   title={opt.label}
                   className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? "border-primary bg-primary/10 text-primary font-bold shadow-xs"
-                      : "border-border bg-background text-foreground hover:bg-muted"
+                      ? "border-2 border-[#FFE394] bg-[#071E3D] text-[#FFF4D4] font-bold shadow-[0_0_12px_rgba(197,160,89,0.25)]"
+                      : "border border-[#3A2C18] bg-[#020A17] text-[#C6B697] hover:border-[#C5A059]/60 hover:text-[#FFF4D4]"
                   }`}
                 >
                   <IconComp className="h-5 w-5" />
                   <span className="truncate w-full text-center text-[11px]">{opt.label}</span>
-                  {isActive && <CheckCircle className="h-3.5 w-3.5 text-primary" />}
+                  {isActive && <CheckCircle className="h-3.5 w-3.5 text-[#FFE394]" />}
                 </button>
               );
             })}

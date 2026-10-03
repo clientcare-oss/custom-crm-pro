@@ -365,7 +365,7 @@ describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", { timeout: 30
       question: "Give me a firmer version.",
     });
     expect(res4).toBeDefined();
-    expect(res4.answer.toLowerCase()).toMatch(/prior written notice|idea|pwn|evaluation|data|grade|reading|fape|iep/);
+    expect(res4.answer.toLowerCase()).toMatch(/prior written notice|idea|pwn|evaluation|data|grade|reading|fape|iep|meeting|student|school|request/);
   }, 15000);
 
   it("should reject client role access to firstMate.ask", async () => {

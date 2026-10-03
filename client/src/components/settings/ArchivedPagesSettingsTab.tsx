@@ -163,21 +163,21 @@ export function ArchivedPagesSettingsTab() {
   return (
     <div className="space-y-6">
       {/* Top Banner: Archived Pages Purpose */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-purple-500/30 bg-purple-950/20 text-purple-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-xl border border-[#3A2C18] bg-[#05142B]/90 text-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300 shrink-0">
+          <div className="p-2.5 rounded-xl bg-[#020A17] border border-[#3A2C18] text-[#FFE394] shrink-0">
             <Archive className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-bold text-base text-foreground">
+              <h3 className="font-serif font-bold text-base text-[#FFF4D4]">
                 Archived Pages & Reference Consoles
               </h3>
-              <Badge variant="outline" className="bg-purple-500/15 text-purple-300 border-purple-500/30 text-[10px]">
+              <Badge variant="outline" className="bg-[#020A17] text-[#FFE394] border border-[#3A2C18] text-[10px]">
                 Safe Repository
               </Badge>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#C6B697] mt-0.5 max-w-2xl leading-relaxed">
               When redesigning core CRM screens, previous versions are preserved here in full working condition. You can open any archived console with live database records to verify feature parity.
             </p>
           </div>
@@ -191,27 +191,27 @@ export function ArchivedPagesSettingsTab() {
         {ARCHIVED_PAGES.map((page) => (
           <Card
             key={page.id}
-            className="p-5 sm:p-6 border-border/80 bg-card/80 hover:border-purple-500/40 transition-all shadow-md relative overflow-hidden group"
+            className="p-5 sm:p-6 rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/60 transition-all relative overflow-hidden group"
           >
             {/* Top decorative accent */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-500 via-indigo-500 to-amber-500" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B]" />
 
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-border/60">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-[#3A2C18]/60">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="bg-purple-500/15 text-purple-300 border-purple-500/30 font-mono font-bold text-xs">
+                  <Badge variant="outline" className="bg-[#020A17] text-[#FFE394] border border-[#3A2C18] font-mono font-bold text-xs">
                     {page.id}
                   </Badge>
-                  <h4 className="text-lg font-bold text-foreground tracking-tight">
+                  <h4 className="text-lg font-serif font-bold text-[#FFF4D4] tracking-tight">
                     {page.name}
                   </h4>
-                  <Badge variant="outline" className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px] font-semibold">
+                  <Badge variant="outline" className="bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold">
                     ✓ {page.status}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Original Path: <code className="bg-muted px-1.5 py-0.5 rounded text-[11px] font-mono">{page.originalRoute}</code> &nbsp;·&nbsp;
-                  Archived Path: <code className="bg-muted px-1.5 py-0.5 rounded text-[11px] font-mono text-purple-300">{page.archivedRoute}</code> &nbsp;·&nbsp;
+                <p className="text-xs text-[#C6B697]">
+                  Original Path: <code className="bg-[#020A17] text-[#FFE394] px-1.5 py-0.5 rounded text-[11px] font-mono border border-[#3A2C18]">{page.originalRoute}</code> &nbsp;·&nbsp;
+                  Archived Path: <code className="bg-[#020A17] text-[#DFBE77] px-1.5 py-0.5 rounded text-[11px] font-mono border border-[#3A2C18]">{page.archivedRoute}</code> &nbsp;·&nbsp;
                   Archived: {page.archivedDate}
                 </p>
               </div>
@@ -221,12 +221,12 @@ export function ArchivedPagesSettingsTab() {
                 {fallbackStudents.length > 0 && (
                   <div className="min-w-[200px]">
                     <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-                      <SelectTrigger className="h-9 text-xs bg-card border-border">
+                      <SelectTrigger className="h-9 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                         <SelectValue placeholder="Select student case..." />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                         {fallbackStudents.map((s) => (
-                          <SelectItem key={s.id} value={String(s.id)} className="text-xs">
+                          <SelectItem key={s.id} value={String(s.id)} className="text-xs text-[#FFF4D4] focus:bg-[#071E3D] focus:text-[#FFE394]">
                             {s.firstName} {s.lastName} {s.company ? `(${s.company})` : ""}
                           </SelectItem>
                         ))}
@@ -237,7 +237,7 @@ export function ArchivedPagesSettingsTab() {
 
                 <Button
                   onClick={() => handleLaunchArchived(page)}
-                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs h-9 px-4 gap-1.5 shrink-0 shadow-sm cursor-pointer"
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shrink-0 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 cursor-pointer"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Launch Workspace
@@ -247,24 +247,24 @@ export function ArchivedPagesSettingsTab() {
 
             {/* Description & Why Archived */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 text-xs">
-              <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
-                <span className="font-bold text-foreground block mb-1">Architecture Description:</span>
-                <p className="text-muted-foreground leading-relaxed">{page.description}</p>
+              <div className="p-3 rounded-xl bg-[#020A17]/80 border border-[#3A2C18]/80">
+                <span className="font-bold text-[#FFF4D4] block mb-1">Architecture Description:</span>
+                <p className="text-[#C6B697] leading-relaxed">{page.description}</p>
               </div>
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200">
-                <span className="font-bold text-amber-300 block mb-1">Redesign Reference Notes:</span>
-                <p className="text-amber-200/90 leading-relaxed">{page.whyArchived}</p>
+              <div className="p-3 rounded-xl bg-[#071E3D]/80 border border-[#3A2C18]/80 text-[#FFF4D4]">
+                <span className="font-bold text-[#FFE394] block mb-1">Redesign Reference Notes:</span>
+                <p className="text-[#C6B697] leading-relaxed">{page.whyArchived}</p>
               </div>
             </div>
 
             {/* Complete 11-Tab Parity Checklist */}
             <div className="pt-2">
               <div className="flex items-center justify-between mb-3">
-                <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-purple-400" />
+                <h5 className="text-xs font-bold uppercase tracking-wider text-[#A69371] flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[#FFE394]" />
                   <span>Original 11-Tab Feature Inventory (Verify nothing is missed in new PG-030)</span>
                 </h5>
-                <span className="text-[11px] text-purple-400 font-bold font-mono">
+                <span className="text-[11px] text-[#FFE394] font-bold font-mono">
                   {page.tabBreakdown.length} Core Modules
                 </span>
               </div>
@@ -275,16 +275,16 @@ export function ArchivedPagesSettingsTab() {
                   return (
                     <div
                       key={tab.title}
-                      className="p-2.5 rounded-xl border border-border/60 bg-card/60 hover:bg-card/90 transition-colors flex items-start gap-2.5 text-xs"
+                      className="p-2.5 rounded-xl border border-[#3A2C18]/70 bg-[#020A17]/80 hover:bg-[#071E3D] hover:border-[#C5A059]/60 transition-colors flex items-start gap-2.5 text-xs"
                     >
-                      <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0 mt-0.5">
+                      <div className="p-1.5 rounded-lg bg-[#05142B] text-[#FFE394] border border-[#3A2C18] shrink-0 mt-0.5">
                         <Icon className="h-3.5 w-3.5" />
                       </div>
                       <div className="min-w-0">
-                        <span className="font-bold text-foreground block truncate">
+                        <span className="font-bold text-[#FFF4D4] block truncate">
                           {idx + 1}. {tab.title}
                         </span>
-                        <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mt-0.5">
+                        <p className="text-[11px] text-[#C6B697] leading-snug line-clamp-2 mt-0.5">
                           {tab.description}
                         </p>
                       </div>
