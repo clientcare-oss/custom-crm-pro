@@ -222,63 +222,92 @@ function BrassSlipHandle({ isActive }: { isActive?: boolean }) {
 }
 
 // ── Miniature Page Facsimile Preview (Actual Micro Document Replica) ────────
-function MiniaturePagePreview({ category, isActive }: { category: DocumentPage["category"]; isActive?: boolean }) {
-  if (category === "cover") {
-    return (
-      <div
-        className={cn(
-          "w-[24px] h-[32px] rounded-[1.5px] p-[2px] flex flex-col justify-between shadow-[0_1px_2.5px_rgba(0,0,0,0.45)] border shrink-0 relative overflow-hidden",
-          isActive ? "bg-[#FFFDF7] border-[#8C6D2B]" : "bg-[#FAF5E8] border-[#A88A4C]/80"
-        )}
-      >
-        {/* Tiny top header representation */}
-        <div className="w-full flex flex-col items-center gap-[1px] pt-[0.5px]">
-          <div className="w-2 h-[1px] bg-[#6C5320] rounded-[0.5px]" />
-          <div className="w-3.5 h-[0.5px] bg-[#9E7D3B]" />
-        </div>
-        {/* Tiny centered title block */}
-        <div className="w-full flex flex-col items-center gap-[0.5px] my-auto">
-          <div className="w-3.5 h-[1.5px] bg-[#1A120A] rounded-[0.5px]" />
-          <div className="w-2.5 h-[0.5px] bg-[#6C5320]" />
-          {/* Micro lines */}
-          <div className="w-full flex flex-col gap-[1px] px-[1px] mt-0.5">
-            <div className="w-full h-[0.5px] bg-[#8C6D2B]/60" />
-            <div className="w-3/4 h-[0.5px] bg-[#8C6D2B]/60" />
-            <div className="w-4/5 h-[0.5px] bg-[#8C6D2B]/60" />
-          </div>
-        </div>
-        {/* Tiny footer */}
-        <div className="w-2.5 h-[0.5px] bg-[#A88A4C] mx-auto mb-[0.5px]" />
-      </div>
-    );
-  }
+function MiniaturePagePreview({
+  page,
+  caseDetails,
+  isActive,
+}: {
+  page: DocumentPage;
+  caseDetails: ComplaintCaseDetails;
+  isActive?: boolean;
+}) {
+  const isCover = page.category === "cover" || page.id === "cover";
 
-  // Legal Pleading / Exhibits
   return (
     <div
       className={cn(
-        "w-[24px] h-[32px] rounded-[1.5px] p-[2px] flex flex-col justify-between shadow-[0_1px_2.5px_rgba(0,0,0,0.45)] border shrink-0 relative overflow-hidden",
-        isActive ? "bg-[#FFFDF7] border-[#8C6D2B]" : "bg-[#FAF5E8] border-[#A88A4C]/80"
+        "w-[34px] h-[45px] rounded-[2px] p-[1px] shadow-[0_1.5px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] border shrink-0 relative overflow-hidden transition-all duration-200 select-none",
+        isActive
+          ? "bg-[#FFFDF8] border-[#8C6D2B] ring-1 ring-[#FFE394]/70 shadow-[0_2px_8px_rgba(255,215,100,0.45),0_1.5px_4px_rgba(0,0,0,0.5)] scale-[1.03]"
+          : "bg-[#FAF5E8] border-[#A88A4C]/80 group-hover:border-[#8C6D2B] group-hover:shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
       )}
+      style={{
+        backgroundImage: "url('/decor/fine-parchment.jpg')",
+        backgroundSize: "cover",
+      }}
     >
-      {/* Tiny caption header */}
-      <div className="w-full flex flex-col gap-[0.5px] pt-[0.5px] border-b border-[#A88A4C]/40 pb-[1px]">
-        <div className="w-full h-[0.5px] bg-[#3A2810]" />
-        <div className="w-2/3 h-[0.5px] bg-[#6C5320]" />
-      </div>
-      {/* Micro ruled paragraph lines */}
-      <div className="w-full flex flex-col gap-[1px] px-[0.5px] my-auto">
-        <div className="w-full h-[0.5px] bg-[#1A120A]/70" />
-        <div className="w-full h-[0.5px] bg-[#1A120A]/70" />
-        <div className="w-4/5 h-[0.5px] bg-[#1A120A]/70" />
-        <div className="w-full h-[0.5px] bg-[#1A120A]/70" />
-        <div className="w-3/5 h-[0.5px] bg-[#1A120A]/70" />
-      </div>
-      {/* Tiny page number */}
-      <div className="w-full flex justify-between items-center px-[0.5px] border-t border-[#A88A4C]/30 pt-[0.5px]">
-        <div className="w-1.5 h-[0.5px] bg-[#8C6D2B]" />
-        <div className="w-1 h-[0.5px] bg-[#6C5320]" />
-      </div>
+      {/* Scaled-down real document facsimile content */}
+      {isCover ? (
+        <div className="w-[190px] h-[250px] p-2.5 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.18]">
+          {/* Real State Header */}
+          <div className="text-center border-b border-[#3A2810]/40 pb-1">
+            <div className="text-[9px] font-bold tracking-wider uppercase leading-tight text-[#1A120A]">
+              Georgia Dept. of Education
+            </div>
+            <div className="text-[7.5px] text-[#4A3820] tracking-wide">
+              Special Education Services
+            </div>
+          </div>
+
+          {/* Real Title & Student info */}
+          <div className="text-center my-auto py-1">
+            <div className="text-[10px] font-bold tracking-wide uppercase text-[#0B1E38] border-y border-[#8C6D2B]/50 py-0.5">
+              State Complaint
+            </div>
+            <div className="text-[8.5px] font-bold mt-1 text-[#1A120A] truncate">
+              {caseDetails.studentName || "Student Record"}
+            </div>
+            <div className="text-[7.5px] text-[#5A4528] italic truncate">
+              v. {caseDetails.district || "School District"}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-[7px] text-center text-[#6A5230] border-t border-[#3A2810]/30 pt-0.5">
+            34 C.F.R. § 300.151–153
+          </div>
+        </div>
+      ) : (
+        <div className="w-[190px] h-[250px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.18]">
+          {/* Real Section Title */}
+          <div className="border-b border-[#3A2810]/40 pb-0.5">
+            <div className="flex justify-between items-center text-[7.5px] text-[#5A4528]">
+              <span className="font-bold uppercase tracking-wider text-[#0B1E38] truncate max-w-[130px]">
+                {page.title}
+              </span>
+              <span className="font-mono font-bold text-[8.5px] text-[#6A5230]">
+                p.{page.number}
+              </span>
+            </div>
+          </div>
+
+          {/* Real Body Paragraph Text */}
+          <div className="flex-1 overflow-hidden my-1">
+            <p className="text-[7px] text-[#2A1D0E] leading-[9.5px] line-clamp-[18] whitespace-pre-line font-serif text-justify">
+              {(page.content || "").trim() || "No text entered for this section..."}
+            </p>
+          </div>
+
+          {/* Real Page Number Footer */}
+          <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6.5px] text-[#6A5230] font-sans">
+            <span className="truncate max-w-[120px]">Waypoint Advocates</span>
+            <span className="font-mono font-bold">p.{page.number}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Subtle corner dog-ear highlight */}
+      <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-gradient-to-bl from-amber-200/60 to-transparent pointer-events-none" />
     </div>
   );
 }
@@ -670,7 +699,7 @@ export default function ComplaintWorkspace() {
 
                       {/* Right: Miniature document facsimile */}
                       <div className="flex items-center shrink-0">
-                        <MiniaturePagePreview category={p.category} isActive={isActive} />
+                        <MiniaturePagePreview page={p} caseDetails={caseDetails} isActive={isActive} />
                       </div>
                     </button>
                   );
