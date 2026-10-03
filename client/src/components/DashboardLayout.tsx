@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, Users, GraduationCap, Briefcase, FileText, FileSignature, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
 import { getStoredEmployees, checkEmployeeModuleAccess } from "@/components/team/teamStore";
 import { CRM_MODULES } from "@/components/team/teamTypes";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
@@ -1094,11 +1094,11 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 {/* Collapse button at top right */}
                 <button
                   onClick={toggleSidebar}
-                  className="absolute top-0 right-0 h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-white/50 hover:text-white cursor-pointer z-20"
-                  title="Collapse navigation"
-                  aria-label="Collapse navigation"
+                  className="absolute top-0 right-0 h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-white/60 hover:text-white cursor-pointer z-20"
+                  title="Close sidebar"
+                  aria-label="Close sidebar"
                 >
-                  <PanelLeft className="h-4 w-4" />
+                  <PanelLeftClose className="h-4 w-4" />
                 </button>
 
                 {/* Waypoint Advocates Logo & Wordmark */}
@@ -1378,15 +1378,11 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               <div className="flex flex-col items-center justify-center py-1 gap-2">
                 <button
                   onClick={toggleSidebar}
-                  className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-white cursor-pointer"
-                  title="Expand navigation"
-                  aria-label="Expand navigation"
+                  className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-[#E5C175] hover:text-[#FFF4D4] cursor-pointer group"
+                  title="Open sidebar"
+                  aria-label="Open sidebar"
                 >
-                  <img
-                    src={logoData?.logoUrl || LOGO_URL}
-                    alt="Waypoint Advocates"
-                    className="h-7 w-7 object-contain drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]"
-                  />
+                  <PanelLeftOpen className="h-5 w-5 group-hover:scale-110 transition-transform text-[#E5C175] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
                 </button>
                 <button
                   onClick={toggleTheme}
@@ -1546,7 +1542,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
           (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
           location === "/contacts" && "p-0 bg-[#07152B]",
-          (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]"
+          (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]",
+          (location === "/agreements" || location.startsWith("/agreements") || location === "/contracts" || location.startsWith("/smart-files")) && "p-0 bg-[#07162B]",
+          (location === "/state-complaint-builder" || location.startsWith("/tools/state-complaint-builder")) && "p-0 bg-[#030D1A]"
         )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">

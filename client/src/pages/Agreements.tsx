@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import PageIdBadge from "@/components/PageIdBadge";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -135,16 +134,15 @@ export default function Agreements() {
   };
 
   return (
-    <DashboardLayout>
-      <ScopedErrorBoundary moduleName="Agreements Engine">
-        <div 
-          className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100"
-          style={{
-            backgroundColor: "#07162B",
-            backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-          }}
-        >
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <ScopedErrorBoundary moduleName="Agreements Engine">
+      <div 
+        className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100"
+        style={{
+          backgroundColor: "#07162B",
+          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
+        }}
+      >
+        <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1700px] mx-auto space-y-6">
             {/* Top Header Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#3A2C18] pb-6">
               <div className="flex items-start gap-4">
@@ -429,6 +427,5 @@ export default function Agreements() {
           </div>
         </div>
       </ScopedErrorBoundary>
-    </DashboardLayout>
   );
 }
