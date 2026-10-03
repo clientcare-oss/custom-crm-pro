@@ -404,8 +404,24 @@ export default function ComplaintWorkspace() {
   // Safe back navigation to student profile
   const handleSafeBackToProfile = () => {
     setLastSavedText("Draft saved just now");
-    toast.success("Draft safely saved. Returning to student profile...");
-    const dest = params.id ? `/students/${params.id}` : "/students";
+    toast.success("State Complaint draft safely saved. Returning to student profile...");
+
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const queryStudentId = searchParams?.get("studentId") || searchParams?.get("contactId");
+    const sessionUrl = typeof window !== "undefined" ? sessionStorage.getItem("lastStudentProfileUrl") : null;
+    const sessionId = typeof window !== "undefined" ? sessionStorage.getItem("lastStudentProfileId") : null;
+
+    let dest = "/students";
+    if (sessionUrl) {
+      dest = sessionUrl;
+    } else if (params.id) {
+      dest = `/students/${params.id}`;
+    } else if (queryStudentId) {
+      dest = `/students/${queryStudentId}`;
+    } else if (sessionId) {
+      dest = `/students/${sessionId}`;
+    }
+
     navigate(dest);
   };
 
@@ -452,24 +468,24 @@ export default function ComplaintWorkspace() {
             <button
               type="button"
               onClick={handleSafeBackToProfile}
-              className="group flex flex-col items-center justify-center text-left py-0.5 px-1 hover:opacity-90 transition-all cursor-pointer select-none"
-              title="Safely save draft and return to student profile"
+              className="group flex flex-col items-center justify-center text-left py-0.5 px-1 hover:opacity-95 transition-all cursor-pointer select-none"
+              title="Safely save draft and return to student case profile"
             >
               <span className="font-serif text-[15px] sm:text-[16px] text-[#FFF4D4] font-normal tracking-wide group-hover:text-[#FFE394] transition-colors leading-tight">
                 Back to Profile
               </span>
               {/* Curved gold return arrow matching user reference */}
               <svg
-                viewBox="0 0 24 24"
+                viewBox="0 0 20 12"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="w-3.5 h-3 text-[#DFBE77] mt-0.5 group-hover:text-[#FFE394] group-hover:-translate-x-0.5 transition-all"
+                className="w-4 h-2.5 text-[#DFBE77] mt-0.5 group-hover:text-[#FFE394] group-hover:-translate-x-0.5 transition-all"
               >
-                <path d="M 9 14 L 4 9 L 9 4" />
-                <path d="M 20 20 V 13 C 20 10.79 18.21 9 16 9 L 4 9" />
+                <path d="M 5 2 L 1 6 L 5 10" />
+                <path d="M 1 6 H 13 C 16 6 18.5 8 18.5 11" />
               </svg>
             </button>
 

@@ -133,7 +133,11 @@ export function StudentWorkspaceMoreTab({
       icon: Landmark,
       onClick: () => {
         setSelectedId("state-complaint");
-        setLocation(`/state-complaint-builder`);
+        if (studentId) {
+          sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
+          sessionStorage.setItem("lastStudentProfileId", String(studentId));
+        }
+        setLocation(studentId ? `/state-complaint-builder?studentId=${studentId}` : `/state-complaint-builder`);
       },
     },
     {

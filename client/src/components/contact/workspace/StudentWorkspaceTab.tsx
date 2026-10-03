@@ -258,7 +258,11 @@ export function StudentWorkspaceTab({
         setLocation(`/tools/iep-comparator?studentId=${contactId}`);
         break;
       case "complaint-engine":
-        setLocation(`/tools/state-complaint-builder`);
+        if (contactId) {
+          sessionStorage.setItem("lastStudentProfileUrl", `/students/${contactId}`);
+          sessionStorage.setItem("lastStudentProfileId", String(contactId));
+        }
+        setLocation(contactId ? `/state-complaint-builder?studentId=${contactId}` : `/state-complaint-builder`);
         break;
       case "voyage-recorder":
         onSwitchTab("voyage-log");

@@ -30,6 +30,14 @@ export default function StudentWorkspace() {
   const studentId = parseInt(params.id ?? "0", 10);
   const [, setLocation] = useLocation();
 
+  // Store active student profile route for safe return from nested tools
+  if (studentId > 0 && typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
+      sessionStorage.setItem("lastStudentProfileId", String(studentId));
+    } catch {}
+  }
+
   // Active top index tab
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "communication" | "tasks" | "notes" | "documents" | "more">("overview");
 
