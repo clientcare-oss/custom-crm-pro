@@ -523,7 +523,7 @@ export default function ComplaintWorkspace() {
               </div>
 
               {/* Tightly stacked index cards with realistic shingled depth */}
-              <div className="flex-1 overflow-y-auto space-y-1.5 pt-2 pb-3 pl-3 pr-1.5 custom-scrollbar [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#020d20] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
+              <div className="flex-1 overflow-y-auto space-y-[2px] pt-1.5 pb-3 pl-3 pr-1.5 custom-scrollbar [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#020d20] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
                 {pages.map((p) => {
                   const isActive = p.id === activePageId;
                   return (
@@ -550,8 +550,8 @@ export default function ComplaintWorkspace() {
                       className={cn(
                         "w-full flex items-center justify-between py-1.5 px-2 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none",
                         isActive
-                          ? "border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3),0_3.5px_10px_rgba(0,0,0,0.7),0_1px_2px_rgba(0,0,0,0.45)]"
-                          : "border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15),0_2.5px_6px_rgba(0,0,0,0.55),0_1px_1.5px_rgba(0,0,0,0.35)] hover:brightness-105"
+                          ? "z-10 border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3),0_4px_12px_rgba(0,0,0,0.75),0_1px_2px_rgba(0,0,0,0.5)]"
+                          : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15),0_1.5px_3px_rgba(0,0,0,0.6)] hover:brightness-105"
                       )}
                     >
                       {/* Authentic Embossed Brass Slip Handle with sharp corners & realistic depth */}
