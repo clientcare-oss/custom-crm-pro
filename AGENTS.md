@@ -215,5 +215,27 @@ The Marina Parking Lot (`client/src/components/portal/MarinaLotView.tsx`) uses t
    - **Luxury Sports Car** (`sports`): 25% spawn weight
    - **Crew-Cab Pickup Truck** (`truck`): 10% spawn weight (least spawned)
 
+---
+
+## 9. Waypoint Admiralty Theme (`"Admiralty Theme"` / `"Navy & Brass"`)
+When requested to style pages or components in the **Admiralty Theme** (also referred to as **"Waypoint Admiralty"** or **"Navy & Brass"**):
+1. **Ambient Background Canvas**:
+   - Deep radial maritime vignette: `bg-[#07162B]` with `radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)`.
+2. **Surfaces & Cards**:
+   - Deep obsidian navy leather fill: `bg-[#05142B]/90`.
+   - Aged dimensional brass perimeter trim: `border border-[#3A2C18]`.
+   - Corner radius: `rounded-xl`.
+   - Depth and bevel shadows: `shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]`.
+   - Hover illumination: `hover:border-[#C5A059]/60 transition-all`.
+3. **Typography & Metrics**:
+   - Prominent values & titles: `'Playfair Display', Georgia, serif` in warm gold/ivory (`text-[#FFF4D4]`, `text-[#FFE394]`, `text-[#FAD77B]`).
+   - Supporting labels & descriptions: Muted parchment gold (`text-[#C6B697]`, `text-[#A69371]`).
+4. **Recessed Sub-Cards / Stat Insets**:
+   - Recessed dark obsidian plate: `bg-[#020A17]/80 border border-[#3A2C18]/60 rounded-lg p-2.5`.
+5. **Pills & Action Triggers**:
+   - Active controls: Warm gold gradient `bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)]`.
+   - Secondary actions: `border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4]`.
+
+
 
 
