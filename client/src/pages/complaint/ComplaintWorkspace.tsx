@@ -458,20 +458,12 @@ export default function ComplaintWorkspace() {
   return (
     <ScopedErrorBoundary moduleName="State Complaint Builder">
       <div 
-        className="relative flex flex-col h-[calc(100vh-0px)] w-full overflow-hidden bg-[#000820] text-slate-100 select-none"
+        className="relative flex flex-col h-[calc(100vh-0px)] w-full overflow-hidden bg-[#020B1A] text-slate-100 select-none"
         style={{
-          backgroundImage: "url('/decor/folio-leather-texture.png')",
-          backgroundRepeat: "repeat",
-          backgroundSize: "240px",
+          backgroundColor: "#020B1A",
+          backgroundImage: "radial-gradient(ellipse at 50% 0%, #0A2244 0%, #041224 60%, #020814 100%)",
         }}
       >
-        {/* Background Vignette */}
-        <div 
-          className="absolute inset-0 pointer-events-none z-0"
-          style={{
-            background: "radial-gradient(ellipse at 50% 15%, rgba(13,38,72,0.5) 0%, rgba(2,10,23,0.85) 60%, rgba(0,8,32,0.96) 100%)",
-          }}
-        />
 
         {/* ── TOP HEADER BAR (Executive Maritime Hardwood Rail) ─────────────── */}
         <header 
@@ -618,15 +610,14 @@ export default function ComplaintWorkspace() {
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-48 sm:w-52 lg:w-56 xl:w-64 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative p-2.5"
+              className="w-48 sm:w-52 lg:w-56 xl:w-64 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative p-2.5 z-20"
               style={{
                 backgroundColor: "#03152E",
-                backgroundImage: "url('/decor/folio-leather-texture.png')",
-                backgroundRepeat: "repeat",
-                backgroundSize: "200px",
+                background: "linear-gradient(180deg, #051A38 0%, #03152E 35%, #020E22 100%)",
+                boxShadow: "inset 0 1px 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.85)",
               }}
             >
-              <div className="flex items-center justify-between px-2 pt-6 pb-2 border-b border-[#3A2C18]/60 relative z-20">
+              <div className="flex items-center justify-between px-2 pt-6 pb-2 border-b border-[#3A2C18]/60 relative z-20 bg-transparent">
                 <span className="text-[11px] font-serif font-bold text-[#C6B697] tracking-wider uppercase">Packet Index</span>
                 <button
                   type="button"
@@ -639,7 +630,7 @@ export default function ComplaintWorkspace() {
               </div>
 
               {/* Tightly stacked index cards with realistic shingled depth */}
-              <div className="flex-1 overflow-y-auto space-y-1 pt-1.5 pb-3 pl-3.5 pr-2 custom-scrollbar [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
+              <div className="flex-1 overflow-y-auto space-y-1 pt-1.5 pb-3 pl-3.5 pr-2 custom-scrollbar bg-transparent [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
                 {pages.map((p) => {
                   const isActive = p.id === activePageId;
                   return (
@@ -740,25 +731,19 @@ export default function ComplaintWorkspace() {
           {/* ── CENTER COLUMN: Parchment Writing Stage ──────────────────── */}
           <main 
             className={cn(
-              "flex-1 flex flex-col border border-[#3A2C18] bg-[#03152E] shadow-2xl relative min-w-0",
+              "flex-1 flex flex-col border border-[#3A2C18] bg-[#03152E] shadow-2xl relative min-w-0 z-10",
               isToolsCollapsed 
                 ? "rounded-l-[14px] rounded-r-none" 
                 : "rounded-[14px]"
             )}
             style={{
               backgroundColor: "#03152E",
-              backgroundImage: "url('/decor/folio-leather-texture.png')",
-              backgroundRepeat: "repeat",
-              backgroundSize: "240px",
+              background: "linear-gradient(180deg, #051A38 0%, #03152E 35%, #020E22 100%)",
+              boxShadow: "inset 0 1px 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.85)",
             }}
           >
             {/* Top Folio Tabs Bar (Executive Navy & Brass Tabs matching Student Workspace) */}
             <div 
-              style={{
-                backgroundImage: "url('/decor/folio-leather-texture.png')",
-                backgroundRepeat: "repeat",
-                backgroundSize: "220px",
-              }}
               className={cn(
                 "pl-8 sm:pl-9 pr-8 sm:pr-9 pt-2.5 pb-0 bg-gradient-to-b from-[#041633] via-[#021026] to-[#010a1a] flex items-end justify-center sm:justify-start relative z-20 shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(147,197,253,0.15)]",
                 isToolsCollapsed ? "rounded-tl-[14px] rounded-tr-none" : "rounded-t-[14px]"
@@ -1338,12 +1323,11 @@ export default function ComplaintWorkspace() {
           {/* ── RIGHT COLUMN: Cover tools Panel (matching reference mockup) ── */}
           {!isFocusMode && !isToolsCollapsed && (
             <aside 
-              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-l-[14px] rounded-r-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative p-2.5"
+              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-l-[14px] rounded-r-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative p-2.5 z-20"
               style={{
                 backgroundColor: "#03152E",
-                backgroundImage: "url('/decor/folio-leather-texture.png')",
-                backgroundRepeat: "repeat",
-                backgroundSize: "200px",
+                background: "linear-gradient(180deg, #051A38 0%, #03152E 35%, #020E22 100%)",
+                boxShadow: "inset 0 1px 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.85)",
               }}
             >
               <div className="space-y-3 relative z-20 pt-6 px-1">
