@@ -613,7 +613,7 @@ export default function ComplaintWorkspace() {
         </header>
 
         {/* ── 3-COLUMN STUDIO WORKSPACE ───────────────────────────────────── */}
-        <div className="relative z-10 flex flex-1 overflow-hidden px-0 pt-2 pb-2 gap-2.5 lg:gap-3">
+        <div className="relative z-10 flex flex-1 overflow-hidden px-0 pt-2 pb-2 gap-1.5">
           
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
