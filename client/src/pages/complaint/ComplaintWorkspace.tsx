@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronLeft,
   ChevronUp,
+  PanelRight,
   Maximize2,
   Minimize2,
   ZoomIn,
@@ -769,8 +770,9 @@ export default function ComplaintWorkspace() {
                   { id: "cover", label: "Cover", icon: FileText },
                   { id: "insert", label: "Insert", icon: Plus },
                   { id: "compile", label: "Compile", icon: Settings },
+                  { id: "tools", label: "Tools", icon: PanelRight },
                 ].map((tab) => {
-                  const isActive = activeToolbarTab === tab.id;
+                  const isActive = tab.id === "tools" ? !isToolsCollapsed : activeToolbarTab === tab.id;
                   const Icon = tab.icon;
                   return (
                     <button
@@ -781,6 +783,8 @@ export default function ComplaintWorkspace() {
                           setIsAddPageModalOpen(true);
                         } else if (tab.id === "compile") {
                           setIsCompilerModalOpen(true);
+                        } else if (tab.id === "tools") {
+                          setIsToolsCollapsed((prev) => !prev);
                         } else {
                           setActiveToolbarTab(tab.id as any);
                           if (tab.id === "cover") {
@@ -1372,18 +1376,6 @@ export default function ComplaintWorkspace() {
             {/* Brass Corner Brackets in front covering editorial box corners */}
             <FolioBoxCornerBrackets size={36} />
           </main>
-
-          {/* Collapsed Tools Expand Trigger */}
-          {isToolsCollapsed && !isFocusMode && (
-            <button
-              type="button"
-              onClick={() => setIsToolsCollapsed(false)}
-              className="h-14 w-6 flex items-center justify-center rounded-l-lg border border-r-0 border-[#3A2C18] bg-[#03152E]/95 text-[#DFBE77] hover:text-[#FFE394] shadow-lg self-center transition-all cursor-pointer z-30 group"
-              title="Expand cover tools"
-            >
-              <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            </button>
-          )}
 
           {/* ── RIGHT COLUMN: Cover tools Panel (matching reference mockup) ── */}
           {!isFocusMode && !isToolsCollapsed && (
