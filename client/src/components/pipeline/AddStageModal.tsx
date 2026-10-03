@@ -68,31 +68,31 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-[#07162B] border-[#0E274D] text-slate-100 shadow-2xl">
+      <DialogContent className="max-w-md bg-[#05142B]/95 border-[#3A2C18] text-[#FFF4D4] shadow-[0_16px_48px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-            <Plus className="h-5 w-5 text-[#F5B544]" />
+          <DialogTitle className="text-base font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+            <Plus className="h-5 w-5 text-[#C5A059]" />
             Add Pipeline Stage
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2 text-sm">
           <div className="space-y-1.5">
-            <Label className="text-xs text-slate-300">Stage Name *</Label>
+            <Label className="text-xs text-[#C6B697] font-semibold">Stage Name *</Label>
             <Input
               value={stageName}
               onChange={(e) => setStageName(e.target.value)}
               placeholder="e.g. IEP Transition, BIP Strategy, MDR..."
-              className="bg-[#0A1A33] border-[#0E274D] text-white text-xs"
+              className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] text-xs focus:border-[#C5A059] rounded-lg"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-slate-300">Workflow Category</Label>
+            <Label className="text-xs text-[#C6B697] font-semibold">Workflow Category</Label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full h-9 rounded-md bg-[#0A1A33] border border-[#0E274D] text-white text-xs px-3 focus:ring-1 focus:ring-[#F5B544]"
+              className="w-full h-9 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs px-3 focus:outline-hidden focus:border-[#C5A059]"
             >
               {CATEGORY_OPTIONS.map((cat) => (
                 <option key={cat.value} value={cat.value}>
@@ -103,14 +103,14 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
           </div>
 
           <div className="space-y-1.5 pt-1">
-            <Label className="text-xs text-slate-300">Accent Color</Label>
+            <Label className="text-xs text-[#C6B697] font-semibold">Accent Color</Label>
             <div className="flex items-center gap-2 flex-wrap">
               {COLOR_OPTIONS.map((color) => (
                 <button
                   key={color}
                   type="button"
                   onClick={() => setAccentColor(color)}
-                  className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center transition-transform hover:scale-110 cursor-pointer"
+                  className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-xs"
                   style={{ backgroundColor: color }}
                 >
                   {accentColor === color && <Check className="h-3.5 w-3.5 text-black font-bold" />}
@@ -120,18 +120,18 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-[#3A2C18]">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-[#0E274D] text-slate-300 hover:bg-white/[0.06] text-xs"
+            className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs cursor-pointer"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={!stageName.trim()}
-            className="bg-[#F5B544] text-[#07162B] hover:bg-[#F5B544]/90 font-bold text-xs"
+            className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-110 text-xs cursor-pointer"
           >
             Create Stage
           </Button>

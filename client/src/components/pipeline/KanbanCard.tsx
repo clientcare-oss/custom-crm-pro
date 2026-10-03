@@ -10,7 +10,6 @@ import {
   ExternalLink,
   Mail,
   AlertTriangle,
-  HelpCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -47,53 +46,52 @@ export function KanbanCard({
     setLocation(`/contacts/${card.id}`);
   };
 
-  // Plan Tier pill style matching reference image
+  // Plan Tier pill style matching Admiralty navy & brass palette
   const getPlanTierStyle = (tier: string) => {
     switch (tier) {
       case "$55":
-        return "bg-[#0E3A66]/80 border-[#1B5799] text-[#7DD3FC]";
+        return "bg-[#072448]/90 border-[#1B5799] text-[#93C5FD]";
       case "$105":
-        return "bg-[#281B5E]/80 border-[#4F399F] text-[#C4B5FD]";
+        return "bg-[#1E124A]/90 border-[#4F399F] text-[#D8B4FE]";
       case "Scholarship":
-        return "bg-[#4D2800]/80 border-[#A35900] text-[#FCD34D]";
+        return "bg-[#2D1B00]/90 border-[#A35900] text-[#FDE047]";
       case "Pay Per Use":
-        return "bg-[#482808]/80 border-[#9A5B15] text-[#FDBA74]";
+        return "bg-[#331800]/90 border-[#9A5B15] text-[#FDBA74]";
       case "Tools Only":
       case "Vault":
-        return "bg-[#1E293B]/90 border-[#334155] text-slate-300";
+        return "bg-[#020A17] border-[#3A2C18] text-[#C6B697]";
       case "Renewal":
-        return "bg-[#064E3B]/80 border-[#059669] text-[#6EE7B7]";
+        return "bg-[#04241B]/90 border-[#059669] text-[#6EE7B7]";
       case "Nonpay":
-        return "bg-[#58151C]/80 border-[#9F1239] text-[#FDA4AF]";
+        return "bg-[#33090F]/90 border-[#9F1239] text-[#FDA4AF]";
       default:
-        return "bg-[#0A2954] border-[#0E3A73] text-sky-300";
+        return "bg-[#072448]/90 border-[#1B5799] text-[#93C5FD]";
     }
   };
 
-  // Case Type tag style matching reference image
+  // Case Type tag style matching Admiralty palette
   const getCaseTypeStyle = (type: string) => {
     switch (type) {
       case "IEP":
-        return "bg-[#102A4C]/80 border-[#1D4E89] text-[#93C5FD]";
+        return "bg-[#0B2545]/90 border-[#1D4E89] text-[#93C5FD]";
       case "504":
-        return "bg-[#083344]/80 border-[#0E7490] text-[#67E8F9]";
+        return "bg-[#042B38]/90 border-[#0E7490] text-[#67E8F9]";
       case "Complaint":
       case "State Complaint":
-        return "bg-[#4C0519]/80 border-[#881337] text-[#FDA4AF]";
+        return "bg-[#3A0B18]/90 border-[#881337] text-[#FDA4AF]";
       case "Records":
-        return "bg-[#1E293B]/80 border-[#475569] text-slate-300";
+        return "bg-[#020A17] border-[#3A2C18] text-[#C6B697]";
       case "Meeting":
-        return "bg-[#1E1B4B]/80 border-[#3730A3] text-[#A5B4FC]";
+        return "bg-[#16133B]/90 border-[#3730A3] text-[#A5B4FC]";
       case "Monitoring":
-        return "bg-[#064E3B]/80 border-[#047857] text-[#6EE7B7]";
       case "Resolved":
-        return "bg-[#064E3B]/80 border-[#047857] text-[#6EE7B7]";
+        return "bg-[#04241B]/90 border-[#047857] text-[#6EE7B7]";
       case "Vault":
-        return "bg-[#1E293B]/80 border-[#334155] text-slate-300";
+        return "bg-[#020A17] border-[#3A2C18] text-[#C6B697]";
       case "Evaluation":
-        return "bg-[#3B0764]/80 border-[#6B21A8] text-[#D8B4FE]";
+        return "bg-[#260B44]/90 border-[#6B21A8] text-[#D8B4FE]";
       default:
-        return "bg-[#1E293B]/70 border-[#334155] text-slate-300";
+        return "bg-[#020A17] border-[#3A2C18] text-[#C6B697]";
     }
   };
 
@@ -102,17 +100,17 @@ export function KanbanCard({
     const chosen = iconType || defaultIcon;
     switch (chosen) {
       case "clock":
-        return <Clock className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" />;
+        return <Clock className="h-3 w-3 text-[#F5B544] shrink-0 mt-0.5" />;
       case "calendar":
-        return <Calendar className="h-3 w-3 text-sky-400 shrink-0 mt-0.5" />;
+        return <Calendar className="h-3 w-3 text-[#C5A059] shrink-0 mt-0.5" />;
       case "check":
-        return <CheckCircle2 className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />;
+        return <CheckCircle2 className="h-3 w-3 text-[#A69371] shrink-0 mt-0.5" />;
       case "alert":
         return <AlertTriangle className="h-3 w-3 text-rose-400 shrink-0 mt-0.5" />;
       case "mail":
-        return <Mail className="h-3 w-3 text-sky-300 shrink-0 mt-0.5" />;
+        return <Mail className="h-3 w-3 text-[#FFE394] shrink-0 mt-0.5" />;
       default:
-        return <CheckCircle2 className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />;
+        return <CheckCircle2 className="h-3 w-3 text-[#A69371] shrink-0 mt-0.5" />;
     }
   };
 
@@ -124,26 +122,26 @@ export function KanbanCard({
       onDrop={(e) => onDrop?.(e, card)}
       onClick={handleCardClick}
       className={cn(
-        "group relative rounded-2xl bg-[#091F3D]/95 hover:bg-[#0C274E] border border-[#113A6E] hover:border-[#F5B544]/70 p-3.5 transition-all duration-150 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg space-y-2.5 select-none",
-        isDragging && "opacity-40 scale-95 border-dashed border-[#F5B544]",
-        card.needsAttention && "border-rose-500/50 bg-[#0E1B33]"
+        "group relative rounded-xl bg-[#020A17]/95 hover:bg-[#05142B] border border-[#3A2C18] hover:border-[#C5A059]/80 p-3.5 transition-all duration-150 cursor-grab active:cursor-grabbing shadow-[0_4px_16px_rgba(0,0,0,0.7)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.85)] space-y-2.5 select-none",
+        isDragging && "opacity-40 scale-95 border-dashed border-[#C5A059]",
+        card.needsAttention && "border-rose-600/60 bg-[#16080B]/90"
       )}
     >
       {/* 1. Header: Student Name + School + Menu */}
       <div className="flex items-start justify-between gap-1.5">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h4 className="text-[13px] font-bold text-white group-hover:text-[#F5B544] transition-colors truncate">
+            <h4 className="text-[13px] font-serif font-bold text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors truncate">
               {card.fullName}
             </h4>
             {card.needsAttention && (
               <span
-                className="w-2 h-2 rounded-full bg-rose-400 animate-pulse shrink-0"
+                className="w-2 h-2 rounded-full bg-rose-400 animate-pulse shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.8)]"
                 title={card.attentionReason || "Needs Attention"}
               />
             )}
           </div>
-          <p className="text-[11px] text-slate-300 truncate mt-0.5">
+          <p className="text-[11px] text-[#C6B697] truncate mt-0.5">
             {card.schoolName}
           </p>
         </div>
@@ -153,14 +151,14 @@ export function KanbanCard({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="h-6 w-6 rounded-md hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-colors"
+                className="h-6 w-6 rounded-md hover:bg-[#07162B] flex items-center justify-center text-[#A69371] hover:text-[#FFF4D4] cursor-pointer transition-colors"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl text-xs">
+            <DropdownMenuContent align="end" className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] shadow-2xl text-xs">
               <DropdownMenuItem onClick={() => setLocation(`/contacts/${card.id}`)} className="cursor-pointer gap-2">
-                <ExternalLink className="h-3.5 w-3.5 text-[#F5B544]" />
+                <ExternalLink className="h-3.5 w-3.5 text-[#C5A059]" />
                 <span>Open Student Workspace</span>
               </DropdownMenuItem>
               {onMoveStage && (
@@ -174,7 +172,7 @@ export function KanbanCard({
                   <DropdownMenuItem onClick={() => onMoveStage(card, "State Complaint")} className="cursor-pointer">
                     Move to State Complaint
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onMoveStage(card, "Closed")} className="cursor-pointer text-slate-400">
+                  <DropdownMenuItem onClick={() => onMoveStage(card, "Closed")} className="cursor-pointer text-[#A69371]">
                     Move to Closed
                   </DropdownMenuItem>
                 </>
@@ -188,7 +186,7 @@ export function KanbanCard({
       <div className="flex items-center gap-1.5 flex-wrap">
         <span
           className={cn(
-            "px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-tight",
+            "px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-tight shadow-xs",
             getPlanTierStyle(card.planTier)
           )}
         >
@@ -198,7 +196,7 @@ export function KanbanCard({
         {card.planType && (
           <span
             className={cn(
-              "px-2.5 py-0.5 rounded-full text-[10px] font-semibold border tracking-tight",
+              "px-2.5 py-0.5 rounded-full text-[10px] font-semibold border tracking-tight shadow-xs",
               getCaseTypeStyle(card.planType)
             )}
           >
@@ -207,52 +205,54 @@ export function KanbanCard({
         )}
 
         {card.activeWorkstreams && card.activeWorkstreams.length > 0 && (
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-[#0E274D] text-sky-300 border border-[#18467D]">
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#05142B] text-[#FFE394] border border-[#3A2C18]">
             +{card.activeWorkstreams.length} stream{card.activeWorkstreams.length > 1 ? "s" : ""}
           </span>
         )}
       </div>
 
-      {/* 3. Task Activity Rows matching visual reference */}
-      <div className="space-y-1 text-[11px] text-slate-200">
-        {card.primaryTask && (
-          <div className="flex items-start gap-1.5 leading-snug">
-            {renderTaskIcon(card.primaryTaskIcon, "clock")}
-            <span className="truncate">{card.primaryTask}</span>
-          </div>
-        )}
+      {/* 3. Task Activity Rows within a recessed plate */}
+      {(card.primaryTask || card.secondaryTask || card.meetingDate || card.nextDate) && (
+        <div className="bg-[#000814]/70 border border-[#3A2C18]/60 rounded-lg p-2 space-y-1 text-[11px] text-[#C6B697]">
+          {card.primaryTask && (
+            <div className="flex items-start gap-1.5 leading-snug">
+              {renderTaskIcon(card.primaryTaskIcon, "clock")}
+              <span className="truncate">{card.primaryTask}</span>
+            </div>
+          )}
 
-        {card.secondaryTask ? (
-          <div className="flex items-start gap-1.5 text-slate-300 leading-snug">
-            {renderTaskIcon(card.secondaryTaskIcon, "calendar")}
-            <span className="truncate">{card.secondaryTask}</span>
-          </div>
-        ) : card.meetingDate ? (
-          <div className="flex items-start gap-1.5 text-[#F5B544] font-medium leading-snug">
-            <Calendar className="h-3 w-3 text-[#F5B544] shrink-0 mt-0.5" />
-            <span className="truncate">{card.meetingDate}</span>
-          </div>
-        ) : card.nextDate && card.nextDate !== "In Progress" ? (
-          <div className="flex items-start gap-1.5 text-slate-300 leading-snug">
-            <Calendar className="h-3 w-3 text-sky-400 shrink-0 mt-0.5" />
-            <span className="truncate">{card.nextDate}</span>
-          </div>
-        ) : null}
-      </div>
+          {card.secondaryTask ? (
+            <div className="flex items-start gap-1.5 text-[#A69371] leading-snug">
+              {renderTaskIcon(card.secondaryTaskIcon, "calendar")}
+              <span className="truncate">{card.secondaryTask}</span>
+            </div>
+          ) : card.meetingDate ? (
+            <div className="flex items-start gap-1.5 text-[#FFE394] font-medium leading-snug">
+              <Calendar className="h-3 w-3 text-[#C5A059] shrink-0 mt-0.5" />
+              <span className="truncate">{card.meetingDate}</span>
+            </div>
+          ) : card.nextDate && card.nextDate !== "In Progress" ? (
+            <div className="flex items-start gap-1.5 text-[#A69371] leading-snug">
+              <Calendar className="h-3 w-3 text-[#C5A059] shrink-0 mt-0.5" />
+              <span className="truncate">{card.nextDate}</span>
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {/* 4. Advocate Footer Row */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#113A6E]/60 text-[11px]">
+      <div className="flex items-center justify-between pt-2 border-t border-[#3A2C18]/60 text-[11px]">
         <div className="flex items-center gap-1.5 min-w-0">
-          <div className="w-5 h-5 rounded-full bg-[#0E2E59] border border-sky-400/50 flex items-center justify-center text-[9px] font-bold text-sky-200 shrink-0">
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] border border-[#FFE394]/60 flex items-center justify-center text-[9px] font-bold text-[#07162B] shrink-0 shadow-xs">
             {card.assignedAdvocateInitials || "BH"}
           </div>
-          <span className="text-slate-300 font-medium truncate">
+          <span className="text-[#C6B697] font-medium truncate">
             {card.assignedAdvocateName}
           </span>
         </div>
 
         {card.accountStatus && card.accountStatus !== "Active" && (
-          <span className="text-[10px] text-slate-400 shrink-0">
+          <span className="text-[10px] text-[#A69371] shrink-0 font-medium">
             {card.accountStatus}
           </span>
         )}

@@ -7,14 +7,6 @@ import {
   Pencil,
   Archive,
   Trash2,
-  CheckCircle2,
-  Calendar,
-  Scale,
-  FileSearch,
-  FileText,
-  School,
-  Compass,
-  Activity,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -113,17 +105,17 @@ export function KanbanColumn({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "w-[260px] shrink-0 rounded-2xl bg-[#061833]/90 border flex flex-col max-h-[calc(100vh-175px)] transition-all duration-150 relative overflow-hidden",
+        "w-[270px] shrink-0 rounded-2xl bg-[#05142B]/90 border flex flex-col max-h-[calc(100vh-175px)] transition-all duration-150 relative overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]",
         isCardDragOver
-          ? "border-[#F5B544] bg-[#082042] shadow-[0_0_20px_rgba(245,181,68,0.18)] ring-1 ring-[#F5B544]/60"
-          : "border-[#0D366B]/80",
-        isStageBeingDragged && "opacity-40 border-dashed border-[#F5B544]"
+          ? "border-[#C5A059] bg-[#07162B] shadow-[0_0_24px_rgba(197,160,89,0.25)] ring-1 ring-[#FFE394]/60"
+          : "border-[#3A2C18]",
+        isStageBeingDragged && "opacity-40 border-dashed border-[#C5A059]"
       )}
     >
       {/* Top Stage Accent Strip */}
       <div
         className="h-1.5 w-full shrink-0"
-        style={{ backgroundColor: stage.accentColor || "#38BDF8" }}
+        style={{ backgroundColor: stage.accentColor || "#C5A059" }}
       />
 
       {/* Stage Header — Draggable for column reordering */}
@@ -133,15 +125,15 @@ export function KanbanColumn({
           e.dataTransfer.setData("application/waypoint-stage", String(stage.id));
           onStageDragStart?.(e, stage);
         }}
-        className="px-3 py-2 border-b border-[#0D366B]/60 flex items-center justify-between gap-1.5 shrink-0 cursor-grab active:cursor-grabbing hover:bg-white/[0.02] transition-colors"
+        className="px-3.5 py-2.5 border-b border-[#3A2C18] flex items-center justify-between gap-1.5 shrink-0 cursor-grab active:cursor-grabbing hover:bg-white/[0.02] transition-colors"
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <GripVertical className="h-3.5 w-3.5 text-slate-400 shrink-0 hover:text-white transition-colors" />
+          <GripVertical className="h-3.5 w-3.5 text-[#A69371] shrink-0 hover:text-[#FFF4D4] transition-colors" />
           <div className="min-w-0">
-            <h3 className="text-xs font-bold text-white tracking-wider truncate">
+            <h3 className="text-xs font-serif font-bold text-[#FFF4D4] tracking-wider truncate">
               {stage.name}
             </h3>
-            <p className="text-[10px] text-slate-400 font-medium">
+            <p className="text-[10px] text-[#C6B697] font-medium">
               {cards.length} {cards.length === 1 ? "client" : "clients"}
             </p>
           </div>
@@ -151,24 +143,24 @@ export function KanbanColumn({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="h-6 w-6 rounded-md hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-colors"
+              className="h-6 w-6 rounded-md hover:bg-[#020A17] flex items-center justify-center text-[#A69371] hover:text-[#FFF4D4] cursor-pointer transition-colors"
             >
               <MoreVertical className="h-3.5 w-3.5" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-xl text-xs">
+          <DropdownMenuContent align="end" className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] shadow-2xl text-xs">
             <DropdownMenuItem onClick={() => onAddCard(stage.name)} className="cursor-pointer gap-2">
-              <Plus className="h-3.5 w-3.5 text-[#F5B544]" />
+              <Plus className="h-3.5 w-3.5 text-[#C5A059]" />
               <span>Add Client to {stage.name}</span>
             </DropdownMenuItem>
             {onEditStage && (
               <DropdownMenuItem onClick={() => onEditStage(stage)} className="cursor-pointer gap-2">
-                <Pencil className="h-3.5 w-3.5 text-sky-400" />
+                <Pencil className="h-3.5 w-3.5 text-[#FFE394]" />
                 <span>Edit Stage Details</span>
               </DropdownMenuItem>
             )}
             {onArchiveStage && (
-              <DropdownMenuItem onClick={() => onArchiveStage(stage)} className="cursor-pointer gap-2 text-slate-300">
+              <DropdownMenuItem onClick={() => onArchiveStage(stage)} className="cursor-pointer gap-2 text-[#C6B697]">
                 <Archive className="h-3.5 w-3.5" />
                 <span>Archive Stage</span>
               </DropdownMenuItem>
@@ -198,21 +190,21 @@ export function KanbanColumn({
         ))}
 
         {cards.length === 0 && (
-          <div className="h-24 rounded-xl border border-dashed border-[#0E3A73]/60 flex flex-col items-center justify-center text-slate-400 text-[11px] text-center p-2">
+          <div className="h-24 rounded-xl border border-dashed border-[#3A2C18] bg-[#020A17]/40 flex flex-col items-center justify-center text-[#A69371] text-[11px] text-center p-2">
             <p>No clients in this stage</p>
-            <span className="text-[10px] text-slate-400 mt-0.5">Drag cards here</span>
+            <span className="text-[10px] text-[#A69371]/80 mt-0.5">Drag cards here</span>
           </div>
         )}
       </div>
 
       {/* Column Footer: "+ Add a card" button */}
-      <div className="p-1.5 border-t border-[#0D366B]/50 shrink-0 bg-[#061833]/80">
+      <div className="p-1.5 border-t border-[#3A2C18] shrink-0 bg-[#020A17]/80">
         <button
           type="button"
           onClick={() => onAddCard(stage.name)}
-          className="w-full py-1 px-2.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-[#0E3A73] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          className="w-full py-1 px-2.5 rounded-lg text-[11px] font-semibold text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-[#3A2C18]/60 hover:border-[#C5A059]/60 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <Plus className="h-3 w-3" />
+          <Plus className="h-3 w-3 text-[#C5A059]" />
           <span>Add a card</span>
         </button>
       </div>

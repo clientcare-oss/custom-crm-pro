@@ -8,6 +8,7 @@ import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
 import { CustomizePipelineModal } from "@/components/pipeline/CustomizePipelineModal";
 import { NewViewModal } from "@/components/pipeline/NewViewModal";
 import { AddStageModal } from "@/components/pipeline/AddStageModal";
+import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import type {
   PipelineStageItem,
   PipelineCardItem,
@@ -966,60 +967,68 @@ export default function AdvocacyPipeline() {
   };
 
   return (
-    <div className="space-y-2.5 p-3.5 sm:p-5 lg:p-6 bg-[#07162B] min-h-screen text-slate-100">
-      {/* 1. Page Header (Compact) */}
-      <AdvocacyPipelineHeader
-        onCustomizePipeline={() => setShowCustomizeModal(true)}
-        onAddStage={() => setShowAddStageModal(true)}
-      />
-
-      {/* 2. Primary Control Row: Saved Views + Compact Filter Button */}
-      <SavedViewsBar
-        views={allSavedViews}
-        activeViewSlug={activeViewSlug}
-        onSelectView={(view) => setActiveViewSlug(view.slug)}
-        onTogglePinView={handleTogglePinView}
-        onNewView={() => setShowNewViewModal(true)}
-        viewCounts={viewCounts}
-        filters={filters}
-        onChangeFilters={setFilters}
-        onClearFilters={() => setFilters({})}
-        matchingCount={filteredCards.length}
-      />
-
-      {/* 3. High-Density Kanban Pipeline Board */}
-      <KanbanBoard
-        stages={stagesState}
-        cards={filteredCards}
-        onMoveCard={handleMoveCard}
-        onReorderCards={handleReorderCards}
-        onReorderStages={handleReorderStages}
-        onAddCard={(stageName) => {
-          toast.info(`Opening new student intake for stage: ${stageName}`);
+    <ScopedErrorBoundary moduleName="Advocacy Pipeline">
+      <div 
+        className="space-y-3.5 p-3.5 sm:p-5 lg:p-6 min-h-screen text-slate-100 relative overflow-x-hidden"
+        style={{
+          backgroundColor: "#07162B",
+          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
         }}
-        onAddCustomStage={() => setShowAddStageModal(true)}
-        onEditStage={() => setShowCustomizeModal(true)}
-      />
+      >
+        {/* 1. Page Header (Compact) */}
+        <AdvocacyPipelineHeader
+          onCustomizePipeline={() => setShowCustomizeModal(true)}
+          onAddStage={() => setShowAddStageModal(true)}
+        />
 
-      {/* 4. Modals */}
-      <CustomizePipelineModal
-        open={showCustomizeModal}
-        onOpenChange={setShowCustomizeModal}
-        stages={stagesState}
-        onSaveStages={handleSaveStages}
-      />
+        {/* 2. Primary Control Row: Saved Views + Compact Filter Button */}
+        <SavedViewsBar
+          views={allSavedViews}
+          activeViewSlug={activeViewSlug}
+          onSelectView={(view) => setActiveViewSlug(view.slug)}
+          onTogglePinView={handleTogglePinView}
+          onNewView={() => setShowNewViewModal(true)}
+          viewCounts={viewCounts}
+          filters={filters}
+          onChangeFilters={setFilters}
+          onClearFilters={() => setFilters({})}
+          matchingCount={filteredCards.length}
+        />
 
-      <NewViewModal
-        open={showNewViewModal}
-        onOpenChange={setShowNewViewModal}
-        onSaveView={handleSaveNewView}
-      />
+        {/* 3. High-Density Kanban Pipeline Board */}
+        <KanbanBoard
+          stages={stagesState}
+          cards={filteredCards}
+          onMoveCard={handleMoveCard}
+          onReorderCards={handleReorderCards}
+          onReorderStages={handleReorderStages}
+          onAddCard={(stageName) => {
+            toast.info(`Opening new student intake for stage: ${stageName}`);
+          }}
+          onAddCustomStage={() => setShowAddStageModal(true)}
+          onEditStage={() => setShowCustomizeModal(true)}
+        />
 
-      <AddStageModal
-        open={showAddStageModal}
-        onOpenChange={setShowAddStageModal}
-        onAddStage={handleAddCustomStage}
-      />
-    </div>
+        {/* 4. Modals */}
+        <CustomizePipelineModal
+          open={showCustomizeModal}
+          onOpenChange={setShowCustomizeModal}
+          stages={stagesState}
+          onSaveStages={handleSaveStages}
+        />
+
+        <NewViewModal
+          open={showNewViewModal}
+          onOpenChange={setShowNewViewModal}
+          onSaveView={handleSaveNewView}
+        />
+
+        <AddStageModal
+          open={showAddStageModal}
+          onOpenChange={setShowAddStageModal}
+          onAddStage={handleAddCustomStage}
+        />
+      </div>
+    </ScopedErrorBoundary>
   );
 }

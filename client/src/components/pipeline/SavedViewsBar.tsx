@@ -100,20 +100,20 @@ export function SavedViewsBar({
               className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer border shrink-0",
                 isActive
-                  ? "bg-[#0A2349] border-[#F5B544] text-[#F5B544] shadow-[0_0_12px_rgba(245,181,68,0.2)]"
-                  : "bg-[#071F42]/85 hover:bg-[#0A2954] border-[#0E3A73] text-slate-300 hover:text-white"
+                  ? "bg-[#05142B] border-[#C5A059] text-[#FFE394] shadow-[0_0_12px_rgba(197,160,89,0.25)]"
+                  : "bg-[#020A17]/85 hover:bg-[#05142B] border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4]"
               )}
             >
               <Icon
                 className={cn(
                   "h-3.5 w-3.5 shrink-0",
-                  isActive ? "text-[#F5B544]" : "text-slate-400"
+                  isActive ? "text-[#FFE394]" : "text-[#A69371]"
                 )}
               />
               <span>{view.name}</span>
               {view.isPrivate && (
                 <span title="Private to you">
-                  <Lock className="h-2.5 w-2.5 text-slate-400 shrink-0" />
+                  <Lock className="h-2.5 w-2.5 text-[#A69371] shrink-0" />
                 </span>
               )}
               {count !== undefined && (
@@ -121,8 +121,8 @@ export function SavedViewsBar({
                   className={cn(
                     "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold leading-tight",
                     isActive
-                      ? "bg-[#F5B544] text-[#07162B]"
-                      : "bg-[#0D2F5E] text-slate-300"
+                      ? "bg-[#FFE394] text-[#07162B]"
+                      : "bg-[#020A17] border border-[#3A2C18] text-[#A69371]"
                   )}
                 >
                   {count}
@@ -141,8 +141,8 @@ export function SavedViewsBar({
                 className={cn(
                   "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer border shrink-0",
                   isOverflowActive
-                    ? "bg-[#0A2349] border-[#F5B544] text-[#F5B544] shadow-[0_0_12px_rgba(245,181,68,0.2)]"
-                    : "bg-[#071F42]/85 hover:bg-[#0A2954] border-[#0E3A73] text-slate-300 hover:text-white"
+                    ? "bg-[#05142B] border-[#C5A059] text-[#FFE394] shadow-[0_0_12px_rgba(197,160,89,0.25)]"
+                    : "bg-[#020A17]/85 hover:bg-[#05142B] border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4]"
                 )}
               >
                 <span>{isOverflowActive ? activeOverflowView?.name : "More"}</span>
@@ -151,9 +151,9 @@ export function SavedViewsBar({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="bg-[#07162B] border-[#0E274D] text-slate-200 shadow-2xl rounded-xl w-56 text-xs p-1"
+              className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_12px_32px_rgba(0,0,0,0.95)] rounded-xl w-56 text-xs p-1"
             >
-              <DropdownMenuLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
+              <DropdownMenuLabel className="text-[10px] font-bold text-[#C6B697] uppercase tracking-wider px-2 py-1">
                 Additional Views
               </DropdownMenuLabel>
               {overflowViews.map((view) => {
@@ -167,21 +167,21 @@ export function SavedViewsBar({
                     onClick={() => onSelectView(view)}
                     className={cn(
                       "flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-colors",
-                      isSelected ? "bg-[#0A2349] text-[#F5B544]" : "hover:bg-[#0A2954] text-slate-200"
+                      isSelected ? "bg-[#020A17] text-[#FFE394] font-semibold" : "hover:bg-[#07162B] text-[#C6B697] hover:text-[#FFF4D4]"
                     )}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Icon className={cn("h-3.5 w-3.5 shrink-0", isSelected ? "text-[#F5B544]" : "text-slate-400")} />
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0", isSelected ? "text-[#FFE394]" : "text-[#A69371]")} />
                       <span className="truncate">{view.name}</span>
                       {view.isPrivate && (
                         <span title="Private">
-                          <Lock className="h-2.5 w-2.5 text-slate-400 shrink-0" />
+                          <Lock className="h-2.5 w-2.5 text-[#A69371] shrink-0" />
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {count !== undefined && (
-                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#0D2F5E] text-slate-300">
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#020A17] border border-[#3A2C18] text-[#A69371]">
                           {count}
                         </span>
                       )}
@@ -192,7 +192,7 @@ export function SavedViewsBar({
                             e.stopPropagation();
                             onTogglePinView(view);
                           }}
-                          className="p-1 hover:text-[#F5B544] text-slate-400 transition-colors"
+                          className="p-1 hover:text-[#FFE394] text-[#A69371] transition-colors"
                           title={view.isPinned ? "Unpin view" : "Pin to bar"}
                         >
                           <Pin className="h-3 w-3" />
@@ -219,9 +219,9 @@ export function SavedViewsBar({
         <button
           type="button"
           onClick={onNewView}
-          className="h-8 px-2.5 rounded-xl text-xs font-semibold border border-[#0E3A73] bg-[#071F42] hover:bg-[#0A2954] text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer shadow-xs shrink-0"
+          className="h-8 px-3 rounded-xl text-xs font-semibold border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center gap-1.5 transition-all cursor-pointer shadow-sm shrink-0"
         >
-          <Plus className="h-3.5 w-3.5 text-[#F5B544]" />
+          <Plus className="h-3.5 w-3.5 text-[#FFE394]" />
           <span>New View</span>
         </button>
       </div>

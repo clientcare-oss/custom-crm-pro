@@ -65,7 +65,7 @@ export function KanbanBoard({
   };
 
   return (
-    <div className="flex items-start gap-3 overflow-x-auto pb-4 pt-0.5 select-none min-h-[calc(100vh-170px)] no-scrollbar">
+    <div className="flex items-start gap-3.5 overflow-x-auto pb-4 pt-0.5 select-none min-h-[calc(100vh-170px)] no-scrollbar">
       {/* Dynamic Pipeline Stage Columns */}
       {stages
         .filter((s) => !s.isArchived)
@@ -95,20 +95,20 @@ export function KanbanBoard({
         })}
 
       {/* Trailing "+ Add Custom Stage" Column on the far right */}
-      <div className="w-[240px] shrink-0 rounded-2xl border-2 border-dashed border-[#0E3A73]/70 hover:border-[#F5B544]/60 bg-[#061833]/40 hover:bg-[#071F42]/60 p-4 flex flex-col items-center justify-center text-center transition-all duration-150 cursor-pointer min-h-[300px] group space-y-2.5">
+      <div className="w-[250px] shrink-0 rounded-2xl border-2 border-dashed border-[#3A2C18] hover:border-[#C5A059]/80 bg-[#05142B]/40 hover:bg-[#05142B]/80 p-4 flex flex-col items-center justify-center text-center transition-all duration-150 cursor-pointer min-h-[300px] group space-y-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
         <button
           type="button"
           onClick={onAddCustomStage}
           className="w-full h-full flex flex-col items-center justify-center space-y-2.5 cursor-pointer focus:outline-hidden"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0F284F] group-hover:bg-[#F5B544]/20 border border-[#174885] group-hover:border-[#F5B544]/40 flex items-center justify-center text-sky-400 group-hover:text-[#F5B544] transition-all">
+          <div className="w-10 h-10 rounded-xl bg-[#020A17] group-hover:bg-[#07162B] border border-[#3A2C18] group-hover:border-[#C5A059]/60 flex items-center justify-center text-[#C5A059] group-hover:text-[#FFE394] transition-all shadow-xs">
             <Plus className="h-5 w-5" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-white group-hover:text-[#F5B544] transition-colors">
+            <h4 className="text-xs font-serif font-bold text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors">
               + Add Custom Stage
             </h4>
-            <p className="text-[11px] text-slate-400 mt-0.5 max-w-[170px] leading-relaxed">
+            <p className="text-[11px] text-[#C6B697] mt-0.5 max-w-[170px] leading-relaxed">
               Create a stage to fit your workflow.
             </p>
           </div>

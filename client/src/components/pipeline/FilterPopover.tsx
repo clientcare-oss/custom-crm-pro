@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Filter, X, Check, RotateCcw } from "lucide-react";
+import { Filter, RotateCcw } from "lucide-react";
 import {
   Popover,
   PopoverTrigger,
@@ -53,7 +53,6 @@ export function FilterPopover({
   const districtOptions = ["Fulton County", "Cobb County", "Gwinnett County", "DeKalb County", "Atlanta Public Schools"];
   const caseTypeOptions = ["IEP", "504", "Evaluation", "State Complaint", "Records"];
   const accountStatusOptions = ["Active", "Onboarding", "Renewal Needed", "On Hold", "Closed"];
-  const billingStatusOptions = ["Current", "Payment Failed", "Past Due", "Complimentary"];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -61,16 +60,16 @@ export function FilterPopover({
         <button
           type="button"
           className={cn(
-            "h-8 px-3 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0 shadow-xs",
+            "h-8 px-3 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0",
             activeFilterCount > 0
-              ? "bg-[#0A2954] border-[#F5B544] text-[#F5B544] shadow-[0_0_10px_rgba(245,181,68,0.2)]"
-              : "bg-[#071F42] hover:bg-[#0A2954] border-[#0E3A73] text-slate-300 hover:text-white"
+              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/60 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+              : "bg-[#020A17] hover:bg-[#07162B] border-[#3A2C18] hover:border-[#C5A059]/60 text-[#D8C7A5] hover:text-[#FFF4D4] shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
           )}
         >
-          <Filter className="h-3.5 w-3.5" />
+          <Filter className={cn("h-3.5 w-3.5", activeFilterCount > 0 ? "text-[#07162B]" : "text-[#C5A059]")} />
           <span>Filter</span>
           {activeFilterCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B]">
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#07162B] text-[#FFE394] border border-[#FFE394]/40">
               {activeFilterCount}
             </span>
           )}
@@ -80,15 +79,15 @@ export function FilterPopover({
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-80 sm:w-96 p-4 bg-[#07162B] border-[#0E274D] text-slate-200 shadow-2xl rounded-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+        className="w-80 sm:w-96 p-4 bg-[#05142B]/95 border-[#3A2C18] text-[#FFF4D4] shadow-[0_12px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl space-y-4 max-h-[85vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-[#0D366B]/60">
+        <div className="flex items-center justify-between pb-2 border-b border-[#3A2C18]">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-[#F5B544]" />
-            <h4 className="text-sm font-bold text-white">Filter Clients</h4>
+            <Filter className="h-4 w-4 text-[#C5A059]" />
+            <h4 className="text-sm font-bold font-serif text-[#FFF4D4]">Filter Clients</h4>
           </div>
-          <span className="text-xs text-slate-400 font-medium">
+          <span className="text-xs text-[#C6B697] font-medium">
             {matchingCount} matching
           </span>
         </div>
@@ -96,7 +95,7 @@ export function FilterPopover({
         <div className="space-y-3 text-xs">
           {/* 1. Plan Tier */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               Plan Tier
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -115,8 +114,8 @@ export function FilterPopover({
                     className={cn(
                       "px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer",
                       isSelected
-                        ? "bg-[#0A2954] border-[#F5B544] text-[#F5B544]"
-                        : "bg-[#061833] border-[#0E3A73] text-slate-300 hover:text-white"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/60 shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
+                        : "bg-[#020A17]/80 hover:bg-[#07162B] border-[#3A2C18]/80 text-[#D8C7A5] hover:text-[#FFF4D4]"
                     )}
                   >
                     {plan}
@@ -128,7 +127,7 @@ export function FilterPopover({
 
           {/* 2. Assigned Advocate */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               Assigned Advocate
             </label>
             <select
@@ -139,7 +138,7 @@ export function FilterPopover({
                   advocate: e.target.value || undefined,
                 }))
               }
-              className="w-full h-8 px-2.5 rounded-lg bg-[#061833] border border-[#0E3A73] text-slate-200 text-xs focus:outline-hidden focus:border-[#F5B544]"
+              className="w-full h-8 px-2.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs focus:outline-hidden focus:border-[#C5A059]"
             >
               <option value="">All Advocates</option>
               {advocateOptions.map((adv) => (
@@ -152,7 +151,7 @@ export function FilterPopover({
 
           {/* 3. School District */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               School District
             </label>
             <select
@@ -163,7 +162,7 @@ export function FilterPopover({
                   district: e.target.value || undefined,
                 }))
               }
-              className="w-full h-8 px-2.5 rounded-lg bg-[#061833] border border-[#0E3A73] text-slate-200 text-xs focus:outline-hidden focus:border-[#F5B544]"
+              className="w-full h-8 px-2.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs focus:outline-hidden focus:border-[#C5A059]"
             >
               <option value="">All Districts</option>
               {districtOptions.map((dist) => (
@@ -176,7 +175,7 @@ export function FilterPopover({
 
           {/* 4. Case Type */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               Case Type
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -195,8 +194,8 @@ export function FilterPopover({
                     className={cn(
                       "px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer",
                       isSelected
-                        ? "bg-[#0A2954] border-[#F5B544] text-[#F5B544]"
-                        : "bg-[#061833] border-[#0E3A73] text-slate-300 hover:text-white"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/60 shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
+                        : "bg-[#020A17]/80 hover:bg-[#07162B] border-[#3A2C18]/80 text-[#D8C7A5] hover:text-[#FFF4D4]"
                     )}
                   >
                     {type}
@@ -208,7 +207,7 @@ export function FilterPopover({
 
           {/* 5. Account Status */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               Account Status
             </label>
             <select
@@ -219,7 +218,7 @@ export function FilterPopover({
                   accountStatus: e.target.value || undefined,
                 }))
               }
-              className="w-full h-8 px-2.5 rounded-lg bg-[#061833] border border-[#0E3A73] text-slate-200 text-xs focus:outline-hidden focus:border-[#F5B544]"
+              className="w-full h-8 px-2.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs focus:outline-hidden focus:border-[#C5A059]"
             >
               <option value="">All Account Statuses</option>
               {accountStatusOptions.map((st) => (
@@ -231,10 +230,10 @@ export function FilterPopover({
           </div>
 
           {/* 6. Needs Attention Toggle */}
-          <div className="pt-2 border-t border-[#0D366B]/40 flex items-center justify-between">
+          <div className="pt-2 border-t border-[#3A2C18]/60 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-white">Needs Attention Only</span>
-              <p className="text-[10px] text-slate-400">Filter to flagged / urgent client records</p>
+              <span className="text-xs font-semibold text-[#FFF4D4]">Needs Attention Only</span>
+              <p className="text-[10px] text-[#A69371]">Filter to flagged / urgent client records</p>
             </div>
             <button
               type="button"
@@ -245,21 +244,21 @@ export function FilterPopover({
                 }))
               }
               className={cn(
-                "w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer flex items-center",
-                draftFilters.needsAttentionOnly ? "bg-[#F5B544] justify-end" : "bg-slate-700 justify-start"
+                "w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer flex items-center border border-[#3A2C18]",
+                draftFilters.needsAttentionOnly ? "bg-gradient-to-r from-[#DFBE77] to-[#C5A059] justify-end" : "bg-[#020A17] justify-start"
               )}
             >
-              <span className="w-4 h-4 rounded-full bg-white shadow-xs" />
+              <span className="w-4 h-4 rounded-full bg-[#07162B] shadow-xs" />
             </button>
           </div>
         </div>
 
         {/* Action Footer */}
-        <div className="pt-3 border-t border-[#0D366B]/60 flex items-center justify-between gap-2">
+        <div className="pt-3 border-t border-[#3A2C18] flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={handleClear}
-            className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+            className="text-xs text-[#A69371] hover:text-[#FFF4D4] flex items-center gap-1 transition-colors cursor-pointer"
           >
             <RotateCcw className="h-3 w-3" />
             <span>Reset</span>
@@ -270,14 +269,14 @@ export function FilterPopover({
               variant="outline"
               size="sm"
               onClick={() => setOpen(false)}
-              className="h-8 px-3 text-xs border-[#0E3A73] bg-[#061833] text-slate-300 hover:text-white cursor-pointer"
+              className="h-8 px-3 text-xs border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               size="sm"
               onClick={handleApply}
-              className="h-8 px-3.5 text-xs font-bold bg-[#F5B544] text-[#07162B] hover:bg-[#F5B544]/90 cursor-pointer"
+              className="h-8 px-3.5 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-110 cursor-pointer"
             >
               Apply Filters
             </Button>
