@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import PageIdBadge from "@/components/PageIdBadge";
+import GivingPageLayout from "@/components/giving/GivingPageLayout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -125,22 +126,29 @@ export default function WebsiteToolsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07162B] text-white p-4 md:p-8 space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shadow-inner">
-            <Globe className="h-6 w-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Website Tools</h1>
-              <PageIdBadge id="PG-040-WEB" name="Website Tools" />
+    <GivingPageLayout>
+      {/* ── Sub-Header: Waypoint Navy Plaque Sub-Bar with Actions ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_6px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.08)]">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[#0B2144] border border-[#C5A059]/40 flex items-center justify-center text-[#FAD77B] shadow-inner">
+              <Globe className="h-5 w-5" />
             </div>
-            <p className="text-xs md:text-sm text-white/60">
-              Create donation forms, campaign pages, buttons, progress bars, and shareable fundraising tools for the
-              Waypoint website.
-            </p>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 
+                  className="text-xl md:text-2xl font-bold tracking-wide text-[#FFF4D4]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  Website Tools
+                </h2>
+                <PageIdBadge id="PG-040-WEB" name="Website Tools" />
+              </div>
+              <p className="text-xs text-[#C6B697]">
+                Create donation forms, campaign pages, buttons, progress bars, and shareable fundraising tools for the
+                Waypoint website.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -149,16 +157,16 @@ export default function WebsiteToolsPage() {
             setToolToEdit(null);
             setCreateModalOpen(true);
           }}
-          className="bg-gradient-to-r from-[#D4AF37] to-[#F59E0B] hover:brightness-105 text-black font-bold text-xs md:text-sm rounded-xl px-4 py-2.5 shadow-lg shadow-[#D4AF37]/20 flex items-center gap-2 self-start md:self-auto"
+          className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer self-start md:self-auto"
         >
-          <Plus className="h-4 w-4" />
-          Create Website Tool
+          <Plus className="h-4 w-4 stroke-[2.5]" />
+          <span>Create Website Tool</span>
         </Button>
       </div>
 
       {/* Top Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <Card className="p-4 bg-[#001A41]/80 border border-white/10 rounded-2xl">
+        <Card className="p-4 bg-[#05142B]/90 border border-[#3A2C18] rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.06)]">
           <span className="text-xs text-white/50 block">Active Tools</span>
           <span className="text-2xl font-bold text-white mt-1 block">{activeCount}</span>
           <span className="text-[10px] text-emerald-400 mt-1 block">Live on Public Website</span>
@@ -438,6 +446,6 @@ export default function WebsiteToolsPage() {
         onOpenChange={setShareModalOpen}
         tool={toolToShare}
       />
-    </div>
+    </GivingPageLayout>
   );
 }

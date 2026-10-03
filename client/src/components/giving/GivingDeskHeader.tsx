@@ -8,16 +8,16 @@ import {
 } from "lucide-react";
 
 interface GivingDeskHeaderProps {
-  onOpen501c3: () => void;
-  onOpenScholarship: () => void;
-  onRecordDonation: () => void;
+  onOpen501c3?: () => void;
+  onOpenScholarship?: () => void;
+  onRecordDonation?: () => void;
 }
 
 export function GivingDeskHeader({
   onOpen501c3,
   onOpenScholarship,
   onRecordDonation,
-}: GivingDeskHeaderProps) {
+}: GivingDeskHeaderProps = {}) {
   const [location] = useLocation();
 
   const navigationTabs = [

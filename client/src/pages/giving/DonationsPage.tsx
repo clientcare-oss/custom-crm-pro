@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import PageIdBadge from "@/components/PageIdBadge";
+import GivingPageLayout from "@/components/giving/GivingPageLayout";
 import {
   Dialog,
   DialogContent,
@@ -132,72 +133,75 @@ export default function DonationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07162B] text-white p-6 md:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <GivingPageLayout>
+      {/* ── Sub-Header: Waypoint Navy Plaque Sub-Bar with Actions ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_6px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.08)]">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shadow-inner">
-              <DollarSign className="h-6 w-6" />
+            <div className="h-10 w-10 rounded-xl bg-[#0B2144] border border-[#C5A059]/40 flex items-center justify-center text-[#FAD77B] shadow-inner font-serif text-lg font-bold">
+              $
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+                <h2 
+                  className="text-xl md:text-2xl font-bold tracking-wide text-[#FFF4D4]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
                   Donations & Contributions
-                </h1>
+                </h2>
                 <PageIdBadge id="PG-040-DON" name="Donations Ledger" />
               </div>
-              <p className="text-xs md:text-sm text-white/60">
+              <p className="text-xs text-[#C6B697]">
                 Charitable contribution ledger with fund designation, tax receipting, and audit tracking.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
+        <div className="flex items-center gap-2.5 self-start md:self-auto">
           <Button
             type="button"
             variant="outline"
             onClick={handleExportCSV}
-            className="border-white/15 text-white/80 hover:bg-white/5 text-xs h-9 px-3 gap-1.5 cursor-pointer"
+            className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs h-9 px-3 gap-1.5 cursor-pointer shadow-sm"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 text-[#C5A059]" />
             <span>Export CSV</span>
           </Button>
 
           <Button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="bg-amber-500 hover:bg-amber-400 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-md cursor-pointer"
+            className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 stroke-[2.5]" />
             <span>Record Donation</span>
           </Button>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex items-center justify-between gap-3 bg-[#001A41]/80 border border-white/10 p-3 rounded-xl">
+      <div className="flex items-center justify-between gap-3 bg-[#030D1C]/90 border border-[#3A2C18] p-3 rounded-xl shadow-inner">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A69371]" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by donor, receipt #, or fund..."
-            className="pl-9 bg-black/30 border-white/10 text-xs text-white placeholder:text-white/40 h-8 rounded-lg focus-visible:ring-amber-400"
+            className="pl-9 bg-[#010814] border-[#3A2C18] text-xs text-[#FFF4D4] placeholder:text-[#A69371]/60 h-8 rounded-lg focus-visible:ring-[#C5A059]"
           />
         </div>
-        <p className="text-xs text-white/50 hidden sm:block">
+        <p className="text-xs text-[#C6B697] hidden sm:block">
           Showing {filtered.length} contribution{filtered.length === 1 ? "" : "s"}
         </p>
       </div>
 
       {/* Ledger Table */}
-      <Card className="bg-[#001A41]/80 border-white/10 overflow-hidden shadow-lg">
+      <Card className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/10 bg-black/30 text-white/60 font-semibold uppercase tracking-wider text-[11px]">
+              <tr className="border-b border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3.5 px-4">Receipt #</th>
                 <th className="py-3.5 px-4">Donor / Contributor</th>
                 <th className="py-3.5 px-4">Designated Fund</th>
@@ -207,7 +211,7 @@ export default function DonationsPage() {
                 <th className="py-3.5 px-4 text-center">Receipt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-[#1D2A40]/60 text-[#F2E8D5]">
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-white/50">
@@ -392,6 +396,6 @@ export default function DonationsPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </GivingPageLayout>
   );
 }

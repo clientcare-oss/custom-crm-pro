@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import PageIdBadge from "@/components/PageIdBadge";
+import GivingPageLayout from "@/components/giving/GivingPageLayout";
 import {
   Dialog,
   DialogContent,
@@ -92,22 +93,25 @@ export default function FundsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07162B] text-white p-6 md:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <GivingPageLayout>
+      {/* ── Sub-Header: Waypoint Navy Plaque Sub-Bar with Actions ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_6px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.08)]">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-400 shadow-inner">
-              <Landmark className="h-6 w-6" />
+            <div className="h-10 w-10 rounded-xl bg-[#0B2144] border border-[#C5A059]/40 flex items-center justify-center text-[#FAD77B] shadow-inner">
+              <Landmark className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+                <h2 
+                  className="text-xl md:text-2xl font-bold tracking-wide text-[#FFF4D4]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
                   Designated Charitable Funds
-                </h1>
+                </h2>
                 <PageIdBadge id="PG-040-FND" name="Funds & Endowments" />
               </div>
-              <p className="text-xs md:text-sm text-white/60">
+              <p className="text-xs text-[#C6B697]">
                 Restricted and unrestricted philanthropic pools for IEP scholarships, legal aid, and operations.
               </p>
             </div>
@@ -117,9 +121,9 @@ export default function FundsPage() {
         <Button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="bg-amber-500 hover:bg-amber-400 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-md cursor-pointer self-start md:self-auto"
+          className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer self-start md:self-auto"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 stroke-[2.5]" />
           <span>Create Fund</span>
         </Button>
       </div>
@@ -127,11 +131,11 @@ export default function FundsPage() {
       {/* Funds Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
-          <div className="col-span-full text-center py-12 text-white/50 text-xs">
+          <div className="col-span-full text-center py-12 text-[#C6B697] text-xs">
             Loading designated funds...
           </div>
         ) : funds.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-white/50 text-xs">
+          <div className="col-span-full text-center py-12 text-[#C6B697] text-xs">
             No funds established yet
           </div>
         ) : (
@@ -140,15 +144,20 @@ export default function FundsPage() {
             return (
               <Card
                 key={f.id}
-                className="bg-[#001A41]/80 border-white/10 p-5 space-y-4 hover:border-amber-400/30 transition-all flex flex-col justify-between"
+                className="bg-[#05142B]/90 border border-[#3A2C18] p-5 space-y-4 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/60 transition-all flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="font-mono text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                      <span className="font-mono text-[10px] text-[#FAD77B] font-bold uppercase tracking-wider">
                         {f.code}
                       </span>
-                      <h2 className="text-base font-bold text-white mt-0.5">{f.name}</h2>
+                      <h3 
+                        className="text-base font-bold text-[#FFF4D4] mt-0.5"
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                      >
+                        {f.name}
+                      </h3>
                     </div>
                     <Badge
                       variant="outline"
@@ -164,13 +173,13 @@ export default function FundsPage() {
                     </Badge>
                   </div>
 
-                  <p className="text-xs text-white/60 leading-relaxed">{f.description}</p>
+                  <p className="text-xs text-[#C6B697] leading-relaxed">{f.description}</p>
                 </div>
 
-                <div className="space-y-2 pt-3 border-t border-white/10">
+                <div className="space-y-2 pt-3 border-t border-[#3A2C18]/60">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60">Current Balance</span>
-                    <span className="font-mono font-bold text-amber-300">
+                    <span className="text-[#C6B697]">Current Balance</span>
+                    <span className="font-mono font-bold text-[#FFE394]">
                       {formatCurrency(f.currentBalance)}
                     </span>
                   </div>
@@ -296,6 +305,6 @@ export default function FundsPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </GivingPageLayout>
   );
 }

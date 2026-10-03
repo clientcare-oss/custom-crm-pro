@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import PageIdBadge from "@/components/PageIdBadge";
+import GivingPageLayout from "@/components/giving/GivingPageLayout";
 import {
   BarChart3,
   Download,
@@ -36,22 +37,25 @@ export default function GivingReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07162B] text-white p-6 md:p-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <GivingPageLayout>
+      {/* ── Sub-Header: Waypoint Navy Plaque Sub-Bar with Actions ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_6px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.08)]">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-teal-400 shadow-inner">
-              <BarChart3 className="h-6 w-6" />
+            <div className="h-10 w-10 rounded-xl bg-[#0B2144] border border-[#C5A059]/40 flex items-center justify-center text-[#FAD77B] shadow-inner">
+              <BarChart3 className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+                <h2 
+                  className="text-xl md:text-2xl font-bold tracking-wide text-[#FFF4D4]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
                   Giving Reports & 990 Analytics
-                </h1>
+                </h2>
                 <PageIdBadge id="PG-040-REP" name="Giving Reports" />
               </div>
-              <p className="text-xs md:text-sm text-white/60">
+              <p className="text-xs text-[#C6B697]">
                 IRS Form 990 Schedule A preparedness, annual trends, and restricted fund distribution.
               </p>
             </div>
@@ -61,9 +65,9 @@ export default function GivingReportsPage() {
         <Button
           type="button"
           onClick={handleExportReport}
-          className="bg-amber-500 hover:bg-amber-400 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-md cursor-pointer self-start md:self-auto"
+          className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-bold text-xs h-9 px-4 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer self-start md:self-auto"
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-4 w-4 stroke-[2.5]" />
           <span>Export 990 Summary</span>
         </Button>
       </div>
@@ -192,6 +196,6 @@ export default function GivingReportsPage() {
           </div>
         </Card>
       </div>
-    </div>
+    </GivingPageLayout>
   );
 }

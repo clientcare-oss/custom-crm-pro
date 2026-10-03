@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import PageIdBadge from "@/components/PageIdBadge";
+import GivingPageLayout from "@/components/giving/GivingPageLayout";
 import {
   Dialog,
   DialogContent,
@@ -63,22 +64,25 @@ export default function ReceiptsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07162B] text-white p-6 md:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <GivingPageLayout>
+      {/* ── Sub-Header: Waypoint Navy Plaque Sub-Bar with Actions ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_6px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.08)]">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center text-rose-400 shadow-inner">
-              <Receipt className="h-6 w-6" />
+            <div className="h-10 w-10 rounded-xl bg-[#0B2144] border border-[#C5A059]/40 flex items-center justify-center text-[#FAD77B] shadow-inner">
+              <Receipt className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+                <h2 
+                  className="text-xl md:text-2xl font-bold tracking-wide text-[#FFF4D4]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
                   Tax Receipts & Donor Statements
-                </h1>
+                </h2>
                 <PageIdBadge id="PG-040-REC" name="Receipts & Statements" />
               </div>
-              <p className="text-xs md:text-sm text-white/60">
+              <p className="text-xs text-[#C6B697]">
                 IRS-compliant charitable written acknowledgments and annual giving statements.
               </p>
             </div>
@@ -89,35 +93,35 @@ export default function ReceiptsPage() {
           type="button"
           variant="outline"
           onClick={() => toast.info("Year-end tax statements generated for all active donors")}
-          className="border-amber-400/40 text-amber-300 hover:bg-amber-400/10 text-xs h-9 px-3.5 gap-1.5 cursor-pointer self-start md:self-auto"
+          className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs h-9 px-3.5 gap-1.5 cursor-pointer shadow-sm self-start md:self-auto"
         >
-          <FileCheck className="h-4 w-4 text-amber-400" />
+          <FileCheck className="h-4 w-4 text-[#C5A059]" />
           <span>Batch Annual Statements</span>
         </Button>
       </div>
 
       {/* Filter Bar */}
-      <div className="flex items-center justify-between gap-3 bg-[#001A41]/80 border border-white/10 p-3 rounded-xl">
+      <div className="flex items-center justify-between gap-3 bg-[#030D1C]/90 border border-[#3A2C18] p-3 rounded-xl shadow-inner">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A69371]" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by receipt # or donor..."
-            className="pl-9 bg-black/30 border-white/10 text-xs text-white placeholder:text-white/40 h-8 rounded-lg focus-visible:ring-amber-400"
+            className="pl-9 bg-[#010814] border-[#3A2C18] text-xs text-[#FFF4D4] placeholder:text-[#A69371]/60 h-8 rounded-lg focus-visible:ring-[#C5A059]"
           />
         </div>
-        <p className="text-xs text-white/50 hidden sm:block">
-          EIN: <span className="font-mono text-white/80">{orgSettings?.ein || "58-7492014"}</span> · 501(c)(3) Tax-Exempt
+        <p className="text-xs text-[#C6B697] hidden sm:block">
+          EIN: <span className="font-mono text-[#FAD77B]">{orgSettings?.ein || "58-7492014"}</span> · 501(c)(3) Tax-Exempt
         </p>
       </div>
 
       {/* Receipts Table */}
-      <Card className="bg-[#001A41]/80 border-white/10 overflow-hidden shadow-lg">
+      <Card className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/10 bg-black/30 text-white/60 font-semibold uppercase tracking-wider text-[11px]">
+              <tr className="border-b border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3.5 px-4">Receipt #</th>
                 <th className="py-3.5 px-4">Donor Name & Email</th>
                 <th className="py-3.5 px-4">Designated Fund</th>
@@ -127,7 +131,7 @@ export default function ReceiptsPage() {
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-[#1D2A40]/60 text-[#F2E8D5]">
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-white/50">
@@ -298,6 +302,6 @@ export default function ReceiptsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </GivingPageLayout>
   );
 }
