@@ -45,7 +45,9 @@ import {
   Italic,
   Underline,
   Type,
-  Quote
+  Quote,
+  Cloud,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -339,6 +341,8 @@ export default function ComplaintWorkspace() {
   const [isIndexCollapsed, setIsIndexCollapsed] = useState<boolean>(false);
   const [isToolsCollapsed, setIsToolsCollapsed] = useState<boolean>(false);
   const [lastSavedText, setLastSavedText] = useState<string>("Draft saved 2 minutes ago");
+  const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Alexander");
+  const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
 
   // State: Google Docs Typography & Writing Settings
   const [fontFamily, setFontFamily] = useState<"serif" | "times" | "garamond" | "sans">("serif");
@@ -442,36 +446,82 @@ export default function ComplaintWorkspace() {
           }}
         />
 
-        {/* ── TOP HEADER BAR ──────────────────────────────────────────────── */}
+        {/* ── TOP HEADER BAR (Executive Admiralty Navy & Brass) ─────────────── */}
         <header 
-          className="relative z-30 flex items-center justify-between px-5 py-2.5 mx-3 mt-3 rounded-[16px] border border-[#3A2C18] bg-[#020B1A]/95 shadow-md before:absolute before:inset-[3px] before:border before:border-dashed before:border-[#2C4166]/40 before:rounded-[12px] before:pointer-events-none"
+          className="relative z-30 flex items-center justify-between px-5 sm:px-6 py-2 mx-3 mt-2.5 rounded-[14px] border-x border-[#3A2C18] border-t border-[#DFBE77] border-b border-[#5E4215] bg-gradient-to-b from-[#092144] via-[#061836] to-[#04142B] shadow-[inset_0_1px_0_rgba(255,245,200,0.45),0_4px_16px_rgba(0,0,0,0.7)]"
           style={{
             backgroundImage: "url('/decor/folio-leather-texture.png')",
             backgroundRepeat: "repeat",
-            backgroundSize: "240px",
+            backgroundSize: "220px",
           }}
         >
-          <div className="flex items-center gap-4">
-            <h1 className="font-serif text-lg font-bold tracking-wide text-[#FFF4D4] flex items-center gap-2">
-              <span>State Complaint — Alexander</span>
-              <PageIdBadge id="PG-020" />
-            </h1>
-            <span className="flex items-center gap-2 text-xs text-[#C6B697] font-medium border-l border-[#3A2C18] pl-4">
-              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-              <span>{lastSavedText}</span>
-            </span>
+          {/* Left: Page ID badge & docket indicator */}
+          <div className="flex items-center gap-3 min-w-0 sm:min-w-[140px] md:min-w-[190px]">
+            <PageIdBadge id="PG-020" />
           </div>
 
-          <div className="flex items-center gap-2.5">
+          {/* Center: Centered Title + Pencil Quick-Edit + Cloud Save Status */}
+          <div className="flex flex-col items-center justify-center text-center flex-1 px-2">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={complaintTitle}
+                  onChange={(e) => setComplaintTitle(e.target.value)}
+                  onBlur={() => setIsEditingTitle(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") setIsEditingTitle(false);
+                  }}
+                  autoFocus
+                  className="bg-[#020F24] border border-[#C5A059] text-[#FFF4D4] font-serif text-base sm:text-[17px] px-2.5 py-0.5 rounded focus:outline-none shadow-inner"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTitle(false)}
+                  className="p-1 rounded bg-[#C5A059] text-[#07162B] hover:bg-[#FFE394] transition-colors cursor-pointer"
+                  title="Save title"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group/title">
+                <h1 
+                  className="font-serif text-base sm:text-[17px] font-bold tracking-wide text-[#FFE7A0] drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] cursor-pointer"
+                  onClick={() => setIsEditingTitle(true)}
+                  title="Click to rename"
+                >
+                  {complaintTitle}
+                </h1>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTitle(true)}
+                  className="p-1 rounded-[4px] bg-white/[0.08] hover:bg-white/[0.18] border border-white/15 hover:border-[#DFBE77] text-[#FFE7A0] hover:text-white transition-colors cursor-pointer"
+                  title="Rename document"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            
+            {/* Sub-line: Centered Cloud Sync Status */}
+            <div className="flex items-center gap-1.5 text-[11px] font-sans text-[#C6B697] font-medium mt-0.5">
+              <span>{lastSavedText}</span>
+              <Cloud className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400/20 drop-shadow-[0_0_3px_rgba(52,211,153,0.5)]" />
+            </div>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center justify-end gap-2 sm:gap-2.5 min-w-0 sm:min-w-[140px] md:min-w-[190px]">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setIsPreviewModalOpen(true)}
-              className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-xs"
+              className="border-[#1E3B66]/80 bg-[#020F24]/90 text-[#D8C7A5] hover:bg-[#071F42] hover:text-[#FFF4D4] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-xs hidden sm:flex"
             >
               <Eye className="w-3.5 h-3.5 text-[#FFE394]" />
-              Preview
+              <span>Preview</span>
             </Button>
 
             <Button
@@ -479,20 +529,20 @@ export default function ComplaintWorkspace() {
               variant="outline"
               size="sm"
               onClick={handleSaveDraft}
-              className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-xs"
+              className="border-[#1E3B66]/80 bg-[#020F24]/90 text-[#D8C7A5] hover:bg-[#071F42] hover:text-[#FFF4D4] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-xs"
             >
               <Save className="w-3.5 h-3.5 text-[#FFE394]" />
-              Save Draft
+              <span className="hidden md:inline">Save Draft</span>
             </Button>
 
             <Button
               type="button"
               size="sm"
               onClick={handleExportPdf}
-              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-4 gap-1.5 rounded-md border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer"
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-3 sm:px-4 gap-1.5 rounded-md border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              Export PDF
+              <span>Export PDF</span>
             </Button>
           </div>
         </header>
