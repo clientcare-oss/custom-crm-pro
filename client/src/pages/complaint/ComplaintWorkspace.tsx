@@ -618,8 +618,9 @@ export default function ComplaintWorkspace() {
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-48 sm:w-52 lg:w-56 xl:w-64 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-r-[10px] before:rounded-l-none before:pointer-events-none before:z-10"
+              className="w-48 sm:w-52 lg:w-56 xl:w-64 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative p-2.5"
               style={{
+                backgroundColor: "#03152E",
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
                 backgroundSize: "200px",
@@ -638,7 +639,7 @@ export default function ComplaintWorkspace() {
               </div>
 
               {/* Tightly stacked index cards with realistic shingled depth */}
-              <div className="flex-1 overflow-y-auto space-y-1 pt-1.5 pb-3 pl-3.5 pr-2 custom-scrollbar [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#020d20] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
+              <div className="flex-1 overflow-y-auto space-y-1 pt-1.5 pb-3 pl-3.5 pr-2 custom-scrollbar [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
                 {pages.map((p) => {
                   const isActive = p.id === activePageId;
                   return (
@@ -739,12 +740,13 @@ export default function ComplaintWorkspace() {
           {/* ── CENTER COLUMN: Parchment Writing Stage ──────────────────── */}
           <main 
             className={cn(
-              "flex-1 flex flex-col border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative min-w-0 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:pointer-events-none before:z-10",
+              "flex-1 flex flex-col border border-[#3A2C18] bg-[#03152E] shadow-2xl relative min-w-0",
               isToolsCollapsed 
-                ? "rounded-l-[14px] rounded-r-none before:rounded-l-[10px] before:rounded-r-none" 
-                : "rounded-[14px] before:rounded-[10px]"
+                ? "rounded-l-[14px] rounded-r-none" 
+                : "rounded-[14px]"
             )}
             style={{
+              backgroundColor: "#03152E",
               backgroundImage: "url('/decor/folio-leather-texture.png')",
               backgroundRepeat: "repeat",
               backgroundSize: "240px",
@@ -1336,8 +1338,9 @@ export default function ComplaintWorkspace() {
           {/* ── RIGHT COLUMN: Cover tools Panel (matching reference mockup) ── */}
           {!isFocusMode && !isToolsCollapsed && (
             <aside 
-              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-l-[14px] rounded-r-none border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-l-[10px] before:rounded-r-none before:pointer-events-none before:z-10"
+              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-l-[14px] rounded-r-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative p-2.5"
               style={{
+                backgroundColor: "#03152E",
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
                 backgroundSize: "200px",
