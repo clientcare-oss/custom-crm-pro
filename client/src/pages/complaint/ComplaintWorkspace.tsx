@@ -583,12 +583,12 @@ export default function ComplaintWorkspace() {
         </header>
 
         {/* ── 3-COLUMN STUDIO WORKSPACE ───────────────────────────────────── */}
-        <div className="relative z-10 flex flex-1 overflow-hidden p-2.5 sm:p-3 pt-2 gap-2.5 lg:gap-3">
+        <div className="relative z-10 flex flex-1 overflow-hidden pt-2 pb-2.5 sm:pb-3 pr-2.5 sm:pr-3 pl-0 gap-2.5 lg:gap-3">
           
-          {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
+          {/* ── LEFT COLUMN: Document Binder / Outline Rail (Bumped flush against left sidebar) ── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-56 sm:w-60 lg:w-64 xl:w-72 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+              className="w-56 sm:w-60 lg:w-64 xl:w-72 shrink-0 flex flex-col justify-between rounded-r-[18px] rounded-l-none border-y border-r border-l-0 border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 pl-3 before:absolute before:inset-y-[4px] before:right-[4px] before:left-0 before:border-y before:border-r before:border-l-0 before:border-dashed before:border-[#263E63]/50 before:rounded-r-[14px] before:rounded-l-none before:pointer-events-none before:z-10"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
@@ -689,9 +689,24 @@ export default function ComplaintWorkspace() {
                 </Button>
               </div>
 
-              {/* Brass Corner Brackets in front */}
-              <FolioBoxCornerBrackets size={32} />
+              {/* Right Brass Corner Brackets in front */}
+              <div className="absolute inset-0 pointer-events-none select-none z-40">
+                <BrassCorner position="tr" size={32} />
+                <BrassCorner position="br" size={32} />
+              </div>
             </aside>
+          )}
+
+          {/* Collapsed Index Expand Trigger */}
+          {isIndexCollapsed && !isFocusMode && (
+            <button
+              type="button"
+              onClick={() => setIsIndexCollapsed(false)}
+              className="h-14 w-6 flex items-center justify-center rounded-r-lg border border-l-0 border-[#3A2C18] bg-[#03152E]/95 text-[#DFBE77] hover:text-[#FFE394] shadow-lg self-center transition-all cursor-pointer z-30 group"
+              title="Expand Packet Index"
+            >
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
           )}
 
           {/* ── CENTER COLUMN: Parchment Writing Stage ──────────────────── */}
