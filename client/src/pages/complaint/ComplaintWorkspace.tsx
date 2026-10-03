@@ -787,13 +787,14 @@ export default function ComplaintWorkspace() {
             )}
 
             {/* ── Scrollable Document Canvas Viewport ───────────────────── */}
-            {/* Tightened space above paper, quiet navy scrollbar with muted brass thumb */}
+            {/* Consistent rich Admiralty Blue leather from top to bottom (no dark fade) */}
             <div 
-              className="flex-1 relative overflow-y-auto overflow-x-hidden pt-2.5 pb-6 px-4 sm:px-6 flex flex-col items-center bg-[#041633] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-[#031024] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm hover:[&::-webkit-scrollbar-thumb]:bg-[#7A5A28]"
+              className="flex-1 relative overflow-y-auto overflow-x-hidden pt-2.5 pb-6 px-4 sm:px-6 flex flex-col items-center bg-[#0C2A52] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-[#081F3D] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm hover:[&::-webkit-scrollbar-thumb]:bg-[#7A5A28]"
               style={{
-                backgroundImage: "radial-gradient(ellipse at 50% 35%, rgba(18, 52, 96, 0.72) 0%, rgba(7, 25, 54, 0.88) 60%, rgba(3, 14, 32, 0.98) 100%), url('/decor/folio-leather-texture.png')",
-                backgroundRepeat: "no-repeat, repeat",
-                backgroundSize: "100% 100%, 240px",
+                backgroundImage: "linear-gradient(180deg, rgba(18, 54, 104, 0.90) 0%, rgba(14, 46, 90, 0.88) 50%, rgba(18, 54, 104, 0.90) 100%), url('/decor/folio-leather-texture.png')",
+                backgroundRepeat: "repeat",
+                backgroundSize: "auto, 240px",
+                backgroundAttachment: "local",
               }}
             >
               
@@ -1079,7 +1080,7 @@ export default function ComplaintWorkspace() {
 
             {/* Bottom Floating Control Bar (Admiralty Navy leather, aligned, zero overlap, rounded bottom) */}
             <div 
-              className="px-6 sm:px-8 py-2 border-t border-[#1C3E6B]/80 bg-gradient-to-r from-[#031D42] via-[#062452] to-[#031D42] flex items-center justify-between gap-2.5 relative z-20 rounded-b-[18px] shadow-[inset_0_1px_0_rgba(147,197,253,0.18),0_-4px_14px_rgba(0,0,0,0.5)] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+              className="px-6 sm:px-8 py-2 border-t border-[#23508C]/80 bg-gradient-to-r from-[#082855] via-[#0E3A75] to-[#082855] flex items-center justify-between gap-2.5 relative z-20 rounded-b-[18px] shadow-[inset_0_1px_0_rgba(147,197,253,0.22),0_-4px_14px_rgba(0,0,0,0.45)] overflow-x-auto [&::-webkit-scrollbar]:hidden"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
