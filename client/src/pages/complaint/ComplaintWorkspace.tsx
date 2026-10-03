@@ -446,15 +446,15 @@ export default function ComplaintWorkspace() {
           }}
         />
 
-        {/* ── TOP HEADER BAR (Executive Maritime Hardwood Rail & Brass) ────── */}
+        {/* ── TOP HEADER BAR (Executive Maritime Hardwood Rail) ─────────────── */}
         <header 
-          className="relative z-30 flex items-center justify-between px-4 sm:px-6 h-[58px] min-h-[58px] w-full border-t border-[#DFBE77]/80 border-b border-[#2C1F0B] shadow-[0_6px_20px_rgba(0,0,0,0.65)] overflow-hidden select-none"
+          className="relative z-30 flex items-center justify-between px-4 sm:px-6 h-[58px] min-h-[58px] w-full border-b border-[#05142B] shadow-[0_6px_20px_rgba(0,0,0,0.65)] overflow-hidden select-none"
           style={{
-            backgroundImage: "linear-gradient(180deg, rgba(255,242,204,0.22) 0%, rgba(20,68,136,0.32) 45%, rgba(10,38,78,0.55) 100%), url('/decor/rail-wood-grain.png')",
+            backgroundImage: "linear-gradient(180deg, rgba(14, 48, 96, 0.45) 0%, rgba(10, 36, 74, 0.5) 100%), url('/decor/rail-wood-grain.png')",
             backgroundRepeat: "no-repeat, repeat-x",
             backgroundSize: "100% 100%, auto 58px",
-            backgroundColor: "#113A6E",
-            boxShadow: "inset 0 1px 0 rgba(255,240,180,0.6), inset 0 -1px 0 rgba(223,190,119,0.3), 0 6px 20px rgba(0,0,0,0.7)",
+            backgroundColor: "#0C2E5C",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
           }}
         >
           {/* Bottom carved wood bevel and brass seam */}
