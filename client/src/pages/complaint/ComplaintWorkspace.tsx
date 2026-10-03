@@ -212,38 +212,20 @@ function BrassSlipHandle({ isActive }: { isActive?: boolean }) {
   return (
     <div 
       className={cn(
-        "absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-7 pointer-events-none z-30 flex items-center justify-center",
-        "drop-shadow-[2px_3px_4px_rgba(0,0,0,0.85)]"
+        "absolute -left-[9px] top-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-center",
+        "drop-shadow-[2px_3px_5px_rgba(0,0,0,0.85)]"
       )}
     >
-      {/* Outer Brass Backplate with sharp metallic corners */}
-      <div 
+      <img
+        src="/decor/ornate-gold-bracket.png"
+        alt="Ornate Brass & Navy Tab Bracket"
         className={cn(
-          "w-3.5 h-6 rounded-[2px] border transition-all relative flex flex-col items-center justify-between py-[2px]",
+          "h-[34px] w-auto pointer-events-none select-none object-contain transition-all duration-200",
           isActive
-            ? "border-[#FFF5D4] bg-gradient-to-b from-[#FFF2CB] via-[#DDA843] to-[#784D12] shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.95),0_1.5px_3px_rgba(0,0,0,0.7)]"
-            : "border-[#E5C47D] bg-gradient-to-b from-[#F5DCA0] via-[#B88E3E] to-[#54330A] shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_1.5px_2.5px_rgba(0,0,0,0.6)]"
+            ? "brightness-110 contrast-105 drop-shadow-[0_0_8px_rgba(255,215,100,0.45)] scale-[1.04]"
+            : "brightness-95 contrast-100 opacity-90 group-hover:brightness-105 group-hover:opacity-100"
         )}
-      >
-        {/* Top Brass Rivet */}
-        <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#FFFDF0] via-[#C99E3D] to-[#4A2D06] shadow-[0_0.5px_1px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)]" />
-
-        {/* Center Arched Pull Loop / Handle Bar */}
-        <div 
-          className={cn(
-            "w-2 h-2.5 rounded-[1px] border-[1px] transition-all relative shadow-sm",
-            isActive
-              ? "border-[#FFF8DE] bg-gradient-to-r from-[#7D4F12] via-[#FFEBB2] to-[#7D4F12]"
-              : "border-[#E8C882] bg-gradient-to-r from-[#5E390A] via-[#D8AD52] to-[#5E390A]"
-          )}
-        >
-          {/* Loop Inner Shadow Depth */}
-          <div className="absolute inset-0 bg-black/25 rounded-[0.5px]" />
-        </div>
-
-        {/* Bottom Brass Rivet */}
-        <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#FFFDF0] via-[#C99E3D] to-[#4A2D06] shadow-[0_0.5px_1px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)]" />
-      </div>
+      />
     </div>
   );
 }
@@ -609,13 +591,13 @@ export default function ComplaintWorkspace() {
                             }
                       }
                       className={cn(
-                        "w-full flex items-center justify-between py-1.5 px-2 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none",
+                        "w-full flex items-center justify-between py-1.5 px-2 pl-3.5 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none",
                         isActive
                           ? "z-10 border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3),0_4px_12px_rgba(0,0,0,0.75),0_1px_2px_rgba(0,0,0,0.5)]"
                           : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15),0_1.5px_3px_rgba(0,0,0,0.6)] hover:brightness-105"
                       )}
                     >
-                      {/* Authentic Embossed Brass Slip Handle with sharp corners & realistic depth */}
+                      {/* Authentic Ornate Brass & Navy Slip Bracket */}
                       <BrassSlipHandle isActive={isActive} />
 
                       <div className="flex items-center gap-1.5 min-w-0 flex-1 pl-1">
