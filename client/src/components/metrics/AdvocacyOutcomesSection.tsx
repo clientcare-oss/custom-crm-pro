@@ -43,26 +43,26 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
   return (
     <div className="space-y-6">
       {/* ── Section Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-sky-500/20 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#3A2C18] pb-3">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-serif font-bold text-[#FFF4D4] tracking-wide flex items-center gap-2">
             <span>Advocacy Outcomes</span>
           </h2>
-          <p className="text-xs text-blue-200/70 mt-0.5">
+          <p className="text-xs text-[#C6B697] mt-0.5">
             Real student impact: goals achieved, accommodations won, placement changes, and IDEA risk resolution.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-xl bg-[#001433] border border-sky-500/30 text-xs">
-            <span className="text-blue-200/60 mr-1.5">Avg Time to Resolution:</span>
+          <div className="px-3 py-1.5 rounded-xl bg-[#020A17]/80 border border-[#3A2C18] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] text-xs">
+            <span className="text-[#C6B697]/80 mr-1.5">Avg Time to Resolution:</span>
             <strong className="text-emerald-400 font-mono font-bold">
               {data.averageTimeToResolutionDays} days
             </strong>
           </div>
-          <div className="px-3 py-1.5 rounded-xl bg-[#001433] border border-sky-500/30 text-xs">
-            <span className="text-blue-200/60 mr-1.5">Escalations Handled:</span>
-            <strong className="text-amber-400 font-mono font-bold">
+          <div className="px-3 py-1.5 rounded-xl bg-[#020A17]/80 border border-[#3A2C18] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] text-xs">
+            <span className="text-[#C6B697]/80 mr-1.5">Escalations Handled:</span>
+            <strong className="text-[#FFE394] font-mono font-bold">
               {data.casesRequiringEscalation} cases
             </strong>
           </div>
@@ -72,10 +72,10 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
       {/* ── Top Grid: Primary Goal Achievements & IDEA Risk Breakdown ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Goal Achievement Breakdown */}
-        <div className="lg:col-span-2 bg-[#07162B] border border-sky-500/25 rounded-2xl p-5 shadow-md space-y-4">
+        <div className="lg:col-span-2 bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Award className="w-3.5 h-3.5" />
+            <h3 className="text-xs font-serif font-bold text-[#FFE394] uppercase tracking-wider flex items-center gap-1.5">
+              <Award className="w-3.5 h-3.5 text-[#C5A059]" />
               <span>Primary Educational Goal Status</span>
             </h3>
             <span className="text-[11px] font-mono text-emerald-400 font-bold">
@@ -87,23 +87,23 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
             {goalStats.map((st) => (
               <div
                 key={st.label}
-                className="p-3.5 rounded-xl bg-[#001026]/80 border border-sky-500/20 text-center space-y-1"
+                className="p-3.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18]/60 text-center space-y-1"
               >
-                <div className="text-2xl font-black font-mono" style={{ color: st.color }}>
+                <div className="text-2xl font-black font-serif" style={{ color: st.color }}>
                   {st.pct}%
                 </div>
-                <div className="text-xs font-bold text-white">{st.label}</div>
-                <div className="text-[10px] text-blue-200/50 font-mono">{st.count} cases</div>
+                <div className="text-xs font-bold text-[#E8DCC4]">{st.label}</div>
+                <div className="text-[10px] text-[#A69371] font-mono">{st.count} cases</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* IDEA Risk Level Breakdown */}
-        <div className="bg-[#07162B] border border-sky-500/25 rounded-2xl p-5 shadow-md space-y-3">
+        <div className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <h3 className="text-xs font-serif font-bold text-[#FFE394] uppercase tracking-wider flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#C5A059]" />
               <span>Cases by IDEA Risk Level</span>
             </h3>
           </div>
@@ -112,7 +112,7 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
             {data.ideaRiskLevels.map((risk) => {
               const riskColors: Record<string, string> = {
                 Low: "#10B981",
-                Moderate: "#38BDF8",
+                Moderate: "#DFBE77",
                 High: "#F59E0B",
                 Critical: "#F43F5E",
               };
@@ -121,12 +121,12 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
               return (
                 <div key={risk.level} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-200 font-semibold">{risk.level} Risk</span>
-                    <span className="font-mono text-white text-[11px]">
+                    <span className="text-[#E8DCC4] font-semibold">{risk.level} Risk</span>
+                    <span className="font-mono text-[#FFF4D4] text-[11px]">
                       {risk.count} ({risk.percentage}%)
                     </span>
                   </div>
-                  <div className="w-full bg-[#001026] h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-[#020A17] h-1.5 rounded-full overflow-hidden border border-[#3A2C18]/40">
                     <div
                       className="h-full rounded-full"
                       style={{ width: `${risk.percentage}%`, backgroundColor: c }}
@@ -142,9 +142,9 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
       {/* ── Multi-Outcome Impact Deliverables & State Complaint Resolution ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left 2 Cols: Concrete Educational Outcomes Secured */}
-        <div className="lg:col-span-2 bg-[#07162B] border border-sky-500/25 rounded-2xl p-5 shadow-md space-y-3">
-          <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
-            <FileCheck className="w-3.5 h-3.5" />
+        <div className="lg:col-span-2 bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-3">
+          <h3 className="text-xs font-serif font-bold text-[#FFE394] uppercase tracking-wider flex items-center gap-1.5">
+            <FileCheck className="w-3.5 h-3.5 text-[#C5A059]" />
             <span>Educational Deliverables & Rights Secured</span>
           </h3>
 
@@ -152,13 +152,13 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
             {data.outcomesByType.map((o) => (
               <div
                 key={o.outcome}
-                className="flex items-center justify-between p-3 rounded-xl bg-[#001026]/70 border border-sky-500/15 text-xs"
+                className="flex items-center justify-between p-3 rounded-lg bg-[#020A17]/80 border border-[#3A2C18]/60 text-xs"
               >
                 <div className="flex items-center gap-2 min-w-0 pr-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-slate-200 font-medium truncate">{o.outcome}</span>
+                  <span className="text-[#E8DCC4] font-medium truncate">{o.outcome}</span>
                 </div>
-                <span className="font-bold font-mono text-white bg-[#001433] px-2.5 py-0.5 rounded-lg border border-sky-500/30 shrink-0">
+                <span className="font-bold font-mono text-[#FFE394] bg-[#020A17] px-2.5 py-0.5 rounded-md border border-[#3A2C18] shrink-0">
                   {o.count}
                 </span>
               </div>
@@ -167,43 +167,43 @@ export default function AdvocacyOutcomesSection({ data }: AdvocacyOutcomesSectio
         </div>
 
         {/* Right Col: State Complaint Card */}
-        <div className="bg-[#07162B] border border-sky-500/25 rounded-2xl p-5 shadow-md flex flex-col justify-between space-y-4">
+        <div className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between space-y-4">
           <div>
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Scale className="w-3.5 h-3.5" />
+            <h3 className="text-xs font-serif font-bold text-[#DFBE77] uppercase tracking-wider flex items-center gap-1.5">
+              <Scale className="w-3.5 h-3.5 text-[#C5A059]" />
               <span>State Complaints</span>
             </h3>
-            <p className="text-xs text-blue-200/70 mt-1">
+            <p className="text-xs text-[#C6B697] mt-1">
               Formal IDEA state-level compliance actions filed with Department of Education.
             </p>
           </div>
 
           <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#001026]">
-              <span className="text-blue-200/70">Complaints Filed:</span>
-              <strong className="text-white font-mono">{data.stateComplaints.totalFiled}</strong>
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18]/60">
+              <span className="text-[#C6B697]">Complaints Filed:</span>
+              <strong className="text-[#FFF4D4] font-mono">{data.stateComplaints.totalFiled}</strong>
             </div>
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#001026]">
-              <span className="text-blue-200/70">Favorable Findings:</span>
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18]/60">
+              <span className="text-[#C6B697]">Favorable Findings:</span>
               <strong className="text-emerald-400 font-mono">
                 {data.stateComplaints.favorableFinding} of {data.stateComplaints.totalFiled} (75%)
               </strong>
             </div>
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#001026]">
-              <span className="text-blue-200/70">Settlement / Mediation:</span>
-              <strong className="text-sky-300 font-mono">
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18]/60">
+              <span className="text-[#C6B697]">Settlement / Mediation:</span>
+              <strong className="text-[#DFBE77] font-mono">
                 {data.stateComplaints.settlementMediation}
               </strong>
             </div>
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#001026]">
-              <span className="text-blue-200/70">Avg Resolution Time:</span>
-              <strong className="text-amber-300 font-mono">
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18]/60">
+              <span className="text-[#C6B697]">Avg Resolution Time:</span>
+              <strong className="text-[#FFE394] font-mono">
                 {data.stateComplaints.averageResolutionDays} days
               </strong>
             </div>
           </div>
 
-          <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-[11px] text-emerald-200">
+          <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200">
             100% of state complaints resolved favorably with corrective action or mediation.
           </div>
         </div>

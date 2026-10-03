@@ -141,15 +141,14 @@ export default function SnapshotCards({ data, onCardClick }: SnapshotCardsProps)
           <div
             key={c.key}
             onClick={() => onCardClick(c.key, c.title)}
-            className="group relative bg-[#07162B] hover:bg-[#001A41] border border-sky-500/25 hover:border-sky-400/50 rounded-2xl p-4 transition-all duration-200 shadow-md hover:shadow-[0_10px_30px_rgba(0,120,255,0.18)] cursor-pointer flex flex-col justify-between select-none"
+            className="group relative bg-[#05142B]/90 hover:bg-[#071A35] border border-[#3A2C18] hover:border-[#C5A059]/60 rounded-xl p-4 transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] cursor-pointer flex flex-col justify-between select-none"
           >
             {/* Top row: Icon & Trendline */}
             <div className="flex items-center justify-between gap-2">
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-inner group-hover:scale-105 transition-transform"
-                style={{ backgroundColor: `${c.color}25`, border: `1px solid ${c.color}50` }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform bg-[#020A17] border border-[#3A2C18] text-[#FFE394]"
               >
-                <Icon className="w-4.5 h-4.5" style={{ color: c.sparkColor }} />
+                <Icon className="w-4.5 h-4.5 text-[#DFBE77]" />
               </div>
 
               <Sparkline data={c.trend} color={c.sparkColor} />
@@ -157,24 +156,24 @@ export default function SnapshotCards({ data, onCardClick }: SnapshotCardsProps)
 
             {/* Middle: Big Metric Value & Label */}
             <div className="pt-3">
-              <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight group-hover:text-sky-300 transition-colors">
+              <div className="text-2xl sm:text-3xl font-serif font-black text-[#FFF4D4] tracking-tight group-hover:text-[#FFE394] transition-colors">
                 {c.format(c.value)}
               </div>
-              <div className="text-xs font-bold text-slate-200 mt-0.5 tracking-wide">
+              <div className="text-xs font-bold text-[#DFBE77] mt-0.5 tracking-wide">
                 {c.title}
               </div>
-              <div className="text-[10px] text-blue-200/60 truncate mt-0.5">
+              <div className="text-[10px] text-[#C6B697] truncate mt-0.5">
                 {c.description}
               </div>
             </div>
 
             {/* Bottom: Change Badge & Drilldown Hint */}
-            <div className="pt-3 border-t border-sky-500/15 flex items-center justify-between text-[11px] font-semibold">
+            <div className="pt-3 border-t border-[#3A2C18]/60 flex items-center justify-between text-[11px] font-semibold">
               <span
-                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold ${
                   isPositive
-                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                    : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                    ? "bg-emerald-950/60 text-emerald-400 border border-emerald-500/30"
+                    : "bg-rose-950/60 text-rose-400 border border-rose-500/30"
                 }`}
               >
                 {isPositive ? (
@@ -185,7 +184,7 @@ export default function SnapshotCards({ data, onCardClick }: SnapshotCardsProps)
                 <span>{Math.abs(c.change)}%</span>
               </span>
 
-              <span className="text-[10px] text-blue-300/50 group-hover:text-sky-300 flex items-center gap-0.5 transition-colors">
+              <span className="text-[10px] text-[#A69371] group-hover:text-[#FFE394] flex items-center gap-0.5 transition-colors font-medium">
                 <span>View</span>
                 <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </span>

@@ -54,18 +54,18 @@ export default function MetricDrilldownModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#001433] border border-sky-500/30 text-white rounded-3xl max-w-2xl shadow-[0_25px_60px_rgba(0,10,35,0.9)] p-6 max-h-[85vh] flex flex-col">
-        <DialogHeader className="border-b border-sky-500/15 pb-3 shrink-0">
+      <DialogContent className="bg-[#05142B] border border-[#3A2C18] text-white rounded-2xl max-w-2xl shadow-[0_25px_60px_rgba(0,0,0,0.95)] p-6 max-h-[85vh] flex flex-col">
+        <DialogHeader className="border-b border-[#3A2C18] pb-3 shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-base sm:text-lg font-bold text-white tracking-wide">
+              <DialogTitle className="text-base sm:text-lg font-serif font-bold text-[#FFF4D4] tracking-wide">
                 {metricTitle}
               </DialogTitle>
-              <DialogDescription className="text-xs text-blue-200/70 mt-0.5">
+              <DialogDescription className="text-xs text-[#C6B697] mt-0.5">
                 Underlying records contributing to this metric. Click any record to open workspace.
               </DialogDescription>
             </div>
-            <Badge className="bg-sky-500/20 text-sky-300 border-sky-400/30 text-xs px-2.5 py-0.5">
+            <Badge className="bg-[#020A17] text-[#FFE394] border-[#3A2C18] text-xs px-2.5 py-0.5 font-mono">
               {records.length} Records
             </Badge>
           </div>
@@ -73,12 +73,12 @@ export default function MetricDrilldownModal({
 
         <div className="flex-1 overflow-y-auto py-3 space-y-2.5 pr-1">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16 text-blue-200/60 gap-2 text-xs">
-              <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+            <div className="flex items-center justify-center py-16 text-[#C6B697] gap-2 text-xs">
+              <Loader2 className="w-4 h-4 animate-spin text-[#FFE394]" />
               <span>Loading record details...</span>
             </div>
           ) : records.length === 0 ? (
-            <div className="text-center py-16 text-xs text-blue-200/50">
+            <div className="text-center py-16 text-xs text-[#A69371]">
               No specific records matching current filter criteria.
             </div>
           ) : (
@@ -86,30 +86,30 @@ export default function MetricDrilldownModal({
               <div
                 key={rec.id || idx}
                 onClick={() => handleNavigate(rec.link)}
-                className="group flex items-center justify-between p-3.5 rounded-2xl bg-[#000E26] hover:bg-[#00183F] border border-sky-500/20 hover:border-sky-400/50 transition-all cursor-pointer shadow-sm"
+                className="group flex items-center justify-between p-3.5 rounded-xl bg-[#020A17]/80 hover:bg-[#071B38] border border-[#3A2C18]/60 hover:border-[#C5A059]/60 transition-all cursor-pointer shadow-sm"
               >
                 <div className="space-y-1 min-w-0 pr-3">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-white truncate group-hover:text-sky-300 transition-colors">
+                    <h4 className="text-sm font-bold text-[#FFF4D4] truncate group-hover:text-[#FFE394] transition-colors">
                       {rec.title}
                     </h4>
                     {rec.category && (
-                      <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-blue-900/60 text-blue-200 border border-blue-700/50">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#05142B] text-[#C6B697] border border-[#3A2C18]">
                         {rec.category}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-blue-200/75 truncate">{rec.subtitle}</p>
-                  <div className="flex items-center gap-3 text-[11px] text-blue-300/60 pt-0.5">
+                  <p className="text-xs text-[#C6B697] truncate">{rec.subtitle}</p>
+                  <div className="flex items-center gap-3 text-[11px] text-[#A69371] pt-0.5">
                     {rec.responsibleName && (
                       <span className="flex items-center gap-1">
-                        <User className="w-3 h-3 text-sky-400" />
+                        <User className="w-3 h-3 text-[#C5A059]" />
                         {rec.responsibleName}
                       </span>
                     )}
                     {rec.date && (
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-sky-400" />
+                        <Calendar className="w-3 h-3 text-[#C5A059]" />
                         {rec.date}
                       </span>
                     )}
@@ -117,10 +117,10 @@ export default function MetricDrilldownModal({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-sky-500/15 text-sky-300 border border-sky-400/30">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-[#05142B] text-[#FFE394] border border-[#3A2C18]">
                     {rec.status}
                   </span>
-                  <div className="w-7 h-7 rounded-xl bg-sky-500/10 group-hover:bg-sky-500/25 text-sky-400 flex items-center justify-center transition-colors">
+                  <div className="w-7 h-7 rounded-lg bg-[#020A17] border border-[#3A2C18]/60 group-hover:border-[#C5A059]/40 text-[#C6B697] group-hover:text-[#FFE394] flex items-center justify-center transition-colors">
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>

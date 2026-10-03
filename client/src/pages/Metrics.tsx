@@ -187,7 +187,13 @@ export default function Metrics() {
 
   return (
     <ScopedErrorBoundary moduleName="Waypoint Metrics Console">
-      <div className="min-h-screen bg-[#000821] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8 font-sans select-none">
+      <div 
+        className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8 select-none"
+        style={{
+          backgroundColor: "#07162B",
+          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
+        }}
+      >
         {/* ── Universal Header with Multi-Dimensional Filters ── */}
         <MetricsHeader
           filters={filters}
@@ -219,8 +225,8 @@ export default function Metrics() {
         {visibleSections.snapshot && (
           <div>
             {isSnapshotLoading || !snapshotData ? (
-              <div className="h-36 rounded-2xl bg-[#07162B] border border-sky-500/20 flex items-center justify-center text-xs text-blue-200/50 gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+              <div className="h-36 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex items-center justify-center text-xs text-[#C6B697] gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-[#FFE394]" />
                 <span>Loading top-level metrics snapshot...</span>
               </div>
             ) : (
@@ -292,13 +298,13 @@ export default function Metrics() {
 
         {/* ── Customize Dashboard Modal ── */}
         <Dialog open={customizeOpen} onOpenChange={setCustomizeOpen}>
-          <DialogContent className="bg-[#001433] border border-sky-500/30 text-white rounded-3xl max-w-md shadow-2xl p-6">
+          <DialogContent className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] rounded-2xl max-w-md shadow-[0_8px_24px_rgba(0,0,0,0.85)] p-6">
             <DialogHeader>
-              <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-sky-400" />
+              <DialogTitle className="text-base font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#DFBE77]" />
                 Customize Metrics Dashboard
               </DialogTitle>
-              <DialogDescription className="text-xs text-blue-200/70">
+              <DialogDescription className="text-xs text-[#C6B697]">
                 Toggle the operational sections you want visible on this workstation.
               </DialogDescription>
             </DialogHeader>
@@ -318,9 +324,9 @@ export default function Metrics() {
               ].map((item) => (
                 <div
                   key={item.key}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#000E26] border border-sky-500/15"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#020A17] border border-[#3A2C18]"
                 >
-                  <Label className="text-xs font-semibold text-slate-200">{item.label}</Label>
+                  <Label className="text-xs font-semibold text-[#FFF4D4]">{item.label}</Label>
                   <Switch
                     checked={(visibleSections as any)[item.key]}
                     onCheckedChange={(checked) =>
@@ -338,7 +344,7 @@ export default function Metrics() {
                   setCustomizeOpen(false);
                   toast.success("Dashboard preferences saved");
                 }}
-                className="h-8 px-4 text-xs font-bold bg-[#0062E3] hover:bg-[#0070F3] text-white rounded-xl"
+                className="h-8 px-4 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 rounded-xl shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer"
               >
                 Done
               </Button>

@@ -124,16 +124,16 @@ export default function ServicesDeliveredSection({
 
   return (
     <div className="space-y-4">
-      <div className="border-b border-sky-500/20 pb-3 flex items-center justify-between">
+      <div className="border-b border-[#3A2C18] pb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-serif font-bold text-[#FFF4D4] tracking-wide flex items-center gap-2">
             <span>Services Delivered</span>
           </h2>
-          <p className="text-xs text-blue-200/70 mt-0.5">
+          <p className="text-xs text-[#C6B697] mt-0.5">
             Advocacy volume metrics. Click any item to inspect the underlying cases and activities.
           </p>
         </div>
-        <span className="text-[11px] text-blue-200/50 font-medium">Click to Inspect</span>
+        <span className="text-[11px] text-[#A69371] font-medium">Click to Inspect</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -144,33 +144,33 @@ export default function ServicesDeliveredSection({
             <div
               key={it.title}
               onClick={() => onMetricClick(it.key, it.title)}
-              className={`group relative bg-[#07162B] hover:bg-[#001A41] border rounded-2xl p-3.5 transition-all duration-200 shadow-md flex flex-col justify-between cursor-pointer select-none ${
+              className={`group relative bg-[#05142B]/90 hover:bg-[#071B38] border rounded-xl p-3.5 transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between cursor-pointer select-none ${
                 it.isAlert
-                  ? "border-rose-500/30 hover:border-rose-400/60"
-                  : "border-sky-500/25 hover:border-sky-400/50"
+                  ? "border-rose-500/40 hover:border-rose-400/70"
+                  : "border-[#3A2C18] hover:border-[#C5A059]/60"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
                   style={{ backgroundColor: `${it.color}20`, border: `1px solid ${it.color}40` }}
                 >
                   <Icon className="w-4 h-4" style={{ color: it.color }} />
                 </div>
 
-                <div className="w-6 h-6 rounded-lg bg-sky-500/10 group-hover:bg-sky-500/20 text-sky-400 flex items-center justify-center transition-colors">
+                <div className="w-6 h-6 rounded-lg bg-[#020A17] border border-[#3A2C18]/60 group-hover:border-[#C5A059]/40 text-[#C6B697] group-hover:text-[#FFE394] flex items-center justify-center transition-colors">
                   <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </div>
 
               <div className="pt-3">
-                <div className="text-2xl font-black text-white font-mono tracking-tight group-hover:text-sky-300 transition-colors">
+                <div className="text-2xl font-black font-serif text-[#FFF4D4] tracking-tight group-hover:text-[#FFE394] transition-colors">
                   {it.value}
                 </div>
-                <h4 className="text-xs font-bold text-slate-200 line-clamp-1 mt-0.5">
+                <h4 className="text-xs font-bold text-[#E8DCC4] line-clamp-1 mt-0.5">
                   {it.title}
                 </h4>
-                <p className="text-[10px] text-blue-200/60 truncate mt-0.5">
+                <p className="text-[10px] text-[#C6B697] truncate mt-0.5">
                   {it.subtitle}
                 </p>
               </div>
