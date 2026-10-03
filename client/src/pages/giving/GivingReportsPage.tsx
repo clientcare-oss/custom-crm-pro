@@ -75,8 +75,8 @@ export default function GivingReportsPage() {
       {/* Primary Highlights Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Public Support Percentage */}
-        <Card className="bg-[#001A41]/80 border-white/10 p-5 space-y-3 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs text-white/60">
+        <Card className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/60 transition-all p-5 space-y-3 relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs text-[#C6B697]">
             <span>Form 990 Public Support %</span>
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
           </div>
@@ -84,47 +84,47 @@ export default function GivingReportsPage() {
             <p className="text-3xl font-bold text-emerald-400 font-mono">
               {isLoading ? "..." : `${reports?.publicSupportPercentage}%`}
             </p>
-            <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px]">
+            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px]">
               Passes 33.3% Test
             </Badge>
           </div>
-          <p className="text-xs text-white/60 leading-relaxed">
+          <p className="text-xs text-[#C6B697] leading-relaxed">
             Confirms public charity classification under IRC Section 509(a)(1) and 170(b)(1)(A)(vi).
           </p>
         </Card>
 
         {/* Sustaining Donor Retention */}
-        <Card className="bg-[#001A41]/80 border-white/10 p-5 space-y-3 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs text-white/60">
+        <Card className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/60 transition-all p-5 space-y-3 relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs text-[#C6B697]">
             <span>Recurring Donor Retention</span>
-            <Users className="h-4 w-4 text-amber-400" />
+            <Users className="h-4 w-4 text-[#FAD77B]" />
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-amber-300 font-mono">
+            <p className="text-3xl font-bold text-[#FFE394] font-mono">
               {isLoading ? "..." : `${reports?.recurringDonorRetention}%`}
             </p>
-            <Badge className="bg-amber-500/20 text-amber-300 text-[10px]">
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
               High Loyalty
             </Badge>
           </div>
-          <p className="text-xs text-white/60 leading-relaxed">
+          <p className="text-xs text-[#C6B697] leading-relaxed">
             Percentage of recurring and corporate sponsors continuing support over 12 months.
           </p>
         </Card>
 
         {/* 2026 Year-to-Date Growth */}
-        <Card className="bg-[#001A41]/80 border-white/10 p-5 space-y-3 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs text-white/60">
+        <Card className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/60 transition-all p-5 space-y-3 relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs text-[#C6B697]">
             <span>Year-over-Year Growth</span>
-            <TrendingUp className="h-4 w-4 text-blue-400" />
+            <TrendingUp className="h-4 w-4 text-[#7BB4FA]" />
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-white font-mono">+30.2%</p>
-            <Badge className="bg-blue-500/20 text-blue-300 text-[10px]">
+            <p className="text-3xl font-bold text-[#FFF4D4] font-mono">+30.2%</p>
+            <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px]">
               Surpassing 2025
             </Badge>
           </div>
-          <p className="text-xs text-white/60 leading-relaxed">
+          <p className="text-xs text-[#C6B697] leading-relaxed">
             Expansion driven by dedicated IEP family scholarship matching programs.
           </p>
         </Card>
@@ -133,32 +133,35 @@ export default function GivingReportsPage() {
       {/* Two Column Detailed Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Annual Giving Trends */}
-        <Card className="bg-[#001A41]/80 border-white/10 p-5 space-y-4">
-          <div className="border-b border-white/10 pb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wide">
+        <Card className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-5 space-y-4">
+          <div className="border-b border-[#3A2C18]/80 pb-3 flex items-center justify-between">
+            <h3 
+              className="text-sm font-bold text-[#FFF4D4] tracking-wide"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
               Annual Contribution History
-            </h2>
-            <span className="text-[11px] text-white/40">Fiscal Years 2024–2026</span>
+            </h3>
+            <span className="text-[11px] text-[#A69371]">Fiscal Years 2024–2026</span>
           </div>
 
           <div className="space-y-4">
             {reports?.annualTotals.map((item: any) => (
               <div key={item.year} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white">{item.year}</span>
-                  <span className="font-mono font-bold text-amber-300">
+                  <span className="font-semibold text-[#FFF4D4]">{item.year}</span>
+                  <span className="font-mono font-bold text-[#FFE394]">
                     {formatCurrency(item.totalDonatedCents)}
                   </span>
                 </div>
-                <div className="h-2.5 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
+                <div className="h-2.5 w-full bg-[#010814] rounded-full overflow-hidden border border-[#3A2C18]/60">
                   <div
-                    className="h-full bg-amber-400 rounded-full"
+                    className="h-full bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] rounded-full"
                     style={{
                       width: `${Math.min(100, Math.round((item.totalDonatedCents / 5000000) * 100))}%`,
                     }}
                   />
                 </div>
-                <div className="flex justify-between text-[10px] text-white/40">
+                <div className="flex justify-between text-[10px] text-[#A69371]">
                   <span>{item.donorsCount} participating contributors</span>
                   <span>Avg gift: {formatCurrency(Math.round(item.totalDonatedCents / (item.donorsCount || 1)))}</span>
                 </div>
@@ -168,24 +171,27 @@ export default function GivingReportsPage() {
         </Card>
 
         {/* Designated Fund Breakdown */}
-        <Card className="bg-[#001A41]/80 border-white/10 p-5 space-y-4">
-          <div className="border-b border-white/10 pb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wide">
+        <Card className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-5 space-y-4">
+          <div className="border-b border-[#3A2C18]/80 pb-3 flex items-center justify-between">
+            <h3 
+              className="text-sm font-bold text-[#FFF4D4] tracking-wide"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
               Designated Fund Allocations
-            </h2>
-            <span className="text-[11px] text-white/40">Cumulative Distribution</span>
+            </h3>
+            <span className="text-[11px] text-[#A69371]">Cumulative Distribution</span>
           </div>
 
           <div className="space-y-4">
             {reports?.fundBreakdown.map((f: any) => (
               <div key={f.fundName} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white">{f.fundName}</span>
-                  <span className="font-mono font-bold text-amber-300">
+                  <span className="font-semibold text-[#FFF4D4]">{f.fundName}</span>
+                  <span className="font-mono font-bold text-[#FFE394]">
                     {formatCurrency(f.allocatedCents)} ({f.percent}%)
                   </span>
                 </div>
-                <div className="h-2.5 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
+                <div className="h-2.5 w-full bg-[#010814] rounded-full overflow-hidden border border-[#3A2C18]/60">
                   <div
                     className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full"
                     style={{ width: `${f.percent}%` }}
