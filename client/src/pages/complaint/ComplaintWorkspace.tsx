@@ -192,7 +192,7 @@ function BrassCorner({ position, size = 32 }: { position: "tl" | "tr" | "bl" | "
       className={cn(
         "absolute pointer-events-none z-40 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]",
         isTop ? "-top-[1px]" : "-bottom-[1px]",
-        isLeft ? "-left-[1px]" : "-right-[1px]"
+        isLeft ? "left-0" : "right-0"
       )}
     />
   );
@@ -613,12 +613,12 @@ export default function ComplaintWorkspace() {
         </header>
 
         {/* ── 3-COLUMN STUDIO WORKSPACE ───────────────────────────────────── */}
-        <div className="relative z-10 flex flex-1 overflow-hidden p-2.5 sm:p-3 pt-2 gap-2.5 lg:gap-3">
+        <div className="relative z-10 flex flex-1 overflow-hidden px-0 pt-2 pb-2 gap-2.5 lg:gap-3">
           
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-48 sm:w-52 lg:w-56 xl:w-64 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+              className="w-48 sm:w-52 lg:w-56 xl:w-64 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-r-[10px] before:rounded-l-none before:pointer-events-none before:z-10"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
@@ -738,7 +738,12 @@ export default function ComplaintWorkspace() {
 
           {/* ── CENTER COLUMN: Parchment Writing Stage ──────────────────── */}
           <main 
-            className="flex-1 flex flex-col rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative min-w-0 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+            className={cn(
+              "flex-1 flex flex-col border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative min-w-0 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:pointer-events-none before:z-10",
+              isToolsCollapsed 
+                ? "rounded-l-[14px] rounded-r-none before:rounded-l-[10px] before:rounded-r-none" 
+                : "rounded-[14px] before:rounded-[10px]"
+            )}
             style={{
               backgroundImage: "url('/decor/folio-leather-texture.png')",
               backgroundRepeat: "repeat",
@@ -752,7 +757,10 @@ export default function ComplaintWorkspace() {
                 backgroundRepeat: "repeat",
                 backgroundSize: "220px",
               }}
-              className="pl-8 sm:pl-9 pr-8 sm:pr-9 pt-2.5 pb-0 bg-gradient-to-b from-[#041633] via-[#021026] to-[#010a1a] flex items-end justify-center sm:justify-start relative z-20 rounded-t-[18px] shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(147,197,253,0.15)]"
+              className={cn(
+                "pl-8 sm:pl-9 pr-8 sm:pr-9 pt-2.5 pb-0 bg-gradient-to-b from-[#041633] via-[#021026] to-[#010a1a] flex items-end justify-center sm:justify-start relative z-20 shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(147,197,253,0.15)]",
+                isToolsCollapsed ? "rounded-tl-[14px] rounded-tr-none" : "rounded-t-[14px]"
+              )}
             >
               {/* Authentic Debossed Leather Impression Seam (replacing the gold line) */}
               <div 
@@ -1380,7 +1388,7 @@ export default function ComplaintWorkspace() {
           {/* ── RIGHT COLUMN: Cover tools Panel (matching reference mockup) ── */}
           {!isFocusMode && !isToolsCollapsed && (
             <aside 
-              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-l-[14px] rounded-r-none border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-l-[10px] before:rounded-r-none before:pointer-events-none before:z-10"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
