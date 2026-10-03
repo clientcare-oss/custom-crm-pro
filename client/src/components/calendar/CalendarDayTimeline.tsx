@@ -54,7 +54,7 @@ export default function CalendarDayTimeline({
   }, [dayAppointments]);
 
   return (
-    <div className="rounded-xl border border-blue-900/60 bg-[#000a22] shadow-2xl p-4 sm:p-5">
+    <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-4 sm:p-5">
       <div className="space-y-4">
         {HOURS.map((hour) => {
           const hourLabel = formatHour(hour);
@@ -64,13 +64,13 @@ export default function CalendarDayTimeline({
             <div key={hour} className="flex items-start gap-4">
               {/* Hour Label */}
               <div className="w-16 sm:w-20 shrink-0 text-right pt-2">
-                <span className="text-xs font-semibold text-slate-400 font-mono">
+                <span className="text-xs font-semibold text-[#A69371] font-mono">
                   {hourLabel}
                 </span>
               </div>
 
               {/* Main Content Area */}
-              <div className="flex-1 min-h-[46px] border-t border-blue-950/80 pt-2 space-y-2">
+              <div className="flex-1 min-h-[46px] border-t border-[#3A2C18]/60 pt-2 space-y-2">
                 {hourApts.map((apt) => {
                   const isNeedsCoverage = apt.status === "Needs Coverage";
                   const startStr = new Date(apt.startTime).toLocaleTimeString("en-US", {
@@ -84,31 +84,31 @@ export default function CalendarDayTimeline({
                   const studentName = apt.studentName || apt.parentName || "Student";
                   const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
 
-                  // Card styling depending on type & coverage
-                  let cardStyle = "bg-[#021845] border-blue-800/60 border-l-[#00b4d8]";
+                  // Card styling depending on type & coverage in Admiralty Theme
+                  let cardStyle = "bg-[#020A17]/90 border-[#3A2C18] border-l-[#C5A059] hover:border-[#C5A059]/80";
                   if (isNeedsCoverage) {
-                    cardStyle = "bg-[#2b0816] border-rose-800/70 border-l-[#e11d48]";
+                    cardStyle = "bg-rose-950/40 border-rose-800/60 border-l-rose-500 hover:border-rose-400/80";
                   } else if (apt.title.toLowerCase().includes("record")) {
-                    cardStyle = "bg-[#01282d] border-teal-800/60 border-l-[#059669]";
+                    cardStyle = "bg-[#031527] border-[#3A2C18] border-l-[#DFBE77] hover:border-[#DFBE77]/80";
                   }
 
                   return (
                     <div
                       key={apt.id}
                       onClick={() => onEventClick(apt)}
-                      className={`rounded-lg border border-l-4 p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 ${cardStyle}`}
+                      className={`rounded-xl border border-l-4 p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-sm ${cardStyle}`}
                     >
                       {/* Left: Title & Subtitle */}
                       <div>
-                        <div className="font-bold text-white text-sm tracking-tight leading-tight">
+                        <div className="font-serif font-bold text-[#FFF4D4] text-sm tracking-tight leading-tight">
                           {apt.title}
                         </div>
-                        <div className="text-xs text-slate-300 mt-0.5">
-                          <span>{studentName}</span>
-                          <span className="mx-2 text-slate-500">|</span>
-                          <span>{advocateName}</span>
+                        <div className="text-xs text-[#C6B697] mt-0.5">
+                          <span className="text-[#FFF4D4] font-medium">{studentName}</span>
+                          <span className="mx-2 text-[#3A2C18]">|</span>
+                          <span className="text-[#FFE394] font-medium">{advocateName}</span>
                           {isNeedsCoverage && (
-                            <span className="ml-2 text-rose-400 font-medium">
+                            <span className="ml-2 text-rose-400 font-semibold font-mono">
                               (Needs Coverage)
                             </span>
                           )}
@@ -117,16 +117,16 @@ export default function CalendarDayTimeline({
 
                       {/* Right: Time Range & Action Button */}
                       <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-slate-300 font-mono">
+                        <span className="text-xs text-[#FFE394] font-mono font-medium">
                           {startStr} – {endStr}
                         </span>
 
                         <button
                           type="button"
                           onClick={() => onEventClick(apt)}
-                          className="h-7 w-8 rounded-md border border-blue-800/60 bg-[#001033] hover:bg-blue-900/50 text-slate-300 flex items-center justify-center transition-colors"
+                          className="h-7 w-8 rounded-lg border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
                         >
-                          <MoreHorizontal className="w-4 h-4 text-slate-400" />
+                          <MoreHorizontal className="w-4 h-4 text-[#A69371]" />
                         </button>
                       </div>
                     </div>

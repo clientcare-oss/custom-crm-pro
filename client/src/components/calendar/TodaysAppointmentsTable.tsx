@@ -115,10 +115,10 @@ export default function TodaysAppointmentsTable({
   const displayList = tab === "my" ? myAppointments : dayAppointments;
 
   return (
-    <div className="rounded-xl border border-blue-900/60 bg-[#000b26] p-4 sm:p-5 shadow-2xl">
+    <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
       {/* Header: Title + Inline Tabs exactly matching reference */}
-      <div className="flex flex-wrap items-center gap-6 pb-4 border-b border-blue-900/40">
-        <h2 className="text-xl font-black text-white tracking-tight">
+      <div className="flex flex-wrap items-center gap-6 pb-4 border-b border-[#3A2C18]/60">
+        <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">
           Today's Appointments
         </h2>
 
@@ -126,30 +126,30 @@ export default function TodaysAppointmentsTable({
           <button
             type="button"
             onClick={() => setTab("my")}
-            className={`text-sm font-bold transition-all relative pb-1 ${
+            className={`text-sm font-semibold transition-all relative pb-1 cursor-pointer ${
               tab === "my"
-                ? "text-sky-400"
-                : "text-slate-400 hover:text-white"
+                ? "text-[#FFE394]"
+                : "text-[#A69371] hover:text-[#FFF4D4]"
             }`}
           >
             My Appointments ({myAppointments.length})
             {tab === "my" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-400 rounded-full shadow-[0_0_8px_#38bdf8]" />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C5A059] rounded-full shadow-[0_0_8px_#C5A059]" />
             )}
           </button>
 
           <button
             type="button"
             onClick={() => setTab("all")}
-            className={`text-sm font-bold transition-all relative pb-1 ${
+            className={`text-sm font-semibold transition-all relative pb-1 cursor-pointer ${
               tab === "all"
-                ? "text-sky-400"
-                : "text-slate-400 hover:text-white"
+                ? "text-[#FFE394]"
+                : "text-[#A69371] hover:text-[#FFF4D4]"
             }`}
           >
             All Appointments ({dayAppointments.length})
             {tab === "all" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-400 rounded-full shadow-[0_0_8px_#38bdf8]" />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C5A059] rounded-full shadow-[0_0_8px_#C5A059]" />
             )}
           </button>
         </div>
@@ -157,14 +157,14 @@ export default function TodaysAppointmentsTable({
 
       {/* Table matching reference */}
       {displayList.length === 0 ? (
-        <div className="py-10 text-center text-slate-400 text-sm">
+        <div className="py-10 text-center text-[#A69371] text-sm">
           No {tab === "my" ? "personal" : "team"} appointments scheduled for this day.
         </div>
       ) : (
         <div className="overflow-x-auto mt-2">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-blue-900/40 text-slate-400 font-semibold text-[11px]">
+              <tr className="border-b border-[#3A2C18]/60 text-[#C6B697] font-semibold text-[11px] font-mono uppercase tracking-wider">
                 <th className="py-3 px-3">Time</th>
                 <th className="py-3 px-3">Student</th>
                 <th className="py-3 px-3">Meeting</th>
@@ -173,7 +173,7 @@ export default function TodaysAppointmentsTable({
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-blue-950/60 font-medium text-slate-200">
+            <tbody className="divide-y divide-[#3A2C18]/40 font-medium text-[#FFF4D4]">
               {displayList.map((apt) => {
                 const startTimeFormatted = new Date(apt.startTime).toLocaleTimeString("en-US", {
                   hour: "numeric",
@@ -188,10 +188,10 @@ export default function TodaysAppointmentsTable({
                   <tr
                     key={apt.id}
                     onClick={() => onEventClick(apt)}
-                    className="hover:bg-blue-950/40 transition-colors cursor-pointer group"
+                    className="hover:bg-[#07162B]/80 transition-colors cursor-pointer group"
                   >
                     {/* Time */}
-                    <td className="py-3 px-3 whitespace-nowrap font-semibold text-white">
+                    <td className="py-3 px-3 whitespace-nowrap font-mono font-semibold text-[#FFE394]">
                       {startTimeFormatted}
                     </td>
 
@@ -199,33 +199,33 @@ export default function TodaysAppointmentsTable({
                     <td className="py-3 px-3 whitespace-nowrap">
                       <div className="flex items-center gap-2.5">
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${bg}`}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 font-serif border border-[#3A2C18] ${bg}`}
                         >
                           {initials}
                         </div>
-                        <span className="font-semibold text-white">{studentName}</span>
+                        <span className="font-serif font-bold text-[#FFF4D4]">{studentName}</span>
                       </div>
                     </td>
 
                     {/* Meeting */}
-                    <td className="py-3 px-3 whitespace-nowrap text-slate-200 font-normal">
+                    <td className="py-3 px-3 whitespace-nowrap text-[#D8C7A5] font-normal">
                       {apt.title}
                     </td>
 
                     {/* Advocate */}
-                    <td className="py-3 px-3 whitespace-nowrap text-slate-300 font-normal">
+                    <td className="py-3 px-3 whitespace-nowrap text-[#C6B697] font-normal">
                       {advocateDisplay}
                     </td>
 
                     {/* Status Pill */}
                     <td className="py-3 px-3 whitespace-nowrap">
                       {isNeedsCoverage ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-rose-600/80 bg-rose-950/60 text-rose-300 font-semibold text-xs">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-rose-500/40 bg-rose-950/60 text-rose-300 font-semibold text-xs font-mono">
                           <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                           <span>Needs Coverage</span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-emerald-500/60 bg-emerald-950/40 text-emerald-400 font-semibold text-xs">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 font-semibold text-xs font-mono">
                           <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
@@ -241,9 +241,9 @@ export default function TodaysAppointmentsTable({
                           <button
                             type="button"
                             onClick={() => onReassignClick(apt)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-blue-700/60 bg-[#001844] hover:bg-blue-900/60 text-slate-200 font-semibold text-xs transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] font-semibold text-xs transition-colors cursor-pointer"
                           >
-                            <Users className="w-3.5 h-3.5 text-sky-400" />
+                            <Users className="w-3.5 h-3.5 text-[#C5A059]" />
                             <span>Reassign</span>
                           </button>
                         )}
@@ -251,9 +251,9 @@ export default function TodaysAppointmentsTable({
                         <button
                           type="button"
                           onClick={() => onEventClick(apt)}
-                          className="h-7 w-8 rounded-md border border-blue-900/80 bg-[#001438] hover:bg-blue-900/50 text-slate-300 flex items-center justify-center transition-colors"
+                          className="h-7 w-8 rounded-lg border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
                         >
-                          <MoreHorizontal className="w-4 h-4 text-slate-400" />
+                          <MoreHorizontal className="w-4 h-4 text-[#A69371]" />
                         </button>
                       </div>
                     </td>

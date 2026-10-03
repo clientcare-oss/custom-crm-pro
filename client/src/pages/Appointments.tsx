@@ -16,6 +16,9 @@ import StaffStatusManagerModal from "@/components/calendar/StaffStatusManagerMod
 import NationalCoverage from "./NationalCoverage";
 import Scheduler from "./Scheduler";
 import ClientCallingSafetyBadge from "@/components/callingSafety/ClientCallingSafetyBadge";
+import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
+import PageIdBadge from "@/components/PageIdBadge";
+import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import { cn } from "@/lib/utils";
 import {
   formatDualTimes,
@@ -528,15 +531,62 @@ export default function Appointments() {
   }, [appointments, todayDateStr]);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* ── Event Detail Popup ── */}
-      {selectedApt && (
+    <ScopedErrorBoundary moduleName="Appointments & Calendar">
+      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto">
+        {/* ── Admiralty Top Header Console ── */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#05142B]/90 border border-[#3A2C18] p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#102B4E]/30 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#020A17] border border-[#3A2C18] text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
+                  <Calendar className="w-4 h-4 text-[#C5A059] shrink-0" />
+                  <span>Operations Deck</span>
+                </div>
+                <PageIdBadge
+                  id={activeTab === "coverage" ? "PG-041" : activeTab === "session-types" ? "PG-008" : "PG-007"}
+                  name={activeTab === "coverage" ? "National Coverage" : activeTab === "session-types" ? "Session Types" : "Appointments & Calendar"}
+                  inline
+                />
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Dual-Zone Sync Active</span>
+                </div>
+              </div>
+
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-serif text-[#FFF4D4] font-normal tracking-wide">
+                  Appointments & <span className="font-serif italic font-bold text-[#FFE394]">Calendar Console</span>
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <WaypointWaveIcon className="w-8 h-2 text-[#C5A059] shrink-0" />
+                  <p className="text-xs sm:text-sm text-[#C6B697] font-medium">
+                    Master scheduling, dual-zone advocacy alignment, and team coverage dispatch.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                onClick={() => setShowCreate(true)}
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs sm:text-sm shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-110 transition-all gap-2"
+              >
+                <Plus className="w-4 h-4 text-[#07162B]" />
+                Schedule Appointment
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Event Detail Popup ── */}
+        {selectedApt && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
           onClick={() => setSelectedApt(null)}
         >
           <div
-            className="bg-card text-card-foreground rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
+            className="bg-[#05142B] text-[#FFF4D4] rounded-xl shadow-[0_16px_40px_rgba(0,0,0,0.95)] border border-[#3A2C18] w-full max-w-sm mx-4 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className={`h-1.5 w-full ${getStatusBarColor(selectedApt.status)}`} />
@@ -544,14 +594,14 @@ export default function Appointments() {
               {/* Title + close */}
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold leading-tight">{isEditingApt ? 'Edit Appointment' : selectedApt.title}</h2>
+                  <h2 className="text-lg font-serif font-bold text-[#FFF4D4] leading-tight">{isEditingApt ? 'Edit Appointment' : selectedApt.title}</h2>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {!isEditingApt && (
                     <>
                       <button
                         onClick={() => openEditMode(selectedApt)}
-                        className="text-xs px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                        className="text-xs px-2.5 py-1 rounded-md bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold hover:brightness-110 transition-colors shadow-sm"
                       >
                         Edit
                       </button>
@@ -559,7 +609,7 @@ export default function Appointments() {
                       {selectedApt.status !== "Cancelled" && !isCancellingApt && !isDeletingApt && (
                         <button
                           onClick={() => setIsCancellingApt(true)}
-                          className="text-muted-foreground hover:text-orange-500 transition-colors"
+                          className="text-[#C6B697] hover:text-orange-400 transition-colors"
                           title="Cancel meeting"
                         >
                           <Ban className="h-4 w-4" />
@@ -573,7 +623,7 @@ export default function Appointments() {
                               checked={notifyParentOnCancel}
                               onCheckedChange={(v) => setNotifyParentOnCancel(!!v)}
                             />
-                            <label htmlFor="notifyParent" className="text-xs text-muted-foreground cursor-pointer whitespace-nowrap">Notify parent</label>
+                            <label htmlFor="notifyParent" className="text-xs text-[#C6B697] cursor-pointer whitespace-nowrap">Notify parent</label>
                           </div>
                           <div className="flex items-center gap-1">
                             <button
@@ -585,7 +635,7 @@ export default function Appointments() {
                             </button>
                             <button
                               onClick={() => setIsCancellingApt(false)}
-                              className="text-xs px-2 py-0.5 rounded border border-muted-foreground/30 hover:bg-accent transition-colors"
+                              className="text-xs px-2 py-0.5 rounded border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] transition-colors"
                             >
                               No
                             </button>
@@ -595,24 +645,24 @@ export default function Appointments() {
                       {!isDeletingApt && !isCancellingApt ? (
                         <button
                           onClick={() => setIsDeletingApt(true)}
-                          className="text-muted-foreground hover:text-red-500 transition-colors"
+                          className="text-[#C6B697] hover:text-rose-400 transition-colors"
                           title="Delete appointment"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       ) : !isCancellingApt ? (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-red-500 font-medium">Delete?</span>
+                          <span className="text-xs text-rose-400 font-medium">Delete?</span>
                           <button
                             onClick={() => deleteMutation.mutate({ id: selectedApt.id })}
                             disabled={deleteMutation.isPending}
-                            className="text-xs px-2 py-0.5 rounded bg-red-600 text-white hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+                            className="text-xs px-2 py-0.5 rounded bg-rose-700 text-white hover:bg-rose-600 transition-colors font-medium disabled:opacity-50"
                           >
                             {deleteMutation.isPending ? '...' : 'Yes'}
                           </button>
                           <button
                             onClick={() => setIsDeletingApt(false)}
-                            className="text-xs px-2 py-0.5 rounded border border-muted-foreground/30 hover:bg-accent transition-colors"
+                            className="text-xs px-2 py-0.5 rounded border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] transition-colors"
                           >
                             No
                           </button>
@@ -622,7 +672,7 @@ export default function Appointments() {
                   )}
                   <button
                     onClick={() => { setSelectedApt(null); setIsEditingApt(false); }}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-[#C6B697] hover:text-[#FFF4D4] transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -633,12 +683,12 @@ export default function Appointments() {
                 /* ── Edit Form ── */
                 <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Auto-fill from Contact</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Auto-fill from Contact</label>
                     <Select onValueChange={(v) => autoFillFromContact(v, setEditAptData)}>
-                      <SelectTrigger className="mt-1 h-8 text-xs">
+                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                         <SelectValue placeholder="Pick a contact to auto-fill parent/student…" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                         {(contacts as any[]).map((c: any) => (
                           <SelectItem key={c.id} value={c.id.toString()}>
                             {c.firstName} {c.lastName}{c.jobTitle === 'Student' ? ' (Student)' : ''}
@@ -648,46 +698,46 @@ export default function Appointments() {
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Title *</label>
                     <VoiceInput
                       value={editAptData.title}
                       onChange={(e) => setEditAptData(d => d ? { ...d, title: e.target.value } : d)}
                       placeholder="Appointment title"
-                      className="mt-1 h-8 text-sm"
+                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Start *</label>
+                      <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Start *</label>
                       <input
                         type="datetime-local"
                         value={editAptData.startTime}
                         onChange={(e) => setEditAptData(d => d ? { ...d, startTime: e.target.value } : d)}
-                        className="mt-1 w-full h-8 text-xs rounded-md border border-input bg-background px-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="mt-1 w-full h-8 text-xs rounded-md border border-[#3A2C18] bg-[#020A17] text-[#FFF4D4] px-2 focus:outline-none focus:border-[#C5A059]"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">End *</label>
+                      <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">End *</label>
                       <input
                         type="datetime-local"
                         value={editAptData.endTime}
                         onChange={(e) => setEditAptData(d => d ? { ...d, endTime: e.target.value } : d)}
-                        className="mt-1 w-full h-8 text-xs rounded-md border border-input bg-background px-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="mt-1 w-full h-8 text-xs rounded-md border border-[#3A2C18] bg-[#020A17] text-[#FFF4D4] px-2 focus:outline-none focus:border-[#C5A059]"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                      <Globe className="h-3 w-3 text-primary" /> Client Time Zone
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
+                      <Globe className="h-3 w-3 text-[#C5A059]" /> Client Time Zone
                     </label>
                     <Select
                       value={editAptData.clientTimeZone}
                       onValueChange={(v) => setEditAptData(d => d ? { ...d, clientTimeZone: v } : d)}
                     >
-                      <SelectTrigger className="mt-1 h-8 text-xs">
+                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                         {SIX_CORE_ZONES.map((z) => (
                           <SelectItem key={z.id} value={z.id}>
                             {z.name} ({z.code})
@@ -697,17 +747,17 @@ export default function Appointments() {
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
                       <User className="h-3 w-3 text-cyan-400" /> Assigned Advocate
                     </label>
                     <Select
                       value={editAptData.assignedAdvocateName}
                       onValueChange={(v) => setEditAptData(d => d ? { ...d, assignedAdvocateName: v } : d)}
                     >
-                      <SelectTrigger className="mt-1 h-8 text-xs">
+                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                         {staffList.map((s) => (
                           <SelectItem key={s.id} value={s.name}>
                             {s.name} ({s.status})
@@ -717,15 +767,15 @@ export default function Appointments() {
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Status</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Status</label>
                     <Select
                       value={editAptData.status}
                       onValueChange={(v) => setEditAptData(d => d ? { ...d, status: v } : d)}
                     >
-                      <SelectTrigger className="mt-1 h-8 text-xs">
+                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                         <SelectItem value="Scheduled">Scheduled</SelectItem>
                         <SelectItem value="Confirmed">Confirmed</SelectItem>
                         <SelectItem value="Completed">Completed</SelectItem>
@@ -735,58 +785,58 @@ export default function Appointments() {
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Video / Meeting Link</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Video / Meeting Link</label>
                     <VoiceInput
                       value={editAptData.videoLink}
                       onChange={(e) => setEditAptData(d => d ? { ...d, videoLink: e.target.value } : d)}
                       placeholder="https://..."
-                      className="mt-1 h-8 text-sm"
+                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Location</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Location</label>
                     <VoiceInput
                       value={editAptData.location}
                       onChange={(e) => setEditAptData(d => d ? { ...d, location: e.target.value } : d)}
                       placeholder="Location"
-                      className="mt-1 h-8 text-sm"
+                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Parent Name</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Parent Name</label>
                     <VoiceInput
                       value={editAptData.parentName}
                       onChange={(e) => setEditAptData(d => d ? { ...d, parentName: e.target.value } : d)}
                       placeholder="Parent name"
-                      className="mt-1 h-8 text-sm"
+                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Parent Phone</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Parent Phone</label>
                     <VoiceInput
                       value={editAptData.parentPhone}
                       onChange={(e) => setEditAptData(d => d ? { ...d, parentPhone: e.target.value } : d)}
                       placeholder="(xxx) xxx-xxxx"
-                      className="mt-1 h-8 text-sm"
+                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Student Name</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Student Name</label>
                     <VoiceInput
                       value={editAptData.studentName}
                       onChange={(e) => setEditAptData(d => d ? { ...d, studentName: e.target.value } : d)}
                       placeholder="Student name"
-                      className="mt-1 h-8 text-sm"
+                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Description</label>
+                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Description</label>
                     <VoiceTextarea
                       value={editAptData.description}
                       onChange={(e) => setEditAptData(d => d ? { ...d, description: e.target.value } : d)}
                       placeholder="Notes about this appointment..."
                       rows={3}
-                      className="mt-1 text-sm"
+                      className="mt-1 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
                     />
                   </div>
                   <div className="flex gap-2 pt-1">
@@ -794,7 +844,7 @@ export default function Appointments() {
                       size="sm"
                       onClick={handleSaveEdit}
                       disabled={updateMutation.isPending}
-                      className="flex-1"
+                      className="flex-1 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold hover:brightness-110"
                     >
                       {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </Button>
@@ -802,7 +852,7 @@ export default function Appointments() {
                       size="sm"
                       variant="outline"
                       onClick={() => setIsEditingApt(false)}
-                      className="flex-1"
+                      className="flex-1 border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B]"
                     >
                       Cancel
                     </Button>
@@ -821,19 +871,19 @@ export default function Appointments() {
                   </div>
                 )}
                 {(selectedApt.parentName || selectedApt.parentPhone || selectedApt.studentName) && (
-                  <div className="text-sm space-y-0.5 pt-1">
+                  <div className="text-sm space-y-0.5 pt-1 text-[#FFF4D4]">
                     {selectedApt.parentName && (
                       <p>
-                        <span className="font-medium text-muted-foreground">Parent:</span>{" "}
+                        <span className="font-medium text-[#C6B697]">Parent:</span>{" "}
                         {selectedApt.parentName}
                         {selectedApt.parentPhone && (
-                          <> · <a href={`tel:${selectedApt.parentPhone}`} className="text-primary hover:underline">{selectedApt.parentPhone}</a></>
+                          <> · <a href={`tel:${selectedApt.parentPhone}`} className="text-[#FFE394] hover:underline">{selectedApt.parentPhone}</a></>
                         )}
                       </p>
                     )}
                     {selectedApt.studentName && (
                       <p>
-                        <span className="font-medium text-muted-foreground">Student:</span>{" "}
+                        <span className="font-medium text-[#C6B697]">Student:</span>{" "}
                         {selectedApt.studentName}
                       </p>
                     )}
@@ -841,7 +891,7 @@ export default function Appointments() {
                 )}
 
                 {/* Contextual Calling Safety */}
-                <div className="mt-2.5 p-2.5 rounded-lg border border-border/70 bg-card/40">
+                <div className="mt-2.5 p-2.5 rounded-lg border border-[#3A2C18] bg-[#020A17]/80">
                   <ClientCallingSafetyBadge
                     timeZone={selectedApt.clientTimeZone}
                   />
@@ -857,10 +907,10 @@ export default function Appointments() {
                   selectedApt.originalTimeZone || "America/New_York"
                 );
                 return (
-                  <div className="rounded-xl border border-border/70 bg-card/60 p-3.5 space-y-3 shadow-sm">
+                  <div className="rounded-xl border border-[#3A2C18] bg-[#020A17]/80 p-3.5 space-y-3 shadow-md">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Globe className="h-3.5 w-3.5 text-primary" /> Multi-Zone Schedule Alignment
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[#C6B697] flex items-center gap-1.5">
+                        <Globe className="h-3.5 w-3.5 text-[#C5A059]" /> Multi-Zone Alignment
                       </span>
                       {dualTime.clientTime.isDifferent ? (
                         <span className="text-[11px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.5 rounded-full">
@@ -868,7 +918,7 @@ export default function Appointments() {
                         </span>
                       ) : (
                         <span className="text-[11px] font-medium text-emerald-300 bg-emerald-950/50 border border-emerald-500/40 px-2 py-0.5 rounded-full">
-                          Both Eastern (Synchronized)
+                          Synchronized
                         </span>
                       )}
                     </div>
@@ -879,7 +929,7 @@ export default function Appointments() {
                         <div className="flex items-center justify-between text-xs text-rose-300 font-semibold mb-1">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse inline-block" />
-                            Client Scheduled Time
+                            Client Time
                           </span>
                           <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/40">
                             {dualTime.clientTime.tzAbbr}
@@ -889,7 +939,7 @@ export default function Appointments() {
                           {dualTime.clientTime.timeRange}
                         </p>
                         <p className="text-[11px] text-rose-300/90 mt-1">
-                          {dualTime.clientTime.dateFormatted} · {dualTime.clientTime.friendlyName} Time
+                          {dualTime.clientTime.dateFormatted} · {dualTime.clientTime.friendlyName}
                         </p>
                       </div>
 
@@ -898,7 +948,7 @@ export default function Appointments() {
                         <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold mb-1">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                            Waypoint Advocate Time
+                            Waypoint Time
                           </span>
                           <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
                             {dualTime.waypointTime.tzAbbr}
@@ -908,14 +958,14 @@ export default function Appointments() {
                           {dualTime.waypointTime.timeRange}
                         </p>
                         <p className="text-[11px] text-emerald-300/90 mt-1">
-                          {dualTime.waypointTime.dateFormatted} · Atlanta, GA (EDT)
+                          {dualTime.waypointTime.dateFormatted} · Atlanta (EDT)
                         </p>
                       </div>
                     </div>
 
                     {dualTime.clientTime.isDifferent && (
-                      <div className="text-xs text-muted-foreground bg-muted/40 rounded-md p-2.5 border border-border/50 flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-primary shrink-0" />
+                      <div className="text-xs text-[#C6B697] bg-[#05142B] rounded-md p-2.5 border border-[#3A2C18] flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-[#C5A059] shrink-0" />
                         <span>{dualTime.explanation}</span>
                       </div>
                     )}
@@ -923,13 +973,39 @@ export default function Appointments() {
                 );
               })()}
 
+              {/* Assigned Advocate */}
+              {selectedApt.assignedAdvocateName && (
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-[#3A2C18] bg-[#020A17]/80">
+                  <span className="text-xs text-[#C6B697] flex items-center gap-1.5">
+                    <UserCheck className="h-3.5 w-3.5 text-cyan-400" />
+                    Assigned Advocate:
+                  </span>
+                  <span className="text-xs font-semibold text-[#FFF4D4]">
+                    {selectedApt.assignedAdvocateName}
+                  </span>
+                </div>
+              )}
+
+              {/* Needs Coverage Alert Banner if flagged */}
+              {selectedApt.status === "Needs Coverage" && (
+                <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/60 flex items-start gap-2.5">
+                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-rose-300">Coverage Required</p>
+                    <p className="text-[11px] text-rose-300/80">
+                      Assigned advocate is unavailable. Use Reassign to delegate to another team advocate.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Join Meeting */}
               {selectedApt.videoLink && (
                 <a
                   href={selectedApt.videoLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 w-full justify-center px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+                  className="flex items-center gap-2 w-full justify-center px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-md"
                 >
                   <Video className="h-4 w-4" />
                   Join Meeting
@@ -939,9 +1015,9 @@ export default function Appointments() {
 
               {/* IEP Meeting Link status */}
               {selectedApt.meetingType === 'IEP Meeting' && (
-                <div className="rounded-lg border p-3 space-y-2">
+                <div className="rounded-lg border border-[#3A2C18] bg-[#020A17]/60 p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">IEP Meeting Link</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">IEP Meeting Link</span>
                     {selectedApt.clientMeetingLink ? (
                       <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
                         Link Received
@@ -954,7 +1030,7 @@ export default function Appointments() {
                   </div>
                   {selectedApt.clientMeetingLink && (
                     <>
-                      <p className="text-xs text-muted-foreground break-all">{selectedApt.clientMeetingLink}</p>
+                      <p className="text-xs text-[#C6B697] break-all">{selectedApt.clientMeetingLink}</p>
                       <a
                         href={selectedApt.clientMeetingLink}
                         target="_blank"
@@ -972,29 +1048,27 @@ export default function Appointments() {
               {/* Location */}
               {selectedApt.location && (
                 <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <p className="text-sm">{selectedApt.location}</p>
+                  <MapPin className="h-4 w-4 text-[#C5A059] shrink-0" />
+                  <p className="text-sm text-[#FFF4D4]">{selectedApt.location}</p>
                 </div>
               )}
 
-
-
               {/* Description */}
               {selectedApt.description && (
-                <p className="text-sm text-muted-foreground border-t pt-3">{selectedApt.description}</p>
+                <p className="text-sm text-[#C6B697] border-t border-[#3A2C18] pt-3">{selectedApt.description}</p>
               )}
 
               {/* Status change */}
-              <div className="flex items-center gap-2 border-t pt-3">
-                <span className="text-xs text-muted-foreground shrink-0">Status:</span>
+              <div className="flex items-center gap-2 border-t border-[#3A2C18] pt-3">
+                <span className="text-xs text-[#C6B697] shrink-0">Status:</span>
                 <Select
                   value={selectedApt.status}
                   onValueChange={(v) => handleStatusChange(selectedApt.id, v)}
                 >
-                  <SelectTrigger className="h-8 text-xs flex-1">
+                  <SelectTrigger className="h-8 text-xs flex-1 bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                     <SelectItem value="Scheduled">Scheduled</SelectItem>
                     <SelectItem value="Confirmed">Confirmed</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
@@ -1011,25 +1085,25 @@ export default function Appointments() {
 
       {/* ── Schedule Appointment Dialog (opened via header button or programmatically) ── */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_16px_40px_rgba(0,0,0,0.95)]">
             <DialogHeader>
-              <DialogTitle>Schedule Appointment</DialogTitle>
+              <DialogTitle className="font-serif text-[#FFF4D4] text-xl font-normal">Schedule Appointment</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-sm font-medium">Client *</label>
+                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Client *</label>
                 <Select value={formData.clientId} onValueChange={(v) => {
                   setFormData(prev => ({ ...prev, clientId: v }));
                   autoFillFromContact(v, setFormData);
                 }}>
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1 bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                     {/* Students first */}
                     {(contacts as any[]).filter((c: any) => c.jobTitle === 'Student').length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Students</div>
+                        <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-[#C5A059] font-bold font-mono">Students</div>
                         {(contacts as any[]).filter((c: any) => c.jobTitle === 'Student').map((c: any) => {
                           const parent = (contacts as any[]).find((p: any) => p.id === c.parentContactId);
                           return (
@@ -1038,7 +1112,7 @@ export default function Appointments() {
                             </SelectItem>
                           );
                         })}
-                        <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">All Contacts</div>
+                        <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-[#C5A059] font-bold font-mono mt-1">All Contacts</div>
                       </>
                     )}
                     {(contacts as any[]).filter((c: any) => c.jobTitle !== 'Student').map((c: any) => (
@@ -1050,22 +1124,22 @@ export default function Appointments() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Title *</label>
+                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Title *</label>
                 <VoiceInput
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] placeholder:text-[#A69371]/60 focus:border-[#C5A059]"
                   placeholder="Meeting title"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Meeting Type</label>
+                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Meeting Type</label>
                 <Select value={formData.meetingType} onValueChange={(v) => setFormData({ ...formData, meetingType: v })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1 bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                     {MEETING_TYPES.map((type) => (
                       <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
@@ -1076,12 +1150,12 @@ export default function Appointments() {
               {/* Assigned Advocate Selector with Live Availability Check */}
               <div>
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5 text-cyan-400" /> Assigned Advocate *
                   </label>
                   {schedulingAvailabilityQuery.data && (
                     <span className="text-[11px] text-cyan-400 font-mono">
-                      Available Advocates: {schedulingAvailabilityQuery.data.availableCount}
+                      Available: {schedulingAvailabilityQuery.data.availableCount}
                     </span>
                   )}
                 </div>
@@ -1089,10 +1163,10 @@ export default function Appointments() {
                   value={formData.assignedAdvocateName}
                   onValueChange={(v) => setFormData({ ...formData, assignedAdvocateName: v })}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                     <SelectValue placeholder="Select advocate" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                     {staffList.map((s) => (
                       <SelectItem key={s.id} value={s.name}>
                         {s.name} ({s.status})
@@ -1123,17 +1197,17 @@ export default function Appointments() {
 
               {/* Client Time Zone */}
               <div>
-                <label className="text-sm font-medium flex items-center gap-1.5">
-                  <Globe className="h-3.5 w-3.5 text-primary" /> Client Time Zone *
+                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-[#C5A059]" /> Client Time Zone *
                 </label>
                 <Select
                   value={formData.clientTimeZone}
                   onValueChange={(v) => setFormData({ ...formData, clientTimeZone: v })}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                     <SelectValue placeholder="Select client time zone" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                     {SIX_CORE_ZONES.map((z) => (
                       <SelectItem key={z.id} value={z.id}>
                         {z.name} ({z.code}) — {z.description}
@@ -1141,10 +1215,10 @@ export default function Appointments() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-muted-foreground mt-1">
+                <p className="text-[11px] text-[#C6B697] mt-1">
                   Advocate operates in Eastern Time (Atlanta, GA). Client calendar will reflect their local zone.
                 </p>
-                <div className="mt-2 p-2 rounded-md bg-muted/40 border border-border/60">
+                <div className="mt-2 p-2 rounded-md bg-[#020A17] border border-[#3A2C18]">
                   <ClientCallingSafetyBadge
                     timeZone={formData.clientTimeZone}
                     compact
@@ -1154,7 +1228,7 @@ export default function Appointments() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium">Start Time *</label>
+                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Start Time *</label>
                   <input
                     type="datetime-local"
                     value={formData.startTime}
@@ -1172,26 +1246,26 @@ export default function Appointments() {
                       }
                       setFormData({ ...formData, startTime: newStart, endTime: newEnd });
                     }}
-                    className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] focus:border-[#C5A059]"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">End Time *</label>
+                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">End Time *</label>
                   <input
                     type="datetime-local"
                     value={formData.endTime}
                     min={formData.startTime || undefined}
                     onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] focus:border-[#C5A059]"
                   />
                 </div>
               </div>
 
               {/* Live Dual Time Zone Preview */}
               {formData.startTime && formData.endTime && (
-                <div className="rounded-lg border border-border/70 bg-card/60 p-3 space-y-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-primary" /> Live Time Alignment Preview
+                <div className="rounded-lg border border-[#3A2C18] bg-[#020A17]/80 p-3 space-y-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#C6B697] flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-[#C5A059]" /> Live Time Alignment Preview
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     {/* 🔴 RED: Client time */}
@@ -1217,79 +1291,83 @@ export default function Appointments() {
               )}
 
               <div>
-                <label className="text-sm font-medium">Location</label>
+                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Location</label>
                 <VoiceInput
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] placeholder:text-[#A69371]/60 focus:border-[#C5A059]"
                   placeholder="e.g., Zoom, Office, Phone"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium flex items-center gap-1.5">
-                  <Video className="h-3.5 w-3.5" /> Video / Meeting Link
+                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1.5">
+                  <Video className="h-3.5 w-3.5 text-[#C5A059]" /> Video / Meeting Link
                 </label>
                 <VoiceInput
                   type="text"
                   value={formData.videoLink}
                   onChange={(e) => setFormData({ ...formData, videoLink: e.target.value })}
-                  className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] placeholder:text-[#A69371]/60 focus:border-[#C5A059]"
                   placeholder="https://teams.microsoft.com/... or Zoom link"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium">Parent Name</label>
+                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Parent Name</label>
                   <VoiceInput
                     type="text"
                     value={formData.parentName}
                     onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                    className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] placeholder:text-[#A69371]/60 focus:border-[#C5A059]"
                     placeholder="Parent name"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Student Name</label>
+                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Student Name</label>
                   <VoiceInput
                     type="text"
                     value={formData.studentName}
                     onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                    className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] placeholder:text-[#A69371]/60 focus:border-[#C5A059]"
                     placeholder="Student name"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium">Description</label>
+                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Description</label>
                 <VoiceTextarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+                  className="w-full mt-1 rounded-md border border-[#3A2C18] bg-[#020A17] px-3 py-2 text-sm text-[#FFF4D4] placeholder:text-[#A69371]/60 focus:border-[#C5A059] min-h-[80px]"
                   placeholder="Notes about this meeting..."
                 />
               </div>
-              <Button onClick={handleCreate} className="w-full" disabled={createMutation.isPending}>
+              <Button
+                onClick={handleCreate}
+                className="w-full bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-sm shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-110 transition-all py-2.5"
+                disabled={createMutation.isPending}
+              >
                 {createMutation.isPending ? "Scheduling..." : "Schedule Appointment"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
 
-      {/* ── Calendar / Session Types / National Coverage Navigation Switcher ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-border/60">
-        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-xl border border-border/50 shadow-inner">
+      {/* ── Navigation Switcher (Admiralty Brass/Navy Tabs) ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-[#3A2C18]/60">
+        <div className="flex items-center gap-1.5 p-1 bg-[#020A17]/90 rounded-xl border border-[#3A2C18] shadow-inner">
           <button
             type="button"
             onClick={() => handleTabChange("calendar")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
               activeTab === "calendar"
-                ? "bg-card text-foreground shadow-sm border border-border/60"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md border border-[#FFE394]/50"
+                : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]"
             )}
           >
-            <Calendar className="w-4 h-4 text-primary" />
+            <Calendar className={cn("w-4 h-4", activeTab === "calendar" ? "text-[#07162B]" : "text-[#C5A059]")} />
             Calendar
           </button>
           <button
@@ -1298,11 +1376,11 @@ export default function Appointments() {
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
               activeTab === "session-types"
-                ? "bg-card text-foreground shadow-sm border border-border/60"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md border border-[#FFE394]/50"
+                : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]"
             )}
           >
-            <CalendarClock className="w-4 h-4 text-amber-400" />
+            <CalendarClock className={cn("w-4 h-4", activeTab === "session-types" ? "text-[#07162B]" : "text-[#C5A059]")} />
             Session Types
           </button>
           <button
@@ -1311,28 +1389,28 @@ export default function Appointments() {
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
               activeTab === "coverage"
-                ? "bg-card text-foreground shadow-sm border border-border/60"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md border border-[#FFE394]/50"
+                : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]"
             )}
           >
-            <Globe className="w-4 h-4 text-sky-400" />
+            <Globe className={cn("w-4 h-4", activeTab === "coverage" ? "text-[#07162B]" : "text-[#C5A059]")} />
             National Coverage
           </button>
         </div>
 
         {activeTab === "coverage" ? (
-          <div className="text-xs text-slate-400 flex items-center gap-2">
+          <div className="text-xs text-[#C6B697] flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Interactive US Coverage Map, Clocks & Safe Calling Guidance</span>
           </div>
         ) : activeTab === "session-types" ? (
-          <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-2">
-            <CalendarClock className="w-3.5 h-3.5 text-amber-400" />
+          <div className="text-xs text-[#C6B697] hidden sm:flex items-center gap-2">
+            <CalendarClock className="w-3.5 h-3.5 text-[#C5A059]" />
             <span>Session Configuration & Client Portal Booking Settings</span>
           </div>
         ) : (
-          <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-primary" />
+          <div className="text-xs text-[#C6B697] hidden sm:flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-[#C5A059]" />
             <span>Dual-Zone Schedule Alignment Active</span>
           </div>
         )}
@@ -1382,13 +1460,13 @@ export default function Appointments() {
       />
 
       {/* ── Upcoming Appointments ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming Appointments</CardTitle>
+      <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-xl">
+        <CardHeader className="border-b border-[#3A2C18]/60 pb-4">
+          <CardTitle className="font-serif text-[#FFF4D4] text-xl font-normal">Upcoming Appointments</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {upcomingAppointments.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No upcoming appointments</p>
+            <p className="text-center text-[#A69371] py-8">No upcoming appointments</p>
           ) : (
             <div className="space-y-3">
               {upcomingAppointments.map((apt: Appointment) => {
@@ -1401,34 +1479,34 @@ export default function Appointments() {
                 return (
                   <div
                     key={apt.id}
-                    className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer"
+                    className="flex items-center justify-between p-4 rounded-lg border border-[#3A2C18]/80 bg-[#020A17]/80 hover:border-[#C5A059]/60 hover:bg-[#07162B]/80 transition-all cursor-pointer"
                     onClick={() => setSelectedApt(apt)}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-primary/5 flex flex-col items-center justify-center shrink-0">
-                        <span className="text-xs font-medium text-primary">
+                      <div className="h-12 w-12 rounded-lg bg-[#07162B] border border-[#3A2C18] flex flex-col items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold text-[#C5A059] uppercase tracking-wider">
                           {new Date(apt.startTime).toLocaleDateString([], { month: "short" })}
                         </span>
-                        <span className="text-lg font-bold text-primary leading-none">
+                        <span className="text-lg font-serif font-bold text-[#FFF4D4] leading-none">
                           {new Date(apt.startTime).getDate()}
                         </span>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium">{apt.title}</p>
+                          <p className="font-semibold text-sm text-[#FFF4D4]">{apt.title}</p>
                           {apt.meetingType && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#07162B] text-[#FFE394] border border-[#3A2C18]">
                               {apt.meetingType}
                             </span>
                           )}
-                          {apt.videoLink && <Video className="h-3.5 w-3.5 text-blue-500" aria-label="Video meeting" />}
+                          {apt.videoLink && <Video className="h-3.5 w-3.5 text-blue-400" aria-label="Video meeting" />}
                         </div>
 
                         {/* Dual-Time Display (Red for Client, Green for Waypoint) */}
                         <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                           {/* 🔴 RED BADGE: CLIENT SCHEDULED TIME */}
                           <span
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-950/50 text-rose-300 border border-rose-500/40 shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-950/70 text-rose-300 border border-rose-500/50 shadow-sm"
                             title={`Client's local scheduled time in ${dual.clientTime.friendlyName} Time`}
                           >
                             <span className="w-2 h-2 rounded-full bg-rose-500" />
@@ -1438,7 +1516,7 @@ export default function Appointments() {
 
                           {/* 🟢 GREEN BADGE: WAYPOINT ADVOCATE TIME */}
                           <span
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-950/50 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-950/70 text-emerald-300 border border-emerald-500/50 shadow-sm"
                             title="Waypoint Advocate's time in Atlanta, GA (Eastern)"
                           >
                             <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -1448,20 +1526,20 @@ export default function Appointments() {
                         </div>
 
                         {dual.clientTime.isDifferent && (
-                          <p className="text-[11px] text-muted-foreground/85 italic mt-1 flex items-center gap-1">
+                          <p className="text-[11px] text-[#C6B697] italic mt-1 flex items-center gap-1">
                             <span>{dual.explanation}</span>
                           </p>
                         )}
 
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {apt.parentName && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <User className="h-3 w-3" />{apt.parentName}
+                            <span className="text-xs text-[#C6B697] flex items-center gap-1">
+                              <User className="h-3 w-3 text-[#C5A059]" />{apt.parentName}
                             </span>
                           )}
                           {apt.studentName && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <span className="text-muted-foreground/50">·</span>{apt.studentName}
+                            <span className="text-xs text-[#C6B697] flex items-center gap-1">
+                              <span className="text-[#3A2C18]">·</span>{apt.studentName}
                             </span>
                           )}
                         </div>
@@ -1475,10 +1553,10 @@ export default function Appointments() {
                         value={apt.status}
                         onValueChange={(v) => handleStatusChange(apt.id, v)}
                       >
-                        <SelectTrigger className="w-[130px] h-8 text-xs">
+                        <SelectTrigger className="w-[130px] h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
                           <SelectItem value="Scheduled">Scheduled</SelectItem>
                           <SelectItem value="Confirmed">Confirmed</SelectItem>
                           <SelectItem value="Completed">Completed</SelectItem>
@@ -1495,12 +1573,12 @@ export default function Appointments() {
       </Card>
 
       {/* ── Availability Management ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Availability</CardTitle>
+      <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-xl">
+        <CardHeader className="border-b border-[#3A2C18]/60 pb-4">
+          <CardTitle className="font-serif text-[#FFF4D4] text-xl font-normal">Your Availability</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">Set your available hours for client bookings</p>
+        <CardContent className="pt-4">
+          <p className="text-sm text-[#C6B697] mb-4">Set your available hours for client bookings</p>
           <div className="space-y-3">
             {DAYS.map((day, index) => {
               const dayAvail = (availability as any[]).find((a: any) => a.dayOfWeek === index);
@@ -1508,7 +1586,7 @@ export default function Appointments() {
               const startTime = dayAvail?.startTime ?? "09:00";
               const endTime = dayAvail?.endTime ?? "17:00";
               return (
-                <div key={day} className="flex items-center gap-4 p-3 rounded-lg border">
+                <div key={day} className="flex items-center gap-4 p-3 rounded-lg border border-[#3A2C18]/70 bg-[#020A17]/80">
                   <div className="w-28">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -1524,9 +1602,9 @@ export default function Appointments() {
                           });
                           updateAvailabilityMutation.mutate(updated);
                         }}
-                        className="rounded border-gray-300"
+                        className="rounded border-[#3A2C18] bg-[#07162B] text-[#C5A059] focus:ring-[#C5A059]"
                       />
-                      <span className="text-sm font-medium">{day}</span>
+                      <span className="text-sm font-medium text-[#FFF4D4]">{day}</span>
                     </label>
                   </div>
                   {isAvailable && (
@@ -1544,9 +1622,9 @@ export default function Appointments() {
                           });
                           updateAvailabilityMutation.mutate(updated);
                         }}
-                        className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                        className="rounded-md border border-[#3A2C18] bg-[#07162B] px-2 py-1 text-sm text-[#FFF4D4] focus:border-[#C5A059]"
                       />
-                      <span className="text-sm text-muted-foreground">to</span>
+                      <span className="text-sm text-[#C6B697]">to</span>
                       <input
                         type="time"
                         defaultValue={endTime}
@@ -1560,12 +1638,12 @@ export default function Appointments() {
                           });
                           updateAvailabilityMutation.mutate(updated);
                         }}
-                        className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                        className="rounded-md border border-[#3A2C18] bg-[#07162B] px-2 py-1 text-sm text-[#FFF4D4] focus:border-[#C5A059]"
                       />
                     </div>
                   )}
                   {!isAvailable && (
-                    <span className="text-sm text-muted-foreground italic">Unavailable</span>
+                    <span className="text-sm text-[#A69371] italic">Unavailable</span>
                   )}
                 </div>
               );
@@ -1576,35 +1654,35 @@ export default function Appointments() {
 
       {/* ── Past Appointments ── */}
       {pastAppointments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-muted-foreground">Past & Cancelled</CardTitle>
+        <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-xl">
+          <CardHeader className="border-b border-[#3A2C18]/60 pb-3">
+            <CardTitle className="font-serif text-[#A69371] text-lg font-normal">Past & Cancelled</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-3">
             <div className="space-y-2">
               {pastAppointments.slice(0, 10).map((apt: Appointment) => (
                 <div
                   key={apt.id}
-                  className="flex items-center justify-between p-3 rounded-lg border opacity-70 cursor-pointer hover:opacity-100 hover:bg-accent/30 transition-all"
+                  className="flex items-center justify-between p-3 rounded-lg border border-[#3A2C18]/60 bg-[#020A17]/60 opacity-80 cursor-pointer hover:opacity-100 hover:border-[#C5A059]/50 hover:bg-[#07162B]/60 transition-all"
                   onClick={() => setSelectedApt(apt)}
                 >
                   <div className="flex items-center gap-3">
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-medium text-sm">{apt.title}</p>
+                        <p className="font-medium text-sm text-[#FFF4D4]">{apt.title}</p>
                         {apt.meetingType && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#05142B] text-[#C6B697] border border-[#3A2C18]">
                             {apt.meetingType}
                           </span>
                         )}
-                        {apt.videoLink && <Video className="h-3 w-3 text-blue-500" />}
+                        {apt.videoLink && <Video className="h-3 w-3 text-blue-400" />}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-[#A69371]">
                           {new Date(apt.startTime).toLocaleDateString()}
                         </p>
-                        {apt.parentName && <span className="text-xs text-muted-foreground">{apt.parentName}</span>}
-                        {apt.studentName && <span className="text-xs text-muted-foreground">· {apt.studentName}</span>}
+                        {apt.parentName && <span className="text-xs text-[#A69371]">{apt.parentName}</span>}
+                        {apt.studentName && <span className="text-xs text-[#A69371]">· {apt.studentName}</span>}
                       </div>
                     </div>
                   </div>
@@ -1622,23 +1700,23 @@ export default function Appointments() {
 
       {/* ⚠️ SERVICE LIMIT WARNING DIALOG (Section 10) */}
       <Dialog open={!!serviceLimitWarning} onOpenChange={(open) => !open && setServiceLimitWarning(null)}>
-        <DialogContent className="max-w-md bg-[#000d2b] border border-amber-500/40 text-white shadow-2xl">
+        <DialogContent className="max-w-md bg-[#05142B] border border-amber-500/50 text-[#FFF4D4] shadow-[0_16px_40px_rgba(0,0,0,0.95)]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-300 text-base">
+            <DialogTitle className="flex items-center gap-2 font-serif text-amber-300 text-lg font-normal">
               <AlertTriangle className="h-5 w-5 text-amber-400" />
               {serviceLimitWarning?.isNotIncluded
                 ? "⚠️ SERVICE NOT INCLUDED IN CURRENT PLAN"
                 : "⚠️ SERVICE LIMIT REACHED"}
             </DialogTitle>
-            <p className="text-xs text-muted-foreground pt-1">
+            <p className="text-xs text-[#C6B697] pt-1">
               {serviceLimitWarning?.isNotIncluded ? (
                 <>
-                  <strong className="text-white">{serviceLimitWarning?.serviceName}</strong> is not included in the client's current plan.
+                  <strong className="text-[#FFF4D4]">{serviceLimitWarning?.serviceName}</strong> is not included in the client's current plan.
                 </>
               ) : (
                 <>
                   This client has used or scheduled all included{" "}
-                  <strong className="text-white">{serviceLimitWarning?.serviceName}</strong> for the
+                  <strong className="text-[#FFF4D4]">{serviceLimitWarning?.serviceName}</strong> for the
                   current service period ({serviceLimitWarning?.used} of{" "}
                   {serviceLimitWarning?.totalAllowance} already consumed).
                 </>
@@ -1646,8 +1724,8 @@ export default function Appointments() {
             </p>
           </DialogHeader>
 
-          <div className="py-2 space-y-2 text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg">
-            <p className="text-white font-medium">How would you like to proceed?</p>
+          <div className="py-2 space-y-2 text-xs text-[#C6B697] bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg">
+            <p className="text-[#FFF4D4] font-medium">How would you like to proceed?</p>
             <ul className="list-disc list-inside space-y-1 text-[11px]">
               <li><strong>Add Extra Allowance:</strong> Authorizes +1 session and schedules immediately.</li>
               <li><strong>Override & Schedule:</strong> Schedules appointment and records an audited override note in the Activity Timeline.</li>
@@ -1660,7 +1738,7 @@ export default function Appointments() {
               variant="ghost"
               size="sm"
               onClick={() => setServiceLimitWarning(null)}
-              className="text-xs text-muted-foreground hover:text-white"
+              className="text-xs text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]"
             >
               Cancel
             </Button>
@@ -1670,14 +1748,14 @@ export default function Appointments() {
                 size="sm"
                 onClick={handleAddAllowanceAndSchedule}
                 disabled={addExtraAllowanceMutation.isPending}
-                className="text-xs border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20"
+                className="text-xs border-emerald-500/50 text-emerald-300 bg-emerald-950/40 hover:bg-emerald-900/50"
               >
                 + Add Extra Allowance & Schedule
               </Button>
               <Button
                 size="sm"
                 onClick={() => executeCreate(true)}
-                className="text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold"
+                className="text-xs bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-110 text-white font-bold border border-amber-400/50 shadow-sm"
               >
                 Override & Schedule
               </Button>
@@ -1686,6 +1764,7 @@ export default function Appointments() {
         </DialogContent>
       </Dialog>
     </div>
+    </ScopedErrorBoundary>
   );
 }
 

@@ -170,7 +170,7 @@ export default function CalendarView({
   const monthGridDays: React.ReactNode[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
     monthGridDays.push(
-      <div key={`empty-${i}`} className="min-h-[7rem] border border-blue-950/60 bg-[#000618]/60" />
+      <div key={`empty-${i}`} className="min-h-[7rem] border border-[#3A2C18]/40 bg-[#020A17]/40" />
     );
   }
 
@@ -182,8 +182,8 @@ export default function CalendarView({
     monthGridDays.push(
       <div
         key={day}
-        className={`min-h-[7rem] border border-blue-950/70 p-1.5 transition-colors cursor-pointer ${
-          isToday ? "bg-cyan-950/20 border-cyan-400/40" : "hover:bg-blue-950/30 bg-[#000820]"
+        className={`min-h-[7rem] border border-[#3A2C18]/60 p-1.5 transition-colors cursor-pointer ${
+          isToday ? "bg-[#071F3D]/50 border-[#C5A059]/70" : "hover:bg-[#07162B]/50 bg-[#020A17]/80"
         }`}
         onClick={() => {
           const clickedDate = new Date(year, month, day);
@@ -193,7 +193,7 @@ export default function CalendarView({
         <div className="flex items-center justify-between mb-1">
           <span
             className={`text-xs font-mono font-bold ${
-              isToday ? "text-cyan-400 bg-cyan-950/80 px-1 rounded border border-cyan-400/40" : "text-slate-400"
+              isToday ? "text-[#FFE394] bg-[#020A17] px-1 rounded border border-[#C5A059]/50" : "text-[#A69371]"
             }`}
           >
             {day}
@@ -215,18 +215,18 @@ export default function CalendarView({
                   e.stopPropagation();
                   onEventClick?.(apt);
                 }}
-                className={`text-[10px] px-1.5 py-1 rounded cursor-pointer hover:opacity-90 transition-all border ${
+                className={`text-[10px] px-1.5 py-1 rounded-lg cursor-pointer hover:opacity-90 transition-all border ${
                   isNeedsCoverage
-                    ? "bg-rose-950/80 text-rose-200 border-rose-600 shadow-sm shadow-rose-950"
-                    : "bg-[#031d4d] text-cyan-200 border-blue-800/70 hover:border-cyan-400/60"
+                    ? "bg-rose-950/80 text-rose-200 border-rose-600/80 shadow-sm shadow-rose-950"
+                    : "bg-[#05142B] text-[#FFF4D4] border-[#3A2C18] hover:border-[#C5A059]/70"
                 }`}
               >
-                <div className="font-bold truncate leading-tight">{apt.title}</div>
-                <div className="flex items-center justify-between text-[9px] text-slate-400 mt-0.5">
-                  <span className="truncate max-w-[85px]">
+                <div className="font-serif font-bold truncate leading-tight">{apt.title}</div>
+                <div className="flex items-center justify-between text-[9px] text-[#A69371] mt-0.5">
+                  <span className="truncate max-w-[85px] text-[#C6B697]">
                     {apt.studentName || apt.parentName || "Student"}
                   </span>
-                  <span className="text-cyan-400 font-semibold">{advocateName}</span>
+                  <span className="text-[#FFE394] font-semibold">{advocateName}</span>
                 </div>
               </div>
             );
@@ -248,17 +248,17 @@ export default function CalendarView({
             setTableTab("my");
             setCurrentDate(new Date());
           }}
-          className="flex items-center gap-3.5 px-4 py-3 rounded-xl border border-sky-500/50 bg-[#001033] shadow-[0_0_20px_rgba(14,165,233,0.18)] cursor-pointer hover:border-sky-400 transition-all shrink-0 group"
+          className="flex items-center gap-3.5 px-4 py-3 rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] cursor-pointer hover:border-[#C5A059]/80 transition-all shrink-0 group"
         >
-          <div className="p-2 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform">
-            <CalendarIcon className="w-5 h-5 text-sky-400" />
+          <div className="p-2 rounded-xl bg-[#020A17] text-[#FFE394] border border-[#3A2C18] group-hover:scale-105 transition-transform">
+            <CalendarIcon className="w-5 h-5 text-[#C5A059]" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-300">Meetings Today</div>
-            <div className="text-2xl font-black text-amber-400 leading-none my-0.5">
+            <div className="text-xs font-semibold text-[#C6B697]">Meetings Today</div>
+            <div className="text-2xl font-serif font-bold text-[#FFF4D4] leading-none my-0.5">
               {myMeetingsTodayCount || 2}
             </div>
-            <div className="text-[11px] text-sky-400 font-medium hover:underline flex items-center gap-0.5">
+            <div className="text-[11px] text-[#C5A059] font-medium hover:underline flex items-center gap-0.5">
               <span>View your appointments</span>
               <ChevronRight className="w-3 h-3" />
             </div>
@@ -267,10 +267,10 @@ export default function CalendarView({
 
         {/* Center: Title & Subtitle */}
         <div className="flex-1 md:px-4">
-          <h1 className="text-2xl font-black text-white tracking-tight leading-tight">
+          <h1 className="text-2xl font-serif font-bold text-[#FFF4D4] tracking-tight leading-tight">
             {formattedHeaderDate}
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#C6B697] mt-0.5">
             Your schedule and all staff appointments for today.
           </p>
         </div>
@@ -279,26 +279,26 @@ export default function CalendarView({
         <div>
           <Button
             onClick={() => onScheduleClick?.()}
-            className="bg-[#f5b82e] hover:bg-[#eab308] text-slate-950 font-bold text-sm h-10 px-4 rounded-lg shadow-md flex items-center gap-1.5 transition-all active:scale-95"
+            className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-sm h-10 px-4 rounded-xl shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-slate-950 stroke-[3]" />
+            <Plus className="w-4 h-4 text-[#07162B] stroke-[3]" />
             <span>Schedule Appointment</span>
           </Button>
         </div>
       </div>
 
       {/* ── CONTROLS ROW (Day|Week|Month + My Calendar|All Staff + Advocate + Date) ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-blue-900/60 bg-[#000d2b] shadow-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="flex flex-wrap items-center gap-3">
           {/* Day | Week | Month */}
-          <div className="flex items-center p-0.5 rounded-lg bg-[#000820] border border-blue-900/80">
+          <div className="flex items-center p-0.5 rounded-xl bg-[#020A17] border border-[#3A2C18]">
             <button
               type="button"
               onClick={() => setViewMode("day")}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "day"
-                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  : "text-[#C6B697] hover:text-[#FFF4D4]"
               }`}
             >
               Day
@@ -306,10 +306,10 @@ export default function CalendarView({
             <button
               type="button"
               onClick={() => setViewMode("week")}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "week"
-                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  : "text-[#C6B697] hover:text-[#FFF4D4]"
               }`}
             >
               Week
@@ -317,10 +317,10 @@ export default function CalendarView({
             <button
               type="button"
               onClick={() => setViewMode("month")}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "month"
-                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  : "text-[#C6B697] hover:text-[#FFF4D4]"
               }`}
             >
               Month
@@ -328,17 +328,17 @@ export default function CalendarView({
           </div>
 
           {/* My Calendar | All Staff */}
-          <div className="flex items-center p-0.5 rounded-lg bg-[#000820] border border-blue-900/80">
+          <div className="flex items-center p-0.5 rounded-xl bg-[#020A17] border border-[#3A2C18]">
             <button
               type="button"
               onClick={() => {
                 setScope("my");
                 setTableTab("my");
               }}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 scope === "my"
-                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  : "text-[#C6B697] hover:text-[#FFF4D4]"
               }`}
             >
               My Calendar
@@ -349,10 +349,10 @@ export default function CalendarView({
                 setScope("all");
                 setTableTab("all");
               }}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 scope === "all"
-                  ? "bg-[#0f4cd9] text-white shadow-sm shadow-blue-600/30"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  : "text-[#C6B697] hover:text-[#FFF4D4]"
               }`}
             >
               All Staff
@@ -361,11 +361,11 @@ export default function CalendarView({
 
           {/* Advocate Filter Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium">Advocate</span>
+            <span className="text-xs text-[#A69371] font-medium">Advocate</span>
             <select
               value={filterAdvocate}
               onChange={(e) => setFilterAdvocate(e.target.value)}
-              className="h-8 px-3 rounded-lg bg-[#000820] border border-blue-900/80 text-white text-xs font-medium focus:outline-none focus:border-sky-400 cursor-pointer"
+              className="h-8 px-3 rounded-xl bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs font-medium focus:outline-none focus:border-[#C5A059] cursor-pointer"
             >
               <option value="all">All Advocates</option>
               {staffList.map((s) => (
@@ -379,10 +379,10 @@ export default function CalendarView({
 
         {/* Right: Date selector matching reference */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-medium">Date</span>
-          <div className="flex items-center gap-2 h-8 px-3 rounded-lg bg-[#000820] border border-blue-900/80 text-white text-xs font-mono">
+          <span className="text-xs text-[#A69371] font-medium">Date</span>
+          <div className="flex items-center gap-2 h-8 px-3 rounded-xl bg-[#020A17] border border-[#3A2C18] text-[#FFE394] text-xs font-mono">
             <span>{dateInputStr}</span>
-            <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+            <CalendarIcon className="w-3.5 h-3.5 text-[#C5A059]" />
           </div>
         </div>
       </div>
@@ -425,13 +425,13 @@ export default function CalendarView({
       )}
 
       {viewMode === "month" && (
-        <Card className="border border-blue-900/60 bg-[#000820] shadow-xl overflow-hidden">
+        <Card className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
           <CardContent className="p-3">
             <div className="grid grid-cols-7 gap-0">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div
                   key={d}
-                  className="text-center text-xs font-bold text-cyan-400 py-2 border-b border-blue-900/60 uppercase tracking-wider"
+                  className="text-center text-xs font-serif font-bold text-[#FFE394] py-2 border-b border-[#3A2C18]/60 uppercase tracking-wider"
                 >
                   {d}
                 </div>
