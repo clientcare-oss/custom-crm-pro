@@ -341,7 +341,7 @@ export default function ComplaintWorkspace() {
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [isIndexCollapsed, setIsIndexCollapsed] = useState<boolean>(false);
-  const [isToolsCollapsed, setIsToolsCollapsed] = useState<boolean>(false);
+  const [isToolsCollapsed, setIsToolsCollapsed] = useState<boolean>(true);
   const [lastSavedText, setLastSavedText] = useState<string>("Draft saved 2 minutes ago");
   const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Alexander");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
@@ -1372,6 +1372,18 @@ export default function ComplaintWorkspace() {
             {/* Brass Corner Brackets in front covering editorial box corners */}
             <FolioBoxCornerBrackets size={36} />
           </main>
+
+          {/* Collapsed Tools Expand Trigger */}
+          {isToolsCollapsed && !isFocusMode && (
+            <button
+              type="button"
+              onClick={() => setIsToolsCollapsed(false)}
+              className="h-14 w-6 flex items-center justify-center rounded-l-lg border border-r-0 border-[#3A2C18] bg-[#03152E]/95 text-[#DFBE77] hover:text-[#FFE394] shadow-lg self-center transition-all cursor-pointer z-30 group"
+              title="Expand cover tools"
+            >
+              <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            </button>
+          )}
 
           {/* ── RIGHT COLUMN: Cover tools Panel (matching reference mockup) ── */}
           {!isFocusMode && !isToolsCollapsed && (
