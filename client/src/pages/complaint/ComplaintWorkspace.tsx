@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import PageIdBadge from "@/components/PageIdBadge";
+import { OrnateTabBracket } from "@/components/complaint/OrnateTabBracket";
 import { toast } from "sonner";
 import {
   Eye,
@@ -212,20 +213,10 @@ function BrassSlipHandle({ isActive }: { isActive?: boolean }) {
   return (
     <div 
       className={cn(
-        "absolute -left-[9px] top-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-center",
-        "drop-shadow-[2px_3px_5px_rgba(0,0,0,0.85)]"
+        "absolute -left-[10px] top-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-center"
       )}
     >
-      <img
-        src="/decor/ornate-gold-bracket.png"
-        alt="Ornate Brass & Navy Tab Bracket"
-        className={cn(
-          "h-[34px] w-auto pointer-events-none select-none object-contain transition-all duration-200",
-          isActive
-            ? "brightness-110 contrast-105 drop-shadow-[0_0_8px_rgba(255,215,100,0.45)] scale-[1.04]"
-            : "brightness-95 contrast-100 opacity-90 group-hover:brightness-105 group-hover:opacity-100"
-        )}
-      />
+      <OrnateTabBracket isActive={isActive} height={38} />
     </div>
   );
 }
@@ -546,7 +537,7 @@ export default function ComplaintWorkspace() {
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-48 lg:w-52 xl:w-56 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+              className="w-56 sm:w-60 lg:w-64 xl:w-72 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
@@ -591,25 +582,26 @@ export default function ComplaintWorkspace() {
                             }
                       }
                       className={cn(
-                        "w-full flex items-center justify-between py-1.5 px-2 pl-3.5 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none",
+                        "w-full flex items-center justify-between py-1.5 px-1.5 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none",
                         isActive
-                          ? "z-10 border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3),0_4px_12px_rgba(0,0,0,0.75),0_1px_2px_rgba(0,0,0,0.5)]"
-                          : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15),0_1.5px_3px_rgba(0,0,0,0.6)] hover:brightness-105"
+                          ? "z-10 border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3),0_4px_12px_rgba(0,0,0,0.75),0_1px_2px_rgba(0,0,0,0.5)] translate-x-0.5"
+                          : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15),0_1.5px_3px_rgba(0,0,0,0.6)] hover:brightness-105 hover:translate-x-0.5"
                       )}
                     >
                       {/* Authentic Ornate Brass & Navy Slip Bracket */}
                       <BrassSlipHandle isActive={isActive} />
 
-                      <div className="flex items-center gap-1.5 min-w-0 flex-1 pl-1">
+                      {/* Number brought snug to the left + maximized room for title */}
+                      <div className="flex items-center min-w-0 flex-1 pl-1 pr-1.5 gap-1.5">
                         <span className={cn(
-                          "font-mono text-xs shrink-0 font-bold px-1 border-r leading-none",
-                          isActive ? "text-[#3D2C10] border-[#8C6D2B]/50" : "text-[#5C421B] border-[#B39358]/40"
+                          "font-mono text-[11px] shrink-0 font-bold leading-none",
+                          isActive ? "text-[#3D2C10]" : "text-[#5C421B]"
                         )}>
                           {p.number}
                         </span>
                         <span 
                           className={cn(
-                            "text-xs truncate tracking-tight font-serif font-bold leading-tight",
+                            "text-[12px] truncate tracking-tight font-serif font-bold leading-tight flex-1 min-w-0",
                             isActive ? "text-[#1C1003]" : "text-[#1A1005]"
                           )}
                           title={p.title}
@@ -618,12 +610,9 @@ export default function ComplaintWorkspace() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0 pl-1">
+                      {/* Right: Miniature document facsimile */}
+                      <div className="flex items-center shrink-0">
                         <MiniaturePagePreview category={p.category} isActive={isActive} />
-                        <GripVertical className={cn(
-                          "w-3 h-3 shrink-0 opacity-45 group-hover:opacity-90 transition-opacity",
-                          isActive ? "text-[#3D2C10]" : "text-[#7A6136]"
-                        )} />
                       </div>
                     </button>
                   );
