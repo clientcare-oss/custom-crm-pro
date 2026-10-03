@@ -446,15 +446,26 @@ export default function ComplaintWorkspace() {
           }}
         />
 
-        {/* ── TOP HEADER BAR (Full-width edge-to-edge, zero buffer) ─────────── */}
+        {/* ── TOP HEADER BAR (Executive Maritime Hardwood Rail & Brass) ────── */}
         <header 
-          className="relative z-30 flex items-center justify-between px-4 sm:px-6 py-2 w-full border-b border-[#5E4215] bg-gradient-to-b from-[#092144] via-[#061836] to-[#04142B] shadow-[0_4px_16px_rgba(0,0,0,0.7)]"
+          className="relative z-30 flex items-center justify-between px-4 sm:px-6 h-[58px] min-h-[58px] w-full border-t border-[#DFBE77]/80 border-b border-[#2C1F0B] shadow-[0_6px_20px_rgba(0,0,0,0.65)] overflow-hidden select-none"
           style={{
-            backgroundImage: "url('/decor/folio-leather-texture.png')",
-            backgroundRepeat: "repeat",
-            backgroundSize: "220px",
+            backgroundImage: "linear-gradient(180deg, rgba(255,242,204,0.22) 0%, rgba(20,68,136,0.32) 45%, rgba(10,38,78,0.55) 100%), url('/decor/rail-wood-grain.png')",
+            backgroundRepeat: "no-repeat, repeat-x",
+            backgroundSize: "100% 100%, auto 58px",
+            backgroundColor: "#113A6E",
+            boxShadow: "inset 0 1px 0 rgba(255,240,180,0.6), inset 0 -1px 0 rgba(223,190,119,0.3), 0 6px 20px rgba(0,0,0,0.7)",
           }}
         >
+          {/* Bottom carved wood bevel and brass seam */}
+          <div 
+            className="absolute bottom-0 left-0 right-0 h-[2px] pointer-events-none"
+            style={{
+              background: "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(197,160,89,0.55) 100%)",
+              boxShadow: "0 1px 0 rgba(0,0,0,0.5)",
+            }}
+          />
+
           {/* Left: Page ID badge & docket indicator */}
           <div className="flex items-center gap-3 min-w-0 sm:min-w-[140px] md:min-w-[190px]">
             <PageIdBadge id="PG-020" />
@@ -473,7 +484,7 @@ export default function ComplaintWorkspace() {
                     if (e.key === "Enter") setIsEditingTitle(false);
                   }}
                   autoFocus
-                  className="bg-[#020F24] border border-[#C5A059] text-[#FFF4D4] font-serif text-base sm:text-[17px] px-2.5 py-0.5 rounded focus:outline-none shadow-inner"
+                  className="bg-[#092244] border border-[#C5A059] text-[#FFF4D4] font-serif text-base sm:text-[17px] px-2.5 py-0.5 rounded focus:outline-none shadow-inner"
                 />
                 <button
                   type="button"
@@ -487,7 +498,7 @@ export default function ComplaintWorkspace() {
             ) : (
               <div className="flex items-center gap-2 group/title">
                 <h1 
-                  className="font-serif text-base sm:text-[17px] font-bold tracking-wide text-[#FFE7A0] drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] cursor-pointer"
+                  className="font-serif text-base sm:text-[17px] font-bold tracking-wide text-[#FFF0C2] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] cursor-pointer"
                   onClick={() => setIsEditingTitle(true)}
                   title="Click to rename"
                 >
@@ -496,7 +507,7 @@ export default function ComplaintWorkspace() {
                 <button
                   type="button"
                   onClick={() => setIsEditingTitle(true)}
-                  className="p-1 rounded-[4px] bg-white/[0.08] hover:bg-white/[0.18] border border-white/15 hover:border-[#DFBE77] text-[#FFE7A0] hover:text-white transition-colors cursor-pointer"
+                  className="p-1 rounded-[4px] bg-[#0A264D]/90 hover:bg-[#113A6E] border border-[#DFBE77]/60 text-[#FFE7A0] hover:text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_1px_2px_rgba(0,0,0,0.6)] transition-colors cursor-pointer"
                   title="Rename document"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -505,9 +516,9 @@ export default function ComplaintWorkspace() {
             )}
             
             {/* Sub-line: Centered Cloud Sync Status */}
-            <div className="flex items-center gap-1.5 text-[11px] font-sans text-[#C6B697] font-medium mt-0.5">
+            <div className="flex items-center gap-1.5 text-[11px] font-sans text-[#E2D4BD] font-medium mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
               <span>{lastSavedText}</span>
-              <Cloud className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400/20 drop-shadow-[0_0_3px_rgba(52,211,153,0.5)]" />
+              <Cloud className="w-3.5 h-3.5 text-emerald-300 fill-emerald-300/30 drop-shadow-[0_0_4px_rgba(110,231,183,0.7)]" />
             </div>
           </div>
 
@@ -518,7 +529,7 @@ export default function ComplaintWorkspace() {
               variant="outline"
               size="sm"
               onClick={() => setIsPreviewModalOpen(true)}
-              className="border-[#1E3B66]/80 bg-[#020F24]/90 text-[#D8C7A5] hover:bg-[#071F42] hover:text-[#FFF4D4] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-xs hidden sm:flex"
+              className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)] hidden sm:flex"
             >
               <Eye className="w-3.5 h-3.5 text-[#FFE394]" />
               <span>Preview</span>
@@ -529,7 +540,7 @@ export default function ComplaintWorkspace() {
               variant="outline"
               size="sm"
               onClick={handleSaveDraft}
-              className="border-[#1E3B66]/80 bg-[#020F24]/90 text-[#D8C7A5] hover:bg-[#071F42] hover:text-[#FFF4D4] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-xs"
+              className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)]"
             >
               <Save className="w-3.5 h-3.5 text-[#FFE394]" />
               <span className="hidden md:inline">Save Draft</span>
@@ -539,7 +550,7 @@ export default function ComplaintWorkspace() {
               type="button"
               size="sm"
               onClick={handleExportPdf}
-              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-3 sm:px-4 gap-1.5 rounded-md border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer"
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-3 sm:px-4 gap-1.5 rounded-md border border-[#FFE394]/70 shadow-[0_3px_12px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.7)] hover:brightness-105 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export PDF</span>
