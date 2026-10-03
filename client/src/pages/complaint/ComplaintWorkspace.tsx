@@ -211,36 +211,36 @@ function BrassSlipHandle({ isActive }: { isActive?: boolean }) {
     <div 
       className={cn(
         "absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-7 pointer-events-none z-30 flex items-center justify-center",
-        "drop-shadow-[1px_2px_3px_rgba(0,0,0,0.7)]"
+        "drop-shadow-[2px_3px_4px_rgba(0,0,0,0.85)]"
       )}
     >
-      {/* Outer Brass Backplate */}
+      {/* Outer Brass Backplate with sharp metallic corners */}
       <div 
         className={cn(
-          "w-3.5 h-6 rounded-[3px] border transition-all relative flex flex-col items-center justify-between py-[2px]",
+          "w-3.5 h-6 rounded-[2px] border transition-all relative flex flex-col items-center justify-between py-[2px]",
           isActive
-            ? "border-[#FFF0C4] bg-gradient-to-b from-[#FFF2CB] via-[#DDA843] to-[#805517] shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.6)]"
-            : "border-[#DFBC72] bg-gradient-to-b from-[#F5DCA0] via-[#B88E3E] to-[#5C3B0E] shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_1px_2px_rgba(0,0,0,0.5)]"
+            ? "border-[#FFF5D4] bg-gradient-to-b from-[#FFF2CB] via-[#DDA843] to-[#784D12] shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.95),0_1.5px_3px_rgba(0,0,0,0.7)]"
+            : "border-[#E5C47D] bg-gradient-to-b from-[#F5DCA0] via-[#B88E3E] to-[#54330A] shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_1.5px_2.5px_rgba(0,0,0,0.6)]"
         )}
       >
         {/* Top Brass Rivet */}
-        <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#FFF8DF] via-[#C99E3D] to-[#5A380A] shadow-[0_0.5px_1px_rgba(0,0,0,0.8),inset_0_0.5px_0.5px_rgba(255,255,255,0.8)]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#FFFDF0] via-[#C99E3D] to-[#4A2D06] shadow-[0_0.5px_1px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)]" />
 
         {/* Center Arched Pull Loop / Handle Bar */}
         <div 
           className={cn(
-            "w-2 h-2.5 rounded-[1.5px] border-[1px] transition-all relative shadow-sm",
+            "w-2 h-2.5 rounded-[1px] border-[1px] transition-all relative shadow-sm",
             isActive
-              ? "border-[#FFF5D4] bg-gradient-to-r from-[#8A5B18] via-[#FEE8A2] to-[#8A5B18]"
-              : "border-[#E8C882] bg-gradient-to-r from-[#6B440E] via-[#D8AD52] to-[#6B440E]"
+              ? "border-[#FFF8DE] bg-gradient-to-r from-[#7D4F12] via-[#FFEBB2] to-[#7D4F12]"
+              : "border-[#E8C882] bg-gradient-to-r from-[#5E390A] via-[#D8AD52] to-[#5E390A]"
           )}
         >
           {/* Loop Inner Shadow Depth */}
-          <div className="absolute inset-0 bg-black/15 rounded-[0.5px]" />
+          <div className="absolute inset-0 bg-black/25 rounded-[0.5px]" />
         </div>
 
         {/* Bottom Brass Rivet */}
-        <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#FFF8DF] via-[#C99E3D] to-[#5A380A] shadow-[0_0.5px_1px_rgba(0,0,0,0.8),inset_0_0.5px_0.5px_rgba(255,255,255,0.8)]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#FFFDF0] via-[#C99E3D] to-[#4A2D06] shadow-[0_0.5px_1px_rgba(0,0,0,0.9),inset_0_0.5px_0.5px_rgba(255,255,255,0.9)]" />
       </div>
     </div>
   );
@@ -503,7 +503,7 @@ export default function ComplaintWorkspace() {
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-44 lg:w-48 xl:w-52 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
+              className="w-48 lg:w-52 xl:w-56 shrink-0 flex flex-col justify-between rounded-[18px] border border-[#3A2C18] bg-[#03152E]/95 shadow-2xl relative p-2.5 before:absolute before:inset-[4px] before:border before:border-dashed before:border-[#263E63]/50 before:rounded-[14px] before:pointer-events-none before:z-10"
               style={{
                 backgroundImage: "url('/decor/folio-leather-texture.png')",
                 backgroundRepeat: "repeat",
@@ -522,7 +522,8 @@ export default function ComplaintWorkspace() {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-2.5 pt-2 pb-3 pl-3 pr-1.5 custom-scrollbar [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#000820] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
+              {/* Tightly stacked index cards with realistic shingled depth */}
+              <div className="flex-1 overflow-y-auto space-y-1.5 pt-2 pb-3 pl-3 pr-1.5 custom-scrollbar [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#020d20] [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
                 {pages.map((p) => {
                   const isActive = p.id === activePageId;
                   return (
@@ -539,7 +540,7 @@ export default function ComplaintWorkspace() {
                       }}
                       style={
                         isActive
-                          ? { background: "linear-gradient(135deg, #FFF1CD 0%, #F5D382 45%, #E6B54E 100%)" }
+                          ? { background: "linear-gradient(135deg, #FFF4D2 0%, #F5D588 45%, #E2AE48 100%)" }
                           : {
                               backgroundImage: "url('/decor/fine-parchment.jpg')",
                               backgroundSize: "cover",
@@ -547,26 +548,29 @@ export default function ComplaintWorkspace() {
                             }
                       }
                       className={cn(
-                        "w-full flex items-center justify-between p-2 pl-3.5 rounded-[6px] transition-all text-left group cursor-pointer relative border select-none",
+                        "w-full flex items-center justify-between py-1.5 px-2 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none",
                         isActive
-                          ? "border-[#FDE08E] shadow-[0_3px_10px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]"
-                          : "border-[#C2AA74]/80 shadow-[0_2px_5px_rgba(0,0,0,0.5),0_1px_1px_rgba(0,0,0,0.3)] hover:brightness-105"
+                          ? "border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3),0_3.5px_10px_rgba(0,0,0,0.7),0_1px_2px_rgba(0,0,0,0.45)]"
+                          : "border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15),0_2.5px_6px_rgba(0,0,0,0.55),0_1px_1.5px_rgba(0,0,0,0.35)] hover:brightness-105"
                       )}
                     >
-                      {/* Authentic Embossed Brass Slip Handle */}
+                      {/* Authentic Embossed Brass Slip Handle with sharp corners & realistic depth */}
                       <BrassSlipHandle isActive={isActive} />
 
-                      <div className="flex items-center gap-2 min-w-0 flex-1 pl-1">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1 pl-1">
                         <span className={cn(
-                          "font-mono text-xs shrink-0 font-bold px-1.5 border-r",
+                          "font-mono text-xs shrink-0 font-bold px-1 border-r leading-none",
                           isActive ? "text-[#3D2C10] border-[#8C6D2B]/50" : "text-[#5C421B] border-[#B39358]/40"
                         )}>
                           {p.number}
                         </span>
-                        <span className={cn(
-                          "text-xs truncate tracking-tight font-serif font-bold",
-                          isActive ? "text-[#1C1003]" : "text-[#1A1005]"
-                        )}>
+                        <span 
+                          className={cn(
+                            "text-xs truncate tracking-tight font-serif font-bold leading-tight",
+                            isActive ? "text-[#1C1003]" : "text-[#1A1005]"
+                          )}
+                          title={p.title}
+                        >
                           {p.title}
                         </span>
                       </div>
@@ -574,7 +578,7 @@ export default function ComplaintWorkspace() {
                       <div className="flex items-center gap-1.5 shrink-0 pl-1">
                         <MiniaturePagePreview category={p.category} isActive={isActive} />
                         <GripVertical className={cn(
-                          "w-3 h-3 shrink-0 opacity-50 group-hover:opacity-90 transition-opacity",
+                          "w-3 h-3 shrink-0 opacity-45 group-hover:opacity-90 transition-opacity",
                           isActive ? "text-[#3D2C10]" : "text-[#7A6136]"
                         )} />
                       </div>
