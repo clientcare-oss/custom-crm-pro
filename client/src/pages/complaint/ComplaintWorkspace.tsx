@@ -217,7 +217,7 @@ function BrassSlipHandle({ isActive }: { isActive?: boolean }) {
         "absolute -left-[10px] top-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-center"
       )}
     >
-      <OrnateTabBracket isActive={isActive} height={38} />
+      <OrnateTabBracket isActive={isActive} height={42} />
     </div>
   );
 }
@@ -237,7 +237,7 @@ function MiniaturePagePreview({
   return (
     <div
       className={cn(
-        "w-[34px] h-[45px] rounded-[2px] p-[1px] shadow-[0_1.5px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] border shrink-0 relative overflow-hidden transition-all duration-200 select-none",
+        "w-[42px] h-[56px] rounded-[2px] p-[1px] shadow-[0_1.5px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] border shrink-0 relative overflow-hidden transition-all duration-200 select-none",
         isActive
           ? "bg-[#FFFDF8] border-[#8C6D2B] ring-1 ring-[#FFE394]/70 shadow-[0_2px_8px_rgba(255,215,100,0.45),0_1.5px_4px_rgba(0,0,0,0.5)] scale-[1.03]"
           : "bg-[#FAF5E8] border-[#A88A4C]/80 group-hover:border-[#8C6D2B] group-hover:shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
@@ -249,7 +249,7 @@ function MiniaturePagePreview({
     >
       {/* Scaled-down real document facsimile content */}
       {isCover ? (
-        <div className="w-[190px] h-[250px] p-2.5 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.18]">
+        <div className="w-[190px] h-[250px] p-2.5 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.22]">
           {/* Real State Header */}
           <div className="text-center border-b border-[#3A2810]/40 pb-1">
             <div className="text-[9px] font-bold tracking-wider uppercase leading-tight text-[#1A120A]">
@@ -279,7 +279,7 @@ function MiniaturePagePreview({
           </div>
         </div>
       ) : (
-        <div className="w-[190px] h-[250px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.18]">
+        <div className="w-[190px] h-[250px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.22]">
           {/* Real Section Title */}
           <div className="border-b border-[#3A2810]/40 pb-0.5">
             <div className="flex justify-between items-center text-[7.5px] text-[#5A4528]">
