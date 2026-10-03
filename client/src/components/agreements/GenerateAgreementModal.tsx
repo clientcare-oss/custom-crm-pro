@@ -116,17 +116,17 @@ export function GenerateAgreementModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl w-[92vw] bg-slate-900 border-slate-800 text-slate-100 rounded-2xl p-0 overflow-hidden shadow-2xl z-[1100]">
-        <DialogHeader className="p-6 pb-4 border-b border-slate-800/80 bg-slate-950/60 flex flex-row items-center justify-between">
+      <DialogContent className="max-w-2xl w-[92vw] bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] rounded-2xl p-0 overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.95)] z-[1100]">
+        <DialogHeader className="p-6 pb-4 border-b border-[#3A2C18] bg-[#020A17]/80 flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,181,68,0.2)]">
+            <div className="w-10 h-10 rounded-xl bg-[#020A17] border border-[#3A2C18] flex items-center justify-center text-[#FFE394] shadow-md shadow-black/40">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-white tracking-wide">
+              <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4] tracking-wide">
                 Generate New Agreement
               </DialogTitle>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#C6B697] mt-0.5">
                 Populate CRM merge fields and create an immutable agreement instance.
               </p>
             </div>
@@ -136,18 +136,18 @@ export function GenerateAgreementModal({
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Step 1: Template */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-amber-400" />
+            <Label className="text-xs font-semibold text-[#C6B697] flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-[#FFE394]" />
               Select Template *
             </Label>
             <select
               value={selectedTemplateId || ""}
               onChange={(e) => handleTemplateChange(Number(e.target.value))}
-              className="w-full h-10 rounded-lg bg-slate-950 border border-slate-700 px-3 text-sm text-slate-100 focus:outline-none focus:border-amber-400 cursor-pointer"
+              className="w-full h-10 rounded-lg bg-[#020A17]/90 border border-[#3A2C18] px-3 text-sm text-[#FFF4D4] focus:outline-none focus:border-[#C5A059] cursor-pointer"
             >
-              <option value="" disabled>Choose a template...</option>
+              <option value="" disabled className="bg-[#05142B] text-[#A69371]">Choose a template...</option>
               {templates.map((tpl: any) => (
-                <option key={tpl.id} value={tpl.id}>
+                <option key={tpl.id} value={tpl.id} className="bg-[#05142B] text-[#FFF4D4]">
                   {tpl.name} ({tpl.agreementType.replace("_", " ")})
                 </option>
               ))}
@@ -156,20 +156,20 @@ export function GenerateAgreementModal({
 
           {/* Agreement Title */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-300">Agreement Title</Label>
+            <Label className="text-xs font-semibold text-[#C6B697]">Agreement Title</Label>
             <Input
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
               placeholder="e.g. Advocacy Service Agreement - Smith Family"
-              className="bg-slate-950 border-slate-700 text-slate-100 focus:border-amber-400 h-9"
+              className="bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] focus:border-[#C5A059] h-9"
             />
           </div>
 
           {/* Step 2 & 3: Client & Student */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-blue-400" />
+              <Label className="text-xs font-semibold text-[#C6B697] flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[#FFE394]" />
                 Client / Parent Contact *
               </Label>
               <select
@@ -179,11 +179,11 @@ export function GenerateAgreementModal({
                   setSelectedClientId(val);
                   setSelectedStudentId(null);
                 }}
-                className="w-full h-10 rounded-lg bg-slate-950 border border-slate-700 px-3 text-sm text-slate-100 focus:outline-none focus:border-amber-400 cursor-pointer"
+                className="w-full h-10 rounded-lg bg-[#020A17]/90 border border-[#3A2C18] px-3 text-sm text-[#FFF4D4] focus:outline-none focus:border-[#C5A059] cursor-pointer"
               >
-                <option value="" disabled>Select client...</option>
+                <option value="" disabled className="bg-[#05142B] text-[#A69371]">Select client...</option>
                 {clients.map((c: any) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} className="bg-[#05142B] text-[#FFF4D4]">
                     {c.firstName} {c.lastName} {c.email ? `(${c.email})` : ""}
                   </option>
                 ))}
@@ -191,19 +191,19 @@ export function GenerateAgreementModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
+              <Label className="text-xs font-semibold text-[#C6B697] flex items-center gap-1.5">
+                <GraduationCap className="w-3.5 h-3.5 text-[#FFE394]" />
                 Student Record (Optional)
               </Label>
               <select
                 value={selectedStudentId || ""}
                 onChange={(e) => setSelectedStudentId(e.target.value ? Number(e.target.value) : null)}
                 disabled={!selectedClientId}
-                className="w-full h-10 rounded-lg bg-slate-950 border border-slate-700 px-3 text-sm text-slate-100 focus:outline-none focus:border-amber-400 disabled:opacity-40 cursor-pointer"
+                className="w-full h-10 rounded-lg bg-[#020A17]/90 border border-[#3A2C18] px-3 text-sm text-[#FFF4D4] focus:outline-none focus:border-[#C5A059] disabled:opacity-40 cursor-pointer"
               >
-                <option value="">No specific student linked</option>
+                <option value="" className="bg-[#05142B] text-[#A69371]">No specific student linked</option>
                 {studentsForSelectedClient.map((s: any) => (
-                  <option key={s.id} value={s.id}>
+                  <option key={s.id} value={s.id} className="bg-[#05142B] text-[#FFF4D4]">
                     {s.firstName} {s.lastName} {s.gradeLevel ? `(${s.gradeLevel})` : ""}
                   </option>
                 ))}
@@ -213,18 +213,18 @@ export function GenerateAgreementModal({
 
           {/* Step 4: Associated Service */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
+            <Label className="text-xs font-semibold text-[#C6B697] flex items-center gap-1.5">
+              <Briefcase className="w-3.5 h-3.5 text-[#FFE394]" />
               Associated Service from Catalog (Optional)
             </Label>
             <select
               value={selectedServiceId || ""}
               onChange={(e) => setSelectedServiceId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full h-10 rounded-lg bg-slate-950 border border-slate-700 px-3 text-sm text-slate-100 focus:outline-none focus:border-amber-400 cursor-pointer"
+              className="w-full h-10 rounded-lg bg-[#020A17]/90 border border-[#3A2C18] px-3 text-sm text-[#FFF4D4] focus:outline-none focus:border-[#C5A059] cursor-pointer"
             >
-              <option value="">No service associated</option>
+              <option value="" className="bg-[#05142B] text-[#A69371]">No service associated</option>
               {servicesData.map((srv: any) => (
-                <option key={srv.id} value={srv.id}>
+                <option key={srv.id} value={srv.id} className="bg-[#05142B] text-[#FFF4D4]">
                   {srv.name} {srv.price ? `($${srv.price})` : ""}
                 </option>
               ))}
@@ -233,22 +233,22 @@ export function GenerateAgreementModal({
 
           {/* Internal Notes */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-300">Internal Staff Notes (Optional)</Label>
+            <Label className="text-xs font-semibold text-[#C6B697]">Internal Staff Notes (Optional)</Label>
             <Input
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
               placeholder="e.g. Prepared following discovery call; customized scope for IEP review."
-              className="bg-slate-950 border-slate-700 text-slate-100 focus:border-amber-400 h-9"
+              className="bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] focus:border-[#C5A059] h-9"
             />
           </div>
         </div>
 
-        <DialogFooter className="p-4 border-t border-slate-800 bg-slate-950/60 flex flex-row items-center justify-between gap-3">
+        <DialogFooter className="p-4 border-t border-[#3A2C18] bg-[#020A17]/80 flex flex-row items-center justify-between gap-3">
           <Button
             type="button"
             variant="ghost"
             onClick={onClose}
-            className="text-slate-400 hover:text-white cursor-pointer"
+            className="text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] cursor-pointer"
           >
             Cancel
           </Button>
@@ -259,7 +259,7 @@ export function GenerateAgreementModal({
               variant="outline"
               onClick={() => handleGenerate(false)}
               disabled={createMutation.isPending}
-              className="border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 cursor-pointer text-xs h-9"
+              className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] cursor-pointer text-xs h-9"
             >
               Save as Draft
             </Button>
@@ -268,7 +268,7 @@ export function GenerateAgreementModal({
               type="button"
               onClick={() => handleGenerate(true)}
               disabled={createMutation.isPending}
-              className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs h-9 gap-1.5 shadow-[0_0_16px_rgba(245,181,68,0.25)] cursor-pointer"
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 gap-1.5 border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               {createMutation.isPending ? "Generating..." : "Generate & Send Now"}
