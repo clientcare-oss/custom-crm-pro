@@ -610,14 +610,14 @@ export default function ComplaintWorkspace() {
           {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-48 sm:w-52 lg:w-56 xl:w-64 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative pt-2 pb-2 pr-2.5 pl-1 z-20"
+              className="w-44 sm:w-48 lg:w-50 xl:w-52 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative pt-2 pb-2 pr-1 pl-1 z-20"
               style={{
                 backgroundColor: "#03152E",
                 background: "linear-gradient(180deg, #051A38 0%, #03152E 35%, #020E22 100%)",
                 boxShadow: "inset 0 1px 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.85)",
               }}
             >
-              <div className="flex items-center justify-between pl-2 pr-1.5 pt-6 pb-2 border-b border-[#3A2C18]/60 relative z-20 bg-transparent">
+              <div className="flex items-center justify-between pl-2 pr-2 pt-6 pb-2 border-b border-[#3A2C18]/60 relative z-20 bg-transparent">
                 <span className="text-[11px] font-serif font-bold text-[#C6B697] tracking-wider uppercase">Packet Index</span>
                 <button
                   type="button"
@@ -629,8 +629,8 @@ export default function ComplaintWorkspace() {
                 </button>
               </div>
 
-              {/* Tightly stacked index cards with realistic shingled depth pulled snug to the left */}
-              <div className="flex-1 overflow-y-auto space-y-1 pt-1.5 pb-3 pl-3 pr-1.5 custom-scrollbar bg-transparent [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
+              {/* Tightly stacked index cards with realistic shingled depth pulled snug against the scrollbar */}
+              <div className="flex-1 overflow-y-auto space-y-1 pt-1.5 pb-3 pl-3 pr-0.5 custom-scrollbar bg-transparent [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
                 {pages.map((p) => {
                   const isActive = p.id === activePageId;
                   return (
