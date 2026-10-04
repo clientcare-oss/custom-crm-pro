@@ -31,6 +31,7 @@ interface StateComplaintFormViewProps {
   zoomLevel?: number;
   renderedPages?: ImportedPdfPage[];
   isRendering?: boolean;
+  totalPages?: number;
 }
 
 const GADOE_PDF_URL = "/forms/gadoe-formal-complaint-form.pdf";
@@ -44,6 +45,7 @@ export function StateComplaintFormView({
   zoomLevel = 100,
   renderedPages: propRenderedPages,
   isRendering = false,
+  totalPages = 4,
 }: StateComplaintFormViewProps) {
   // Always default to "interactive" mode so spot 01 is immediately editable directly on the document sheets
   const [formMode, setFormMode] = useState<"interactive" | "facsimile">("interactive");
@@ -489,7 +491,7 @@ export function StateComplaintFormView({
             {/* Sheet Footer */}
             <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0 mt-3">
               <span className="tracking-wide">{stateConfig.agencyName} · Special Education Formal Complaint</span>
-              <span className="font-mono">Page 1 of 4</span>
+              <span className="font-mono">Page 1 of {totalPages}</span>
             </div>
           </div>
 
@@ -546,7 +548,7 @@ export function StateComplaintFormView({
 
             <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0 mt-3">
               <span className="tracking-wide">{stateConfig.agencyName} · Special Education Formal Complaint</span>
-              <span className="font-mono">Page 2 of 4</span>
+              <span className="font-mono">Page 2 of {totalPages}</span>
             </div>
           </div>
 
@@ -648,7 +650,7 @@ export function StateComplaintFormView({
 
             <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0 mt-3">
               <span className="tracking-wide">{stateConfig.agencyName} · Special Education Formal Complaint</span>
-              <span className="font-mono">Page 3 of 4</span>
+              <span className="font-mono">Page 3 of {totalPages}</span>
             </div>
           </div>
 
@@ -765,7 +767,7 @@ export function StateComplaintFormView({
 
             <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0 mt-3">
               <span className="tracking-wide">{stateConfig.agencyName} · Special Education Formal Complaint</span>
-              <span className="font-mono">Page 4 of 4</span>
+              <span className="font-mono">Page 4 of {totalPages}</span>
             </div>
           </div>
 
@@ -786,7 +788,7 @@ export function StateComplaintFormView({
               <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
 
               <div className="absolute top-3 right-4 z-10 font-mono text-[10px] text-[#8C7A60] bg-[#FBF6EA]/95 px-2.5 py-0.5 rounded-full border border-[#BCA062]/60 shadow-xs pointer-events-none font-bold">
-                Official PDF Facsimile · Page {page.pageNumber} of {activePages.length}
+                Official PDF Facsimile · Page {page.pageNumber} of {totalPages}
               </div>
 
               <img

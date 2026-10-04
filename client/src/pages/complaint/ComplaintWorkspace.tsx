@@ -72,6 +72,21 @@ import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter"
 import { PDFDocument } from "pdf-lib";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
+export const STATE_FORM_PAGE_COUNT = 4;
+
+// Helper to get continuous docket page number for a given page index
+export function getDocketPageNumber(pageIndex: number): number {
+  if (pageIndex <= 0) return 1;
+  return STATE_FORM_PAGE_COUNT + pageIndex;
+}
+
+// Helper to get formatted page badge string for packet index or headers
+export function getPageDisplayBadge(p: { id: string; number?: string }, pageIndex: number): string {
+  if (p.id === "cover" || pageIndex === 0) return "01–04";
+  const num = STATE_FORM_PAGE_COUNT + pageIndex;
+  return num < 10 ? `0${num}` : `${num}`;
+}
+
 interface DocumentPage {
   id: string;
   number: string;
@@ -84,14 +99,14 @@ interface DocumentPage {
 const DEFAULT_PAGES: DocumentPage[] = [
   { 
     id: "cover", 
-    number: "01", 
+    number: "01–04", 
     title: "State Form", 
     category: "cover",
     content: "Official State Complaint Form — Georgia Department of Education Division for Special Education Services and Supports."
   },
   { 
     id: "clarity_control", 
-    number: "02", 
+    number: "05", 
     title: "Clarity Control Restatement", 
     category: "restatement", 
     content: `BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
@@ -138,7 +153,7 @@ III. PROPOSED RESOLUTION & CORRECTIVE ACTIONS
   },
   { 
     id: "chronological_summary", 
-    number: "03", 
+    number: "06", 
     title: "Chronological Summary", 
     category: "facts", 
     content: `CHRONOLOGICAL SUMMARY OF FACTS & TIMELINE
@@ -168,7 +183,7 @@ Parent notified district administration of ongoing service deprivation and reque
   },
   { 
     id: "exhibit_index", 
-    number: "04", 
+    number: "07", 
     title: "Exhibit Index", 
     category: "pleading", 
     content: `FORMAL STATE COMPLAINT — EXHIBIT INDEX & DOCUMENT SCHEDULE
@@ -182,11 +197,13 @@ AGENCY: COBB COUNTY SCHOOL DISTRICT
 ================================================================================
 TABLE OF COMPLAINT FILING SECTIONS:
 ================================================================================
-  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document
-  2. CLARITY CONTROL RESTATEMENT: Restatement of Issues, Allegations & Legal Authorities
-  3. CHRONOLOGICAL SUMMARY: Statement of Facts, Chronological Timeline & Milestones
-  4. EXHIBIT INDEX: Master Evidentiary Schedule (This Page)
-  5. EXHIBIT A: Student's Operative IEP (Individualized Education Program)
+  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)
+  2. CLARITY CONTROL RESTATEMENT: Restatement of Issues, Allegations & Legal Authorities (Page 5)
+  3. CHRONOLOGICAL SUMMARY: Statement of Facts, Chronological Timeline & Milestones (Page 6)
+  4. EXHIBIT INDEX: Master Evidentiary Schedule (This Page · Page 7)
+  5. EXHIBIT A: Student's Operative IEP (Individualized Education Program) (Page 8)
+  6. EXHIBIT B: Evaluations & Parent Written Requests (Page 9)
+  7. EXHIBIT C: District Correspondence & Service Logs (Page 10)
 
 ================================================================================
 MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
@@ -215,7 +232,7 @@ Exhibit files are attached behind this index in labeled alphabetical order.`
   },
   { 
     id: "exhibit_a", 
-    number: "05", 
+    number: "08", 
     title: "Exhibit A (Student's IEP)", 
     category: "exhibit", 
     exhibitTag: "Exhibit A", 
@@ -234,7 +251,7 @@ This exhibit substantiates the service standard against which the District's imp
   },
   { 
     id: "exhibit_b", 
-    number: "06", 
+    number: "09", 
     title: "Exhibit B (Evaluations)", 
     category: "exhibit", 
     exhibitTag: "Exhibit B", 
@@ -250,7 +267,7 @@ Proves written notification to LEA of emerging sensory deficits and establishes 
   },
   { 
     id: "exhibit_c", 
-    number: "07", 
+    number: "10", 
     title: "Exhibit C (Communications)", 
     category: "exhibit", 
     exhibitTag: "Exhibit C", 
@@ -397,7 +414,7 @@ function MiniaturePagePreview({
           {/* Footer */}
           <div className="text-[6px] flex justify-between items-center text-slate-500 border-t border-slate-300 pt-0.5">
             <span className="font-semibold text-emerald-700">Official Fillable PDF</span>
-            <span className="font-mono font-bold text-slate-800">4 Pages</span>
+            <span className="font-mono font-bold text-slate-800">Pages 1–4</span>
           </div>
         </div>
       )) : page.id === "clarity_control" ? (
@@ -868,6 +885,10 @@ export default function ComplaintWorkspace() {
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
   const activePageIndex = pages.findIndex((p) => p.id === activePageId);
 
+  // Total docket pages: 4 pages for binder 01 (State Form) + 1 page for each subsequent section
+  const totalDocketPages = STATE_FORM_PAGE_COUNT + Math.max(0, pages.length - 1);
+  const currentDocketPageNumber = activePageIndex <= 0 ? 1 : STATE_FORM_PAGE_COUNT + activePageIndex;
+
   // Ref & auto-resize effect for the editable legal drafting textarea
   // Eliminates nested inner scrollbars: the sheet expands naturally and only the outer canvas scrollbar is used!
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -913,7 +934,7 @@ export default function ComplaintWorkspace() {
   // Add Page handler
   const handleAddPage = () => {
     if (!newPageTitle.trim()) return;
-    const nextNum = (pages.length + 1).toString().padStart(2, "0");
+    const nextNum = (STATE_FORM_PAGE_COUNT + pages.length).toString().padStart(2, "0");
     const newPage: DocumentPage = {
       id: `custom_${Date.now()}`,
       number: nextNum,
@@ -1166,7 +1187,7 @@ export default function ComplaintWorkspace() {
 
               {/* Tightly stacked index cards with realistic shingled depth pulled snug against the scrollbar */}
               <div className="flex-1 overflow-y-auto space-y-1.5 pt-1.5 pb-3 pl-3 pr-0.5 custom-scrollbar bg-transparent [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
-                {pages.map((p) => {
+                {pages.map((p, index) => {
                   const isActive = p.id === activePageId;
                   return (
                     <button
@@ -1205,7 +1226,7 @@ export default function ComplaintWorkspace() {
                           "font-mono text-[11px] shrink-0 font-bold leading-none self-center",
                           isActive ? "text-[#3D2C10]" : "text-[#5C421B]"
                         )}>
-                          {p.number}
+                          {getPageDisplayBadge(p, index)}
                         </span>
 
                         {/* Thin vertical line divider after the number */}
@@ -1540,6 +1561,7 @@ export default function ComplaintWorkspace() {
                   zoomLevel={zoomLevel}
                   renderedPages={stateFormPages}
                   isRendering={isRenderingStateForm}
+                  totalPages={totalDocketPages}
                 />
               ) : (
                 /* ── VIEW 2: EDITABLE DOCUMENT PAGES (Proportional Google Docs Writing Area) ── */
@@ -1581,14 +1603,14 @@ export default function ComplaintWorkspace() {
                     <div className="flex items-center justify-between pb-3 border-b border-[#8C7A60]/40 shrink-0">
                       <div>
                         <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A60] font-bold">
-                          Section {activePage.number} · {activePage.id === "clarity_control" || activePage.number === "02" || activePage.category === "pleading" || activePage.category === "restatement" ? "RESTATEMENT" : activePage.category.toUpperCase()}
+                          Page {currentDocketPageNumber} · {activePage.id === "clarity_control" || activePage.number === "02" || activePage.number === "05" || activePage.category === "pleading" || activePage.category === "restatement" ? "RESTATEMENT" : activePage.category.toUpperCase()}
                         </span>
                         <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5">
                           {activePage.title}
                         </h2>
                       </div>
-                      {/* For Page Two, remove gadoe sped and 34 cfr etc */}
-                      {activePage.id !== "clarity_control" && activePage.number !== "02" && (
+                      {/* For Page Two / Restatement, remove gadoe sped and 34 cfr etc */}
+                      {activePage.id !== "clarity_control" && activePage.number !== "02" && activePage.number !== "05" && activePage.category !== "restatement" && (
                         <div className="text-right">
                           <span className="text-[11px] font-serif text-[#6E5D43] italic block">
                             {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.shortAgency || "GA DOE"} SPECIAL EDUCATION
@@ -1628,7 +1650,7 @@ export default function ComplaintWorkspace() {
 
                     <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0">
                       <span className="tracking-wide">Georgia Department of Education IDEA Complaint</span>
-                      <span className="font-mono">Page {activePage.number} of {pages.length}</span>
+                      <span className="font-mono">Page {currentDocketPageNumber} of {totalDocketPages}</span>
                     </div>
                   </div>
                 </div>
@@ -1653,7 +1675,7 @@ export default function ComplaintWorkspace() {
                 }}
               />
               
-              {/* Left: Pagination Controls: < 1 / 18 > */}
+              {/* Left: Pagination Controls: < Pages 1–4 of 10 > or < Page 5 of 10 > */}
               <div className="flex items-center gap-1 bg-[#020F24]/90 border border-[#1E3B66]/80 rounded-md px-2 py-1 shadow-sm shrink-0">
                 <button
                   type="button"
@@ -1665,7 +1687,9 @@ export default function ComplaintWorkspace() {
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
                 <span className="font-mono text-xs text-[#FFF4D4] px-2 font-medium">
-                  {activePageIndex + 1} / {pages.length}
+                  {activePageIndex === 0
+                    ? `Pages 1–4 of ${totalDocketPages}`
+                    : `Page ${currentDocketPageNumber} of ${totalDocketPages}`}
                 </span>
                 <button
                   type="button"
@@ -2229,7 +2253,7 @@ export default function ComplaintWorkspace() {
               <div className="p-3 rounded-lg bg-[#020A17] border border-[#3A2C18] space-y-1.5 text-[#C6B697]">
                 <div className="flex justify-between text-white font-medium">
                   <span>Packet Assembly Status:</span>
-                  <span className="text-[#DFBE77]">{pages.length} Pages Assembled</span>
+                  <span className="text-[#DFBE77]">{totalDocketPages} Pages Assembled</span>
                 </div>
                 <div>• 1. State Form formatted with LEA identifiers</div>
                 <div>• 2. Clarity Control Restatement with statutory claims</div>
@@ -2263,7 +2287,7 @@ export default function ComplaintWorkspace() {
                     Georgia IDEA State Complaint Preview
                   </DialogTitle>
                   <span className="text-xs text-[#C6B697] font-mono mt-0.5">
-                    {stateFormPages.length > 0 ? `${pages.length + stateFormPages.length - 1} Pages (4-Page Official State Form + Sections)` : `${pages.length} Sections`} · Complete Filing Packet
+                    {totalDocketPages} Pages (4-Page Official State Form + Sections) · Complete Filing Packet
                   </span>
                 </div>
 
@@ -2314,14 +2338,14 @@ export default function ComplaintWorkspace() {
             </DialogHeader>
 
             <div className="space-y-6 py-4">
-              {pages.map((p) => (
+              {pages.map((p, idx) => (
                 <div key={p.id} className="p-4 sm:p-6 rounded-sm bg-[#F5EEDC] text-[#1A120A] font-serif shadow-md border border-[#D4C3A3] w-full max-w-[880px] mx-auto">
                   <div className="flex justify-between items-center pb-2 border-b border-[#8C7A60]/40 text-xs text-[#8C7A60] mb-4">
                     <span className="font-bold uppercase tracking-wider">
-                      Section {p.number} · {p.id === "clarity_control" || p.number === "02" || p.category === "restatement" ? "Restatement" : p.title}
+                      {p.id === "cover" ? "Section 01 · Official State Form" : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}`}
                     </span>
                     <span className="font-mono font-bold">
-                      {p.id === "cover" ? "Pages 1–4 of Complete Filing Packet" : `Page ${parseInt(p.number, 10) + 3} of ${pages.length + 3}`}
+                      {p.id === "cover" ? `Pages 1–4 of ${totalDocketPages}` : `Page ${getDocketPageNumber(idx)} of ${totalDocketPages}`}
                     </span>
                   </div>
                   {p.id === "cover" ? (
@@ -2497,7 +2521,7 @@ export default function ComplaintWorkspace() {
         `}</style>
 
         <div id="state-complaint-print-docket" className="hidden">
-          {pages.map((p) => {
+          {pages.map((p, idx) => {
             if (p.id === "cover") {
               if (stateFormPages.length > 0) {
                 return (
@@ -2562,10 +2586,10 @@ export default function ComplaintWorkspace() {
               <div key={`print-${p.id}`} className="print-packet-sheet font-serif">
                 <div className="flex justify-between items-center border-b border-black pb-2 mb-4 text-xs font-sans">
                   <span className="font-bold uppercase tracking-wider">
-                    Section {p.number} · {p.id === "clarity_control" || p.number === "02" || p.category === "restatement" ? "Restatement" : p.title}
+                    Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
                   </span>
                   <span className="font-mono font-bold">
-                    Page {parseInt(p.number, 10) + (stateFormPages.length > 0 ? stateFormPages.length - 1 : 0)} of {pages.length + (stateFormPages.length > 0 ? stateFormPages.length - 1 : 0)}
+                    Page {getDocketPageNumber(idx)} of {totalDocketPages}
                   </span>
                 </div>
                 <div className="text-xs leading-relaxed whitespace-pre-wrap text-justify font-serif">
