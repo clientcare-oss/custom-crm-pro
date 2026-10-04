@@ -716,18 +716,6 @@ export default function ComplaintWorkspace() {
             </aside>
           )}
 
-          {/* Collapsed Index Expand Trigger */}
-          {isIndexCollapsed && !isFocusMode && (
-            <button
-              type="button"
-              onClick={() => setIsIndexCollapsed(false)}
-              className="h-14 w-6 flex items-center justify-center rounded-r-lg border border-l-0 border-[#3A2C18] bg-[#03152E]/95 text-[#DFBE77] hover:text-[#FFE394] shadow-lg self-center transition-all cursor-pointer z-30 group"
-              title="Expand Packet Index"
-            >
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          )}
-
           {/* ── CENTER COLUMN: Parchment Writing Stage ──────────────────── */}
           <main 
             className={cn(
@@ -759,6 +747,20 @@ export default function ComplaintWorkspace() {
               />
 
               <div className="flex items-end gap-1 sm:gap-1.5 md:gap-2 mb-0 min-w-0 flex-1 justify-center sm:justify-start relative z-20">
+                {/* Index icon tab when collapsed (always accessible) */}
+                {isIndexCollapsed && (
+                  <button
+                    type="button"
+                    onClick={() => setIsIndexCollapsed(false)}
+                    className="relative flex items-center justify-center gap-1 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-t-[4px] text-xs sm:text-[13px] border border-b-0 border-[#DFBE77]/60 bg-gradient-to-b from-[#06244F] to-[#021430] text-[#DFBE77] hover:text-[#FFE394] hover:brightness-110 transition-all cursor-pointer select-none shrink-0 font-serif font-bold shadow-sm mr-1"
+                    title="Expand Packet Index"
+                  >
+                    <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#DFBE77] shrink-0" />
+                    <span>Index</span>
+                    <ChevronRight className="w-3 h-3 text-[#C6B697]" />
+                  </button>
+                )}
+
                 {[
                   { id: "edit", label: "Edit", icon: Pencil },
                   { id: "arrange", label: "Arrange", icon: Layers },
@@ -817,13 +819,29 @@ export default function ComplaintWorkspace() {
             {activePage.id !== "cover" && (
               <div 
                 style={{
-                  backgroundImage: "url('/decor/folio-leather-texture.png')",
-                  backgroundRepeat: "repeat",
-                  backgroundSize: "200px",
+                  backgroundColor: "#061833",
+                  background: "linear-gradient(90deg, #0A2244 0%, #061833 50%, #0A2244 100%)",
                 }}
-                className="px-8 py-1.5 border-b border-[#3A2C18] bg-gradient-to-r from-[#0A2244]/95 via-[#061833]/95 to-[#0A2244]/95 flex flex-wrap items-center justify-between gap-2 text-xs relative z-20 shadow-xs"
+                className="px-4 sm:px-6 py-1.5 border-b border-[#3A2C18] flex flex-wrap items-center justify-between gap-2 text-xs relative z-20 shadow-xs"
               >
                 <div className="flex flex-wrap items-center gap-1.5">
+                  {/* Index Icon beside text style bar when index is collapsed */}
+                  {isIndexCollapsed && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setIsIndexCollapsed(false)}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#041A38] hover:bg-[#082954] text-[#DFBE77] hover:text-[#FFE394] border border-[#3A2C18] hover:border-[#C5A059] transition-all cursor-pointer font-serif text-[11px] font-bold shadow-xs mr-1"
+                        title="Expand Packet Index"
+                      >
+                        <Layers className="w-3.5 h-3.5 text-[#DFBE77]" />
+                        <span>Index</span>
+                        <ChevronRight className="w-3 h-3 text-[#C6B697]" />
+                      </button>
+                      <div className="w-[1px] h-4 bg-[#3A2C18] mr-1" />
+                    </>
+                  )}
+
                   <select
                     value={fontFamily}
                     onChange={(e) => setFontFamily(e.target.value as any)}
