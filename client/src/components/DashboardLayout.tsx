@@ -1451,7 +1451,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </SidebarContent>
 
           {/* ── Footer: Compact Employee Pill Matching Reference ── */}
-          <SidebarFooter className="bg-slate-950/60 backdrop-blur-md border-t border-[#152744] px-2 py-2">
+          <SidebarFooter className="bg-[#07152B] border-t border-[#152744] px-2 py-2">
             <div className="flex items-center gap-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

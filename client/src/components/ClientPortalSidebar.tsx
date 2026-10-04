@@ -192,7 +192,7 @@ export function ClientPortalSidebar({
         mobile ? "w-72" : isCollapsed ? "w-20" : "w-64 shrink-0"
       )}
       style={!isLight ? {
-        background: "linear-gradient(180deg, #07152B 0%, #051020 50%, #030A14 100%)",
+        background: "#07152B",
       } : undefined}
     >
       

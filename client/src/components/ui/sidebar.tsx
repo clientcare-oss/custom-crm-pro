@@ -175,7 +175,7 @@ function Sidebar({
           className
         )}
         style={{
-          background: "linear-gradient(180deg, #07152B 0%, #051020 50%, #030A14 100%)",
+          background: "#07152B",
         }}
         {...props}
       >
@@ -195,7 +195,7 @@ function Sidebar({
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              background: "linear-gradient(180deg, #07152B 0%, #051020 50%, #030A14 100%)",
+              background: "#07152B",
             } as React.CSSProperties
           }
           side={side}
@@ -257,7 +257,7 @@ function Sidebar({
           data-slot="sidebar-inner"
           className="relative border-r border-[#152744] text-sidebar-foreground group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border shadow-2xl overflow-hidden"
           style={{
-            background: "linear-gradient(180deg, #07152B 0%, #051020 50%, #030A14 100%)",
+            background: "#07152B",
           }}
         >
           {children}
