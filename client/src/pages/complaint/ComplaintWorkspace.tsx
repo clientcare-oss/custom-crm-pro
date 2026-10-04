@@ -49,21 +49,22 @@ import {
   Type,
   Quote,
   Cloud,
-  Check
+  Check,
+  User,
+  ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { StateComplaintFormView } from "@/components/complaint/StateComplaintFormView";
+import {
+  SUPPORTED_STATE_FORMS,
+  INITIAL_GADOE_FORM_STATE,
+  detectStateCode,
+  type OfficialComplaintFormState,
+} from "@/components/complaint/stateFormsData";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
 interface DocumentPage {
@@ -269,6 +270,7 @@ interface ComplaintCaseDetails {
   preparedBy: string;
   submissionDate: string;
   showLogo?: boolean;
+  state?: string;
 }
 
 // ── Authentic Transparent Photographic Brass Corner Bracket Asset ───────────
@@ -342,33 +344,45 @@ function MiniaturePagePreview({
     >
       {/* Scaled-down real document facsimile content */}
       {isCover ? (
-        <div className="w-[190px] h-[250px] p-2.5 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.22]">
-          {/* Real State Header */}
-          <div className="text-center border-b border-[#3A2810]/40 pb-1">
-            <div className="text-[9px] font-bold tracking-wider uppercase leading-tight text-[#1A120A]">
-              Georgia Dept. of Education
+        <div className="w-[190px] h-[250px] p-2 flex flex-col justify-between text-[#1A1A1A] font-sans select-none pointer-events-none origin-top-left scale-[0.22] bg-white">
+          {/* Micro GaDOE Form Header */}
+          <div className="border-b border-slate-700 pb-1 text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-[#3E9B34] font-sans tracking-tight">
+                Ga<span className="text-[#D62B28]">DOE</span>
+              </span>
+              <span className="text-[7px] text-slate-600 font-bold uppercase">
+                {caseDetails.state || "GA"} Form
+              </span>
             </div>
-            <div className="text-[7.5px] text-[#4A3820] tracking-wide">
-              Special Education Services
+            <div className="text-[7.5px] font-bold text-slate-900 leading-tight mt-0.5">
+              Special Education Formal Complaint Form
+            </div>
+            <div className="text-[6.5px] text-[#D62B28] font-semibold">
+              Georgia Dept. of Education
             </div>
           </div>
 
-          {/* Real Title & Student info */}
-          <div className="text-center my-auto py-1">
-            <div className="text-[10px] font-bold tracking-wide uppercase text-[#0B1E38] border-y border-[#8C6D2B]/50 py-0.5">
-              State Form
+          {/* Form fields micro preview */}
+          <div className="space-y-1 my-auto py-1 text-left">
+            <div className="text-[7px] text-slate-700 truncate">
+              <span className="font-bold">Agency:</span> {caseDetails.district || "School District"}
             </div>
-            <div className="text-[8.5px] font-bold mt-1 text-[#1A120A] truncate">
+            <div className="text-[7.5px] text-slate-900 font-bold truncate">
               {caseDetails.studentName || "Student Record"}
             </div>
-            <div className="text-[7.5px] text-[#5A4528] italic truncate">
-              v. {caseDetails.district || "School District"}
+            <div className="text-[6.5px] text-slate-600 truncate">
+              School: {caseDetails.school || "Assigned School"}
+            </div>
+            <div className="border border-slate-300 p-1 bg-slate-50 rounded-xs text-[5.5px] text-slate-600 line-clamp-2">
+              *Statement of Alleged Violations (34 C.F.R. § 300.153)
             </div>
           </div>
 
           {/* Footer */}
-          <div className="text-[7px] text-center text-[#6A5230] border-t border-[#3A2810]/30 pt-0.5">
-            34 C.F.R. § 300.151–153
+          <div className="text-[6.5px] flex justify-between items-center text-slate-500 border-t border-slate-300 pt-0.5">
+            <span>Georgia State Form</span>
+            <span className="font-mono font-bold">p.01</span>
           </div>
         </div>
       ) : (
@@ -412,18 +426,106 @@ export default function ComplaintWorkspace() {
   const [location, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
 
+  // CRM Contacts for Student Selection & Auto-fill
+  const contactsQuery = trpc.contacts.list.useQuery();
+
   // State: Case Data
   const [caseDetails, setCaseDetails] = useState<ComplaintCaseDetails>({
     studentName: "Alexander, Shanderious Jr.",
-    studentDob: "",
+    studentDob: "04/12/2015",
     grade: "4th grade",
-    school: "",
+    school: "Clarkdale Elementary School",
     district: "Cobb County School District",
-    parentName: "",
+    parentName: "Parent / Guardian",
     preparedBy: "Waypoint Advocates",
-    submissionDate: "",
+    submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
     showLogo: true,
+    state: "GA",
   });
+
+  // State: Official State Complaint Form State (defaults to Georgia GaDOE)
+  const [officialFormState, setOfficialFormState] = useState<OfficialComplaintFormState>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(`complaint_form_state_${params?.id || "active"}`);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return INITIAL_GADOE_FORM_STATE;
+  });
+
+  // Apply a CRM student record to the complaint workspace and official form
+  const applyStudentToComplaint = (student: any) => {
+    const sName = `${student.firstName || ""} ${student.lastName || ""}`.trim();
+    const stateCode = detectStateCode(student.state);
+    const districtName =
+      student.countyDistrict ||
+      (student.company?.includes("District") ? student.company : "") ||
+      "Cobb County School District";
+
+    setComplaintTitle(`State Complaint – ${student.lastName || sName || "Student"}`);
+
+    setCaseDetails((prev) => ({
+      ...prev,
+      studentName: sName || prev.studentName,
+      studentDob: student.dateOfBirth || prev.studentDob,
+      grade: student.gradeLevel || prev.grade,
+      school: student.schoolName || prev.school,
+      district: districtName,
+      state: stateCode,
+    }));
+
+    setOfficialFormState((prev) => ({
+      ...prev,
+      stateCode: stateCode,
+      publicAgency: districtName,
+      studentName: sName || prev.studentName,
+      studentDob: student.dateOfBirth || prev.studentDob,
+      studentAddress: student.address || prev.studentAddress,
+      studentCity: student.city || prev.studentCity,
+      studentState: student.state ? (student.state.length === 2 ? student.state.toUpperCase() : "GA") : "GA",
+      studentZip: student.zipCode || prev.studentZip,
+      currentSchool: student.schoolName || prev.currentSchool,
+      grade: student.gradeLevel || prev.grade,
+      studentGtid: student.caseId || prev.studentGtid,
+    }));
+
+    if (student.parentContactId && contactsQuery.data) {
+      const parent = contactsQuery.data.find((c) => c.id === student.parentContactId);
+      if (parent) {
+        const pName = `${parent.firstName || ""} ${parent.lastName || ""}`.trim();
+        setOfficialFormState((prev) => ({
+          ...prev,
+          parentName: pName || prev.parentName,
+          parentAddress: parent.address || prev.parentAddress,
+          parentCity: parent.city || prev.parentCity,
+          parentState: parent.state || "GA",
+          parentZip: parent.zipCode || prev.parentZip,
+          parentPhone: parent.phone || prev.parentPhone,
+          parentEmail: parent.email || prev.parentEmail,
+        }));
+      }
+    }
+
+    toast.success(`Loaded ${sName}'s record into ${SUPPORTED_STATE_FORMS[stateCode]?.name || "Georgia"} State Complaint Form`);
+  };
+
+  // Auto-detect student from URL query (?studentId=... or ?contactId=... or params.id)
+  const isAutoLoaded = useRef(false);
+  useEffect(() => {
+    if (isAutoLoaded.current || !contactsQuery.data?.length) return;
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const qId = searchParams?.get("studentId") || searchParams?.get("contactId") || params?.id;
+    if (qId) {
+      const matched = contactsQuery.data.find(
+        (c) => String(c.id) === String(qId) || c.caseId === qId
+      );
+      if (matched) {
+        isAutoLoaded.current = true;
+        applyStudentToComplaint(matched);
+      }
+    }
+  }, [contactsQuery.data, params?.id]);
 
   // State: Pages and Active Navigation
   const [pages, setPages] = useState<DocumentPage[]>(DEFAULT_PAGES);
@@ -516,13 +618,17 @@ export default function ComplaintWorkspace() {
             savedAt: new Date().toISOString(),
           })
         );
+        localStorage.setItem(
+          `complaint_form_state_${params?.id || "active"}`,
+          JSON.stringify(officialFormState)
+        );
       } catch (e) {
         // storage quota fallback
       }
       setLastSavedText("Auto-saved just now");
     }, 1000);
     return () => clearTimeout(timer);
-  }, [pages, caseDetails, complaintTitle, params?.id]);
+  }, [pages, caseDetails, officialFormState, complaintTitle, params?.id]);
 
   // State: Modals
   const [isEditCoverModalOpen, setIsEditCoverModalOpen] = useState(false);
@@ -1011,6 +1117,36 @@ export default function ComplaintWorkspace() {
               </div>
             </div>
 
+            {/* If on cover page, show Official State Complaint Form status banner */}
+            {activePage.id === "cover" && (
+              <div 
+                style={{
+                  backgroundColor: "#061833",
+                  background: "linear-gradient(90deg, #0A2244 0%, #061833 50%, #0A2244 100%)",
+                }}
+                className="px-4 sm:px-6 py-1.5 border-b border-[#3A2C18] flex flex-wrap items-center justify-between gap-2 text-xs relative z-20 shadow-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[#FFE394] font-serif">
+                    Official State Filing Form:
+                  </span>
+                  <span className="text-[#C6B697] text-[11px]">
+                    {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.name || "Georgia"} ({SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.shortAgency || "GaDOE"}) · Special Education Formal Complaint Form
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-[#A69371]">
+                    Student: <strong className="text-white">{officialFormState.studentName || caseDetails.studentName}</strong>
+                  </span>
+                  <div className="w-[1px] h-3.5 bg-[#3A2C18]" />
+                  <span className="text-[11px] text-[#A69371]">
+                    Agency: <strong className="text-white">{officialFormState.publicAgency || caseDetails.district}</strong>
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* If NOT on cover page, show compact single-line formatting toolbar */}
             {activePage.id !== "cover" && (
               <div 
@@ -1124,184 +1260,45 @@ export default function ComplaintWorkspace() {
                 backgroundAttachment: "local",
               }}
             >
-              {/* ── PARCHMENT LETTER DOCUMENT SHEET ─────────────────────── */}
-              {/* Uses pristine fine parchment texture with zero dark brown bands and calm lighter center for reading */}
-              <div
-                style={{
-                  aspectRatio: "8.5 / 11",
-                  backgroundImage: "url('/decor/fine-parchment.jpg')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                  transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
-                  transformOrigin: "top center",
-                }}
-                className={cn(
-                  "relative rounded-xs select-text flex flex-col justify-between transition-all",
-                  "bg-[#FBF6EA] text-[#1A120A] border border-[#C5A059]/60",
-                  "shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)]",
-                  viewMode === "fit-width" && "w-full max-w-[840px] aspect-[8.5/11] min-h-[1080px] p-10 sm:p-14 lg:p-16 my-1 shrink-0",
-                  viewMode === "fit-page" && "h-[calc(100vh-175px)] aspect-[8.5/11] w-auto max-w-full p-8 lg:p-10 my-auto shrink-0",
-                  viewMode === "actual" && "w-[816px] min-h-[1056px] p-12 sm:p-16 my-2 shrink-0"
-                )}
-              >
-                {/* Printable Margin Guidelines (1-inch printable margins) */}
-                <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-                <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
-                <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-                <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+              {/* ── DOCUMENT SHEET DISPLAY ───────────────────────────────── */}
+              {activePage.id === "cover" ? (
+                /* ── VIEW 1: AUTHENTIC OFFICIAL STATE COMPLAINT FORM (4 Standard 8.5x11 Sheets) ── */
+                <StateComplaintFormView
+                  formState={officialFormState}
+                  onChange={setOfficialFormState}
+                  onSelectState={(code) => {
+                    setOfficialFormState((prev) => ({ ...prev, stateCode: code }));
+                    setCaseDetails((prev) => ({ ...prev, state: code }));
+                  }}
+                  viewMode={viewMode}
+                  zoomLevel={zoomLevel}
+                />
+              ) : (
+                /* ── VIEW 2: EDITABLE DOCUMENT PAGES (Proportional Google Docs Writing Area) ── */
+                <div
+                  style={{
+                    aspectRatio: "8.5 / 11",
+                    backgroundImage: "url('/decor/fine-parchment.jpg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
+                    transformOrigin: "top center",
+                  }}
+                  className={cn(
+                    "relative rounded-xs select-text flex flex-col justify-between transition-all",
+                    "bg-[#FBF6EA] text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)]",
+                    viewMode === "fit-width" && "w-full max-w-[840px] aspect-[8.5/11] min-h-[1080px] p-10 sm:p-14 lg:p-16 my-1 shrink-0",
+                    viewMode === "fit-page" && "h-[calc(100vh-175px)] aspect-[8.5/11] w-auto max-w-full p-8 lg:p-10 my-auto shrink-0",
+                    viewMode === "actual" && "w-[816px] min-h-[1056px] p-12 sm:p-16 my-2 shrink-0"
+                  )}
+                >
+                  {/* Printable Margin Guidelines (only on draft pages) */}
+                  <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+                  <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+                  <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+                  <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
 
-                {/* ── VIEW 1: COVER PAGE (1-to-1 match with Reference Screenshot) ── */}
-                {activePage.id === "cover" ? (
-                  <div className="relative z-10 flex flex-col justify-between h-full min-h-0 text-center select-text">
-                    
-                    {/* Top Header */}
-                    <div className="pt-2 shrink-0">
-                      {caseDetails.showLogo && (
-                        <div className="flex justify-center mb-2">
-                          <img 
-                            src="/waypoint-logo.png" 
-                            alt="Waypoint Advocates" 
-                            className="h-10 w-10 sm:h-12 sm:w-12 object-contain filter drop-shadow-xs" 
-                          />
-                        </div>
-                      )}
-                      
-                      <h2 className="font-serif tracking-[0.25em] text-[#2C2013] text-xs sm:text-sm font-bold uppercase">
-                        WAYPOINT ADVOCATES
-                      </h2>
-
-                      {/* Diamond Filigree Flourish */}
-                      <div className="w-32 h-[1px] bg-[#8C7A60]/60 mx-auto my-3 flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 rotate-45 bg-[#8C7A60]" />
-                      </div>
-
-                      {/* Main Title */}
-                      <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide text-[#150E06] uppercase mt-2">
-                        STATE FORM
-                      </h1>
-
-                      <p className="font-serif italic text-sm sm:text-base text-[#4A3C28] mt-2">
-                        Official State Complaint Form · Georgia Department of Education
-                      </p>
-                    </div>
-
-                    {/* Metadata Table Form Grid (2 Columns) */}
-                    <div className="max-w-md sm:max-w-lg mx-auto w-full my-auto py-6 sm:py-8 shrink-0">
-                      <div className="grid grid-cols-[140px_1fr] sm:grid-cols-[170px_1fr] gap-y-2.5 sm:gap-y-3 text-left text-xs sm:text-sm font-serif">
-                        
-                        {/* Student */}
-                        <div className="font-bold text-[#1A120A] self-center">Student:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.studentName}
-                            onChange={(e) => handleQuickFieldUpdate("studentName", e.target.value)}
-                            placeholder="Student Full Legal Name"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)]"
-                          />
-                        </div>
-
-                        {/* Date of Birth */}
-                        <div className="font-bold text-[#1A120A] self-center">Date of birth:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.studentDob}
-                            onChange={(e) => handleQuickFieldUpdate("studentDob", e.target.value)}
-                            placeholder="MM/DD/YYYY"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
-                          />
-                        </div>
-
-                        {/* Grade */}
-                        <div className="font-bold text-[#1A120A] self-center">Grade:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.grade}
-                            onChange={(e) => handleQuickFieldUpdate("grade", e.target.value)}
-                            placeholder="e.g. 4th grade"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs"
-                          />
-                        </div>
-
-                        {/* School */}
-                        <div className="font-bold text-[#1A120A] self-center">School:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.school}
-                            onChange={(e) => handleQuickFieldUpdate("school", e.target.value)}
-                            placeholder="e.g. Elementary / High School"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
-                          />
-                        </div>
-
-                        {/* District */}
-                        <div className="font-bold text-[#1A120A] self-center">District:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.district}
-                            onChange={(e) => handleQuickFieldUpdate("district", e.target.value)}
-                            placeholder="e.g. County School District"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs"
-                          />
-                        </div>
-
-                        {/* Parent / Guardian */}
-                        <div className="font-bold text-[#1A120A] self-center">Parent / Guardian:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.parentName}
-                            onChange={(e) => handleQuickFieldUpdate("parentName", e.target.value)}
-                            placeholder="Parent or Guardian name"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
-                          />
-                        </div>
-
-                        {/* Prepared by */}
-                        <div className="font-bold text-[#1A120A] self-center">Prepared by:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.preparedBy}
-                            onChange={(e) => handleQuickFieldUpdate("preparedBy", e.target.value)}
-                            placeholder="e.g. Waypoint Advocates"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs"
-                          />
-                        </div>
-
-                        {/* Submission date */}
-                        <div className="font-bold text-[#1A120A] self-center">Submission date:</div>
-                        <div>
-                          <input
-                            type="text"
-                            value={caseDetails.submissionDate}
-                            onChange={(e) => handleQuickFieldUpdate("submissionDate", e.target.value)}
-                            placeholder="MM/DD/YYYY"
-                            className="w-full bg-transparent border-b border-[#8C7A60]/35 hover:border-[#8C7A60]/75 focus:border-[#0B1E38] focus:bg-[#FFFDF8]/80 px-1.5 py-0.5 font-serif text-xs sm:text-sm font-medium text-[#1A120A] focus:outline-none transition-colors rounded-xs placeholder:italic placeholder:text-[#8C7A60]"
-                          />
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* Bottom Confidentiality Footer */}
-                    <div className="pb-3 shrink-0">
-                      <div className="w-40 h-[1px] bg-[#8C7A60]/50 mx-auto my-3 flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 rotate-45 bg-[#8C7A60]" />
-                      </div>
-                      <p className="font-serif italic text-xs text-[#8C7A60]">
-                        Confidential student information
-                      </p>
-                    </div>
-
-                  </div>
-                ) : (
-                  /* ── VIEW 2: EDITABLE DOCUMENT PAGES (Proportional Google Docs Writing Area) ── */
                   <div className="relative z-10 flex flex-col h-full min-h-0 select-text">
                     <div className="flex items-center justify-between pb-3 border-b border-[#8C7A60]/40 shrink-0">
                       <div>
@@ -1348,9 +1345,8 @@ export default function ComplaintWorkspace() {
                       <span className="font-mono">Page {activePage.number} of {pages.length}</span>
                     </div>
                   </div>
-                )}
-
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Bottom Floating Control Bar (Admiralty Navy leather, aligned, zero overlap, rounded bottom) */}
@@ -1528,24 +1524,41 @@ export default function ComplaintWorkspace() {
               }}
             >
               <div className="space-y-3 relative z-20 pt-6 px-1">
-                {/* Header: Cover tools with collapse chevron */}
+                {/* Header: State complaint tools with collapse chevron */}
                 <div className="flex items-center justify-between pb-2 border-b border-[#3A2C18]">
                   <h3 className="font-serif text-sm font-bold text-[#FFF4D4]">
-                    Cover tools
+                    State complaint tools
                   </h3>
                   <button
                     type="button"
                     onClick={() => setIsToolsCollapsed(true)}
                     className="text-[#C6B697] hover:text-[#FFF4D4] p-1 rounded hover:bg-white/[0.05] transition-colors cursor-pointer"
-                    title="Collapse cover tools"
+                    title="Collapse state complaint tools"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
 
+                {/* Gold Plaque: Settings (moved up, kept gold) */}
+                <button
+                  type="button"
+                  onClick={() => setIsCompilerModalOpen(true)}
+                  style={{
+                    background: "linear-gradient(180deg, #FDF0C8 0%, #E6C577 26%, #C79E48 70%, #9E7428 100%)",
+                  }}
+                  className="h-11 px-3.5 w-full flex items-center justify-between rounded-md text-[#1A1005] font-serif font-bold border-[1.5px] border-[#FFE59E] shadow-[0_3px_10px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.75)] hover:brightness-105 transition-all cursor-pointer group"
+                  title="Settings"
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-[#1A1005]" />
+                    <span className="text-xs">Settings</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#1A1005] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
                 {/* 4 Shallow Rectangular Parchment Plates */}
                 <div className="space-y-2.5">
-                  {/* Plate 1: Edit cover details */}
+                  {/* Plate 1: Edit official state form details */}
                   <button
                     type="button"
                     onClick={() => setIsEditCoverModalOpen(true)}
@@ -1558,35 +1571,19 @@ export default function ComplaintWorkspace() {
                   >
                     <div className="flex items-center gap-2.5">
                       <FileText className="w-4 h-4 text-[#4A3515] group-hover:scale-105 transition-transform" />
-                      <span className="text-xs font-serif font-bold tracking-tight">Edit State Form details</span>
+                      <span className="text-xs font-serif font-bold tracking-tight">Edit State Form Details</span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#7A5C28] group-hover:translate-x-0.5 transition-transform" />
                   </button>
 
-                  {/* Plate 2: Choose template */}
-                  <button
-                    type="button"
-                    onClick={() => setIsTemplateModalOpen(true)}
-                    style={{
-                      backgroundImage: "url('/decor/fine-parchment.jpg')",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                    className="h-11 px-3.5 w-full flex items-center justify-between rounded-md border border-[#BCA062]/80 text-[#1A1005] shadow-[0_2px_5px_rgba(0,0,0,0.45),0_1px_1px_rgba(0,0,0,0.25)] transition-all cursor-pointer group hover:brightness-105"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <LayoutGrid className="w-4 h-4 text-[#4A3515] group-hover:scale-105 transition-transform" />
-                      <span className="text-xs font-serif font-bold tracking-tight">Choose template</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-[#7A5C28] group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-
-                  {/* Plate 3: Add logo / Remove logo */}
+                  {/* Plate 2: State Jurisdiction */}
                   <button
                     type="button"
                     onClick={() => {
-                      setCaseDetails((prev) => ({ ...prev, showLogo: !prev.showLogo }));
-                      toast.success(caseDetails.showLogo ? "Logo removed from cover" : "Logo added to cover");
+                      const next = officialFormState.stateCode === "GA" ? "FL" : "GA";
+                      setOfficialFormState((prev) => ({ ...prev, stateCode: next }));
+                      setCaseDetails((prev) => ({ ...prev, state: next }));
+                      toast.success(`Switched state form to ${SUPPORTED_STATE_FORMS[next]?.name || next}`);
                     }}
                     style={{
                       backgroundImage: "url('/decor/fine-parchment.jpg')",
@@ -1596,18 +1593,52 @@ export default function ComplaintWorkspace() {
                     className="h-11 px-3.5 w-full flex items-center justify-between rounded-md border border-[#BCA062]/80 text-[#1A1005] shadow-[0_2px_5px_rgba(0,0,0,0.45),0_1px_1px_rgba(0,0,0,0.25)] transition-all cursor-pointer group hover:brightness-105"
                   >
                     <div className="flex items-center gap-2.5">
-                      <ImageIcon className="w-4 h-4 text-[#4A3515] group-hover:scale-105 transition-transform" />
+                      <ShieldCheck className="w-4 h-4 text-[#3E9B34] group-hover:scale-105 transition-transform" />
                       <span className="text-xs font-serif font-bold tracking-tight">
-                        {caseDetails.showLogo ? "Remove logo" : "Add logo"}
+                        State: {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.name || "Georgia"} ({officialFormState.stateCode || "GA"})
                       </span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#7A5C28] group-hover:translate-x-0.5 transition-transform" />
                   </button>
 
-                  {/* Plate 4: Submission details */}
+                  {/* Plate 3: Switch/Select Student */}
                   <button
                     type="button"
-                    onClick={() => setIsEditCoverModalOpen(true)}
+                    onClick={() => {
+                      if (contactsQuery.data && contactsQuery.data.length > 0) {
+                        const currentIdx = contactsQuery.data.findIndex((c) => 
+                          (c.lastName ? `${c.lastName}, ${c.firstName}` : c.firstName) === (officialFormState.studentName || caseDetails.studentName)
+                        );
+                        const nextStudent = contactsQuery.data[(currentIdx + 1) % contactsQuery.data.length];
+                        if (nextStudent) applyStudentToComplaint(nextStudent);
+                      } else {
+                        setIsEditCoverModalOpen(true);
+                      }
+                    }}
+                    style={{
+                      backgroundImage: "url('/decor/fine-parchment.jpg')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                    className="h-11 px-3.5 w-full flex items-center justify-between rounded-md border border-[#BCA062]/80 text-[#1A1005] shadow-[0_2px_5px_rgba(0,0,0,0.45),0_1px_1px_rgba(0,0,0,0.25)] transition-all cursor-pointer group hover:brightness-105"
+                    title="Click to cycle CRM student, or edit details in State Form details"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <User className="w-4 h-4 text-[#4A3515] group-hover:scale-105 transition-transform" />
+                      <span className="text-xs font-serif font-bold tracking-tight truncate max-w-[170px]">
+                        Student: {officialFormState.studentName || caseDetails.studentName}
+                      </span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#7A5C28] group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+
+                  {/* Plate 4: Submission details & eFax Info */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText("spedhelpdesk@doe.k12.ga.us");
+                      toast.success("Copied GaDOE SpEd Helpdesk email: spedhelpdesk@doe.k12.ga.us");
+                    }}
                     style={{
                       backgroundImage: "url('/decor/fine-parchment.jpg')",
                       backgroundSize: "cover",
@@ -1617,29 +1648,11 @@ export default function ComplaintWorkspace() {
                   >
                     <div className="flex items-center gap-2.5">
                       <Calendar className="w-4 h-4 text-[#4A3515] group-hover:scale-105 transition-transform" />
-                      <span className="text-xs font-serif font-bold tracking-tight">Submission details</span>
+                      <span className="text-xs font-serif font-bold tracking-tight">Copy GaDOE Filing Info</span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#7A5C28] group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
-              </div>
-
-              {/* Bottom Gold Plaque: Open Complaint Compiler */}
-              <div className="pt-3 border-t border-[#3A2C18]/80 mt-auto relative z-20">
-                <button
-                  type="button"
-                  onClick={() => setIsCompilerModalOpen(true)}
-                  style={{
-                    background: "linear-gradient(180deg, #FDF0C8 0%, #E6C577 26%, #C79E48 70%, #9E7428 100%)",
-                  }}
-                  className="h-11 px-3.5 w-full flex items-center justify-between rounded-md text-[#1A1005] font-serif font-bold border-[1.5px] border-[#FFE59E] shadow-[0_3px_10px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.75)] hover:brightness-105 transition-all cursor-pointer group"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileSignature className="w-4 h-4 text-[#1A1005]" />
-                    <span className="text-xs">Open Complaint Compiler</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#1A1005] group-hover:translate-x-0.5 transition-transform" />
-                </button>
               </div>
 
               {/* Brass Corner Brackets in front */}

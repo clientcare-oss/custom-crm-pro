@@ -8,7 +8,7 @@ import * as pdfjsLib from "pdfjs-dist";
 
 // Set worker to CDN matching the exact installed version for seamless zero-config browser compatibility
 if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 }
 
 export interface ImportedPdfPage {
@@ -28,8 +28,6 @@ export async function convertPdfToPageImages(
 ): Promise<ImportedPdfPage[]> {
   const loadingTask = pdfjsLib.getDocument({
     data: pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData),
-    cMapUrl: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/",
-    cMapPacked: true,
   });
 
   const pdfDoc = await loadingTask.promise;

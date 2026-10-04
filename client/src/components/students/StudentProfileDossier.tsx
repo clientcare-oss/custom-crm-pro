@@ -113,6 +113,17 @@ export function StudentProfileDossier({
           </span>
         </div>
 
+        {/* State */}
+        <div className="flex items-center justify-between gap-1.5 py-0.5">
+          <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+            <Globe className="h-3 w-3 text-[#38BDF8]" />
+            <span>State:</span>
+          </div>
+          <span className="font-bold text-white text-right">
+            {student?.state || "Georgia"}
+          </span>
+        </div>
+
         {/* School */}
         <div className="flex items-center justify-between gap-1.5 py-0.5">
           <div className="flex items-center gap-1.5 text-slate-300 shrink-0">

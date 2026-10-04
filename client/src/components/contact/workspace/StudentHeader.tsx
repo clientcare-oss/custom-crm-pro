@@ -370,6 +370,17 @@ export function StudentHeader({
               </span>
             </div>
 
+            {/* State */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                <Globe className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>State:</span>
+              </div>
+              <span className="font-bold text-white text-right">
+                {contact.state || "Georgia"}
+              </span>
+            </div>
+
             {/* School */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-slate-300 shrink-0">
