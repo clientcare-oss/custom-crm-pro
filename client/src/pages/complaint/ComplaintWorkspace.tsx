@@ -768,7 +768,9 @@ export default function ComplaintWorkspace() {
                   { id: "insert", label: "Insert", icon: Plus },
                   { id: "compile", label: "Compile", icon: Settings },
                   { id: "tools", label: "Tools", icon: PanelRight },
-                ].map((tab) => {
+                ]
+                  .filter((tab) => !(tab.id === "tools" && !isToolsCollapsed))
+                  .map((tab) => {
                   const isActive = tab.id === "tools" ? !isToolsCollapsed : activeToolbarTab === tab.id;
                   const Icon = tab.icon;
                   return (
