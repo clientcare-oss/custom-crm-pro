@@ -641,7 +641,7 @@ export default function ComplaintWorkspace() {
               className="w-44 sm:w-48 lg:w-50 xl:w-52 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative pt-2 pb-2 pr-1 pl-1 z-20"
               style={{
                 backgroundColor: "#03152E",
-                background: "linear-gradient(180deg, #051A38 0%, #03152E 35%, #020E22 100%)",
+                background: "#03152E",
                 boxShadow: "inset 0 1px 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.85)",
               }}
             >
