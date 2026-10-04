@@ -825,23 +825,6 @@ export default function ComplaintWorkspace() {
                 className="px-4 sm:px-6 py-1.5 border-b border-[#3A2C18] flex flex-wrap items-center justify-between gap-2 text-xs relative z-20 shadow-xs"
               >
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {/* Index Icon beside text style bar when index is collapsed */}
-                  {isIndexCollapsed && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setIsIndexCollapsed(false)}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#041A38] hover:bg-[#082954] text-[#DFBE77] hover:text-[#FFE394] border border-[#3A2C18] hover:border-[#C5A059] transition-all cursor-pointer font-serif text-[11px] font-bold shadow-xs mr-1"
-                        title="Expand Packet Index"
-                      >
-                        <Layers className="w-3.5 h-3.5 text-[#DFBE77]" />
-                        <span>Index</span>
-                        <ChevronRight className="w-3 h-3 text-[#C6B697]" />
-                      </button>
-                      <div className="w-[1px] h-4 bg-[#3A2C18] mr-1" />
-                    </>
-                  )}
-
                   <select
                     value={fontFamily}
                     onChange={(e) => setFontFamily(e.target.value as any)}
