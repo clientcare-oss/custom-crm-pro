@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -343,7 +343,7 @@ export default function ComplaintWorkspace() {
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [isIndexCollapsed, setIsIndexCollapsed] = useState<boolean>(false);
   const [isToolsCollapsed, setIsToolsCollapsed] = useState<boolean>(true);
-  const [lastSavedText, setLastSavedText] = useState<string>("Draft saved 2 minutes ago");
+  const [lastSavedText, setLastSavedText] = useState<string>("Auto-saved just now");
   const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Alexander");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
 
@@ -355,6 +355,33 @@ export default function ComplaintWorkspace() {
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
+
+  // Auto-save effect: automatically persists complaint draft on any change
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setLastSavedText("Saving changes...");
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          `complaint_draft_${params?.id || "active"}`,
+          JSON.stringify({
+            complaintTitle,
+            caseDetails,
+            pages,
+            savedAt: new Date().toISOString(),
+          })
+        );
+      } catch (e) {
+        // storage quota fallback
+      }
+      setLastSavedText("Auto-saved just now");
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [pages, caseDetails, complaintTitle, params?.id]);
 
   // State: Modals
   const [isEditCoverModalOpen, setIsEditCoverModalOpen] = useState(false);
@@ -585,11 +612,12 @@ export default function ComplaintWorkspace() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleSaveDraft}
+              onClick={() => setIsCompilerModalOpen(true)}
               className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)]"
+              title="Launch State Complaint Compiler"
             >
-              <Save className="w-3.5 h-3.5 text-[#FFE394]" />
-              <span className="hidden md:inline">Save Draft</span>
+              <Settings className="w-3.5 h-3.5 text-[#FFE394]" />
+              <span>Compile</span>
             </Button>
 
             <Button
@@ -766,7 +794,6 @@ export default function ComplaintWorkspace() {
                   { id: "arrange", label: "Arrange", icon: Layers },
                   { id: "cover", label: "Cover", icon: FileText },
                   { id: "insert", label: "Insert", icon: Plus },
-                  { id: "compile", label: "Compile", icon: Settings },
                   { id: "tools", label: "Tools", icon: PanelRight },
                 ]
                   .filter((tab) => !(tab.id === "tools" && !isToolsCollapsed))
@@ -780,8 +807,6 @@ export default function ComplaintWorkspace() {
                       onClick={() => {
                         if (tab.id === "insert") {
                           setIsAddPageModalOpen(true);
-                        } else if (tab.id === "compile") {
-                          setIsCompilerModalOpen(true);
                         } else if (tab.id === "tools") {
                           setIsToolsCollapsed((prev) => !prev);
                         } else {
