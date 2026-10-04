@@ -76,8 +76,19 @@ interface DocumentPage {
 }
 
 const DEFAULT_PAGES: DocumentPage[] = [
-  { id: "cover", number: "01", title: "Cover Page", category: "cover" },
-  { id: "complaint", number: "02", title: "State Complaint", category: "pleading", content: `BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
+  { 
+    id: "cover", 
+    number: "01", 
+    title: "State Form", 
+    category: "cover",
+    content: "Official State Complaint Form — Georgia Department of Education Division for Special Education Services and Supports."
+  },
+  { 
+    id: "clarity_control", 
+    number: "02", 
+    title: "Clarity Control Restatement", 
+    category: "pleading", 
+    content: `BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
 DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
 
 IN RE: ALEXANDER, SHANDERIOUS JR.
@@ -91,53 +102,118 @@ COBB COUNTY SCHOOL DISTRICT,
     Local Educational Agency.
 ____________________________________________/
 
-FORMAL STATE COMPLAINT UNDER 34 C.F.R. § 300.153
-AND GA. COMP. R. & REGS. 160-4-7-.12
+CLARITY CONTROL RESTATEMENT OF ISSUES & STATUTORY VIOLATIONS
+UNDER 34 C.F.R. § 300.153 AND GA. COMP. R. & REGS. 160-4-7-.12
 
-I. INTRODUCTION & JURISDICTION
-Complainant files this Formal State Complaint on behalf of Alexander, Shanderious Jr., a 4th grade student eligible for special education and related services under the Individuals with Disabilities Education Act (IDEA), 20 U.S.C. § 1400 et seq.
+I. RESTATEMENT OF JURISDICTION & FILING TIMELINESS
+Complainant files this Clarity Control Restatement on behalf of Alexander, Shanderious Jr., a 4th grade student eligible for special education and related services under the Individuals with Disabilities Education Act (IDEA), 20 U.S.C. § 1400 et seq.
 
-This complaint is timely filed within the one-year statute of limitations provided by 34 C.F.R. § 300.153(c) and Ga. Comp. R. & Regs. 160-4-7-.12(2)(c). All violations alleged herein occurred within the preceding twelve-month period.` },
-  { id: "facts", number: "03", title: "Facts and Background", category: "facts", content: `II. STATEMENT OF FACTS
+This complaint is timely filed within the one-year statute of limitations provided by 34 C.F.R. § 300.153(c) and Ga. Comp. R. & Regs. 160-4-7-.12(2)(c). All violations alleged herein occurred within the preceding twelve-month period.
 
-1. Alexander is a 9-year-old student currently enrolled in 4th grade within the Cobb County School District.
+II. CLARITY CONTROL RESTATEMENT OF CAUSES OF ACTION
 
-2. Alexander is eligible for special education services under the primary eligibility category of Other Health Impairment (OHI) and secondary Speech-Language Impairment.
-
-3. On October 12, 2025, the Parent requested comprehensive re-evaluations in writing due to documented academic regression and escalating behavioral disruptions resulting from unaddressed sensory processing deficits.
-
-4. The District failed to provide Prior Written Notice (PWN) or an evaluation consent form within the mandated timeline, in violation of 34 C.F.R. § 300.300 and Ga. Comp. R. & Regs. 160-4-7-.04.
-
-5. Furthermore, between November 1, 2025 and January 15, 2026, the District systematically failed to provide 240 minutes of specialized reading instruction stipulated in Section 6 of Alexander's operative IEP.` },
-  { id: "violations", number: "04", title: "Violations of Law", category: "violations", content: `III. ALLEGED VIOLATIONS OF LAW
-
-COUNT I: FAILURE TO DELIVER MANDATED SPECIAL EDUCATION SERVICES
+COUNT I: FAILURE TO IMPLEMENT OPERATIVE IEP SERVICES & DENIAL OF FAPE
 (34 C.F.R. § 300.323(c)(2) · Ga. Comp. R. & Regs. 160-4-7-.06)
-The District failed to implement the IEP as written by withholding mandated specialized reading instruction and speech-language therapy, resulting in a denial of a Free Appropriate Public Education (FAPE).
+The District failed to implement Alexander's operative IEP as written by withholding mandated specialized reading instruction (240 minutes) and speech-language services, depriving the student of a Free Appropriate Public Education. (Supported by Exhibit A & Exhibit C).
 
-COUNT II: FAILURE TO TIMELY EVALUATE & CHILD FIND VIOLATION
+COUNT II: FAILURE TO TIMELY RE-EVALUATE & AFFIRMATIVE CHILD FIND VIOLATION
 (34 C.F.R. § 300.111, § 300.301 · Ga. Comp. R. & Regs. 160-4-7-.03)
-The District ignored formal written parental requests for sensory and functional behavioral assessments, violating its affirmative duty to evaluate in all areas of suspected disability.
+The District ignored formal written parental requests for sensory and functional behavioral assessments, violating its affirmative statutory duty to evaluate in all suspected disability areas. (Supported by Exhibit B).
 
-COUNT III: REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE
+COUNT III: UNLAWFUL REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE (PWN)
 (34 C.F.R. § 300.503 · Ga. Comp. R. & Regs. 160-4-7-.14)
-The District altered service delivery schedules and refused evaluation requests without providing written explanations containing the mandatory statutory justifications.` },
-  { id: "remedies", number: "05", title: "Requested Remedies", category: "remedies", content: `IV. PROPOSED RESOLUTION & REQUESTED REMEDIES
+The District altered service delivery schedules and refused evaluation requests without providing written explanation or mandatory statutory justifications. (Supported by Exhibit C).
 
-To remedy the systemic deprivations of educational benefit suffered by Alexander, Complainant respectfully requests that the Georgia Department of Education order the following corrective actions:
+III. PROPOSED RESOLUTION & CORRECTIVE ACTIONS
+1. Award 60 hours of 1-on-1 certified reading tutoring and 20 hours of speech therapy.
+2. Fund an Independent Educational Evaluation (IEE) at public expense.
+3. Order the IEP team to reconvene within 15 school days to integrate compensatory hours.
+4. Mandate administrative training for school-based special education personnel.`
+  },
+  { 
+    id: "chronological_summary", 
+    number: "03", 
+    title: "Chronological Summary", 
+    category: "facts", 
+    content: `CHRONOLOGICAL SUMMARY OF FACTS & TIMELINE
 
-1. COMPENSATORY EDUCATION:
-Award 60 hours of 1-on-1 certified Orton-Gillingham reading tutoring and 20 hours of licensed Speech-Language Pathology services to be provided by an independent provider of Parent's choice at the District's expense.
+IN RE: ALEXANDER, SHANDERIOUS JR.
+LOCAL EDUCATIONAL AGENCY: COBB COUNTY SCHOOL DISTRICT
 
-2. INDEPENDENT EDUCATIONAL EVALUATION (IEE):
-Fund independent comprehensive neuropsychological and sensory processing evaluations at public expense.
+A chronological summary of relevant events and factual milestones occurring within the one-year statutory filing period (October 2025 – October 2026):
 
-3. IEP TEAM MEETING:
-Order the Cobb County School District to reconvene the IEP team within 15 school days of investigative findings to incorporate compensatory hours, revise annual goals, and integrate mandatory accommodation safeguards.
+1. AUGUST 28, 2025 — ANNUAL IEP CONVENED (EXHIBIT A)
+The Cobb County School District IEP team convened to develop Alexander's operative 4th grade IEP. The IEP committed the District to 150 minutes weekly of specialized reading instruction in general education, 90 minutes weekly of pull-out reading intervention, and 60 minutes weekly of speech-language therapy.
 
-4. STAFF TRAINING:
-Require mandatory administrative training for school-based special education personnel on Prior Written Notice compliance and service log verification.` },
-  { id: "exhibit_a", number: "06", title: "Exhibit A (IEP)", category: "exhibit", exhibitTag: "Exhibit A", content: `EXHIBIT A: OPERATIVE INDIVIDUALIZED EDUCATION PROGRAM (IEP)
+2. OCTOBER 12, 2025 — FORMAL RE-EVALUATION REQUEST (EXHIBIT B)
+Documented academic regression and sensory dysregulation prompted Parent to deliver a formal written request for comprehensive psychoeducational and sensory evaluations to the LEA Special Education Lead via timestamped email at 8:42 AM.
+
+3. OCTOBER 26, 2025 — EXPIRATION OF STATUTORY TIMELINE WITHOUT CONSENT
+The District failed to provide an evaluation consent form or Prior Written Notice explaining refusal within the mandatory statutory window, violating 34 C.F.R. § 300.300.
+
+4. NOVEMBER 1, 2025 TO JANUARY 15, 2026 — SERVICE DELIVERY WITHHOLDING (EXHIBIT C)
+District service logs demonstrate that Alexander missed 18 scheduled specialized reading intervention sessions (totaling 27 hours) without notice, make-up scheduling, or compensatory plan.
+
+5. DECEMBER 12, 2025 — CASE MANAGER ADMISSION OF STAFF SHORTAGES
+In written correspondence, the school case manager acknowledged staff shortages and confirmed that intervention minutes were not delivered as stipulated in Section 6 of the IEP.
+
+6. MARCH 3, 2026 — FORMAL DISPUTE NOTICE
+Parent notified district administration of ongoing service deprivation and requested immediate compensatory scheduling, which the District failed to provide.`
+  },
+  { 
+    id: "exhibit_index", 
+    number: "04", 
+    title: "Exhibit Index", 
+    category: "pleading", 
+    content: `FORMAL STATE COMPLAINT — EXHIBIT INDEX & DOCUMENT SCHEDULE
+
+BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
+DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
+
+STUDENT: ALEXANDER, SHANDERIOUS JR.
+AGENCY: COBB COUNTY SCHOOL DISTRICT
+
+================================================================================
+TABLE OF COMPLAINT FILING SECTIONS:
+================================================================================
+  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document
+  2. CLARITY CONTROL RESTATEMENT: Restatement of Issues, Allegations & Legal Authorities
+  3. CHRONOLOGICAL SUMMARY: Statement of Facts, Chronological Timeline & Milestones
+  4. EXHIBIT INDEX: Master Evidentiary Schedule (This Page)
+  5. EXHIBIT A: Student's Operative IEP (Individualized Education Program)
+
+================================================================================
+MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
+================================================================================
+
+EXHIBIT A: STUDENT'S OPERATIVE IEP
+• Document: Operative Annual Individualized Education Program (IEP)
+• Date: August 28, 2025 · Author: Cobb County School District IEP Team
+• Relevant Pages: Pages 4–8 (Service Delivery Schedule & Accommodations)
+• Evidentiary Purpose: Establishes binding baseline of 240 weekly reading minutes and 60 minutes speech therapy.
+• Supports: Count I (Failure to Implement Operative IEP Services / Denial of FAPE).
+
+EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
+• Document: Psychoeducational Evaluation & Formal Parent Re-Evaluation Request Letter
+• Date: October 12, 2025 (timestamped delivery 8:42 AM)
+• Evidentiary Purpose: Verifies written notice of emerging sensory deficits and triggers 60-day statutory timeline.
+• Supports: Count II (Failure to Timely Evaluate & Child Find Violation).
+
+EXHIBIT C: DISTRICT CORRESPONDENCE, PWN & SERVICE LOGS
+• Document: Special Education Service Delivery Logs & Email Correspondence
+• Date: November 1, 2025 – January 15, 2026
+• Evidentiary Purpose: Documentary proof of 18 missed sessions and written admission of staff shortages.
+• Supports: Count I & Count III (Prior Written Notice Omission).
+
+Exhibit files are attached behind this index in labeled alphabetical order.`
+  },
+  { 
+    id: "exhibit_a", 
+    number: "05", 
+    title: "Exhibit A (Student's IEP)", 
+    category: "exhibit", 
+    exhibitTag: "Exhibit A", 
+    content: `EXHIBIT A: OPERATIVE INDIVIDUALIZED EDUCATION PROGRAM (IEP)
 
 DOCUMENT DETAILS:
 • Student: Alexander, Shanderious Jr.
@@ -146,8 +222,17 @@ DOCUMENT DETAILS:
 • Relevant Pages: Pages 4-8 (Service Delivery Schedule & Accommodations)
 
 SUMMARY OF EXHIBIT EVIDENCE:
-This document establishes the binding commitment made by Cobb County School District to provide 150 minutes weekly of specialized reading instruction and 60 minutes weekly of speech therapy.` },
-  { id: "exhibit_b", number: "07", title: "Exhibit B (Evaluations)", category: "exhibit", exhibitTag: "Exhibit B", content: `EXHIBIT B: PSYCHOEDUCATIONAL EVALUATION & PARENT REQUESTS
+This document establishes the binding commitment made by Cobb County School District to provide 150 minutes weekly of specialized reading instruction and 60 minutes weekly of speech therapy.
+
+This exhibit substantiates the service standard against which the District's implementation failure is proven in the Chronological Summary and Clarity Control Restatement.`
+  },
+  { 
+    id: "exhibit_b", 
+    number: "06", 
+    title: "Exhibit B (Evaluations)", 
+    category: "exhibit", 
+    exhibitTag: "Exhibit B", 
+    content: `EXHIBIT B: PSYCHOEDUCATIONAL EVALUATION & PARENT REQUESTS
 
 DOCUMENT DETAILS:
 • Initial Evaluation Report: September 14, 2023
@@ -155,15 +240,23 @@ DOCUMENT DETAILS:
 • Delivery Confirmation: Email timestamped 8:42 AM to Special Education Lead
 
 SUMMARY OF EXHIBIT EVIDENCE:
-Proves written notification to LEA of emerging sensory deficits and establishes the start of statutory timelines for evaluation consent.` },
-  { id: "exhibit_c", number: "08", title: "Exhibit C (Communications)", category: "exhibit", exhibitTag: "Exhibit C", content: `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
+Proves written notification to LEA of emerging sensory deficits and establishes the start of statutory timelines for evaluation consent.`
+  },
+  { 
+    id: "exhibit_c", 
+    number: "07", 
+    title: "Exhibit C (Communications)", 
+    category: "exhibit", 
+    exhibitTag: "Exhibit C", 
+    content: `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
 
 DOCUMENT DETAILS:
 • Service Delivery Log: November 2025 – January 2026
 • Email Chain between Parent and Case Manager: November 18, 2025 – December 12, 2025
 
 SUMMARY OF EXHIBIT EVIDENCE:
-Documentary proof showing 18 missed sessions without compensatory make-up time and admission from case manager acknowledging staff shortages.` },
+Documentary proof showing 18 missed sessions without compensatory make-up time and admission from case manager acknowledging staff shortages.`
+  },
 ];
 
 interface ComplaintCaseDetails {
@@ -263,7 +356,7 @@ function MiniaturePagePreview({
           {/* Real Title & Student info */}
           <div className="text-center my-auto py-1">
             <div className="text-[10px] font-bold tracking-wide uppercase text-[#0B1E38] border-y border-[#8C6D2B]/50 py-0.5">
-              State Complaint
+              State Form
             </div>
             <div className="text-[8.5px] font-bold mt-1 text-[#1A120A] truncate">
               {caseDetails.studentName || "Student Record"}
@@ -346,6 +439,54 @@ export default function ComplaintWorkspace() {
   const [lastSavedText, setLastSavedText] = useState<string>("Auto-saved just now");
   const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Alexander");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+
+  // State: Resizable Packet Index Width with Draggable Right Edge
+  const [indexWidth, setIndexWidth] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("complaint_index_width");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 160 && parsed <= 420) return parsed;
+      }
+    }
+    return 208; // compact, elegant default width
+  });
+  const [isResizingIndex, setIsResizingIndex] = useState(false);
+  const indexAsideRef = useRef<HTMLElement>(null);
+
+  // Mouse drag event listeners for resizing Packet Index
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingIndex) return;
+      const asideLeft = indexAsideRef.current?.getBoundingClientRect().left ?? 0;
+      const newWidth = Math.round(e.clientX - asideLeft);
+      if (newWidth >= 160 && newWidth <= 440) {
+        setIndexWidth(newWidth);
+      }
+    };
+    const handleMouseUp = () => {
+      if (isResizingIndex) {
+        setIsResizingIndex(false);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("complaint_index_width", indexWidth.toString());
+          } catch (e) {}
+        }
+      }
+    };
+    if (isResizingIndex) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizingIndex, indexWidth]);
 
   // State: Google Docs Typography & Writing Settings
   const [fontFamily, setFontFamily] = useState<"serif" | "times" | "garamond" | "sans">("serif");
@@ -635,16 +776,42 @@ export default function ComplaintWorkspace() {
         {/* ── 3-COLUMN STUDIO WORKSPACE ───────────────────────────────────── */}
         <div className="relative z-10 flex flex-1 overflow-hidden px-0 pt-2 pb-2 gap-1.5">
           
-          {/* ── LEFT COLUMN: Document Binder / Outline Rail ─────────────── */}
+          {/* ── LEFT COLUMN: Document Binder / Outline Rail (Resizable via Draggable Edge) ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
             <aside 
-              className="w-44 sm:w-48 lg:w-50 xl:w-52 shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative pt-2 pb-2 pr-1 pl-1 z-20"
+              ref={indexAsideRef}
               style={{
+                width: `${indexWidth}px`,
                 backgroundColor: "#03152E",
                 background: "#03152E",
                 boxShadow: "inset 0 1px 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.85)",
               }}
+              className="shrink-0 flex flex-col justify-between rounded-r-[14px] rounded-l-none border border-[#3A2C18] bg-[#03152E] shadow-2xl relative pt-2 pb-2 pr-1.5 pl-1 z-20 select-none group/index-aside"
             >
+              {/* Draggable resize edge handle on the right border */}
+              <div
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsResizingIndex(true);
+                }}
+                className={cn(
+                  "absolute -right-[6px] top-0 bottom-0 w-[12px] cursor-col-resize z-50 flex items-center justify-center transition-colors group/resizer",
+                  isResizingIndex ? "bg-[#DFBE77]/25" : "hover:bg-[#DFBE77]/15"
+                )}
+                title="Drag left or right to resize Packet Index"
+              >
+                {/* Thin tactile brass indicator bar */}
+                <div 
+                  className={cn(
+                    "w-[2px] rounded-full transition-all duration-150",
+                    isResizingIndex
+                      ? "bg-[#FFE394] shadow-[0_0_8px_rgba(255,227,148,0.9)] h-16"
+                      : "bg-[#8C6D2B]/50 group-hover/resizer:bg-[#DFBE77] h-10 group-hover/resizer:h-14"
+                  )} 
+                />
+              </div>
+
               <div className="flex items-center justify-between pl-2 pr-2 pt-6 pb-2 border-b border-[#3A2C18]/60 relative z-20 bg-transparent">
                 <span className="text-[11px] font-serif font-bold text-[#C6B697] tracking-wider uppercase">Packet Index</span>
                 <button
@@ -658,7 +825,7 @@ export default function ComplaintWorkspace() {
               </div>
 
               {/* Tightly stacked index cards with realistic shingled depth pulled snug against the scrollbar */}
-              <div className="flex-1 overflow-y-auto space-y-1 pt-1.5 pb-3 pl-3 pr-0.5 custom-scrollbar bg-transparent [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
+              <div className="flex-1 overflow-y-auto space-y-1.5 pt-1.5 pb-3 pl-3 pr-0.5 custom-scrollbar bg-transparent [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
                 {pages.map((p) => {
                   const isActive = p.id === activePageId;
                   return (
@@ -683,7 +850,7 @@ export default function ComplaintWorkspace() {
                             }
                       }
                       className={cn(
-                        "w-full flex items-center justify-between py-1.5 px-1.5 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none",
+                        "w-full flex items-center justify-between py-2 px-2 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none min-h-[46px]",
                         isActive
                           ? "z-10 border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3)] translate-x-0.5"
                           : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15)] hover:brightness-105 hover:translate-x-0.5"
@@ -692,10 +859,10 @@ export default function ComplaintWorkspace() {
                       {/* Authentic Ornate Brass & Navy Slip Bracket */}
                       <BrassSlipHandle isActive={isActive} />
 
-                      {/* Number brought snug to the left + vertical line divider + maximized room for title */}
-                      <div className="flex items-center min-w-0 flex-1 pl-1 pr-1.5 gap-1.5">
+                      {/* Number + vertical line divider + full wrapped title (no dots/truncate) */}
+                      <div className="flex items-center min-w-0 flex-1 pl-1 pr-2 gap-2">
                         <span className={cn(
-                          "font-mono text-[11px] shrink-0 font-bold leading-none",
+                          "font-mono text-[11px] shrink-0 font-bold leading-none self-center",
                           isActive ? "text-[#3D2C10]" : "text-[#5C421B]"
                         )}>
                           {p.number}
@@ -703,16 +870,15 @@ export default function ComplaintWorkspace() {
 
                         {/* Thin vertical line divider after the number */}
                         <div className={cn(
-                          "h-3 w-[1px] shrink-0",
+                          "h-5 w-[1px] shrink-0 self-center",
                           isActive ? "bg-[#8C6D2B]/75" : "bg-[#B39358]/55"
                         )} />
 
                         <span 
                           className={cn(
-                            "text-[12px] truncate tracking-tight font-serif font-bold leading-tight flex-1 min-w-0",
+                            "text-[12px] font-serif font-bold leading-[1.25] flex-1 min-w-0 break-words whitespace-normal",
                             isActive ? "text-[#1C1003]" : "text-[#1A1005]"
                           )}
-                          title={p.title}
                         >
                           {p.title}
                         </span>
@@ -790,9 +956,9 @@ export default function ComplaintWorkspace() {
                 )}
 
                 {[
+                  { id: "cover", label: "State Form", icon: FileText },
                   { id: "edit", label: "Edit", icon: Pencil },
-                  { id: "arrange", label: "Arrange", icon: Layers },
-                  { id: "cover", label: "Cover", icon: FileText },
+                  { id: "arrange", label: "Exhibit Index", icon: Layers },
                   { id: "insert", label: "Insert", icon: Plus },
                   { id: "tools", label: "Tools", icon: PanelRight },
                 ]
@@ -809,12 +975,15 @@ export default function ComplaintWorkspace() {
                           setIsAddPageModalOpen(true);
                         } else if (tab.id === "tools") {
                           setIsToolsCollapsed((prev) => !prev);
+                        } else if (tab.id === "arrange") {
+                          setActiveToolbarTab("arrange");
+                          setActivePageId("exhibit_index");
                         } else {
                           setActiveToolbarTab(tab.id as any);
                           if (tab.id === "cover") {
                             setActivePageId("cover");
                           } else if (activePageId === "cover") {
-                            setActivePageId("complaint");
+                            setActivePageId("clarity_control");
                           }
                         }
                       }}
@@ -1009,11 +1178,11 @@ export default function ComplaintWorkspace() {
 
                       {/* Main Title */}
                       <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide text-[#150E06] uppercase mt-2">
-                        STATE COMPLAINT
+                        STATE FORM
                       </h1>
 
                       <p className="font-serif italic text-sm sm:text-base text-[#4A3C28] mt-2">
-                        Submitted to the Georgia Department of Education
+                        Official State Complaint Form · Georgia Department of Education
                       </p>
                     </div>
 
@@ -1389,7 +1558,7 @@ export default function ComplaintWorkspace() {
                   >
                     <div className="flex items-center gap-2.5">
                       <FileText className="w-4 h-4 text-[#4A3515] group-hover:scale-105 transition-transform" />
-                      <span className="text-xs font-serif font-bold tracking-tight">Edit cover details</span>
+                      <span className="text-xs font-serif font-bold tracking-tight">Edit State Form details</span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#7A5C28] group-hover:translate-x-0.5 transition-transform" />
                   </button>
@@ -1486,7 +1655,7 @@ export default function ComplaintWorkspace() {
           <DialogContent className="max-w-lg max-h-[85vh] flex flex-col bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl p-5">
             <DialogHeader className="pb-1 border-b border-[#3A2C18]/60">
               <DialogTitle className="font-serif text-base text-[#FFF4D4]">
-                Edit Cover Sheet Details
+                Edit State Form Details
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-2.5 py-2 text-xs overflow-y-auto pr-1.5 custom-scrollbar flex-1 max-h-[60vh]">
@@ -1763,10 +1932,11 @@ export default function ComplaintWorkspace() {
                   <span>Packet Assembly Status:</span>
                   <span className="text-[#DFBE77]">{pages.length} Pages Assembled</span>
                 </div>
-                <div>• Cover sheet formatted with LEA identifiers</div>
-                <div>• 3 legal causes of action citing 34 C.F.R. and Georgia Rules</div>
-                <div>• 3 attached documentary exhibits with evidentiary links</div>
-                <div>• Compensatory education schedule quantified</div>
+                <div>• 1. State Form formatted with LEA identifiers</div>
+                <div>• 2. Clarity Control Restatement with statutory claims</div>
+                <div>• 3. Chronological Summary with 1-year timeline milestones</div>
+                <div>• 4. Master Exhibit Index with evidentiary schedule</div>
+                <div>• 5. Exhibit A: Student's IEP attached as primary baseline</div>
               </div>
             </div>
             <DialogFooter>
@@ -1803,8 +1973,8 @@ export default function ComplaintWorkspace() {
                   {p.id === "cover" ? (
                     <div className="text-center py-6">
                       <h3 className="font-serif font-bold tracking-widest uppercase text-xs">WAYPOINT ADVOCATES</h3>
-                      <h2 className="font-serif font-black text-2xl uppercase mt-2">STATE COMPLAINT</h2>
-                      <p className="text-xs italic mt-1">Submitted to the Georgia Department of Education</p>
+                      <h2 className="font-serif font-black text-2xl uppercase mt-2">STATE FORM</h2>
+                      <p className="text-xs italic mt-1">Official State Complaint Form · Submitted to the Georgia Department of Education</p>
                       <div className="my-6 text-left max-w-sm mx-auto text-xs space-y-1.5 font-medium">
                         <p><strong>Student:</strong> {caseDetails.studentName}</p>
                         <p><strong>Grade:</strong> {caseDetails.grade}</p>

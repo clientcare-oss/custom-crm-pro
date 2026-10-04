@@ -155,9 +155,29 @@ export function registerComplaintExportRoute(app: Express) {
       doc.addPage();
       doc.font("Helvetica-Bold").fontSize(16).fill(NAVY).text("Exhibit Index");
       doc.moveTo(72, doc.y + 4).lineTo(540, doc.y + 4).lineWidth(1).stroke(GOLD);
-      doc.moveDown(1);
+      doc.moveDown(0.8);
+
+      doc.font("Helvetica-Bold").fontSize(10).fill(GOLD).text("COMPLAINT FILING SEQUENCE & TABLE OF CONTENTS:");
+      doc.moveDown(0.3);
+      const scheduleItems = [
+        "1. State Form (Official State Complaint Filing Document)",
+        "2. Clarity Control Restatement (Formal Claims, Violations & Legal Authorities)",
+        "3. Chronological Summary (Statement of Facts & Timeline of Milestones)",
+        "4. Exhibit Index (Master Schedule of Documentary Evidence)",
+        "5. Exhibit A: Student's IEP (Operative Individualized Education Program)",
+      ];
+      for (const item of scheduleItems) {
+        doc.font("Helvetica").fontSize(10).fill(BODY).text(item, { lineGap: 2 });
+      }
+      doc.moveDown(0.8);
+
+      doc.font("Helvetica-Bold").fontSize(11).fill(NAVY).text("ATTACHED DOCUMENTARY EXHIBITS:");
+      doc.moveTo(72, doc.y + 2).lineTo(300, doc.y + 2).lineWidth(0.5).stroke(GOLD);
+      doc.moveDown(0.5);
+
       if (!evidence.length) {
-        para("No exhibits are attached to this complaint.", { color: MUTED });
+        para("Exhibit A: Operative IEP (Individualized Education Program) — attached behind index.", { bold: true });
+        para("No additional uploaded exhibits attached to this complaint.", { color: MUTED });
       } else {
         for (const ev of evidence) {
           const supports = links

@@ -136,7 +136,17 @@ export function SectionDraft() {
 
         {/* 11. Exhibit index (auto) */}
         <AutoBlock label="11. Exhibit Index">
-          {(evidence?.items.length ?? 0) === 0 && <p className="text-slate-500">No evidence uploaded yet.</p>}
+          <div className="mb-3 rounded border border-[#22355499] bg-[#081A33] p-3 text-xs text-slate-300">
+            <span className="font-semibold text-[#E4B65B]">Complaint Filing Sequence & Table of Contents:</span>
+            <ol className="mt-1.5 list-inside list-decimal space-y-1 text-slate-300">
+              <li><strong className="text-slate-100">State Form</strong> (Official State Complaint Filing Document)</li>
+              <li><strong className="text-slate-100">Clarity Control Restatement</strong> (Formal Claims, Violations & Legal Authorities)</li>
+              <li><strong className="text-slate-100">Chronological Summary</strong> (Statement of Facts & Timeline of Milestones)</li>
+              <li><strong className="text-slate-100">Exhibit Index</strong> (Master Schedule of Documentary Evidence)</li>
+              <li><strong className="text-[#E4B65B]">Exhibit A: Student&apos;s IEP</strong> (Operative Individualized Education Program)</li>
+            </ol>
+          </div>
+          {(evidence?.items.length ?? 0) === 0 && <p className="text-slate-500">No additional exhibits uploaded yet.</p>}
           <ul className="space-y-1">
             {evidence?.items.map(ev => {
               const supports = links.filter(l => l.evidenceItemId === ev.id)
