@@ -1455,94 +1455,97 @@ export default function ComplaintWorkspace() {
         
         {/* 1. Edit Cover Details Modal */}
         <Dialog open={isEditCoverModalOpen} onOpenChange={setIsEditCoverModalOpen}>
-          <DialogContent className="max-w-md bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="font-serif text-lg text-[#FFF4D4]">
+          <DialogContent className="max-w-lg max-h-[85vh] flex flex-col bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl p-5">
+            <DialogHeader className="pb-1 border-b border-[#3A2C18]/60">
+              <DialogTitle className="font-serif text-base text-[#FFF4D4]">
                 Edit Cover Sheet Details
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3.5 py-2 text-xs">
-              <div>
-                <Label className="text-[#C6B697]">Student Full Legal Name</Label>
-                <Input
-                  value={caseDetails.studentName}
-                  onChange={(e) => handleQuickFieldUpdate("studentName", e.target.value)}
-                  className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2.5 py-2 text-xs overflow-y-auto pr-1.5 custom-scrollbar flex-1 max-h-[60vh]">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <Label className="text-[#C6B697]">Date of Birth</Label>
+                  <Label className="text-[#C6B697] text-[11px]">Student Full Legal Name</Label>
+                  <Input
+                    value={caseDetails.studentName}
+                    onChange={(e) => handleQuickFieldUpdate("studentName", e.target.value)}
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[#C6B697] text-[11px]">Date of Birth</Label>
                   <Input
                     placeholder="YYYY-MM-DD"
                     value={caseDetails.studentDob}
                     onChange={(e) => handleQuickFieldUpdate("studentDob", e.target.value)}
-                    className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <Label className="text-[#C6B697]">Current Grade</Label>
+                  <Label className="text-[#C6B697] text-[11px]">Current Grade</Label>
                   <Input
                     value={caseDetails.grade}
                     onChange={(e) => handleQuickFieldUpdate("grade", e.target.value)}
-                    className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[#C6B697] text-[11px]">Assigned School</Label>
+                  <Input
+                    placeholder="e.g. Wheeler High School"
+                    value={caseDetails.school}
+                    onChange={(e) => handleQuickFieldUpdate("school", e.target.value)}
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
                   />
                 </div>
               </div>
 
-              <div>
-                <Label className="text-[#C6B697]">Assigned School</Label>
-                <Input
-                  placeholder="e.g. Wheeler High School"
-                  value={caseDetails.school}
-                  onChange={(e) => handleQuickFieldUpdate("school", e.target.value)}
-                  className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
-                />
-              </div>
-
-              <div>
-                <Label className="text-[#C6B697]">School District (LEA)</Label>
-                <Input
-                  value={caseDetails.district}
-                  onChange={(e) => handleQuickFieldUpdate("district", e.target.value)}
-                  className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
-                />
-              </div>
-
-              <div>
-                <Label className="text-[#C6B697]">Parent / Complainant Name</Label>
-                <Input
-                  placeholder="e.g. Sarah Jenkins"
-                  value={caseDetails.parentName}
-                  onChange={(e) => handleQuickFieldUpdate("parentName", e.target.value)}
-                  className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <Label className="text-[#C6B697]">Prepared By</Label>
+                  <Label className="text-[#C6B697] text-[11px]">School District (LEA)</Label>
+                  <Input
+                    value={caseDetails.district}
+                    onChange={(e) => handleQuickFieldUpdate("district", e.target.value)}
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[#C6B697] text-[11px]">Parent / Complainant</Label>
+                  <Input
+                    placeholder="e.g. Sarah Jenkins"
+                    value={caseDetails.parentName}
+                    onChange={(e) => handleQuickFieldUpdate("parentName", e.target.value)}
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label className="text-[#C6B697] text-[11px]">Prepared By</Label>
                   <Input
                     value={caseDetails.preparedBy}
                     onChange={(e) => handleQuickFieldUpdate("preparedBy", e.target.value)}
-                    className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
                   />
                 </div>
                 <div>
-                  <Label className="text-[#C6B697]">Submission Date</Label>
+                  <Label className="text-[#C6B697] text-[11px]">Submission Date</Label>
                   <Input
                     placeholder="e.g. October 15, 2026"
                     value={caseDetails.submissionDate}
                     onChange={(e) => handleQuickFieldUpdate("submissionDate", e.target.value)}
-                    className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
+                    className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
                   />
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[#3A2C18] flex items-center justify-between">
+              {/* Cover Options & Fast Tools */}
+              <div className="pt-2 border-t border-[#3A2C18]/80 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Label className="text-[#C6B697] cursor-pointer" htmlFor="cover-logo-toggle">
+                  <Label className="text-[#C6B697] text-xs cursor-pointer" htmlFor="cover-logo-toggle">
                     Display Waypoint Logo on Cover
                   </Label>
                 </div>
@@ -1551,7 +1554,7 @@ export default function ComplaintWorkspace() {
                   id="cover-logo-toggle"
                   onClick={() => setCaseDetails((prev) => ({ ...prev, showLogo: !prev.showLogo }))}
                   className={cn(
-                    "px-2.5 py-1 rounded text-[11px] font-semibold transition-all border cursor-pointer",
+                    "px-2.5 py-0.5 rounded text-[11px] font-semibold transition-all border cursor-pointer",
                     caseDetails.showLogo
                       ? "bg-[#C5A059] text-[#07162B] border-[#FFE394]"
                       : "bg-[#020A17] text-[#8C7A60] border-[#3A2C18]"
@@ -1590,14 +1593,23 @@ export default function ComplaintWorkspace() {
                 </Button>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="pt-2 border-t border-[#3A2C18]/60 flex items-center justify-between sm:justify-between">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditCoverModalOpen(false)}
+                className="text-[#C6B697] hover:text-white hover:bg-white/[0.05] text-xs h-7 px-3"
+              >
+                Cancel
+              </Button>
               <Button
                 type="button"
                 onClick={() => {
                   setIsEditCoverModalOpen(false);
                   toast.success("Cover sheet details saved");
                 }}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8"
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-7 px-4 shadow-md hover:brightness-105"
               >
                 Apply Details
               </Button>
