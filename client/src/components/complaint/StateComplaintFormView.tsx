@@ -135,22 +135,60 @@ export function StateComplaintFormView({
     }
   }, [formState.studentName]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const estimatedWidth = Math.min(840, Math.max(500, window.innerWidth - 280));
+      return Math.ceil(estimatedWidth * (792 / 612) * 4) + 40;
+    }
+    return 3800;
+  });
+
+  // Dynamically calculate exact PDF height based on rendered container width
+  // Eliminates dead grey space below the 4-page PDF form while preventing inner scrollbars
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const calculateExactHeight = () => {
+      const width = el.clientWidth;
+      if (width > 0) {
+        // Standard US Letter aspect ratio = 792 / 612 (1.294117647)
+        // 4 pages + Chromium PDF viewer page separators (~8px each) + boundary margins (~16px) = ~40px
+        const pageHeight = width * (792 / 612);
+        const exactHeight = Math.ceil(pageHeight * 4) + 40;
+        setMeasuredHeight(exactHeight);
+      }
+    };
+
+    calculateExactHeight();
+    const ro = new ResizeObserver(calculateExactHeight);
+    ro.observe(el);
+    window.addEventListener("resize", calculateExactHeight);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", calculateExactHeight);
+    };
+  }, [viewMode]);
+
   return (
     <div className="w-full flex flex-col items-center select-none">
       {/* ── Exact Official Fillable PDF Document Sheet ──────────────────────── */}
-      {/* Formatted to the exact 8.5 x 11 Letter layout of the other document pages */}
-      {/* Sized so all 4 pages fit vertically, completely eliminating any inner scrollbar! */}
+      {/* Dynamically sized so the 4 pages terminate cleanly with zero trailing grey void! */}
       {/* The single blue canvas scrollbar on screen is the ONLY scrollbar used to progress. */}
       <div
+        ref={containerRef}
         style={{
+          height: measuredHeight ? `${measuredHeight}px` : undefined,
           transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
           transformOrigin: "top center",
         }}
         className={cn(
           "relative rounded-xs select-text flex flex-col items-center transition-all bg-white text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)] my-2 shrink-0 overflow-hidden",
-          viewMode === "fit-width" && "w-full max-w-[840px] h-[4400px]",
-          viewMode === "fit-page" && "h-[calc(100vh-175px)] w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",
-          viewMode === "actual" && "w-[816px] h-[4260px] my-2"
+          viewMode === "fit-width" && "w-full max-w-[840px]",
+          viewMode === "fit-page" && "w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",
+          viewMode === "actual" && "w-[816px] my-2"
         )}
       >
         {/* Printable Corner Margin Registration Tick Marks matching other pages */}

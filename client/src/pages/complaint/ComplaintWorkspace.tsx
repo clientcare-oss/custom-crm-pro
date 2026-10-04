@@ -51,7 +51,9 @@ import {
   Cloud,
   Check,
   User,
-  ShieldCheck
+  ShieldCheck,
+  ExternalLink,
+  Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +67,8 @@ import {
   detectStateCode,
   type OfficialComplaintFormState,
 } from "@/components/complaint/stateFormsData";
+import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter";
+import { PDFDocument } from "pdf-lib";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
 interface DocumentPage {
@@ -322,72 +326,197 @@ function MiniaturePagePreview({
   page,
   caseDetails,
   isActive,
+  coverThumbnail,
 }: {
   page: DocumentPage;
   caseDetails: ComplaintCaseDetails;
   isActive?: boolean;
+  coverThumbnail?: string;
 }) {
   const isCover = page.category === "cover" || page.id === "cover";
 
   return (
     <div
       className={cn(
-        "w-[42px] h-[56px] rounded-[2px] p-[1px] shadow-[0_1.5px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] border shrink-0 relative overflow-hidden transition-all duration-200 select-none",
+        "w-[44px] h-[58px] rounded-[2px] p-[1px] shadow-[0_1.5px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] border shrink-0 relative overflow-hidden transition-all duration-200 select-none",
         isActive
           ? "bg-[#FFFDF8] border-[#8C6D2B] ring-1 ring-[#FFE394]/70 shadow-[0_2px_8px_rgba(255,215,100,0.45),0_1.5px_4px_rgba(0,0,0,0.5)] scale-[1.03]"
           : "bg-[#FAF5E8] border-[#A88A4C]/80 group-hover:border-[#8C6D2B] group-hover:shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
       )}
       style={{
-        backgroundImage: "url('/decor/fine-parchment.jpg')",
+        backgroundImage: isCover ? "none" : "url('/decor/fine-parchment.jpg')",
+        backgroundColor: isCover ? "#FFFFFF" : undefined,
         backgroundSize: "cover",
       }}
     >
       {/* Scaled-down real document facsimile content */}
       {isCover ? (
-        <div className="w-[190px] h-[250px] p-2 flex flex-col justify-between text-[#1A1A1A] font-sans select-none pointer-events-none origin-top-left scale-[0.22] bg-white">
-          {/* Micro GaDOE Form Header */}
-          <div className="border-b border-slate-700 pb-1 text-left">
+        coverThumbnail ? (
+          <img
+            src={coverThumbnail}
+            alt="State Form Page 1"
+            className="w-full h-full object-cover object-top select-none pointer-events-none"
+          />
+        ) : (
+          <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A1A1A] font-sans select-none pointer-events-none origin-top-left scale-[0.23] bg-white">
+            {/* Official GaDOE Form Header */}
+            <div className="border-b border-slate-800 pb-1 text-left">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#3E9B34] font-sans tracking-tight">
-                Ga<span className="text-[#D62B28]">DOE</span>
+              <span className="text-[10px] font-black text-[#2E7D32] tracking-tight">
+                Ga<span className="text-[#C62828]">DOE</span>
               </span>
-              <span className="text-[7px] text-slate-600 font-bold uppercase">
+              <span className="text-[6.5px] bg-slate-100 text-slate-700 px-1 py-0.2 rounded border border-slate-300 font-bold uppercase">
                 {caseDetails.state || "GA"} Form
               </span>
             </div>
-            <div className="text-[7.5px] font-bold text-slate-900 leading-tight mt-0.5">
+            <div className="text-[7px] font-black text-slate-900 leading-tight mt-0.5 uppercase tracking-tight">
               Special Education Formal Complaint Form
             </div>
-            <div className="text-[6.5px] text-[#D62B28] font-semibold">
-              Georgia Dept. of Education
+            <div className="text-[6px] text-[#C62828] font-bold">
+              Georgia Department of Education
             </div>
           </div>
 
           {/* Form fields micro preview */}
           <div className="space-y-1 my-auto py-1 text-left">
-            <div className="text-[7px] text-slate-700 truncate">
-              <span className="font-bold">Agency:</span> {caseDetails.district || "School District"}
+            <div className="text-[6.5px] text-slate-700 truncate">
+              <span className="font-bold text-slate-900">Agency:</span> {caseDetails.district || "School District"}
             </div>
-            <div className="text-[7.5px] text-slate-900 font-bold truncate">
+            <div className="text-[7.5px] text-slate-900 font-black truncate bg-amber-50/80 px-0.5 rounded border border-amber-200/50">
               {caseDetails.studentName || "Student Record"}
             </div>
-            <div className="text-[6.5px] text-slate-600 truncate">
-              School: {caseDetails.school || "Assigned School"}
+            <div className="text-[6.5px] text-slate-700 truncate">
+              <span className="font-bold text-slate-900">School:</span> {caseDetails.school || "Assigned School"}
             </div>
-            <div className="border border-slate-300 p-1 bg-slate-50 rounded-xs text-[5.5px] text-slate-600 line-clamp-2">
-              *Statement of Alleged Violations (34 C.F.R. § 300.153)
+            <div className="border border-slate-300 p-1 bg-slate-50/90 rounded-xs text-[5.5px] text-slate-600 line-clamp-2">
+              • Statement of Alleged Violations (34 C.F.R. § 300.153)
             </div>
           </div>
 
           {/* Footer */}
-          <div className="text-[6.5px] flex justify-between items-center text-slate-500 border-t border-slate-300 pt-0.5">
-            <span>Georgia State Form</span>
-            <span className="font-mono font-bold">p.01</span>
+          <div className="text-[6px] flex justify-between items-center text-slate-500 border-t border-slate-300 pt-0.5">
+            <span className="font-semibold text-emerald-700">Official Fillable PDF</span>
+            <span className="font-mono font-bold text-slate-800">4 Pages</span>
+          </div>
+        </div>
+      )) : page.id === "clarity_control" ? (
+        <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
+          {/* Legal Pleading Caption */}
+          <div className="text-center border-b border-[#3A2810]/40 pb-0.5">
+            <div className="text-[6px] font-bold tracking-wider uppercase text-[#4A3820]">
+              Georgia Dept. of Education
+            </div>
+            <div className="text-[7px] font-bold text-[#0B1E38] truncate mt-0.5">
+              IN RE: {caseDetails.studentName?.split(",")[0] || "STUDENT"}
+            </div>
+            <div className="border-t border-double border-[#8C6D2B]/50 my-0.5" />
+            <div className="text-[7.5px] font-black uppercase tracking-wide text-[#1A1005]">
+              Clarity Control
+            </div>
+          </div>
+
+          {/* Roman Numeral Claims */}
+          <div className="space-y-1 my-auto text-left text-[6.5px] leading-tight text-[#2A1D0E]">
+            <div className="truncate font-bold text-[#8B2500]">• COUNT I: Failure to Implement IEP</div>
+            <div className="truncate font-bold text-[#8B2500]">• COUNT II: Affirmative Child Find</div>
+            <div className="truncate font-bold text-[#8B2500]">• COUNT III: PWN Refusal</div>
+            <div className="text-[5.5px] text-[#5A4528] italic line-clamp-2 mt-0.5">
+              34 C.F.R. § 300.153 · Statutory Violations
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6px] text-[#6A5230] font-sans">
+            <span>Restatement</span>
+            <span className="font-mono font-bold">p.{page.number}</span>
+          </div>
+        </div>
+      ) : page.id === "chronological_summary" ? (
+        <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
+          <div className="border-b border-[#3A2810]/40 pb-0.5">
+            <div className="flex justify-between items-center text-[7px] text-[#5A4528]">
+              <span className="font-black uppercase tracking-wider text-[#0B1E38]">
+                Timeline
+              </span>
+              <span className="font-mono font-bold text-[8px] text-[#6A5230]">
+                p.{page.number}
+              </span>
+            </div>
+            <div className="text-[6.5px] text-[#4A3820] italic">Chronological Facts</div>
+          </div>
+
+          <div className="space-y-1.5 my-auto text-left text-[6px] text-[#2A1D0E]">
+            <div className="border-l-2 border-[#8C6D2B] pl-1">
+              <span className="font-bold text-[#0B1E38] block">Aug 28:</span> Annual IEP Convened
+            </div>
+            <div className="border-l-2 border-[#8C6D2B] pl-1">
+              <span className="font-bold text-[#0B1E38] block">Oct 12:</span> Re-Evaluation Request
+            </div>
+            <div className="border-l-2 border-[#8C6D2B] pl-1">
+              <span className="font-bold text-[#0B1E38] block">Nov–Jan:</span> 18 Sessions Missed
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6px] text-[#6A5230] font-sans">
+            <span>1-Year Window</span>
+            <span className="font-mono font-bold">p.{page.number}</span>
+          </div>
+        </div>
+      ) : page.id === "exhibit_index" ? (
+        <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
+          <div className="border-b border-[#3A2810]/40 pb-0.5 text-center">
+            <div className="text-[7.5px] font-black uppercase tracking-wider text-[#0B1E38]">
+              Exhibit Index
+            </div>
+            <div className="text-[6px] text-[#6A5230]">Master Evidentiary Schedule</div>
+          </div>
+
+          <div className="space-y-1 my-auto text-left text-[6px] text-[#2A1D0E]">
+            <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
+              <span className="font-bold text-[#8C6D2B]">EXH A:</span>
+              <span className="truncate">Operative IEP</span>
+            </div>
+            <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
+              <span className="font-bold text-[#8C6D2B]">EXH B:</span>
+              <span className="truncate">Psychoed Evals</span>
+            </div>
+            <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
+              <span className="font-bold text-[#8C6D2B]">EXH C:</span>
+              <span className="truncate">Service Logs</span>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6px] text-[#6A5230] font-sans">
+            <span>Evidence Docket</span>
+            <span className="font-mono font-bold">p.{page.number}</span>
+          </div>
+        </div>
+      ) : page.id === "exhibit_a" ? (
+        <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
+          <div className="text-center my-auto py-2">
+            <div className="inline-block border-2 border-[#8C6D2B] bg-[#FFFBF0] px-2 py-1 rounded shadow-xs mb-1">
+              <span className="text-[9px] font-black tracking-widest text-[#0B1E38] uppercase block">
+                EXHIBIT A
+              </span>
+            </div>
+            <div className="text-[7px] font-bold text-[#1A1005] mt-1 uppercase">
+              Operative IEP
+            </div>
+            <div className="text-[6px] text-[#5A4528] italic mt-0.5">
+              Service Schedule & Accommodations
+            </div>
+            <div className="border-t border-[#8C6D2B]/40 w-16 mx-auto my-1.5" />
+            <div className="text-[5.5px] text-[#6A5230]">
+              August 28, 2025 · Cobb County
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6px] text-[#6A5230] font-sans">
+            <span>Primary Baseline</span>
+            <span className="font-mono font-bold">p.{page.number}</span>
           </div>
         </div>
       ) : (
-        <div className="w-[190px] h-[250px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.22]">
-          {/* Real Section Title */}
+        <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
           <div className="border-b border-[#3A2810]/40 pb-0.5">
             <div className="flex justify-between items-center text-[7.5px] text-[#5A4528]">
               <span className="font-bold uppercase tracking-wider text-[#0B1E38] truncate max-w-[130px]">
@@ -399,14 +528,12 @@ function MiniaturePagePreview({
             </div>
           </div>
 
-          {/* Real Body Paragraph Text */}
           <div className="flex-1 overflow-hidden my-1">
             <p className="text-[7px] text-[#2A1D0E] leading-[9.5px] line-clamp-[18] whitespace-pre-line font-serif text-justify">
               {(page.content || "").trim() || "No text entered for this section..."}
             </p>
           </div>
 
-          {/* Real Page Number Footer */}
           <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6.5px] text-[#6A5230] font-sans">
             <span className="truncate max-w-[120px]">Waypoint Advocates</span>
             <span className="font-mono font-bold">p.{page.number}</span>
@@ -541,6 +668,92 @@ export default function ComplaintWorkspace() {
   const [lastSavedText, setLastSavedText] = useState<string>("Auto-saved just now");
   const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Alexander");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+
+  // State: Pre-rendered high-res page images for all 4 pages of Binder 01 (Official State Form)
+  // Guarantees all 4 pages are completely visible in Full Document Print Preview & window.print()
+  const [stateFormPages, setStateFormPages] = useState<ImportedPdfPage[]>([]);
+  const [isRenderingStateForm, setIsRenderingStateForm] = useState<boolean>(false);
+  const [previewSheetFit, setPreviewSheetFit] = useState<"fit-page" | "fit-width">("fit-page");
+
+  // Generate filled official state PDF bytes (populated with student, school, district, and advocate info)
+  // and render all 4 pages into high-res images for print preview and printing
+  const renderFilledStateFormPages = async (formStateToFill: OfficialComplaintFormState) => {
+    try {
+      setIsRenderingStateForm(true);
+      const res = await fetch("/forms/gadoe-formal-complaint-form.pdf");
+      if (!res.ok) return;
+      const existingPdfBytes = await res.arrayBuffer();
+
+      let pdfToConvert: ArrayBuffer = existingPdfBytes;
+      try {
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        const form = pdfDoc.getForm();
+
+        const setIfField = (name: string, value: string | undefined | null) => {
+          if (!value) return;
+          try {
+            const field = form.getTextField(name);
+            if (field) field.setText(String(value));
+          } catch (e) {}
+        };
+
+        // Page 1: Public Agency & Complainant & Student
+        setIfField("Public agency filing complaint against", formStateToFill.publicAgency || caseDetails.district);
+        setIfField("Name of Complainant", formStateToFill.complainantName || caseDetails.preparedBy);
+        setIfField("Relationship to student", formStateToFill.complainantRelationship || "Advocate on behalf of Parent");
+        setIfField("Complainant Address", formStateToFill.complainantAddress);
+        setIfField("City", formStateToFill.complainantCity);
+        setIfField("State", formStateToFill.complainantState || "GA");
+        setIfField("Zip Code", formStateToFill.complainantZip);
+        setIfField("Complainant Phone Numbers", formStateToFill.complainantPhone);
+        setIfField("Complainant Email Address", formStateToFill.complainantEmail);
+
+        setIfField("Name of Student", formStateToFill.studentName || caseDetails.studentName);
+        setIfField("Date of Birth", formStateToFill.studentDob || caseDetails.studentDob);
+        setIfField("Student Address", formStateToFill.studentAddress);
+        setIfField("Student City", formStateToFill.studentCity);
+        setIfField("Student State", formStateToFill.studentState || "GA");
+        setIfField("Student Zip", formStateToFill.studentZip);
+        setIfField("Current School", formStateToFill.currentSchool || caseDetails.school);
+        setIfField("Grade", formStateToFill.grade || caseDetails.grade);
+        setIfField("Student GTID", formStateToFill.studentGtid);
+
+        // Page 1 & 2: Statement of Problem & Resolution
+        setIfField(
+          "Please provide a statement of the problem and the facts upon which the problem is based Include the date and time when the violation occurred or the duration of the violation and supporting documentation",
+          formStateToFill.statementOfViolations || formStateToFill.factsRelatingToViolations
+        );
+        setIfField(
+          "Please provide a proposed resolution of the problem to the extent known and available to the party at the time the complaint is filed",
+          formStateToFill.proposedResolution
+        );
+
+        // Page 3: Verification of Service
+        setIfField("On", formStateToFill.serviceDate || caseDetails.submissionDate);
+        setIfField("name or title of recipient", formStateToFill.serviceRecipient || caseDetails.district);
+        setIfField("Signature of Person Filing Complaint", formStateToFill.signatureName || formStateToFill.complainantName || caseDetails.preparedBy);
+        setIfField("Date", formStateToFill.signatureDate || caseDetails.submissionDate);
+
+        const filledBytes = await pdfDoc.save();
+        pdfToConvert = filledBytes.buffer as ArrayBuffer;
+      } catch (fillErr) {
+        console.warn("Could not populate PDF fields prior to preview rendering, using raw form:", fillErr);
+      }
+
+      const imgs = await convertPdfToPageImages(pdfToConvert, 1.8);
+      if (imgs.length > 0) {
+        setStateFormPages(imgs);
+      }
+    } catch (err) {
+      console.error("Failed to convert state form pages for print preview:", err);
+    } finally {
+      setIsRenderingStateForm(false);
+    }
+  };
+
+  useEffect(() => {
+    renderFilledStateFormPages(officialFormState);
+  }, []);
 
   // State: Resizable Packet Index Width with Draggable Right Edge
   const [indexWidth, setIndexWidth] = useState<number>(() => {
@@ -694,6 +907,9 @@ export default function ComplaintWorkspace() {
   // PDF Export
   const handleExportPdf = () => {
     toast.success("Compiling official Georgia State Complaint PDF with exhibits...");
+    if (stateFormPages.length === 0) {
+      renderFilledStateFormPages(officialFormState);
+    }
     setTimeout(() => {
       window.print();
     }, 400);
@@ -848,7 +1064,12 @@ export default function ComplaintWorkspace() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setIsPreviewModalOpen(true)}
+              onClick={() => {
+                if (stateFormPages.length === 0) {
+                  renderFilledStateFormPages(officialFormState);
+                }
+                setIsPreviewModalOpen(true);
+              }}
               className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)] hidden sm:flex"
             >
               <Eye className="w-3.5 h-3.5 text-[#FFE394]" />
@@ -992,7 +1213,12 @@ export default function ComplaintWorkspace() {
 
                       {/* Right: Miniature document facsimile */}
                       <div className="flex items-center shrink-0">
-                        <MiniaturePagePreview page={p} caseDetails={caseDetails} isActive={isActive} />
+                        <MiniaturePagePreview
+                          page={p}
+                          caseDetails={caseDetails}
+                          isActive={isActive}
+                          coverThumbnail={p.id === "cover" ? stateFormPages[0]?.dataUrl : undefined}
+                        />
                       </div>
                     </button>
                   );
@@ -1135,14 +1361,40 @@ export default function ComplaintWorkspace() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-[#A69371]">
-                    Student: <strong className="text-white">{officialFormState.studentName || caseDetails.studentName}</strong>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] sm:text-xs text-[#E8DCC2] flex items-center gap-1.5 font-sans font-medium">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_rgba(52,211,153,0.8)] shrink-0" />
+                    <span>This form has been matched to your client's state</span>
                   </span>
-                  <div className="w-[1px] h-3.5 bg-[#3A2C18]" />
-                  <span className="text-[11px] text-[#A69371]">
-                    Agency: <strong className="text-white">{officialFormState.publicAgency || caseDetails.district}</strong>
-                  </span>
+                  <span className="text-[#DFBE77] font-semibold text-xs select-none">&gt;</span>
+
+                  <div className="relative inline-flex items-center">
+                    <select
+                      id="change-state-form-select"
+                      value={officialFormState.stateCode || "GA"}
+                      onChange={(e) => {
+                        const newCode = e.target.value;
+                        const config = SUPPORTED_STATE_FORMS[newCode];
+                        setOfficialFormState((prev) => ({
+                          ...prev,
+                          stateCode: newCode,
+                        }));
+                        setCaseDetails((prev) => ({
+                          ...prev,
+                          state: newCode,
+                        }));
+                        toast.success(`Switched filing form to ${config?.name || newCode} (${config?.shortAgency || newCode})`);
+                      }}
+                      className="appearance-none bg-[#031124] hover:bg-[#071C3A] text-[#FFE394] hover:text-[#FFF4D4] font-serif font-bold text-xs border border-[#C5A059] hover:border-[#FFE394] rounded-md pl-2.5 pr-7 py-1 focus:outline-none focus:ring-1 focus:ring-[#FFE394] cursor-pointer shadow-sm transition-all"
+                    >
+                      {Object.values(SUPPORTED_STATE_FORMS).map((st) => (
+                        <option key={st.code} value={st.code} className="bg-[#05142B] text-white font-sans py-1">
+                          {st.code === officialFormState.stateCode ? `Change Form: ${st.name} (${st.shortAgency}) ✓` : `${st.name} (${st.shortAgency})`}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#DFBE77] absolute right-2 pointer-events-none" />
+                  </div>
                 </div>
               </div>
             )}
@@ -1969,51 +2221,326 @@ export default function ComplaintWorkspace() {
 
         {/* 5. Full Document Preview Modal */}
         <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl custom-scrollbar p-6">
-            <DialogHeader>
-              <DialogTitle className="font-serif text-lg text-[#FFF4D4] flex items-center justify-between">
-                <span>Georgia IDEA State Complaint Preview</span>
-                <span className="text-xs text-[#C6B697] font-mono font-normal">{pages.length} Pages</span>
-              </DialogTitle>
+          <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-[94vw] md:max-w-[92vw] lg:max-w-5xl xl:max-w-6xl max-h-[94vh] overflow-y-auto bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl custom-scrollbar p-3 sm:p-5">
+            <DialogHeader className="space-y-0">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#3A2C18]">
+                <div className="flex flex-col text-left">
+                  <DialogTitle className="font-serif text-lg sm:text-xl text-[#FFF4D4] font-bold">
+                    Georgia IDEA State Complaint Preview
+                  </DialogTitle>
+                  <span className="text-xs text-[#C6B697] font-mono mt-0.5">
+                    {stateFormPages.length > 0 ? `${pages.length + stateFormPages.length - 1} Pages (4-Page Official State Form + Sections)` : `${pages.length} Sections`} · Complete Filing Packet
+                  </span>
+                </div>
+
+                {/* View Scaling Controls: Fit Entire Page vs Fit Width */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-[#020A17] border border-[#3A2C18] rounded-md p-0.5 shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewSheetFit("fit-page")}
+                      className={cn(
+                        "px-2.5 py-1 text-xs rounded font-medium transition-all flex items-center gap-1.5 cursor-pointer",
+                        previewSheetFit === "fit-page"
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
+                          : "text-[#C6B697] hover:text-[#FFF4D4]"
+                      )}
+                      title="Fit entire 8.5x11 page height and width on screen"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Fit Entire Page</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewSheetFit("fit-width")}
+                      className={cn(
+                        "px-2.5 py-1 text-xs rounded font-medium transition-all flex items-center gap-1.5 cursor-pointer",
+                        previewSheetFit === "fit-width"
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
+                          : "text-[#C6B697] hover:text-[#FFF4D4]"
+                      )}
+                      title="Expand sheet width to container"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>Fit Width</span>
+                    </button>
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleExportPdf}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-7.5 px-3 gap-1.5 cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print / PDF</span>
+                  </Button>
+                </div>
+              </div>
             </DialogHeader>
+
             <div className="space-y-6 py-4">
               {pages.map((p) => (
-                <div key={p.id} className="p-8 rounded-sm bg-[#F5EEDC] text-[#1A120A] font-serif shadow-md border border-[#D4C3A3]">
+                <div key={p.id} className="p-4 sm:p-6 rounded-sm bg-[#F5EEDC] text-[#1A120A] font-serif shadow-md border border-[#D4C3A3] w-full max-w-[880px] mx-auto">
                   <div className="flex justify-between items-center pb-2 border-b border-[#8C7A60]/40 text-xs text-[#8C7A60] mb-4">
-                    <span>{p.title}</span>
-                    <span>Page {p.number}</span>
+                    <span className="font-bold uppercase tracking-wider">
+                      Section {p.number} · {p.title}
+                    </span>
+                    <span className="font-mono font-bold">
+                      {p.id === "cover" ? "Pages 1–4 of Complete Filing Packet" : `Page ${parseInt(p.number, 10) + 3} of ${pages.length + 3}`}
+                    </span>
                   </div>
                   {p.id === "cover" ? (
-                    <div className="text-center py-6">
-                      <h3 className="font-serif font-bold tracking-widest uppercase text-xs">WAYPOINT ADVOCATES</h3>
-                      <h2 className="font-serif font-black text-2xl uppercase mt-2">STATE FORM</h2>
-                      <p className="text-xs italic mt-1">Official State Complaint Form · Submitted to the Georgia Department of Education</p>
-                      <div className="my-6 text-left max-w-sm mx-auto text-xs space-y-1.5 font-medium">
-                        <p><strong>Student:</strong> {caseDetails.studentName}</p>
-                        <p><strong>Grade:</strong> {caseDetails.grade}</p>
-                        <p><strong>District:</strong> {caseDetails.district}</p>
-                        <p><strong>Prepared by:</strong> {caseDetails.preparedBy}</p>
+                    <div className="space-y-6">
+                      <div className="bg-[#05142B] px-3.5 py-2.5 rounded border border-[#3A2C18] flex flex-wrap items-center justify-between gap-2 text-xs text-[#FFF4D4]">
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif font-bold text-[#FFE394]">
+                            Official State Complaint Form · Georgia Department of Education (GaDOE)
+                          </span>
+                          <span className="text-[#A69371] font-mono text-[11px]">
+                            · All 4 Pages Included in Filing Docket
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <a
+                            href="/forms/gadoe-formal-complaint-form.pdf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#DFBE77] hover:underline font-mono text-xs flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>Open Raw PDF</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
                       </div>
+
+                      {/* Render all 4 pages of the Official State Complaint Form */}
+                      {stateFormPages.length > 0 ? (
+                        <div className="space-y-8">
+                          {stateFormPages.map((sPage, idx) => {
+                            const pageTitles = [
+                              "Page 1 of 4: Public Agency, Complainant & Student Information",
+                              "Page 2 of 4: Statement of Problem, Proposed Resolution & Mediation",
+                              "Page 3 of 4: Verification of Service to Local Educational Agency (LEA)",
+                              "Page 4 of 4: GaDOE Special Education Division Contact & Submission Information",
+                            ];
+                            const pageDescriptions = [
+                              "Official GaDOE Form · 34 C.F.R. § 300.153(b)(1)–(2) · Student Demographics, Public School System & Contact Notice",
+                              "Official GaDOE Form · 34 C.F.R. § 300.153(b)(3)–(4) · Statement of Statutory Violations, Facts & Proposed Remedy",
+                              "Official GaDOE Form · 34 C.F.R. § 300.153(d) · Mandatory Service Verification to District Superintendent / Director",
+                              "Official GaDOE Form · State Complaint Intake, Special Education Services and Supports & Dispute Resolution",
+                            ];
+
+                            return (
+                              <div
+                                key={`state-preview-page-${idx}`}
+                                className="rounded-sm bg-white border border-[#C5A059]/60 shadow-[0_4px_16px_rgba(0,0,0,0.18)] overflow-hidden"
+                              >
+                                <div className="bg-[#FAF5E8] border-b border-[#D4C3A3] px-4 py-2 flex flex-wrap items-center justify-between gap-1 text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono font-bold text-[#8C6D2B] bg-[#EFE8D6] px-1.5 py-0.5 rounded text-[11px]">
+                                      FORM P.{idx + 1}
+                                    </span>
+                                    <span className="font-serif font-bold text-[#1A120A]">
+                                      {pageTitles[idx] || `State Form Page ${idx + 1}`}
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] text-[#6A5230] font-sans">
+                                    {pageDescriptions[idx] || "Official Georgia Department of Education Form"}
+                                  </span>
+                                </div>
+                                <div className="p-2 sm:p-4 flex justify-center items-center bg-[#1A2636]/40 rounded-b overflow-hidden">
+                                  <img
+                                    src={sPage.dataUrl}
+                                    alt={`GaDOE State Complaint Form Page ${idx + 1}`}
+                                    className={cn(
+                                      "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.4)] rounded-xs border border-slate-300 block mx-auto transition-all",
+                                      previewSheetFit === "fit-page"
+                                        ? "max-h-[76vh] w-auto max-w-full object-contain"
+                                        : "w-full max-w-[820px] h-auto object-contain"
+                                    )}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="w-full bg-white rounded border border-[#C5A059]/60 overflow-hidden shadow-sm">
+                          <iframe
+                            src="/forms/gadoe-formal-complaint-form.pdf#toolbar=0&navpanes=0&view=FitH"
+                            className="w-full h-[880px] border-0 bg-white"
+                            title="Official GaDOE State Complaint Form"
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="text-xs leading-relaxed whitespace-pre-wrap">
+                    <div className="text-xs leading-relaxed whitespace-pre-wrap font-serif text-[#1A120A] text-justify">
                       {p.content}
                     </div>
                   )}
                 </div>
               ))}
             </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                onClick={handleExportPdf}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8"
-              >
-                Download & Print
-              </Button>
+            <DialogFooter className="flex items-center justify-between sm:justify-between w-full border-t border-[#3A2C18] pt-3">
+              <span className="text-xs text-[#A69371] font-mono">
+                {caseDetails.studentName} · Cobb County School District
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPreviewModalOpen(false)}
+                  className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8"
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleExportPdf}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Download & Print</span>
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* ── PRINT MEDIA STYLES & PRINT DOCKET ───────────────────────────────── */}
+        <style>{`
+          @media print {
+            body {
+              background: #fff !important;
+              color: #000 !important;
+            }
+            body * {
+              visibility: hidden !important;
+            }
+            #state-complaint-print-docket,
+            #state-complaint-print-docket * {
+              visibility: visible !important;
+            }
+            #state-complaint-print-docket {
+              display: block !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              background: #fff !important;
+              color: #000 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .print-packet-sheet {
+              page-break-after: always !important;
+              break-after: page !important;
+              padding: 0.75in !important;
+              min-height: 9.5in !important;
+              background: #fff !important;
+              color: #000 !important;
+              box-sizing: border-box !important;
+            }
+            .print-state-form-page {
+              padding: 0.15in 0.2in !important;
+              min-height: auto !important;
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
+            .print-state-form-page img {
+              width: 100% !important;
+              max-width: 8.2in !important;
+              height: auto !important;
+              display: block !important;
+            }
+          }
+        `}</style>
+
+        <div id="state-complaint-print-docket" className="hidden">
+          {pages.map((p) => {
+            if (p.id === "cover") {
+              if (stateFormPages.length > 0) {
+                return (
+                  <React.Fragment key={`print-state-forms`}>
+                    {stateFormPages.map((sPage, idx) => (
+                      <div
+                        key={`print-state-form-p${idx + 1}`}
+                        className="print-packet-sheet print-state-form-page font-serif"
+                      >
+                        <img
+                          src={sPage.dataUrl}
+                          alt={`Official Georgia State Complaint Form Page ${idx + 1}`}
+                          className="w-full h-auto object-contain block mx-auto"
+                        />
+                      </div>
+                    ))}
+                  </React.Fragment>
+                );
+              }
+              return (
+                <div key={`print-${p.id}`} className="print-packet-sheet font-serif">
+                  <div className="text-center border-b-2 border-black pb-3 mb-6">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-800">
+                      GEORGIA DEPARTMENT OF EDUCATION
+                    </h3>
+                    <h4 className="text-xs font-bold text-slate-600 mt-1">
+                      DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
+                    </h4>
+                    <h2 className="text-xl font-black uppercase mt-3 tracking-wide">
+                      SPECIAL EDUCATION FORMAL COMPLAINT FILING DOCKET
+                    </h2>
+                    <p className="text-xs italic mt-1 text-slate-600">
+                      Filed pursuant to 34 C.F.R. §§ 300.151–300.153 and Ga. Comp. R. & Regs. 160-4-7-.12
+                    </p>
+                  </div>
+
+                  <div className="border border-slate-700 p-4 rounded mb-6 text-xs">
+                    <div className="grid grid-cols-[180px_1fr] gap-y-2 text-left">
+                      <div className="font-bold">STUDENT:</div>
+                      <div>{caseDetails.studentName} (DOB: {caseDetails.studentDob || "N/A"})</div>
+                      <div className="font-bold">PUBLIC AGENCY / LEA:</div>
+                      <div>{caseDetails.district}</div>
+                      <div className="font-bold">ASSIGNED SCHOOL:</div>
+                      <div>{caseDetails.school} (Grade: {caseDetails.grade})</div>
+                      <div className="font-bold">COMPLAINANT / ADVOCATE:</div>
+                      <div>{caseDetails.preparedBy} on behalf of Parent / Guardian</div>
+                      <div className="font-bold">DATE OF FILING:</div>
+                      <div>{caseDetails.submissionDate}</div>
+                      <div className="font-bold">ATTACHED STATE FORM:</div>
+                      <div>Official GaDOE Formal Complaint Filing Form (4 Pages) attached as Section 01</div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs leading-relaxed text-slate-800">
+                    <p><strong>FORMAL NOTICE OF FILING:</strong> This state complaint filing packet comprises Section 01 (Official Georgia Department of Education Formal Complaint Form), followed by Section 02 (Clarity Control Restatement of Issues & Statutory Violations), Section 03 (Chronological Summary of Facts), Section 04 (Master Evidentiary Exhibit Index), and attached documentary exhibits in indexed alphabetical order.</p>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={`print-${p.id}`} className="print-packet-sheet font-serif">
+                <div className="flex justify-between items-center border-b border-black pb-2 mb-4 text-xs font-sans">
+                  <span className="font-bold uppercase tracking-wider">
+                    Section {p.number} · {p.title}
+                  </span>
+                  <span className="font-mono font-bold">
+                    Page {parseInt(p.number, 10) + (stateFormPages.length > 0 ? stateFormPages.length - 1 : 0)} of {pages.length + (stateFormPages.length > 0 ? stateFormPages.length - 1 : 0)}
+                  </span>
+                </div>
+                <div className="text-xs leading-relaxed whitespace-pre-wrap text-justify font-serif">
+                  {p.content}
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
       </div>
     </ScopedErrorBoundary>
