@@ -5,14 +5,6 @@ import {
   SUPPORTED_STATE_FORMS,
 } from "./stateFormsData";
 import { cn } from "@/lib/utils";
-import {
-  FileText,
-  Download,
-  ExternalLink,
-  RefreshCw,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
 import { type ImportedPdfPage } from "@/lib/pdfImporter";
 
 interface StateComplaintFormViewProps {
@@ -40,7 +32,6 @@ export function StateComplaintFormView({
 }: StateComplaintFormViewProps) {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string>(GADOE_PDF_URL);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState<string>("Synced with student");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -148,7 +139,6 @@ export function StateComplaintFormView({
       const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
       const newUrl = URL.createObjectURL(blob);
       setPdfBlobUrl(newUrl);
-      setLastRefreshed("Auto-populated from student");
     } catch (err: any) {
       console.error("Error populating official PDF:", err);
     } finally {
@@ -201,58 +191,6 @@ export function StateComplaintFormView({
 
   return (
     <div className="w-full flex flex-col items-center select-none pb-6">
-
-      {/* ── Top Status & Action Bar: Authentic Fillable PDF Controller ──────── */}
-      <div className="w-full max-w-[840px] mb-2 px-2 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#0A264D]/90 border border-[#DFBE77]/60 text-[#FFE394] shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-bold">01 Spot: Official Fillable PDF</span>
-            <span className="text-[#DFBE77]/80">· Pages 1–4 of {totalPages}</span>
-          </span>
-          <span className="text-[11px] text-[#A69371] hidden sm:inline">
-            Click directly on any field in the PDF to edit
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={generateFilledPdf}
-            disabled={isGenerating}
-            className="px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1 bg-[#05142B]/90 border border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 transition-all cursor-pointer shadow-xs disabled:opacity-50"
-            title="Re-populate PDF fields from CRM student record"
-          >
-            {isGenerating ? (
-              <Loader2 className="w-3 h-3 animate-spin text-[#DFBE77]" />
-            ) : (
-              <RefreshCw className="w-3 h-3 text-[#DFBE77]" />
-            )}
-            <span>Re-sync Data</span>
-          </button>
-
-          <a
-            href={pdfBlobUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1 bg-[#05142B]/90 border border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 transition-all cursor-pointer shadow-xs"
-            title="Open in full screen or external PDF viewer"
-          >
-            <ExternalLink className="w-3 h-3 text-[#DFBE77]" />
-            <span className="hidden sm:inline">Open Fullscreen</span>
-          </a>
-
-          <a
-            href={pdfBlobUrl}
-            download={`State-Complaint-Form-${formState.studentName || "Student"}.pdf`}
-            className="px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] transition-all cursor-pointer shadow-xs hover:brightness-105"
-            title="Download this fillable PDF with current edits"
-          >
-            <Download className="w-3 h-3" />
-            <span>Download PDF</span>
-          </a>
-        </div>
-      </div>
 
       {/* ── Exact Official Fillable PDF Document Sheet ──────────────────────── */}
       {/* Dynamically sized so all 4 pages terminate cleanly with zero trailing void */}
