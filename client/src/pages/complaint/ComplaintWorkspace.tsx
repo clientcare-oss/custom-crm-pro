@@ -24,6 +24,7 @@ import {
   Minimize2,
   ZoomIn,
   ZoomOut,
+  Undo2,
   GripVertical,
   LayoutGrid,
   Image as ImageIcon,
@@ -75,7 +76,7 @@ interface DocumentPage {
   id: string;
   number: string;
   title: string;
-  category: "cover" | "pleading" | "facts" | "violations" | "remedies" | "exhibit";
+  category: "cover" | "restatement" | "pleading" | "facts" | "violations" | "remedies" | "exhibit";
   content?: string;
   exhibitTag?: string;
 }
@@ -92,7 +93,7 @@ const DEFAULT_PAGES: DocumentPage[] = [
     id: "clarity_control", 
     number: "02", 
     title: "Clarity Control Restatement", 
-    category: "pleading", 
+    category: "restatement", 
     content: `BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
 DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
 
@@ -401,17 +402,14 @@ function MiniaturePagePreview({
         </div>
       )) : page.id === "clarity_control" ? (
         <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
-          {/* Legal Pleading Caption */}
+          {/* Restatement Header */}
           <div className="text-center border-b border-[#3A2810]/40 pb-0.5">
-            <div className="text-[6px] font-bold tracking-wider uppercase text-[#4A3820]">
-              Georgia Dept. of Education
-            </div>
             <div className="text-[7px] font-bold text-[#0B1E38] truncate mt-0.5">
               IN RE: {caseDetails.studentName?.split(",")[0] || "STUDENT"}
             </div>
             <div className="border-t border-double border-[#8C6D2B]/50 my-0.5" />
             <div className="text-[7.5px] font-black uppercase tracking-wide text-[#1A1005]">
-              Clarity Control
+              Restatement
             </div>
           </div>
 
@@ -421,7 +419,7 @@ function MiniaturePagePreview({
             <div className="truncate font-bold text-[#8B2500]">• COUNT II: Affirmative Child Find</div>
             <div className="truncate font-bold text-[#8B2500]">• COUNT III: PWN Refusal</div>
             <div className="text-[5.5px] text-[#5A4528] italic line-clamp-2 mt-0.5">
-              34 C.F.R. § 300.153 · Statutory Violations
+              Statutory Claims & Violations
             </div>
           </div>
 
@@ -753,7 +751,21 @@ export default function ComplaintWorkspace() {
 
   useEffect(() => {
     renderFilledStateFormPages(officialFormState);
-  }, []);
+  }, [
+    officialFormState.stateCode,
+    officialFormState.studentName,
+    officialFormState.studentDob,
+    officialFormState.publicAgency,
+    officialFormState.complainantName,
+    officialFormState.complainantAddress,
+    officialFormState.complainantPhone,
+    officialFormState.complainantEmail,
+    officialFormState.currentSchool,
+    officialFormState.grade,
+    officialFormState.statementOfViolations,
+    officialFormState.proposedResolution,
+  ]);
+
 
   // State: Resizable Packet Index Width with Draggable Right Edge
   const [indexWidth, setIndexWidth] = useState<number>(() => {
@@ -807,7 +819,7 @@ export default function ComplaintWorkspace() {
   const [fontFamily, setFontFamily] = useState<"serif" | "times" | "garamond" | "sans">("serif");
   const [fontSize, setFontSize] = useState<number>(12); // pt
   const [lineSpacing, setLineSpacing] = useState<"1.15" | "1.5" | "2.0">("1.5");
-  const [textAlign, setTextAlign] = useState<"left" | "justify" | "center">("justify");
+  const [textAlign, setTextAlign] = useState<"left" | "justify" | "center">("left");
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
@@ -855,6 +867,18 @@ export default function ComplaintWorkspace() {
   // Editable Content in State
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
   const activePageIndex = pages.findIndex((p) => p.id === activePageId);
+
+  // Ref & auto-resize effect for the editable legal drafting textarea
+  // Eliminates nested inner scrollbars: the sheet expands naturally and only the outer canvas scrollbar is used!
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const newHeight = Math.max(680, el.scrollHeight);
+    el.style.height = `${newHeight}px`;
+  }, [activePage.content, fontSize, lineSpacing, fontFamily, activePageId]);
 
   // Content edits handler
   const handleUpdatePageContent = (text: string) => {
@@ -986,19 +1010,8 @@ export default function ComplaintWorkspace() {
               <span className="font-serif text-[15px] sm:text-[16px] text-[#FFF4D4] font-normal tracking-wide group-hover:text-[#FFE394] transition-colors leading-tight">
                 Back to Profile
               </span>
-              {/* Curved gold return arrow matching user reference */}
-              <svg
-                viewBox="0 0 20 12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-4 h-2.5 text-[#DFBE77] mt-0.5 group-hover:text-[#FFE394] group-hover:-translate-x-0.5 transition-all"
-              >
-                <path d="M 5 2 L 1 6 L 5 10" />
-                <path d="M 1 6 H 13 C 16 6 18.5 8 18.5 11" />
-              </svg>
+              {/* Curved gold U-turn return arrow matching Student Workspace */}
+              <Undo2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#DFBE77] group-hover:text-[#FFE394] group-hover:-translate-x-0.5 transition-all mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
             </button>
 
             {/* Thin vertical divider line matching reference screenshot */}
@@ -1515,6 +1528,7 @@ export default function ComplaintWorkspace() {
               {/* ── DOCUMENT SHEET DISPLAY ───────────────────────────────── */}
               {activePage.id === "cover" ? (
                 /* ── VIEW 1: AUTHENTIC OFFICIAL STATE COMPLAINT FORM (4 Standard 8.5x11 Sheets) ── */
+                /* Cleanly stacked Letter sheets — zero iframes, zero inner scrollbars! Only the outer scrollbar on the right scrolls */
                 <StateComplaintFormView
                   formState={officialFormState}
                   onChange={setOfficialFormState}
@@ -1524,25 +1538,37 @@ export default function ComplaintWorkspace() {
                   }}
                   viewMode={viewMode}
                   zoomLevel={zoomLevel}
+                  renderedPages={stateFormPages}
+                  isRendering={isRenderingStateForm}
                 />
               ) : (
                 /* ── VIEW 2: EDITABLE DOCUMENT PAGES (Proportional Google Docs Writing Area) ── */
+                /* Auto-expanding Letter sheet: zero nested scrollbars, outer canvas scrollbar on the right scrolls all pages */
                 <div
                   style={{
-                    aspectRatio: "8.5 / 11",
+                    width: viewMode === "actual" ? "816px" : "100%",
+                    maxWidth: "816px",
+                    minHeight: "1056px",
                     backgroundImage: "url('/decor/fine-parchment.jpg')",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
-                    transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
+                    transform: viewMode === "fit-page" 
+                      ? "scale(0.78)" 
+                      : zoomLevel !== 100 
+                        ? `scale(${zoomLevel / 100})` 
+                        : undefined,
                     transformOrigin: "top center",
+                    marginBottom: (viewMode !== "fit-page" && zoomLevel > 100) 
+                      ? `${(zoomLevel - 100) * 11}px` 
+                      : (viewMode === "fit-page")
+                        ? "-180px"
+                        : undefined,
                   }}
                   className={cn(
                     "relative rounded-xs select-text flex flex-col justify-between transition-all",
                     "bg-[#FBF6EA] text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)]",
-                    viewMode === "fit-width" && "w-full max-w-[840px] aspect-[8.5/11] min-h-[1080px] p-10 sm:p-14 lg:p-16 my-1 shrink-0",
-                    viewMode === "fit-page" && "h-[calc(100vh-175px)] aspect-[8.5/11] w-auto max-w-full p-8 lg:p-10 my-auto shrink-0",
-                    viewMode === "actual" && "w-[816px] min-h-[1056px] p-12 sm:p-16 my-2 shrink-0"
+                    "px-8 sm:px-12 md:px-14 pt-8 pb-8 my-2 shrink-0"
                   )}
                 >
                   {/* Printable Margin Guidelines (only on draft pages) */}
@@ -1551,44 +1577,52 @@ export default function ComplaintWorkspace() {
                   <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
                   <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
 
-                  <div className="relative z-10 flex flex-col h-full min-h-0 select-text">
+                  <div className="relative z-10 flex flex-col h-full select-text flex-1">
                     <div className="flex items-center justify-between pb-3 border-b border-[#8C7A60]/40 shrink-0">
                       <div>
                         <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A60] font-bold">
-                          Section {activePage.number} · {activePage.category.toUpperCase()}
+                          Section {activePage.number} · {activePage.id === "clarity_control" || activePage.number === "02" || activePage.category === "pleading" || activePage.category === "restatement" ? "RESTATEMENT" : activePage.category.toUpperCase()}
                         </span>
                         <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5">
                           {activePage.title}
                         </h2>
                       </div>
-                      <div className="text-right">
-                        <span className="text-[11px] font-serif text-[#6E5D43] italic block">
-                          GA DOE SPECIAL EDUCATION
-                        </span>
-                        <span className="text-[10px] font-mono text-[#8C7A60]">
-                          34 C.F.R. § 300.153
-                        </span>
-                      </div>
+                      {/* For Page Two, remove gadoe sped and 34 cfr etc */}
+                      {activePage.id !== "clarity_control" && activePage.number !== "02" && (
+                        <div className="text-right">
+                          <span className="text-[11px] font-serif text-[#6E5D43] italic block">
+                            {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.shortAgency || "GA DOE"} SPECIAL EDUCATION
+                          </span>
+                          <span className="text-[10px] font-mono text-[#8C7A60]">
+                            IDEA State Complaint
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex-1 py-4 overflow-y-auto custom-scrollbar min-h-0 flex flex-col">
+                    <div className="py-4 flex flex-col w-full flex-1">
                       <textarea
+                        ref={textareaRef}
                         value={activePage.content || ""}
-                        onChange={(e) => handleUpdatePageContent(e.target.value)}
+                        onChange={(e) => {
+                          handleUpdatePageContent(e.target.value);
+                          e.target.style.height = "auto";
+                          e.target.style.height = `${Math.max(680, e.target.scrollHeight)}px`;
+                        }}
                         placeholder="Draft legal statement, factual narrative, or statutory citations here..."
                         style={{
-                          lineHeight: lineSpacing === "2.0" ? "2" : lineSpacing === "1.5" ? "1.6" : "1.25",
+                          lineHeight: lineSpacing === "2.0" ? "2.0" : lineSpacing === "1.5" ? "1.6" : "1.35",
                           fontSize: `${fontSize}pt`,
                           textAlign: textAlign,
                           fontWeight: isBold ? "bold" : "normal",
                           fontStyle: isItalic ? "italic" : "normal",
                           textDecoration: isUnderline ? "underline" : "none",
-                          fontFamily: fontFamily === "serif" ? "'Playfair Display', Georgia, serif" :
-                                      fontFamily === "times" ? "'Times New Roman', Times, serif" :
-                                      fontFamily === "garamond" ? "'EB Garamond', Garamond, serif" :
-                                      "Inter, system-ui, sans-serif"
+                          fontFamily: fontFamily === "serif" ? "Georgia, Cambria, 'Times New Roman', serif" :
+                                      fontFamily === "times" ? "'Times New Roman', Times, Georgia, serif" :
+                                      fontFamily === "garamond" ? "'EB Garamond', Garamond, Georgia, serif" :
+                                      "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                         }}
-                        className="w-full flex-1 min-h-[350px] bg-transparent text-[#1A120A] resize-none focus:outline-none placeholder:text-[#8C7A60]/50"
+                        className="w-full bg-transparent text-[#1A120A] resize-none focus:outline-none placeholder:text-[#8C7A60]/50 tracking-normal leading-relaxed overflow-hidden"
                       />
                     </div>
 
@@ -2284,7 +2318,7 @@ export default function ComplaintWorkspace() {
                 <div key={p.id} className="p-4 sm:p-6 rounded-sm bg-[#F5EEDC] text-[#1A120A] font-serif shadow-md border border-[#D4C3A3] w-full max-w-[880px] mx-auto">
                   <div className="flex justify-between items-center pb-2 border-b border-[#8C7A60]/40 text-xs text-[#8C7A60] mb-4">
                     <span className="font-bold uppercase tracking-wider">
-                      Section {p.number} · {p.title}
+                      Section {p.number} · {p.id === "clarity_control" || p.number === "02" || p.category === "restatement" ? "Restatement" : p.title}
                     </span>
                     <span className="font-mono font-bold">
                       {p.id === "cover" ? "Pages 1–4 of Complete Filing Packet" : `Page ${parseInt(p.number, 10) + 3} of ${pages.length + 3}`}
@@ -2528,7 +2562,7 @@ export default function ComplaintWorkspace() {
               <div key={`print-${p.id}`} className="print-packet-sheet font-serif">
                 <div className="flex justify-between items-center border-b border-black pb-2 mb-4 text-xs font-sans">
                   <span className="font-bold uppercase tracking-wider">
-                    Section {p.number} · {p.title}
+                    Section {p.number} · {p.id === "clarity_control" || p.number === "02" || p.category === "restatement" ? "Restatement" : p.title}
                   </span>
                   <span className="font-mono font-bold">
                     Page {parseInt(p.number, 10) + (stateFormPages.length > 0 ? stateFormPages.length - 1 : 0)} of {pages.length + (stateFormPages.length > 0 ? stateFormPages.length - 1 : 0)}

@@ -4,7 +4,9 @@ import {
   type OfficialComplaintFormState,
   SUPPORTED_STATE_FORMS,
 } from "./stateFormsData";
+import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 interface StateComplaintFormViewProps {
   formState: OfficialComplaintFormState;
@@ -13,6 +15,8 @@ interface StateComplaintFormViewProps {
   readOnly?: boolean;
   viewMode?: "fit-width" | "fit-page" | "actual";
   zoomLevel?: number;
+  renderedPages?: ImportedPdfPage[];
+  isRendering?: boolean;
 }
 
 const GADOE_PDF_URL = "/forms/gadoe-formal-complaint-form.pdf";
@@ -24,186 +28,165 @@ export function StateComplaintFormView({
   readOnly = false,
   viewMode = "fit-width",
   zoomLevel = 100,
+  renderedPages: propRenderedPages,
+  isRendering = false,
 }: StateComplaintFormViewProps) {
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string>(GADOE_PDF_URL);
-  const [hasAutoFilled, setHasAutoFilled] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [internalPages, setInternalPages] = useState<ImportedPdfPage[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  // Function to fill the exact official Georgia GaDOE PDF with student & case data
-  const generateFilledPdf = async () => {
-    try {
-      const response = await fetch(GADOE_PDF_URL);
-      if (!response.ok) {
-        throw new Error(`Failed to load official state form (${response.status})`);
-      }
-      const existingPdfBytes = await response.arrayBuffer();
+  // Self-render fallback if renderedPages not provided by parent
+  useEffect(() => {
+    if (propRenderedPages && propRenderedPages.length > 0) return;
 
-      // Load with pdf-lib to populate official AcroForm fields
-      const pdfDoc = await PDFDocument.load(existingPdfBytes);
-      const form = pdfDoc.getForm();
-
-      const setIfField = (name: string, value: string | undefined | null) => {
-        if (!value) return;
-        try {
-          const field = form.getTextField(name);
-          if (field) field.setText(String(value));
-        } catch (e) {
-          // ignore if field not present
-        }
-      };
-
-      // Page 1: Public Agency
-      setIfField("Public agency filing complaint against", formState.publicAgency);
-
-      // Page 1: Complainant
-      setIfField("Name of Complainant", formState.complainantName);
-      setIfField("Relationship to student", formState.complainantRelationship);
-      setIfField("Complainant Address", formState.complainantAddress);
-      setIfField("City", formState.complainantCity);
-      setIfField("State", formState.complainantState || "GA");
-      setIfField("Zip Code", formState.complainantZip);
-      setIfField("Complainant Phone Numbers", formState.complainantPhone);
-      setIfField("Complainant Email Address", formState.complainantEmail);
-
-      // Page 1: Student
-      setIfField("Name of Student", formState.studentName);
-      setIfField("Date of Birth", formState.studentDob);
-      setIfField("Student Address", formState.studentAddress);
-      setIfField("City_2", formState.studentCity);
-      setIfField("State_2", formState.studentState || "GA");
-      setIfField("Zip Code_2", formState.studentZip);
-      setIfField("GTID", formState.studentGtid);
-      setIfField("Current School", formState.currentSchool);
-
-      // Page 1: Parent
-      setIfField("Parent if not the complainant", formState.parentName);
-      setIfField("Parent Address", formState.parentAddress);
-      setIfField("City_3", formState.parentCity);
-      setIfField("State_3", formState.parentState || "GA");
-      setIfField("Zip Code_3", formState.parentZip);
-      setIfField("Parent Phone Numbers", formState.parentPhone);
-      setIfField("Parent Email Address", formState.parentEmail);
-
-      // Page 1: Problem / Allegation Statement
-      setIfField(
-        "Please provide a statement of the problem and the facts upon which the problem is based Include the date and time when the violation occurred or the duration of the violation and supporting documentation",
-        formState.statementOfViolations || formState.factsRelatingToViolations
-      );
-
-      // Page 2: Proposed Resolution
-      setIfField(
-        "Please provide a proposed resolution of the problem to the extent known and available to the party at the time the complaint is filed",
-        formState.proposedResolution
-      );
-
-      // Page 2: Mediation Willingness Radio
+    let isCancelled = false;
+    const generateFallback = async () => {
       try {
-        const radio = form.getRadioGroup("Are you willing to participate in the mediation process to try to resolve your concerns");
-        if (radio) {
-          if (formState.mediationWillingness === "yes") {
-            radio.select("YES");
-          } else if (formState.mediationWillingness === "no") {
-            radio.select("NO");
-          } else if (formState.mediationWillingness === "na") {
-            radio.select("Not Applicable");
-          }
+        setIsGenerating(true);
+        const res = await fetch(GADOE_PDF_URL);
+        if (!res.ok) return;
+        const bytes = await res.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(bytes);
+        const form = pdfDoc.getForm();
+
+        const setIf = (name: string, val: string | undefined | null) => {
+          if (!val) return;
+          try {
+            const f = form.getTextField(name);
+            if (f) f.setText(String(val));
+          } catch (e) {}
+        };
+
+        setIf("Public agency filing complaint against", formState.publicAgency);
+        setIf("Name of Complainant", formState.complainantName);
+        setIf("Relationship to student", formState.complainantRelationship);
+        setIf("Complainant Address", formState.complainantAddress);
+        setIf("City", formState.complainantCity);
+        setIf("State", formState.complainantState || "GA");
+        setIf("Zip Code", formState.complainantZip);
+        setIf("Complainant Phone Numbers", formState.complainantPhone);
+        setIf("Complainant Email Address", formState.complainantEmail);
+
+        setIf("Name of Student", formState.studentName);
+        setIf("Date of Birth", formState.studentDob);
+        setIf("Student Address", formState.studentAddress);
+        setIf("City_2", formState.studentCity);
+        setIf("State_2", formState.studentState || "GA");
+        setIf("Zip Code_2", formState.studentZip);
+        setIf("GTID", formState.studentGtid);
+        setIf("Current School", formState.currentSchool);
+
+        setIf(
+          "Please provide a statement of the problem and the facts upon which the problem is based Include the date and time when the violation occurred or the duration of the violation and supporting documentation",
+          formState.statementOfViolations || formState.factsRelatingToViolations
+        );
+        setIf(
+          "Please provide a proposed resolution of the problem to the extent known and available to the party at the time the complaint is filed",
+          formState.proposedResolution
+        );
+
+        const saved = await pdfDoc.save();
+        const imgs = await convertPdfToPageImages(saved.buffer as ArrayBuffer, 1.8);
+        if (!isCancelled && imgs.length > 0) {
+          setInternalPages(imgs);
         }
-      } catch (e) {}
-
-      // Page 3: Service copy to LEA
-      setIfField("On", formState.serviceDate);
-      setIfField("name or title of recipient", formState.serviceRecipient);
-      setIfField("via", formState.serviceMethod);
-
-      // Save modified PDF bytes
-      const pdfBytes = await pdfDoc.save();
-
-      // Create new blob URL for the fillable PDF
-      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
-      const newUrl = URL.createObjectURL(blob);
-      setPdfBlobUrl(newUrl);
-      setHasAutoFilled(true);
-    } catch (err: any) {
-      console.error("Error populating official PDF:", err);
-    }
-  };
-
-  // Initial load auto-population with student data
-  useEffect(() => {
-    if (formState.studentName && !hasAutoFilled) {
-      generateFilledPdf();
-    }
-  }, [formState.studentName]);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [measuredHeight, setMeasuredHeight] = useState<number | null>(() => {
-    if (typeof window !== "undefined") {
-      const estimatedWidth = Math.min(840, Math.max(500, window.innerWidth - 280));
-      return Math.ceil(estimatedWidth * (792 / 612) * 4) + 40;
-    }
-    return 3800;
-  });
-
-  // Dynamically calculate exact PDF height based on rendered container width
-  // Eliminates dead grey space below the 4-page PDF form while preventing inner scrollbars
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const calculateExactHeight = () => {
-      const width = el.clientWidth;
-      if (width > 0) {
-        // Standard US Letter aspect ratio = 792 / 612 (1.294117647)
-        // 4 pages + Chromium PDF viewer page separators (~8px each) + boundary margins (~16px) = ~40px
-        const pageHeight = width * (792 / 612);
-        const exactHeight = Math.ceil(pageHeight * 4) + 40;
-        setMeasuredHeight(exactHeight);
+      } catch (err) {
+        console.error("Error generating fallback pages in StateComplaintFormView:", err);
+      } finally {
+        if (!isCancelled) setIsGenerating(false);
       }
     };
 
-    calculateExactHeight();
-    const ro = new ResizeObserver(calculateExactHeight);
-    ro.observe(el);
-    window.addEventListener("resize", calculateExactHeight);
-
+    generateFallback();
     return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", calculateExactHeight);
+      isCancelled = true;
     };
-  }, [viewMode]);
+  }, [
+    propRenderedPages,
+    formState.studentName,
+    formState.studentDob,
+    formState.publicAgency,
+    formState.complainantName,
+    formState.statementOfViolations,
+    formState.proposedResolution,
+  ]);
+
+  const activePages = (propRenderedPages && propRenderedPages.length > 0) ? propRenderedPages : internalPages;
+  const isLoading = (isRendering || isGenerating) && activePages.length === 0;
 
   return (
-    <div className="w-full flex flex-col items-center select-none">
-      {/* ── Exact Official Fillable PDF Document Sheet ──────────────────────── */}
-      {/* Dynamically sized so the 4 pages terminate cleanly with zero trailing grey void! */}
-      {/* The single blue canvas scrollbar on screen is the ONLY scrollbar used to progress. */}
-      <div
-        ref={containerRef}
-        style={{
-          height: measuredHeight ? `${measuredHeight}px` : undefined,
-          transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
-          transformOrigin: "top center",
-        }}
-        className={cn(
-          "relative rounded-xs select-text flex flex-col items-center transition-all bg-white text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)] my-2 shrink-0 overflow-hidden",
-          viewMode === "fit-width" && "w-full max-w-[840px]",
-          viewMode === "fit-page" && "w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",
-          viewMode === "actual" && "w-[816px] my-2"
-        )}
-      >
-        {/* Printable Corner Margin Registration Tick Marks matching other pages */}
-        <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-        <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
-        <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-        <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+    <div className="w-full flex flex-col items-center select-none pb-6">
+      {isLoading ? (
+        /* Loading skeleton sheet */
+        <div
+          style={{
+            width: viewMode === "actual" ? "816px" : "100%",
+            maxWidth: "816px",
+            minHeight: "1056px",
+            aspectRatio: "8.5 / 11",
+          }}
+          className="relative rounded-xs flex flex-col items-center justify-center bg-[#FBF6EA] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)] my-2"
+        >
+          <div className="p-4 rounded-full bg-[#05142B]/10 border border-[#C5A059]/30 mb-3">
+            <Loader2 className="w-8 h-8 text-[#C5A059] animate-spin" />
+          </div>
+          <span className="font-serif text-[#1A120A] font-bold text-base">
+            Loading Official State Complaint Form...
+          </span>
+          <span className="text-[#8C7A60] text-xs font-mono mt-1">
+            Rendering 4 official pages for {SUPPORTED_STATE_FORMS[formState.stateCode]?.name || "Georgia"}
+          </span>
+        </div>
+      ) : activePages.length > 0 ? (
+        /* ── All 4 Pages Stacked Vertically — Zero Iframes, Zero Inner Scrollbars ── */
+        /* The single blue canvas scrollbar on the right is the ONLY scrollbar used to scroll all pages */
+        <div className="flex flex-col items-center gap-6 w-full">
+          {activePages.map((page, idx) => (
+            <div
+              key={page.pageNumber || idx}
+              style={{
+                width: viewMode === "actual" ? "816px" : "100%",
+                maxWidth: "816px",
+                minHeight: "1056px",
+                aspectRatio: "8.5 / 11",
+                transform: viewMode === "fit-page" 
+                  ? "scale(0.78)" 
+                  : zoomLevel !== 100 
+                    ? `scale(${zoomLevel / 100})` 
+                    : undefined,
+                transformOrigin: "top center",
+                marginBottom: (viewMode !== "fit-page" && zoomLevel > 100)
+                  ? `${(zoomLevel - 100) * 11}px`
+                  : (viewMode === "fit-page")
+                    ? "-180px"
+                    : undefined,
+              }}
+              className={cn(
+                "relative rounded-xs select-text flex flex-col items-center transition-all bg-white text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)] my-2 shrink-0 overflow-hidden",
+                viewMode === "fit-width" && "w-full max-w-[840px]",
+                viewMode === "fit-page" && "w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",
+                viewMode === "actual" && "w-[816px] my-2"
+              )}
+            >
+              {/* Printable Corner Margin Registration Tick Marks */}
+              <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+              <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+              <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+              <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
 
-        <iframe
-          ref={iframeRef}
-          src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-          className="w-full h-full border-0 bg-white"
-          title="Georgia Department of Education (GaDOE) Special Education Formal Complaint Form"
-        />
-      </div>
+              {/* Top floating pill page number badge */}
+              <div className="absolute top-3 right-4 z-10 font-mono text-[10px] text-[#8C7A60] bg-[#FBF6EA]/95 px-2.5 py-0.5 rounded-full border border-[#BCA062]/60 shadow-xs pointer-events-none font-bold">
+                Official State Form · Page {page.pageNumber} of {activePages.length}
+              </div>
+
+              <img
+                src={page.dataUrl}
+                alt={`Official State Form Page ${page.pageNumber}`}
+                className="w-full h-auto object-contain block select-none pointer-events-none"
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
