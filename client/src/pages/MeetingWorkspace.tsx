@@ -153,12 +153,12 @@ export default function MeetingWorkspace() {
         const order = safeParseJson<string[]>(workspace.detectedIepOrder, []);
         if (order.length > 0) setDetectedIepOrder(order);
       }
-      if (workspace.iepIntelFindings) setIepFindings(safeParseJson<IepIntelFinding[]>(workspace.iepIntelFindings, []));
-      if (workspace.parentIntelConcerns) setParentConcerns(safeParseJson<ParentIntelConcern[]>(workspace.parentIntelConcerns, []));
       if (workspace.parentConcernStatement) setPcsText(workspace.parentConcernStatement);
       if (typeof workspace.pcsApproved === "boolean") setPcsApproved(workspace.pcsApproved);
+
+      let loadedTargets: MeetingTarget[] = [];
       if (workspace.meetingTargets) {
-        const loadedTargets = safeParseJson<MeetingTarget[]>(workspace.meetingTargets, []);
+        loadedTargets = safeParseJson<MeetingTarget[]>(workspace.meetingTargets, []);
         if (loadedTargets.length > 0) {
           setTargets(loadedTargets);
           try { if (selectedStudentId) localStorage.setItem(`mw_backup_${selectedStudentId}`, JSON.stringify(loadedTargets)); } catch {}
@@ -168,6 +168,7 @@ export default function MeetingWorkspace() {
             if (cached) {
               const parsedCache = JSON.parse(cached);
               if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+                loadedTargets = parsedCache;
                 setTargets(parsedCache);
                 saveCurrentState({ meetingTargets: parsedCache });
               }
@@ -176,6 +177,44 @@ export default function MeetingWorkspace() {
         }
         if (loadedTargets.some((t) => t.sources?.some((s) => s.toLowerCase().includes("import")))) setIsManualImport(true);
       }
+
+      // Sync or auto-derive IEP Intel Findings
+      const existingFindings = workspace.iepIntelFindings ? safeParseJson<IepIntelFinding[]>(workspace.iepIntelFindings, []) : [];
+      if (existingFindings.length > 0) {
+        setIepFindings(existingFindings);
+      } else if (loadedTargets.length > 0) {
+        const derivedFindings: IepIntelFinding[] = loadedTargets
+          .filter((t) => t.iepSection !== "Parent Concerns")
+          .map((t, idx) => ({
+            id: `fnd-derived-${t.id || idx + 1}`,
+            category: t.iepSection || "Accommodations / Supports",
+            section: t.iepSection || "Accommodations / Supports",
+            text: `${t.targetName}: ${t.whyWeWantIt || t.quickAdvocateSayThis || ""}`,
+            quote: t.supportingEvidence || t.possibleIepWording || undefined,
+            status: (t.iepSection === "Accommodations / Supports" || t.iepSection === "Special Education Services") ? "important" : "keep",
+            isCustom: false,
+          }));
+        setIepFindings(derivedFindings);
+      }
+
+      // Sync or auto-derive Parent Intel Concerns
+      const existingConcerns = workspace.parentIntelConcerns ? safeParseJson<ParentIntelConcern[]>(workspace.parentIntelConcerns, []) : [];
+      if (existingConcerns.length > 0) {
+        setParentConcerns(existingConcerns);
+      } else if (loadedTargets.length > 0) {
+        const derivedConcerns: ParentIntelConcern[] = loadedTargets
+          .filter((t) => t.iepSection === "Parent Concerns" || t.parentWhatWeWant || t.parentWhyWeWantIt)
+          .map((t, idx) => ({
+            id: `pci-derived-${t.id || idx + 1}`,
+            topic: t.targetName,
+            concern: t.parentWhyWeWantIt || t.whyWeWantIt || t.parentWhatWeWant || t.quickAdvocateSayThis || "",
+            source: t.sources?.[0] || "Advocate Ready Document",
+            status: "keep",
+            isCustom: false,
+          }));
+        setParentConcerns(derivedConcerns);
+      }
+
       if (workspace.parkingLot) setParkingLot(safeParseJson<ParkingLotItem[]>(workspace.parkingLot, []));
       if (workspace.additionalItems) setAdditionalItems(safeParseJson<AdditionalItem[]>(workspace.additionalItems, []));
       if (workspace.closeoutChecks) {
@@ -185,7 +224,15 @@ export default function MeetingWorkspace() {
           })
         );
       }
-      if (workspace.status === "LIVE") setActiveTab("MEETING_MODE");
+      if (workspace.status === "LIVE") {
+        setActiveTab("MEETING_MODE");
+      } else if (workspace.activeTab) {
+        setActiveTab(workspace.activeTab as WorkspaceTab);
+        if (workspace.prepStep) setPrepStep(workspace.prepStep as PrepStep);
+      } else if (loadedTargets.length > 0) {
+        setActiveTab("BLUEPRINT");
+        setPrepStep("blueprint");
+      }
     }
   }, [workspace]);
 
@@ -273,6 +320,8 @@ export default function MeetingWorkspace() {
       saveMutation.mutate({
         id: workspace.id,
         status: partialUpdates?.status ?? meetingStatus,
+        activeTab: partialUpdates?.activeTab ?? activeTab,
+        prepStep: partialUpdates?.prepStep ?? prepStep,
         meetingTitle: meetingType,
         meetingDate: meetingDate,
         detectedIepOrder: serialize(updatedOrder),
@@ -369,42 +418,42 @@ export default function MeetingWorkspace() {
 
   return (
     <ScopedErrorBoundary>
-      <div className="min-h-screen bg-[#000820] text-slate-100 p-4 sm:p-6 lg:p-8 flex flex-col space-y-6">
+      <div className="min-h-screen bg-[#07162B] bg-[radial-gradient(ellipse_at_50%_0%,#102B4E_0%,#07162B_55%,#030D1A_100%)] text-[#FFF4D4] p-4 sm:p-6 lg:p-8 flex flex-col space-y-6">
         {/* Top Student Switcher Bar */}
-        <div className="flex items-center justify-between gap-4 flex-wrap pb-2 border-b border-slate-800/80">
+        <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-[#3A2C18]/80">
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs font-semibold text-slate-200 hover:border-[#F5B544]/60 transition-all cursor-pointer">
-                  <Users className="w-3.5 h-3.5 text-[#F5B544]" />
-                  <span>Student: <strong className="text-amber-200">{studentName}</strong></span>
+                <button className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] text-xs font-semibold text-[#FFF4D4] hover:border-[#C5A059]/60 shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all cursor-pointer">
+                  <Users className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  <span>Student: <strong className="text-[#FFE394]">{studentName}</strong></span>
                   {caseId && (
-                    <span className="px-2 py-0.5 rounded-full bg-[#0E3560] border border-[#1D5B9B] text-[11px] font-mono font-bold text-amber-300">
+                    <span className="px-2 py-0.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[11px] font-mono font-bold text-[#FFE394]">
                       Case #{caseId.replace(/^Case\s*#?/i, "")}
                     </span>
                   )}
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                  <ChevronDown className="w-3 h-3 text-[#A69371]" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-slate-900 border-slate-700 text-slate-200 w-64 max-h-80 overflow-y-auto">
+              <DropdownMenuContent className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] w-64 max-h-80 overflow-y-auto shadow-2xl">
                 {contacts?.map((c) => {
                   const cCaseId = c.caseId || (c.id === 120034 ? "WP-2026-0029" : null);
                   return (
                     <DropdownMenuItem
                       key={c.id}
                       onClick={() => handleStudentSwitch(c.id)}
-                      className="flex items-center justify-between gap-2 text-xs hover:bg-slate-800 cursor-pointer py-2"
+                      className="flex items-center justify-between gap-2 text-xs hover:bg-[#071E3D] hover:text-[#FFF4D4] cursor-pointer py-2 text-[#D8C7A5]"
                     >
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-slate-200">{c.firstName} {c.lastName}</span>
+                        <span className="font-semibold text-[#FFF4D4]">{c.firstName} {c.lastName}</span>
                         {cCaseId && (
-                          <span className="text-[10.5px] font-mono text-amber-400/90 font-medium">
+                          <span className="text-[10.5px] font-mono text-[#FFE394]/90 font-medium">
                             Case #{cCaseId.replace(/^Case\s*#?/i, "")}
                           </span>
                         )}
                       </div>
                       {c.id === selectedStudentId && (
-                        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] py-0 shrink-0">Active</Badge>
+                        <Badge className="bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40 text-[10px] py-0 shrink-0">Active</Badge>
                       )}
                     </DropdownMenuItem>
                   );
@@ -413,9 +462,9 @@ export default function MeetingWorkspace() {
             </DropdownMenu>
 
             {saveMutation.isPending && (
-              <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
-                Saving...
+              <span className="text-[11px] text-[#A69371] flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin text-[#FFE394]" />
+                Saving to D1...
               </span>
             )}
           </div>
@@ -426,19 +475,19 @@ export default function MeetingWorkspace() {
               variant="outline"
               size="sm"
               onClick={() => setIsImportModalOpen(true)}
-              className="text-xs h-8 border-[#144A7E] bg-[#071C3C] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 gap-1.5 cursor-pointer shadow-sm font-semibold"
+              className="text-xs h-8 border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 gap-1.5 cursor-pointer shadow-sm font-semibold"
               title="Paste or drop an Advocate Ready document to import targets"
             >
-              <Download className="w-3.5 h-3.5 text-[#F5B544]" />
+              <Download className="w-3.5 h-3.5 text-[#DFBE77]" />
               <span>📥 Import Advocate Ready</span>
             </Button>
             <Button
               onClick={() => saveCurrentState()}
               variant="outline"
               size="sm"
-              className="text-xs h-8 border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 gap-1.5 cursor-pointer"
+              className="text-xs h-8 border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 gap-1.5 cursor-pointer"
             >
-              <Save className="w-3.5 h-3.5 text-[#F5B544]" />
+              <Save className="w-3.5 h-3.5 text-[#DFBE77]" />
               Save Workspace
             </Button>
             <PageIdBadge id="PG-043" name="⚡ Meeting Workspace" />
@@ -455,6 +504,7 @@ export default function MeetingWorkspace() {
           activeTab={activeTab}
           onSelectTab={(tab) => {
             setActiveTab(tab);
+            saveCurrentState({ activeTab: tab }, true);
           }}
           onBack={handleBack}
           onStartLiveMeeting={() => {
@@ -479,8 +529,8 @@ export default function MeetingWorkspace() {
         {/* Loading state */}
         {workspaceLoading && (
           <div className="flex flex-col items-center justify-center p-16 space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-[#F5B544]" />
-            <p className="text-xs text-slate-400">Loading IEP meeting workspace...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-[#FFE394]" />
+            <p className="text-xs text-[#C6B697]">Loading IEP meeting workspace...</p>
           </div>
         )}
 
@@ -495,6 +545,7 @@ export default function MeetingWorkspace() {
                   currentStep={prepStep}
                   onSelectStep={(step) => {
                     setPrepStep(step);
+                    saveCurrentState({ prepStep: step }, true);
                   }}
                   hasIepIntel={hasIepIntel}
                   hasParentIntel={hasParentIntel}
@@ -624,13 +675,13 @@ export default function MeetingWorkspace() {
 
                 {/* Step 5: Ready for Meeting */}
                 {prepStep === "ready" && (
-                  <div className="bg-[#0b1e36] border border-slate-700/60 rounded-xl p-8 text-center max-w-2xl mx-auto space-y-6 shadow-xl">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-950/50 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto">
-                      <Badge className="text-xl p-2 bg-transparent text-[#F5B544]">⚡</Badge>
+                  <div className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-8 text-center max-w-2xl mx-auto space-y-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                    <div className="w-14 h-14 rounded-2xl bg-[#020A17] border border-[#3A2C18] text-[#FFE394] flex items-center justify-center mx-auto shadow-inner">
+                      <span className="text-2xl select-none">⚡</span>
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-slate-100">Meeting Preparation Complete</h3>
-                      <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                      <h3 className="text-xl sm:text-2xl font-serif font-black text-[#FFF4D4]">Meeting Preparation Complete</h3>
+                      <p className="text-xs text-[#C6B697] mt-1.5 max-w-md mx-auto leading-relaxed">
                         All IEP intel, parent concerns, and meeting targets have been approved. You are ready to run the IEP meeting.
                       </p>
                     </div>
@@ -641,7 +692,7 @@ export default function MeetingWorkspace() {
                           setActiveTab("MEETING_MODE");
                         }}
                         variant="outline"
-                        className="border-slate-700 bg-slate-900 text-slate-200 text-xs cursor-pointer"
+                        className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 text-xs cursor-pointer"
                       >
                         Preview Meeting Mode
                       </Button>
@@ -651,7 +702,7 @@ export default function MeetingWorkspace() {
                           setActiveTab("MEETING_MODE");
                           saveCurrentState({ status: "LIVE" });
                         }}
-                        className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-slate-950 font-bold text-xs gap-2 cursor-pointer shadow-lg"
+                        className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs gap-2 cursor-pointer shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105"
                       >
                         ⚡ Launch Live Meeting Mode
                       </Button>

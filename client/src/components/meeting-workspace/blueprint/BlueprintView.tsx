@@ -141,22 +141,22 @@ export function BlueprintView({
   return (
     <div className="space-y-4">
       {/* Compact Top Action Bar (Small box, no awkward text wrapping) */}
-      <div className="rounded-xl bg-[#092244]/90 border border-[#144A7E] p-2.5 sm:p-3 shadow-md flex items-center justify-between gap-3 flex-wrap">
+      <div className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] p-2.5 sm:p-3 shadow-[0_8px_24px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2.5 flex-wrap min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="p-1 rounded-md bg-amber-500/20 text-[#F5B544] shrink-0">
+            <span className="p-1 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#DFBE77] shrink-0">
               <MapIcon className="h-4 w-4" />
             </span>
-            <h2 className="text-sm sm:text-base font-bold text-white tracking-wide whitespace-nowrap">
+            <h2 className="text-sm sm:text-base font-serif font-black text-[#FFF4D4] tracking-wide whitespace-nowrap">
               IEP Meeting Blueprint
             </h2>
           </div>
-          <span className="text-blue-400/40 hidden sm:inline">·</span>
-          <span className="px-2 py-0.5 rounded-md bg-[#06172E] border border-[#144E8A] text-[11px] font-mono font-bold text-amber-300 shrink-0">
+          <span className="text-[#3A2C18] hidden sm:inline">·</span>
+          <span className="px-2 py-0.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[11px] font-mono font-bold text-[#FFE394] shrink-0">
             {targets.length} Planned {targets.length === 1 ? "Target" : "Targets"}
           </span>
-          <span className="text-blue-400/40 hidden md:inline">·</span>
-          <span className="text-xs text-blue-200/70 hidden md:inline truncate max-w-sm">
+          <span className="text-[#3A2C18] hidden md:inline">·</span>
+          <span className="text-xs text-[#C6B697] hidden md:inline truncate max-w-sm">
             1 Request · 1 IEP Location · 1 Team Decision
           </span>
         </div>
@@ -167,7 +167,7 @@ export function BlueprintView({
             size="sm"
             onClick={() => setShowParentPreviewModal(true)}
             disabled={targets.length === 0}
-            className="h-8 text-xs font-semibold border-emerald-500/50 bg-[#07241A] text-emerald-300 hover:text-white hover:bg-emerald-900/60 hover:border-emerald-400 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+            className="h-8 text-xs font-semibold border border-emerald-500/50 bg-[#021A10] text-emerald-300 hover:text-white hover:bg-emerald-950/60 hover:border-emerald-400 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
             title="Open parent-facing preview with plain-language requests and evidence"
           >
             <HeartHandshake className="h-3.5 w-3.5 text-emerald-400" />
@@ -179,7 +179,7 @@ export function BlueprintView({
             size="sm"
             onClick={() => setShowEmailModal(true)}
             disabled={targets.length === 0}
-            className="h-8 text-xs font-semibold border-teal-500/50 bg-[#07252A] text-teal-300 hover:text-white hover:bg-teal-900/60 hover:border-teal-400 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+            className="h-8 text-xs font-semibold border border-teal-500/50 bg-[#021A1A] text-teal-300 hover:text-white hover:bg-teal-950/60 hover:border-teal-400 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
             title="Email the parent-friendly Meeting Blueprint directly to the family"
           >
             <Mail className="h-3.5 w-3.5 text-teal-400" />
@@ -191,10 +191,10 @@ export function BlueprintView({
             size="sm"
             onClick={() => openPrintDialog("PARENT_BLUEPRINT", studentName, meetingType, meetingDate, targets)}
             disabled={targets.length === 0}
-            className="h-8 text-xs font-semibold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-white hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+            className="h-8 text-xs font-semibold border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
             title="Generate a compact, multi-target printer-friendly document / PDF"
           >
-            <Printer className="h-3.5 w-3.5 text-[#F5B544]" />
+            <Printer className="h-3.5 w-3.5 text-[#DFBE77]" />
             <span>Print Blueprint</span>
           </Button>
 
@@ -203,10 +203,10 @@ export function BlueprintView({
               variant="outline"
               size="sm"
               onClick={onOpenImportModal}
-              className="h-8 text-xs font-semibold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+              className="h-8 text-xs font-semibold border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
               title="Paste or drop an Advocate Ready document"
             >
-              <Download className="h-3.5 w-3.5 text-[#F5B544]" />
+              <Download className="h-3.5 w-3.5 text-[#DFBE77]" />
               <span>Import</span>
             </Button>
           )}
@@ -215,9 +215,9 @@ export function BlueprintView({
             variant="outline"
             size="sm"
             onClick={() => setShowReorganizeModal(true)}
-            className="h-8 text-xs font-semibold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-white hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+            className="h-8 text-xs font-semibold border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
           >
-            <ArrowUpDown className="h-3.5 w-3.5 text-[#F5B544]" />
+            <ArrowUpDown className="h-3.5 w-3.5 text-[#DFBE77]" />
             <span>Reorganize</span>
           </Button>
 
@@ -225,24 +225,24 @@ export function BlueprintView({
             size="sm"
             onClick={onPreviewMeetingMode}
             disabled={targets.length === 0}
-            className="h-8 text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md px-3.5 cursor-pointer inline-flex items-center gap-1.5 border border-amber-400/40"
+            className="h-8 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 px-3.5 cursor-pointer inline-flex items-center gap-1.5 transition-all"
           >
-            <PlayCircle className="h-3.5 w-3.5 text-slate-950" />
+            <PlayCircle className="h-3.5 w-3.5" />
             <span>Enter Meeting Mode</span>
           </Button>
         </div>
       </div>
 
       {/* 🧭 MEETING REMINDER (Advocate-Facing, Compact Small Box) */}
-      <div className="rounded-xl bg-[#081F3B] border border-[#144A7E] p-2.5 sm:p-3 shadow-sm flex items-start gap-2.5">
-        <span className="p-1 rounded-md bg-amber-500/20 text-[#F5B544] shrink-0 mt-0.5">
+      <div className="rounded-xl bg-[#020A17]/90 border border-[#3A2C18] p-2.5 sm:p-3 shadow-md flex items-start gap-2.5">
+        <span className="p-1 rounded-md bg-[#05142B] border border-[#3A2C18] text-[#DFBE77] shrink-0 mt-0.5">
           <Compass className="h-3.5 w-3.5" />
         </span>
         <div className="space-y-0.5 text-xs flex-1 min-w-0">
-          <span className="font-bold text-[#F5B544] uppercase tracking-wider text-[11px] block">
+          <span className="font-serif font-bold text-[#FFE394] uppercase tracking-wider text-[11px] block">
             🧭 Meeting Reminder
           </span>
-          <p className="text-blue-100/90 leading-relaxed text-[11.5px]">
+          <p className="text-[#C6B697] leading-relaxed text-[11.5px]">
             Every meeting is different. Depending on the discussion, time available, and decisions that need to be made, not every Target may be addressed in one meeting. It may be necessary to let the client know that some items will need to be continued at a reconvened meeting or addressed as the case progresses.
           </p>
         </div>
@@ -258,20 +258,20 @@ export function BlueprintView({
           return (
             <div
               key={section}
-              className="rounded-2xl bg-[#071A33] border border-[#0F3D70] overflow-hidden shadow-lg"
+              className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85)]"
             >
               {/* Section Header */}
               <div
                 onClick={() => toggleSection(section)}
-                className="px-5 py-3.5 bg-gradient-to-r from-[#09254D] to-[#071A33] border-b border-[#0F3D70] flex items-center justify-between cursor-pointer hover:bg-[#0C2D5A] transition-colors"
+                className="px-5 py-3 bg-[#020A17] border-b border-[#3A2C18] flex items-center justify-between cursor-pointer hover:bg-[#071E3D]/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-blue-400">
+                  <span className="text-[#DFBE77]">
                     {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </span>
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <span className="text-[#F5B544]">{section}</span>
-                    <span className="text-[11px] font-mono text-blue-300/60 font-normal">
+                  <h3 className="text-sm font-serif font-bold text-[#FFF4D4] uppercase tracking-wider flex items-center gap-2">
+                    <span className="text-[#FFE394]">{section}</span>
+                    <span className="text-[11px] font-mono text-[#A69371] font-normal">
                       ({sectionTargets.length} target{sectionTargets.length !== 1 ? "s" : ""})
                     </span>
                   </h3>
@@ -284,9 +284,9 @@ export function BlueprintView({
                     e.stopPropagation();
                     handleAddNewTarget(section);
                   }}
-                  className="text-xs text-blue-300 hover:text-white hover:bg-white/10 h-7 px-2.5 inline-flex items-center gap-1 cursor-pointer"
+                  className="text-xs text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#071E3D] h-7 px-2.5 inline-flex items-center gap-1 cursor-pointer border border-transparent hover:border-[#3A2C18]"
                 >
-                  <Plus className="h-3.5 w-3.5 text-[#F5B544]" />
+                  <Plus className="h-3.5 w-3.5 text-[#DFBE77]" />
                   Add Target
                 </Button>
               </div>
@@ -295,21 +295,21 @@ export function BlueprintView({
               {!isCollapsed && (
                 <div className="p-4 space-y-3">
                   {sectionTargets.length === 0 ? (
-                    <p className="text-xs text-blue-300/50 italic py-2 text-center">
+                    <p className="text-xs text-[#A69371] italic py-2 text-center">
                       No active targets in this section. Click "+ Add Target" to assign one.
                     </p>
                   ) : (
                     sectionTargets.map((target) => (
                       <div
                         key={target.id}
-                        className="rounded-xl border border-[#13457A] bg-[#092244] p-4 space-y-3 hover:border-[#1E68B8] transition-all shadow-md"
+                        className="rounded-xl border border-[#3A2C18] bg-[#020A17]/90 p-4 space-y-3 hover:border-[#C5A059]/60 transition-all shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
                       >
                         {/* Target Header Row */}
                         <div className="flex items-start justify-between gap-3 flex-wrap">
                           <div className="space-y-1 flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               {target.externalTargetId && (
-                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#071C3C] border border-[#175294] text-[#F5B544] font-bold">
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#05142B] border border-[#3A2C18] text-[#FFE394] font-bold">
                                   {target.externalTargetId}
                                 </span>
                               )}
@@ -319,13 +319,13 @@ export function BlueprintView({
                                   setEditingTarget(target);
                                   setIsNewTargetModal(false);
                                 }}
-                                className="inline-flex items-center gap-1.5 bg-[#0E427B] hover:bg-[#135398] text-[#F5B544] border border-[#2368B2] hover:border-[#F5B544] text-xs font-bold px-2.5 py-0.5 rounded-full cursor-pointer transition-colors"
+                                className="inline-flex items-center gap-1.5 bg-[#05142B] hover:bg-[#071E3D] text-[#FFE394] border border-[#3A2C18] hover:border-[#C5A059]/60 text-xs font-bold px-2.5 py-0.5 rounded-full cursor-pointer transition-colors shadow-sm"
                                 title="Click to edit topic title & details"
                               >
                                 <span>🎯 {target.targetName}</span>
-                                <Pencil className="h-3 w-3 text-amber-300" />
+                                <Pencil className="h-3 w-3 text-[#DFBE77]" />
                               </button>
-                              <span className="text-[11px] text-blue-200/70 font-mono">
+                              <span className="text-[11px] text-[#A69371] font-mono">
                                 ✍ {target.putItHereLocation}
                               </span>
                             </div>
@@ -333,7 +333,7 @@ export function BlueprintView({
                             {/* Quick Say This */}
                             <div className="pt-1">
                               <div className="flex items-center justify-between">
-                                <p className="text-xs text-blue-300/70 uppercase tracking-wider font-semibold text-[10.5px]">
+                                <p className="text-xs text-[#A69371] uppercase tracking-wider font-semibold text-[10.5px]">
                                   Quick Advocate Say This (Live Script)
                                 </p>
                                 <button
@@ -342,15 +342,15 @@ export function BlueprintView({
                                     setEditingTarget(target);
                                     setIsNewTargetModal(false);
                                   }}
-                                  className="text-[11px] text-[#F5B544] hover:text-amber-300 flex items-center gap-1 cursor-pointer font-medium"
+                                  className="text-[11px] text-[#DFBE77] hover:text-[#FFE394] flex items-center gap-1 cursor-pointer font-medium"
                                   title="Edit phrasing / what to ask for"
                                 >
                                   <Pencil className="h-3 w-3" />
                                   <span>Edit Phrasing</span>
                                 </button>
                               </div>
-                              <p className="text-sm font-semibold text-white mt-0.5 leading-snug">
-                                "{target.quickAdvocateSayThis}"
+                              <p className="text-sm font-semibold text-[#FFF4D4] mt-0.5 leading-snug">
+                                &ldquo;{target.quickAdvocateSayThis}&rdquo;
                               </p>
                             </div>
                           </div>
@@ -364,9 +364,9 @@ export function BlueprintView({
                                 setIsNewTargetModal(false);
                               }}
                               title="Edit full target details"
-                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer inline-flex items-center gap-1"
+                              className="p-1.5 rounded-lg text-xs text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#071E3D] transition-colors cursor-pointer inline-flex items-center gap-1"
                             >
-                              <Pencil className="h-3.5 w-3.5 text-blue-400" />
+                              <Pencil className="h-3.5 w-3.5 text-[#DFBE77]" />
                               <span className="text-[11px]">Edit</span>
                             </button>
 
@@ -374,16 +374,16 @@ export function BlueprintView({
                               type="button"
                               onClick={() => handleDuplicateTarget(target)}
                               title="Duplicate target"
-                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-xs text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#071E3D] transition-colors cursor-pointer"
                             >
-                              <Copy className="h-3.5 w-3.5 text-indigo-400" />
+                              <Copy className="h-3.5 w-3.5 text-[#DFBE77]" />
                             </button>
 
                             <button
                               type="button"
                               onClick={() => setTargetToDelete(target)}
                               title="Delete target"
-                              className="p-1.5 rounded-lg text-xs text-blue-200 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-xs text-[#D8C7A5] hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -391,21 +391,21 @@ export function BlueprintView({
                         </div>
 
                         {/* Rationale & Evidence Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-[#113E70]/70 text-xs">
-                          <div className="rounded-lg bg-[#061830] p-2.5 border border-[#0E3560]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-300/70 mb-0.5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-[#3A2C18]/60 text-xs">
+                          <div className="rounded-lg bg-[#010812] p-2.5 border border-[#3A2C18]/60">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#FFE394] mb-0.5">
                               💡 Why We Want It
                             </p>
-                            <p className="text-blue-100 text-[11.5px] leading-relaxed">
+                            <p className="text-[#C6B697] text-[11.5px] leading-relaxed">
                               {target.whyWeWantIt || "No rationale specified."}
                             </p>
                           </div>
 
-                          <div className="rounded-lg bg-[#061830] p-2.5 border border-[#0E3560]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-300/70 mb-0.5">
+                          <div className="rounded-lg bg-[#010812] p-2.5 border border-[#3A2C18]/60">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#FFE394] mb-0.5">
                               📊 Supporting Evidence
                             </p>
-                            <p className="text-blue-100 text-[11.5px] leading-relaxed">
+                            <p className="text-[#C6B697] text-[11.5px] leading-relaxed">
                               {target.supportingEvidence || "No evidence attached."}
                             </p>
                           </div>
@@ -413,12 +413,12 @@ export function BlueprintView({
 
                         {/* Advocate Notes (if populated) */}
                         {target.notes && (
-                          <div className="rounded-lg bg-[#061830] p-2.5 border border-amber-500/40 text-xs">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#F5B544] mb-0.5 flex items-center gap-1">
+                          <div className="rounded-lg bg-[#05142B] p-2.5 border border-[#C5A059]/50 text-xs">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#FFE394] mb-0.5 flex items-center gap-1">
                               <span>📝</span>
                               <span>Advocate Notes / Strategy</span>
                             </p>
-                            <p className="text-amber-100 text-[11.5px] leading-relaxed whitespace-pre-wrap">
+                            <p className="text-[#FFF4D4] text-[11.5px] leading-relaxed whitespace-pre-wrap">
                               {target.notes}
                             </p>
                           </div>
@@ -436,13 +436,13 @@ export function BlueprintView({
       {/* Target Editor Dialog */}
       {editingTarget && (
         <Dialog open={Boolean(editingTarget)} onOpenChange={(open) => !open && setEditingTarget(null)}>
-          <DialogContent className="max-w-3xl bg-[#06172E] border border-[#144E8A] text-white shadow-2xl p-0 overflow-hidden">
-            <div className="p-6 border-b border-[#0F3D70] bg-gradient-to-r from-[#09254D] to-[#06172E]">
-              <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-                <span className="text-[#F5B544]">🎯</span>
+          <DialogContent className="max-w-3xl bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_16px_36px_rgba(0,0,0,0.9)] p-0 overflow-hidden">
+            <div className="p-6 border-b border-[#3A2C18] bg-[#020A17]">
+              <DialogTitle className="text-lg font-serif font-black text-[#FFF4D4] flex items-center gap-2">
+                <span className="text-[#DFBE77]">🎯</span>
                 <span>{isNewTargetModal ? "Create Meeting Target" : `Edit: ${editingTarget.targetName}`}</span>
               </DialogTitle>
-              <p className="text-xs text-blue-200/70 mt-1">
+              <p className="text-xs text-[#C6B697] mt-1">
                 One Target = One Request, One IEP Location, One Team Decision.
               </p>
             </div>
@@ -584,11 +584,11 @@ export function BlueprintView({
               </div>
             </div>
 
-            <DialogFooter className="p-4 border-t border-[#0F3D70] bg-[#051426] flex items-center justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setEditingTarget(null)} className="text-xs text-blue-300">
+            <DialogFooter className="p-4 border-t border-[#3A2C18] bg-[#020A17] flex items-center justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setEditingTarget(null)} className="text-xs text-[#A69371] hover:text-[#FFF4D4] hover:bg-[#071E3D] cursor-pointer">
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleSaveTargetEdit} className="text-xs bg-[#F5B544] hover:bg-amber-400 text-slate-950 font-bold">
+              <Button size="sm" onClick={handleSaveTargetEdit} className="text-xs bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer">
                 Save Target
               </Button>
             </DialogFooter>

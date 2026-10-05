@@ -47,11 +47,11 @@ export function PrepPipeline({
       {/* Top Pipeline Bar + Secondary Import Trigger */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-blue-200/70 tracking-wide uppercase">
+          <span className="text-xs font-serif font-bold text-[#FFE394] tracking-wide uppercase">
             Preparation Pipeline
           </span>
           {isManualImport && (
-            <Badge variant="outline" className="border-amber-500/40 bg-amber-950/40 text-amber-300 text-[10px] py-0">
+            <Badge variant="outline" className="border-[#C5A059]/40 bg-[#020A17] text-[#FFE394] text-[10px] py-0 font-mono">
               MANUAL PREP IMPORT
             </Badge>
           )}
@@ -63,15 +63,15 @@ export function PrepPipeline({
             variant="outline"
             size="sm"
             onClick={onOpenImportModal}
-            className="text-xs h-7 border-[#144A7E] bg-[#071C3C] text-blue-200 hover:text-[#F5B544] hover:border-[#F5B544]/60 gap-1.5 cursor-pointer shadow-sm"
+            className="text-xs h-7 border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 gap-1.5 cursor-pointer shadow-sm"
           >
-            <Download className="h-3 w-3 text-[#F5B544]" />
+            <Download className="h-3 w-3 text-[#DFBE77]" />
             <span>📥 Import Advocate Ready</span>
           </Button>
         )}
       </div>
 
-      <div className="rounded-2xl bg-[#092244]/90 border border-[#103E70] p-2.5 sm:p-3 shadow-xl w-full">
+      <div className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] p-2.5 sm:p-3 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] w-full">
         {/* 5-Column Grid: Fits 100% at any zoom without horizontal scrollbars */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 w-full">
           {steps.map((step) => {
@@ -83,20 +83,20 @@ export function PrepPipeline({
                 type="button"
                 onClick={() => onSelectStep(step.key)}
                 className={cn(
-                  "min-w-0 h-9 sm:h-9.5 px-2 sm:px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none",
+                  "min-w-0 h-9 sm:h-9.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none border",
                   isActive
-                    ? "bg-gradient-to-r from-[#0E427B] to-[#13599E] border border-[#2A76C9] text-white shadow-[0_2px_10px_rgba(245,181,68,0.25)] ring-1 ring-[#F5B544]/60 font-bold"
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
                     : isDone
-                    ? "bg-[#071C38] border border-emerald-500/40 text-emerald-200 hover:bg-[#0C2A54]"
-                    : "bg-[#06172E] border border-transparent text-blue-300/70 hover:text-white hover:bg-[#0A264D]"
+                    ? "bg-[#020A17] border-emerald-500/40 text-emerald-300 hover:bg-[#07162B]"
+                    : "bg-[#020A17]/60 border-[#3A2C18]/60 text-[#A69371] hover:text-[#FFF4D4] hover:bg-[#07162B]"
                 )}
               >
                 {isDone ? (
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                 ) : isActive ? (
-                  <span className="h-2 w-2 rounded-full bg-[#F5B544] animate-pulse shrink-0" />
+                  <span className="h-2 w-2 rounded-full bg-[#07162B] animate-pulse shrink-0" />
                 ) : (
-                  <Circle className="h-3 w-3 text-blue-400/40 shrink-0" />
+                  <Circle className="h-3 w-3 text-[#A69371]/60 shrink-0" />
                 )}
                 <span className="truncate">
                   {step.stepNumber}. {step.shortLabel}

@@ -83,17 +83,17 @@ export function Step3PcsEditor({
   return (
     <div className="space-y-6">
       {/* Top Banner & Generator Action */}
-      <div className="rounded-2xl bg-gradient-to-br from-[#0B3767] via-[#09254D] to-[#071C38] border border-[#144E8A] p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
+            <span className="p-1.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#DFBE77]">
               <FileText className="h-4 w-4" />
             </span>
-            <h2 className="text-lg font-bold text-white tracking-wide">
+            <h2 className="text-lg font-serif font-black text-[#FFF4D4] tracking-wide">
               Step 3 — Parent Concern Statement (PCS)
             </h2>
           </div>
-          <p className="text-xs text-blue-200/70 max-w-2xl leading-relaxed">
+          <p className="text-xs text-[#C6B697] max-w-2xl leading-relaxed">
             Translate approved family concerns ({keptConcernsCount} active) into an authoritative, legally grounded Parent Concern Statement ready for delivery to the school team.
           </p>
         </div>
@@ -102,16 +102,16 @@ export function Step3PcsEditor({
           <Button
             onClick={onGenerateDraft}
             disabled={isLoading || keptConcernsCount === 0}
-            className="inline-flex items-center gap-2 text-xs font-bold bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-lg border border-indigo-400/30 px-4 py-2 cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 px-4 py-2 cursor-pointer transition-all"
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-[#07162B]" />
                 Drafting PCS...
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4 text-[#F5B544]" />
+                <Sparkles className="h-4 w-4 text-[#07162B]" />
                 {content ? "Regenerate PCS Draft" : "✨ Generate PCS Draft"}
               </>
             )}
@@ -121,13 +121,13 @@ export function Step3PcsEditor({
 
       {/* Warning if PCS changed after Blueprint generation */}
       {hasBlueprintGenerated && isDirty && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-950/40 p-4 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-[#F5B544] shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-amber-500/40 bg-[#020A17] p-4 flex items-start gap-3 shadow-md">
+          <AlertTriangle className="h-5 w-5 text-[#FFE394] shrink-0 mt-0.5" />
           <div className="text-xs space-y-1">
-            <p className="font-bold text-amber-200">
+            <p className="font-bold text-[#FFE394]">
               Parent Concern Statement modified since Blueprint was generated.
             </p>
-            <p className="text-amber-300/80">
+            <p className="text-[#C6B697]">
               Your edits are safely preserved. Once approved, you can regenerate or update affected meeting targets without losing manual customizations.
             </p>
           </div>
@@ -135,19 +135,19 @@ export function Step3PcsEditor({
       )}
 
       {/* Editor Container */}
-      <div className="rounded-2xl bg-[#071A33] border border-[#0F3D70] p-4 sm:p-5 space-y-4 shadow-xl">
-        <div className="flex items-center justify-between gap-3 border-b border-[#0F3D70] pb-3 flex-wrap">
+      <div className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] p-4 sm:p-5 space-y-4 shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+        <div className="flex items-center justify-between gap-3 border-b border-[#3A2C18] pb-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
+            <span className="text-xs font-serif font-bold text-[#FFF4D4] uppercase tracking-wider">
               Document Editor
             </span>
             {pcsApproved ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-950/80 border border-emerald-500/60 text-emerald-300">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 font-mono">
                 <CheckCircle2 className="h-3 w-3 text-emerald-400" />
                 Approved
               </span>
             ) : (
-              <span className="text-[11px] text-amber-300/80 bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-500/30">
+              <span className="text-[11px] text-[#FFE394] bg-[#020A17] px-2 py-0.5 rounded-lg border border-[#3A2C18] font-mono font-medium">
                 Draft / Unapproved
               </span>
             )}
@@ -159,9 +159,9 @@ export function Step3PcsEditor({
               size="sm"
               onClick={handleCopyText}
               disabled={!content}
-              className="text-xs border-[#144A7E] bg-[#092244] text-blue-200 hover:text-white cursor-pointer inline-flex items-center gap-1.5"
+              className="text-xs border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1.5"
             >
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="h-3.5 w-3.5 text-[#DFBE77]" />
               Copy Text
             </Button>
 
@@ -170,9 +170,9 @@ export function Step3PcsEditor({
               size="sm"
               onClick={handleSaveDraft}
               disabled={isSaving || !content}
-              className="text-xs border-[#144A7E] bg-[#092244] text-blue-200 hover:text-white cursor-pointer inline-flex items-center gap-1.5"
+              className="text-xs border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1.5"
             >
-              <Save className="h-3.5 w-3.5" />
+              <Save className="h-3.5 w-3.5 text-[#DFBE77]" />
               Save Draft
             </Button>
 
@@ -180,7 +180,7 @@ export function Step3PcsEditor({
               size="sm"
               onClick={handleApprove}
               disabled={isSaving || !content}
-              className="text-xs bg-[#F5B544] hover:bg-amber-400 text-slate-950 font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer"
+              className="text-xs bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 inline-flex items-center gap-1.5 cursor-pointer transition-all"
             >
               <Check className="h-3.5 w-3.5" />
               Approve PCS
@@ -194,31 +194,31 @@ export function Step3PcsEditor({
           onChange={handleChange}
           placeholder="Click 'Generate PCS Draft' above or type your Parent Concern Statement directly here..."
           rows={16}
-          className="w-full text-xs sm:text-[13px] leading-relaxed bg-[#051426] border-[#0E3560] text-blue-100 placeholder:text-blue-400/40 font-mono focus:border-[#F5B544]/60 p-4 rounded-xl"
+          className="w-full text-xs sm:text-[13px] leading-relaxed bg-[#010812] border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] font-mono focus:border-[#C5A059]/80 p-4 rounded-xl shadow-inner"
         />
 
-        <div className="flex items-center justify-between text-[11px] text-blue-300/60 pt-1">
+        <div className="flex items-center justify-between text-[11px] text-[#A69371] pt-1">
           <span>{content.length} characters · {content.split(/\s+/).filter(Boolean).length} words</span>
           <span>Approved statement automatically feeds Step 4: IEP Blueprint</span>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#0F3C6D]">
+      <div className="flex items-center justify-between pt-3 border-t border-[#3A2C18]/80">
         <Button
           variant="ghost"
           onClick={onPrevStep}
-          className="text-xs text-blue-300 hover:text-white"
+          className="text-xs text-[#A69371] hover:text-[#FFF4D4] hover:bg-[#071E3D] cursor-pointer"
         >
           ← Back to 2. Parent Intel
         </Button>
 
         <Button
           onClick={onNextStep}
-          className="inline-flex items-center gap-2 text-xs font-bold bg-[#0D4B84] hover:bg-[#145D9F] text-white border border-[#206BBC] px-5 py-2 cursor-pointer shadow-lg"
+          className="inline-flex items-center gap-2 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 px-5 py-2 cursor-pointer transition-all"
         >
           <span>Next: 4. IEP Blueprint</span>
-          <ArrowRight className="h-3.5 w-3.5 text-[#F5B544]" />
+          <ArrowRight className="h-3.5 w-3.5 text-[#07162B]" />
         </Button>
       </div>
     </div>

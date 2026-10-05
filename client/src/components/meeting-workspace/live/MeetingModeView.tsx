@@ -338,10 +338,10 @@ export function MeetingModeView({
       {/* ── Voyage Live Meeting Recording & Audio Transcription Bar ── */}
       <div
         className={cn(
-          "rounded-2xl border p-3.5 sm:p-4 shadow-xl transition-all flex flex-col md:flex-row md:items-center justify-between gap-3.5",
+          "rounded-xl border p-3.5 sm:p-4 shadow-[0_8px_24px_rgba(0,0,0,0.85)] transition-all flex flex-col md:flex-row md:items-center justify-between gap-3.5",
           isVoyageRecording
-            ? "bg-gradient-to-r from-red-950/70 via-[#0a182e]/90 to-red-950/50 border-red-500/50 shadow-red-950/40"
-            : "bg-gradient-to-r from-[#071d3a] via-[#092244] to-[#06172f] border-blue-900/50"
+            ? "bg-[#18080C] border-red-500/60 shadow-red-950/40"
+            : "bg-[#05142B]/90 border-[#3A2C18]"
         )}
       >
         <div className="flex items-center gap-3 min-w-0">
@@ -350,7 +350,7 @@ export function MeetingModeView({
               "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border",
               isVoyageRecording
                 ? "bg-red-500/20 border-red-500/50 text-red-400"
-                : "bg-blue-500/15 border-blue-500/30 text-[#F5B544]"
+                : "bg-[#020A17] border-[#3A2C18] text-[#DFBE77]"
             )}
           >
             <Video className="w-5 h-5" />
@@ -358,37 +358,37 @@ export function MeetingModeView({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5">
+              <span className="text-xs font-serif font-bold text-[#FFF4D4] tracking-wide flex items-center gap-1.5">
                 {isVoyageRecording ? (
                   <>
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-                    <span className="text-red-300 font-extrabold">VOYAGE RECORDING LIVE</span>
+                    <span className="text-red-300 font-extrabold font-mono">VOYAGE RECORDING LIVE</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-[#F5B544]">Voyage Meeting Media</span>
-                    <span className="text-slate-400">· Background Infrastructure</span>
+                    <span className="text-[#FFE394]">Voyage Meeting Media</span>
+                    <span className="text-[#A69371]">· Background Infrastructure</span>
                   </>
                 )}
               </span>
 
               {isVoyageRecording && (
-                <span className="px-2 py-0.5 rounded-full bg-red-900/50 border border-red-500/40 text-[11px] font-mono font-bold text-red-200">
+                <span className="px-2 py-0.5 rounded-lg bg-red-900/50 border border-red-500/40 text-[11px] font-mono font-bold text-red-200">
                   {Math.floor(voyageDuration / 60)}:{String(voyageDuration % 60).padStart(2, "0")}
                 </span>
               )}
 
               {caseId && (
-                <span className="px-2 py-0.5 rounded-full bg-blue-950/60 border border-blue-800/60 text-[10.5px] font-mono text-blue-300">
+                <span className="px-2 py-0.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[10.5px] font-mono text-[#FFE394]">
                   Case #{caseId.replace(/^Case\s*#?/i, "")}
                 </span>
               )}
             </div>
 
-            <p className="text-[11.5px] text-slate-300/90 truncate mt-0.5">
+            <p className="text-[11.5px] text-[#C6B697] truncate mt-0.5">
               {isVoyageRecording ? (
                 latestTranscript ? (
-                  <span className="italic text-amber-200/90">🎙️ &ldquo;{latestTranscript}&rdquo;</span>
+                  <span className="italic text-[#FFE394]">🎙️ &ldquo;{latestTranscript}&rdquo;</span>
                 ) : (
                   "Screen & microphone active · Deepgram Nova-3 transcribing in background..."
                 )
@@ -405,11 +405,11 @@ export function MeetingModeView({
               href={`/contacts/${studentContactId}?tab=voyage-log`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-blue-800/60 bg-blue-950/40 text-blue-300 hover:text-white hover:bg-blue-900/40 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] inline-flex items-center gap-1.5 cursor-pointer transition-colors"
               title="Open this student's Voyage Log recordings vault"
             >
               <span>Case Voyage Log</span>
-              <ExternalLink className="w-3 h-3 text-blue-400" />
+              <ExternalLink className="w-3 h-3 text-[#DFBE77]" />
             </a>
           )}
 
@@ -417,7 +417,7 @@ export function MeetingModeView({
             size="sm"
             onClick={handleToggleVoyageRecord}
             className={cn(
-              "text-xs font-bold px-3.5 py-1.5 rounded-xl cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all",
+              "text-xs font-bold px-3.5 py-1.5 rounded-lg cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all",
               isVoyageRecording
                 ? "bg-red-600 hover:bg-red-700 text-white border border-red-400/40 shadow-red-950/60"
                 : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white border border-red-500/40"
@@ -439,15 +439,15 @@ export function MeetingModeView({
       </div>
 
       {/* Top Quick Status & Progress Bar */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#0B3767] via-[#09254D] to-[#071C38] border border-[#144E8A] p-4 sm:p-5 shadow-2xl flex items-center justify-between gap-4 flex-wrap">
+      <div className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex items-center justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-wide flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-serif font-black text-[#FFF4D4] tracking-wide flex items-center gap-2">
               <span>⚡ MEETING QUICK LIST</span>
             </h2>
           </div>
-          <p className="text-xs text-blue-200/70 mt-0.5">
+          <p className="text-xs text-[#C6B697] mt-0.5">
             {raisedCount} of {totalTargets} requests raised · {agreedCount} agreed to IEP
           </p>
         </div>
@@ -459,26 +459,26 @@ export function MeetingModeView({
             size="sm"
             onClick={() => openPrintDialog("ADVOCATE_STRATEGY", studentName, meetingType, meetingDate, targets)}
             disabled={targets.length === 0}
-            className="text-xs font-bold border-[#1E62A6] bg-[#0A2E59] text-blue-200 hover:text-white hover:border-[#F5B544]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+            className="text-xs font-bold border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
             title="Generate the expanded Advocate Ready strategy document / PDF"
           >
-            <Printer className="h-3.5 w-3.5 text-[#F5B544]" />
+            <Printer className="h-3.5 w-3.5 text-[#DFBE77]" />
             <span>Advocate Printer-Friendly Version</span>
           </Button>
 
           <Button
             size="sm"
             onClick={() => setShowAddTargetModal(true)}
-            className="text-xs font-bold bg-[#0D4B84] hover:bg-[#145D9F] text-white border border-[#206BBC] px-3.5 py-1.5 cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-bold border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 px-3.5 py-1.5 cursor-pointer inline-flex items-center gap-1.5"
           >
-            <Plus className="h-3.5 w-3.5 text-[#F5B544]" />
+            <Plus className="h-3.5 w-3.5 text-[#DFBE77]" />
             + Add Target
           </Button>
 
           <Button
             size="sm"
             onClick={() => setShowCloseoutModal(true)}
-            className="text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg px-4 py-1.5 cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105 px-4 py-1.5 cursor-pointer inline-flex items-center gap-1.5 transition-all"
           >
             <span>🚦 End Meeting</span>
           </Button>
@@ -486,8 +486,8 @@ export function MeetingModeView({
       </div>
 
       {/* Persistent Park It Instant Capture Bar */}
-      <div className="rounded-xl bg-[#08203E] border border-[#144D87] p-3 flex items-center gap-2.5 shadow-lg">
-        <span className="text-xs font-extrabold text-[#F5B544] uppercase tracking-wider px-2 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 shrink-0">
+      <div className="rounded-xl bg-[#020A17]/90 border border-[#3A2C18] p-3 flex items-center gap-2.5 shadow-md">
+        <span className="text-xs font-extrabold text-[#FFE394] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#05142B] border border-[#3A2C18] shrink-0">
           🅿 Park It
         </span>
         <Input
@@ -495,13 +495,13 @@ export function MeetingModeView({
           onChange={(e) => setParkInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAddParkItem()}
           placeholder="Capture an unexpected thought or side-topic instantly (e.g. 'Check transportation time')..."
-          className="h-8 text-xs bg-[#051426] border-[#0E3560] text-white flex-1"
+          className="h-8 text-xs bg-[#010812] border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] flex-1 focus-visible:ring-[#C5A059]"
         />
         <Button
           size="sm"
           onClick={handleAddParkItem}
           disabled={!parkInput.trim()}
-          className="h-8 text-xs bg-[#0E427B] hover:bg-[#16569C] text-blue-100 font-bold shrink-0 cursor-pointer"
+          className="h-8 text-xs bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shrink-0 cursor-pointer shadow-sm hover:brightness-105"
         >
           Park
         </Button>
@@ -515,20 +515,20 @@ export function MeetingModeView({
           return (
             <div
               key={section}
-              className="rounded-2xl bg-[#071A33] border border-[#0F3D70] overflow-hidden shadow-lg"
+              className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85)]"
             >
               {/* Small Visual Section Divider */}
-              <div className="px-4 py-2 bg-gradient-to-r from-[#0A2750] to-[#071A33] border-b border-[#0F3D70] flex items-center justify-between">
-                <span className="text-xs font-bold text-[#F5B544] uppercase tracking-wider">
+              <div className="px-4 py-2 bg-[#020A17] border-b border-[#3A2C18] flex items-center justify-between">
+                <span className="text-xs font-serif font-black text-[#FFE394] uppercase tracking-wider">
                   {section}
                 </span>
-                <span className="text-[10.5px] font-mono text-blue-300/60">
+                <span className="text-[10.5px] font-mono text-[#A69371]">
                   {sectionTargets.filter((t) => t.requestRaised).length}/{sectionTargets.length} Raised
                 </span>
               </div>
 
               {/* Quick Targets in Section */}
-              <div className="divide-y divide-[#0D2F54]">
+              <div className="divide-y divide-[#3A2C18]/60">
                 {sectionTargets.map((target) => (
                   <div
                     key={target.id}
@@ -537,8 +537,8 @@ export function MeetingModeView({
                       target.tags?.includes("ADVOCATE_REPAIR") && "border-l-4 border-l-rose-500 bg-rose-950/15",
                       target.tags?.includes("IMPORTANT") && !target.tags?.includes("ADVOCATE_REPAIR") && "border-l-4 border-l-amber-500",
                       target.requestRaised
-                        ? "bg-[#092244]/40"
-                        : "bg-[#07182E] hover:bg-[#0A2548]"
+                        ? "bg-[#020A17]/60"
+                        : "bg-[#05142B]/40 hover:bg-[#071E3D]/50"
                     )}
                   >
                     {/* Left: Checkbox + Topic + Say This */}

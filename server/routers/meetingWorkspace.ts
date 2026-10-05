@@ -1029,10 +1029,45 @@ Build 5-8 distinct meeting targets.`;
         }));
       }
 
+      let currentFindings: any[] = [];
+      try {
+        currentFindings = currentWorkspace.iepIntelFindings ? JSON.parse(currentWorkspace.iepIntelFindings) : [];
+      } catch {}
+
+      let currentConcerns: any[] = [];
+      try {
+        currentConcerns = currentWorkspace.parentIntelConcerns ? JSON.parse(currentWorkspace.parentIntelConcerns) : [];
+      } catch {}
+
+      const derivedFindings = currentFindings.length > 0 ? currentFindings : finalTargets
+        .filter((t: any) => t.iepSection !== "Parent Concerns")
+        .map((t: any, idx: number) => ({
+          id: `fnd-imp-${idx + 1}`,
+          category: t.iepSection || "Accommodations / Supports",
+          section: t.iepSection || "Accommodations / Supports",
+          text: `${t.targetName}: ${t.whyWeWantIt || t.quickAdvocateSayThis || ""}`,
+          quote: t.supportingEvidence || t.possibleIepWording || undefined,
+          status: (t.iepSection === "Accommodations / Supports" || t.iepSection === "Special Education Services") ? "important" : "keep",
+          isCustom: false,
+        }));
+
+      const derivedConcerns = currentConcerns.length > 0 ? currentConcerns : finalTargets
+        .filter((t: any) => t.iepSection === "Parent Concerns" || t.parentWhatWeWant || t.parentWhyWeWantIt)
+        .map((t: any, idx: number) => ({
+          id: `pci-imp-${idx + 1}`,
+          topic: t.targetName,
+          concern: t.parentWhyWeWantIt || t.whyWeWantIt || t.parentWhatWeWant || t.quickAdvocateSayThis || "",
+          source: t.sources?.[0] || "Advocate Ready Document",
+          status: "keep",
+          isCustom: false,
+        }));
+
       await db.updateWorkspace(currentWorkspace.id, {
         meetingTargets: JSON.stringify(finalTargets),
         detectedIepOrder: JSON.stringify(detectedOrder),
         additionalItems: formattedAdditional.length > 0 ? JSON.stringify(formattedAdditional) : currentWorkspace.additionalItems,
+        iepIntelFindings: JSON.stringify(derivedFindings),
+        parentIntelConcerns: JSON.stringify(derivedConcerns),
         prepStep: "blueprint",
         activeTab: "BLUEPRINT",
         pcsApproved: true,
