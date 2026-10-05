@@ -262,6 +262,7 @@ export function StudentWorkspaceTab({
           sessionStorage.setItem("lastStudentProfileUrl", `/students/${contactId}`);
           sessionStorage.setItem("lastStudentProfileId", String(contactId));
         }
+        window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
         setLocation(contactId ? `/state-complaint-builder?studentId=${contactId}` : `/state-complaint-builder`);
         break;
       case "voyage-recorder":

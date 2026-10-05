@@ -387,6 +387,19 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       isActive: (loc) => loc === "/advocacy-pipeline" || loc.startsWith("/advocacy-pipeline") || loc === "/meeting-workspace" || loc.startsWith("/meeting-workspace") || loc === "/workspace" || loc.startsWith("/post-meeting-review"),
     },
     {
+      id: "state-complaint",
+      icon: Shield,
+      label: "State Complaint",
+      path: "/state-complaint-builder",
+      isActive: (loc) =>
+        loc === "/state-complaint-builder" ||
+        loc.startsWith("/state-complaint-builder") ||
+        loc === "/tools/state-complaint-builder" ||
+        loc.startsWith("/tools/state-complaint-builder") ||
+        loc === "/complaint" ||
+        loc.startsWith("/complaint"),
+    },
+    {
       id: "documents",
       icon: FileSignature,
       label: "Documents",
@@ -635,11 +648,44 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     const access = checkEmployeeModuleAccess(currentEmployee, currentMod.id);
     return access === "none" ? currentMod : null;
   }, [currentEmployee, user?.role, user?.email, location]);
-  const { state, toggleSidebar, isMobile } = useSidebar();
+  const { state, toggleSidebar, isMobile, setOpen, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [goToPageOpen, setGoToPageOpen] = useState(false);
+
+  // Auto-collapse sidebar when entering State Complaint Workspace to maximize document canvas space
+  const prevLocationRef = useRef<string>("");
+  useEffect(() => {
+    const isStateComplaint =
+      location.startsWith("/state-complaint-builder") ||
+      location.startsWith("/tools/state-complaint-builder") ||
+      location.startsWith("/complaint");
+    const wasStateComplaint =
+      prevLocationRef.current.startsWith("/state-complaint-builder") ||
+      prevLocationRef.current.startsWith("/tools/state-complaint-builder") ||
+      prevLocationRef.current.startsWith("/complaint");
+
+    if (isStateComplaint && !wasStateComplaint) {
+      setOpen(false);
+      if (isMobile) {
+        setOpenMobile(false);
+      }
+    }
+    prevLocationRef.current = location;
+  }, [location, isMobile, setOpen, setOpenMobile]);
+
+  // Listen for explicit sidebar collapse events across the system
+  useEffect(() => {
+    const handleCollapse = () => {
+      setOpen(false);
+      if (isMobile) {
+        setOpenMobile(false);
+      }
+    };
+    window.addEventListener("waypoint:collapse-sidebar", handleCollapse);
+    return () => window.removeEventListener("waypoint:collapse-sidebar", handleCollapse);
+  }, [isMobile, setOpen, setOpenMobile]);
 
   // Search open/close & selection handlers
   const handleOpenSearch = () => {
@@ -658,6 +704,14 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   };
 
   const handleSelectResult = (path: string) => {
+    if (
+      path.startsWith("/state-complaint-builder") ||
+      path.startsWith("/tools/state-complaint-builder") ||
+      path.startsWith("/complaint")
+    ) {
+      setOpen(false);
+      if (isMobile) setOpenMobile(false);
+    }
     setLocation(path);
     handleCloseSearch();
   };
@@ -1423,7 +1477,17 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => {
+                        if (
+                          item.path.startsWith("/state-complaint-builder") ||
+                          item.path.startsWith("/tools/state-complaint-builder") ||
+                          item.id === "state-complaint"
+                        ) {
+                          setOpen(false);
+                          if (isMobile) setOpenMobile(false);
+                        }
+                        setLocation(item.path);
+                      }}
                       tooltip={item.label}
                       className={cn(
                         "h-10 w-full px-3 rounded-lg text-[13.5px] cursor-pointer transition-all duration-150 flex items-center gap-3.5 select-none",

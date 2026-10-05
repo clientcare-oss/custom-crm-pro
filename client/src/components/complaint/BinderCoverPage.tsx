@@ -26,6 +26,9 @@ interface BinderCoverPageProps {
   submissionDate?: string;
   agencyName?: string;
   coverDetails?: BinderCoverDetails;
+  paperTheme?: "parchment" | "white";
+  className?: string;
+  style?: React.CSSProperties;
   viewMode?: "fit-width" | "fit-page" | "actual";
   zoomLevel?: number;
   onUpdateSummary?: (text: string) => void;
@@ -47,6 +50,9 @@ export function BinderCoverPage({
   submissionDate,
   agencyName = "Georgia Department of Education",
   coverDetails,
+  paperTheme = "parchment",
+  className,
+  style,
   viewMode = "fit-width",
   zoomLevel = 100,
   onUpdateSummary,
@@ -56,18 +62,22 @@ export function BinderCoverPage({
   const isFacts = pageId === "chronological_summary" || category === "facts";
   const isIndex = pageId === "exhibit_index";
 
+  const isWhitePaper = paperTheme === "white";
+
   const sheetStyle: React.CSSProperties = {
     width: viewMode === "actual" ? "816px" : "100%",
     maxWidth: "816px",
     minHeight: "1056px",
     aspectRatio: "8.5 / 11",
-    backgroundColor: "#FBF6EA",
-    backgroundImage: "url('/decor/fine-parchment.jpg')",
+    backgroundColor: isWhitePaper ? "#FFFFFF" : "#FBF6EA",
+    backgroundImage: isWhitePaper ? "none" : "url('/decor/fine-parchment.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
-    boxShadow: "0 16px 50px rgba(0,0,0,0.85), 0 2px 8px rgba(0,0,0,0.5)",
-    border: "1px solid rgba(197, 160, 89, 0.6)",
+    boxShadow: isWhitePaper 
+      ? "0 14px 40px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08)" 
+      : "0 16px 50px rgba(0,0,0,0.85), 0 2px 8px rgba(0,0,0,0.5)",
+    border: isWhitePaper ? "1px solid #D1D5DB" : "1px solid rgba(197, 160, 89, 0.6)",
     transform: viewMode === "fit-page" 
       ? "scale(0.78)" 
       : zoomLevel !== 100 
@@ -79,6 +89,7 @@ export function BinderCoverPage({
       : (viewMode === "fit-page")
         ? "-180px"
         : undefined,
+    ...style,
   };
 
   // Extract clean section or exhibit code (e.g. "EXHIBIT 05", "EXHIBIT A", "SECTION 02")
@@ -156,8 +167,9 @@ export function BinderCoverPage({
     <div
       style={sheetStyle}
       className={cn(
-        "relative rounded-xs select-text flex flex-col justify-between transition-all shrink-0 my-2",
-        "px-10 sm:px-14 md:px-16 pt-12 pb-10"
+        "relative rounded-xs select-text flex flex-col justify-between transition-all shrink-0 my-2 binder-cover-page-sheet",
+        "px-10 sm:px-14 md:px-16 pt-12 pb-10",
+        className
       )}
     >
       {/* ── TOP TWO-COLUMN LEGAL HEADER CAPTION ──────────────────────── */}

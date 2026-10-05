@@ -694,7 +694,8 @@ export default function ComplaintWorkspace() {
   const [activeToolbarTab, setActiveToolbarTab] = useState<"edit" | "arrange" | "cover" | "insert" | "compile">("cover");
 
   // State: Viewport, Proportional View Mode, Zoom, and Collapsible Panels
-  const [viewMode, setViewMode] = useState<"fit-width" | "fit-page" | "actual">("fit-width");
+  // Default to "actual" (100% Letter view: 8.5" x 11" @ 816px) for true WYSIWYG parity with print preview & paper
+  const [viewMode, setViewMode] = useState<"fit-width" | "fit-page" | "actual">("actual");
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [isIndexCollapsed, setIsIndexCollapsed] = useState<boolean>(false);
@@ -703,11 +704,15 @@ export default function ComplaintWorkspace() {
   const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Alexander");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
 
+  // Automatically collapse the global sidebar to maximize the legal document workspace
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
+  }, []);
+
   // State: Pre-rendered high-res page images for all 4 pages of Binder 01 (Official State Form)
   // Guarantees all 4 pages are completely visible in Full Document Print Preview & window.print()
   const [stateFormPages, setStateFormPages] = useState<ImportedPdfPage[]>([]);
   const [isRenderingStateForm, setIsRenderingStateForm] = useState<boolean>(false);
-  const [previewSheetFit, setPreviewSheetFit] = useState<"fit-page" | "fit-width">("fit-page");
 
   // Generate filled official state PDF bytes (populated with student, school, district, and advocate info)
   // and render all 4 pages into high-res images for print preview and printing
@@ -1126,9 +1131,10 @@ export default function ComplaintWorkspace() {
                 setIsPreviewModalOpen(true);
               }}
               className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)] hidden sm:flex"
+              title="Open Official Real Print Preview (Standard White Paper)"
             >
-              <Eye className="w-3.5 h-3.5 text-[#FFE394]" />
-              <span>Preview</span>
+              <Printer className="w-3.5 h-3.5 text-[#FFE394]" />
+              <span>Print Preview</span>
             </Button>
 
             <Button
@@ -1746,86 +1752,14 @@ export default function ComplaintWorkspace() {
                 </button>
               </div>
 
-              {/* Center: View Mode Presets */}
-              <div className="hidden md:flex items-center bg-[#020F24]/90 border border-[#1E3B66]/80 rounded-md p-0.5 shadow-sm text-xs shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("fit-width")}
-                  className={cn(
-                    "px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer",
-                    viewMode === "fit-width"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  )}
-                  title="Fit sheet to container width"
-                >
-                  Fit Width
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("fit-page")}
-                  className={cn(
-                    "px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer",
-                    viewMode === "fit-page"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  )}
-                  title="Show whole page inside viewport"
-                >
-                  Whole Page
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("actual")}
-                  className={cn(
-                    "px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer",
-                    viewMode === "actual"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  )}
-                  title="100% standard Letter paper size (8.5 x 11 in)"
-                >
-                  100% Letter
-                </button>
+              {/* Center: 100% Letter Paper View Indicator */}
+              <div className="hidden md:flex items-center bg-[#020F24]/90 border border-[#1E3B66]/80 rounded-md px-3 py-1 shadow-sm text-xs shrink-0 text-[#FFF4D4] font-medium font-serif gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="tracking-wide">100% Letter View (8.5" × 11")</span>
               </div>
 
-              {/* Right: Zoom & Focus & Panel Controls */}
+              {/* Right: Zoom & Focus Controls */}
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Index Toggle Button */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsIndexCollapsed(!isIndexCollapsed)}
-                  className={cn(
-                    "border-[#1E3B66]/80 text-xs h-7 px-2 sm:px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md transition-colors",
-                    isIndexCollapsed 
-                      ? "bg-[#020F24]/90 text-[#D8C7A5] hover:text-[#FFF4D4]" 
-                      : "bg-[#082347] text-[#FFF4D4] border-[#386299]"
-                  )}
-                  title={isIndexCollapsed ? "Show Index" : "Hide Index"}
-                >
-                  <BookOpen className="w-3 h-3 text-[#DFBE77]" />
-                  <span className="hidden sm:inline">{isIndexCollapsed ? "Index" : "Hide Index"}</span>
-                </Button>
-
-                {/* Tools Toggle Button */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsToolsCollapsed(!isToolsCollapsed)}
-                  className={cn(
-                    "border-[#1E3B66]/80 text-xs h-7 px-2 sm:px-2.5 gap-1.5 cursor-pointer shadow-sm rounded-md transition-colors",
-                    isToolsCollapsed 
-                      ? "bg-[#020F24]/90 text-[#D8C7A5] hover:text-[#FFF4D4]" 
-                      : "bg-[#082347] text-[#FFF4D4] border-[#386299]"
-                  )}
-                  title={isToolsCollapsed ? "Show Tools" : "Hide Tools"}
-                >
-                  <LayoutGrid className="w-3 h-3 text-[#DFBE77]" />
-                  <span className="hidden sm:inline">{isToolsCollapsed ? "Tools" : "Hide Tools"}</span>
-                </Button>
 
                 <div className="flex items-center bg-[#020F24]/90 border border-[#1E3B66]/80 rounded-md px-1.5 py-0.5 shadow-sm">
                   <button
@@ -2321,51 +2255,30 @@ export default function ComplaintWorkspace() {
           </DialogContent>
         </Dialog>
 
-        {/* 5. Full Document Preview Modal */}
+        {/* 5. Real Print Preview Modal (Authentic 8.5" x 11" Standard White Paper, No Parchment) */}
         <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
-          <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-[94vw] md:max-w-[92vw] lg:max-w-5xl xl:max-w-6xl max-h-[94vh] overflow-y-auto bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl custom-scrollbar p-3 sm:p-5">
+          <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-[94vw] md:max-w-[92vw] lg:max-w-5xl xl:max-w-6xl max-h-[94vh] overflow-y-auto bg-[#071322] border border-[#3A2C18] text-white shadow-2xl custom-scrollbar p-3 sm:p-5">
             <DialogHeader className="space-y-0">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#3A2C18]">
                 <div className="flex flex-col text-left">
-                  <DialogTitle className="font-serif text-lg sm:text-xl text-[#FFF4D4] font-bold">
-                    Georgia IDEA State Complaint Preview
-                  </DialogTitle>
+                  <div className="flex items-center gap-2">
+                    <DialogTitle className="font-serif text-lg sm:text-xl text-[#FFF4D4] font-bold">
+                      Official Print Preview
+                    </DialogTitle>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-600/40 font-semibold uppercase tracking-wider">
+                      White Print Paper · No Parchment
+                    </span>
+                  </div>
                   <span className="text-xs text-[#C6B697] font-mono mt-0.5">
-                    {totalDocketPages} Pages (4-Page Official State Form + Sections) · Complete Filing Packet
+                    Standard US Letter (8.5" × 11") · {totalDocketPages} Pages Total (4-Page Official State Form + Sections)
                   </span>
                 </div>
 
-                {/* View Scaling Controls: Fit Entire Page vs Fit Width */}
+                {/* 100% Letter Paper Indicator & Print Button */}
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-[#020A17] border border-[#3A2C18] rounded-md p-0.5 shadow-inner">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewSheetFit("fit-page")}
-                      className={cn(
-                        "px-2.5 py-1 text-xs rounded font-medium transition-all flex items-center gap-1.5 cursor-pointer",
-                        previewSheetFit === "fit-page"
-                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
-                          : "text-[#C6B697] hover:text-[#FFF4D4]"
-                      )}
-                      title="Fit entire 8.5x11 page height and width on screen"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>Fit Entire Page</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewSheetFit("fit-width")}
-                      className={cn(
-                        "px-2.5 py-1 text-xs rounded font-medium transition-all flex items-center gap-1.5 cursor-pointer",
-                        previewSheetFit === "fit-width"
-                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
-                          : "text-[#C6B697] hover:text-[#FFF4D4]"
-                      )}
-                      title="Expand sheet width to container"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                      <span>Fit Width</span>
-                    </button>
+                  <div className="flex items-center bg-[#020A17] border border-[#3A2C18] rounded-md px-3 py-1 text-xs text-[#FFF4D4] font-medium font-serif gap-2 shadow-inner">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>100% Letter View</span>
                   </div>
 
                   <Button
@@ -2375,170 +2288,186 @@ export default function ComplaintWorkspace() {
                     className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-7.5 px-3 gap-1.5 cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    <span>Print / PDF</span>
+                    <span>Print / Save as PDF</span>
                   </Button>
                 </div>
               </div>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
+            {/* Print Preview Desk Stage (Dark Desk Canvas with Authentic White 8.5x11 Sheets) */}
+            <div className="space-y-10 py-6 px-1 sm:px-4 flex flex-col items-center">
               {pages.map((p, idx) => {
                 const range = getBinderPageRange(idx);
                 if (p.id === "cover") {
                   return (
-                    <div key={p.id} className="p-4 sm:p-6 rounded-sm bg-[#F5EEDC] text-[#1A120A] font-serif shadow-md border border-[#D4C3A3] w-full max-w-[880px] mx-auto">
-                      <div className="flex justify-between items-center pb-2 border-b border-[#8C7A60]/40 text-xs text-[#8C7A60] mb-4">
-                        <span className="font-bold uppercase tracking-wider">
-                          Section 01 · Official State Form
-                        </span>
-                        <span className="font-mono font-bold">
-                          Pages 1–4 of {totalDocketPages}
-                        </span>
-                      </div>
-                      <div className="space-y-6">
-                        <div className="bg-[#05142B] px-3.5 py-2.5 rounded border border-[#3A2C18] flex flex-wrap items-center justify-between gap-2 text-xs text-[#FFF4D4]">
-                          <div className="flex items-center gap-2">
-                            <span className="font-serif font-bold text-[#FFE394]">
-                              Official State Complaint Form · Georgia Department of Education (GaDOE)
-                            </span>
-                            <span className="text-[#A69371] font-mono text-[11px]">
-                              · All 4 Pages Included in Filing Docket
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <a
-                              href="/forms/gadoe-formal-complaint-form.pdf"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#DFBE77] hover:underline font-mono text-xs flex items-center gap-1 cursor-pointer"
-                            >
-                              <span>Open Raw PDF</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
+                    <div key={p.id} className="w-full flex flex-col items-center space-y-8">
+                      {/* Section 01 Banner */}
+                      <div className="w-full max-w-[816px] bg-[#05142B] px-4 py-2.5 rounded border border-[#3A2C18] flex flex-wrap items-center justify-between gap-2 text-xs text-[#FFF4D4]">
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif font-bold text-[#FFE394]">
+                            Section 01 · Official State Complaint Form
+                          </span>
+                          <span className="text-[#A69371] font-mono text-[11px]">
+                            · Pages 1–4 of {totalDocketPages}
+                          </span>
                         </div>
-
-                        {/* Render all 4 pages of the Official State Complaint Form */}
-                        {stateFormPages.length > 0 ? (
-                          <div className="space-y-8">
-                            {stateFormPages.map((sPage, sIdx) => {
-                              const pageTitles = [
-                                "Page 1 of 4: Public Agency, Complainant & Student Information",
-                                "Page 2 of 4: Statement of Problem, Proposed Resolution & Mediation",
-                                "Page 3 of 4: Verification of Service to Local Educational Agency (LEA)",
-                                "Page 4 of 4: GaDOE Special Education Division Contact & Submission Information",
-                              ];
-                              const pageDescriptions = [
-                                "Official GaDOE Form · 34 C.F.R. § 300.153(b)(1)–(2) · Student Demographics, Public School System & Contact Notice",
-                                "Official GaDOE Form · 34 C.F.R. § 300.153(b)(3)–(4) · Statement of Statutory Violations, Facts & Proposed Remedy",
-                                "Official GaDOE Form · 34 C.F.R. § 300.153(d) · Mandatory Service Verification to District Superintendent / Director",
-                                "Official GaDOE Form · State Complaint Intake, Special Education Services and Supports & Dispute Resolution",
-                              ];
-
-                              return (
-                                <div
-                                  key={`state-preview-page-${sIdx}`}
-                                  className="rounded-sm bg-white border border-[#C5A059]/60 shadow-[0_4px_16px_rgba(0,0,0,0.18)] overflow-hidden"
-                                >
-                                  <div className="bg-[#FAF5E8] border-b border-[#D4C3A3] px-4 py-2 flex flex-wrap items-center justify-between gap-1 text-xs">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-mono font-bold text-[#8C6D2B] bg-[#EFE8D6] px-1.5 py-0.5 rounded text-[11px]">
-                                        FORM P.{sIdx + 1}
-                                      </span>
-                                      <span className="font-serif font-bold text-[#1A120A]">
-                                        {pageTitles[sIdx] || `State Form Page ${sIdx + 1}`}
-                                      </span>
-                                    </div>
-                                    <span className="text-[11px] text-[#6A5230] font-sans">
-                                      {pageDescriptions[sIdx] || "Official Georgia Department of Education Form"}
-                                    </span>
-                                  </div>
-                                  <div className="p-2 sm:p-4 flex justify-center items-center bg-[#1A2636]/40 rounded-b overflow-hidden">
-                                    <img
-                                      src={sPage.dataUrl}
-                                      alt={`GaDOE State Complaint Form Page ${sIdx + 1}`}
-                                      className={cn(
-                                        "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.4)] rounded-xs border border-slate-300 block mx-auto transition-all",
-                                        previewSheetFit === "fit-page"
-                                          ? "max-h-[76vh] w-auto max-w-full object-contain"
-                                          : "w-full max-w-[820px] h-auto object-contain"
-                                      )}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="w-full bg-white rounded border border-[#C5A059]/60 overflow-hidden shadow-sm">
-                            <iframe
-                              src="/forms/gadoe-formal-complaint-form.pdf#toolbar=0&navpanes=0&view=FitH"
-                              className="w-full h-[880px] border-0 bg-white"
-                              title="Official GaDOE State Complaint Form"
-                            />
-                          </div>
-                        )}
+                        <a
+                          href="/forms/gadoe-formal-complaint-form.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#DFBE77] hover:underline font-mono text-xs flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>Open Raw Form PDF</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
                       </div>
+
+                      {/* Render all 4 pages of the Official State Complaint Form on White Paper */}
+                      {stateFormPages.length > 0 ? (
+                        <div className="w-full flex flex-col items-center space-y-10">
+                          {stateFormPages.map((sPage, sIdx) => {
+                            const pageTitles = [
+                              "Page 1: Public Agency, Complainant & Student Information",
+                              "Page 2: Statement of Problem, Proposed Resolution & Mediation",
+                              "Page 3: Verification of Service to Local Educational Agency (LEA)",
+                              "Page 4: Special Education Division Contact & Submission Information",
+                            ];
+
+                            return (
+                              <div key={`state-preview-page-${sIdx}`} className="w-full flex flex-col items-center">
+                                {/* Page Indicator Badge */}
+                                <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
+                                  <span className="font-bold text-[#FFE394]">
+                                    PAGE {sIdx + 1} OF {totalDocketPages}
+                                  </span>
+                                  <span className="text-[#C6B697] truncate ml-2">
+                                    {pageTitles[sIdx]} · Official White Print Form
+                                  </span>
+                                </div>
+                                <div 
+                                  style={{
+                                    width: "816px",
+                                    maxWidth: "816px",
+                                    backgroundColor: "#FFFFFF",
+                                    boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+                                    border: "1px solid #D1D5DB",
+                                  }}
+                                  className="relative rounded-b overflow-hidden bg-white p-2 sm:p-4 flex items-center justify-center shrink-0"
+                                >
+                                  <img
+                                    src={sPage.dataUrl}
+                                    alt={`State Complaint Form Page ${sIdx + 1}`}
+                                    className="w-full h-auto object-contain block mx-auto bg-white"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="w-full max-w-[816px] bg-white rounded border border-[#C5A059]/60 overflow-hidden shadow-sm">
+                          <iframe
+                            src="/forms/gadoe-formal-complaint-form.pdf#toolbar=0&navpanes=0&view=FitH"
+                            className="w-full h-[880px] border-0 bg-white"
+                            title="Official GaDOE State Complaint Form"
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 }
 
-                // All subsequent binders: render Cover Sheet (Sheet 1) followed by Content Sheet (Sheet 2)
+                // All subsequent binders: render Cover Sheet (Sheet 1) followed by Content Sheet (Sheet 2) on REAL WHITE PAPER
                 return (
-                  <div key={p.id} className="space-y-4 w-full max-w-[880px] mx-auto">
-                    {/* SHEET 1: BINDER COVER SHEET PREVIEW */}
-                    <div className="p-4 sm:p-6 rounded-sm bg-[#F5EEDC] text-[#1A120A] font-serif shadow-md border border-[#D4C3A3]">
-                      <div className="flex justify-between items-center pb-2 border-b border-[#8C7A60]/40 text-xs text-[#8C7A60] mb-4">
-                        <span className="font-bold uppercase tracking-wider">
-                          Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · Cover Page
+                  <div key={p.id} className="w-full flex flex-col items-center space-y-10">
+                    
+                    {/* SHEET 1: STANDARDIZED BINDER COVER PAGE (WHITE PAPER) */}
+                    <div className="w-full flex flex-col items-center">
+                      <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
+                        <span className="font-bold text-[#FFE394]">
+                          PAGE {range.coverPage} OF {totalDocketPages}
                         </span>
-                        <span className="font-mono font-bold">
-                          Page {range.coverPage} of {totalDocketPages}
+                        <span className="text-[#C6B697] truncate ml-2">
+                          Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Cover Page · Standard White Print Paper
                         </span>
                       </div>
-                      <div className="p-4 rounded border border-[#BCA16B]/60 bg-[#FFFDF8] text-center space-y-3">
-                        <div className="text-[10px] font-mono uppercase tracking-widest text-[#6E5D43]">
-                          {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} · IDEA State Complaint
-                        </div>
-                        <div className="border border-[#8C7A60]/40 p-2.5 rounded bg-[#FAF5E8] text-[11px] text-left">
-                          <span className="font-bold text-[#0B1E38] uppercase">{caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")}</span>
-                          <span className="text-[#5A4528] italic block">Student with a Disability · Complainant v. {caseDetails.district || "School District"}</span>
-                        </div>
-                        <div className="py-2">
-                          <span className="inline-block px-3 py-0.5 rounded bg-[#0A264D] text-[#FFF4D4] font-mono text-xs font-bold uppercase mb-1">
-                            Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                      <BinderCoverPage
+                        pageId={p.id}
+                        title={p.title}
+                        category={p.category}
+                        sectionNumber={`Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
+                        coverPageNumber={range.coverPage}
+                        totalDocketPages={totalDocketPages}
+                        studentName={caseDetails.studentName}
+                        studentDob={caseDetails.studentDob}
+                        grade={caseDetails.grade}
+                        school={caseDetails.school}
+                        district={caseDetails.district}
+                        preparedBy={caseDetails.preparedBy}
+                        submissionDate={caseDetails.submissionDate}
+                        agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                        paperTheme="white"
+                        viewMode="actual"
+                        zoomLevel={100}
+                      />
+                    </div>
+
+                    {/* SHEET 2: DOCUMENT CONTENT SHEET (WHITE PAPER) */}
+                    <div className="w-full flex flex-col items-center">
+                      <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
+                        <span className="font-bold text-[#FFE394]">
+                          PAGE {range.contentPage} OF {totalDocketPages}
+                        </span>
+                        <span className="text-[#C6B697] truncate ml-2">
+                          Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Content · Standard White Print Paper
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          width: "816px",
+                          maxWidth: "816px",
+                          minHeight: "1056px",
+                          aspectRatio: "8.5 / 11",
+                          backgroundColor: "#FFFFFF",
+                          color: "#111827",
+                          boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+                          border: "1px solid #D1D5DB",
+                        }}
+                        className="relative rounded-b select-text flex flex-col justify-between px-10 sm:px-14 md:px-16 pt-12 pb-10 transition-all shrink-0 bg-white text-[#111827]"
+                      >
+                        {/* Running Top Header */}
+                        <div className="w-full shrink-0 pb-3 border-b border-black flex items-center justify-between text-xs font-sans text-slate-800">
+                          <span className="font-bold uppercase tracking-wider">
+                            Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}
                           </span>
-                          <h3 className="font-serif text-xl font-bold uppercase text-[#1A1005]">
-                            {p.title}
-                          </h3>
+                          <span className="font-mono font-bold">
+                            Page {range.contentPage} of {totalDocketPages}
+                          </span>
                         </div>
-                        <div className="text-[11px] text-[#4A3820] italic border-t border-[#8C7A60]/30 pt-2 text-justify">
-                          Official filing binder section and evidentiary schedule submitted on behalf of Complainant pursuant to IDEA statutory filing requirements.
+
+                        {/* Content Body */}
+                        <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
+                          {p.content}
+                        </div>
+
+                        {/* Running Bottom Footer */}
+                        <div className="w-full shrink-0 pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-slate-600">
+                          <span className="tracking-wide">
+                            {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint
+                          </span>
+                          <span className="font-serif">Page {range.contentPage} of {totalDocketPages}</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* SHEET 2: CONTENT SHEET PREVIEW */}
-                    <div className="p-4 sm:p-6 rounded-sm bg-[#F5EEDC] text-[#1A120A] font-serif shadow-md border border-[#D4C3A3]">
-                      <div className="flex justify-between items-center pb-2 border-b border-[#8C7A60]/40 text-xs text-[#8C7A60] mb-4">
-                        <span className="font-bold uppercase tracking-wider">
-                          Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
-                        </span>
-                        <span className="font-mono font-bold">
-                          Page {range.contentPage} of {totalDocketPages}
-                        </span>
-                      </div>
-                      <div className="text-xs leading-relaxed whitespace-pre-wrap font-serif text-[#1A120A] text-justify">
-                        {p.content}
-                      </div>
-                    </div>
                   </div>
                 );
               })}
             </div>
+
             <DialogFooter className="flex items-center justify-between sm:justify-between w-full border-t border-[#3A2C18] pt-3">
               <span className="text-xs text-[#A69371] font-mono">
-                {caseDetails.studentName} · Cobb County School District
+                {caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")} · {caseDetails.district || "Cobb County School District"}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -2568,8 +2497,8 @@ export default function ComplaintWorkspace() {
         <style>{`
           @media print {
             body {
-              background: #fff !important;
-              color: #000 !important;
+              background: #ffffff !important;
+              color: #000000 !important;
             }
             body * {
               visibility: hidden !important;
@@ -2584,19 +2513,36 @@ export default function ComplaintWorkspace() {
               left: 0 !important;
               top: 0 !important;
               width: 100% !important;
-              background: #fff !important;
-              color: #000 !important;
+              background: #ffffff !important;
+              color: #000000 !important;
               margin: 0 !important;
               padding: 0 !important;
             }
             .print-packet-sheet {
               page-break-after: always !important;
               break-after: page !important;
-              padding: 0.75in !important;
-              min-height: 9.5in !important;
-              background: #fff !important;
-              color: #000 !important;
+              background: #ffffff !important;
+              color: #000000 !important;
               box-sizing: border-box !important;
+            }
+            .print-cover-page-wrapper {
+              padding: 0 !important;
+              margin: 0 !important;
+              background: #ffffff !important;
+            }
+            .print-cover-page-wrapper .binder-cover-page-sheet {
+              background-color: #ffffff !important;
+              background-image: none !important;
+              box-shadow: none !important;
+              border: none !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              min-height: 10.5in !important;
+              height: 10.5in !important;
+              margin: 0 !important;
+              padding: 0.75in !important;
+              box-sizing: border-box !important;
+              transform: none !important;
             }
             .print-state-form-page {
               padding: 0.15in 0.2in !important;
@@ -2621,14 +2567,14 @@ export default function ComplaintWorkspace() {
               if (stateFormPages.length > 0) {
                 return (
                   <React.Fragment key={`print-state-forms`}>
-                    {stateFormPages.map((sPage, idx) => (
+                    {stateFormPages.map((sPage, sIdx) => (
                       <div
-                        key={`print-state-form-p${idx + 1}`}
+                        key={`print-state-form-p${sIdx + 1}`}
                         className="print-packet-sheet print-state-form-page font-serif"
                       >
                         <img
                           src={sPage.dataUrl}
-                          alt={`Official Georgia State Complaint Form Page ${idx + 1}`}
+                          alt={`Official Georgia State Complaint Form Page ${sIdx + 1}`}
                           className="w-full h-auto object-contain block mx-auto"
                         />
                       </div>
@@ -2637,7 +2583,7 @@ export default function ComplaintWorkspace() {
                 );
               }
               return (
-                <div key={`print-${p.id}`} className="print-packet-sheet font-serif">
+                <div key={`print-${p.id}`} className="print-packet-sheet font-serif p-10">
                   <div className="text-center border-b-2 border-black pb-3 mb-6">
                     <h3 className="text-sm font-bold uppercase tracking-widest text-slate-800">
                       GEORGIA DEPARTMENT OF EDUCATION
@@ -2656,7 +2602,7 @@ export default function ComplaintWorkspace() {
                   <div className="border border-slate-700 p-4 rounded mb-6 text-xs">
                     <div className="grid grid-cols-[180px_1fr] gap-y-2 text-left">
                       <div className="font-bold">STUDENT:</div>
-                      <div>{caseDetails.studentName} (DOB: {caseDetails.studentDob || "N/A"})</div>
+                      <div>{caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")} (DOB: {caseDetails.studentDob || "N/A"})</div>
                       <div className="font-bold">PUBLIC AGENCY / LEA:</div>
                       <div>{caseDetails.district}</div>
                       <div className="font-bold">ASSIGNED SCHOOL:</div>
@@ -2680,55 +2626,30 @@ export default function ComplaintWorkspace() {
             const range = getBinderPageRange(idx);
             return (
               <React.Fragment key={`print-${p.id}`}>
-                {/* Print Sheet 1: Official Binder Cover Page */}
-                <div className="print-packet-sheet font-serif p-8 flex flex-col justify-between" style={{ minHeight: "10.5in", pageBreakAfter: "always" }}>
-                  <div className="text-center border-b-2 border-black pb-3 mb-6">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-800">
-                      {caseDetails.state || "GEORGIA"} DEPARTMENT OF EDUCATION
-                    </h3>
-                    <h4 className="text-xs font-bold text-slate-600 mt-1">
-                      DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
-                    </h4>
-                    <p className="text-[10px] font-mono mt-1 text-slate-600">
-                      OFFICIAL FILING BINDER COVER SHEET · SECTION {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                    </p>
-                  </div>
-
-                  <div className="border border-slate-700 p-4 rounded mb-6 text-xs">
-                    <div className="grid grid-cols-[160px_1fr] gap-y-2 text-left">
-                      <div className="font-bold">STUDENT:</div>
-                      <div className="font-bold uppercase">{caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")} (Student with a Disability)</div>
-                      <div className="font-bold">COMPLAINANT:</div>
-                      <div>By and Through Parent / Authorized Advocate ({caseDetails.preparedBy})</div>
-                      <div className="font-bold">LOCAL EDUCATIONAL AGENCY:</div>
-                      <div>{caseDetails.district}</div>
-                      <div className="font-bold">SECTION:</div>
-                      <div>Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} — {p.title}</div>
-                      <div className="font-bold">FILING DATE:</div>
-                      <div>{caseDetails.submissionDate}</div>
-                    </div>
-                  </div>
-
-                  <div className="text-center my-auto py-8">
-                    <div className="inline-block px-4 py-1 rounded border border-black font-mono text-xs font-bold uppercase mb-2">
-                      Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                    </div>
-                    <h2 className="text-2xl font-black uppercase tracking-wide">
-                      {p.title}
-                    </h2>
-                    <p className="text-xs italic text-slate-600 mt-2">
-                      Filing Section Attached in Support of Formal State Complaint
-                    </p>
-                  </div>
-
-                  <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono">
-                    <span>{caseDetails.state || "Georgia"} Department of Education IDEA Complaint</span>
-                    <span>Page {range.coverPage} of {totalDocketPages}</span>
-                  </div>
+                {/* Print Sheet 1: Official Standardized Binder Cover Page on White Paper */}
+                <div className="print-packet-sheet print-cover-page-wrapper">
+                  <BinderCoverPage
+                    pageId={p.id}
+                    title={p.title}
+                    category={p.category}
+                    sectionNumber={`Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
+                    coverPageNumber={range.coverPage}
+                    totalDocketPages={totalDocketPages}
+                    studentName={caseDetails.studentName}
+                    studentDob={caseDetails.studentDob}
+                    grade={caseDetails.grade}
+                    school={caseDetails.school}
+                    district={caseDetails.district}
+                    preparedBy={caseDetails.preparedBy}
+                    submissionDate={caseDetails.submissionDate}
+                    agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                    paperTheme="white"
+                    viewMode="actual"
+                  />
                 </div>
 
-                {/* Print Sheet 2: Document Content Sheet */}
-                <div className="print-packet-sheet font-serif p-8 flex flex-col justify-between" style={{ minHeight: "10.5in", pageBreakAfter: "always" }}>
+                {/* Print Sheet 2: Document Content Sheet on White Paper */}
+                <div className="print-packet-sheet font-serif px-12 py-10 flex flex-col justify-between" style={{ minHeight: "10.5in", pageBreakAfter: "always" }}>
                   <div className="flex justify-between items-center border-b border-black pb-2 mb-4 text-xs font-sans">
                     <span className="font-bold uppercase tracking-wider">
                       Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
@@ -2737,11 +2658,11 @@ export default function ComplaintWorkspace() {
                       Page {range.contentPage} of {totalDocketPages}
                     </span>
                   </div>
-                  <div className="text-xs leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1">
+                  <div className="text-[13px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black">
                     {p.content}
                   </div>
                   <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-4">
-                    <span>{caseDetails.state || "Georgia"} Department of Education IDEA Complaint</span>
+                    <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
                     <span>Page {range.contentPage} of {totalDocketPages}</span>
                   </div>
                 </div>
