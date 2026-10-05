@@ -131,7 +131,7 @@ const DEFAULT_PAGES: DocumentPage[] = [
     content: `BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
 DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
 
-IN RE: ALEXANDER, SHANDERIOUS JR.
+ALEXANDER, SHANDERIOUS JR.
 STUDENT WITH A DISABILITY,
 BY AND THROUGH PARENT / GUARDIAN,
     Complainant,
@@ -177,7 +177,7 @@ III. PROPOSED RESOLUTION & CORRECTIVE ACTIONS
     category: "facts", 
     content: `CHRONOLOGICAL SUMMARY OF FACTS & TIMELINE
 
-IN RE: ALEXANDER, SHANDERIOUS JR.
+ALEXANDER, SHANDERIOUS JR.
 LOCAL EDUCATIONAL AGENCY: COBB COUNTY SCHOOL DISTRICT
 
 A chronological summary of relevant events and factual milestones occurring within the one-year statutory filing period (October 2025 – October 2026):
@@ -441,7 +441,7 @@ function MiniaturePagePreview({
           {/* Restatement Header */}
           <div className="text-center border-b border-[#3A2810]/40 pb-0.5">
             <div className="text-[7px] font-bold text-[#0B1E38] truncate mt-0.5">
-              IN RE: {caseDetails.studentName?.split(",")[0] || "STUDENT"}
+              {caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "").split(",")[0] || "STUDENT"}
             </div>
             <div className="border-t border-double border-[#8C6D2B]/50 my-0.5" />
             <div className="text-[7.5px] font-black uppercase tracking-wide text-[#1A1005]">
@@ -2501,7 +2501,7 @@ export default function ComplaintWorkspace() {
                           {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} · IDEA State Complaint
                         </div>
                         <div className="border border-[#8C7A60]/40 p-2.5 rounded bg-[#FAF5E8] text-[11px] text-left">
-                          <span className="font-bold text-[#0B1E38] uppercase">IN RE: {caseDetails.studentName}</span>
+                          <span className="font-bold text-[#0B1E38] uppercase">{caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")}</span>
                           <span className="text-[#5A4528] italic block">Student with a Disability · Complainant v. {caseDetails.district || "School District"}</span>
                         </div>
                         <div className="py-2">
@@ -2696,8 +2696,8 @@ export default function ComplaintWorkspace() {
 
                   <div className="border border-slate-700 p-4 rounded mb-6 text-xs">
                     <div className="grid grid-cols-[160px_1fr] gap-y-2 text-left">
-                      <div className="font-bold">IN RE:</div>
-                      <div className="font-bold uppercase">{caseDetails.studentName} (Student with a Disability)</div>
+                      <div className="font-bold">STUDENT:</div>
+                      <div className="font-bold uppercase">{caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")} (Student with a Disability)</div>
                       <div className="font-bold">COMPLAINANT:</div>
                       <div>By and Through Parent / Authorized Advocate ({caseDetails.preparedBy})</div>
                       <div className="font-bold">LOCAL EDUCATIONAL AGENCY:</div>

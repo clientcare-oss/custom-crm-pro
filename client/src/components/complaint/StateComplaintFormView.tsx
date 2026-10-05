@@ -39,9 +39,9 @@ export function StateComplaintFormView({
   const [measuredHeight, setMeasuredHeight] = useState<number>(() => {
     if (typeof window !== "undefined") {
       const estimatedWidth = Math.min(840, Math.max(500, window.innerWidth - 280));
-      return Math.ceil(estimatedWidth * (792 / 612) * 4) + 60;
+      return Math.round(estimatedWidth * (4235 / 838));
     }
-    return 4200;
+    return 4235;
   });
 
   // Function to populate the authentic official Georgia GaDOE PDF with student & case data
@@ -168,10 +168,11 @@ export function StateComplaintFormView({
     const calculateExactHeight = () => {
       const width = el.clientWidth;
       if (width > 0) {
-        // Standard US Letter aspect ratio = 792 / 612 (1.294117647)
-        // 4 pages + PDF viewer page separators (~12px each) + boundary margins (~20px) = ~56px
-        const pageHeight = width * (792 / 612);
-        const exactHeight = Math.ceil(pageHeight * 4) + 60;
+        // Exact 4-page US Letter PDF height inside browser PDF viewer:
+        // Chromium fits 826px doc width (816px page + 5px margins) to container width.
+        // The 4-page document terminates cleanly at height: width * (4235 / 838) ≈ width * 5.0537.
+        // This eliminates the trailing grey void below Page 4 so the plate scales precisely to the PDF.
+        const exactHeight = Math.round(width * (4235 / 838));
         setMeasuredHeight(exactHeight);
       }
     };
@@ -202,13 +203,16 @@ export function StateComplaintFormView({
           maxWidth: "840px",
           height: viewMode === "fit-page" 
             ? "calc(100vh - 180px)" 
-            : measuredHeight ? `${measuredHeight}px` : "4200px",
+            : measuredHeight ? `${measuredHeight}px` : "4235px",
           transform: viewMode === "fit-page"
             ? "scale(0.85)"
             : zoomLevel !== 100
               ? `scale(${zoomLevel / 100})`
               : undefined,
           transformOrigin: "top center",
+          marginBottom: (viewMode !== "fit-page" && zoomLevel > 100)
+            ? `${(zoomLevel - 100) * 11}px`
+            : undefined,
         }}
         className={cn(
           "relative rounded-xs select-text flex flex-col items-center transition-all bg-white text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)] my-2 shrink-0 overflow-hidden",
