@@ -65,3 +65,62 @@ export async function convertPdfToPageImages(
 
   return pages;
 }
+
+/**
+ * Extracts plain text page-by-page from an uploaded PDF ArrayBuffer or Uint8Array.
+ * Preserves line breaks and vertical positioning so structured headings, labels, and
+ * multiline Advocate Ready fields parse accurately.
+ */
+export async function extractTextFromPdf(
+  pdfData: ArrayBuffer | Uint8Array
+): Promise<{ text: string; numPages: number }> {
+  const loadingTask = pdfjsLib.getDocument({
+    data: pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData),
+  });
+
+  const pdfDoc = await loadingTask.promise;
+  const numPages = pdfDoc.numPages;
+  const pageTexts: string[] = [];
+
+  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum);
+    const textContent = await page.getTextContent();
+
+    let lastY: number | null = null;
+    let pageText = "";
+
+    for (const item of textContent.items as any[]) {
+      if (!item || typeof item.str !== "string") continue;
+
+      const currentY = item.transform ? item.transform[5] : null;
+
+      // If vertical Y position shifts significantly, insert a newline
+      if (lastY !== null && currentY !== null && Math.abs(currentY - lastY) > 5) {
+        pageText += "\n";
+      } else if (item.hasEOL) {
+        pageText += "\n";
+      } else if (
+        pageText.length > 0 &&
+        !pageText.endsWith(" ") &&
+        !pageText.endsWith("\n") &&
+        !item.str.startsWith(" ")
+      ) {
+        pageText += " ";
+      }
+
+      pageText += item.str;
+      if (currentY !== null) {
+        lastY = currentY;
+      }
+    }
+
+    if (pageText.trim()) {
+      pageTexts.push(pageText.trim());
+    }
+  }
+
+  return {
+    text: pageTexts.join("\n\n"),
+    numPages,
+  };
+}

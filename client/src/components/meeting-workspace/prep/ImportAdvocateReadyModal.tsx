@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { extractTextFromPdf } from "@/lib/pdfImporter";
 import type { MeetingTarget, AdvocateReadyImportItem } from "../types";
 
 interface ImportAdvocateReadyModalProps {
@@ -63,6 +64,7 @@ export function ImportAdvocateReadyModal({
   const [pastedText, setPastedText] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [isExtractingPdf, setIsExtractingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Parse state & Review state
@@ -149,8 +151,37 @@ export function ImportAdvocateReadyModal({
     },
   });
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
     setUploadedFileName(file.name);
+
+    const isPdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+
+    if (isPdf) {
+      setIsExtractingPdf(true);
+      const loadingToastId = toast.loading(`Extracting text from ${file.name}...`);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const { text, numPages } = await extractTextFromPdf(arrayBuffer);
+        toast.dismiss(loadingToastId);
+
+        if (!text || text.trim().length === 0) {
+          toast.error("Could not extract selectable text from this PDF. If this is a scanned image, please paste the text directly.");
+          setIsExtractingPdf(false);
+          return;
+        }
+
+        setPastedText(text);
+        toast.success(`Successfully extracted ${numPages} page${numPages === 1 ? "" : "s"} from ${file.name}`);
+      } catch (err: any) {
+        toast.dismiss(loadingToastId);
+        console.error("PDF text extraction error:", err);
+        toast.error(`PDF extraction error: ${err.message || "Failed to process PDF"}`);
+      } finally {
+        setIsExtractingPdf(false);
+      }
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
@@ -378,7 +409,7 @@ export function ImportAdvocateReadyModal({
                   )}
                 >
                   <UploadCloud className="h-3.5 w-3.5" />
-                  Drop File (.txt)
+                  Drop File (.pdf / .txt)
                 </button>
               </div>
 
@@ -409,9 +440,12 @@ export function ImportAdvocateReadyModal({
                     }}
                     onDragLeave={() => setDragOver(false)}
                     onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => {
+                      if (!isExtractingPdf) fileInputRef.current?.click();
+                    }}
                     className={cn(
                       "border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-3",
+                      isExtractingPdf && "cursor-wait opacity-80",
                       dragOver
                         ? "border-[#F5B544] bg-[#F5B544]/10"
                         : "border-[#144E8A] bg-[#051429]/80 hover:border-blue-400/60 hover:bg-[#071C3C]"
@@ -420,8 +454,9 @@ export function ImportAdvocateReadyModal({
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".txt,.md,.text"
+                      accept=".pdf,.txt,.md,.text,application/pdf"
                       className="hidden"
+                      disabled={isExtractingPdf}
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           handleFileUpload(e.target.files[0]);
@@ -429,25 +464,38 @@ export function ImportAdvocateReadyModal({
                       }}
                     />
                     <div className="w-12 h-12 rounded-2xl bg-[#092244] border border-[#175294] text-[#F5B544] flex items-center justify-center">
-                      <UploadCloud className="h-6 w-6" />
+                      {isExtractingPdf ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-[#F5B544]" />
+                      ) : (
+                        <UploadCloud className="h-6 w-6" />
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-bold text-white">
-                        {uploadedFileName ? uploadedFileName : "Drop Advocate Ready .txt file here"}
+                        {isExtractingPdf
+                          ? `Extracting text from ${uploadedFileName || "PDF"}...`
+                          : uploadedFileName
+                          ? uploadedFileName
+                          : "Drop Advocate Ready .pdf or .txt file here"}
                       </p>
                       <p className="text-xs text-blue-300/70 mt-1">
-                        Drag and drop your file or click to browse
+                        {isExtractingPdf
+                          ? "Rendering and extracting document pages in browser..."
+                          : "Supports PDF and plain text documents · Drag & drop or click to browse"}
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-xs border-[#144E8A] bg-[#092244] text-blue-200 hover:text-white"
-                    >
-                      Choose File
-                    </Button>
+                    {!isExtractingPdf && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-[#144E8A] bg-[#092244] text-blue-200 hover:text-white"
+                      >
+                        Choose File
+                      </Button>
+                    )}
                   </div>
+
 
                   {uploadedFileName && pastedText && (
                     <div className="p-3 rounded-xl bg-[#06172E] border border-[#144E8A] text-xs text-blue-200/80 max-h-32 overflow-y-auto font-mono">
@@ -842,10 +890,15 @@ export function ImportAdvocateReadyModal({
               <Button
                 type="button"
                 onClick={handleParse}
-                disabled={parseMutation.isPending || !pastedText.trim()}
-                className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-slate-950 font-bold text-xs gap-2 cursor-pointer shadow-lg"
+                disabled={parseMutation.isPending || isExtractingPdf || !pastedText.trim()}
+                className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-slate-950 font-bold text-xs gap-2 cursor-pointer shadow-lg disabled:opacity-50"
               >
-                {parseMutation.isPending ? (
+                {isExtractingPdf ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Extracting PDF Text...
+                  </>
+                ) : parseMutation.isPending ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     Parsing Targets...

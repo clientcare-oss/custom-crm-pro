@@ -206,8 +206,15 @@ function normalizeSectionTitle(sec: string): string {
       continue;
     }
 
+    // Normalized line for robust key detection (removes leading bullets, dashes, markdown asterisks/underscores)
+    const norm = trimmed
+      .replace(/^[\s*\-_#•]+/, "")
+      .replace(/\*\*/g, "")
+      .replace(/__/g, "")
+      .trim();
+
     // 1. Check if we hit the detailed targets section: "TARGET ID:"
-    if (/^#*\s*TARGET ID\s*[:=]/i.test(trimmed) || /^TARGET ID\s*[:=]/i.test(trimmed)) {
+    if (/^TARGET ID\s*[:=]/i.test(norm) || /^TARGET\s*#?\d+\s*[:=]/i.test(norm)) {
       if (isParsingQuickList) {
         flushQuickItem();
         isParsingQuickList = false;
@@ -215,7 +222,7 @@ function normalizeSectionTitle(sec: string): string {
       isInsideAdditionalNotes = false;
       flushDetailedBlock();
 
-      const idVal = trimmed.replace(/^#*\s*TARGET ID\s*[:=]\s*/i, "").trim();
+      const idVal = norm.replace(/^(TARGET ID|TARGET\s*#?\d+)\s*[:=]\s*/i, "").trim() || norm;
       currentDetail = {
         targetId: idVal,
         label: "",
@@ -242,7 +249,7 @@ function normalizeSectionTitle(sec: string): string {
 
     // 2. Check for Additional Things to Discuss / Before We Close section
     if (
-      /(ADDITIONAL THINGS TO DISCUSS|BEFORE WE CLOSE|PARKING LOT ITEMS|CLOSING NOTES)/i.test(trimmed)
+      /(ADDITIONAL THINGS TO DISCUSS|BEFORE WE CLOSE|PARKING LOT ITEMS|CLOSING NOTES)/i.test(norm)
     ) {
       if (isParsingQuickList) {
         flushQuickItem();
@@ -272,19 +279,19 @@ function normalizeSectionTitle(sec: string): string {
     // --- PARSING QUICK LIST ---
     if (isParsingQuickList) {
       // Check for Quick List Header
-      if (/MEETING QUICK LIST/i.test(trimmed)) {
+      if (/MEETING QUICK LIST/i.test(norm)) {
         continue;
       }
 
       // Check for Section Header (markdown ##, Roman numerals, emoji headings, or capitalized section names)
       if (
         /^#{1,6}\s+/i.test(trimmed) ||
-        /^([IVXLCDM]+\.|\d+\.)\s+[A-Z]/i.test(trimmed.replace(/^#{1,6}\s*/, "")) ||
-        /^(📋|📚|⚙|⚙️|🎯|👥|🏫|🚌|💡|⚡|🔍|\bSECTION\b|\bIEP SECTION\b)/i.test(trimmed) ||
-        (/^[A-Z\s/&().,-]{4,}$/.test(trimmed) && !trimmed.startsWith("LABEL") && !trimmed.startsWith("ASK") && !trimmed.startsWith("EXPAND"))
+        /^([IVXLCDM]+\.|\d+\.)\s+[A-Z]/i.test(norm) ||
+        /^(📋|📚|⚙|⚙️|🎯|👥|🏫|🚌|💡|⚡|🔍|\bSECTION\b|\bIEP SECTION\b)/i.test(norm) ||
+        (/^[A-Z\s/&().,-]{4,}$/.test(norm) && !norm.startsWith("LABEL") && !norm.startsWith("ASK") && !norm.startsWith("EXPAND"))
       ) {
         flushQuickItem();
-        const secName = cleanHeader(trimmed);
+        const secName = cleanHeader(norm);
         if (secName && !["MEETING QUICK LIST", "QUICK LIST", "EXPAND", "LABEL", "ASK"].includes(secName.toUpperCase())) {
           currentSection = secName;
           if (!detectedSections.includes(secName)) {
@@ -295,23 +302,23 @@ function normalizeSectionTitle(sec: string): string {
       }
 
       // Check for LABEL:
-      if (/^LABEL\s*[:=]/i.test(trimmed)) {
+      if (/^(?:TARGET\s+)?LABEL\s*[:=]/i.test(norm)) {
         if (currentQuickLabel && (currentQuickAsk || currentQuickExpand)) {
           flushQuickItem();
         }
-        currentQuickLabel = trimmed.replace(/^LABEL\s*[:=]\s*/i, "").trim();
+        currentQuickLabel = norm.replace(/^(?:TARGET\s+)?LABEL\s*[:=]\s*/i, "").trim();
         continue;
       }
 
       // Check for ASK:
-      if (/^ASK\s*[:=]/i.test(trimmed)) {
-        currentQuickAsk = trimmed.replace(/^ASK\s*[:=]\s*/i, "").replace(/^["']|["']$/g, "").trim();
+      if (/^(?:ADVOCATE\s+)?ASK\s*[:=]/i.test(norm)) {
+        currentQuickAsk = norm.replace(/^(?:ADVOCATE\s+)?ASK\s*[:=]\s*/i, "").replace(/^["']|["']$/g, "").trim();
         continue;
       }
 
       // Check for EXPAND:
-      if (/^EXPAND\s*[:=]/i.test(trimmed)) {
-        currentQuickExpand = trimmed.replace(/^EXPAND\s*[:=]\s*/i, "").trim();
+      if (/^(?:EXPAND|TARGET\s+ID)\s*[:=]/i.test(norm)) {
+        currentQuickExpand = norm.replace(/^(?:EXPAND|TARGET\s+ID)\s*[:=]\s*/i, "").trim();
         flushQuickItem();
         continue;
       }
@@ -325,8 +332,8 @@ function normalizeSectionTitle(sec: string): string {
 
     // --- PARSING DETAILED BLOCKS ---
     if (currentDetail) {
-      if (/^TARGET LABEL\s*[:=]/i.test(trimmed) || /^LABEL\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(TARGET LABEL|LABEL)\s*[:=]\s*/i, "").trim();
+      if (/^(TARGET LABEL|LABEL)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(TARGET LABEL|LABEL)\s*[:=]\s*/i, "").trim();
         if (val) {
           currentDetail.label = val;
           currentDetailField = null;
@@ -336,8 +343,8 @@ function normalizeSectionTitle(sec: string): string {
         continue;
       }
 
-      if (/^IEP SECTION\s*[:=]/i.test(trimmed) || /^SECTION\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(IEP SECTION|SECTION)\s*[:=]\s*/i, "").trim();
+      if (/^(IEP SECTION|SECTION)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(IEP SECTION|SECTION)\s*[:=]\s*/i, "").trim();
         if (val) {
           currentDetail.iepSection = normalizeSectionTitle(val);
           currentDetailField = null;
@@ -347,57 +354,57 @@ function normalizeSectionTitle(sec: string): string {
         continue;
       }
 
-      if (/^ADVOCATE SAY THIS\s*[:=]/i.test(trimmed) || /^SAY THIS\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(ADVOCATE SAY THIS|SAY THIS)\s*[:=]\s*/i, "").replace(/^["']|["']$/g, "").trim();
+      if (/^(ADVOCATE SAY THIS|SAY THIS)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(ADVOCATE SAY THIS|SAY THIS)\s*[:=]\s*/i, "").replace(/^["']|["']$/g, "").trim();
         currentDetail.advocateSayThis = val;
         currentDetailField = "advocateSayThis";
         continue;
       }
 
-      if (/^PUT IT HERE\s*[:=]/i.test(trimmed) || /^LOCATION\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(PUT IT HERE|LOCATION)\s*[:=]\s*/i, "").trim();
+      if (/^(PUT IT HERE|LOCATION)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(PUT IT HERE|LOCATION)\s*[:=]\s*/i, "").trim();
         currentDetail.putItHere = val;
         currentDetailField = "putItHere";
         continue;
       }
 
-      if (/^POSSIBLE IEP WORDING\s*[:=]/i.test(trimmed) || /^IEP WORDING\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(POSSIBLE IEP WORDING|IEP WORDING)\s*[:=]\s*/i, "").replace(/^["']|["']$/g, "").trim();
+      if (/^(POSSIBLE IEP WORDING|IEP WORDING)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(POSSIBLE IEP WORDING|IEP WORDING)\s*[:=]\s*/i, "").replace(/^["']|["']$/g, "").trim();
         currentDetail.possibleIepWording = val;
         currentDetailField = "possibleIepWording";
         continue;
       }
 
-      if (/^WHY\s*[:=]/i.test(trimmed) || /^WHY WE WANT IT\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(WHY WE WANT IT|WHY)\s*[:=]\s*/i, "").trim();
+      if (/^(WHY WE WANT IT|WHY)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(WHY WE WANT IT|WHY)\s*[:=]\s*/i, "").trim();
         currentDetail.why = val;
         currentDetailField = "why";
         continue;
       }
 
-      if (/^EVIDENCE\s*[:=]/i.test(trimmed) || /^SUPPORTING EVIDENCE\s*[:=]/i.test(trimmed) || /^DATA\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(SUPPORTING EVIDENCE|EVIDENCE|DATA)\s*[:=]\s*/i, "").trim();
+      if (/^(SUPPORTING EVIDENCE|EVIDENCE|DATA)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(SUPPORTING EVIDENCE|EVIDENCE|DATA)\s*[:=]\s*/i, "").trim();
         currentDetail.evidence = val;
         currentDetailField = "evidence";
         continue;
       }
 
-      if (/^IF TEAM DISAGREES\s*[:=]/i.test(trimmed) || /^DISAGREES\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(IF TEAM DISAGREES|DISAGREES)\s*[:=]\s*/i, "").trim();
+      if (/^(IF TEAM DISAGREES|DISAGREES)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(IF TEAM DISAGREES|DISAGREES)\s*[:=]\s*/i, "").trim();
         currentDetail.ifTeamDisagrees = val;
         currentDetailField = "ifTeamDisagrees";
         continue;
       }
 
-      if (/^SOURCE\s*[:=]/i.test(trimmed) || /^SOURCES\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(SOURCES|SOURCE)\s*[:=]\s*/i, "").trim();
+      if (/^(SOURCES|SOURCE)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(SOURCES|SOURCE)\s*[:=]\s*/i, "").trim();
         currentDetail.source = val;
         currentDetailField = "source";
         continue;
       }
 
-      if (/^(ADVOCATE NOTES|MEETING NOTES|MY NOTES|NOTES)\s*[:=]/i.test(trimmed)) {
-        const val = trimmed.replace(/^(ADVOCATE NOTES|MEETING NOTES|MY NOTES|NOTES)\s*[:=]\s*/i, "").trim();
+      if (/^(ADVOCATE NOTES|MEETING NOTES|MY NOTES|NOTES)\s*[:=]/i.test(norm)) {
+        const val = norm.replace(/^(ADVOCATE NOTES|MEETING NOTES|MY NOTES|NOTES)\s*[:=]\s*/i, "").trim();
         currentDetail.notes = val;
         currentDetailField = "notes";
         continue;
