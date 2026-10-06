@@ -408,6 +408,13 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       isActive: (loc) => loc === "/tools" || (loc.startsWith("/tools/") && !loc.startsWith("/tools/state-complaint")) || loc === "/first-mate" || loc === "/knowledge-base" || loc === "/walkthroughs",
     },
     {
+      id: "automations",
+      icon: Zap,
+      label: "Automations",
+      path: "/automations",
+      isActive: (loc) => loc === "/automations" || loc.startsWith("/automations") || loc === "/workflows",
+    },
+    {
       id: "reports",
       icon: Activity,
       label: "Reports",
@@ -426,7 +433,7 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       icon: Settings,
       label: "Settings",
       path: "/settings",
-      isActive: (loc) => loc === "/settings" || loc.startsWith("/settings") || loc === "/team" || loc.startsWith("/team") || loc === "/automations" || loc === "/integrations" || loc === "/ai-connections" || loc === "/portal-management" || loc === "/manage-experiences" || loc === "/services" || loc === "/tasks",
+      isActive: (loc) => loc === "/settings" || loc.startsWith("/settings") || loc === "/team" || loc.startsWith("/team") || loc === "/integrations" || loc === "/ai-connections" || loc === "/portal-management" || loc === "/manage-experiences" || loc === "/services" || loc === "/tasks",
     },
   ];
 }
@@ -505,6 +512,7 @@ const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
   { id: "mod-agreements", name: "Agreements Engine", category: "module", path: "/agreements", badge: "PG-046", keywords: ["contracts", "signatures", "smart files", "agreements", "terms"], icon: FileSignature },
   { id: "mod-invoices", name: "Invoices & Billing", category: "module", path: "/invoices", badge: "PG-005", keywords: ["invoices", "payments", "receipts", "billing", "charges"], icon: Banknote },
   { id: "mod-templates", name: "Templates", category: "module", path: "/templates", badge: "PG-011", keywords: ["templates", "forms", "letters", "documents", "email templates"], icon: LayoutTemplate },
+  { id: "mod-automations", name: "Automations", category: "module", path: "/automations", badge: "PG-013", keywords: ["automations", "triggers", "actions", "workflows", "zapier", "webhooks"], icon: Zap },
   { id: "mod-reports", name: "Reports & Metrics", category: "module", path: "/metrics", badge: "PG-042", keywords: ["analytics", "metrics", "kpi", "performance", "financials"], icon: Activity },
   { id: "mod-giving", name: "Giving & Impact", category: "module", path: "/giving", badge: "PG-040", keywords: ["giving", "scholarships", "donations", "charity", "funds", "sponsors"], icon: HandHeart },
   { id: "mod-settings", name: "Settings", category: "module", path: "/settings", badge: "PG-024", keywords: ["settings", "configuration", "preferences", "receipts", "domain"], icon: Settings },

@@ -11,8 +11,12 @@ import {
   ArrowRight, ChevronRight, Info, X, Check, Loader2, RefreshCw, User,
   Layers, Sparkles, AlertCircle, Eye, Settings,
   AlertTriangle, CheckCircle2, Split, HelpCircle, Maximize,
-  ZoomIn, ZoomOut
+  ZoomIn, ZoomOut, Lock, ShieldCheck, KeyRound, Bot
 } from "lucide-react";
+import PageIdBadge from "@/components/PageIdBadge";
+import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
+import AiPromptVault from "@/components/automations/AiPromptVault";
+import { cn } from "@/lib/utils";
 
 // ============ TYPES & SCHEMAS ============
 interface AutomationStep {
@@ -266,6 +270,7 @@ export default function Automations() {
   const simulateMutation = trpc.automations.simulate.useMutation();
 
   const [automations, setAutomations] = useState<Automation[]>([]);
+  const [pageTab, setPageTab] = useState<"workflows" | "ai-vault">("workflows");
   const [activeView, setActiveView] = useState<"list" | "edit" | "simulate">("list");
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
@@ -604,123 +609,207 @@ export default function Automations() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-slate-100 p-6 md:p-8">
-      <div className="max-w-6xl mx-auto w-full space-y-8">
+    <ScopedErrorBoundary moduleName="Automations Engine">
+      <div
+        className="min-h-screen w-full relative text-[#F0DFC5] p-4 sm:p-6 lg:p-8"
+        style={{
+          background: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto w-full space-y-7">
 
-        {/* ── VIEW 1: DASHBOARD LISTING ── */}
-        {activeView === "list" && (
-          <div className="space-y-6">
-            {/* Header Block */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 gap-4 text-left">
-              <div>
+          {/* ─── Top Header Deck: Title, Subtitle, PageIdBadge, Tab Pills ─── */}
+          <div className="w-full flex flex-col gap-4 border-b border-[#3A2C18] pb-5">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 text-left">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
-                    Automations Engine
+                  <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418]">
+                    PG-013 · Autonomous Systems
                   </span>
-                  <h1 className="text-2xl font-bold tracking-tight text-white font-serif">Workflow Automations</h1>
                 </div>
-                <p className="text-sm text-slate-400 mt-1">
-                  Build trigger-based action flows to automate communication, smart file requests, and internal task queues.
+                <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-wide leading-none bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                  Automations Engine
+                </h1>
+                <p className="font-serif text-xs sm:text-sm text-[#E8D1A7] leading-relaxed max-w-2xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  Trigger-based action sequences, smart file routing, and executive AI prompt libraries for Byron Honea.
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSeedStarters} className="border-white/10 text-slate-300 hover:bg-white/5">
-                  <RefreshCw className="h-4 w-4 mr-2" /> Seed Starters
-                </Button>
-                <Button onClick={handleCreateNew} className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">
-                  <Plus className="h-4 w-4 mr-2" /> New Automation
-                </Button>
+
+              {/* Top Right: Page ID Badge (Rule E) */}
+              <div className="shrink-0 flex items-center gap-2">
+                <PageIdBadge id="PG-013" name="Automations Engine" />
               </div>
             </div>
 
-            <div className="flex items-center bg-[#07162B]/50 border border-white/5 rounded-xl px-4 py-2">
-              <Sliders className="h-4 w-4 text-slate-400 mr-3" />
-              <input
-                type="text"
-                placeholder="Search workflows, triggers, or description templates..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-0 text-white text-xs w-full focus:ring-0 focus:outline-none placeholder-slate-500"
-              />
+            {/* Navigation Tab Bar: Sequences vs Locked AI Vault */}
+            <div className="flex items-center gap-2 bg-[#020A17]/85 p-1.5 rounded-xl border border-[#3A2C18] w-fit shadow-inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setPageTab("workflows");
+                  setActiveView("list");
+                }}
+                className={cn(
+                  "py-2 px-4 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2",
+                  pageTab === "workflows"
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
+                    : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
+                )}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Workflow Sequences</span>
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded font-mono",
+                  pageTab === "workflows" ? "bg-[#07162B]/20 text-[#07162B]" : "bg-[#05142B] text-[#A69371]"
+                )}>
+                  {automations.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPageTab("ai-vault")}
+                className={cn(
+                  "py-2 px-4 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative",
+                  pageTab === "ai-vault"
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
+                    : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
+                )}
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Locked AI Backend</span>
+                <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Prompt Vault
+                </span>
+              </button>
             </div>
-
-            {filteredAutomations.length === 0 ? (
-              <div className="text-center py-20 border border-dashed border-white/5 rounded-2xl">
-                <Zap className="h-12 w-12 text-slate-500/40 mx-auto mb-4" />
-                <h3 className="text-base font-bold text-white mb-1">No automations configured</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  Seed the starter templates or create a custom sequence to get started.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredAutomations.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      setSelectedAutomation(item);
-                      setActiveView("edit");
-                      setConfiguringTrigger(false);
-                    }}
-                    className="bg-[#07162B]/40 hover:bg-[#07162B]/60 border border-white/5 hover:border-amber-500/20 rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between min-h-[190px] group text-left"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <h3 className="font-bold text-base text-white group-hover:text-amber-400 transition-colors">
-                            {item.name}
-                          </h3>
-                          <p className="text-xs text-slate-400 leading-normal line-clamp-2 pr-4">
-                            {item.description || "No description configured."}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2 mt-3.5">
-                            <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-900 border border-white/10 px-2 py-0.5 rounded text-slate-400">
-                              Trigger: {getTriggerLabel(item.triggerEvent) || "Set trigger in sidebar"}
-                            </span>
-                            <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded text-indigo-400">
-                              {item.steps.length} {item.steps.length === 1 ? 'Step' : 'Steps'}
-                            </span>
-                            {item.isActive && (
-                              <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded text-emerald-450">
-                                Active
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Toggle active switch */}
-                        <label className="relative inline-flex items-center cursor-pointer shrink-0" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={item.isActive}
-                            onChange={() => handleToggleActive(item.id)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-slate-950/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-amber-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500/20 peer-checked:border peer-checked:border-amber-500/35"></div>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-4">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <User className="h-3.5 w-3.5" />
-                        <span>Active runs: {item.activeRunsCount} students</span>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => handleDelete(item.id, e)}
-                        className="h-8 w-8 text-slate-500 hover:text-rose-455 hover:bg-rose-500/10 rounded-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        )}
+
+          {/* ─── CONDITIONAL TAB CONTENT ─── */}
+          {pageTab === "ai-vault" ? (
+            <AiPromptVault />
+          ) : (
+            <div className="w-full space-y-6">
+
+          {/* ── VIEW 1: DASHBOARD LISTING ── */}
+          {activeView === "list" && (
+            <div className="space-y-6">
+              {/* Header Action Strip */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#3A2C18] pb-4 gap-4 text-left">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-[#FFF4D4] font-serif">Workflow Automations</h2>
+                  <p className="text-xs text-[#C6B697] mt-0.5">
+                    Build trigger-based action flows to automate communication, smart file requests, and internal task queues.
+                  </p>
+                </div>
+                <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleSeedStarters}
+                    className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] font-serif text-xs font-semibold py-2 px-3.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 text-[#C5A059]" /> Seed Starters
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateNew}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-serif font-bold text-xs border border-[#FFE394]/50 shadow-md hover:brightness-110 active:scale-95 py-2 px-4 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Plus className="h-4 w-4" /> New Automation
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex items-center bg-[#020A17]/90 border border-[#3A2C18] rounded-xl px-4 py-2.5 shadow-inner">
+                <Sliders className="h-4 w-4 text-[#7E97B8] mr-3" />
+                <input
+                  type="text"
+                  placeholder="Search workflows, triggers, or description templates..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent border-0 text-[#F0F6FC] text-xs w-full focus:ring-0 focus:outline-none placeholder-[#647C9D] font-serif"
+                />
+              </div>
+
+              {filteredAutomations.length === 0 ? (
+                <div className="text-center py-20 border border-dashed border-[#3A2C18] rounded-2xl bg-[#05142B]/40">
+                  <Zap className="h-12 w-12 text-[#C5A059]/40 mx-auto mb-4" />
+                  <h3 className="text-base font-serif font-bold text-[#FFF4D4] mb-1">No automations configured</h3>
+                  <p className="text-xs text-[#C6B697] max-w-sm mx-auto">
+                    Seed the starter templates or create a custom sequence to get started.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredAutomations.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedAutomation(item);
+                        setActiveView("edit");
+                        setConfiguringTrigger(false);
+                      }}
+                      className="bg-[#05142B]/90 hover:bg-[#07162B] border border-[#3A2C18] hover:border-[#C5A059]/60 rounded-xl p-5 cursor-pointer transition-all flex flex-col justify-between min-h-[190px] group text-left shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <h3 className="font-serif font-bold text-base text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors">
+                              {item.name}
+                            </h3>
+                            <p className="text-xs text-[#C6B697] leading-relaxed line-clamp-2 pr-4">
+                              {item.description || "No description configured."}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 mt-3.5">
+                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#020A17] border border-[#3A2C18] px-2 py-0.5 rounded text-[#FFE394]">
+                                Trigger: {getTriggerLabel(item.triggerEvent) || "Set trigger in sidebar"}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#020A17] border border-[#3A2C18] px-2 py-0.5 rounded text-[#8CA4C4]">
+                                {item.steps.length} {item.steps.length === 1 ? 'Step' : 'Steps'}
+                              </span>
+                              {item.isActive && (
+                                <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded text-emerald-400">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Toggle active switch */}
+                          <label className="relative inline-flex items-center cursor-pointer shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={item.isActive}
+                              onChange={() => handleToggleActive(item.id)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-[#020A17] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#8CA4C4] peer-checked:after:bg-[#07162B] after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#C5A059] peer-checked:border peer-checked:border-[#FFE394]"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between border-t border-[#3A2C18]/60 pt-3.5 mt-3.5">
+                        <div className="flex items-center gap-1.5 text-xs text-[#A69371] font-serif">
+                          <User className="h-3.5 w-3.5 text-[#C5A059]" />
+                          <span>Active runs: {item.activeRunsCount} students</span>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => handleDelete(item.id, e)}
+                          className="h-8 w-8 text-[#A69371] hover:text-rose-400 hover:bg-rose-500/10 rounded-lg"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
         {/* ── VIEW 2: referencehbptl STYLE CANVAS EDITOR ── */}
         {activeView === "edit" && selectedAutomation && (
@@ -1564,7 +1653,8 @@ export default function Automations() {
           </div>
         )}
 
-      </div>
+            </div>
+          )}
 
       {/* ── EMAIL TEMPLATE PREVIEW MODAL OVERLAY ── */}
       {previewTemplateId && EMAIL_TEMPLATES[previewTemplateId] && (
@@ -1684,7 +1774,8 @@ export default function Automations() {
           </div>
         </div>
       )}
-
-    </div>
+        </div>
+      </div>
+    </ScopedErrorBoundary>
   );
 }
