@@ -307,10 +307,10 @@ export default function UnassignedCallLogs() {
           isConfigured={quoStatus?.configured ?? true}
         />
 
-        {/* Main Body Content — Tucked close beneath shelf beam */}
+        {/* Main Body Content — Positioned cleanly just below the shelf picture */}
         <div
           className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10"
-          style={{ paddingTop: "calc(100% * 225 / 1024)" }}
+          style={{ paddingTop: "calc(100% * 242 / 1024)" }}
         >
           {/* Top Metric & Statistics Boxes (safely centered, not going under leaves) */}
           <CallCenterStats
