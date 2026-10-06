@@ -79,6 +79,7 @@ import EmployeeProfileTab from "@/components/crew-quarters/EmployeeProfileTab";
 import EmployeePayrollTab from "@/components/crew-quarters/EmployeePayrollTab";
 import EmployeeEquipmentTab from "@/components/crew-quarters/EmployeeEquipmentTab";
 import NotesWorkspace from "@/components/braindump/NotesWorkspace";
+import CrewQuartersAnimatedHeader from "@/components/crew-quarters/CrewQuartersAnimatedHeader";
 
 interface TimeOffRequest {
   id: string;
@@ -307,15 +308,8 @@ export default function CrewQuarters() {
   return (
     <ScopedErrorBoundary moduleName="Crew Quarters">
       <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] pb-12 flex flex-col">
-        {/* ── Top Header Panoramic Observation Window ── */}
-        {/* Bumps flush to left sidebar, right edge, and top edge. All UI below this. */}
-        <div className="w-full relative select-none overflow-hidden bg-[#020712] border-b border-[#3A2C18] shadow-[0_12px_32px_rgba(0,0,0,0.85)]">
-          <img
-            src="/images/crew-quarters-window-trimmed.png"
-            alt="Crew Quarters Panoramic Observation Window"
-            className="w-full h-auto block select-none pointer-events-none"
-          />
-        </div>
+        {/* ── Top Header Panoramic Observation Window (Animated & Interactive) ── */}
+        <CrewQuartersAnimatedHeader />
 
         {/* ── Main UI Deck (All UI Below the Header Window) ── */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto w-full flex-1">
