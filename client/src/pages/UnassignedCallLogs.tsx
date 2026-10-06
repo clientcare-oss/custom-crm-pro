@@ -269,36 +269,38 @@ export default function UnassignedCallLogs() {
 
   return (
     <ScopedErrorBoundary moduleName="Call Center">
-      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] px-2 sm:px-3 pt-0 pb-6 space-y-3 sm:space-y-3.5">
-        {/* Top Header */}
-      <CallCenterHeader
-        callsTodayCount={callsTodayCount}
-        activeFilter={activeStatFilter}
-        onSelectStat={(key) => {
-          setActiveStatFilter(key);
-          toast.info(`Filtered view for: ${key}`);
-        }}
-        isQuoConfigured={quoStatus?.configured ?? true}
-        onOpenSettings={() => setShowSettings(!showSettings)}
-        onRefresh={() => {
-          refetchLogs();
-          toast.success("Call Center synchronized");
-        }}
-        isRefreshing={isFetching}
-        onStartSimulation={handleStartSimulation}
-        activeSimulation={simulatedCall}
-        onResetSimulation={handleResetSimulation}
-      />
+      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] pb-8 space-y-4">
+        {/* Top Header — Bumps Left to Sidebar, Right to Right Bar, and Top to Top Bar */}
+        <CallCenterHeader
+          callsTodayCount={callsTodayCount}
+          activeFilter={activeStatFilter}
+          onSelectStat={(key) => {
+            setActiveStatFilter(key);
+            toast.info(`Filtered view for: ${key}`);
+          }}
+          isQuoConfigured={quoStatus?.configured ?? true}
+          onOpenSettings={() => setShowSettings(!showSettings)}
+          onRefresh={() => {
+            refetchLogs();
+            toast.success("Call Center synchronized");
+          }}
+          isRefreshing={isFetching}
+          onStartSimulation={handleStartSimulation}
+          activeSimulation={simulatedCall}
+          onResetSimulation={handleResetSimulation}
+        />
 
-      {/* Quo Integration Settings Drawer / Panel (if toggled) */}
-      <QuoSettingsDrawer
-        open={showSettings}
-        onClose={() => setShowSettings(false)}
-        isConfigured={quoStatus?.configured ?? true}
-      />
+        {/* Quo Integration Settings Drawer / Panel (if toggled) */}
+        <QuoSettingsDrawer
+          open={showSettings}
+          onClose={() => setShowSettings(false)}
+          isConfigured={quoStatus?.configured ?? true}
+        />
 
-      {/* Top 5 Metric & Quick Access Cards in Horizontal Row */}
-      <CallCenterStats
+        {/* Main Body Content with comfortable padding */}
+        <div className="px-3 sm:px-5 lg:px-6 space-y-4">
+          {/* Top 5 Metric & Quick Access Cards in Horizontal Row */}
+          <CallCenterStats
         callsTodayCount={callsTodayCount}
         missedCallsCount={missedCount}
         callbacksCount={callbacksCount}
@@ -575,6 +577,7 @@ export default function UnassignedCallLogs() {
           }
         }}
       />
+        </div>
 
       {/* Dialog: Send SMS Composer */}
       {smsContact && (
