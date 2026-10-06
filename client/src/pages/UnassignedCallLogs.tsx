@@ -313,23 +313,23 @@ export default function UnassignedCallLogs() {
           style={{ paddingTop: "calc(100% * 248 / 1024)" }}
         >
           {/* ─── UNDER-SHELF RECESSED LIGHTING GLOW DIRECTLY OVER NUMBER BOXES ─── */}
-          {/* Rich warm orange under-shelf lighting matching the warm incandescent header lamps */}
+          {/* Softly faded warm orange lighting with golden-yellow undertones */}
           <div className="relative w-full">
             <div className="absolute -top-6 left-0 right-0 h-13 pointer-events-none select-none overflow-hidden z-0">
-              {/* Luminous warm orange light bar running along the underside of the shelf */}
-              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF7A00] to-transparent blur-[0.5px] opacity-95" />
-              {/* Vibrant warm orange ambient bloom directly beneath the shelf beam */}
-              <div className="h-[8px] w-full -mt-[2px] bg-gradient-to-r from-transparent via-[#FF6200]/85 to-transparent blur-[3px]" />
-              {/* Downward warm orange wash illuminating just the gap directly above the boxes */}
+              {/* Luminous light filament with warm golden-yellow undertone */}
+              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFB326] to-transparent blur-[0.5px] opacity-85" />
+              {/* Soft warm orange ambient bloom directly beneath the shelf beam */}
+              <div className="h-[8px] w-full -mt-[2px] bg-gradient-to-r from-transparent via-[#FF7812]/65 to-transparent blur-[3.5px]" />
+              {/* Downward softly faded warm orange wash with golden-yellow undertone */}
               <div
                 className="w-full h-full"
                 style={{
                   background:
-                    "linear-gradient(to bottom, rgba(255, 122, 0, 0.80) 0%, rgba(255, 98, 0, 0.50) 25%, rgba(230, 80, 0, 0.22) 55%, rgba(180, 55, 0, 0.05) 80%, transparent 100%)",
+                    "linear-gradient(to bottom, rgba(255, 178, 48, 0.62) 0%, rgba(255, 128, 24, 0.42) 22%, rgba(235, 96, 14, 0.18) 52%, rgba(185, 68, 8, 0.04) 78%, transparent 100%)",
                   maskImage:
-                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 50%, transparent 100%)",
+                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 45%, transparent 100%)",
                   WebkitMaskImage:
-                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 50%, transparent 100%)",
+                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 45%, transparent 100%)",
                 }}
               />
             </div>
