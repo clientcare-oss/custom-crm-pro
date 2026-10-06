@@ -312,25 +312,14 @@ export default function UnassignedCallLogs() {
           className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10"
           style={{ paddingTop: "calc(100% * 248 / 1024)" }}
         >
-          {/* ─── UNDER-SHELF RECESSED LIGHTING GLOW DIRECTLY OVER NUMBER BOXES ─── */}
-          {/* Exact color-matched golden-amber under-shelf lighting from user's reference */}
+          {/* ─── AUTHENTIC 3D-RENDERED SHELF LIGHTING DIRECTLY OVER NUMBER BOXES ─── */}
+          {/* Matches upper shelf lights with 100% photorealistic optical bloom from 3D render */}
           <div className="relative w-full">
-            <div className="absolute -top-6 left-0 right-0 h-14 pointer-events-none select-none overflow-hidden">
-              {/* Luminous golden-amber light bar running along the underside of the shelf */}
-              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFC745] to-transparent blur-[0.5px] opacity-95" />
-              {/* Soft warm golden-amber bloom directly beneath the beam */}
-              <div className="h-[8px] w-full -mt-[2px] bg-gradient-to-r from-transparent via-[#F39425]/80 to-transparent blur-[3px]" />
-              {/* Downward golden-amber wash illuminating just the gap above the boxes */}
-              <div
-                className="w-full h-full"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, rgba(250, 186, 65, 0.75) 0%, rgba(243, 148, 37, 0.48) 25%, rgba(216, 114, 31, 0.22) 55%, rgba(180, 90, 27, 0.06) 80%, transparent 100%)",
-                  maskImage:
-                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 50%, transparent 100%)",
-                  WebkitMaskImage:
-                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 50%, transparent 100%)",
-                }}
+            <div className="absolute -top-7 left-0 right-0 h-14 pointer-events-none select-none overflow-hidden flex items-center justify-center">
+              <img
+                src="/images/rendered-shelf-light-alpha.png"
+                alt="Shelf Light Glow"
+                className="w-full h-auto select-none mix-blend-screen opacity-100 drop-shadow-[0_0_14px_rgba(251,190,65,0.7)]"
               />
             </div>
 
