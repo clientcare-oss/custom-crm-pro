@@ -312,48 +312,23 @@ export default function UnassignedCallLogs() {
           className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10"
           style={{ paddingTop: "calc(100% * 248 / 1024)" }}
         >
-          {/* ─── UNDER-SHELF RECESSED LIGHTING GLOW DIRECTLY OVER NUMBER BOXES ─── */}
-          {/* Softly faded warm orange lighting with golden-yellow undertones */}
-          <div className="relative w-full">
-            <div className="absolute -top-6 left-0 right-0 h-13 pointer-events-none select-none overflow-hidden z-0">
-              {/* Luminous light filament with warm golden-yellow undertone */}
-              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFB326] to-transparent blur-[0.5px] opacity-85" />
-              {/* Soft warm orange ambient bloom directly beneath the shelf beam */}
-              <div className="h-[8px] w-full -mt-[2px] bg-gradient-to-r from-transparent via-[#FF7812]/65 to-transparent blur-[3.5px]" />
-              {/* Downward softly faded warm orange wash with golden-yellow undertone */}
-              <div
-                className="w-full h-full"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, rgba(255, 178, 48, 0.62) 0%, rgba(255, 128, 24, 0.42) 22%, rgba(235, 96, 14, 0.18) 52%, rgba(185, 68, 8, 0.04) 78%, transparent 100%)",
-                  maskImage:
-                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 45%, transparent 100%)",
-                  WebkitMaskImage:
-                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 45%, transparent 100%)",
-                }}
-              />
-            </div>
-
-            {/* Top Metric & Statistics Boxes — solid opaque background, sits cleanly above the lighting */}
-            <div className="relative z-10">
-              <CallCenterStats
-                callsTodayCount={callsTodayCount}
-                missedCallsCount={missedCount}
-              callbacksCount={callbacksCount}
-              voicemailCount={voicemailCount}
-              scheduledCallsCount={scheduledCount}
-              needsAttentionCount={3}
-              contactsCount={formattedContacts.length}
-              activeFilter={activeStatFilter}
-              onSelectStat={(key) => {
-                setActiveStatFilter(key);
-                toast.info(`Filtered view for: ${key}`);
-              }}
-              onScrollToNeedsAttention={handleScrollToNeedsAttention}
-              onScrollToContactList={handleScrollToContactList}
-            />
-          </div>
-        </div>
+          {/* Top Metric & Statistics Boxes (safely centered, not going under leaves) */}
+          <CallCenterStats
+            callsTodayCount={callsTodayCount}
+            missedCallsCount={missedCount}
+            callbacksCount={callbacksCount}
+            voicemailCount={voicemailCount}
+            scheduledCallsCount={scheduledCount}
+            needsAttentionCount={3}
+            contactsCount={formattedContacts.length}
+            activeFilter={activeStatFilter}
+            onSelectStat={(key) => {
+              setActiveStatFilter(key);
+              toast.info(`Filtered view for: ${key}`);
+            }}
+            onScrollToNeedsAttention={handleScrollToNeedsAttention}
+            onScrollToContactList={handleScrollToContactList}
+          />
 
       {/* PRIMARY PHONE / CALL AREA (TOP OF PAGE) */}
       <div className="space-y-4">
