@@ -33,17 +33,18 @@ export function CallCenterHeader({
     <header className="absolute top-0 left-0 right-0 z-40 pt-2 sm:pt-2.5 px-3 sm:px-6 pointer-events-auto">
       {/* Written directly on the wall — Centered title, sleek wall typography */}
       <div className="w-full relative flex items-center justify-between min-h-[36px]">
-        {/* Positioned directly above the books next to the salt lamp */}
+        {/* Positioned on the left above the shelf — matching user mockup */}
         <div
-          className="flex items-center gap-2.5 sm:gap-3"
-          style={{ paddingLeft: "calc(100% * 175 / 1024)" }}
+          className="flex items-center gap-3 sm:gap-3.5"
+          style={{ paddingLeft: "calc(100% * 68 / 1024)" }}
         >
-          <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-[#05142B]/80 border border-[#C5A059]/50 flex items-center justify-center text-[#FFE394] shadow-md shadow-black/50 shrink-0">
-            <Headset className="h-4.5 w-4.5 text-[#FFE394] drop-shadow-[0_1px_4px_rgba(255,227,148,0.7)]" />
+          {/* Rounded Dark Tile with Glowing Headset */}
+          <div className="w-11 h-11 sm:w-12 sm:h-12 md:w-[50px] md:h-[50px] rounded-2xl bg-[#030914]/95 border border-[#8C6418]/60 flex items-center justify-center text-[#F5D88A] shadow-xl shadow-black/85 shrink-0">
+            <Headset className="h-6 w-6 sm:h-6.5 sm:w-6.5 md:h-7 md:w-7 text-[#F5D88A] drop-shadow-[0_0_8px_rgba(245,216,138,0.6)]" />
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-['Outfit',sans-serif] font-bold tracking-tight text-[#FFF8E7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-[34px] font-serif font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none tracking-tight">
               Call Center
             </h1>
             <PageIdBadge id="PG-018" />
