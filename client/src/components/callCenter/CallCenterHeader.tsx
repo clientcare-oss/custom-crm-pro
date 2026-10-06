@@ -36,22 +36,17 @@ export function CallCenterHeader({
         {/* Left balance spacer on wide viewports */}
         <div className="hidden lg:flex w-44 shrink-0" />
 
-        {/* Center: Headset Icon + Call Center Title + Badge + Subtitle */}
-        <div className="flex items-center justify-center gap-2.5 mx-auto text-center sm:text-left">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#05142B]/70 border border-[#C5A059]/40 flex items-center justify-center text-[#FFE394] shadow-sm shrink-0">
-            <Headset className="h-4 w-4 text-[#FFE394] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]" />
+        {/* Center: Headset Icon + Waypoint-styled Call Center Title + Badge */}
+        <div className="flex items-center justify-center gap-2.5 sm:gap-3 mx-auto">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#05142B]/80 border border-[#C5A059]/50 flex items-center justify-center text-[#FFE394] shadow-md shadow-black/50 shrink-0">
+            <Headset className="h-4.5 w-4.5 text-[#FFE394] drop-shadow-[0_1px_4px_rgba(255,227,148,0.7)]" />
           </div>
 
-          <div className="space-y-0 min-w-0 text-left">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-serif font-bold tracking-wider text-[#FFF8E7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] whitespace-nowrap leading-tight">
-                Call Center
-              </h1>
-              <PageIdBadge id="PG-018" />
-            </div>
-            <div className="text-[9.5px] sm:text-[10px] font-serif font-medium text-[#D8C7A5]/85 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-wide whitespace-nowrap">
-              Inbound & Outbound Telephony · Live Advocacy Dispatch
-            </div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl md:text-[26px] font-['Libre_Baskerville',Georgia,serif] font-bold tracking-[0.16em] uppercase text-[#FFF8E7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none pl-0.5">
+              Call Center
+            </h1>
+            <PageIdBadge id="PG-018" />
           </div>
         </div>
 
