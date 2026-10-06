@@ -33,17 +33,17 @@ export function CallCenterHeader({
     <header className="absolute top-0 left-0 right-0 z-40 pt-2 sm:pt-2.5 px-3 sm:px-6 pointer-events-auto">
       {/* Written directly on the wall — Centered title, sleek wall typography */}
       <div className="w-full relative flex items-center justify-between min-h-[36px]">
-        {/* Left balance spacer on wide viewports */}
-        <div className="hidden lg:flex w-44 shrink-0" />
-
-        {/* Center: Headset Icon + Waypoint-styled Call Center Title + Badge */}
-        <div className="flex items-center justify-center gap-2.5 sm:gap-3 mx-auto">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#05142B]/80 border border-[#C5A059]/50 flex items-center justify-center text-[#FFE394] shadow-md shadow-black/50 shrink-0">
+        {/* Positioned directly above the books next to the salt lamp */}
+        <div
+          className="flex items-center gap-2.5 sm:gap-3"
+          style={{ paddingLeft: "calc(100% * 175 / 1024)" }}
+        >
+          <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-[#05142B]/80 border border-[#C5A059]/50 flex items-center justify-center text-[#FFE394] shadow-md shadow-black/50 shrink-0">
             <Headset className="h-4.5 w-4.5 text-[#FFE394] drop-shadow-[0_1px_4px_rgba(255,227,148,0.7)]" />
           </div>
 
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl md:text-[26px] font-['Libre_Baskerville',Georgia,serif] font-bold tracking-[0.16em] uppercase text-[#FFF8E7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none pl-0.5">
+            <h1 className="text-xl sm:text-2xl font-['Outfit',sans-serif] font-bold tracking-tight text-[#FFF8E7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none">
               Call Center
             </h1>
             <PageIdBadge id="PG-018" />
