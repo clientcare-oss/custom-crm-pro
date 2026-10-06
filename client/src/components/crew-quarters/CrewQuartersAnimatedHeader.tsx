@@ -1,9 +1,6 @@
 import React, { useState } from "react";
-import { Flame } from "lucide-react";
 import {
-  LavaLampCalibrationPanel,
   loadLavaLampConfig,
-  saveLavaLampConfig,
   DEFAULT_LAVA_LAMP_CONFIG,
   LavaLampConfig,
 } from "./LavaLampCalibrationPanel";
@@ -44,9 +41,7 @@ const RIGHT_WINDOW_STARS: StarDef[] = [
 ];
 
 export function CrewQuartersAnimatedHeader() {
-  const [lavaConfig, setLavaConfig] = useState<LavaLampConfig>(loadLavaLampConfig);
-  const [isCalibratorOpen, setIsCalibratorOpen] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
+  const [lavaConfig] = useState<LavaLampConfig>(loadLavaLampConfig);
 
   return (
     <div className="w-full relative select-none overflow-hidden bg-[#020712] border-b border-[#3A2C18] shadow-[0_12px_32px_rgba(0,0,0,0.85)]">
@@ -259,9 +254,7 @@ export function CrewQuartersAnimatedHeader() {
 
           return (
             <div
-              className="absolute z-20 group cursor-pointer pointer-events-auto transition-[left,top,width,height] duration-75"
-              onClick={() => setIsCalibratorOpen(true)}
-              title="Click to adjust Lava Lamp position, top/bottom widths & height (PG-038)"
+              className="absolute z-20 pointer-events-none"
               style={{
                 left: `${lavaConfig.left}%`,
                 top: `${lavaConfig.top}%`,
@@ -276,29 +269,6 @@ export function CrewQuartersAnimatedHeader() {
                 "--lava-rise-sec-low": `-${Math.round((lavaConfig.riseTravel || 48) * 0.2)}px`,
               } as React.CSSProperties}
             >
-              {/* Visual Alignment / Guide Outline when calibrating */}
-              {showGuide && (
-                <div
-                  className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center"
-                  style={{
-                    clipPath: clipPathPolygon,
-                    backgroundColor: "rgba(197, 160, 89, 0.35)",
-                    outline: "2px dashed #FFE394",
-                    filter: "drop-shadow(0 0 6px rgba(255, 227, 148, 0.8))",
-                  }}
-                >
-                  <span className="text-[9px] font-mono text-[#FFF4D4] bg-[#05142B]/95 px-1 py-0.5 rounded border border-[#C5A059] shadow whitespace-nowrap">
-                    top {lavaConfig.topWidth}% / bot {lavaConfig.bottomWidth}%
-                  </span>
-                </div>
-              )}
-
-              {/* Hover indicator hint badge */}
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 whitespace-nowrap bg-[#05142B]/90 text-[#FFE394] border border-[#C5A059]/60 px-2 py-0.5 rounded text-[10px] shadow-lg flex items-center gap-1">
-                <Flame className="w-2.5 h-2.5 text-[#C5A059]" />
-                <span>Click to adjust</span>
-              </div>
-
               {/* Glass Tapered Chamber: Dynamic geometric polygon of the lamp based on independent top/bottom flow widths */}
               <div
                 className="w-full h-full relative overflow-hidden"
@@ -372,33 +342,6 @@ export function CrewQuartersAnimatedHeader() {
         })()}
 
       </div>
-
-      {/* ── Top-Right Quick Calibration Trigger ── */}
-      <div className="absolute top-2.5 right-3 z-30 pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => setIsCalibratorOpen(true)}
-          title="Adjust Lava Lamp position & height (PG-038)"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#05142B]/85 hover:bg-[#0E2749] text-[#FFE394] border border-[#3A2C18] hover:border-[#C5A059]/70 text-xs font-medium shadow-[0_4px_16px_rgba(0,0,0,0.8)] backdrop-blur-md transition-all group"
-        >
-          <Flame className="w-3.5 h-3.5 text-[#C5A059] group-hover:scale-110 transition-transform" />
-          <span className="hidden sm:inline">Adjust Lamp</span>
-        </button>
-      </div>
-
-      {/* ── Calibration & Positioning Panel ── */}
-      <LavaLampCalibrationPanel
-        isOpen={isCalibratorOpen}
-        onClose={() => setIsCalibratorOpen(false)}
-        config={lavaConfig}
-        onChange={setLavaConfig}
-        onReset={() => {
-          setLavaConfig(DEFAULT_LAVA_LAMP_CONFIG);
-          saveLavaLampConfig(DEFAULT_LAVA_LAMP_CONFIG);
-        }}
-        showGuide={showGuide}
-        onToggleGuide={setShowGuide}
-      />
     </div>
   );
 }
