@@ -93,13 +93,13 @@ export function CrewQuartersAnimatedHeader() {
             transform: translate3d(0, 0, 0) scale(1, 1);
           }
           40% {
-            transform: translate3d(-1px, calc(-1px * var(--lava-rise-mid, 28px)), 0) scale(0.85, 1.2);
+            transform: translate3d(-1px, var(--lava-rise-mid, -28px), 0) scale(0.85, 1.2);
           }
           60% {
-            transform: translate3d(1px, calc(-1px * var(--lava-rise-max, 48px)), 0) scale(1.1, 0.9);
+            transform: translate3d(1px, var(--lava-rise-max, -48px), 0) scale(1.1, 0.9);
           }
           85% {
-            transform: translate3d(0, calc(-1px * var(--lava-rise-low, 14px)), 0) scale(0.95, 1.05);
+            transform: translate3d(0, var(--lava-rise-low, -14px), 0) scale(0.95, 1.05);
           }
         }
 
@@ -108,13 +108,13 @@ export function CrewQuartersAnimatedHeader() {
             transform: translate3d(0, 0, 0) scale(1, 1);
           }
           35% {
-            transform: translate3d(1px, calc(-1px * var(--lava-rise-sec-mid, 20px)), 0) scale(0.9, 1.15);
+            transform: translate3d(1px, var(--lava-rise-sec-mid, -20px), 0) scale(0.9, 1.15);
           }
           65% {
-            transform: translate3d(-1px, calc(-1px * var(--lava-rise-sec-max, 42px)), 0) scale(1.1, 0.9);
+            transform: translate3d(-1px, var(--lava-rise-sec-max, -42px), 0) scale(1.1, 0.9);
           }
           85% {
-            transform: translate3d(0, calc(-1px * var(--lava-rise-sec-low, 10px)), 0) scale(1, 1);
+            transform: translate3d(0, var(--lava-rise-sec-low, -10px), 0) scale(1, 1);
           }
         }
 
@@ -268,12 +268,12 @@ export function CrewQuartersAnimatedHeader() {
                 width: `${lavaConfig.width}%`,
                 height: `${lavaConfig.height}%`,
                 // @ts-ignore
-                "--lava-rise-max": `${lavaConfig.riseTravel}px`,
-                "--lava-rise-mid": `${Math.round(lavaConfig.riseTravel * 0.6)}px`,
-                "--lava-rise-low": `${Math.round(lavaConfig.riseTravel * 0.28)}px`,
-                "--lava-rise-sec-max": `${Math.round(lavaConfig.riseTravel * 0.88)}px`,
-                "--lava-rise-sec-mid": `${Math.round(lavaConfig.riseTravel * 0.42)}px`,
-                "--lava-rise-sec-low": `${Math.round(lavaConfig.riseTravel * 0.2)}px`,
+                "--lava-rise-max": `-${lavaConfig.riseTravel || 48}px`,
+                "--lava-rise-mid": `-${Math.round((lavaConfig.riseTravel || 48) * 0.6)}px`,
+                "--lava-rise-low": `-${Math.round((lavaConfig.riseTravel || 48) * 0.28)}px`,
+                "--lava-rise-sec-max": `-${Math.round((lavaConfig.riseTravel || 48) * 0.88)}px`,
+                "--lava-rise-sec-mid": `-${Math.round((lavaConfig.riseTravel || 48) * 0.42)}px`,
+                "--lava-rise-sec-low": `-${Math.round((lavaConfig.riseTravel || 48) * 0.2)}px`,
               } as React.CSSProperties}
             >
               {/* Visual Alignment / Guide Outline when calibrating */}
