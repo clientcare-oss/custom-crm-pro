@@ -4,7 +4,6 @@ import {
   PhoneMissed,
   Voicemail,
   CalendarCheck,
-  BookUser,
   ArrowDown,
   AlertCircle,
 } from "lucide-react";
@@ -32,11 +31,9 @@ export function CallCenterStats({
   scheduledCallsCount = 4,
   leadsCount = 3,
   needsAttentionCount = 3,
-  contactsCount = 15,
   activeFilter,
   onSelectStat,
   onScrollToNeedsAttention,
-  onScrollToContactList,
 }: CallCenterStatsProps) {
   const stats = [
     {
@@ -76,20 +73,11 @@ export function CallCenterStats({
       isAnchorLink: true,
       action: onScrollToNeedsAttention,
     },
-    {
-      key: "contacts",
-      label: "Contacts",
-      count: contactsCount,
-      icon: BookUser,
-      iconColor: "text-[#DFBE77]",
-      isAnchorLink: true,
-      action: onScrollToContactList,
-    },
   ];
 
   return (
-    <div className="max-w-5xl mx-auto w-full px-2 sm:px-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 w-full">
+    <div className="max-w-4xl mx-auto w-full px-2 sm:px-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 w-full justify-center">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const isActive = activeFilter === stat.key;
@@ -103,29 +91,32 @@ export function CallCenterStats({
                   onSelectStat?.(stat.key);
                 }
               }}
-              className={`flex flex-col justify-between p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer group min-h-[72px] sm:min-h-[78px] shrink-0 shadow-[0_6px_18px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
+              className={`flex flex-col justify-between p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer group min-h-[74px] sm:min-h-[80px] shrink-0 shadow-[0_6px_18px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
                 isActive
                   ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_18px_rgba(197,160,89,0.35),inset_0_1px_2px_rgba(255,227,148,0.4)]"
                   : "bg-[#05142B]/92 border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
               }`}
             >
-              <div className="flex items-center justify-between gap-1 w-full">
-                <div className={`w-6 h-6 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 ${stat.iconColor}`}>
-                  <Icon className="h-3.5 w-3.5" />
+              {/* Top: Bigger Icon + Big Number Next to it */}
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-8 h-8 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 shadow-inner ${stat.iconColor}`}>
+                    <Icon className="h-4.5 w-4.5" />
+                  </div>
+                  <span className="text-2xl sm:text-[26px] font-serif font-bold text-[#FFF4D4] leading-none tracking-tight">
+                    {stat.count}
+                  </span>
                 </div>
                 {stat.isAnchorLink && (
                   <ArrowDown
-                    className="h-3 w-3 text-[#A69371] group-hover:text-[#FFE394] transition-all shrink-0 animate-bounce"
+                    className="h-3.5 w-3.5 text-[#A69371] group-hover:text-[#FFE394] transition-all shrink-0 animate-bounce"
                   />
                 )}
               </div>
-              <div className="mt-2 min-w-0">
-                <div className="text-xl sm:text-2xl font-serif font-bold text-[#FFF4D4] leading-none">
-                  {stat.count}
-                </div>
-                <div className="text-[10.5px] sm:text-[11px] font-medium text-[#C6B697] truncate mt-1 leading-tight">
-                  {stat.label}
-                </div>
+
+              {/* Bottom: Title of the box */}
+              <div className="mt-2 text-xs font-semibold text-[#C6B697] truncate tracking-wide">
+                {stat.label}
               </div>
             </div>
           );
