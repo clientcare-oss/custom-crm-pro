@@ -453,12 +453,18 @@ export const appointments = mysqlTable("appointments", {
   clientTimeZone: varchar("clientTimeZone", { length: 64 }),
   schoolTimeZone: varchar("schoolTimeZone", { length: 64 }),
   assignedAdvocateName: varchar("assignedAdvocateName", { length: 150 }),
+  // Proposed Meeting & Sibling Hold Traceability (PG-007)
+  proposedMeetingId: int("proposedMeetingId"),
+  candidateSlotId: int("candidateSlotId"),
+  confirmedBy: varchar("confirmedBy", { length: 150 }),
+  confirmedAt: timestamp("confirmedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
   ownerIdIdx: index("appointments_ownerId_idx").on(t.ownerId),
   clientIdIdx: index("appointments_clientId_idx").on(t.clientId),
   caseIdIdx: index("appointments_caseId_idx").on(t.caseId),
+  proposedMeetingIdx: index("appointments_proposedMeeting_idx").on(t.proposedMeetingId),
 }));
 
 export type Appointment = typeof appointments.$inferSelect;
@@ -3069,6 +3075,89 @@ export const receiptSettings = mysqlTable("receipt_settings", {
 
 export type ReceiptSettings = typeof receiptSettings.$inferSelect;
 export type InsertReceiptSettings = typeof receiptSettings.$inferInsert;
+
+/**
+ * Proposed Meetings (PG-007 · Appointments & Calendar)
+ * Represents a single scheduling decision containing one or more candidate time slots held on the calendar.
+ * Never creates unrelated holds: all candidate slots remain linked to this master record.
+ */
+export const proposedMeetings = mysqlTable("proposed_meetings", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("owner_id").notNull(), // Assigned advocate / team member user ID
+  assignedAdvocateName: varchar("assigned_advocate_name", { length: 150 }).default("Byron Honea").notNull(),
+  clientId: int("client_id"), // Student contact ID
+  parentContactId: int("parent_contact_id"), // Parent/Family contact ID
+  leadId: int("lead_id"), // Lead/Prospect ID if from intake/discovery
+  caseId: varchar("case_id", { length: 50 }),
+  studentName: varchar("student_name", { length: 255 }).notNull(),
+  parentName: varchar("parent_name", { length: 255 }),
+  parentEmail: varchar("parent_email", { length: 320 }),
+  parentPhone: varchar("parent_phone", { length: 50 }),
+  meetingType: varchar("meeting_type", { length: 150 }).default("Meeting Type Not Yet Determined").notNull(),
+  schoolDistrict: varchar("school_district", { length: 255 }),
+  location: varchar("location", { length: 255 }),
+  virtualMeetingLink: varchar("virtual_meeting_link", { length: 1024 }),
+  notes: text("notes"),
+  internalNotes: text("internal_notes"),
+  clientTimeZone: varchar("client_time_zone", { length: 64 }).default("America/New_York"),
+  status: varchar("status", { length: 50 }).default("AWAITING_CONFIRMATION").notNull(),
+  // "AWAITING_CONFIRMATION" | "WAITING_ON_PARENT" | "WAITING_ON_SCHOOL" | "PARENT_SELECTED" | "AWAITING_NEW_DATES" | "CONFIRMED" | "POSTPONED" | "CANCELED" | "CLOSED"
+  waitingOn: varchar("waiting_on", { length: 50 }).default("School").notNull(),
+  // "Parent / Client" | "School" | "Waypoint" | "Multiple Parties" | "Other"
+  waitingOnOtherExplanation: text("waiting_on_other_explanation"),
+  finalDateProcess: varchar("final_date_process", { length: 50 }).default("WAYPOINT_CONFIRMS").notNull(),
+  // "WAYPOINT_CONFIRMS" | "PARENT_CAN_CONFIRM" | "PARENT_PREFERENCE_THEN_WAYPOINT"
+  parentPreferredSlotId: int("parent_preferred_slot_id"),
+  parentSelectedAt: timestamp("parent_selected_at"),
+  followUpBy: varchar("follow_up_by", { length: 50 }), // YYYY-MM-DD
+  confirmedSlotId: int("confirmed_slot_id"),
+  confirmedAppointmentId: int("confirmed_appointment_id"),
+  confirmedBy: varchar("confirmed_by", { length: 150 }),
+  confirmedAt: timestamp("confirmed_at"),
+  releaseReason: text("release_reason"),
+  releasedBy: varchar("released_by", { length: 150 }),
+  releasedAt: timestamp("released_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  ownerIdx: index("proposed_meetings_owner_idx").on(t.ownerId),
+  clientIdx: index("proposed_meetings_client_idx").on(t.clientId),
+  parentIdx: index("proposed_meetings_parent_idx").on(t.parentContactId),
+  statusIdx: index("proposed_meetings_status_idx").on(t.status),
+  followUpIdx: index("proposed_meetings_follow_up_idx").on(t.followUpBy),
+}));
+
+export type ProposedMeeting = typeof proposedMeetings.$inferSelect;
+export type InsertProposedMeeting = typeof proposedMeetings.$inferInsert;
+
+/**
+ * Candidate Time Slots (PG-007 · Appointments & Calendar)
+ * Held options for one proposed meeting. Each candidate slot temporarily protects calendar capacity.
+ * Sibling slots carry the same proposedMeetingId.
+ */
+export const candidateTimeSlots = mysqlTable("candidate_time_slots", {
+  id: int("id").autoincrement().primaryKey(),
+  proposedMeetingId: int("proposed_meeting_id").notNull(),
+  slotOrder: int("slot_order").default(1).notNull(),
+  startTime: datetime("start_time").notNull(),
+  endTime: datetime("end_time").notNull(),
+  durationMinutes: int("duration_minutes").default(60).notNull(),
+  status: varchar("status", { length: 50 }).default("HELD").notNull(),
+  // "HELD" | "PARENT_SELECTED" | "CONFIRMED" | "RELEASED"
+  notes: text("notes"),
+  releasedReason: varchar("released_reason", { length: 255 }),
+  releasedAt: timestamp("released_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  meetingIdx: index("candidate_slots_meeting_idx").on(t.proposedMeetingId),
+  statusIdx: index("candidate_slots_status_idx").on(t.status),
+  startIdx: index("candidate_slots_start_idx").on(t.startTime),
+}));
+
+export type CandidateTimeSlot = typeof candidateTimeSlots.$inferSelect;
+export type InsertCandidateTimeSlot = typeof candidateTimeSlots.$inferInsert;
+
 
 
 

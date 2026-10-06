@@ -10,6 +10,7 @@ import { formatDualTimes } from "@shared/timezones";
 import TodaysAppointmentsTable, { CalendarAppointment } from "./calendar/TodaysAppointmentsTable";
 import CalendarDayTimeline from "./calendar/CalendarDayTimeline";
 import CalendarWeekView from "./calendar/CalendarWeekView";
+import { detectItemPatternKey, CALENDAR_PATTERNS } from "./calendar/CalendarPatternStyles";
 
 export type CalendarViewMode = "day" | "week" | "month";
 export type CalendarScope = "my" | "all";
@@ -17,6 +18,7 @@ export type CalendarScope = "my" | "all";
 interface CalendarViewProps {
   appointments: CalendarAppointment[];
   onDateClick?: (date: Date) => void;
+  onSlotClick?: (date: Date, time?: string) => void;
   onEventClick?: (appointment: CalendarAppointment) => void;
   onReassignClick?: (appointment: CalendarAppointment) => void;
   onScheduleClick?: () => void;
@@ -58,6 +60,7 @@ function matchAdvocate(nameA?: string | null, nameB?: string | null): boolean {
 export default function CalendarView({
   appointments,
   onDateClick,
+  onSlotClick,
   onEventClick,
   onReassignClick,
   onScheduleClick,
@@ -207,6 +210,8 @@ export default function CalendarView({
           {dayAppointments.slice(0, 3).map((apt) => {
             const isNeedsCoverage = apt.status === "Needs Coverage";
             const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
+            const patternKey = detectItemPatternKey(apt as any);
+            const patternDef = CALENDAR_PATTERNS[patternKey];
 
             return (
               <div
@@ -215,13 +220,14 @@ export default function CalendarView({
                   e.stopPropagation();
                   onEventClick?.(apt);
                 }}
+                style={{ background: patternDef.inlineBackground }}
                 className={`text-[10px] px-1.5 py-1 rounded-lg cursor-pointer hover:opacity-90 transition-all border ${
                   isNeedsCoverage
-                    ? "bg-rose-950/80 text-rose-200 border-rose-600/80 shadow-sm shadow-rose-950"
-                    : "bg-[#05142B] text-[#FFF4D4] border-[#3A2C18] hover:border-[#C5A059]/70"
+                    ? "border-rose-600/80 shadow-sm shadow-rose-950"
+                    : patternDef.borderClass
                 }`}
               >
-                <div className="font-serif font-bold truncate leading-tight">{apt.title}</div>
+                <div className="font-serif font-bold truncate leading-tight text-[#FFF4D4]">{apt.title}</div>
                 <div className="flex items-center justify-between text-[9px] text-[#A69371] mt-0.5">
                   <span className="truncate max-w-[85px] text-[#C6B697]">
                     {apt.studentName || apt.parentName || "Student"}
@@ -407,6 +413,9 @@ export default function CalendarView({
             selectedDate={currentDate}
             onEventClick={(apt) => onEventClick?.(apt)}
             onReassignClick={(apt) => onReassignClick?.(apt)}
+            onSlotClick={(date, time) =>
+              onSlotClick ? onSlotClick(date, time) : onDateClick ? onDateClick(date) : undefined
+            }
           />
         </div>
       )}

@@ -1564,4 +1564,8 @@ export * from "./db/referrals";
 // ─── Student Legal Involvement & AI Lawyer Prep ─────────────────────────
 export * from "./db/lawyerPrep";
 
+// ─── Proposed Meetings & Candidate Time Slots (PG-007) ─────────────────
+export * from "./db/proposedMeetings";
+
+
 

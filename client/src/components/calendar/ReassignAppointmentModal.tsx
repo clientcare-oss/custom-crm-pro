@@ -38,11 +38,15 @@ export default function ReassignAppointmentModal({
   const startTime = appointment ? new Date(appointment.startTime) : new Date();
   const endTime = appointment ? new Date(appointment.endTime) : new Date();
 
+  const rawExcludeId = appointment?.originalId ?? appointment?.id;
+  const parsedExcludeId = rawExcludeId !== undefined ? Number(rawExcludeId) : undefined;
+  const excludeAppointmentId = typeof parsedExcludeId === "number" && !isNaN(parsedExcludeId) ? parsedExcludeId : undefined;
+
   const availabilityQuery = trpc.appointments.checkAvailability.useQuery(
     {
       startTime,
       endTime,
-      excludeAppointmentId: appointment?.id,
+      excludeAppointmentId,
     },
     {
       enabled: open && !!appointment,
@@ -93,8 +97,9 @@ export default function ReassignAppointmentModal({
       return;
     }
 
+    const rawApptId = Number(appointment.originalId ?? appointment.id);
     reassignMutation.mutate({
-      appointmentId: appointment.id,
+      appointmentId: isNaN(rawApptId) ? 0 : rawApptId,
       newAdvocateName: selectedAdvocate,
       reason: reason.trim() || "Advocate unavailable",
       adminOverride: hasConflict && overrideWarningAccepted,

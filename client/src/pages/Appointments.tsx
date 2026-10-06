@@ -16,6 +16,11 @@ import StaffStatusManagerModal from "@/components/calendar/StaffStatusManagerMod
 import NationalCoverage from "./NationalCoverage";
 import Scheduler from "./Scheduler";
 import ClientCallingSafetyBadge from "@/components/callingSafety/ClientCallingSafetyBadge";
+import HoldsNeedingAttentionCard from "@/components/calendar/HoldsNeedingAttentionCard";
+import CreateProposedMeetingModal from "@/components/calendar/CreateProposedMeetingModal";
+import ProposedMeetingDetailModal from "@/components/calendar/ProposedMeetingDetailModal";
+import MasterScheduleModal, { ScheduleActionType } from "@/components/calendar/MasterScheduleModal";
+import { CalendarPatternLegendBar } from "@/components/calendar/CalendarPatternStyles";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import PageIdBadge from "@/components/PageIdBadge";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
@@ -221,7 +226,24 @@ export default function Appointments() {
     assignedAdvocateName: user?.name || "Byron Honea",
   });
 
+  const [activeProposedMeetingId, setActiveProposedMeetingId] = useState<number | null>(null);
+  const [showMasterSchedule, setShowMasterSchedule] = useState<boolean>(false);
+  const [scheduleModalDate, setScheduleModalDate] = useState<Date | undefined>(undefined);
+  const [scheduleModalTime, setScheduleModalTime] = useState<string>("10:00");
+  const [scheduleModalAction, setScheduleModalAction] = useState<ScheduleActionType | undefined>(undefined);
+
+  const handleOpenSchedule = (date?: Date, time?: string, action?: ScheduleActionType) => {
+    setScheduleModalDate(date || selectedDate);
+    if (time) setScheduleModalTime(time);
+    setScheduleModalAction(action);
+    setShowMasterSchedule(true);
+  };
+
   const { data: appointments = [], refetch } = trpc.appointments.list.useQuery();
+  const { data: unifiedData, refetch: refetchUnified } = trpc.proposedMeetings.getUnifiedCalendarEvents.useQuery(
+    { includeReleasedHolds: false },
+    { refetchInterval: 15000 }
+  );
   const { data: contacts = [] } = trpc.contacts.list.useQuery();
   const { data: availability = [], refetch: refetchAvailability } = trpc.availability.get.useQuery();
   const staffRosterQuery = trpc.appointments.getStaffRoster.useQuery();
@@ -463,8 +485,36 @@ export default function Appointments() {
       return d === todayDateStr && a.status !== "Cancelled";
     });
 
+    const holdList: any[] = (unifiedData?.holdEvents || []).map((h: any) => ({
+      id: h.id,
+      originalId: h.originalId,
+      clientId: h.clientId || null,
+      title: h.title,
+      studentName: h.studentName,
+      parentName: h.parentName,
+      parentPhone: h.parentPhone,
+      meetingType: h.meetingType,
+      assignedAdvocateName: h.assignedAdvocateName,
+      status: h.status,
+      startTime: new Date(h.startTime),
+      endTime: new Date(h.endTime),
+      location: h.location,
+      videoLink: h.videoLink,
+      clientTimeZone: h.clientTimeZone,
+      originalTimeZone: "America/New_York",
+      isHold: true,
+      proposedMeetingId: h.proposedMeetingId,
+      candidateSlotId: h.candidateSlotId,
+      siblingLabel: h.siblingLabel,
+      totalSiblingSlots: h.totalSiblingSlots,
+      slotOrder: h.slotOrder,
+      waitingOn: h.waitingOn,
+      parentPreferred: h.parentPreferred,
+      meetingStatus: h.meetingStatus,
+    }));
+
     if (hasTodayApts) {
-      return rawList;
+      return [...rawList, ...holdList];
     }
 
     const baseDate = new Date();
@@ -527,8 +577,8 @@ export default function Appointments() {
       },
     ];
 
-    return [...sampleApts, ...rawList];
-  }, [appointments, todayDateStr]);
+    return [...sampleApts, ...rawList, ...holdList];
+  }, [appointments, unifiedData, todayDateStr]);
 
   return (
     <ScopedErrorBoundary moduleName="Appointments & Calendar">
@@ -569,11 +619,11 @@ export default function Appointments() {
 
             <div className="flex items-center gap-3 flex-wrap">
               <Button
-                onClick={() => setShowCreate(true)}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs sm:text-sm shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-110 transition-all gap-2"
+                onClick={() => handleOpenSchedule()}
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs sm:text-sm shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-110 transition-all gap-2 tracking-wide cursor-pointer px-4 sm:px-5 py-2"
               >
                 <Plus className="w-4 h-4 text-[#07162B]" />
-                Schedule Appointment
+                + SCHEDULE
               </Button>
             </div>
           </div>
@@ -1083,8 +1133,8 @@ export default function Appointments() {
         </div>
       )}
 
-      {/* ── Schedule Appointment Dialog (opened via header button or programmatically) ── */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      {/* ── Deprecated Schedule Dialog (superseded by MasterScheduleModal + SCHEDULE workflow) ── */}
+      <Dialog open={false} onOpenChange={setShowCreate}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_16px_40px_rgba(0,0,0,0.95)]">
             <DialogHeader>
               <DialogTitle className="font-serif text-[#FFF4D4] text-xl font-normal">Schedule Appointment</DialogTitle>
@@ -1426,6 +1476,32 @@ export default function Appointments() {
         </div>
       ) : (
         <>
+      {/* ── Holds Needing Attention Work Queue ── */}
+      <div className="mb-4">
+        <HoldsNeedingAttentionCard
+          onReviewMeeting={(id) => setActiveProposedMeetingId(id)}
+        />
+      </div>
+
+      {/* ── Visual Pattern Key & Small Block Legend ── */}
+      <div className="mb-4">
+        <CalendarPatternLegendBar
+          onSelectPattern={(key) => {
+            const action: ScheduleActionType =
+              key === "confirmed"
+                ? "CONFIRMED_APPOINTMENT"
+                : key === "proposed_hold"
+                ? "PROPOSED_HOLDS"
+                : key === "block_time"
+                ? "BLOCK_TIME"
+                : key === "office_closure"
+                ? "OFFICE_CLOSURE"
+                : "INTERNAL_EVENT";
+            handleOpenSchedule(selectedDate, undefined, action);
+          }}
+        />
+      </div>
+
       {/* ── Calendar View ── */}
       <CalendarView
         appointments={mergedAppointments as any}
@@ -1437,9 +1513,17 @@ export default function Appointments() {
         onAdvocateFilterChange={setSelectedAdvocateFilter}
         currentDate={selectedDate}
         onDateChange={setSelectedDate}
-        onEventClick={(apt) => setSelectedApt(apt as Appointment)}
+        onDateClick={(d) => handleOpenSchedule(d)}
+        onSlotClick={(date, time) => handleOpenSchedule(date, time)}
+        onEventClick={(apt) => {
+          if ((apt as any).isHold || (apt as any).proposedMeetingId) {
+            setActiveProposedMeetingId((apt as any).proposedMeetingId);
+          } else {
+            setSelectedApt(apt as Appointment);
+          }
+        }}
         onReassignClick={(apt) => setReassignApt(apt as any)}
-        onScheduleClick={() => setShowCreate(true)}
+        onScheduleClick={() => handleOpenSchedule()}
         onManageStaffClick={() => setShowStaffStatusModal(true)}
         loggedInAdvocateName={user?.name || "Byron Honea"}
         staffList={staffList}
@@ -1457,6 +1541,33 @@ export default function Appointments() {
         open={showStaffStatusModal}
         onOpenChange={setShowStaffStatusModal}
         onStatusUpdated={() => refetch()}
+      />
+
+      {/* ── PG-007 Proposed Meeting & Master Schedule Modals ── */}
+      <ProposedMeetingDetailModal
+        proposedMeetingId={activeProposedMeetingId}
+        isOpen={Boolean(activeProposedMeetingId)}
+        onClose={() => setActiveProposedMeetingId(null)}
+        onSuccess={() => {
+          refetch();
+          refetchUnified();
+        }}
+      />
+
+      <MasterScheduleModal
+        isOpen={showMasterSchedule}
+        onClose={() => {
+          setShowMasterSchedule(false);
+          setScheduleModalAction(undefined);
+        }}
+        onSuccess={() => {
+          refetch();
+          refetchUnified();
+        }}
+        initialDate={scheduleModalDate}
+        initialTime={scheduleModalTime}
+        advocateList={staffList}
+        defaultAction={scheduleModalAction}
       />
 
       {/* ── Upcoming Appointments ── */}

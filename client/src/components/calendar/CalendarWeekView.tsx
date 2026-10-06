@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, User, AlertCircle, ArrowRightLeft } from "lucide-react";
 import { CalendarAppointment } from "./TodaysAppointmentsTable";
+import { detectItemPatternKey, CALENDAR_PATTERNS } from "./CalendarPatternStyles";
 
 interface CalendarWeekViewProps {
   appointments: CalendarAppointment[];
@@ -107,16 +108,30 @@ export default function CalendarWeekView({
                     );
                     const advocateName = apt.assignedAdvocateName || "Byron Honea";
                     const isNeedsCoverage = apt.status === "Needs Coverage";
+                    const isHold = apt.isHold;
+                    const isParentSelected = apt.parentPreferred || apt.status === "PARENT_SELECTED";
+                    const patternKey = detectItemPatternKey(apt as any);
+                    const patternDef = CALENDAR_PATTERNS[patternKey];
+
+                    let weekCardBg = patternDef.inlineBackground;
+                    let weekCardBorder = patternDef.borderClass;
+
+                    if (isHold && isParentSelected) {
+                      weekCardBorder = "border-dashed border-purple-500/70 border-l-4 border-l-purple-400";
+                      weekCardBg =
+                        "repeating-linear-gradient(45deg, rgba(168, 85, 247, 0.2) 0px, rgba(168, 85, 247, 0.2) 8px, rgba(16, 43, 78, 0.5) 8px, rgba(16, 43, 78, 0.5) 16px)";
+                    } else if (isNeedsCoverage) {
+                      weekCardBorder = "border-rose-600/80 border-l-4 border-l-rose-500";
+                      weekCardBg =
+                        "repeating-linear-gradient(45deg, rgba(225, 29, 72, 0.25) 0px, rgba(225, 29, 72, 0.25) 6px, rgba(20, 5, 10, 0.8) 6px, rgba(20, 5, 10, 0.8) 12px)";
+                    }
 
                     return (
                       <div
                         key={apt.id}
                         onClick={() => onEventClick(apt)}
-                        className={`rounded-xl border p-2 text-xs cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${
-                          isNeedsCoverage
-                            ? "bg-rose-950/50 border-rose-600/80 text-rose-200 shadow-md shadow-rose-950/40"
-                            : "bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] hover:border-[#C5A059]/70"
-                        }`}
+                        style={{ background: weekCardBg }}
+                        className={`rounded-xl border p-2 text-xs cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${weekCardBorder}`}
                       >
                         {/* Time Badges */}
                         <div className="flex items-center gap-1 font-mono text-[9px] mb-1 flex-wrap">
@@ -137,6 +152,11 @@ export default function CalendarWeekView({
                         <div className="text-[11px] text-[#FFE394]/90 truncate">
                           {apt.studentName || apt.parentName || "Student"}
                         </div>
+                        {isHold && (
+                          <div className="mt-0.5 text-[9px] font-mono text-amber-300 font-bold truncate">
+                            {apt.siblingLabel || "1 OF 3 POSSIBLE DATES"}
+                          </div>
+                        )}
 
                         {/* Status / Coverage Badge */}
                         <div className="mt-1.5 flex items-center justify-between gap-1 flex-wrap">

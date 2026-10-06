@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, Users, MoreHorizontal, ArrowRightLeft } from "lucide-react";
 
 export interface CalendarAppointment {
-  id: number;
+  id: number | string;
+  originalId?: number;
   clientId?: number | null;
   caseId?: string | null;
   title: string;
@@ -22,6 +23,16 @@ export interface CalendarAppointment {
   clientTimeZone?: string | null;
   originalTimeZone?: string | null;
   assignedAdvocateName?: string | null;
+  // Proposed Meeting & Candidate Hold properties
+  isHold?: boolean;
+  proposedMeetingId?: number | null;
+  candidateSlotId?: number | null;
+  siblingLabel?: string | null;
+  totalSiblingSlots?: number | null;
+  slotOrder?: number | null;
+  waitingOn?: string | null;
+  parentPreferred?: boolean | null;
+  meetingStatus?: string | null;
 }
 
 interface TodaysAppointmentsTableProps {

@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { CalendarAppointment } from "./TodaysAppointmentsTable";
+import { detectItemPatternKey, CALENDAR_PATTERNS } from "./CalendarPatternStyles";
 
 interface CalendarDayTimelineProps {
   appointments: CalendarAppointment[];
   selectedDate: Date;
   onEventClick: (apt: CalendarAppointment) => void;
   onReassignClick: (apt: CalendarAppointment) => void;
+  onSlotClick?: (date: Date, time: string) => void;
 }
 
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
@@ -22,6 +24,7 @@ export default function CalendarDayTimeline({
   selectedDate,
   onEventClick,
   onReassignClick,
+  onSlotClick,
 }: CalendarDayTimelineProps) {
   const selectedDateStr = useMemo(() => {
     return new Date(selectedDate).toISOString().split("T")[0];
@@ -70,7 +73,16 @@ export default function CalendarDayTimeline({
               </div>
 
               {/* Main Content Area */}
-              <div className="flex-1 min-h-[46px] border-t border-[#3A2C18]/60 pt-2 space-y-2">
+              <div
+                onClick={() => {
+                  if (hourApts.length === 0) {
+                    onSlotClick?.(selectedDate, `${String(hour).padStart(2, "0")}:00`);
+                  }
+                }}
+                className={`flex-1 min-h-[46px] border-t border-[#3A2C18]/60 pt-2 space-y-2 rounded-lg transition-colors ${
+                  hourApts.length === 0 ? "hover:bg-[#102B4E]/20 cursor-pointer" : ""
+                }`}
+              >
                 {hourApts.map((apt) => {
                   const isNeedsCoverage = apt.status === "Needs Coverage";
                   const startStr = new Date(apt.startTime).toLocaleTimeString("en-US", {
@@ -84,35 +96,65 @@ export default function CalendarDayTimeline({
                   const studentName = apt.studentName || apt.parentName || "Student";
                   const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
 
+                  // Detect pattern specification
+                  const isHold = apt.isHold;
+                  const isParentSelected = apt.parentPreferred || apt.status === "PARENT_SELECTED";
+                  const patternKey = detectItemPatternKey(apt);
+                  const patternDef = CALENDAR_PATTERNS[patternKey];
+
                   // Card styling depending on type & coverage in Admiralty Theme
-                  let cardStyle = "bg-[#020A17]/90 border-[#3A2C18] border-l-[#C5A059] hover:border-[#C5A059]/80";
-                  if (isNeedsCoverage) {
-                    cardStyle = "bg-rose-950/40 border-rose-800/60 border-l-rose-500 hover:border-rose-400/80";
-                  } else if (apt.title.toLowerCase().includes("record")) {
-                    cardStyle = "bg-[#031527] border-[#3A2C18] border-l-[#DFBE77] hover:border-[#DFBE77]/80";
+                  let cardBorderClass = patternDef.borderClass;
+                  let cardBackground = patternDef.inlineBackground;
+
+                  if (isHold && isParentSelected) {
+                    cardBorderClass = "border-dashed border-purple-500/70 border-l-4 border-l-purple-400";
+                    cardBackground =
+                      "repeating-linear-gradient(45deg, rgba(168, 85, 247, 0.2) 0px, rgba(168, 85, 247, 0.2) 8px, rgba(16, 43, 78, 0.5) 8px, rgba(16, 43, 78, 0.5) 16px)";
+                  } else if (isNeedsCoverage) {
+                    cardBorderClass = "border-rose-800/80 border-l-4 border-l-rose-500";
+                    cardBackground =
+                      "repeating-linear-gradient(45deg, rgba(225, 29, 72, 0.25) 0px, rgba(225, 29, 72, 0.25) 6px, rgba(20, 5, 10, 0.8) 6px, rgba(20, 5, 10, 0.8) 12px)";
                   }
 
                   return (
                     <div
                       key={apt.id}
                       onClick={() => onEventClick(apt)}
-                      className={`rounded-xl border border-l-4 p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-sm ${cardStyle}`}
+                      style={{ background: cardBackground }}
+                      className={`rounded-xl border p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-sm ${cardBorderClass}`}
                     >
                       {/* Left: Title & Subtitle */}
                       <div>
-                        <div className="font-serif font-bold text-[#FFF4D4] text-sm tracking-tight leading-tight">
-                          {apt.title}
-                        </div>
-                        <div className="text-xs text-[#C6B697] mt-0.5">
-                          <span className="text-[#FFF4D4] font-medium">{studentName}</span>
-                          <span className="mx-2 text-[#3A2C18]">|</span>
-                          <span className="text-[#FFE394] font-medium">{advocateName}</span>
-                          {isNeedsCoverage && (
-                            <span className="ml-2 text-rose-400 font-semibold font-mono">
-                              (Needs Coverage)
+                        <div className="font-serif font-bold text-[#FFF4D4] text-sm tracking-tight leading-tight flex items-center gap-2">
+                          <span>{apt.title}</span>
+                          {isHold && (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+                              {isParentSelected ? "PARENT SELECTED" : "TENTATIVE"}
                             </span>
                           )}
                         </div>
+
+                        {isHold ? (
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[#102B4E]/80 text-[#FFE394] border border-[#3A2C18]">
+                              {apt.siblingLabel || "1 OF 3 POSSIBLE DATES"}
+                            </span>
+                            <span className="text-xs text-[#C6B697]">
+                              {studentName} · Waiting on: <strong className="text-[#FFE394]">{apt.waitingOn || "School"}</strong>
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-[#C6B697] mt-0.5">
+                            <span className="text-[#FFF4D4] font-medium">{studentName}</span>
+                            <span className="mx-2 text-[#3A2C18]">|</span>
+                            <span className="text-[#FFE394] font-medium">{advocateName}</span>
+                            {isNeedsCoverage && (
+                              <span className="ml-2 text-rose-400 font-semibold font-mono">
+                                (Needs Coverage)
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Right: Time Range & Action Button */}
