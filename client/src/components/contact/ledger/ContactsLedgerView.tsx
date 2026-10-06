@@ -387,8 +387,8 @@ export default function ContactsLedgerView({
       style={{
         backgroundImage: `url(${
           isLight
-            ? "/decor/contacts-ledger-light.png"
-            : "/decor/contacts-ledger-dark.png"
+            ? "/decor/contacts-ledger-light.png?v=20261006"
+            : "/decor/contacts-ledger-dark.png?v=20261006"
         })`,
         backgroundColor: "transparent",
         backgroundSize: "100% 100%",
