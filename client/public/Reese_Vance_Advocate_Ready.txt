@@ -1,0 +1,79 @@
+⚡ MEETING QUICK LIST
+
+## I. INDIVIDUALIZED EDUCATION PROGRAM (IEP)
+
+LABEL: Eligibility Verification
+ASK: Please verify and record Reese Vance's dual eligibility under Autism Spectrum Disorder (ASD) and Speech-Language Impairment on the IEP cover page.
+EXPAND: TARGET-001
+
+## II. PRESENT LEVELS OF ACADEMIC ACHIEVEMENT AND FUNCTIONAL PERFORMANCE
+
+LABEL: Written Expression Fluency Baseline
+ASK: Please document an objective baseline for Reese's typing and speech-to-text writing rate compared to handwriting endurance in academic present levels.
+EXPAND: TARGET-002
+
+LABEL: Sensory Processing Profile
+ASK: Please update Reese's functional present levels with sensory accommodation triggers, specifically auditory sensitivity in the cafeteria and fine-motor handwriting fatigue.
+EXPAND: TARGET-003
+
+LABEL: Math Problem Solving Baseline
+ASK: Please document Reese's performance on multi-step math problem solving when provided visual graphic organizers versus unprompted presentation.
+EXPAND: TARGET-004
+
+## III. CONSIDERATION OF SPECIAL FACTORS
+
+LABEL: Sensory Calm-Down Break Card
+ASK: Please incorporate a non-verbal 5-minute self-initiated calm-down break pass into Reese's special factors and positive behavioral supports.
+EXPAND: TARGET-005
+
+LABEL: Assistive Technology for Dysgraphia
+ASK: Please specify in special factors that assistive technology (speech-to-text software and school Chromebook) is required to access the curriculum without handwriting fatigue.
+EXPAND: TARGET-006
+
+## IV. MEASURABLE ANNUAL GOALS
+
+LABEL: Written Composition with Assistive Tech
+ASK: Please add a measurable written composition goal where Reese generates a multi-paragraph response using speech-to-text or word processing software with 80% accuracy.
+EXPAND: TARGET-007
+
+LABEL: Pragmatic Peer Interaction
+ASK: By May 2027, given a structured small-group collaborative assignment, Reese will initiate a clarifying question or cooperative turn in 4 out of 5 observed opportunities.
+EXPAND: TARGET-008
+
+LABEL: Math Multi-Step Problem Solving
+ASK: By May 2027, given a step-by-step visual calculation checklist, Reese will correctly solve 2-step algebraic equations with 85% accuracy across 3 consecutive probes.
+EXPAND: TARGET-009
+
+## V. SUPPLEMENTAL AIDS AND SERVICES & ACCOMMODATIONS
+
+LABEL: Speech-to-Text & Keyboarding
+ASK: Provide access to speech-to-text dictation and keyboarding for all classroom assignments and assessments exceeding two sentences across all subject areas.
+EXPAND: TARGET-010
+
+LABEL: Noise-Dampening Headphones
+ASK: Allow Reese to wear personal noise-dampening ear wear or headphones during loud passing transitions, cafeteria lunch, assemblies, and emergency drills.
+EXPAND: TARGET-011
+
+LABEL: No Handwriting Deductions
+ASK: Prohibit point deductions or incomplete work penalties based on handwriting legibility or graphomotor speed when Reese has demonstrated content comprehension.
+EXPAND: TARGET-012
+
+## VI. RELATED SERVICES
+
+LABEL: Speech-Language Pathology
+ASK: Confirm 60 minutes weekly (2 x 30 min) of direct Speech-Language Pathology focusing on pragmatic language, conversational reciprocity, and self-advocacy.
+EXPAND: TARGET-013
+
+LABEL: Missed Therapy Make-Up Protocol
+ASK: Require that any speech therapy sessions missed due to provider absence be documented in writing and made up within the same academic grading period.
+EXPAND: TARGET-014
+
+LABEL: Occupational Therapy Consultation
+ASK: Add 30 minutes monthly of indirect OT consultation to monitor sensory diet implementation and assistive technology ergonomics.
+EXPAND: TARGET-015
+
+## VII. TESTING ACCOMMODATIONS
+
+LABEL: Extended Time & Speech-to-Text
+ASK: Ensure state and district standardized testing accommodations include 100% extended time (Double Time) and approved speech-to-text or scribe assistance.
+EXPAND: TARGET-016

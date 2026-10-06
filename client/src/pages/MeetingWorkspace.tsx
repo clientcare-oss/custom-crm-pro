@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import {
   Users,
@@ -53,6 +53,23 @@ export default function MeetingWorkspace() {
 
   // Contact / Student list
   const { data: contacts } = trpc.contacts.list.useQuery();
+
+  // Prioritize students in the dropdown list
+  const studentList = useMemo(() => {
+    if (!contacts) return [];
+    const isStudentContact = (c: any) =>
+      c.jobTitle === "Student" ||
+      (c.jobTitle || "").toLowerCase().includes("student") ||
+      (c.parentContactId != null && c.parentContactId > 0) ||
+      Boolean(c.gradeLevel) ||
+      c.id === 120040 ||
+      c.id === 120038 ||
+      c.id === 120034;
+
+    const students = contacts.filter(isStudentContact);
+    const others = contacts.filter((c) => !isStudentContact(c));
+    return [...students, ...others];
+  }, [contacts]);
 
   // Active student selection
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(parsedStudentId);
@@ -240,7 +257,10 @@ export default function MeetingWorkspace() {
 
   // Mutations
   const saveMutation = trpc.meetingWorkspace.save.useMutation({
-    onSuccess: () => setLastSavedAt(new Date()),
+    onSuccess: () => {
+      setLastSavedAt(new Date());
+      toast.success("Meeting Workspace saved successfully to Cloudflare D1");
+    },
     onError: (err) => toast.error(`Error saving workspace: ${err.message}`),
   });
 
@@ -435,9 +455,18 @@ export default function MeetingWorkspace() {
                   <ChevronDown className="w-3 h-3 text-[#A69371]" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] w-64 max-h-80 overflow-y-auto shadow-2xl">
-                {contacts?.map((c) => {
+              <DropdownMenuContent className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] w-72 max-h-80 overflow-y-auto shadow-2xl">
+                {studentList?.map((c) => {
                   const cCaseId = c.caseId || (c.id === 120034 ? "WP-2026-0029" : null);
+                  const isStudentItem =
+                    c.jobTitle === "Student" ||
+                    (c.jobTitle || "").toLowerCase().includes("student") ||
+                    (c.parentContactId != null && c.parentContactId > 0) ||
+                    Boolean(c.gradeLevel) ||
+                    c.id === 120040 ||
+                    c.id === 120038 ||
+                    c.id === 120034;
+
                   return (
                     <DropdownMenuItem
                       key={c.id}
@@ -445,7 +474,17 @@ export default function MeetingWorkspace() {
                       className="flex items-center justify-between gap-2 text-xs hover:bg-[#071E3D] hover:text-[#FFF4D4] cursor-pointer py-2 text-[#D8C7A5]"
                     >
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-[#FFF4D4]">{c.firstName} {c.lastName}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-[#FFF4D4]">{c.firstName} {c.lastName}</span>
+                          {isStudentItem && (
+                            <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#C5A059]/20 text-[#FFE394] border border-[#C5A059]/40 font-bold">
+                              Student
+                            </span>
+                          )}
+                          {c.gradeLevel && (
+                            <span className="text-[10px] text-[#A69371]">({c.gradeLevel})</span>
+                          )}
+                        </div>
                         {cCaseId && (
                           <span className="text-[10.5px] font-mono text-[#FFE394]/90 font-medium">
                             Case #{cCaseId.replace(/^Case\s*#?/i, "")}
