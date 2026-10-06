@@ -102,23 +102,23 @@ export function CallCenterStats({
                 onSelectStat?.(stat.key);
               }
             }}
-            className={`flex items-center justify-between gap-1 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl border transition-all cursor-pointer group min-h-[46px] whitespace-nowrap shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.6)] ${
+            className={`flex items-center justify-between gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border transition-all cursor-pointer group h-9 sm:h-9.5 min-h-[36px] whitespace-nowrap shrink-0 shadow-[0_4px_14px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,227,148,0.22)] ${
               isActive
-                ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_15px_rgba(197,160,89,0.25)]"
-                : "bg-[#05142B]/90 border-[#3A2C18] hover:border-[#C5A059]/60 hover:bg-[#07162B]"
+                ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_15px_rgba(197,160,89,0.35),inset_0_1px_1px_rgba(255,227,148,0.4)]"
+                : "bg-[#05142B]/90 border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
             }`}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <div className={`w-7 h-7 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 ${stat.iconColor}`}>
-                <Icon className="h-3.5 w-3.5" />
+              <div className={`w-5.5 h-5.5 rounded-md border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 ${stat.iconColor}`}>
+                <Icon className="h-3 w-3" />
               </div>
-              <div className="min-w-0">
-                <div className="text-sm sm:text-base font-serif font-bold text-[#FFF4D4] leading-none">
+              <div className="flex items-baseline gap-1.5 min-w-0">
+                <span className="text-sm font-serif font-bold text-[#FFF4D4] leading-none shrink-0">
                   {stat.count}
-                </div>
-                <div className="text-[10px] sm:text-[11px] font-medium text-[#C6B697] whitespace-nowrap leading-tight mt-0.5">
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-medium text-[#C6B697] truncate leading-none">
                   {stat.label}
-                </div>
+                </span>
               </div>
             </div>
             {stat.isAnchorLink && (

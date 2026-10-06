@@ -312,23 +312,34 @@ export default function UnassignedCallLogs() {
           className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10"
           style={{ paddingTop: "calc(100% * 228 / 1024)" }}
         >
-          {/* Top 6 Metric & Statistics Boxes in Horizontal Row */}
-          <CallCenterStats
-        callsTodayCount={callsTodayCount}
-        missedCallsCount={missedCount}
-        callbacksCount={callbacksCount}
-        voicemailCount={voicemailCount}
-        scheduledCallsCount={scheduledCount}
-        needsAttentionCount={3}
-        contactsCount={formattedContacts.length}
-        activeFilter={activeStatFilter}
-        onSelectStat={(key) => {
-          setActiveStatFilter(key);
-          toast.info(`Filtered view for: ${key}`);
-        }}
-        onScrollToNeedsAttention={handleScrollToNeedsAttention}
-        onScrollToContactList={handleScrollToContactList}
-      />
+          {/* ─── UNDER-SHELF RECESSED LIGHTING GLOW ─── */}
+          {/* Casts downward warm amber architectural illumination onto the statistics buttons */}
+          <div className="relative w-full">
+            <div className="absolute -top-3 left-0 right-0 h-28 pointer-events-none select-none overflow-hidden">
+              {/* Warm LED strip along the underside of the shelf */}
+              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFE394]/70 to-transparent blur-[1px]" />
+              {/* Downward warm ambient light beam shining onto the buttons */}
+              <div className="w-full h-full bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(255,215,130,0.34)_0%,rgba(217,160,60,0.13)_45%,transparent_75%)]" />
+            </div>
+
+            {/* Top 6 Metric & Statistics Boxes in Horizontal Row */}
+            <CallCenterStats
+              callsTodayCount={callsTodayCount}
+              missedCallsCount={missedCount}
+              callbacksCount={callbacksCount}
+              voicemailCount={voicemailCount}
+              scheduledCallsCount={scheduledCount}
+              needsAttentionCount={3}
+              contactsCount={formattedContacts.length}
+              activeFilter={activeStatFilter}
+              onSelectStat={(key) => {
+                setActiveStatFilter(key);
+                toast.info(`Filtered view for: ${key}`);
+              }}
+              onScrollToNeedsAttention={handleScrollToNeedsAttention}
+              onScrollToContactList={handleScrollToContactList}
+            />
+          </div>
 
       {/* PRIMARY PHONE / CALL AREA (TOP OF PAGE) */}
       <div className="space-y-4">
