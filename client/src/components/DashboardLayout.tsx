@@ -1593,7 +1593,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           location === "/contacts" && "p-0 bg-[#07152B]",
           (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]",
           (location === "/agreements" || location.startsWith("/agreements") || location === "/contracts" || location.startsWith("/smart-files")) && "p-0 bg-[#07162B]",
-          (location.startsWith("/state-complaint-builder") || location.startsWith("/tools/state-complaint-builder")) && "p-0 bg-[#030D1A]"
+          (location.startsWith("/state-complaint-builder") || location.startsWith("/tools/state-complaint-builder")) && "p-0 bg-[#030D1A]",
+          (location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#07162B]"
         )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">

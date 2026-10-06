@@ -652,6 +652,18 @@ export default function Automations() {
     return TRIGGER_OPTIONS.find((t) => t.id === id)?.label || id;
   };
 
+  // When viewing Waypoint AI Prompt Library (PG-013-AI), render edge-to-edge full-bleed with no container
+  if (pageTab === "ai-vault") {
+    return (
+      <ScopedErrorBoundary moduleName="Waypoint AI Prompt Library">
+        <AiPromptVault
+          onUnlockChange={(unlocked) => setIsVaultUnlocked(unlocked)}
+          onSwitchToWorkflows={() => handleTabSwitch("workflows")}
+        />
+      </ScopedErrorBoundary>
+    );
+  }
+
   return (
     <ScopedErrorBoundary moduleName="Automations Engine">
       <div
@@ -665,56 +677,30 @@ export default function Automations() {
           {/* ─── Top Header Deck & Tab Switcher ─── */}
           <div className="w-full flex flex-col gap-4 border-b border-[#3A2C18] pb-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
-              {pageTab === "workflows" ? (
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418]">
-                      PG-013 · Autonomous Systems
-                    </span>
-                  </div>
-                  <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-wide text-[#FFF4D4]">
-                    Automations Engine
-                  </h1>
-                  <p className="font-serif text-xs sm:text-sm text-[#E8D1A7] leading-relaxed max-w-2xl">
-                    Trigger-based action sequences, smart file routing, and client communication workflows.
-                  </p>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418]">
+                    PG-013 · Autonomous Systems
+                  </span>
                 </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418] flex items-center gap-1.5">
-                      <span className="font-mono text-[#FFE394]">PG-013-AI</span>
-                      <span>·</span>
-                      <span>Waypoint AI Prompt Library</span>
-                    </span>
-                    <span className={cn(
-                      "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border",
-                      isVaultUnlocked ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/40" : "bg-amber-950/80 text-amber-300 border-amber-500/40"
-                    )}>
-                      {isVaultUnlocked ? "Authorized Admin Session" : "PIN Locked"}
-                    </span>
-                  </div>
-                </div>
-              )}
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-wide text-[#FFF4D4]">
+                  Automations Engine
+                </h1>
+                <p className="font-serif text-xs sm:text-sm text-[#E8D1A7] leading-relaxed max-w-2xl">
+                  Trigger-based action sequences, smart file routing, and client communication workflows.
+                </p>
+              </div>
 
               {/* Navigation Tab Bar: Sequences vs Waypoint AI */}
               <div className="flex items-center gap-2 bg-[#020A17]/85 p-1.5 rounded-xl border border-[#3A2C18] w-fit shadow-inner">
                 <button
                   type="button"
                   onClick={() => handleTabSwitch("workflows")}
-                  className={cn(
-                    "py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2",
-                    pageTab === "workflows"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
-                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
-                  )}
+                  className="py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
                 >
                   <Zap className="w-3.5 h-3.5" />
                   <span>Workflow Sequences</span>
-                  <span className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded font-mono",
-                    pageTab === "workflows" ? "bg-[#07162B]/20 text-[#07162B]" : "bg-[#05142B] text-[#A69371]"
-                  )}>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-[#07162B]/20 text-[#07162B]">
                     {automations.length}
                   </span>
                 </button>
@@ -722,21 +708,11 @@ export default function Automations() {
                 <button
                   type="button"
                   onClick={() => handleTabSwitch("ai-vault")}
-                  className={cn(
-                    "py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative",
-                    pageTab === "ai-vault"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
-                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
-                  )}
+                  className="py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   <span>Waypoint AI</span>
-                  <span className={cn(
-                    "inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border",
-                    pageTab === "ai-vault"
-                      ? "bg-[#07162B]/30 text-[#07162B] border-[#07162B]/40 font-bold"
-                      : "bg-amber-950/80 text-amber-300 border-amber-500/40"
-                  )}>
+                  <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border bg-amber-950/80 text-amber-300 border-amber-500/40">
                     PG-013-AI
                   </span>
                 </button>
@@ -744,11 +720,8 @@ export default function Automations() {
             </div>
           </div>
 
-          {/* ─── CONDITIONAL TAB CONTENT ─── */}
-          {pageTab === "ai-vault" ? (
-            <AiPromptVault onUnlockChange={(unlocked) => setIsVaultUnlocked(unlocked)} />
-          ) : (
-            <div className="w-full space-y-6">
+          {/* ─── WORKFLOWS CONTENT ─── */}
+          <div className="w-full space-y-6">
 
           {/* ── VIEW 1: DASHBOARD LISTING ── */}
           {activeView === "list" && (
@@ -1712,7 +1685,6 @@ export default function Automations() {
         )}
 
             </div>
-          )}
 
       {/* ── EMAIL TEMPLATE PREVIEW MODAL OVERLAY ── */}
       {previewTemplateId && EMAIL_TEMPLATES[previewTemplateId] && (

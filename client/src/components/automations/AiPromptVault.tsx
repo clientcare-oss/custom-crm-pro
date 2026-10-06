@@ -38,13 +38,14 @@ import {
   History,
   Pencil,
   MoreHorizontal,
+  MapPin,
   X,
   CheckCircle2,
   CornerDownRight,
-  Compass as HelmIcon,
   HelpCircle,
   Eye,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ArrowLeft
 } from "lucide-react";
 import {
   DEFAULT_AI_PROMPTS,
@@ -60,9 +61,10 @@ import { broadcastPageId } from "@/lib/pageIdRegistry";
 
 interface AiPromptVaultProps {
   onUnlockChange?: (unlocked: boolean) => void;
+  onSwitchToWorkflows?: () => void;
 }
 
-export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {}) {
+export default function AiPromptVault({ onUnlockChange, onSwitchToWorkflows }: AiPromptVaultProps = {}) {
   // Vault lock state: session-based
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     return sessionStorage.getItem(VAULT_LOCK_STATUS_KEY) === "true";
@@ -282,7 +284,6 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
     setIsSimulating(true);
     setTestOutput("");
 
-    // Simulate Cloudflare Workers AI execution
     setTimeout(() => {
       let output = `[Cloudflare Workers AI Response · Model: ${selectedPrompt.modelName}]\n\n`;
       if (selectedPrompt.key === "CHILD_FILE_ANALYSIS") {
@@ -311,34 +312,32 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
       setTestOutput(output);
       setIsSimulating(false);
       toast.success("Simulation completed successfully via Cloudflare Workers AI");
-    }, 1200);
+    }, 1100);
   };
 
   // Helper icon for prompt list
   const getPromptIcon = (key: string) => {
     switch (key) {
       case "CHILD_FILE_ANALYSIS":
-        return <FileText className="w-5 h-5 text-[#10223D]" />;
       case "IEP_INTEL_UNIT":
-        return <FileText className="w-5 h-5 text-[#10223D]" />;
-      case "CASE_NOTES_PHONE_ANALYSIS":
-        return <Phone className="w-5 h-5 text-[#10223D]" />;
-      case "PARENT_CONCERNS_ANALYSIS":
-        return <Users className="w-5 h-5 text-[#10223D]" />;
-      case "MEETING_DIRECTION_LEAN":
-        return <Compass className="w-5 h-5 text-[#10223D]" />;
-      case "MEETING_ASSEMBLER":
-        return <Sparkles className="w-5 h-5 text-[#10223D]" />;
-      case "STATE_COMPLAINT_BUILDER":
-        return <Scale className="w-5 h-5 text-[#10223D]" />;
       case "PWN_DECODER":
-        return <FileText className="w-5 h-5 text-[#10223D]" />;
+        return <FileText className="w-4 h-4 text-[#10223D]" />;
+      case "CASE_NOTES_PHONE_ANALYSIS":
+        return <Phone className="w-4 h-4 text-[#10223D]" />;
+      case "PARENT_CONCERNS_ANALYSIS":
+        return <Users className="w-4 h-4 text-[#10223D]" />;
+      case "MEETING_DIRECTION_LEAN":
+        return <Compass className="w-4 h-4 text-[#10223D]" />;
+      case "MEETING_ASSEMBLER":
+        return <Sparkles className="w-4 h-4 text-[#10223D]" />;
+      case "STATE_COMPLAINT_BUILDER":
+        return <Scale className="w-4 h-4 text-[#10223D]" />;
       case "PROGRESS_MONITORING_ANALYZER":
-        return <TrendingUp className="w-5 h-5 text-[#10223D]" />;
+        return <TrendingUp className="w-4 h-4 text-[#10223D]" />;
       case "COMMUNICATION_ANALYZER":
-        return <Mail className="w-5 h-5 text-[#10223D]" />;
+        return <Mail className="w-4 h-4 text-[#10223D]" />;
       default:
-        return <Bot className="w-5 h-5 text-[#10223D]" />;
+        return <Bot className="w-4 h-4 text-[#10223D]" />;
     }
   };
 
@@ -364,29 +363,15 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
   if (!isUnlocked) {
     return (
       <div
-        className="w-full min-h-[700px] flex items-center justify-center py-12 px-4 rounded-3xl relative overflow-hidden"
+        className="w-full min-h-screen flex items-center justify-center p-4 relative"
         style={{
-          backgroundImage: "linear-gradient(rgba(3, 9, 21, 0.75), rgba(3, 9, 21, 0.85)), url('/images/steampunk-admiralty-bg.jpg')",
+          backgroundImage: "url('/images/steampunk-admiralty-bg.jpg')",
           backgroundSize: "cover",
-          backgroundPosition: "center"
+          backgroundPosition: "center top",
+          backgroundAttachment: "fixed"
         }}
       >
-        {/* Screw rivets on gateway frame */}
-        <div className="absolute top-4 left-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
-          +
-        </div>
-        <div className="absolute top-4 right-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
-          +
-        </div>
-        <div className="absolute bottom-4 left-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
-          +
-        </div>
-        <div className="absolute bottom-4 right-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
-          +
-        </div>
-
         <div className="max-w-md w-full bg-[#05142B]/95 border-2 border-[#5A4322] rounded-2xl p-7 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_2px_rgba(255,255,255,0.08)] relative overflow-hidden backdrop-blur-xl">
-          {/* Top brass highlight bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#E5C175] to-transparent shadow-[0_0_12px_rgba(229,193,117,0.7)]" />
 
           {/* Security Header */}
@@ -493,45 +478,46 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
   }
 
   // =========================================================================
-  // RENDER 2: FULL STEAMPUNK ADMIRALTY WAYPOINT AI CONSOLE (UNLOCKED)
+  // RENDER 2: FULL EDGE-TO-EDGE STEAMPUNK ADMIRALTY CONSOLE (UNLOCKED)
   // =========================================================================
   return (
     <div
-      className="w-full min-h-screen rounded-3xl relative text-[#2C2114] p-3 sm:p-5 lg:p-7 space-y-6 shadow-2xl border-4 border-[#3D2912] overflow-hidden"
+      className="w-full min-h-screen relative text-[#2C2114] p-3 sm:p-5 lg:p-6 space-y-5"
       style={{
-        backgroundImage: "linear-gradient(rgba(4, 12, 26, 0.45), rgba(4, 12, 26, 0.65)), url('/images/steampunk-admiralty-bg.jpg')",
+        backgroundImage: "url('/images/steampunk-admiralty-bg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center top",
-        backgroundAttachment: "local"
+        backgroundAttachment: "fixed",
+        backgroundRepeat: "no-repeat"
       }}
     >
       {/* ─── 1. TOP ADMIRALTY HEADER DECK ─── */}
-      <div className="w-full flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5 relative z-10">
+      <div className="w-full flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 relative z-10">
         {/* Main Header Plaque (Framed in Riveted Aged Brass) */}
-        <div className="flex-1 bg-[#061426]/90 border-2 border-[#8C6418] rounded-xl p-5 shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.1)] relative">
+        <div className="w-full lg:max-w-2xl bg-[#061426]/95 border-2 border-[#8C6418] rounded-xl p-4 sm:p-5 shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.1)] relative">
           {/* Corner Screw Rivets */}
-          <div className="absolute top-2 left-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+          <div className="absolute top-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[7px] text-[#2A1804] font-mono">
             +
           </div>
-          <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+          <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[7px] text-[#2A1804] font-mono">
             +
           </div>
-          <div className="absolute bottom-2 left-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+          <div className="absolute bottom-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[7px] text-[#2A1804] font-mono">
             +
           </div>
-          <div className="absolute bottom-2 right-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+          <div className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[7px] text-[#2A1804] font-mono">
             +
           </div>
 
-          <div className="flex items-start gap-4 pl-2 pr-2">
+          <div className="flex items-start gap-4 pl-1 pr-1">
             {/* Diamond Compass Star Logo */}
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1F1404] via-[#0E2442] to-[#040D1B] border border-[#C5A059]/70 flex items-center justify-center shadow-lg shrink-0">
-              <Compass className="w-7 h-7 text-[#FFE394] drop-shadow-[0_0_8px_rgba(255,227,148,0.7)]" />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#1F1404] via-[#0E2442] to-[#040D1B] border border-[#C5A059]/70 flex items-center justify-center shadow-lg shrink-0 mt-0.5">
+              <Compass className="w-6 h-6 sm:w-7 sm:h-7 text-[#FFE394] drop-shadow-[0_0_8px_rgba(255,227,148,0.7)]" />
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="font-serif text-2xl sm:text-3xl lg:text-[32px] font-bold tracking-wide text-[#FFF8E7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="font-serif text-2xl sm:text-3xl lg:text-[30px] font-bold tracking-wide text-[#FFF8E7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-none">
                   Waypoint AI
                 </h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#08172C] border border-[#8C6418] text-[#E5C175] text-[10px] font-mono font-bold tracking-wider shadow-sm">
@@ -543,50 +529,65 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                 </span>
               </div>
 
-              <div className="text-[11px] font-serif font-bold uppercase tracking-[0.25em] text-[#C5A059]">
+              <div className="text-[10px] sm:text-[11px] font-serif font-bold uppercase tracking-[0.25em] text-[#C5A059] pt-0.5">
                 PROMPT LIBRARY
               </div>
 
-              <p className="font-serif text-xs sm:text-sm text-[#FFF4D4]/95 font-medium leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] pt-1">
+              <p className="font-serif text-xs sm:text-sm text-[#FFF4D4]/95 font-medium leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] pt-1">
                 The engine behind Waypoint's intelligence.
               </p>
-              <p className="font-serif text-xs text-[#C6B697] leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+              <p className="font-serif text-[11px] sm:text-xs text-[#C6B697] leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 Manage, test, and version all AI prompts used across the platform.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Right Stack: 4 Embossed Stamped Brass Plates on Wall + Actions */}
-        <div className="flex items-center gap-3 shrink-0 self-center">
-          <div className="flex flex-col gap-1.5">
+        {/* Right Stack: 4 Embossed Stamped Brass Plates + Actions */}
+        <div className="flex items-center gap-3 shrink-0 self-start lg:self-auto">
+          {/* 4 Stamped Brass Plates */}
+          <div className="flex flex-col gap-1.5 shrink-0">
             {["ANALYZE", "SYNTHESIZE", "REASON", "ADVOCATE"].map((pill) => (
               <div
                 key={pill}
-                className="bg-gradient-to-b from-[#2A1E0E] to-[#120B04] border border-[#7D5A1E] text-[#D8C7A5] font-serif text-[10px] font-bold tracking-[0.22em] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_6px_rgba(0,0,0,0.8)] py-1 px-4 rounded text-center"
+                className="bg-gradient-to-b from-[#2A1E0E] to-[#120B04] border border-[#7D5A1E] text-[#D8C7A5] font-serif text-[9px] sm:text-[10px] font-bold tracking-[0.22em] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_6px_rgba(0,0,0,0.8)] py-1 px-3 sm:px-4 rounded text-center whitespace-nowrap"
               >
                 {pill}
               </div>
             ))}
           </div>
 
-          {/* Relock Button */}
-          <button
-            type="button"
-            onClick={handleRelock}
-            className="h-full py-4 px-3 rounded-xl border border-rose-500/40 bg-rose-950/60 text-rose-300 hover:bg-rose-900/80 font-serif font-bold text-xs transition-all cursor-pointer flex flex-col items-center justify-center gap-1 shadow-lg"
-            title="Lock Vault"
-          >
-            <Lock className="w-4 h-4 text-rose-400" />
-            <span className="text-[10px]">Lock</span>
-          </button>
+          {/* Quick Actions (Switch to Sequences + Lock) */}
+          <div className="flex flex-col gap-2 shrink-0">
+            {onSwitchToWorkflows && (
+              <button
+                type="button"
+                onClick={onSwitchToWorkflows}
+                className="py-1.5 px-3 rounded-xl border border-[#FFE394]/40 bg-[#0A1A2E]/90 text-[#FFE394] hover:bg-[#122A4A] font-serif font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 shadow-md whitespace-nowrap"
+                title="Switch to Automation Sequences"
+              >
+                <Zap className="w-3.5 h-3.5 text-[#FFE394]" />
+                <span>Sequences</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleRelock}
+              className="py-1.5 px-3 rounded-xl border border-rose-500/40 bg-rose-950/70 text-rose-300 hover:bg-rose-900 font-serif font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md whitespace-nowrap"
+              title="Lock Vault"
+            >
+              <Lock className="w-3.5 h-3.5 text-rose-400" />
+              <span>Lock</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ─── 2. SUB-NAVIGATION FILTER SHELF ─── */}
-      <div className="w-full bg-[#040D1B]/95 border border-[#3A2C18] rounded-xl p-2.5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-xl backdrop-blur-md relative z-10">
+      <div className="w-full bg-[#040D1B]/95 border border-[#3A2C18] rounded-xl p-2 sm:p-2.5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-xl backdrop-blur-md relative z-10">
         {/* Category Pills (Matching Mockup) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           {[
             { label: "All Prompts", icon: Layers },
             { label: "Meeting Intel Engine", icon: Compass },
@@ -603,7 +604,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                 type="button"
                 onClick={() => setSelectedCategory(cat.label)}
                 className={cn(
-                  "py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap",
+                  "py-1.5 px-3 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0",
                   isActive
                     ? "bg-[#DFBE77] text-[#171006] border border-[#FFE394] shadow-[0_2px_8px_rgba(223,190,119,0.5)]"
                     : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
@@ -618,14 +619,14 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
 
         {/* Search Bar + New Prompt Button */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="relative flex-1 sm:w-60">
+          <div className="relative w-44 sm:w-56 shrink-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#7E97B8] pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search prompts..."
-              className="w-full h-9 pl-8 pr-3 rounded-lg bg-[#061224] border border-[#2A3F60] text-xs text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#C5A059] transition-all shadow-inner"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-[#061224] border border-[#2A3F60] text-xs text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#C5A059] transition-all shadow-inner"
             />
           </div>
 
@@ -634,7 +635,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
             onClick={() => {
               const newPrompt: AiPromptRecord = {
                 id: `prompt-${Date.now()}`,
-                name: "New Advocacy Engine Prompt",
+                name: "New Custom AI Prompt",
                 key: `CUSTOM_PROMPT_${Date.now()}`,
                 pageId: "PG-013-AI",
                 category: "Meeting Intel",
@@ -644,7 +645,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                 lastUpdated: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
                 updatedBy: "Byron Honea",
                 status: "Active",
-                description: "Describe new AI prompt capabilities and scope.",
+                description: "Describe new prompt functionality.",
                 purpose: "Define primary purpose and expected advocacy outcomes.",
                 usedIn: ["Meeting Workspace"],
                 systemPrompt: `You are an expert Special Education Advocate AI assisting Byron Honea (Master IEP Coach®).`,
@@ -667,7 +668,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
               setSelectedPromptId(newPrompt.id);
               handleOpenEdit(newPrompt);
             }}
-            className="py-2 px-3.5 rounded-lg bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs border border-[#FFE394] shadow-[0_2px_8px_rgba(223,190,119,0.5)] active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="py-1.5 px-3 rounded-lg bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs border border-[#FFE394] shadow-[0_2px_8px_rgba(223,190,119,0.5)] active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Prompt</span>
@@ -675,34 +676,42 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
         </div>
       </div>
 
-      {/* ─── 3. TWO-COLUMN MASTER-DETAIL WORKSPACE ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 items-start">
+      {/* ─── 3. TWO-COLUMN MASTER-DETAIL WORKSPACE (FIT AT 100% ZOOM) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 relative z-10 items-start">
         {/* ─── LEFT COLUMN: PROMPTS TABLE (PARCHMENT AESTHETIC) ─── */}
-        <div className="lg:col-span-7 bg-[#F4ECDA] text-[#2C2114] border-2 border-[#543E1B] rounded-2xl p-4 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.9)] relative overflow-hidden">
+        <div className="lg:col-span-7 bg-[#F4ECDA] text-[#2C2114] border-2 border-[#543E1B] rounded-2xl p-3 sm:p-4 shadow-[0_16px_40px_rgba(0,0,0,0.9)] relative overflow-hidden">
           {/* Brass Corner Rivets */}
-          <div className="absolute top-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
-          <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
-          <div className="absolute bottom-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
-          <div className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="w-full overflow-x-auto scrollbar-thin">
+            <table className="w-full border-collapse table-fixed text-left min-w-[580px]">
+              <colgroup>
+                <col style={{ width: "38%" }} />
+                <col style={{ width: "24%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "9%" }} />
+                <col style={{ width: "5%" }} />
+              </colgroup>
               <thead>
-                <tr className="border-b border-[#C8B898] text-[#5C4524] text-xs font-serif font-bold text-left uppercase tracking-wider">
-                  <th className="py-2.5 px-3">Name</th>
-                  <th className="py-2.5 px-3">Category</th>
-                  <th className="py-2.5 px-2 text-center">Version</th>
-                  <th className="py-2.5 px-3">Updated</th>
-                  <th className="py-2.5 px-2 text-center">Status</th>
-                  <th className="py-2.5 px-2 text-right">•••</th>
+                <tr className="border-b border-[#C8B898] text-[#5C4524] text-[11px] font-serif font-bold uppercase tracking-wider">
+                  <th className="py-2.5 px-3 whitespace-nowrap">Name</th>
+                  <th className="py-2.5 px-2 whitespace-nowrap">Category</th>
+                  <th className="py-2.5 px-1 text-center whitespace-nowrap">Version</th>
+                  <th className="py-2.5 px-2 text-center whitespace-nowrap">Updated</th>
+                  <th className="py-2.5 px-1 text-center whitespace-nowrap">Status</th>
+                  <th className="py-2.5 px-1 text-right whitespace-nowrap">•••</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2D4B7]">
@@ -715,21 +724,21 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                       className={cn(
                         "group transition-all cursor-pointer",
                         isSelected
-                          ? "bg-[#E8DCC2] shadow-sm font-semibold"
-                          : "hover:bg-[#EFE6D1]"
+                          ? "bg-[#E6D7BA] shadow-inner font-semibold"
+                          : "hover:bg-[#ECE1C9]"
                       )}
                     >
-                      {/* Name + Icon + Snippet */}
-                      <td className="py-3 px-3">
-                        <div className="flex items-start gap-2.5">
-                          <div className="mt-0.5 shrink-0 p-1 rounded bg-[#E4D7BC] border border-[#C6B697]">
+                      {/* Name + Icon + Snippet (Truncated cleanly) */}
+                      <td className="py-2.5 px-3 align-middle">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="shrink-0 p-1.5 rounded bg-[#E4D7BC] border border-[#C6B697] text-[#1C140A]">
                             {getPromptIcon(p.key)}
                           </div>
-                          <div>
-                            <div className="font-serif text-sm font-bold text-[#1C140A] group-hover:text-[#8C6418] transition-colors">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-serif text-xs sm:text-[13px] font-bold text-[#1C140A] group-hover:text-[#8C6418] transition-colors truncate">
                               {p.name}
                             </div>
-                            <div className="font-serif text-[11px] text-[#6B5A43] leading-snug line-clamp-1">
+                            <div className="font-serif text-[11px] text-[#6B5A43] truncate leading-tight mt-0.5">
                               {p.description}
                             </div>
                           </div>
@@ -737,31 +746,33 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                       </td>
 
                       {/* Category Badge */}
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <span className={cn("text-[11px] font-serif font-bold px-2.5 py-0.5 rounded-full inline-block", getCategoryBadgeClass(p.category))}>
-                          {p.category}
-                        </span>
+                      <td className="py-2.5 px-2 align-middle">
+                        <div className="truncate">
+                          <span className={cn("text-[10px] font-serif font-bold px-2 py-0.5 rounded-full inline-block truncate max-w-full text-center", getCategoryBadgeClass(p.category))}>
+                            {p.category}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Version */}
-                      <td className="py-3 px-2 text-center font-mono text-xs text-[#4D3B26]">
+                      <td className="py-2.5 px-1 text-center font-mono text-xs text-[#4D3B26] whitespace-nowrap align-middle">
                         {p.version}
                       </td>
 
                       {/* Updated */}
-                      <td className="py-3 px-3 whitespace-nowrap font-serif text-xs text-[#4D3B26]">
+                      <td className="py-2.5 px-2 text-center font-serif text-[11px] text-[#4D3B26] whitespace-nowrap align-middle">
                         {p.lastUpdated}
                       </td>
 
                       {/* Status */}
-                      <td className="py-3 px-2 text-center whitespace-nowrap">
-                        <span className="text-[11px] font-serif font-bold px-2.5 py-0.5 rounded-full bg-[#BDE8D3] text-[#0D4B2D] border border-[#96D9B6] inline-block">
+                      <td className="py-2.5 px-1 text-center whitespace-nowrap align-middle">
+                        <span className="text-[10px] font-serif font-bold px-2 py-0.5 rounded-full bg-[#BDE8D3] text-[#0D4B2D] border border-[#96D9B6] inline-block">
                           {p.status}
                         </span>
                       </td>
 
                       {/* Context Menu Button */}
-                      <td className="py-3 px-2 text-right">
+                      <td className="py-2.5 px-1 text-right align-middle">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -771,7 +782,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                           className="p-1 rounded text-[#7B6A52] hover:text-[#1C140A] hover:bg-[#DCD0B5] transition-colors"
                           title="Options"
                         >
-                          <MoreHorizontal className="w-4 h-4" />
+                          <MoreHorizontal className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>
@@ -783,35 +794,35 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
         </div>
 
         {/* ─── RIGHT COLUMN: PROMPT INSPECTOR & ACTION DECK ─── */}
-        <div className="lg:col-span-5 bg-[#F4ECDA] text-[#2C2114] border-2 border-[#543E1B] rounded-2xl p-5 sm:p-6 shadow-[0_16px_40px_rgba(0,0,0,0.9)] relative overflow-hidden flex flex-col justify-between min-h-[580px]">
+        <div className="lg:col-span-5 bg-[#F4ECDA] text-[#2C2114] border-2 border-[#543E1B] rounded-2xl p-4 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.9)] relative overflow-hidden flex flex-col justify-between">
           {/* Brass Corner Rivets */}
-          <div className="absolute top-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
-          <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
-          <div className="absolute bottom-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
-          <div className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+          <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[6px] text-[#2C2114] font-mono">
             +
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Top Inspector Header */}
             <div>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-[#0D213B] border border-[#2B4B75] flex items-center justify-center shadow-inner shrink-0">
                     <FileText className="w-5 h-5 text-[#FFE394]" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#1C140A]">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1C140A] leading-tight break-words">
                         {selectedPrompt.name}
                       </h2>
-                      <span className="text-[11px] font-serif font-bold px-2 py-0.5 rounded-full bg-[#BDE8D3] text-[#0D4B2D] border border-[#96D9B6]">
+                      <span className="text-[10px] font-serif font-bold px-2 py-0.5 rounded-full bg-[#BDE8D3] text-[#0D4B2D] border border-[#96D9B6] shrink-0">
                         {selectedPrompt.status}
                       </span>
                     </div>
@@ -821,20 +832,20 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                 <button
                   type="button"
                   onClick={() => handleOpenEdit(selectedPrompt)}
-                  className="p-1 rounded text-[#7B6A52] hover:text-[#1C140A] hover:bg-[#DCD0B5] transition-colors"
+                  className="p-1 rounded text-[#7B6A52] hover:text-[#1C140A] hover:bg-[#DCD0B5] transition-colors shrink-0"
                 >
                   <MoreHorizontal className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Description */}
-              <p className="font-serif text-xs text-[#5C482C] leading-relaxed mt-2.5 pb-3 border-b border-[#C8B898]">
-                {selectedPrompt.purpose}
+              {/* Description (Concise subtitle from description, matching mockup) */}
+              <p className="font-serif text-xs text-[#5C482C] leading-relaxed mt-2.5 pb-3 border-b border-[#C8B898] break-words">
+                {selectedPrompt.description}
               </p>
             </div>
 
             {/* Sub-Tabs: Overview, Instructions, Inputs, Output Format, History */}
-            <div className="flex items-center gap-1 border-b border-[#C8B898] pb-2 overflow-x-auto">
+            <div className="flex items-center gap-1 border-b border-[#C8B898] pb-2 overflow-x-auto scrollbar-none">
               {(["Overview", "Instructions", "Inputs", "Output Format", "History"] as const).map((tab) => {
                 const isActive = inspectorTab === tab;
                 return (
@@ -843,7 +854,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                     type="button"
                     onClick={() => setInspectorTab(tab)}
                     className={cn(
-                      "py-1.5 px-3 rounded font-serif text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
+                      "py-1 px-2.5 rounded font-serif text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
                       isActive
                         ? "bg-[#0A1A30] text-[#FFF4D4] shadow-sm border border-[#2A4468]"
                         : "text-[#6B5A43] hover:text-[#1C140A] hover:bg-[#E4D7BC]"
@@ -858,53 +869,61 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
             {/* ── TAB 1: OVERVIEW ── */}
             {inspectorTab === "Overview" && (
               <div className="space-y-4">
-                {/* Purpose Block */}
-                <div className="p-3.5 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1.5">
-                  <div className="flex items-center gap-2 text-xs font-serif font-bold text-[#1C140A]">
-                    <Target className="w-4 h-4 text-[#8C6418]" />
+                {/* Purpose Block - Clean, no enclosing box */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center gap-1.5 text-xs font-serif font-bold text-[#1C140A]">
+                    <Target className="w-4 h-4 text-[#8C6418] shrink-0" />
                     <span>Purpose</span>
                   </div>
-                  <p className="font-serif text-xs text-[#4D3B26] leading-relaxed">
+                  <p className="font-serif text-xs text-[#4D3B26] leading-relaxed break-words">
                     {selectedPrompt.purpose}
                   </p>
                 </div>
 
-                {/* Metadata Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
-                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
-                      Category
+                {/* 4 Metadata Columns with Top Icons - Clean, no enclosing boxes */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 border-y border-[#C8B898]/70">
+                  {/* Category */}
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] font-serif font-semibold text-[#7B6A52]">
+                      <Layers className="w-3.5 h-3.5 text-[#8C6418] shrink-0" />
+                      <span className="truncate">Category</span>
                     </div>
-                    <div className="mt-1">
-                      <span className={cn("text-[10px] font-serif font-bold px-2 py-0.5 rounded-full inline-block", getCategoryBadgeClass(selectedPrompt.category))}>
+                    <div>
+                      <span className={cn("text-[10px] font-serif font-bold px-2 py-0.5 rounded-full inline-block truncate max-w-full", getCategoryBadgeClass(selectedPrompt.category))}>
                         {selectedPrompt.category}
                       </span>
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
-                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
-                      Current Version
+                  {/* Current Version */}
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] font-serif font-semibold text-[#7B6A52]">
+                      <MapPin className="w-3.5 h-3.5 text-[#8C6418] shrink-0" />
+                      <span className="whitespace-nowrap">Current Version</span>
                     </div>
-                    <div className="font-mono text-xs font-bold text-[#1C140A] mt-1">
+                    <div className="font-mono text-xs font-bold text-[#1C140A]">
                       {selectedPrompt.version}
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
-                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
-                      Last Updated
+                  {/* Last Updated */}
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] font-serif font-semibold text-[#7B6A52]">
+                      <Clock className="w-3.5 h-3.5 text-[#8C6418] shrink-0" />
+                      <span className="whitespace-nowrap">Last Updated</span>
                     </div>
-                    <div className="font-serif text-xs font-bold text-[#1C140A] mt-1">
+                    <div className="font-serif text-xs font-bold text-[#1C140A]">
                       {selectedPrompt.lastUpdated}
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
-                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
-                      Updated By
+                  {/* Updated By */}
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] font-serif font-semibold text-[#7B6A52]">
+                      <User className="w-3.5 h-3.5 text-[#8C6418] shrink-0" />
+                      <span className="whitespace-nowrap">Updated By</span>
                     </div>
-                    <div className="font-serif text-xs font-bold text-[#1C140A] mt-1">
+                    <div className="font-serif text-xs font-bold text-[#1C140A] truncate">
                       {selectedPrompt.updatedBy}
                     </div>
                   </div>
@@ -919,7 +938,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                     {selectedPrompt.usedIn.map((item) => (
                       <span
                         key={item}
-                        className="py-1 px-3 rounded-lg bg-[#E2D4B7] border border-[#C6B697] font-serif text-xs font-semibold text-[#3D2E17] flex items-center gap-1.5 shadow-sm"
+                        className="py-1 px-2.5 rounded-lg bg-[#E2D4B7] border border-[#C6B697] font-serif text-[11px] font-semibold text-[#3D2E17] flex items-center gap-1.5 shadow-sm"
                       >
                         <Sparkles className="w-3 h-3 text-[#8C6418]" />
                         {item}
@@ -932,7 +951,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
 
             {/* ── TAB 2: INSTRUCTIONS (SYSTEM PROMPT) ── */}
             {inspectorTab === "Instructions" && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-serif font-semibold text-[#5C4524]">
                   <span>System Instructions ({selectedPrompt.modelTier})</span>
                   <button
@@ -944,7 +963,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                     <span>Copy</span>
                   </button>
                 </div>
-                <div className="p-3 rounded-xl bg-[#091524] text-[#E8EDF5] font-mono text-xs leading-relaxed max-h-[260px] overflow-y-auto border border-[#2B3E58] shadow-inner select-text whitespace-pre-wrap">
+                <div className="p-3 rounded-xl bg-[#091524] text-[#E8EDF5] font-mono text-xs leading-relaxed max-h-[250px] overflow-y-auto border border-[#2B3E58] shadow-inner select-text whitespace-pre-wrap break-words">
                   {selectedPrompt.systemPrompt}
                 </div>
               </div>
@@ -952,11 +971,11 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
 
             {/* ── TAB 3: INPUTS ── */}
             {inspectorTab === "Inputs" && (
-              <div className="space-y-2.5 max-h-[270px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                 {selectedPrompt.variables.map((v) => (
-                  <div key={v.name} className="p-3 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1">
+                  <div key={v.name} className="p-2.5 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold text-[#1C140A] bg-[#DFCFAF] px-2 py-0.5 rounded border border-[#C6B697]">
+                      <span className="font-mono text-xs font-bold text-[#1C140A] bg-[#DFCFAF] px-1.5 py-0.5 rounded border border-[#C6B697]">
                         {`{${v.name}}`}
                       </span>
                       <span className="text-[10px] font-mono text-[#7B6A52] uppercase">
@@ -964,7 +983,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
                       </span>
                     </div>
                     <p className="font-serif text-xs text-[#5C4524]">{v.description}</p>
-                    <p className="font-serif text-[11px] text-[#7B6A52] italic">
+                    <p className="font-serif text-[11px] text-[#7B6A52] italic truncate">
                       Example: {v.example}
                     </p>
                   </div>
@@ -974,11 +993,11 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
 
             {/* ── TAB 4: OUTPUT FORMAT ── */}
             {inspectorTab === "Output Format" && (
-              <div className="p-3.5 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-2">
+              <div className="p-3 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1.5">
                 <div className="text-xs font-serif font-bold text-[#1C140A]">
                   Expected Output Schema
                 </div>
-                <p className="font-serif text-xs text-[#4D3B26] leading-relaxed">
+                <p className="font-serif text-xs text-[#4D3B26] leading-relaxed break-words">
                   {selectedPrompt.outputFormat}
                 </p>
               </div>
@@ -986,9 +1005,9 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
 
             {/* ── TAB 5: HISTORY ── */}
             {inspectorTab === "History" && (
-              <div className="space-y-2 max-h-[270px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                 {selectedPrompt.history.map((h, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1">
+                  <div key={i} className="p-2.5 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold text-[#1C140A]">
                         v{h.version}
@@ -1005,11 +1024,11 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
           </div>
 
           {/* ─── BOTTOM ACTION BUTTONS BAR (MATCHING MOCKUP) ─── */}
-          <div className="pt-5 mt-4 border-t border-[#C8B898] flex items-center gap-3 flex-wrap">
+          <div className="pt-4 mt-3 border-t border-[#C8B898] flex items-center gap-2.5 flex-wrap">
             <button
               type="button"
               onClick={() => handleOpenEdit(selectedPrompt)}
-              className="py-2 px-4 rounded-lg bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs border border-[#FFE394] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+              className="py-1.5 px-3.5 rounded-lg bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs border border-[#FFE394] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <Pencil className="w-3.5 h-3.5" />
               <span>Edit Prompt</span>
@@ -1018,7 +1037,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
             <button
               type="button"
               onClick={() => handleOpenTest(selectedPrompt)}
-              className="py-2 px-4 rounded-lg bg-[#0B1A2F] hover:bg-[#122847] text-[#FFE394] font-serif font-bold text-xs border border-[#4A381E] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+              className="py-1.5 px-3.5 rounded-lg bg-[#0B1A2F] hover:bg-[#122847] text-[#FFE394] font-serif font-bold text-xs border border-[#4A381E] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <Play className="w-3.5 h-3.5 fill-[#FFE394]" />
               <span>Test Prompt</span>
@@ -1027,7 +1046,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
             <button
               type="button"
               onClick={() => handleDuplicatePrompt(selectedPrompt)}
-              className="py-2 px-4 rounded-lg bg-[#0B1A2F] hover:bg-[#122847] text-[#FFE394] font-serif font-bold text-xs border border-[#4A381E] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+              className="py-1.5 px-3.5 rounded-lg bg-[#0B1A2F] hover:bg-[#122847] text-[#FFE394] font-serif font-bold text-xs border border-[#4A381E] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <Copy className="w-3.5 h-3.5" />
               <span>Duplicate</span>
