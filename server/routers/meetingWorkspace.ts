@@ -830,8 +830,92 @@ Build 5-8 distinct meeting targets.`;
       const contact = effectiveStudentId ? await db.getContactById(effectiveStudentId) : null;
       const studentName = contact ? `${contact.firstName} ${contact.lastName}` : "Jeremiah Mitchell";
 
-      // 1. Run deterministic parser
-      const parseResult = parseAdvocateReadyDocument(rawContent, fileName);
+      // 1. Run deterministic & flexible parser
+      let parseResult = parseAdvocateReadyDocument(rawContent, fileName);
+
+      // 2. If no targets found, invoke Cloudflare Workers AI to extract meeting targets from notes/504
+      if (parseResult.targets.length === 0) {
+        try {
+          const aiResponse = await invokeLLM({
+            model: CF_MODELS.FAST,
+            messages: [
+              {
+                role: "system",
+                content: `You are Waypoint Advocates' Senior Special Education / Section 504 / IEP Meeting Strategist.
+The user provided meeting notes, a Section 504 Plan, an IEP excerpt, or advocacy prep notes.
+Extract all discrete meeting targets/accommodations/goals/requests into structured JSON.
+Output valid JSON only with this schema:
+{
+  "detectedOrder": ["Section 1", "Section 2"],
+  "targets": [
+    {
+      "targetName": "Concise Label (e.g. Speech-to-Text Accommodation)",
+      "iepSection": "Accommodations / Supports",
+      "quickAdvocateSayThis": "Clear advocate statement: We are requesting...",
+      "possibleIepWording": "Draft wording for the plan...",
+      "whyWeWantIt": "Rationale based on student needs...",
+      "ifTeamDisagrees": "Say this if team refuses: If refused, please provide Prior Written Notice..."
+    }
+  ]
+}`
+              },
+              {
+                role: "user",
+                content: `Student: ${studentName}\nDocument Content:\n${rawContent}`
+              }
+            ],
+            response_format: { type: "json_object" }
+          });
+
+          const rawText = extractLLMText(aiResponse);
+          const parsedAi = JSON.parse(rawText);
+          if (parsedAi?.targets && Array.isArray(parsedAi.targets) && parsedAi.targets.length > 0) {
+            const batchId = `draft-${Date.now()}`;
+            const aiTargets = parsedAi.targets.map((t: any, idx: number) => {
+              const extId = `TARGET-${String(idx + 1).padStart(3, "0")}`;
+              return {
+                id: `${batchId}-${extId}`,
+                externalTargetId: extId,
+                targetName: t.targetName || `Target ${idx + 1}`,
+                iepSection: t.iepSection || "Accommodations / Supports",
+                sectionOrder: idx + 1,
+                targetOrder: idx + 1,
+                quickAdvocateSayThis: t.quickAdvocateSayThis || `We request: ${t.targetName}`,
+                fullAdvocateScript: t.quickAdvocateSayThis || `We request: ${t.targetName}`,
+                putItHereLocation: t.iepSection || "Accommodations / Supports",
+                possibleIepWording: t.possibleIepWording || t.targetName,
+                whyWeWantIt: t.whyWeWantIt || "To support student access and educational progress.",
+                supportingEvidence: fileName || "Section 504 / IEP case records.",
+                sources: [fileName || "Imported Document"],
+                ifTeamDisagrees: t.ifTeamDisagrees || "If refused, request Prior Written Notice.",
+                parentWhatWeWant: t.targetName,
+                parentWhyWeWantIt: t.whyWeWantIt || "To remove educational barriers.",
+                parentSupportingEvidence: "Case records.",
+                meetingStatus: "NOT_DISCUSSED" as const,
+                requestRaised: false,
+                pwnNeeded: false,
+                addedToIep: false,
+                followUpNeeded: false,
+                included: true,
+                validationErrors: [],
+              };
+            });
+
+            parseResult = {
+              success: true,
+              detectedOrder: parsedAi.detectedOrder || parseResult.detectedOrder,
+              targets: aiTargets,
+              additionalItems: parseResult.additionalItems,
+              totalTargetsCount: aiTargets.length,
+              validationErrors: [],
+              batchId,
+              rawSummary: `Extracted ${aiTargets.length} meeting targets with AI assist.`,
+            };
+          }
+        } catch (aiErr) {
+          console.warn("[parseAdvocateReadyImport] AI fallback note:", aiErr);
+        }
+      }
 
       if (!parseResult.success && parseResult.targets.length === 0) {
         const errorMsg = parseResult.validationErrors.length > 0

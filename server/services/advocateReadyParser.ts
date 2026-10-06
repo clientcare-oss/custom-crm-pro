@@ -83,6 +83,28 @@ interface DetailedBlock {
   };
 }
 
+export function normalizeSectionTitle(sec: string): string {
+  const s = sec.trim().replace(/^[#*=\-_~`\s]+/, "").replace(/[#*=\-_~`\s]+$/, "");
+  const lower = s.toLowerCase();
+  if (lower.includes("parent concern")) return "Parent Concerns";
+  if (lower.includes("present level") || lower.includes("academic achievement")) return "Present Levels / Academics";
+  if (lower.includes("special factor")) return "Special Factors";
+  if (lower.includes("annual goal") || lower.includes("objective/benchmark") || lower === "goals") return "Annual Goals";
+  if (lower.includes("impairment") || lower.includes("limitation")) return "Impairments & Limitations";
+  if (lower.includes("state assessment") || lower.includes("testing accommodation")) return "State Testing Accommodations";
+  if (lower.includes("student support") || lower.includes("accommodation") || lower.includes("support")) return "Accommodations / Supports";
+  if (lower.includes("related service") || lower.includes("aac") || lower.includes("speech") || lower.includes("ot")) return "Related Services / AAC";
+  if (lower.includes("placement") || lower.includes("lre")) return "Placement / LRE";
+  if (lower.includes("extended school year") || lower.includes("esy") || lower.includes("transportation")) return "ESY & Transportation";
+  if (lower.includes("transition")) return "Transition Service Plan";
+  if (lower.includes("gaa")) return "GAA Participation";
+  if (lower.includes("special education service")) return "Special Education Services";
+  if (lower.includes("meeting outcome") || lower.includes("outcome")) return "Meeting Outcomes";
+  if (lower.includes("individualized education program") || lower.includes("iep")) return "Individualized Education Program (IEP)";
+
+  return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.substr(1).toLowerCase());
+}
+
 export function parseAdvocateReadyDocument(
   rawText: string,
   fileName?: string
@@ -161,25 +183,6 @@ export function parseAdvocateReadyDocument(
       currentDetailField = null;
     }
   };
-
-function normalizeSectionTitle(sec: string): string {
-  const s = sec.trim().replace(/^[#*=\-_~`\s]+/, "").replace(/[#*=\-_~`\s]+$/, "");
-  const lower = s.toLowerCase();
-  if (lower.includes("parent concern")) return "Parent Concerns";
-  if (lower.includes("present level") || lower.includes("academic achievement")) return "Present Levels / Academics";
-  if (lower.includes("special factor")) return "Special Factors";
-  if (lower.includes("annual goal") || lower.includes("objective/benchmark") || lower === "goals") return "Annual Goals";
-  if (lower.includes("student support") || lower.includes("accommodation") || lower.includes("support")) return "Accommodations / Supports";
-  if (lower.includes("related service") || lower.includes("aac") || lower.includes("speech") || lower.includes("ot")) return "Related Services / AAC";
-  if (lower.includes("placement") || lower.includes("lre")) return "Placement / LRE";
-  if (lower.includes("extended school year") || lower.includes("esy") || lower.includes("transportation")) return "ESY & Transportation";
-  if (lower.includes("transition")) return "Transition Service Plan";
-  if (lower.includes("gaa")) return "GAA Participation";
-  if (lower.includes("special education service")) return "Special Education Services";
-  if (lower.includes("individualized education program") || lower.includes("iep")) return "Individualized Education Program (IEP)";
-
-  return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.substr(1).toLowerCase());
-}
 
   const cleanHeader = (line: string) => {
     const raw = line
@@ -526,7 +529,14 @@ function normalizeSectionTitle(sec: string): string {
     }
   });
 
-  // If detectedSections is empty, fallback to standard IEP order
+  // If no targets were found via strict Quick List / Detailed Blocks, run flexible document parser
+  if (parsedTargets.length === 0 && rawText.trim().length > 0) {
+    const flexibleResult = parseFlexibleAdvocateDocument(rawText, fileName, batchId);
+    if (flexibleResult.targets.length > 0) {
+      return flexibleResult;
+    }
+  }
+
   const finalDetectedOrder = detectedSections.length > 0
     ? detectedSections
     : [
@@ -549,5 +559,239 @@ function normalizeSectionTitle(sec: string): string {
     validationErrors,
     batchId,
     rawSummary: `Parsed ${parsedTargets.length} targets across ${finalDetectedOrder.length} IEP sections.`,
+  };
+}
+
+/**
+ * Universal flexible parser for non-standard advocate documents, 504 Plans,
+ * raw IEP text, bullet points, and AI-generated meeting outlines.
+ */
+export function parseFlexibleAdvocateDocument(
+  rawText: string,
+  fileName?: string,
+  batchId = `draft-${Date.now()}`
+): ParseAdvocateReadyResult {
+  const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const targets: ParsedAdvocateTarget[] = [];
+  const detectedSections: string[] = [];
+  const additionalItems: string[] = [];
+
+  // 1. Detect if there is a "Key source sections: ..." line (e.g. from 504 Plan notes)
+  const keySectionsMatch = rawText.match(/Key source sections?:\s*([^\n\r]+)/i);
+  if (keySectionsMatch) {
+    const rawSecs = keySectionsMatch[1].split(/,|;|\band\b/i);
+    for (const s of rawSecs) {
+      const clean = s
+        .replace(/\(p\.\s*\d+\)/gi, "")
+        .replace(/^[^\w]+|[^\w]+$/g, "")
+        .trim();
+      if (clean && clean.length > 2) {
+        const norm = normalizeSectionTitle(clean);
+        if (!detectedSections.includes(norm)) {
+          detectedSections.push(norm);
+        }
+      }
+    }
+  }
+
+  // 2. Iterate through lines to detect section headers and bullet targets
+  let activeSection = detectedSections[0] || "Student Supports";
+  let targetIndex = 1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Check if line is a section heading
+    if (/^(#{1,6}\s+|[IVXLCDM]+\.|\d+\.\s+[A-Z]|Section\s+\d+:)/i.test(line)) {
+      const clean = line
+        .replace(/^[#*=\-_~`\s]+/, "")
+        .replace(/[#*=\-_~`\s]+$/, "")
+        .replace(/^([IVXLCDM]+\.|\d+\.)\s*/i, "")
+        .replace(/^[^\w\s/&-]+\s*/, "")
+        .trim();
+      const headerTitle = normalizeSectionTitle(clean);
+      if (
+        headerTitle &&
+        headerTitle.length > 2 &&
+        !headerTitle.toLowerCase().includes("source note")
+      ) {
+        activeSection = headerTitle;
+        if (!detectedSections.includes(activeSection)) {
+          detectedSections.push(activeSection);
+        }
+        continue;
+      }
+    }
+
+    // Check if line looks like a target, ask, accommodation, or bullet item
+    const bulletMatch = line.match(/^(\*|-|•|–|—|\d+[\).]|\[[ xX]?\]|[☐☑])\s+(.+)$/);
+    const hasTargetKeyword = /^(Target|Ask|Accommodation|Goal|Support|Service|Modification|Request)\s*[:=-]\s*(.+)$/i.test(
+      line
+    );
+
+    if (bulletMatch || hasTargetKeyword) {
+      const content = (
+        bulletMatch
+          ? bulletMatch[2]
+          : line.replace(
+              /^(Target|Ask|Accommodation|Goal|Support|Service|Modification|Request)\s*[:=-]\s*/i,
+              ""
+            )
+      ).trim();
+
+      // Skip meta lines like "Key source sections" or "Prepared from"
+      if (
+        content.toLowerCase().startsWith("key source section") ||
+        content.toLowerCase().startsWith("prepared from")
+      ) {
+        continue;
+      }
+
+      if (content.length > 5) {
+        // Extract label/target name
+        const colonSplit = content.split(/[:–—]/);
+        let targetLabel = "";
+
+        if (
+          colonSplit.length > 1 &&
+          colonSplit[0].trim().length < 50 &&
+          colonSplit[1].trim().length > 5
+        ) {
+          targetLabel = colonSplit[0].trim();
+        } else {
+          // First 6-8 words as target label
+          const words = content.split(" ");
+          targetLabel = words.slice(0, Math.min(6, words.length)).join(" ");
+        }
+
+        const extId = `TARGET-${String(targetIndex).padStart(3, "0")}`;
+        targets.push({
+          id: `${batchId}-${extId}`,
+          externalTargetId: extId,
+          targetName: targetLabel.replace(/^["']|["']$/g, "").trim(),
+          iepSection: activeSection,
+          sectionOrder: detectedSections.indexOf(activeSection) + 1 || targetIndex,
+          targetOrder: targetIndex,
+          quickAdvocateSayThis: `We request that the team document: "${content.replace(/^["']|["']$/g, "")}"`,
+          fullAdvocateScript: `We are requesting that ${content.replace(/^["']|["']$/g, "")}.`,
+          putItHereLocation: activeSection,
+          possibleIepWording: content,
+          whyWeWantIt: "To ensure necessary accommodations and supports are clearly codified in the plan.",
+          supportingEvidence: fileName || "Section 504 / IEP source records.",
+          sources: [fileName || "Imported Advocate Document"],
+          ifTeamDisagrees: "If refused, please provide Prior Written Notice under 34 CFR §300.503 explaining the refusal rationale.",
+          parentWhatWeWant: targetLabel,
+          parentWhyWeWantIt: "To remove educational barriers for the student.",
+          parentSupportingEvidence: "Documented evaluation and functional needs.",
+          meetingStatus: "NOT_DISCUSSED",
+          requestRaised: false,
+          pwnNeeded: false,
+          addedToIep: false,
+          followUpNeeded: false,
+          included: true,
+          validationErrors: [],
+        });
+        targetIndex++;
+      }
+    }
+  }
+
+  // 3. If NO bullet targets were found, but we have detected sections (e.g. from "Key source sections: ..."):
+  // Synthesize targets for each detected key section so the user has immediate actionable targets
+  if (targets.length === 0 && detectedSections.length > 0) {
+    detectedSections.forEach((sec, idx) => {
+      const extId = `TARGET-${String(idx + 1).padStart(3, "0")}`;
+      targets.push({
+        id: `${batchId}-${extId}`,
+        externalTargetId: extId,
+        targetName: `${sec} Review & Accommodation Codification`,
+        iepSection: sec,
+        sectionOrder: idx + 1,
+        targetOrder: idx + 1,
+        quickAdvocateSayThis: `We are requesting an updated review of the student's needs under ${sec} with formal accommodation wording.`,
+        fullAdvocateScript: `We are reviewing ${sec} from the school district plan to ensure all necessary accommodations, supports, and services are preserved and clearly measurable.`,
+        putItHereLocation: sec,
+        possibleIepWording: `The team reviewed ${sec} and confirmed all required student supports and accommodations are actively implemented across all educational settings.`,
+        whyWeWantIt: `Ensure comprehensive compliance and clarity for ${sec} across all academic and extracurricular settings.`,
+        supportingEvidence: fileName || "Section 504 Plan / IEP Records",
+        sources: [fileName || "Imported Plan Source Notes"],
+        ifTeamDisagrees: `If the team proposes removing or altering supports under ${sec}, please provide Prior Written Notice with the objective data justifying the change.`,
+        parentWhatWeWant: `Clear and enforceable supports in ${sec}`,
+        parentWhyWeWantIt: "To protect the student's educational access and well-being.",
+        parentSupportingEvidence: "504 Plan and evaluation records.",
+        meetingStatus: "NOT_DISCUSSED",
+        requestRaised: false,
+        pwnNeeded: false,
+        addedToIep: false,
+        followUpNeeded: false,
+        included: true,
+        validationErrors: [],
+      });
+    });
+  }
+
+  // 4. Fallback if still 0 targets: split rawText into sentences or meaningful chunks
+  if (targets.length === 0) {
+    const rawChunks = rawText
+      .split(/(?<=[.?!])\s+(?=[A-Z])|\n\n+/)
+      .map((c) => c.trim())
+      .filter((c) => c.length > 15 && !c.toLowerCase().startsWith("source note"));
+
+    rawChunks.slice(0, 10).forEach((chunk, idx) => {
+      const extId = `TARGET-${String(idx + 1).padStart(3, "0")}`;
+      const firstSentence = chunk.split(".")[0];
+      const targetLabel = firstSentence.split(" ").slice(0, 7).join(" ");
+      targets.push({
+        id: `${batchId}-${extId}`,
+        externalTargetId: extId,
+        targetName: targetLabel || `Target ${idx + 1}`,
+        iepSection: "Accommodations / Supports",
+        sectionOrder: idx + 1,
+        targetOrder: idx + 1,
+        quickAdvocateSayThis: `We request that the team include: "${chunk}"`,
+        fullAdvocateScript: `We are requesting the following accommodation: ${chunk}`,
+        putItHereLocation: "Accommodations / Supports",
+        possibleIepWording: chunk,
+        whyWeWantIt: "To remove educational barriers and support student progress.",
+        supportingEvidence: fileName || "Imported Case Records",
+        sources: [fileName || "Imported Advocate Document"],
+        ifTeamDisagrees: "If refused, please provide Prior Written Notice under 34 CFR §300.503.",
+        parentWhatWeWant: targetLabel,
+        parentWhyWeWantIt: "To support the student's learning needs.",
+        parentSupportingEvidence: "School and parent records.",
+        meetingStatus: "NOT_DISCUSSED",
+        requestRaised: false,
+        pwnNeeded: false,
+        addedToIep: false,
+        followUpNeeded: false,
+        included: true,
+        validationErrors: [],
+      });
+    });
+  }
+
+  const finalDetectedOrder =
+    detectedSections.length > 0
+      ? detectedSections
+      : [
+          "Parent Concerns",
+          "Present Levels / Academics",
+          "Special Factors",
+          "Annual Goals",
+          "Accommodations / Supports",
+          "Related Services / AAC",
+          "Placement / LRE",
+          "ESY & Transportation",
+        ];
+
+  return {
+    success: targets.length > 0,
+    detectedOrder: finalDetectedOrder,
+    targets,
+    additionalItems,
+    totalTargetsCount: targets.length,
+    validationErrors: [],
+    batchId,
+    rawSummary: `Parsed ${targets.length} targets across ${finalDetectedOrder.length} sections from document notes.`,
   };
 }

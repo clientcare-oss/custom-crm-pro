@@ -125,7 +125,31 @@ async function main() {
   const list = await caller.meetingWorkspace.listByStudent({ studentContactId: 120040 });
   console.log(`Found ${list.length} workspace(s) for Reese Vance`);
 
-  console.log("\n=== ALL MEETING WORKSPACE SAVE & RETRIEVAL TESTS PASSED FOR REESE VANCE! ===");
+  // 7. Test parseAdvocateReadyImport with the user's exact 504 Plan text from screenshot
+  console.log("\n--- 6. Testing parseAdvocateReadyImport with User's 504 Plan Text ---");
+  const userPasted504Text = `Source Notes
+Prepared from Paulding County School District Section 504 Plan, meeting/finalization date April 27, 2026.
+Key source sections: Impairments & Limitations (p. 2), State Assessments (p. 3), Special Factors (p. 4), State Testing Accommodations (p. 5), Student Supports (p. 6), Transportation (p. 7), Special Education Services (p. 8), and Meeting Outcomes (p. 9).`;
+
+  const parsedImport = await caller.meetingWorkspace.parseAdvocateReadyImport({
+    studentContactId: 120040,
+    rawContent: userPasted504Text,
+    fileName: "Paulding_County_504_Plan.txt",
+  });
+
+  console.log("Parsed Import result count:", parsedImport.targets.length);
+  console.log("Detected sections:", parsedImport.detectedOrder);
+  console.log("First 3 targets extracted:", parsedImport.targets.slice(0, 3).map(t => ({
+    name: t.targetName,
+    section: t.iepSection,
+    sayThis: t.quickAdvocateSayThis,
+  })));
+
+  if (parsedImport.targets.length === 0) {
+    throw new Error("Expected at least 1 target from user's 504 Plan text");
+  }
+
+  console.log("\n=== ALL MEETING WORKSPACE SAVE, RETRIEVAL, AND 504 PLAN PARSE TESTS PASSED FOR REESE VANCE! ===");
 }
 
 main().catch((err) => {

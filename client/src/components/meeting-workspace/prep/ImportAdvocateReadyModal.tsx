@@ -373,7 +373,7 @@ export function ImportAdvocateReadyModal({
               📥 Import Advocate Ready Document
             </DialogTitle>
             <DialogDescription className="text-xs text-blue-200/80 leading-relaxed">
-              Paste or drop an Advocate Ready document and Waypoint will parse each item into discrete meeting targets for <strong className="text-white">{parseMeta.studentName || studentName}</strong>.
+              Paste or drop an Advocate Ready document, Section 504 Plan, IEP summary, or meeting notes. Waypoint will automatically parse each item into discrete meeting targets for <strong className="text-white">{parseMeta.studentName || studentName}</strong>.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -383,33 +383,65 @@ export function ImportAdvocateReadyModal({
           {/* STAGE 1: INPUT (Paste or Upload) */}
           {parseStage === "input" && (
             <div className="space-y-4">
-              {/* Tab Selector */}
-              <div className="flex items-center gap-2 p-1 rounded-xl bg-[#06172E] border border-[#0D3866] w-fit">
+              {/* Tab Selector & Quick Sample Loader */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2 p-1 rounded-xl bg-[#06172E] border border-[#0D3866] w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setActiveInputTab("paste")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                      activeInputTab === "paste"
+                        ? "bg-[#0E427B] text-[#F5B544] border border-[#2368B2] shadow-sm font-bold"
+                        : "text-blue-300/70 hover:text-white"
+                    )}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    Paste Text
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveInputTab("upload")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                      activeInputTab === "upload"
+                        ? "bg-[#0E427B] text-[#F5B544] border border-[#2368B2] shadow-sm font-bold"
+                        : "text-blue-300/70 hover:text-white"
+                    )}
+                  >
+                    <UploadCloud className="h-3.5 w-3.5" />
+                    Drop File (.pdf / .txt)
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setActiveInputTab("paste")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                    activeInputTab === "paste"
-                      ? "bg-[#0E427B] text-[#F5B544] border border-[#2368B2] shadow-sm font-bold"
-                      : "text-blue-300/70 hover:text-white"
-                  )}
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/Reese_Vance_Advocate_Ready.txt");
+                      if (res.ok) {
+                        const txt = await res.text();
+                        setPastedText(txt);
+                        setActiveInputTab("paste");
+                        toast.success("Loaded Reese Vance Advocate Ready document");
+                        return;
+                      }
+                    } catch {}
+                    try {
+                      const res2 = await fetch("/Jeremiah_Mitchell_Advocate_Ready.txt");
+                      if (res2.ok) {
+                        const txt = await res2.text();
+                        setPastedText(txt);
+                        setActiveInputTab("paste");
+                        toast.success("Loaded Advocate Ready sample document");
+                      }
+                    } catch {}
+                  }}
+                  className="text-[11.5px] font-semibold text-[#DFBE77] hover:text-[#FFE394] flex items-center gap-1.5 cursor-pointer transition-colors px-2.5 py-1.5 rounded-lg bg-[#0A2544]/80 border border-[#144E8A] shadow-sm hover:border-[#C5A059]/60"
+                  title="Load a verified sample Advocate Ready document template"
                 >
-                  <FileText className="h-3.5 w-3.5" />
-                  Paste Text
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveInputTab("upload")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                    activeInputTab === "upload"
-                      ? "bg-[#0E427B] text-[#F5B544] border border-[#2368B2] shadow-sm font-bold"
-                      : "text-blue-300/70 hover:text-white"
-                  )}
-                >
-                  <UploadCloud className="h-3.5 w-3.5" />
-                  Drop File (.pdf / .txt)
+                  <Sparkles className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  <span>Load Sample Document</span>
                 </button>
               </div>
 
@@ -419,12 +451,12 @@ export function ImportAdvocateReadyModal({
                   <Textarea
                     value={pastedText}
                     onChange={(e) => setPastedText(e.target.value)}
-                    placeholder="Paste Advocate Ready content here (e.g. starting with ⚡ MEETING QUICK LIST)..."
+                    placeholder="Paste Advocate Ready content, Section 504 Plan text, IEP summary, or meeting notes here..."
                     rows={12}
                     className="w-full bg-[#051429] border border-[#144E8A] text-blue-100 placeholder:text-blue-300/40 text-xs font-mono rounded-xl p-4 focus:ring-1 focus:ring-[#F5B544] focus:border-[#F5B544] leading-relaxed resize-y"
                   />
                   <div className="flex items-center justify-between text-[11px] text-blue-300/60">
-                    <span>Both paste and drop inputs route through the same unified parser.</span>
+                    <span>Accepts Advocate Ready files, Section 504 Plans, IEP excerpts, and bullet notes.</span>
                     <span>{pastedText.length} characters</span>
                   </div>
                 </div>
