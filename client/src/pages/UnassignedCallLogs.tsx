@@ -315,17 +315,17 @@ export default function UnassignedCallLogs() {
           {/* ─── UNDER-SHELF RECESSED LIGHTING GLOW DIRECTLY OVER NUMBER BOXES ─── */}
           {/* Exact color-matched golden-amber under-shelf lighting from user's reference */}
           <div className="relative w-full">
-            <div className="absolute -top-7 left-0 right-0 h-44 pointer-events-none select-none overflow-hidden">
+            <div className="absolute -top-6 left-0 right-0 h-14 pointer-events-none select-none overflow-hidden">
               {/* Luminous golden-amber light bar running along the underside of the shelf */}
-              <div className="h-[2.5px] w-full bg-gradient-to-r from-transparent via-[#FFC745] to-transparent blur-[0.5px] opacity-95" />
+              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFC745] to-transparent blur-[0.5px] opacity-95" />
               {/* Soft warm golden-amber bloom directly beneath the beam */}
-              <div className="h-[10px] w-full -mt-[2.5px] bg-gradient-to-r from-transparent via-[#F39425]/80 to-transparent blur-[3.5px]" />
-              {/* Downward golden-amber wall wash cascading over the number boxes */}
+              <div className="h-[8px] w-full -mt-[2px] bg-gradient-to-r from-transparent via-[#F39425]/80 to-transparent blur-[3px]" />
+              {/* Downward golden-amber wash illuminating just the gap above the boxes */}
               <div
                 className="w-full h-full"
                 style={{
                   background:
-                    "linear-gradient(to bottom, rgba(250, 186, 65, 0.72) 0%, rgba(243, 148, 37, 0.50) 18%, rgba(216, 114, 31, 0.30) 40%, rgba(180, 90, 27, 0.14) 65%, rgba(126, 64, 29, 0.04) 85%, transparent 100%)",
+                    "linear-gradient(to bottom, rgba(250, 186, 65, 0.75) 0%, rgba(243, 148, 37, 0.48) 25%, rgba(216, 114, 31, 0.22) 55%, rgba(180, 90, 27, 0.06) 80%, transparent 100%)",
                   maskImage:
                     "radial-gradient(ellipse 85% 100% at 50% 0%, black 50%, transparent 100%)",
                   WebkitMaskImage:
