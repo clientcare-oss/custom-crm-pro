@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ban, Globe, AlertTriangle, ArrowRightLeft, UserCheck, ShieldAlert, CalendarClock } from "lucide-react";
+import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ban, Globe, AlertTriangle, ArrowRightLeft, UserCheck, ShieldAlert, CalendarClock, Layers, Eye, EyeOff, Filter } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import VoiceInput from "@/components/VoiceInput";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import CalendarView, { CalendarViewMode, CalendarScope } from "@/components/CalendarView";
+import CalendarView, { CalendarViewMode, CalendarScope, CalendarLayerFilters } from "@/components/CalendarView";
 import ReassignAppointmentModal from "@/components/calendar/ReassignAppointmentModal";
 import StaffStatusManagerModal from "@/components/calendar/StaffStatusManagerModal";
 import NationalCoverage from "./NationalCoverage";
@@ -20,9 +20,11 @@ import HoldsNeedingAttentionCard from "@/components/calendar/HoldsNeedingAttenti
 import CreateProposedMeetingModal from "@/components/calendar/CreateProposedMeetingModal";
 import ProposedMeetingDetailModal from "@/components/calendar/ProposedMeetingDetailModal";
 import MasterScheduleModal, { ScheduleActionType } from "@/components/calendar/MasterScheduleModal";
+import OperationalBlockDetailDrawer from "@/components/calendar/OperationalBlockDetailDrawer";
 import { CalendarPatternLegendBar } from "@/components/calendar/CalendarPatternStyles";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import PageIdBadge from "@/components/PageIdBadge";
+import type { OperationalBlock } from "../../../drizzle/schema";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import { cn } from "@/lib/utils";
 import {
@@ -240,6 +242,7 @@ export default function Appointments() {
   };
 
   const { data: appointments = [], refetch } = trpc.appointments.list.useQuery();
+  const { data: operationalBlocks = [], refetch: refetchOperationalBlocks } = trpc.operationalBlocks.list.useQuery();
   const { data: unifiedData, refetch: refetchUnified } = trpc.proposedMeetings.getUnifiedCalendarEvents.useQuery(
     { includeReleasedHolds: false },
     { refetchInterval: 15000 }
@@ -248,6 +251,18 @@ export default function Appointments() {
   const { data: availability = [], refetch: refetchAvailability } = trpc.availability.get.useQuery();
   const staffRosterQuery = trpc.appointments.getStaffRoster.useQuery();
   const staffList = staffRosterQuery.data || [];
+
+  const [activeOperationalBlock, setActiveOperationalBlock] = useState<OperationalBlock | null>(null);
+  const [layerFilters, setLayerFilters] = useState<CalendarLayerFilters>({
+    showAppointments: true,
+    showProposedHolds: true,
+    showClosures: true,
+    showHolidays: true,
+    showPto: true,
+    showBlackouts: true,
+    showInternalEvents: true,
+    showProtectedWork: true,
+  });
 
   // Live availability check during scheduling
   const schedulingAvailabilityQuery = trpc.appointments.checkAvailability.useQuery(
@@ -1502,9 +1517,55 @@ export default function Appointments() {
         />
       </div>
 
+      {/* ── Visual Layer Filtering Bar (Visual only, does not alter real scheduling engine rules) ── */}
+      <div className="mb-4 p-3 rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 shrink-0">
+          <Layers className="w-4 h-4 text-[#C5A059]" />
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FFE394]">
+            Layer Visibility
+          </span>
+          <span className="text-[10px] text-[#A69371] font-mono hidden xl:inline">
+            (Visual toggles only — hidden items still strictly govern real scheduling availability)
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          {[
+            { id: "showAppointments", label: "Appointments", active: layerFilters.showAppointments },
+            { id: "showProposedHolds", label: "Holds", active: layerFilters.showProposedHolds },
+            { id: "showClosures", label: "Closures", active: layerFilters.showClosures },
+            { id: "showHolidays", label: "Holidays", active: layerFilters.showHolidays },
+            { id: "showPto", label: "PTO / Sick", active: layerFilters.showPto },
+            { id: "showBlackouts", label: "Blackouts", active: layerFilters.showBlackouts },
+            { id: "showInternalEvents", label: "Internal", active: layerFilters.showInternalEvents },
+            { id: "showProtectedWork", label: "Protected", active: layerFilters.showProtectedWork },
+          ].map((layer) => (
+            <button
+              key={layer.id}
+              type="button"
+              onClick={() =>
+                setLayerFilters((prev) => ({
+                  ...prev,
+                  [layer.id]: !prev[layer.id as keyof CalendarLayerFilters],
+                }))
+              }
+              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                layer.active
+                  ? "bg-[#102B4E]/80 border-[#C5A059]/60 text-[#FFE394] shadow-sm"
+                  : "bg-[#020A17] border-[#3A2C18] text-[#A69371]/60 hover:text-[#C6B697]"
+              }`}
+            >
+              {layer.active ? <Eye className="w-3 h-3 text-[#C5A059]" /> : <EyeOff className="w-3 h-3 text-[#A69371]" />}
+              <span>{layer.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ── Calendar View ── */}
       <CalendarView
         appointments={mergedAppointments as any}
+        operationalBlocks={operationalBlocks}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         scope={scope}
@@ -1522,10 +1583,24 @@ export default function Appointments() {
             setSelectedApt(apt as Appointment);
           }
         }}
+        onOperationalBlockClick={(block) => setActiveOperationalBlock(block)}
         onReassignClick={(apt) => setReassignApt(apt as any)}
         onScheduleClick={() => handleOpenSchedule()}
         onManageStaffClick={() => setShowStaffStatusModal(true)}
         loggedInAdvocateName={user?.name || "Byron Honea"}
+        staffList={staffList}
+        layerFilters={layerFilters}
+      />
+
+      {/* ── Operational Block Detail Drawer ── */}
+      <OperationalBlockDetailDrawer
+        block={activeOperationalBlock}
+        isOpen={Boolean(activeOperationalBlock)}
+        onClose={() => setActiveOperationalBlock(null)}
+        onSuccess={() => {
+          refetchOperationalBlocks();
+          refetch();
+        }}
         staffList={staffList}
       />
 

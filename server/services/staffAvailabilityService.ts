@@ -322,6 +322,36 @@ export async function checkSingleAdvocateAvailability(
     }
   }
 
+  // 5. Operational Availability Blocks (Office Closures, Holidays, PTO, Blackouts, Protected Casework)
+  try {
+    const opBlocks = await db.listOperationalBlocks({
+      startDate: startTime,
+      endDate: endTime,
+    });
+
+    for (const blk of opBlocks) {
+      const applies =
+        blk.scope === "ENTIRE_COMPANY" ||
+        (blk.targetStaffNames && matchAdvocate(blk.targetStaffNames, staff.name));
+
+      if (applies) {
+        if (blk.schedulingEffect === "HARD_BLOCK") {
+          isAvailable = false;
+          conflicts.push(
+            blk.scope === "ENTIRE_COMPANY"
+              ? `🛑 Waypoint Closed: ${blk.title} (${blk.blockType})`
+              : `🛑 Unavailable: ${blk.title} (${blk.blockType})`
+          );
+        } else if (blk.schedulingEffect === "SOFT_BLOCK") {
+          isLimited = true;
+          conflicts.push(`⚠️ Protected Time (Soft Block): ${blk.title} — Requires Override`);
+        }
+      }
+    }
+  } catch (e) {
+    // Non-fatal if table not initialized
+  }
+
   return {
     staffId: staff.id,
     name: staff.name,

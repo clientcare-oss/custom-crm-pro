@@ -12,6 +12,7 @@ import { invoicesRouter } from "./routers/invoices";
 import { contractsRouter } from "./routers/contracts";
 import { appointmentsRouter } from "./routers/appointments";
 import { proposedMeetingsRouter } from "./routers/proposedMeetings";
+import { operationalBlocksRouter } from "./routers/operationalBlocks";
 import { messagesRouter } from "./routers/messages";
 import { availabilityRouter } from "./routers/availability";
 import { clientFilesRouter } from "./routers/clientFiles";
@@ -100,6 +101,7 @@ export const appRouter = router({
   contracts: contractsRouter,
   appointments: appointmentsRouter,
   proposedMeetings: proposedMeetingsRouter,
+  operationalBlocks: operationalBlocksRouter,
   messages: messagesRouter,
   availability: availabilityRouter,
   clientFiles: clientFilesRouter,

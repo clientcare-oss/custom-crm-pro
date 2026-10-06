@@ -3158,6 +3158,46 @@ export const candidateTimeSlots = mysqlTable("candidate_time_slots", {
 export type CandidateTimeSlot = typeof candidateTimeSlots.$inferSelect;
 export type InsertCandidateTimeSlot = typeof candidateTimeSlots.$inferInsert;
 
+/**
+ * Operational Availability Blocks (PG-007 · Appointments & Calendar)
+ * Manages operational unavailability, organization closures, holidays, PTO, personal days,
+ * blackouts, protected casework time, training, travel, and buffer intervals.
+ * Coexists with client scheduling while remaining distinct in data model and UI.
+ */
+export const operationalBlocks = mysqlTable("operational_blocks", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  blockType: varchar("block_type", { length: 64 }).notNull(),
+  categoryFamily: varchar("category_family", { length: 64 }).default("OPERATIONAL_BLOCK").notNull(),
+  schedulingEffect: varchar("scheduling_effect", { length: 64 }).default("HARD_BLOCK").notNull(),
+  scope: varchar("scope", { length: 64 }).default("ONE_EMPLOYEE").notNull(),
+  targetStaffIds: text("target_staff_ids"),
+  targetStaffNames: text("target_staff_names"),
+  startTime: datetime("start_time").notNull(),
+  endTime: datetime("end_time").notNull(),
+  isAllDay: boolean("is_all_day").default(false).notNull(),
+  allDayDate: varchar("all_day_date", { length: 20 }),
+  allDayEndDate: varchar("all_day_end_date", { length: 20 }),
+  recurrenceRule: varchar("recurrence_rule", { length: 64 }).default("NONE").notNull(),
+  recurrenceDays: text("recurrence_days"),
+  recurrenceEndType: varchar("recurrence_end_type", { length: 64 }).default("NO_END_DATE"),
+  recurrenceEndDate: varchar("recurrence_end_date", { length: 20 }),
+  recurrenceCount: int("recurrence_count"),
+  reason: text("reason"),
+  notes: text("notes"),
+  location: varchar("location", { length: 255 }),
+  createdBy: int("created_by"),
+  createdByName: varchar("created_by_name", { length: 150 }),
+  isArchived: boolean("is_archived").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  startIdx: index("op_blocks_start_idx").on(t.startTime),
+  endIdx: index("op_blocks_end_idx").on(t.endTime),
+  blockTypeIdx: index("op_blocks_type_idx").on(t.blockType),
+  effectIdx: index("op_blocks_effect_idx").on(t.schedulingEffect),
+  scopeIdx: index("op_blocks_scope_idx").on(t.scope),
+}));
 
-
-
+export type OperationalBlock = typeof operationalBlocks.$inferSelect;
+export type InsertOperationalBlock = typeof operationalBlocks.$inferInsert;

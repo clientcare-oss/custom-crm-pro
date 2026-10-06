@@ -1,14 +1,37 @@
 import { useMemo } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Building2, User, ShieldAlert, AlertTriangle, Calendar, Info, Clock, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { CalendarAppointment } from "./TodaysAppointmentsTable";
-import { detectItemPatternKey, CALENDAR_PATTERNS } from "./CalendarPatternStyles";
+import {
+  detectItemPatternKey,
+  CALENDAR_PATTERNS,
+  PATTERN_PRECEDENCE_ORDER,
+  CalendarPatternKey,
+} from "./CalendarPatternStyles";
+import type { OperationalBlock } from "../../../../drizzle/schema";
 
 interface CalendarDayTimelineProps {
   appointments: CalendarAppointment[];
+  operationalBlocks?: OperationalBlock[];
   selectedDate: Date;
   onEventClick: (apt: CalendarAppointment) => void;
   onReassignClick: (apt: CalendarAppointment) => void;
   onSlotClick?: (date: Date, time: string) => void;
+  onOperationalBlockClick?: (block: OperationalBlock) => void;
+  scope?: "my" | "all";
+  loggedInAdvocateName?: string;
+  selectedAdvocateFilter?: string;
+  // Visual layer filter toggles
+  layerFilters?: {
+    showAppointments?: boolean;
+    showProposedHolds?: boolean;
+    showClosures?: boolean;
+    showHolidays?: boolean;
+    showPto?: boolean;
+    showBlackouts?: boolean;
+    showInternalEvents?: boolean;
+    showProtectedWork?: boolean;
+  };
 }
 
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
@@ -19,24 +42,113 @@ function formatHour(h: number): string {
   return `${hour12}:00 ${ampm}`;
 }
 
+function matchAdvocate(nameA?: string | null, nameB?: string | null): boolean {
+  if (!nameA || !nameB) return false;
+  const a = nameA.trim().toLowerCase();
+  const b = nameB.trim().toLowerCase();
+  if (a === b) return true;
+  return a.split(" ")[0] === b.split(" ")[0];
+}
+
 export default function CalendarDayTimeline({
   appointments,
+  operationalBlocks = [],
   selectedDate,
   onEventClick,
   onReassignClick,
   onSlotClick,
+  onOperationalBlockClick,
+  scope = "my",
+  loggedInAdvocateName = "Byron Honea",
+  selectedAdvocateFilter = "all",
+  layerFilters = {
+    showAppointments: true,
+    showProposedHolds: true,
+    showClosures: true,
+    showHolidays: true,
+    showPto: true,
+    showBlackouts: true,
+    showInternalEvents: true,
+    showProtectedWork: true,
+  },
 }: CalendarDayTimelineProps) {
   const selectedDateStr = useMemo(() => {
     return new Date(selectedDate).toISOString().split("T")[0];
   }, [selectedDate]);
 
-  // Appointments for selected day (excluding cancelled)
+  // Appointments for selected day (excluding cancelled) filtered by layer toggles
   const dayAppointments = useMemo(() => {
     return appointments.filter((apt) => {
       const d = new Date(apt.startTime).toISOString().split("T")[0];
-      return d === selectedDateStr && apt.status !== "Cancelled";
+      if (d !== selectedDateStr || apt.status === "Cancelled") return false;
+
+      // Filter layer toggles
+      if (apt.isHold && !layerFilters.showProposedHolds) return false;
+      if (!apt.isHold && !layerFilters.showAppointments) return false;
+
+      return true;
     });
-  }, [appointments, selectedDateStr]);
+  }, [appointments, selectedDateStr, layerFilters]);
+
+  // Relevant operational blocks for this day, matching scope and staff filter
+  const dayOperationalBlocks = useMemo(() => {
+    const dayStart = new Date(`${selectedDateStr}T00:00:00`);
+    const dayEnd = new Date(`${selectedDateStr}T23:59:59`);
+
+    return operationalBlocks.filter((block) => {
+      if (block.isArchived) return false;
+
+      // Check date overlap
+      const blockStart = new Date(block.startTime);
+      const blockEnd = new Date(block.endTime);
+      const overlaps = blockStart <= dayEnd && blockEnd >= dayStart;
+      if (!overlaps) return false;
+
+      // Scope match
+      if (block.scope !== "ENTIRE_COMPANY") {
+        if (scope === "my") {
+          // Check if block applies to loggedInAdvocate
+          if (!block.targetStaffNames || !matchAdvocate(block.targetStaffNames, loggedInAdvocateName)) {
+            return false;
+          }
+        } else if (selectedAdvocateFilter && selectedAdvocateFilter !== "all") {
+          if (!block.targetStaffNames || !matchAdvocate(block.targetStaffNames, selectedAdvocateFilter)) {
+            return false;
+          }
+        }
+      }
+
+      // Visual layer filters
+      const bt = block.blockType.toLowerCase();
+      if ((bt.includes("closure") || bt.includes("closed") || block.scope === "ENTIRE_COMPANY") && !layerFilters.showClosures) {
+        return false;
+      }
+      if (bt.includes("holiday") && !layerFilters.showHolidays) return false;
+      if ((bt.includes("pto") || bt.includes("vacation") || bt.includes("personal") || bt.includes("sick")) && !layerFilters.showPto) {
+        return false;
+      }
+      if (bt.includes("blackout") && !layerFilters.showBlackouts) return false;
+      if ((bt.includes("training") || bt.includes("meeting") || bt.includes("internal")) && !layerFilters.showInternalEvents) {
+        return false;
+      }
+      if ((bt.includes("protected") || bt.includes("casework") || bt.includes("focus")) && !layerFilters.showProtectedWork) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [operationalBlocks, selectedDateStr, scope, loggedInAdvocateName, selectedAdvocateFilter, layerFilters]);
+
+  // Check for all-day company closure or major holiday on this date
+  const allDayClosure = useMemo(() => {
+    return dayOperationalBlocks.find(
+      (b) =>
+        b.isAllDay &&
+        (b.scope === "ENTIRE_COMPANY" ||
+          b.blockType.toLowerCase().includes("closed") ||
+          b.blockType.toLowerCase().includes("holiday"))
+    );
+  }, [dayOperationalBlocks]);
 
   // Map appointments to the nearest hour slot
   const appointmentsByHour = useMemo(() => {
@@ -47,7 +159,6 @@ export default function CalendarDayTimeline({
 
     dayAppointments.forEach((apt) => {
       const startH = new Date(apt.startTime).getHours();
-      // Clamp to 8..17
       const slot = Math.min(Math.max(startH, 8), 17);
       if (!map[slot]) map[slot] = [];
       map[slot].push(apt);
@@ -56,12 +167,121 @@ export default function CalendarDayTimeline({
     return map;
   }, [dayAppointments]);
 
+  // Map operational blocks to the hour slots they cover
+  const operationalBlocksByHour = useMemo(() => {
+    const map: Record<number, OperationalBlock[]> = {};
+    for (const h of HOURS) {
+      map[h] = [];
+    }
+
+    dayOperationalBlocks.forEach((block) => {
+      if (block.isAllDay) {
+        for (const h of HOURS) {
+          map[h].push(block);
+        }
+        return;
+      }
+
+      const startH = new Date(block.startTime).getHours();
+      const endH = new Date(block.endTime).getHours();
+      const startMin = new Date(block.startTime).getMinutes();
+      const effectiveEndH = endH === startH || (endH === startH + 1 && new Date(block.endTime).getMinutes() === 0) ? startH : endH;
+
+      for (const h of HOURS) {
+        if (h >= startH && h <= Math.max(startH, effectiveEndH)) {
+          map[h].push(block);
+        }
+      }
+    });
+
+    return map;
+  }, [dayOperationalBlocks]);
+
   return (
-    <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-4 sm:p-5">
+    <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-4 sm:p-5 relative overflow-hidden">
+      {/* ── ALL-DAY CLOSURE / HOLIDAY FULL-WIDTH BANNER ── */}
+      {allDayClosure && (
+        <div
+          onClick={() => onOperationalBlockClick?.(allDayClosure)}
+          style={{
+            background:
+              CALENDAR_PATTERNS[
+                detectItemPatternKey({
+                  blockType: allDayClosure.blockType,
+                  title: allDayClosure.title,
+                  isClosure: true,
+                })
+              ].inlineBackground,
+          }}
+          className="mb-5 rounded-xl border border-rose-600/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg cursor-pointer hover:brightness-110 transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-rose-950/80 border border-rose-500/60 text-rose-300 shrink-0">
+              <Building2 className="w-5 h-5 text-rose-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-500">
+                  OFFICE CLOSED · ENTIRE COMPANY
+                </span>
+                <span className="text-[11px] font-mono text-[#FFE394] font-semibold">
+                  {allDayClosure.schedulingEffect === "HARD_BLOCK" ? "🛡️ Strict Block" : "ℹ️ Informational"}
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-serif font-bold text-[#FFF4D4] mt-1">
+                {allDayClosure.title}
+              </h3>
+              <p className="text-xs text-[#C6B697]">
+                Waypoint is officially closed for client scheduling today. No appointments may normally be booked.
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 flex items-center gap-2 text-xs font-mono text-[#FFE394] bg-[#020A17]/80 px-3 py-1.5 rounded-lg border border-[#3A2C18]">
+            <Clock className="w-3.5 h-3.5 text-[#C5A059]" />
+            <span>ALL DAY</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── TIMELINE HOUR SLOTS WITH AVAILABILITY FABRIC ── */}
       <div className="space-y-4">
         {HOURS.map((hour) => {
           const hourLabel = formatHour(hour);
           const hourApts = appointmentsByHour[hour] || [];
+          const hourBlocks = operationalBlocksByHour[hour] || [];
+
+          // Precedence resolver to choose dominant pattern for the availability fabric shading
+          let dominantPatternKey: CalendarPatternKey = "block_time";
+          let dominantBlock: OperationalBlock | null = null;
+
+          if (hourBlocks.length > 0) {
+            // Pick highest precedence pattern
+            let bestIndex = 999;
+            for (const b of hourBlocks) {
+              const pKey = detectItemPatternKey({
+                blockType: b.blockType,
+                title: b.title,
+                isClosure: b.scope === "ENTIRE_COMPANY" || b.blockType.toLowerCase().includes("closed"),
+              });
+              const idx = PATTERN_PRECEDENCE_ORDER.indexOf(pKey);
+              if (idx !== -1 && idx < bestIndex) {
+                bestIndex = idx;
+                dominantPatternKey = pKey;
+                dominantBlock = b;
+              }
+            }
+          }
+
+          const hasOperationalBlock = hourBlocks.length > 0;
+          const dominantDef = CALENDAR_PATTERNS[dominantPatternKey];
+
+          // Availability Fabric slot background: if blocked, woven/etched pattern texture covers the time slot
+          const slotBackground = hasOperationalBlock
+            ? dominantDef.fabricBackground
+            : undefined;
+
+          const isHardBlock = dominantBlock?.schedulingEffect === "HARD_BLOCK";
 
           return (
             <div key={hour} className="flex items-start gap-4">
@@ -70,19 +290,125 @@ export default function CalendarDayTimeline({
                 <span className="text-xs font-semibold text-[#A69371] font-mono">
                   {hourLabel}
                 </span>
+                {hasOperationalBlock && (
+                  <div className="text-[9px] font-mono text-[#C5A059]/80 truncate">
+                    {dominantDef.patternSymbol}
+                  </div>
+                )}
               </div>
 
-              {/* Main Content Area */}
+              {/* Main Content Area (Fabric Surface) */}
               <div
                 onClick={() => {
-                  if (hourApts.length === 0) {
+                  if (hourApts.length === 0 && !isHardBlock) {
                     onSlotClick?.(selectedDate, `${String(hour).padStart(2, "0")}:00`);
                   }
                 }}
-                className={`flex-1 min-h-[46px] border-t border-[#3A2C18]/60 pt-2 space-y-2 rounded-lg transition-colors ${
-                  hourApts.length === 0 ? "hover:bg-[#102B4E]/20 cursor-pointer" : ""
+                style={{
+                  background: slotBackground,
+                }}
+                className={`flex-1 min-h-[50px] border-t border-[#3A2C18]/60 pt-2 space-y-2 rounded-lg transition-all p-2 ${
+                  hasOperationalBlock
+                    ? "border-l-2 border-l-[#C5A059]/50 shadow-inner"
+                    : hourApts.length === 0
+                    ? "hover:bg-[#102B4E]/20 cursor-pointer"
+                    : ""
                 }`}
               >
+                {/* 1. OPERATIONAL AVAILABILITY BLOCKS (Rendered first as the base fabric banners) */}
+                {hourBlocks.map((block) => {
+                  const bPatternKey = detectItemPatternKey({
+                    blockType: block.blockType,
+                    title: block.title,
+                    isClosure: block.scope === "ENTIRE_COMPANY" || block.blockType.toLowerCase().includes("closed"),
+                  });
+                  const bDef = CALENDAR_PATTERNS[bPatternKey];
+
+                  const startStr = block.isAllDay
+                    ? "All Day"
+                    : new Date(block.startTime).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      });
+                  const endStr = block.isAllDay
+                    ? ""
+                    : new Date(block.endTime).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      });
+
+                  return (
+                    <div
+                      key={`block-${block.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOperationalBlockClick?.(block);
+                      }}
+                      style={{ background: bDef.inlineBackground }}
+                      className={`rounded-xl border p-3 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-sm ${bDef.borderClass}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-[#FFE394] shrink-0">
+                          {block.scope === "ENTIRE_COMPANY" ? (
+                            <Building2 className="w-4 h-4 text-rose-400" />
+                          ) : (
+                            <User className="w-4 h-4 text-cyan-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-serif font-bold text-[#FFF4D4] text-xs sm:text-sm">
+                              {block.title}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/50 text-[#FFE394] border border-[#3A2C18] uppercase">
+                              {bDef.label}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`text-[9px] font-mono px-1.5 py-0 ${
+                                block.schedulingEffect === "HARD_BLOCK"
+                                  ? "bg-rose-950/80 text-rose-300 border-rose-500/60"
+                                  : block.schedulingEffect === "SOFT_BLOCK"
+                                  ? "bg-amber-950/80 text-amber-300 border-amber-500/60"
+                                  : "bg-blue-950/80 text-blue-300 border-blue-500/60"
+                              }`}
+                            >
+                              {block.schedulingEffect === "HARD_BLOCK"
+                                ? "HARD BLOCK"
+                                : block.schedulingEffect === "SOFT_BLOCK"
+                                ? "SOFT PROTECTION"
+                                : "INFORMATIONAL"}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-[#C6B697] mt-0.5 flex items-center gap-2">
+                            <span>
+                              {block.scope === "ENTIRE_COMPANY"
+                                ? "Entire Waypoint Team"
+                                : block.targetStaffNames || "Assigned Advocate"}
+                            </span>
+                            {block.reason && (
+                              <>
+                                <span className="text-[#3A2C18]">|</span>
+                                <span className="italic text-[#A69371] truncate max-w-xs">{block.reason}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-medium text-[#FFE394]">
+                          {startStr} {endStr ? `– ${endStr}` : ""}
+                        </span>
+                        <div className="text-[10px] text-[#A69371] hover:underline cursor-pointer">
+                          View details →
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* 2. CONFIRMED CLIENT APPOINTMENTS & CANDIDATE HOLDS (Sit ABOVE the fabric) */}
                 {hourApts.map((apt) => {
                   const isNeedsCoverage = apt.status === "Needs Coverage";
                   const startStr = new Date(apt.startTime).toLocaleTimeString("en-US", {
@@ -96,13 +422,11 @@ export default function CalendarDayTimeline({
                   const studentName = apt.studentName || apt.parentName || "Student";
                   const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
 
-                  // Detect pattern specification
                   const isHold = apt.isHold;
                   const isParentSelected = apt.parentPreferred || apt.status === "PARENT_SELECTED";
                   const patternKey = detectItemPatternKey(apt);
                   const patternDef = CALENDAR_PATTERNS[patternKey];
 
-                  // Card styling depending on type & coverage in Admiralty Theme
                   let cardBorderClass = patternDef.borderClass;
                   let cardBackground = patternDef.inlineBackground;
 
@@ -121,7 +445,7 @@ export default function CalendarDayTimeline({
                       key={apt.id}
                       onClick={() => onEventClick(apt)}
                       style={{ background: cardBackground }}
-                      className={`rounded-xl border p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-sm ${cardBorderClass}`}
+                      className={`rounded-xl border p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-md relative z-10 ${cardBorderClass}`}
                     >
                       {/* Left: Title & Subtitle */}
                       <div>
@@ -174,6 +498,13 @@ export default function CalendarDayTimeline({
                     </div>
                   );
                 })}
+
+                {/* If open slot, render a subtle prompt if no blocks & no apts */}
+                {hourApts.length === 0 && !hasOperationalBlock && (
+                  <div className="py-2 text-center text-[#A69371]/50 text-xs font-mono hover:text-[#FFE394]/70 transition-colors">
+                    + Available for client scheduling
+                  </div>
+                )}
               </div>
             </div>
           );

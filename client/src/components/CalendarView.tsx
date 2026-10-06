@@ -12,17 +12,32 @@ import CalendarDayTimeline from "./calendar/CalendarDayTimeline";
 import CalendarWeekView from "./calendar/CalendarWeekView";
 import { detectItemPatternKey, CALENDAR_PATTERNS } from "./calendar/CalendarPatternStyles";
 
+import type { OperationalBlock } from "../../../drizzle/schema";
+
 export type CalendarViewMode = "day" | "week" | "month";
 export type CalendarScope = "my" | "all";
 
+export interface CalendarLayerFilters {
+  showAppointments: boolean;
+  showProposedHolds: boolean;
+  showClosures: boolean;
+  showHolidays: boolean;
+  showPto: boolean;
+  showBlackouts: boolean;
+  showInternalEvents: boolean;
+  showProtectedWork: boolean;
+}
+
 interface CalendarViewProps {
   appointments: CalendarAppointment[];
+  operationalBlocks?: OperationalBlock[];
   onDateClick?: (date: Date) => void;
   onSlotClick?: (date: Date, time?: string) => void;
   onEventClick?: (appointment: CalendarAppointment) => void;
   onReassignClick?: (appointment: CalendarAppointment) => void;
   onScheduleClick?: () => void;
   onManageStaffClick?: () => void;
+  onOperationalBlockClick?: (block: OperationalBlock) => void;
   // Controlled or uncontrolled view mode
   viewMode?: CalendarViewMode;
   onViewModeChange?: (mode: CalendarViewMode) => void;
@@ -39,6 +54,8 @@ interface CalendarViewProps {
   loggedInAdvocateName?: string;
   // Staff list for filter
   staffList?: { id: string; name: string; status: string }[];
+  // Layer filters
+  layerFilters?: CalendarLayerFilters;
 }
 
 const DEFAULT_STAFF = [
@@ -59,12 +76,14 @@ function matchAdvocate(nameA?: string | null, nameB?: string | null): boolean {
 
 export default function CalendarView({
   appointments,
+  operationalBlocks = [],
   onDateClick,
   onSlotClick,
   onEventClick,
   onReassignClick,
   onScheduleClick,
   onManageStaffClick,
+  onOperationalBlockClick,
   viewMode: controlledViewMode,
   onViewModeChange,
   scope: controlledScope,
@@ -75,6 +94,16 @@ export default function CalendarView({
   onDateChange,
   loggedInAdvocateName = "Byron Honea",
   staffList = DEFAULT_STAFF,
+  layerFilters = {
+    showAppointments: true,
+    showProposedHolds: true,
+    showClosures: true,
+    showHolidays: true,
+    showPto: true,
+    showBlackouts: true,
+    showInternalEvents: true,
+    showProtectedWork: true,
+  },
 }: CalendarViewProps) {
   // Local state fallbacks if not controlled from parent
   const [internalViewMode, setInternalViewMode] = useState<CalendarViewMode>("day");
@@ -170,6 +199,49 @@ export default function CalendarView({
     return map;
   }, [filteredAppointments]);
 
+  // Operational blocks mapped by date
+  const operationalBlocksByDate = useMemo(() => {
+    const map: Record<string, OperationalBlock[]> = {};
+    operationalBlocks.forEach((block) => {
+      if (block.isArchived) return false;
+
+      // Scope match
+      if (block.scope !== "ENTIRE_COMPANY") {
+        if (scope === "my") {
+          if (!block.targetStaffNames || !matchAdvocate(block.targetStaffNames, loggedInAdvocateName)) {
+            return;
+          }
+        } else if (filterAdvocate && filterAdvocate !== "all") {
+          if (!block.targetStaffNames || !matchAdvocate(block.targetStaffNames, filterAdvocate)) {
+            return;
+          }
+        }
+      }
+
+      // Visual layer filters
+      const bt = block.blockType.toLowerCase();
+      if ((bt.includes("closure") || bt.includes("closed") || block.scope === "ENTIRE_COMPANY") && !layerFilters.showClosures) {
+        return;
+      }
+      if (bt.includes("holiday") && !layerFilters.showHolidays) return;
+      if ((bt.includes("pto") || bt.includes("vacation") || bt.includes("personal") || bt.includes("sick")) && !layerFilters.showPto) {
+        return;
+      }
+      if (bt.includes("blackout") && !layerFilters.showBlackouts) return;
+      if ((bt.includes("training") || bt.includes("meeting") || bt.includes("internal")) && !layerFilters.showInternalEvents) {
+        return;
+      }
+      if ((bt.includes("protected") || bt.includes("casework") || bt.includes("focus")) && !layerFilters.showProtectedWork) {
+        return;
+      }
+
+      const dStr = new Date(block.startTime).toISOString().split("T")[0];
+      if (!map[dStr]) map[dStr] = [];
+      map[dStr].push(block);
+    });
+    return map;
+  }, [operationalBlocks, scope, filterAdvocate, loggedInAdvocateName, layerFilters]);
+
   const monthGridDays: React.ReactNode[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
     monthGridDays.push(
@@ -180,14 +252,39 @@ export default function CalendarView({
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const dayAppointments = appointmentsByDate[dateStr] || [];
+    const dayBlocks = operationalBlocksByDate[dateStr] || [];
     const isToday = dateStr === todayStr;
+
+    // Check for all-day closure on this day
+    const allDayClosure = dayBlocks.find(
+      (b) =>
+        b.isAllDay &&
+        (b.scope === "ENTIRE_COMPANY" ||
+          b.blockType.toLowerCase().includes("closed") ||
+          b.blockType.toLowerCase().includes("holiday"))
+    );
+
+    let cellBackground = isToday
+      ? "bg-[#071F3D]/50 border-[#C5A059]/70"
+      : "hover:bg-[#07162B]/50 bg-[#020A17]/80";
+    let cellStyle: React.CSSProperties = {};
+
+    if (allDayClosure) {
+      const pKey = detectItemPatternKey({
+        blockType: allDayClosure.blockType,
+        title: allDayClosure.title,
+        isClosure: true,
+      });
+      cellStyle = {
+        background: CALENDAR_PATTERNS[pKey].fabricBackground,
+      };
+    }
 
     monthGridDays.push(
       <div
         key={day}
-        className={`min-h-[7rem] border border-[#3A2C18]/60 p-1.5 transition-colors cursor-pointer ${
-          isToday ? "bg-[#071F3D]/50 border-[#C5A059]/70" : "hover:bg-[#07162B]/50 bg-[#020A17]/80"
-        }`}
+        style={cellStyle}
+        className={`min-h-[7rem] border border-[#3A2C18]/60 p-1.5 transition-colors cursor-pointer ${cellBackground}`}
         onClick={() => {
           const clickedDate = new Date(year, month, day);
           onDateClick?.(clickedDate);
@@ -201,13 +298,47 @@ export default function CalendarView({
           >
             {day}
           </span>
-          {dayAppointments.some((a) => a.status === "Needs Coverage") && (
+          {allDayClosure ? (
+            <span
+              className="text-[9px] font-mono px-1 rounded bg-rose-950 text-rose-300 border border-rose-600/60 font-bold"
+              title="Office Closed"
+            >
+              CLOSED
+            </span>
+          ) : dayAppointments.some((a) => a.status === "Needs Coverage") ? (
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Needs Coverage" />
-          )}
+          ) : null}
         </div>
 
         <div className="space-y-1 overflow-hidden">
-          {dayAppointments.slice(0, 3).map((apt) => {
+          {/* Operational Blocks in Month Cell */}
+          {dayBlocks.slice(0, 2).map((block) => {
+            const pKey = detectItemPatternKey({
+              blockType: block.blockType,
+              title: block.title,
+              isClosure: block.scope === "ENTIRE_COMPANY" || block.blockType.toLowerCase().includes("closed"),
+            });
+            const pDef = CALENDAR_PATTERNS[pKey];
+
+            return (
+              <div
+                key={`month-block-${block.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOperationalBlockClick?.(block);
+                }}
+                style={{ background: pDef.inlineBackground }}
+                className={`text-[9px] px-1.5 py-0.5 rounded cursor-pointer hover:opacity-90 transition-all border ${pDef.borderClass}`}
+              >
+                <div className="font-serif font-bold truncate leading-tight text-[#FFE394]">
+                  {pDef.patternSymbol} {block.title}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Client Appointments in Month Cell */}
+          {dayAppointments.slice(0, 2).map((apt) => {
             const isNeedsCoverage = apt.status === "Needs Coverage";
             const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
             const patternKey = detectItemPatternKey(apt as any);
@@ -410,12 +541,18 @@ export default function CalendarView({
           {/* Detailed Timeline */}
           <CalendarDayTimeline
             appointments={filteredAppointments}
+            operationalBlocks={operationalBlocks}
             selectedDate={currentDate}
             onEventClick={(apt) => onEventClick?.(apt)}
             onReassignClick={(apt) => onReassignClick?.(apt)}
             onSlotClick={(date, time) =>
               onSlotClick ? onSlotClick(date, time) : onDateClick ? onDateClick(date) : undefined
             }
+            onOperationalBlockClick={onOperationalBlockClick}
+            scope={scope}
+            loggedInAdvocateName={loggedInAdvocateName}
+            selectedAdvocateFilter={filterAdvocate}
+            layerFilters={layerFilters}
           />
         </div>
       )}
@@ -423,6 +560,7 @@ export default function CalendarView({
       {viewMode === "week" && (
         <CalendarWeekView
           appointments={filteredAppointments}
+          operationalBlocks={operationalBlocks}
           currentDate={currentDate}
           onEventClick={(apt) => onEventClick?.(apt)}
           onReassignClick={(apt) => onReassignClick?.(apt)}
@@ -430,6 +568,11 @@ export default function CalendarView({
             setCurrentDate(date);
             setViewMode("day");
           }}
+          onOperationalBlockClick={onOperationalBlockClick}
+          scope={scope}
+          loggedInAdvocateName={loggedInAdvocateName}
+          selectedAdvocateFilter={filterAdvocate}
+          layerFilters={layerFilters}
         />
       )}
 

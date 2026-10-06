@@ -1567,5 +1567,8 @@ export * from "./db/lawyerPrep";
 // ─── Proposed Meetings & Candidate Time Slots (PG-007) ─────────────────
 export * from "./db/proposedMeetings";
 
+// ─── Operational Availability Blocks (PG-007) ──────────────────────────
+export * from "./db/operationalBlocks";
+
 
 

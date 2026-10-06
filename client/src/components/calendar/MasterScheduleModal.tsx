@@ -299,6 +299,31 @@ export default function MasterScheduleModal({
     onError: (err) => toast.error(err.message),
   });
 
+  const createOperationalBlockMutation = trpc.operationalBlocks.create.useMutation({
+    onSuccess: (res) => {
+      utils.operationalBlocks.list.invalidate();
+      utils.appointments.invalidate();
+      onSuccess();
+      onClose();
+
+      const aptConflicts = res.conflicts?.overlappingAppointments || [];
+      const holdConflicts = res.conflicts?.overlappingCandidateHolds || [];
+
+      if (aptConflicts.length > 0) {
+        toast.warning(
+          `Availability Block Saved! ⚠️ Warning: Overlaps ${aptConflicts.length} existing client appointment (${aptConflicts[0].title}). Client appointments are protected and NOT cancelled.`
+        );
+      } else if (holdConflicts.length > 0) {
+        toast.info(
+          `Availability Block Saved! ℹ️ Note: Overlaps ${holdConflicts.length} tentative candidate hold (${holdConflicts[0].studentName}).`
+        );
+      } else {
+        toast.success(`Operational Availability Block saved to calendar!`);
+      }
+    },
+    onError: (err) => toast.error("Failed to save operational block: " + err.message),
+  });
+
   // SUBMIT HANDLERS
   const handleSelectCategory = (action: ScheduleActionType) => {
     recordRecentAction(action);
@@ -410,30 +435,28 @@ export default function MasterScheduleModal({
   const handleBlockTimeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const start = blockIsAllDay
-      ? new Date(`${blockDate}T08:00:00`)
+      ? new Date(`${blockDate}T00:00:00`)
       : new Date(`${blockDate}T${blockStartTime}:00`);
     const end = blockIsAllDay
-      ? new Date(`${blockEndDate || blockDate}T18:00:00`)
+      ? new Date(`${blockEndDate || blockDate}T23:59:59`)
       : new Date(`${blockEndDate || blockDate}T${blockEndTime}:00`);
 
     const advocateLabel = blockAllStaff ? "All Staff" : blockStaff;
 
-    createAppointmentMutation.mutate(
-      {
-        clientId: 0,
-        title: `[${blockType.toUpperCase()}] ${advocateLabel}`,
-        description: blockReason || `Scheduled block: ${blockType} (${blockEnforcement})`,
-        startTime: start,
-        endTime: end,
-        meetingType: blockType,
-        assignedAdvocateName: advocateLabel,
-        studentName: advocateLabel,
-        status: "Confirmed",
-      },
-      {
-        onSuccess: () => toast.success(`Time blocked: ${blockType} for ${advocateLabel}`),
-      }
-    );
+    createOperationalBlockMutation.mutate({
+      title: `${blockType} — ${advocateLabel}`,
+      blockType,
+      categoryFamily: "OPERATIONAL_BLOCK",
+      schedulingEffect: blockEnforcement,
+      scope: blockAllStaff ? "ENTIRE_COMPANY" : "ONE_EMPLOYEE",
+      targetStaffNames: advocateLabel,
+      startTime: start,
+      endTime: end,
+      isAllDay: blockIsAllDay,
+      allDayDate: blockDate,
+      allDayEndDate: blockEndDate || blockDate,
+      reason: blockReason || undefined,
+    });
   };
 
   // Submit Office Closure
@@ -446,22 +469,23 @@ export default function MasterScheduleModal({
       ? new Date(`${closureEndDate || closureDate}T23:59:59`)
       : new Date(`${closureEndDate || closureDate}T${closureEndTime}:00`);
 
-    createAppointmentMutation.mutate(
-      {
-        clientId: 0,
-        title: `[OFFICE CLOSED] ${closureTitle}`,
-        description: closureNotes || `Organization Closure: ${closureType} (${closureEnforcement})`,
-        startTime: start,
-        endTime: end,
-        meetingType: closureType,
-        assignedAdvocateName: "All Staff",
-        studentName: "Waypoint Advocates (All Offices)",
-        status: "Confirmed",
-      },
-      {
-        onSuccess: () => toast.success(`Office Closure recorded: ${closureTitle}`),
-      }
-    );
+    const isInformationalHoliday = closureType.toLowerCase().includes("holiday") && closureEnforcement === "INFORMATIONAL";
+
+    createOperationalBlockMutation.mutate({
+      title: closureTitle || `Office Closed — Entire Company`,
+      blockType: closureType,
+      categoryFamily: isInformationalHoliday ? "INFORMATIONAL_EVENT" : "OPERATIONAL_BLOCK",
+      schedulingEffect: closureEnforcement,
+      scope: "ENTIRE_COMPANY",
+      targetStaffNames: "Entire Company",
+      startTime: start,
+      endTime: end,
+      isAllDay: closureIsAllDay,
+      allDayDate: closureDate,
+      allDayEndDate: closureEndDate || closureDate,
+      recurrenceRule: closureIsAnnual ? "ANNUALLY" : "NONE",
+      reason: closureNotes || undefined,
+    });
   };
 
   // Submit Internal Event
@@ -469,25 +493,21 @@ export default function MasterScheduleModal({
     e.preventDefault();
     const start = new Date(`${ieDate}T${ieStartTime}:00`);
     const end = new Date(start.getTime() + ieDuration * 60000);
-    const staffLabel = ieAllStaff ? "All Staff" : ieSelectedStaff.join(", ");
+    const staffLabel = ieAllStaff ? "Entire Company" : ieSelectedStaff.join(", ");
 
-    createAppointmentMutation.mutate(
-      {
-        clientId: 0,
-        title: `[INTERNAL] ${ieTitle}`,
-        description: ieNotes || `Internal Event: ${ieType} (${ieEnforcement})`,
-        startTime: start,
-        endTime: end,
-        meetingType: ieType,
-        location: ieLocation || undefined,
-        assignedAdvocateName: staffLabel,
-        studentName: staffLabel,
-        status: "Confirmed",
-      },
-      {
-        onSuccess: () => toast.success(`Internal event scheduled: ${ieTitle}`),
-      }
-    );
+    createOperationalBlockMutation.mutate({
+      title: ieTitle || ieType,
+      blockType: ieType,
+      categoryFamily: "INFORMATIONAL_EVENT",
+      schedulingEffect: ieEnforcement,
+      scope: ieAllStaff ? "ENTIRE_COMPANY" : "SELECTED_EMPLOYEES",
+      targetStaffNames: staffLabel,
+      startTime: start,
+      endTime: end,
+      isAllDay: false,
+      location: ieLocation || undefined,
+      notes: ieNotes || undefined,
+    });
   };
 
   return (

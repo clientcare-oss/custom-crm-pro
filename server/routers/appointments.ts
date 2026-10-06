@@ -135,9 +135,29 @@ export const appointmentsRouter = router({
           status: z.enum(["Scheduled", "Confirmed", "Completed", "Cancelled", "Needs Coverage"]).optional(),
           clientTimeZone: z.string().optional(),
           originalTimeZone: z.string().optional(),
+          adminOverride: z.boolean().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
+        // Enforce Operational Hard Block check unless adminOverride is provided
+        if (!input.adminOverride) {
+          try {
+            const availCheck = await db.checkOperationalAvailability({
+              startTime: input.startTime,
+              endTime: input.endTime,
+              advocateName: input.assignedAdvocateName,
+            });
+            if (availCheck.isHardBlocked) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `Scheduling blocked: ${availCheck.hardBlockReason}. Please select another time or use Admin Override.`,
+              });
+            }
+          } catch (e: any) {
+            if (e instanceof TRPCError) throw e;
+          }
+        }
+
         let clientTz = input.clientTimeZone;
         if (!clientTz && input.clientId) {
           try {
@@ -147,11 +167,43 @@ export const appointmentsRouter = router({
             }
           } catch { /* ignore */ }
         }
-        return await db.createAppointment({
-          ...input,
+
+        const created = await db.createAppointment({
+          clientId: input.clientId,
+          caseId: input.caseId,
+          title: input.title,
+          description: input.description,
+          startTime: input.startTime,
+          endTime: input.endTime,
+          location: input.location,
+          videoLink: input.videoLink,
+          meetingType: input.meetingType,
+          parentName: input.parentName,
+          parentPhone: input.parentPhone,
+          studentName: input.studentName,
+          assignedAdvocateName: input.assignedAdvocateName,
+          status: input.status,
           clientTimeZone: clientTz || "America/New_York",
           originalTimeZone: input.originalTimeZone || "America/New_York",
         }, ctx.user.id);
+
+        if (input.adminOverride && input.clientId) {
+          try {
+            const { recordCaseActivity } = await import("../services/caseActivityService");
+            await recordCaseActivity({
+              studentContactId: input.clientId,
+              eventType: "admin_override",
+              title: `Admin Override: Appointment Scheduled into Blocked Time`,
+              description: `Appointment "${input.title}" was scheduled by ${ctx.user.name || "Admin"} overriding active calendar operational availability restrictions.`,
+              ownerName: ctx.user.name || "Waypoint Admin",
+              ownerRole: ctx.user.role || "admin",
+              isCompleted: true,
+              categoryColor: "amber",
+            });
+          } catch {}
+        }
+
+        return created;
       }),
     update: adminProcedure
       .input(
