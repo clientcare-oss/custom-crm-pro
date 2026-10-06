@@ -41,6 +41,7 @@ import { BlueprintView } from "../components/meeting-workspace/blueprint/Bluepri
 import { MeetingModeView } from "../components/meeting-workspace/live/MeetingModeView";
 import { ImportAdvocateReadyModal } from "../components/meeting-workspace/prep/ImportAdvocateReadyModal";
 import { ParentConcernStatementWorkspace } from "../components/meeting-workspace/pcs/ParentConcernStatementWorkspace";
+import { MeetingWorkspaceAnimatedHeader } from "../components/meeting-workspace/MeetingWorkspaceAnimatedHeader";
 import type { PcsMetadata } from "../components/meeting-workspace/pcs/types";
 
 export default function MeetingWorkspace() {
@@ -438,10 +439,15 @@ export default function MeetingWorkspace() {
 
   return (
     <ScopedErrorBoundary>
-      <div className="min-h-screen bg-[#07162B] bg-[radial-gradient(ellipse_at_50%_0%,#102B4E_0%,#07162B_55%,#030D1A_100%)] text-[#FFF4D4] p-4 sm:p-6 lg:p-8 flex flex-col space-y-6">
-        {/* Top Student Switcher Bar */}
-        <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-[#3A2C18]/80">
-          <div className="flex items-center gap-3">
+      <div className="min-h-screen bg-[#07162B] bg-[radial-gradient(ellipse_at_50%_0%,#102B4E_0%,#07162B_55%,#030D1A_100%)] text-[#FFF4D4] pb-12 flex flex-col">
+        {/* ── Top Panoramic Advocacy Strategy Library & Study Shelf Canopy (PG-043) ── */}
+        <MeetingWorkspaceAnimatedHeader />
+
+        {/* ── Main Workspace Content Deck (Trailing ivy vines drape gracefully over the deck) ── */}
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto w-full flex-1 -mt-6 sm:-mt-10 lg:-mt-14 relative z-30">
+          {/* Top Student Switcher Bar */}
+          <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-[#3A2C18]/80 rounded-2xl p-2.5 sm:p-3 bg-[#05142B]/80 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+            <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] text-xs font-semibold text-[#FFF4D4] hover:border-[#C5A059]/60 shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all cursor-pointer">
@@ -855,6 +861,7 @@ export default function MeetingWorkspace() {
           existingTargetsCount={targets.length}
           onImportTargets={handleImportTargets}
         />
+        </div>
       </div>
     </ScopedErrorBoundary>
   );
