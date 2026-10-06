@@ -5,6 +5,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import PageIdBadge from "@/components/PageIdBadge";
 import { CallCenterTestPanel, SimulatedCallState } from "./CallCenterTestPanel";
 
+import { QuickContactSearch, SearchContactItem } from "./QuickContactSearch";
+
 interface CallCenterHeaderProps {
   callsTodayCount?: number;
   activeFilter?: string;
@@ -16,6 +18,10 @@ interface CallCenterHeaderProps {
   onStartSimulation?: (sim: SimulatedCallState) => void;
   activeSimulation?: SimulatedCallState | null;
   onResetSimulation?: () => void;
+  contacts?: SearchContactItem[];
+  onSelectContact?: (contact: SearchContactItem) => void;
+  onCallContact?: (phone: string, name?: string) => void;
+  onGoToPhoneBook?: () => void;
 }
 
 export function CallCenterHeader({
@@ -24,6 +30,10 @@ export function CallCenterHeader({
   onStartSimulation,
   activeSimulation = null,
   onResetSimulation,
+  contacts = [],
+  onSelectContact,
+  onCallContact,
+  onGoToPhoneBook,
 }: CallCenterHeaderProps) {
   const { user } = useAuth();
   const userName = user?.name || "Byron Honea";
@@ -43,11 +53,21 @@ export function CallCenterHeader({
             <Headset className="h-6 w-6 sm:h-6.5 sm:w-6.5 md:h-7 md:w-7 text-[#F5D88A] drop-shadow-[0_0_8px_rgba(245,216,138,0.6)]" />
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <h1 className="text-2xl sm:text-3xl md:text-[34px] font-serif font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none tracking-tight">
-              Call Center
-            </h1>
-            <PageIdBadge id="PG-018" />
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-[34px] font-serif font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none tracking-tight">
+                Call Center
+              </h1>
+              <PageIdBadge id="PG-018" />
+            </div>
+
+            {/* Quick Contact Search Bar directly after Call Center title */}
+            <QuickContactSearch
+              contacts={contacts}
+              onSelectContact={onSelectContact}
+              onCallContact={onCallContact}
+              onGoToPhoneBook={onGoToPhoneBook}
+            />
           </div>
         </div>
 

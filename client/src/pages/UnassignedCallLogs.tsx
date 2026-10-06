@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import PageIdBadge from "@/components/PageIdBadge";
 
 // Subcomponents
 import { CallCenterHeader } from "@/components/callCenter/CallCenterHeader";
+import { SearchContactItem } from "@/components/callCenter/QuickContactSearch";
 import { CallCenterStats } from "@/components/callCenter/CallCenterStats";
 import { NoActiveCallHero } from "@/components/callCenter/NoActiveCallHero";
 import { ResumeCallHero } from "@/components/callCenter/ResumeCallHero";
@@ -29,6 +31,7 @@ import { SimulatedCallState } from "@/components/callCenter/CallCenterTestPanel"
 import SmsComposerDialog from "@/components/quo/SmsComposerDialog";
 
 export default function UnassignedCallLogs() {
+  const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const { call, startCall, updateCall, discardCallSession } = useActiveCall();
 
@@ -87,6 +90,48 @@ export default function UnassignedCallLogs() {
     }
     return [];
   }, [contactsData]);
+
+  // Transform all contacts & leads for Quick Contact Search in header
+  const quickSearchContacts: SearchContactItem[] = useMemo(() => {
+    const list: SearchContactItem[] = [];
+    if (Array.isArray(contactsData)) {
+      contactsData.forEach((c: any) => {
+        list.push({
+          id: c.id,
+          name: c.name || `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Contact",
+          phone: c.phone || null,
+          email: c.email || null,
+          status: c.jobTitle === "Client" ? "Client" : c.jobTitle === "Lead" ? "Lead" : "Prospect",
+          studentName: c.studentName || null,
+          parentName: c.parentName || null,
+          preferredCallingStartTime: c.preferredCallingStartTime || "09:00",
+          preferredCallingEndTime: c.preferredCallingEndTime || "17:00",
+          preferredCallingDays: c.preferredCallingDays || "Mon–Fri",
+          confirmedTimeZone: c.confirmedTimeZone || "EST",
+          mayCallOutsidePreferredHours: c.mayCallOutsidePreferredHours ?? false,
+        });
+      });
+    }
+    if (Array.isArray(leadsData)) {
+      leadsData.forEach((l: any) => {
+        if (!list.some((existing) => existing.phone && existing.phone === l.parentPhone)) {
+          list.push({
+            id: 100000 + l.id,
+            name: l.parentName || l.name || "Lead Inquiry",
+            phone: l.parentPhone || l.phone || null,
+            email: l.parentEmail || l.email || null,
+            status: "Lead",
+            studentName: l.studentName || null,
+            preferredCallingStartTime: "09:00",
+            preferredCallingEndTime: "17:00",
+            preferredCallingDays: "Mon–Fri",
+            confirmedTimeZone: "EST",
+          });
+        }
+      });
+    }
+    return list;
+  }, [contactsData, leadsData]);
 
   // Derived Counts for Stats & Work Queues
   const missedCount = useMemo(() => {
@@ -230,6 +275,27 @@ export default function UnassignedCallLogs() {
     }
   };
 
+  const handleSelectSearchContact = (contact: SearchContactItem) => {
+    setShowCallWorkspace(true);
+    startCall({
+      callerCategory: contact.status === "Client" ? "existing_client" : "new_lead",
+      contactId: contact.id < 100000 ? contact.id : undefined,
+      contactName: contact.name,
+      callerInfo: {
+        name: contact.name,
+        phone: contact.phone || undefined,
+        email: contact.email || undefined,
+      },
+      studentName: contact.studentName || undefined,
+      callType: contact.status === "Client" ? "Current Client" : "New Lead / Sales",
+    });
+    toast.success(`Loaded ${contact.name} into Call Workspace`);
+    setTimeout(() => {
+      const el = document.getElementById("call-workspace");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
   // Start Fake Test Call Simulation (Tucked behind Developer / Testing in Settings Gear)
   const handleStartSimulation = (sim: SimulatedCallState) => {
     setSimulatedCall(sim);
@@ -298,6 +364,10 @@ export default function UnassignedCallLogs() {
           onStartSimulation={handleStartSimulation}
           activeSimulation={simulatedCall}
           onResetSimulation={handleResetSimulation}
+          contacts={quickSearchContacts}
+          onSelectContact={handleSelectSearchContact}
+          onCallContact={(phone, name) => handleDirectCallPhone(phone, name)}
+          onGoToPhoneBook={() => setLocation("/contacts")}
         />
 
         {/* Quo Integration Settings Drawer / Panel (if toggled) */}
