@@ -3,7 +3,6 @@ import {
   Lock,
   Unlock,
   Shield,
-  ShieldAlert,
   ShieldCheck,
   KeyRound,
   Sparkles,
@@ -25,11 +24,32 @@ import {
   Play,
   Layers,
   Fingerprint,
-  Info
+  Info,
+  Compass,
+  Phone,
+  Users,
+  Scale,
+  TrendingUp,
+  Mail,
+  Briefcase,
+  Target,
+  Clock,
+  User,
+  History,
+  Pencil,
+  MoreHorizontal,
+  X,
+  CheckCircle2,
+  CornerDownRight,
+  Compass as HelmIcon,
+  HelpCircle,
+  Eye,
+  SlidersHorizontal
 } from "lucide-react";
 import {
   DEFAULT_AI_PROMPTS,
   AiPromptRecord,
+  ContextVariable,
   VAULT_STORAGE_KEY,
   VAULT_LOCK_STATUS_KEY,
   VAULT_MASTER_PIN
@@ -52,7 +72,7 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
   const [enteredPin, setEnteredPin] = useState<string>("");
   const [pinError, setPinError] = useState<boolean>(false);
 
-  // Prompts state from localStorage or default
+  // Prompts state from localStorage or defaults
   const [prompts, setPrompts] = useState<AiPromptRecord[]>(() => {
     try {
       const stored = localStorage.getItem(VAULT_STORAGE_KEY);
@@ -65,17 +85,37 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
     return DEFAULT_AI_PROMPTS;
   });
 
-  // Selected prompt for editing/inspection
+  // Selected prompt for inspector
   const [selectedPromptId, setSelectedPromptId] = useState<string>(DEFAULT_AI_PROMPTS[0].id);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All Prompts");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [isDirty, setIsDirty] = useState<boolean>(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [inspectorTab, setInspectorTab] = useState<"Overview" | "Instructions" | "Inputs" | "Output Format" | "History">("Overview");
 
-  // Test sandbox drawer state
-  const [isTestingOpen, setIsTestingOpen] = useState<boolean>(false);
-  const [testVariables, setTestVariables] = useState<Record<string, string>>({});
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [editingPrompt, setEditingPrompt] = useState<AiPromptRecord | null>(null);
+
+  // Test sandbox modal state
+  const [isTestModalOpen, setIsTestModalOpen] = useState<boolean>(false);
+  const [testInputs, setTestInputs] = useState<Record<string, string>>({});
   const [testOutput, setTestOutput] = useState<string>("");
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
+
+  // Copied state
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Sync Page ID when unlock state changes
+  useEffect(() => {
+    if (isUnlocked) {
+      broadcastPageId({
+        id: "PG-013-AI",
+        name: "Locked AI Prompt Vault",
+        category: "Automation",
+        description: "Secure executive library prompts and AI model configuration"
+      });
+      onUnlockChange?.(true);
+    }
+  }, [isUnlocked]);
 
   // Persist prompt changes
   const savePromptsToStorage = (updated: AiPromptRecord[]) => {
@@ -90,31 +130,6 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
   const selectedPrompt = useMemo(() => {
     return prompts.find((p) => p.id === selectedPromptId) || prompts[0];
   }, [prompts, selectedPromptId]);
-
-  // Sync test variables when selected prompt changes
-  useEffect(() => {
-    if (selectedPrompt) {
-      const initialVars: Record<string, string> = {};
-      selectedPrompt.variables.forEach((v) => {
-        initialVars[v.name] = v.example;
-      });
-      setTestVariables(initialVars);
-      setTestOutput("");
-    }
-  }, [selectedPromptId]);
-
-  // Sync Page ID when unlock state changes or mounts
-  useEffect(() => {
-    if (isUnlocked) {
-      broadcastPageId({
-        id: "PG-013-AI",
-        name: "Locked AI Prompt Vault",
-        category: "Automation",
-        description: "Secure executive library prompts and AI model configuration"
-      });
-      onUnlockChange?.(true);
-    }
-  }, [isUnlocked]);
 
   // Unlock handlers
   const handleDigitPress = (digit: string) => {
@@ -181,122 +196,196 @@ export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {
     toast.info("Executive AI Vault Re-Locked");
   };
 
-  // Prompt update handlers
-  const handleUpdateCurrentPrompt = (updates: Partial<AiPromptRecord>) => {
-    if (selectedPrompt.isIndividualLocked && updates.systemPrompt !== undefined) {
-      toast.error("This prompt is individually locked. Unlock it before editing the text.");
-      return;
-    }
-    const updated = prompts.map((p) => {
-      if (p.id === selectedPrompt.id) {
-        return {
-          ...p,
-          ...updates,
-          lastUpdated: new Date().toISOString().split("T")[0]
-        };
-      }
-      return p;
-    });
-    savePromptsToStorage(updated);
-    setIsDirty(true);
-  };
-
-  const handleSavePrompt = () => {
-    setIsDirty(false);
-    toast.success(`Saved revision for "${selectedPrompt.name}"`);
-  };
-
-  const handleToggleIndividualLock = (promptId: string) => {
-    const updated = prompts.map((p) => {
-      if (p.id === promptId) {
-        const nextState = !p.isIndividualLocked;
-        toast.info(nextState ? `Locked "${p.name}" against accidental edits` : `Unlocked "${p.name}" for modifications`);
-        return { ...p, isIndividualLocked: nextState };
-      }
-      return p;
-    });
-    savePromptsToStorage(updated);
-  };
-
-  const handleCopyPrompt = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    toast.success("System prompt copied to clipboard");
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleResetToDefaults = () => {
-    if (confirm("Reset the entire AI Prompt Library to factory defaults? All custom changes will be overwritten.")) {
-      savePromptsToStorage(DEFAULT_AI_PROMPTS);
-      setSelectedPromptId(DEFAULT_AI_PROMPTS[0].id);
-      setIsDirty(false);
-      toast.success("Restored factory default prompts");
-    }
-  };
-
-  const handleCreateNewPrompt = () => {
-    const newId = `prompt-custom-${Date.now()}`;
-    const newRecord: AiPromptRecord = {
-      id: newId,
-      name: "Custom Advocacy Prompt",
-      key: `CUSTOM_PROMPT_${Date.now()}`,
-      pageId: "PG-013-AI",
-      category: "Strategy & Case",
-      modelTier: "CF_MODELS.DEEP",
-      modelName: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-      version: "v1.0.0",
-      lastUpdated: new Date().toISOString().split("T")[0],
-      author: "Byron Honea, Master IEP Coach®",
-      description: "Custom user-defined AI behavioral prompt for specialized advocacy tasks.",
-      temperature: 0.2,
-      maxTokens: 1024,
-      isIndividualLocked: false,
-      systemPrompt: `You are a specialized Special Education Advocacy AI assisting Byron Honea (Master IEP Coach®).
-Analyze the provided student documentation and provide clear, legally sound parent guidance.`,
-      variables: [
-        { name: "student_name", description: "Name of student", example: "Lucas" },
-        { name: "case_details", description: "Pertinent case facts", example: "Pending eligibility determination" }
-      ]
-    };
-    const updated = [newRecord, ...prompts];
-    savePromptsToStorage(updated);
-    setSelectedPromptId(newId);
-    toast.success("Created new custom AI prompt");
-  };
-
-  const handleDeletePrompt = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to permanently delete the prompt "${name}"?`)) {
-      const filtered = prompts.filter((p) => p.id !== id);
-      savePromptsToStorage(filtered);
-      if (selectedPromptId === id && filtered.length > 0) {
-        setSelectedPromptId(filtered[0].id);
-      }
-      toast.success(`Deleted "${name}"`);
-    }
-  };
-
-  // Filtered prompt list
+  // Filtered prompts
   const filteredPrompts = useMemo(() => {
     return prompts.filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.pageId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [prompts, searchQuery, selectedCategory]);
+      const matchCat =
+        selectedCategory === "All Prompts" ||
+        (selectedCategory === "Meeting Intel Engine" && p.category === "Meeting Intel") ||
+        (selectedCategory === "Case Tools" && p.category === "Case Tools") ||
+        (selectedCategory === "Communications" && p.category === "Communications") ||
+        (selectedCategory === "Legal & Compliance" && p.category === "Legal & Compliance") ||
+        (selectedCategory === "System" && p.category === "System");
 
-  const categories = ["All", "Live In-Meeting", "Document Audit", "Legal Dispute", "Intake & Triage", "Strategy & Case"];
+      const matchQuery =
+        searchQuery === "" ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.key.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchCat && matchQuery;
+    });
+  }, [prompts, selectedCategory, searchQuery]);
+
+  // Copy helper
+  const handleCopyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(label);
+    toast.success(`Copied ${label} to clipboard`);
+    setTimeout(() => setCopiedKey(null), 1800);
+  };
+
+  // Open Edit Modal
+  const handleOpenEdit = (prompt: AiPromptRecord) => {
+    setEditingPrompt({ ...prompt });
+    setIsEditModalOpen(true);
+  };
+
+  // Save Edit
+  const handleSaveEdit = () => {
+    if (!editingPrompt) return;
+    const updated = prompts.map((p) => (p.id === editingPrompt.id ? editingPrompt : p));
+    savePromptsToStorage(updated);
+    setIsEditModalOpen(false);
+    toast.success(`Prompt "${editingPrompt.name}" updated successfully`);
+  };
+
+  // Duplicate prompt
+  const handleDuplicatePrompt = (prompt: AiPromptRecord) => {
+    const copyId = `prompt-${Date.now()}`;
+    const duplicated: AiPromptRecord = {
+      ...prompt,
+      id: copyId,
+      name: `${prompt.name} (Copy)`,
+      key: `${prompt.key}_COPY`,
+      version: "1.0",
+      lastUpdated: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
+      updatedBy: "Byron Honea",
+      history: [
+        {
+          version: "1.0",
+          date: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
+          author: "Byron Honea",
+          notes: `Duplicated from ${prompt.name} v${prompt.version}`
+        }
+      ]
+    };
+    const updated = [duplicated, ...prompts];
+    savePromptsToStorage(updated);
+    setSelectedPromptId(duplicated.id);
+    toast.success(`Duplicated "${prompt.name}" as new prompt`);
+  };
+
+  // Open Test Modal
+  const handleOpenTest = (prompt: AiPromptRecord) => {
+    const initialInputs: Record<string, string> = {};
+    prompt.variables.forEach((v) => {
+      initialInputs[v.name] = v.example;
+    });
+    setTestInputs(initialInputs);
+    setTestOutput("");
+    setIsTestModalOpen(true);
+  };
+
+  // Run Test Simulation
+  const handleRunTest = async () => {
+    setIsSimulating(true);
+    setTestOutput("");
+
+    // Simulate Cloudflare Workers AI execution
+    setTimeout(() => {
+      let output = `[Cloudflare Workers AI Response · Model: ${selectedPrompt.modelName}]\n\n`;
+      if (selectedPrompt.key === "CHILD_FILE_ANALYSIS") {
+        output += `### Executive Child Record Dossier: ${testInputs["student_name"] || "Lucas Miller"}\n\n`;
+        output += `**1. Clinical & Neurodevelopmental Profile:**\n`;
+        output += `- Primary Diagnosis: Other Health Impairment (ADHD-Combined) with Specific Learning Disorder in Reading (Phonological Processing Deficit).\n`;
+        output += `- Sensory Dysregulation: Significant auditory defensiveness requiring proactive classroom transition protocols.\n\n`;
+        output += `**2. Longitudinal Academic Benchmarks:**\n`;
+        output += `| Academic Year | Standard Score (WJ-IV) | Percentile | Trajectory |\n`;
+        output += `|---|---|---|---|\n`;
+        output += `| 2023-2024 | 82 (Low Average) | 12th | Baseline |\n`;
+        output += `| 2024-2025 | 78 (Well Below Average) | 7th | ⚠️ Documented Regression |\n`;
+        output += `| 2025-2026 | 77 (Well Below Average) | 6th | ⚠️ Non-Responsive to Tier 2 |\n\n`;
+        output += `**3. Strategic Advocate Leverage Points:**\n`;
+        output += `- The LEA has maintained 30 mins/week consultative reading instruction despite 2 consecutive years of standardized score decline.\n`;
+        output += `- Demand 1:1 direct Orton-Gillingham intervention (60 mins/day) and compensatory education under 34 CFR § 300.324.`;
+      } else {
+        output += `### ${selectedPrompt.name} Analysis Output\n\n`;
+        output += `**Executive Findings:**\n`;
+        output += `- Evaluated all parameters under ${selectedPrompt.category} statutory standards.\n`;
+        output += `- Verified compliance across Georgia Special Education Rule 160-4-7 and IDEA 2004.\n`;
+        output += `- Generated 4 procedural leverage items for Byron Honea's case file.\n\n`;
+        output += `**Recommended Advocate Script:**\n`;
+        output += `"Based on the student's documented performance data and statutory procedural safeguards, we respectfully request this accommodation be formalized into Section 5 of the IEP prior to closing today's session."`;
+      }
+      setTestOutput(output);
+      setIsSimulating(false);
+      toast.success("Simulation completed successfully via Cloudflare Workers AI");
+    }, 1200);
+  };
+
+  // Helper icon for prompt list
+  const getPromptIcon = (key: string) => {
+    switch (key) {
+      case "CHILD_FILE_ANALYSIS":
+        return <FileText className="w-5 h-5 text-[#10223D]" />;
+      case "IEP_INTEL_UNIT":
+        return <FileText className="w-5 h-5 text-[#10223D]" />;
+      case "CASE_NOTES_PHONE_ANALYSIS":
+        return <Phone className="w-5 h-5 text-[#10223D]" />;
+      case "PARENT_CONCERNS_ANALYSIS":
+        return <Users className="w-5 h-5 text-[#10223D]" />;
+      case "MEETING_DIRECTION_LEAN":
+        return <Compass className="w-5 h-5 text-[#10223D]" />;
+      case "MEETING_ASSEMBLER":
+        return <Sparkles className="w-5 h-5 text-[#10223D]" />;
+      case "STATE_COMPLAINT_BUILDER":
+        return <Scale className="w-5 h-5 text-[#10223D]" />;
+      case "PWN_DECODER":
+        return <FileText className="w-5 h-5 text-[#10223D]" />;
+      case "PROGRESS_MONITORING_ANALYZER":
+        return <TrendingUp className="w-5 h-5 text-[#10223D]" />;
+      case "COMMUNICATION_ANALYZER":
+        return <Mail className="w-5 h-5 text-[#10223D]" />;
+      default:
+        return <Bot className="w-5 h-5 text-[#10223D]" />;
+    }
+  };
+
+  // Helper for category pill color
+  const getCategoryBadgeClass = (category: string) => {
+    switch (category) {
+      case "Meeting Intel":
+        return "bg-[#CCD9E8] text-[#1E375A] border border-[#B3C5DC]";
+      case "Legal & Compliance":
+        return "bg-[#EBDDC3] text-[#5C3E14] border border-[#DCB492]";
+      case "Case Tools":
+        return "bg-[#D1DCE5] text-[#283C4D] border border-[#BAC9D5]";
+      case "Communications":
+        return "bg-[#D4D9EE] text-[#222B55] border border-[#C0C7E5]";
+      default:
+        return "bg-[#E2DCCE] text-[#3E3424] border border-[#CFC5B4]";
+    }
+  };
 
   // =========================================================================
-  // RENDER: 1. LOCKED VAULT GATEWAY
+  // RENDER 1: LOCKED VAULT GATEWAY (PIN KEYPAD / PASSKEY)
   // =========================================================================
   if (!isUnlocked) {
     return (
-      <div className="w-full flex items-center justify-center py-10 px-4 select-none">
-        <div className="max-w-md w-full bg-[#05142B]/95 border-2 border-[#5A4322] rounded-2xl p-7 shadow-[0_16px_48px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.08)] relative overflow-hidden backdrop-blur-xl">
+      <div
+        className="w-full min-h-[700px] flex items-center justify-center py-12 px-4 rounded-3xl relative overflow-hidden"
+        style={{
+          backgroundImage: "linear-gradient(rgba(3, 9, 21, 0.75), rgba(3, 9, 21, 0.85)), url('/images/steampunk-admiralty-bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        {/* Screw rivets on gateway frame */}
+        <div className="absolute top-4 left-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
+          +
+        </div>
+        <div className="absolute top-4 right-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
+          +
+        </div>
+        <div className="absolute bottom-4 left-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
+          +
+        </div>
+        <div className="absolute bottom-4 right-4 w-3.5 h-3.5 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-md flex items-center justify-center text-[9px] text-[#2A1804] font-mono">
+          +
+        </div>
+
+        <div className="max-w-md w-full bg-[#05142B]/95 border-2 border-[#5A4322] rounded-2xl p-7 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_2px_rgba(255,255,255,0.08)] relative overflow-hidden backdrop-blur-xl">
           {/* Top brass highlight bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#E5C175] to-transparent shadow-[0_0_12px_rgba(229,193,117,0.7)]" />
 
@@ -316,7 +405,7 @@ Analyze the provided student documentation and provide clear, legally sound pare
             </div>
 
             <h2 className="font-serif text-2xl font-bold text-[#FFF4D4] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-              Locked AI Backend
+              Waypoint AI · Prompt Library
             </h2>
             <p className="text-xs text-[#C6B697] max-w-xs leading-relaxed">
               Confidential prompt libraries, legal guardrails, and behavioral models for Byron Honea (Master IEP Coach®).
@@ -404,437 +493,728 @@ Analyze the provided student documentation and provide clear, legally sound pare
   }
 
   // =========================================================================
-  // RENDER: 2. UNLOCKED EXECUTIVE PROMPT LIBRARY CONSOLE
+  // RENDER 2: FULL STEAMPUNK ADMIRALTY WAYPOINT AI CONSOLE (UNLOCKED)
   // =========================================================================
   return (
-    <div className="w-full flex flex-col space-y-6">
-      {/* ─── Top Control Strip: Status, Counter, Search, Actions ─── */}
-      <div className="w-full bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        {/* Left: Security Status Badge & Quick Summary */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#020A17] border border-[#3A2C18] flex items-center justify-center shadow-inner">
-            <ShieldCheck className="w-5 h-5 text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+    <div
+      className="w-full min-h-screen rounded-3xl relative text-[#2C2114] p-3 sm:p-5 lg:p-7 space-y-6 shadow-2xl border-4 border-[#3D2912] overflow-hidden"
+      style={{
+        backgroundImage: "linear-gradient(rgba(4, 12, 26, 0.45), rgba(4, 12, 26, 0.65)), url('/images/steampunk-admiralty-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "local"
+      }}
+    >
+      {/* ─── 1. TOP ADMIRALTY HEADER DECK ─── */}
+      <div className="w-full flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5 relative z-10">
+        {/* Main Header Plaque (Framed in Riveted Aged Brass) */}
+        <div className="flex-1 bg-[#061426]/90 border-2 border-[#8C6418] rounded-xl p-5 shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.1)] relative">
+          {/* Corner Screw Rivets */}
+          <div className="absolute top-2 left-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+            +
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-[#1F1404] text-[#FFE394] border border-[#8C6418] shadow-[0_0_8px_rgba(197,160,89,0.3)]">
-                <KeyRound className="w-3 h-3 text-[#C5A059]" />
-                PG-013-AI
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 shadow-[0_0_8px_rgba(52,211,153,0.25)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Executive Session Unlocked
-              </span>
-              <span className="text-xs font-serif text-[#C6B697]">
-                {prompts.length} Master Prompts Active
-              </span>
+          <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+            +
+          </div>
+          <div className="absolute bottom-2 left-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+            +
+          </div>
+          <div className="absolute bottom-2 right-2 w-3 h-3 rounded-full bg-[#8C6418] border border-[#FFE394]/60 shadow-sm flex items-center justify-center text-[8px] text-[#2A1804] font-mono">
+            +
+          </div>
+
+          <div className="flex items-start gap-4 pl-2 pr-2">
+            {/* Diamond Compass Star Logo */}
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1F1404] via-[#0E2442] to-[#040D1B] border border-[#C5A059]/70 flex items-center justify-center shadow-lg shrink-0">
+              <Compass className="w-7 h-7 text-[#FFE394] drop-shadow-[0_0_8px_rgba(255,227,148,0.7)]" />
             </div>
-            <p className="text-xs text-[#A69371] font-serif mt-1">
-              Sub-Page ID: <span className="font-mono text-[#FFE394] font-semibold">PG-013-AI</span> · Locked AI Backend & Executive Prompt Library
-            </p>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="font-serif text-2xl sm:text-3xl lg:text-[32px] font-bold tracking-wide text-[#FFF8E7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                  Waypoint AI
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#08172C] border border-[#8C6418] text-[#E5C175] text-[10px] font-mono font-bold tracking-wider shadow-sm">
+                  <Lock className="w-3 h-3 text-[#E5C175]" />
+                  ADMIN ONLY
+                </span>
+                <span className="font-mono text-[10px] font-bold text-[#E5C175] px-2 py-0.5 rounded bg-[#1F1404] border border-[#8C6418]">
+                  PG-013-AI
+                </span>
+              </div>
+
+              <div className="text-[11px] font-serif font-bold uppercase tracking-[0.25em] text-[#C5A059]">
+                PROMPT LIBRARY
+              </div>
+
+              <p className="font-serif text-xs sm:text-sm text-[#FFF4D4]/95 font-medium leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] pt-1">
+                The engine behind Waypoint's intelligence.
+              </p>
+              <p className="font-serif text-xs text-[#C6B697] leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                Manage, test, and version all AI prompts used across the platform.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Right: Actions (Add Prompt, Reset Defaults, Lock Vault) */}
-        <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
-          <button
-            type="button"
-            onClick={handleCreateNewPrompt}
-            className="py-1.5 px-3 rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-serif font-bold text-xs border border-[#FFE394]/50 shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New Prompt
-          </button>
+        {/* Right Stack: 4 Embossed Stamped Brass Plates on Wall + Actions */}
+        <div className="flex items-center gap-3 shrink-0 self-center">
+          <div className="flex flex-col gap-1.5">
+            {["ANALYZE", "SYNTHESIZE", "REASON", "ADVOCATE"].map((pill) => (
+              <div
+                key={pill}
+                className="bg-gradient-to-b from-[#2A1E0E] to-[#120B04] border border-[#7D5A1E] text-[#D8C7A5] font-serif text-[10px] font-bold tracking-[0.22em] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_6px_rgba(0,0,0,0.8)] py-1 px-4 rounded text-center"
+              >
+                {pill}
+              </div>
+            ))}
+          </div>
 
-          <button
-            type="button"
-            onClick={handleResetToDefaults}
-            className="py-1.5 px-3 rounded-lg border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] font-serif text-xs transition-all cursor-pointer flex items-center gap-1.5"
-            title="Restore original Waypoint prompt suite"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-[#C5A059]" />
-            Factory Reset
-          </button>
-
+          {/* Relock Button */}
           <button
             type="button"
             onClick={handleRelock}
-            className="py-1.5 px-3.5 rounded-lg border border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 font-serif font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_10px_rgba(244,63,94,0.15)]"
-            title="Immediately lock the vault"
+            className="h-full py-4 px-3 rounded-xl border border-rose-500/40 bg-rose-950/60 text-rose-300 hover:bg-rose-900/80 font-serif font-bold text-xs transition-all cursor-pointer flex flex-col items-center justify-center gap-1 shadow-lg"
+            title="Lock Vault"
           >
-            <Lock className="w-3.5 h-3.5 text-rose-400" />
-            Lock Vault
+            <Lock className="w-4 h-4 text-rose-400" />
+            <span className="text-[10px]">Lock</span>
           </button>
         </div>
       </div>
 
-      {/* ─── Search & Category Filter Pills ─── */}
-      <div className="flex flex-col md:flex-row items-center gap-3">
-        {/* Search Bar */}
-        <div className="relative flex-1 w-full h-10 flex items-center">
-          <Search className="absolute left-3.5 h-4 w-4 text-[#7E97B8] pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search prompts by title, system key, PG-badge, or model..."
-            className="w-full h-full pl-10 pr-4 rounded-xl bg-[#030917]/95 border border-[#1e3250] text-xs sm:text-sm text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#4B70A6] focus:ring-1 focus:ring-[#4B70A6]/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
-          />
-        </div>
-
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          {categories.map((cat) => {
-            const isActive = selectedCategory === cat;
+      {/* ─── 2. SUB-NAVIGATION FILTER SHELF ─── */}
+      <div className="w-full bg-[#040D1B]/95 border border-[#3A2C18] rounded-xl p-2.5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-xl backdrop-blur-md relative z-10">
+        {/* Category Pills (Matching Mockup) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          {[
+            { label: "All Prompts", icon: Layers },
+            { label: "Meeting Intel Engine", icon: Compass },
+            { label: "Case Tools", icon: Briefcase },
+            { label: "Communications", icon: Mail },
+            { label: "Legal & Compliance", icon: Scale },
+            { label: "System", icon: Users }
+          ].map((cat) => {
+            const isActive = selectedCategory === cat.label;
+            const IconComp = cat.icon;
             return (
               <button
-                key={cat}
+                key={cat.label}
                 type="button"
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => setSelectedCategory(cat.label)}
                 className={cn(
-                  "py-1.5 px-3 rounded-lg text-xs font-serif whitespace-nowrap transition-all cursor-pointer",
+                  "py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap",
                   isActive
-                    ? "bg-[#C5A059]/20 text-[#FFE394] font-bold border border-[#C5A059]/60 shadow-[0_0_8px_rgba(197,160,89,0.3)]"
-                    : "text-[#A69371] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
+                    ? "bg-[#DFBE77] text-[#171006] border border-[#FFE394] shadow-[0_2px_8px_rgba(223,190,119,0.5)]"
+                    : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
                 )}
               >
-                {cat}
+                <IconComp className={cn("w-3.5 h-3.5", isActive ? "text-[#171006]" : "text-[#C5A059]")} />
+                <span>{cat.label}</span>
               </button>
             );
           })}
         </div>
+
+        {/* Search Bar + New Prompt Button */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="relative flex-1 sm:w-60">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#7E97B8] pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search prompts..."
+              className="w-full h-9 pl-8 pr-3 rounded-lg bg-[#061224] border border-[#2A3F60] text-xs text-[#F0F6FC] placeholder:text-[#647C9D] focus:outline-none focus:border-[#C5A059] transition-all shadow-inner"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const newPrompt: AiPromptRecord = {
+                id: `prompt-${Date.now()}`,
+                name: "New Advocacy Engine Prompt",
+                key: `CUSTOM_PROMPT_${Date.now()}`,
+                pageId: "PG-013-AI",
+                category: "Meeting Intel",
+                modelTier: "CF_MODELS.DEEP",
+                modelName: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+                version: "1.0",
+                lastUpdated: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
+                updatedBy: "Byron Honea",
+                status: "Active",
+                description: "Describe new AI prompt capabilities and scope.",
+                purpose: "Define primary purpose and expected advocacy outcomes.",
+                usedIn: ["Meeting Workspace"],
+                systemPrompt: `You are an expert Special Education Advocate AI assisting Byron Honea (Master IEP Coach®).`,
+                outputFormat: `Structured markdown summary with action items and statutory citations.`,
+                variables: [{ name: "student_name", type: "string", description: "Name of student", example: "Lucas" }],
+                history: [
+                  {
+                    version: "1.0",
+                    date: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
+                    author: "Byron Honea",
+                    notes: "Initial creation"
+                  }
+                ],
+                temperature: 0.2,
+                maxTokens: 1500,
+                isIndividualLocked: false
+              };
+              const updated = [newPrompt, ...prompts];
+              savePromptsToStorage(updated);
+              setSelectedPromptId(newPrompt.id);
+              handleOpenEdit(newPrompt);
+            }}
+            className="py-2 px-3.5 rounded-lg bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs border border-[#FFE394] shadow-[0_2px_8px_rgba(223,190,119,0.5)] active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Prompt</span>
+          </button>
+        </div>
       </div>
 
-      {/* ─── Master-Detail Workspace: Prompt List (Left) + Prompt Editor (Right) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* LEFT COLUMN: Prompt Cards List (5 columns) */}
-        <div className="lg:col-span-5 space-y-3">
-          {filteredPrompts.length === 0 ? (
-            <div className="bg-[#05142B]/70 border border-[#3A2C18] rounded-xl p-8 text-center">
-              <Bot className="w-8 h-8 text-[#A69371] mx-auto mb-2 opacity-50" />
-              <p className="font-serif text-sm text-[#C6B697]">No matching prompts found</p>
-            </div>
-          ) : (
-            filteredPrompts.map((p) => {
-              const isSelected = selectedPrompt?.id === p.id;
-              const isDeep = p.modelTier === "CF_MODELS.DEEP";
-              return (
-                <div
-                  key={p.id}
-                  onClick={() => setSelectedPromptId(p.id)}
-                  className={cn(
-                    "p-4 rounded-xl border transition-all cursor-pointer relative group text-left select-none",
-                    isSelected
-                      ? "bg-[#091D3B] border-[#C5A059] shadow-[0_4px_20px_rgba(0,0,0,0.8),0_0_12px_rgba(197,160,89,0.3)]"
-                      : "bg-[#05142B]/80 hover:bg-[#07162B] border-[#3A2C18] hover:border-[#C5A059]/50 shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
-                  )}
-                >
-                  {/* Top Line: Page ID Badge, Category & Individual Lock */}
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#020A17] border border-[#3A2C18] text-[#FFE394]">
-                        {p.pageId}
-                      </span>
-                      <span className="text-[10px] font-serif text-[#C6B697]">
-                        {p.category}
-                      </span>
-                    </div>
+      {/* ─── 3. TWO-COLUMN MASTER-DETAIL WORKSPACE ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 items-start">
+        {/* ─── LEFT COLUMN: PROMPTS TABLE (PARCHMENT AESTHETIC) ─── */}
+        <div className="lg:col-span-7 bg-[#F4ECDA] text-[#2C2114] border-2 border-[#543E1B] rounded-2xl p-4 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.9)] relative overflow-hidden">
+          {/* Brass Corner Rivets */}
+          <div className="absolute top-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
+          <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
+          <div className="absolute bottom-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
+          <div className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleIndividualLock(p.id);
-                        }}
-                        className={cn(
-                          "p-1 rounded-md transition-colors cursor-pointer",
-                          p.isIndividualLocked
-                            ? "text-[#FFE394] hover:bg-[#FFE394]/10"
-                            : "text-[#A69371]/50 hover:text-[#A69371] hover:bg-white/5"
-                        )}
-                        title={p.isIndividualLocked ? "Individually locked (click to unlock)" : "Unlocked (click to lock)"}
-                      >
-                        {p.isIndividualLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Title & Key */}
-                  <h4 className="font-serif text-sm font-bold text-[#FFF4D4] leading-snug group-hover:text-[#FFE394] transition-colors">
-                    {p.name}
-                  </h4>
-                  <p className="font-mono text-[10px] text-[#8CA4C4] mt-0.5">
-                    {p.key}
-                  </p>
-
-                  <p className="text-[11px] text-[#A69371] mt-1.5 line-clamp-2 leading-relaxed">
-                    {p.description}
-                  </p>
-
-                  {/* Bottom Metadata: Model Tier & Version */}
-                  <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-[#3A2C18]/60 text-[10px]">
-                    <span
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-[#C8B898] text-[#5C4524] text-xs font-serif font-bold text-left uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Name</th>
+                  <th className="py-2.5 px-3">Category</th>
+                  <th className="py-2.5 px-2 text-center">Version</th>
+                  <th className="py-2.5 px-3">Updated</th>
+                  <th className="py-2.5 px-2 text-center">Status</th>
+                  <th className="py-2.5 px-2 text-right">•••</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E2D4B7]">
+                {filteredPrompts.map((p) => {
+                  const isSelected = p.id === selectedPrompt.id;
+                  return (
+                    <tr
+                      key={p.id}
+                      onClick={() => setSelectedPromptId(p.id)}
                       className={cn(
-                        "px-2 py-0.5 rounded font-mono font-semibold",
-                        isDeep
-                          ? "bg-purple-950/60 text-purple-300 border border-purple-500/30"
-                          : "bg-sky-950/60 text-sky-300 border border-sky-500/30"
+                        "group transition-all cursor-pointer",
+                        isSelected
+                          ? "bg-[#E8DCC2] shadow-sm font-semibold"
+                          : "hover:bg-[#EFE6D1]"
                       )}
                     >
-                      {isDeep ? "Deep 70B FP8" : "Fast 8B"}
-                    </span>
-                    <span className="font-mono text-[#8CA4C4]">
-                      {p.version} · {p.lastUpdated}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                      {/* Name + Icon + Snippet */}
+                      <td className="py-3 px-3">
+                        <div className="flex items-start gap-2.5">
+                          <div className="mt-0.5 shrink-0 p-1 rounded bg-[#E4D7BC] border border-[#C6B697]">
+                            {getPromptIcon(p.key)}
+                          </div>
+                          <div>
+                            <div className="font-serif text-sm font-bold text-[#1C140A] group-hover:text-[#8C6418] transition-colors">
+                              {p.name}
+                            </div>
+                            <div className="font-serif text-[11px] text-[#6B5A43] leading-snug line-clamp-1">
+                              {p.description}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category Badge */}
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        <span className={cn("text-[11px] font-serif font-bold px-2.5 py-0.5 rounded-full inline-block", getCategoryBadgeClass(p.category))}>
+                          {p.category}
+                        </span>
+                      </td>
+
+                      {/* Version */}
+                      <td className="py-3 px-2 text-center font-mono text-xs text-[#4D3B26]">
+                        {p.version}
+                      </td>
+
+                      {/* Updated */}
+                      <td className="py-3 px-3 whitespace-nowrap font-serif text-xs text-[#4D3B26]">
+                        {p.lastUpdated}
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3 px-2 text-center whitespace-nowrap">
+                        <span className="text-[11px] font-serif font-bold px-2.5 py-0.5 rounded-full bg-[#BDE8D3] text-[#0D4B2D] border border-[#96D9B6] inline-block">
+                          {p.status}
+                        </span>
+                      </td>
+
+                      {/* Context Menu Button */}
+                      <td className="py-3 px-2 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEdit(p);
+                          }}
+                          className="p-1 rounded text-[#7B6A52] hover:text-[#1C140A] hover:bg-[#DCD0B5] transition-colors"
+                          title="Options"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* RIGHT COLUMN: Selected Prompt Deep Editor & Context Inspector (7 columns) */}
-        {selectedPrompt && (
-          <div className="lg:col-span-7 bg-[#05142B]/95 border border-[#3A2C18] rounded-xl p-5 md:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-5 text-left">
-            {/* Header: Title, Page ID, Lock Switch & Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-[#3A2C18] pb-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#020A17] border border-[#3A2C18] text-[#FFE394]">
-                    {selectedPrompt.pageId}
-                  </span>
-                  <span className="text-[11px] font-serif font-bold text-[#C6B697] uppercase tracking-wider">
-                    {selectedPrompt.category}
-                  </span>
-                  {selectedPrompt.isIndividualLocked && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-400 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded">
-                      <Lock className="w-2.5 h-2.5" /> Read-Only Locked
-                    </span>
-                  )}
-                </div>
+        {/* ─── RIGHT COLUMN: PROMPT INSPECTOR & ACTION DECK ─── */}
+        <div className="lg:col-span-5 bg-[#F4ECDA] text-[#2C2114] border-2 border-[#543E1B] rounded-2xl p-5 sm:p-6 shadow-[0_16px_40px_rgba(0,0,0,0.9)] relative overflow-hidden flex flex-col justify-between min-h-[580px]">
+          {/* Brass Corner Rivets */}
+          <div className="absolute top-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
+          <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
+          <div className="absolute bottom-2 left-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
+          <div className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full bg-[#8C6418] border border-[#2C2114]/40 flex items-center justify-center text-[7px] text-[#2C2114] font-mono">
+            +
+          </div>
 
-                <h3 className="font-serif text-xl font-bold text-[#FFF4D4]">
-                  {selectedPrompt.name}
-                </h3>
-                <p className="text-xs text-[#C6B697] leading-relaxed">
-                  {selectedPrompt.description}
-                </p>
-              </div>
-
-              {/* Action Buttons: Copy, Test Sandbox, Save */}
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleCopyPrompt(selectedPrompt.systemPrompt, selectedPrompt.id)}
-                  className="p-2 rounded-lg border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] transition-all cursor-pointer"
-                  title="Copy full prompt text"
-                >
-                  {copiedId === selectedPrompt.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsTestingOpen(!isTestingOpen)}
-                  className={cn(
-                    "py-2 px-3 rounded-lg border font-serif text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                    isTestingOpen
-                      ? "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]"
-                      : "border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4]"
-                  )}
-                >
-                  <Play className="w-3.5 h-3.5 text-[#C5A059]" />
-                  {isTestingOpen ? "Close Sandbox" : "Test Runner"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSavePrompt}
-                  disabled={selectedPrompt.isIndividualLocked}
-                  className="py-2 px-4 rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-serif font-bold text-xs border border-[#FFE394]/50 shadow-md hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  Save Revision
-                </button>
-              </div>
-            </div>
-
-            {/* Config Metrics Bar: Model, Temperature, Max Tokens */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-[#020A17]/80 border border-[#3A2C18]/60">
-              <div>
-                <label className="text-[10px] font-serif uppercase tracking-wider text-[#A69371] block mb-1">
-                  Engine Model
-                </label>
-                <div className="font-mono text-xs text-[#FFE394] truncate" title={selectedPrompt.modelName}>
-                  {selectedPrompt.modelName}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-serif uppercase tracking-wider text-[#A69371]">
-                    Temperature: {selectedPrompt.temperature}
-                  </label>
-                </div>
-                <input
-                  type="range"
-                  min="0.0"
-                  max="1.0"
-                  step="0.05"
-                  disabled={selectedPrompt.isIndividualLocked}
-                  value={selectedPrompt.temperature}
-                  onChange={(e) => handleUpdateCurrentPrompt({ temperature: parseFloat(e.target.value) })}
-                  className="w-full accent-[#C5A059] cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-serif uppercase tracking-wider text-[#A69371] block mb-1">
-                  Max Output Tokens
-                </label>
-                <div className="font-mono text-xs text-[#FFF4D4]">
-                  {selectedPrompt.maxTokens} tokens
-                </div>
-              </div>
-            </div>
-
-            {/* Context Variables List */}
-            {selectedPrompt.variables.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#C6B697] flex items-center gap-1.5">
-                    <Code className="w-3.5 h-3.5 text-[#C5A059]" />
-                    Context Variables (`{"{{var}}"}`)
-                  </span>
-                  <span className="text-[10px] text-[#A69371]">
-                    Click pill to copy variable tag
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedPrompt.variables.map((v) => (
-                    <button
-                      key={v.name}
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`{{${v.name}}}`);
-                        toast.success(`Copied {{${v.name}}} tag to clipboard`);
-                      }}
-                      className="px-2.5 py-1 rounded-md bg-[#020A17] border border-[#3A2C18] hover:border-[#C5A059]/60 text-[11px] font-mono text-[#FFE394] transition-all cursor-pointer flex items-center gap-1.5 group"
-                      title={`${v.description} (Example: ${v.example})`}
-                    >
-                      <span>{`{{${v.name}}}`}</span>
-                      <span className="text-[9px] text-[#A69371] group-hover:text-[#FFF4D4]">
-                        · {v.description}
+          <div className="space-y-5">
+            {/* Top Inspector Header */}
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#0D213B] border border-[#2B4B75] flex items-center justify-center shadow-inner shrink-0">
+                    <FileText className="w-5 h-5 text-[#FFE394]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#1C140A]">
+                        {selectedPrompt.name}
+                      </h2>
+                      <span className="text-[11px] font-serif font-bold px-2 py-0.5 rounded-full bg-[#BDE8D3] text-[#0D4B2D] border border-[#96D9B6]">
+                        {selectedPrompt.status}
                       </span>
-                    </button>
-                  ))}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenEdit(selectedPrompt)}
+                  className="p-1 rounded text-[#7B6A52] hover:text-[#1C140A] hover:bg-[#DCD0B5] transition-colors"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Description */}
+              <p className="font-serif text-xs text-[#5C482C] leading-relaxed mt-2.5 pb-3 border-b border-[#C8B898]">
+                {selectedPrompt.purpose}
+              </p>
+            </div>
+
+            {/* Sub-Tabs: Overview, Instructions, Inputs, Output Format, History */}
+            <div className="flex items-center gap-1 border-b border-[#C8B898] pb-2 overflow-x-auto">
+              {(["Overview", "Instructions", "Inputs", "Output Format", "History"] as const).map((tab) => {
+                const isActive = inspectorTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setInspectorTab(tab)}
+                    className={cn(
+                      "py-1.5 px-3 rounded font-serif text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
+                      isActive
+                        ? "bg-[#0A1A30] text-[#FFF4D4] shadow-sm border border-[#2A4468]"
+                        : "text-[#6B5A43] hover:text-[#1C140A] hover:bg-[#E4D7BC]"
+                    )}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ── TAB 1: OVERVIEW ── */}
+            {inspectorTab === "Overview" && (
+              <div className="space-y-4">
+                {/* Purpose Block */}
+                <div className="p-3.5 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1.5">
+                  <div className="flex items-center gap-2 text-xs font-serif font-bold text-[#1C140A]">
+                    <Target className="w-4 h-4 text-[#8C6418]" />
+                    <span>Purpose</span>
+                  </div>
+                  <p className="font-serif text-xs text-[#4D3B26] leading-relaxed">
+                    {selectedPrompt.purpose}
+                  </p>
+                </div>
+
+                {/* Metadata Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
+                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
+                      Category
+                    </div>
+                    <div className="mt-1">
+                      <span className={cn("text-[10px] font-serif font-bold px-2 py-0.5 rounded-full inline-block", getCategoryBadgeClass(selectedPrompt.category))}>
+                        {selectedPrompt.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
+                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
+                      Current Version
+                    </div>
+                    <div className="font-mono text-xs font-bold text-[#1C140A] mt-1">
+                      {selectedPrompt.version}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
+                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
+                      Last Updated
+                    </div>
+                    <div className="font-serif text-xs font-bold text-[#1C140A] mt-1">
+                      {selectedPrompt.lastUpdated}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-[#EBE0C7] border border-[#C6B697]">
+                    <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#7B6A52]">
+                      Updated By
+                    </div>
+                    <div className="font-serif text-xs font-bold text-[#1C140A] mt-1">
+                      {selectedPrompt.updatedBy}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Used In Section */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-xs font-serif font-bold text-[#1C140A]">
+                    Used In
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {selectedPrompt.usedIn.map((item) => (
+                      <span
+                        key={item}
+                        className="py-1 px-3 rounded-lg bg-[#E2D4B7] border border-[#C6B697] font-serif text-xs font-semibold text-[#3D2E17] flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Sparkles className="w-3 h-3 text-[#8C6418]" />
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Master System Prompt Editor */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#C6B697] flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-[#C5A059]" />
-                  Master System Prompt
-                </label>
-                <span className="font-mono text-[10px] text-[#8CA4C4]">
-                  {selectedPrompt.systemPrompt.length} chars · ~{Math.round(selectedPrompt.systemPrompt.length / 4)} tokens
-                </span>
-              </div>
-
-              <div className="relative">
-                <textarea
-                  rows={14}
-                  value={selectedPrompt.systemPrompt}
-                  readOnly={selectedPrompt.isIndividualLocked}
-                  onChange={(e) => handleUpdateCurrentPrompt({ systemPrompt: e.target.value })}
-                  placeholder="Enter master LLM system instructions, citations, and output schemas..."
-                  className={cn(
-                    "w-full rounded-xl bg-[#020A17] border font-mono text-xs text-[#F0F6FC] leading-relaxed p-4 focus:outline-none transition-all shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]",
-                    selectedPrompt.isIndividualLocked
-                      ? "border-[#3A2C18] opacity-85 cursor-not-allowed"
-                      : "border-[#3A2C18] focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]/40"
-                  )}
-                />
-                {selectedPrompt.isIndividualLocked && (
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded bg-[#07162B]/90 border border-amber-500/40 text-[10px] text-amber-300 font-serif">
-                    <Lock className="w-3 h-3 text-amber-400" />
-                    Locked against changes
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Test Sandbox Drawer (When Opened) */}
-            {isTestingOpen && (
-              <div className="mt-4 p-4 rounded-xl bg-[#020A17] border border-[#C5A059]/40 space-y-3 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between border-b border-[#3A2C18] pb-2">
-                  <span className="text-xs font-serif font-bold text-[#FFE394] flex items-center gap-1.5">
-                    <Play className="w-3.5 h-3.5 text-[#C5A059]" />
-                    Interactive Prompt Sandbox
-                  </span>
-                  <span className="text-[10px] font-mono text-[#8CA4C4]">
-                    Local Template Interpolation
-                  </span>
-                </div>
-
-                {/* Variable Inputs */}
-                <div className="space-y-2">
-                  {selectedPrompt.variables.map((v) => (
-                    <div key={v.name} className="flex flex-col sm:flex-row sm:items-center gap-1.5">
-                      <label className="w-40 font-mono text-[11px] text-[#C5A059] shrink-0">
-                        {`{{${v.name}}}`}:
-                      </label>
-                      <input
-                        type="text"
-                        value={testVariables[v.name] || ""}
-                        onChange={(e) =>
-                          setTestVariables({
-                            ...testVariables,
-                            [v.name]: e.target.value
-                          })
-                        }
-                        className="flex-1 h-8 px-2.5 rounded-lg bg-[#07162B] border border-[#1e3250] text-xs text-white focus:outline-none focus:border-[#C5A059]"
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex justify-end pt-1">
+            {/* ── TAB 2: INSTRUCTIONS (SYSTEM PROMPT) ── */}
+            {inspectorTab === "Instructions" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs font-serif font-semibold text-[#5C4524]">
+                  <span>System Instructions ({selectedPrompt.modelTier})</span>
                   <button
                     type="button"
-                    onClick={() => {
-                      let resolved = selectedPrompt.systemPrompt;
-                      Object.entries(testVariables).forEach(([k, val]) => {
-                        resolved = resolved.replaceAll(`{{${k}}}`, val);
-                      });
-                      setTestOutput(resolved);
-                      toast.success("Resolved prompt interpolated successfully");
-                    }}
-                    className="py-1.5 px-3 rounded-lg bg-[#C5A059] hover:bg-[#DFBE77] text-[#07162B] font-serif font-bold text-xs transition-all cursor-pointer"
+                    onClick={() => handleCopyText(selectedPrompt.systemPrompt, "System Prompt")}
+                    className="text-[#8C6418] hover:text-[#1C140A] flex items-center gap-1 text-[11px]"
                   >
-                    Resolve & Preview Prompt
+                    <Copy className="w-3 h-3" />
+                    <span>Copy</span>
                   </button>
                 </div>
+                <div className="p-3 rounded-xl bg-[#091524] text-[#E8EDF5] font-mono text-xs leading-relaxed max-h-[260px] overflow-y-auto border border-[#2B3E58] shadow-inner select-text whitespace-pre-wrap">
+                  {selectedPrompt.systemPrompt}
+                </div>
+              </div>
+            )}
 
-                {testOutput && (
-                  <div className="mt-3 space-y-1">
-                    <label className="text-[10px] font-serif uppercase tracking-wider text-[#A69371] block">
-                      Interpolated Output Preview:
-                    </label>
-                    <div className="p-3 rounded-lg bg-[#07162B] border border-[#3A2C18] font-mono text-xs text-slate-200 whitespace-pre-wrap max-h-56 overflow-y-auto">
-                      {testOutput}
+            {/* ── TAB 3: INPUTS ── */}
+            {inspectorTab === "Inputs" && (
+              <div className="space-y-2.5 max-h-[270px] overflow-y-auto pr-1">
+                {selectedPrompt.variables.map((v) => (
+                  <div key={v.name} className="p-3 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-[#1C140A] bg-[#DFCFAF] px-2 py-0.5 rounded border border-[#C6B697]">
+                        {`{${v.name}}`}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#7B6A52] uppercase">
+                        {v.type || "string"}
+                      </span>
                     </div>
+                    <p className="font-serif text-xs text-[#5C4524]">{v.description}</p>
+                    <p className="font-serif text-[11px] text-[#7B6A52] italic">
+                      Example: {v.example}
+                    </p>
                   </div>
-                )}
+                ))}
+              </div>
+            )}
+
+            {/* ── TAB 4: OUTPUT FORMAT ── */}
+            {inspectorTab === "Output Format" && (
+              <div className="p-3.5 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-2">
+                <div className="text-xs font-serif font-bold text-[#1C140A]">
+                  Expected Output Schema
+                </div>
+                <p className="font-serif text-xs text-[#4D3B26] leading-relaxed">
+                  {selectedPrompt.outputFormat}
+                </p>
+              </div>
+            )}
+
+            {/* ── TAB 5: HISTORY ── */}
+            {inspectorTab === "History" && (
+              <div className="space-y-2 max-h-[270px] overflow-y-auto pr-1">
+                {selectedPrompt.history.map((h, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-[#EBE0C7] border border-[#C6B697] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-[#1C140A]">
+                        v{h.version}
+                      </span>
+                      <span className="font-serif text-[11px] text-[#7B6A52]">
+                        {h.date} · {h.author}
+                      </span>
+                    </div>
+                    <p className="font-serif text-xs text-[#5C4524]">{h.notes}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        )}
+
+          {/* ─── BOTTOM ACTION BUTTONS BAR (MATCHING MOCKUP) ─── */}
+          <div className="pt-5 mt-4 border-t border-[#C8B898] flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleOpenEdit(selectedPrompt)}
+              className="py-2 px-4 rounded-lg bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs border border-[#FFE394] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span>Edit Prompt</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenTest(selectedPrompt)}
+              className="py-2 px-4 rounded-lg bg-[#0B1A2F] hover:bg-[#122847] text-[#FFE394] font-serif font-bold text-xs border border-[#4A381E] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Play className="w-3.5 h-3.5 fill-[#FFE394]" />
+              <span>Test Prompt</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDuplicatePrompt(selectedPrompt)}
+              className="py-2 px-4 rounded-lg bg-[#0B1A2F] hover:bg-[#122847] text-[#FFE394] font-serif font-bold text-xs border border-[#4A381E] shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Duplicate</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* ─── MODAL 1: EDIT PROMPT MODAL ─── */}
+      {isEditModalOpen && editingPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="max-w-2xl w-full bg-[#05142B] border-2 border-[#8C6418] rounded-2xl p-6 shadow-2xl text-[#FFF4D4] space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#3A2C18] pb-3">
+              <div className="flex items-center gap-2">
+                <Pencil className="w-4 h-4 text-[#FFE394]" />
+                <h3 className="font-serif text-lg font-bold text-[#FFF4D4]">
+                  Edit Prompt · {editingPrompt.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 font-serif">
+              <div>
+                <label className="text-xs text-[#C6B697] block mb-1">Prompt Name</label>
+                <input
+                  type="text"
+                  value={editingPrompt.name}
+                  onChange={(e) => setEditingPrompt({ ...editingPrompt, name: e.target.value })}
+                  className="w-full h-9 rounded bg-[#020A17] border border-[#3A2C18] px-3 text-xs text-[#FFF4D4] focus:border-[#FFE394]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-[#C6B697] block mb-1">Purpose & Description</label>
+                <textarea
+                  rows={2}
+                  value={editingPrompt.purpose}
+                  onChange={(e) => setEditingPrompt({ ...editingPrompt, purpose: e.target.value })}
+                  className="w-full rounded bg-[#020A17] border border-[#3A2C18] p-2.5 text-xs text-[#FFF4D4] focus:border-[#FFE394]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-[#C6B697] block mb-1">System Instructions (LLM Prompt)</label>
+                <textarea
+                  rows={8}
+                  value={editingPrompt.systemPrompt}
+                  onChange={(e) => setEditingPrompt({ ...editingPrompt, systemPrompt: e.target.value })}
+                  className="w-full font-mono rounded bg-[#020A17] border border-[#3A2C18] p-2.5 text-xs text-[#FFF4D4] focus:border-[#FFE394]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-[#C6B697] block mb-1">Temperature ({editingPrompt.temperature})</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={editingPrompt.temperature}
+                    onChange={(e) => setEditingPrompt({ ...editingPrompt, temperature: parseFloat(e.target.value) })}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C6B697] block mb-1">Max Tokens</label>
+                  <input
+                    type="number"
+                    value={editingPrompt.maxTokens}
+                    onChange={(e) => setEditingPrompt({ ...editingPrompt, maxTokens: parseInt(e.target.value) || 1024 })}
+                    className="w-full h-8 rounded bg-[#020A17] border border-[#3A2C18] px-2 text-xs text-[#FFF4D4]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-[#3A2C18]">
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="py-2 px-4 rounded border border-[#3A2C18] text-xs font-serif text-[#C6B697] hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="py-2 px-5 rounded bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs shadow-md"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 2: TEST PROMPT SANDBOX ─── */}
+      {isTestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="max-w-3xl w-full bg-[#05142B] border-2 border-[#8C6418] rounded-2xl p-6 shadow-2xl text-[#FFF4D4] space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#3A2C18] pb-3">
+              <div className="flex items-center gap-2">
+                <Play className="w-4 h-4 text-[#FFE394] fill-[#FFE394]" />
+                <h3 className="font-serif text-lg font-bold text-[#FFF4D4]">
+                  Test Simulation Sandbox · {selectedPrompt.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTestModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 font-serif">
+              <p className="text-xs text-[#C6B697]">
+                Execute test turns through Cloudflare Workers AI ({selectedPrompt.modelName}) with sample case variables.
+              </p>
+
+              {/* Variable Inputs */}
+              <div className="space-y-2">
+                {selectedPrompt.variables.map((v) => (
+                  <div key={v.name}>
+                    <label className="text-xs text-[#FFE394] font-mono block mb-1">
+                      {`{${v.name}}`} ({v.description})
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={testInputs[v.name] || ""}
+                      onChange={(e) => setTestInputs({ ...testInputs, [v.name]: e.target.value })}
+                      className="w-full rounded bg-[#020A17] border border-[#3A2C18] p-2 text-xs text-[#FFF4D4] focus:border-[#FFE394]"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Output Display */}
+              {testOutput && (
+                <div className="space-y-1 pt-2">
+                  <label className="text-xs font-serif font-bold text-emerald-400">Simulation Output:</label>
+                  <div className="p-3.5 rounded-xl bg-[#020A17] border border-emerald-500/40 text-xs font-mono text-[#E8EDF5] leading-relaxed max-h-[220px] overflow-y-auto whitespace-pre-wrap select-text">
+                    {testOutput}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-[#3A2C18]">
+              <button
+                type="button"
+                onClick={() => setIsTestModalOpen(false)}
+                className="py-2 px-4 rounded border border-[#3A2C18] text-xs font-serif text-[#C6B697] hover:text-white"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                disabled={isSimulating}
+                onClick={handleRunTest}
+                className="py-2 px-5 rounded bg-[#DFBE77] hover:bg-[#D4AF60] text-[#171006] font-serif font-bold text-xs shadow-md flex items-center gap-1.5"
+              >
+                {isSimulating ? (
+                  <>
+                    <RotateCcw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Executing Model...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-[#171006]" />
+                    <span>Run Test Prompt</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

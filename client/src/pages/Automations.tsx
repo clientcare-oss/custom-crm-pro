@@ -662,96 +662,85 @@ export default function Automations() {
       >
         <div className="max-w-7xl mx-auto w-full space-y-7">
 
-          {/* ─── Top Header Deck: Title, Subtitle, PageIdBadge, Tab Pills ─── */}
-          <div className="w-full flex flex-col gap-4 border-b border-[#3A2C18] pb-5">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 text-left">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418] flex items-center gap-1.5 shadow-sm">
-                    <span className="font-mono text-[#FFE394] font-bold">
-                      {pageTab === "ai-vault" ? "PG-013-AI" : "PG-013"}
+          {/* ─── Top Header Deck & Tab Switcher ─── */}
+          <div className="w-full flex flex-col gap-4 border-b border-[#3A2C18] pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
+              {pageTab === "workflows" ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418]">
+                      PG-013 · Autonomous Systems
                     </span>
-                    <span>·</span>
-                    <span>
-                      {pageTab === "ai-vault"
-                        ? (isVaultUnlocked ? "Authorized AI Backend" : "Locked AI Backend")
-                        : "Autonomous Systems"}
-                    </span>
-                  </span>
-                  {pageTab === "ai-vault" && (
-                    <span className={cn(
-                      "inline-flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border shadow-sm",
-                      isVaultUnlocked
-                        ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/40"
-                        : "bg-amber-950/80 text-amber-300 border-amber-500/40"
-                    )}>
-                      <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isVaultUnlocked ? "bg-emerald-400" : "bg-amber-400")} />
-                      {isVaultUnlocked ? "Sub-Page Active" : "PIN Authorization Required"}
-                    </span>
-                  )}
+                  </div>
+                  <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-wide text-[#FFF4D4]">
+                    Automations Engine
+                  </h1>
+                  <p className="font-serif text-xs sm:text-sm text-[#E8D1A7] leading-relaxed max-w-2xl">
+                    Trigger-based action sequences, smart file routing, and client communication workflows.
+                  </p>
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-wide leading-none bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
-                  {pageTab === "ai-vault" ? "Locked AI Prompt Vault" : "Automations Engine"}
-                </h1>
-                <p className="font-serif text-xs sm:text-sm text-[#E8D1A7] leading-relaxed max-w-2xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                  {pageTab === "ai-vault"
-                    ? "Sub-Page ID: PG-013-AI · Executive library prompts, Cloudflare Workers AI model parameters, and behavioral guardrails for Byron Honea."
-                    : "Trigger-based action sequences, smart file routing, and executive AI prompt libraries for Byron Honea."}
-                </p>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418] flex items-center gap-1.5">
+                      <span className="font-mono text-[#FFE394]">PG-013-AI</span>
+                      <span>·</span>
+                      <span>Waypoint AI Prompt Library</span>
+                    </span>
+                    <span className={cn(
+                      "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border",
+                      isVaultUnlocked ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/40" : "bg-amber-950/80 text-amber-300 border-amber-500/40"
+                    )}>
+                      {isVaultUnlocked ? "Authorized Admin Session" : "PIN Locked"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Navigation Tab Bar: Sequences vs Waypoint AI */}
+              <div className="flex items-center gap-2 bg-[#020A17]/85 p-1.5 rounded-xl border border-[#3A2C18] w-fit shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => handleTabSwitch("workflows")}
+                  className={cn(
+                    "py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2",
+                    pageTab === "workflows"
+                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
+                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
+                  )}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Workflow Sequences</span>
+                  <span className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded font-mono",
+                    pageTab === "workflows" ? "bg-[#07162B]/20 text-[#07162B]" : "bg-[#05142B] text-[#A69371]"
+                  )}>
+                    {automations.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabSwitch("ai-vault")}
+                  className={cn(
+                    "py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative",
+                    pageTab === "ai-vault"
+                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
+                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
+                  )}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Waypoint AI</span>
+                  <span className={cn(
+                    "inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border",
+                    pageTab === "ai-vault"
+                      ? "bg-[#07162B]/30 text-[#07162B] border-[#07162B]/40 font-bold"
+                      : "bg-amber-950/80 text-amber-300 border-amber-500/40"
+                  )}>
+                    PG-013-AI
+                  </span>
+                </button>
               </div>
-
-              {/* Top Right: Page ID Badge (Rule E) */}
-              <div className="shrink-0 flex items-center gap-2">
-                <PageIdBadge
-                  id={pageTab === "ai-vault" ? "PG-013-AI" : "PG-013"}
-                  name={pageTab === "ai-vault" ? "Locked AI Prompt Vault" : "Automations Engine"}
-                />
-              </div>
-            </div>
-
-            {/* Navigation Tab Bar: Sequences vs Locked AI Vault */}
-            <div className="flex items-center gap-2 bg-[#020A17]/85 p-1.5 rounded-xl border border-[#3A2C18] w-fit shadow-inner">
-              <button
-                type="button"
-                onClick={() => handleTabSwitch("workflows")}
-                className={cn(
-                  "py-2 px-4 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2",
-                  pageTab === "workflows"
-                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
-                    : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
-                )}
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Workflow Sequences</span>
-                <span className={cn(
-                  "text-[10px] px-1.5 py-0.5 rounded font-mono",
-                  pageTab === "workflows" ? "bg-[#07162B]/20 text-[#07162B]" : "bg-[#05142B] text-[#A69371]"
-                )}>
-                  {automations.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTabSwitch("ai-vault")}
-                className={cn(
-                  "py-2 px-4 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative",
-                  pageTab === "ai-vault"
-                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
-                    : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
-                )}
-              >
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Locked AI Backend</span>
-                <span className={cn(
-                  "inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border",
-                  pageTab === "ai-vault"
-                    ? "bg-[#07162B]/30 text-[#07162B] border-[#07162B]/40 font-bold"
-                    : "bg-amber-950/80 text-amber-300 border-amber-500/40"
-                )}>
-                  PG-013-AI
-                </span>
-              </button>
             </div>
           </div>
 

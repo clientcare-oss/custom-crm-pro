@@ -226,8 +226,9 @@ function Router() {
           <Route path="/tools/voyage-recorder" component={VoyageRecorder} />
           <Route path="/templates" component={Templates} />
           <Route path="/leads/forms" component={LeadForms} />
-          <Route path="/lead-forms" component={LeadForms} />
           <Route path="/automations" component={Automations} />
+          <Route path="/waypoint-ai">{() => <Redirect to="/automations?tab=ai-vault" />}</Route>
+          <Route path="/automations/ai-vault">{() => <Redirect to="/automations?tab=ai-vault" />}</Route>
           <Route path="/integrations" component={Integrations} />
           <Route path="/settings/integrations/quo" component={QuoSettings} />
           <Route path="/integrations/quo" component={QuoSettings} />
