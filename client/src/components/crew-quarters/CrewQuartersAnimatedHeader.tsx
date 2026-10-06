@@ -53,26 +53,25 @@ export function CrewQuartersAnimatedHeader() {
           }
         }
 
-        /* Small shooting star (NO TAIL) gliding ACROSS the center window from left to right */
-        @keyframes shootingStarPointAcross {
+        /* Tiny shooting star speck (NO TAIL) gliding in ONE CONTINUOUS FLUID MOTION across the cosmos */
+        @keyframes shootingStarSpeckAcross {
           0% {
             opacity: 0;
-            transform: translate3d(-40px, 0, 0);
+            transform: translate3d(-20px, 0, 0);
           }
-          4% {
+          1.5% {
             opacity: 1;
           }
-          22% {
+          16.5% {
             opacity: 0.9;
-            transform: translate3d(220px, 14px, 0);
           }
-          28% {
+          18% {
             opacity: 0;
-            transform: translate3d(320px, 20px, 0);
+            transform: translate3d(340px, 14px, 0);
           }
           100% {
             opacity: 0;
-            transform: translate3d(320px, 20px, 0);
+            transform: translate3d(340px, 14px, 0);
           }
         }
 
@@ -189,19 +188,19 @@ export function CrewQuartersAnimatedHeader() {
             />
           ))}
 
-          {/* Small Shooting Star (NO TAIL): Gliding across the cosmos from left to right */}
+          {/* Tiny Shooting Star Speck (NO TAIL): Gliding smoothly across the cosmos in one fluid motion */}
           <div
             className="absolute pointer-events-none z-10"
             style={{
               top: "22%",
-              left: "8%",
-              animation: "shootingStarPointAcross 8.5s ease-out infinite",
-              animationDelay: "2s",
+              left: "4%",
+              animation: "shootingStarSpeckAcross 7.5s linear infinite",
+              animationDelay: "1.5s",
             }}
           >
-            {/* Small glowing star dot (no tail) */}
+            {/* Tiny celestial speck of light */}
             <div
-              className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_#FFFFFF,0_0_12px_#93C5FD,0_0_20px_#60A5FA]"
+              className="w-[1.5px] h-[1.5px] rounded-full bg-white shadow-[0_0_2px_#FFFFFF,0_0_4px_rgba(255,255,255,0.85)]"
             />
           </div>
         </div>
