@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Phone,
   PhoneMissed,
   Voicemail,
   CalendarCheck,
@@ -25,6 +26,7 @@ interface CallCenterStatsProps {
 }
 
 export function CallCenterStats({
+  callsTodayCount = 6,
   missedCallsCount = 2,
   voicemailCount = 1,
   scheduledCallsCount = 4,
@@ -37,6 +39,13 @@ export function CallCenterStats({
   onScrollToContactList,
 }: CallCenterStatsProps) {
   const stats = [
+    {
+      key: "calls",
+      label: "Calls Today",
+      count: callsTodayCount,
+      icon: Phone,
+      iconColor: "text-[#FFE394]",
+    },
     {
       key: "missed",
       label: "Missed Calls",
@@ -79,7 +88,7 @@ export function CallCenterStats({
   ];
 
   return (
-    <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5 w-full overflow-x-auto no-scrollbar">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 w-full">
       {stats.map((stat) => {
         const Icon = stat.icon;
         const isActive = activeFilter === stat.key;

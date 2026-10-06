@@ -307,9 +307,12 @@ export default function UnassignedCallLogs() {
           isConfigured={quoStatus?.configured ?? true}
         />
 
-        {/* Main Body Content with comfortable padding */}
-        <div className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10 mt-2 sm:mt-3">
-          {/* Top 5 Metric & Quick Access Cards in Horizontal Row */}
+        {/* Main Body Content — Brought UP to where Call Center was (right under shelf) */}
+        <div
+          className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10"
+          style={{ paddingTop: "calc(100% * 228 / 1024)" }}
+        >
+          {/* Top 6 Metric & Statistics Boxes in Horizontal Row */}
           <CallCenterStats
         callsTodayCount={callsTodayCount}
         missedCallsCount={missedCount}
