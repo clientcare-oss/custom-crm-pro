@@ -77,7 +77,7 @@ export function CallCenterStats({
 
   return (
     <div className="max-w-4xl mx-auto w-full px-2 sm:px-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 w-full justify-center">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3.5 w-full justify-center">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const isActive = activeFilter === stat.key;
@@ -91,22 +91,20 @@ export function CallCenterStats({
                   onSelectStat?.(stat.key);
                 }
               }}
-              className={`flex flex-col justify-between p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer group min-h-[74px] sm:min-h-[80px] shrink-0 shadow-[0_6px_18px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
+              className={`flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer group min-h-[74px] sm:min-h-[80px] shrink-0 text-center last:col-span-2 last:max-w-[200px] last:mx-auto last:w-full sm:last:col-span-1 sm:last:max-w-none shadow-[0_6px_18px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
                 isActive
                   ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_18px_rgba(197,160,89,0.35),inset_0_1px_2px_rgba(255,227,148,0.4)]"
                   : "bg-[#05142B]/92 border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
               }`}
             >
-              {/* Top: Bigger Icon + Big Number Next to it */}
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className={`w-8 h-8 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 shadow-inner ${stat.iconColor}`}>
-                    <Icon className="h-4.5 w-4.5" />
-                  </div>
-                  <span className="text-2xl sm:text-[26px] font-serif font-bold text-[#FFF4D4] leading-none tracking-tight">
-                    {stat.count}
-                  </span>
+              {/* Top: Bigger Icon + Big Number centered together */}
+              <div className="flex items-center justify-center gap-2 sm:gap-2.5 w-full">
+                <div className={`w-8 h-8 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 shadow-inner ${stat.iconColor}`}>
+                  <Icon className="h-4.5 w-4.5" />
                 </div>
+                <span className="text-2xl sm:text-[26px] font-serif font-bold text-[#FFF4D4] leading-none tracking-tight">
+                  {stat.count}
+                </span>
                 {stat.isAnchorLink && (
                   <ArrowDown
                     className="h-3.5 w-3.5 text-[#A69371] group-hover:text-[#FFE394] transition-all shrink-0 animate-bounce"
@@ -114,8 +112,8 @@ export function CallCenterStats({
                 )}
               </div>
 
-              {/* Bottom: Title of the box */}
-              <div className="mt-2 text-xs font-semibold text-[#C6B697] truncate tracking-wide">
+              {/* Bottom: Title of the box, centered */}
+              <div className="mt-2 text-xs font-semibold text-[#C6B697] truncate tracking-wide text-center w-full">
                 {stat.label}
               </div>
             </div>
