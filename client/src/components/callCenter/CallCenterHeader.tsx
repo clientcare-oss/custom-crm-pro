@@ -37,19 +37,11 @@ export function CallCenterHeader({
 
   return (
     <header
-      className="relative w-full overflow-hidden border-b-2 border-[#543E1B] shadow-[0_16px_36px_rgba(0,0,0,0.85)] min-h-[220px] sm:min-h-[270px] md:min-h-[300px] flex flex-col justify-end"
-      style={{
-        backgroundImage: "url('/images/call-center-shelf-header.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundRepeat: "no-repeat",
-      }}
+      className="relative w-full z-10 pb-2 px-3 sm:px-5 lg:px-6"
+      style={{ paddingTop: "calc(100% * 228 / 1024)" }}
     >
-      {/* Subtle bottom gradient to ensure text contrast over wood grain */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#040C1A]/90 via-[#040C1A]/30 to-transparent pointer-events-none" />
-
       {/* Floating Maritime Control Plaque (framed between cascading vines) */}
-      <div className="relative z-10 mx-3 sm:mx-6 md:mx-10 mb-3 sm:mb-4 bg-[#05142B]/90 backdrop-blur-md border border-[#8C6418]/70 rounded-2xl p-3 sm:p-4 shadow-[0_12px_32px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.1)]">
+      <div className="w-full bg-[#05142B]/92 backdrop-blur-md border border-[#8C6418]/70 rounded-2xl p-3 sm:p-4 shadow-[0_12px_32px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.1)] relative">
         {/* Brass Corner Rivets */}
         <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-[#8C6418] border border-[#FFE394]/60 flex items-center justify-center text-[6px] text-[#2A1804] font-mono select-none">
           +

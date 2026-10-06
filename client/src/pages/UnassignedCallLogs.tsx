@@ -269,8 +269,18 @@ export default function UnassignedCallLogs() {
 
   return (
     <ScopedErrorBoundary moduleName="Call Center">
-      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] pb-8 space-y-4">
-        {/* Top Header — Bumps Left to Sidebar, Right to Right Bar, and Top to Top Bar */}
+      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] pb-8 relative overflow-x-hidden">
+        {/* ─── OVERLAPPING SHELF & VINES CANOPY ─── */}
+        {/* Bumps flush to sidebar, right bar, and top bar. Transparent lower area and vines physically overlap the boxes below it */}
+        <div className="absolute top-0 left-0 right-0 pointer-events-none z-30 select-none">
+          <img
+            src="/images/call-center-shelf-overlay.png"
+            alt="Call Center Shelf Canopy"
+            className="w-full h-auto select-none"
+          />
+        </div>
+
+        {/* Top Header — Sits flush top, left, right */}
         <CallCenterHeader
           callsTodayCount={callsTodayCount}
           activeFilter={activeStatFilter}
@@ -298,7 +308,7 @@ export default function UnassignedCallLogs() {
         />
 
         {/* Main Body Content with comfortable padding */}
-        <div className="px-3 sm:px-5 lg:px-6 space-y-4">
+        <div className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10 mt-2 sm:mt-3">
           {/* Top 5 Metric & Quick Access Cards in Horizontal Row */}
           <CallCenterStats
         callsTodayCount={callsTodayCount}
