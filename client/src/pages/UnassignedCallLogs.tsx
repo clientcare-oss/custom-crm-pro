@@ -274,7 +274,7 @@ export default function UnassignedCallLogs() {
         {/* Bumps flush to sidebar, right bar, and top bar. Transparent lower area and vines physically overlap the boxes below it */}
         <div className="absolute top-0 left-0 right-0 pointer-events-none z-30 select-none">
           <img
-            src="/images/call-center-shelf-overlay.png"
+            src="/images/call-center-shelf-overlay.png?v=2"
             alt="Call Center Shelf Canopy"
             className="w-full h-auto select-none"
           />
