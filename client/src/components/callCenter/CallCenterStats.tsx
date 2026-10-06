@@ -91,10 +91,10 @@ export function CallCenterStats({
                   onSelectStat?.(stat.key);
                 }
               }}
-              className={`flex flex-col items-center justify-center px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer group min-h-[74px] sm:min-h-[78px] w-[118px] sm:w-[126px] md:w-[130px] shrink-0 text-center shadow-[0_6px_18px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
+              className={`flex flex-col items-center justify-center px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer group min-h-[74px] sm:min-h-[78px] w-[118px] sm:w-[126px] md:w-[130px] shrink-0 text-center shadow-[0_6px_18px_rgba(0,0,0,0.85),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
                 isActive
                   ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_18px_rgba(197,160,89,0.35),inset_0_1px_2px_rgba(255,227,148,0.4)]"
-                  : "bg-[#05142B]/92 border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
+                  : "bg-[#05142B] border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
               }`}
             >
               {/* Top: Icon + Big Number centered together */}

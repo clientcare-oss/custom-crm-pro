@@ -312,21 +312,33 @@ export default function UnassignedCallLogs() {
           className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10"
           style={{ paddingTop: "calc(100% * 248 / 1024)" }}
         >
-          {/* ─── AUTHENTIC 3D-RENDERED SHELF LIGHTING DIRECTLY OVER NUMBER BOXES ─── */}
-          {/* Matches upper shelf lights with 100% photorealistic optical bloom from 3D render */}
+          {/* ─── UNDER-SHELF RECESSED LIGHTING GLOW DIRECTLY OVER NUMBER BOXES ─── */}
+          {/* Rich warm orange under-shelf lighting matching the warm incandescent header lamps */}
           <div className="relative w-full">
-            <div className="absolute -top-7 left-0 right-0 h-14 pointer-events-none select-none overflow-hidden flex items-center justify-center">
-              <img
-                src="/images/rendered-shelf-light-alpha.png"
-                alt="Shelf Light Glow"
-                className="w-full h-auto select-none mix-blend-screen opacity-100 drop-shadow-[0_0_14px_rgba(251,190,65,0.7)]"
+            <div className="absolute -top-6 left-0 right-0 h-13 pointer-events-none select-none overflow-hidden z-0">
+              {/* Luminous warm orange light bar running along the underside of the shelf */}
+              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF7A00] to-transparent blur-[0.5px] opacity-95" />
+              {/* Vibrant warm orange ambient bloom directly beneath the shelf beam */}
+              <div className="h-[8px] w-full -mt-[2px] bg-gradient-to-r from-transparent via-[#FF6200]/85 to-transparent blur-[3px]" />
+              {/* Downward warm orange wash illuminating just the gap directly above the boxes */}
+              <div
+                className="w-full h-full"
+                style={{
+                  background:
+                    "linear-gradient(to bottom, rgba(255, 122, 0, 0.80) 0%, rgba(255, 98, 0, 0.50) 25%, rgba(230, 80, 0, 0.22) 55%, rgba(180, 55, 0, 0.05) 80%, transparent 100%)",
+                  maskImage:
+                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 50%, transparent 100%)",
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 85% 100% at 50% 0%, black 50%, transparent 100%)",
+                }}
               />
             </div>
 
-            {/* Top 6 Taller Metric & Statistics Boxes (safely centered, not going under leaves) */}
-            <CallCenterStats
-              callsTodayCount={callsTodayCount}
-              missedCallsCount={missedCount}
+            {/* Top Metric & Statistics Boxes — solid opaque background, sits cleanly above the lighting */}
+            <div className="relative z-10">
+              <CallCenterStats
+                callsTodayCount={callsTodayCount}
+                missedCallsCount={missedCount}
               callbacksCount={callbacksCount}
               voicemailCount={voicemailCount}
               scheduledCallsCount={scheduledCount}
@@ -341,6 +353,7 @@ export default function UnassignedCallLogs() {
               onScrollToContactList={handleScrollToContactList}
             />
           </div>
+        </div>
 
       {/* PRIMARY PHONE / CALL AREA (TOP OF PAGE) */}
       <div className="space-y-4">
