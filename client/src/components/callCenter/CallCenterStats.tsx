@@ -88,47 +88,49 @@ export function CallCenterStats({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 w-full">
-      {stats.map((stat) => {
-        const Icon = stat.icon;
-        const isActive = activeFilter === stat.key;
-        return (
-          <div
-            key={stat.key}
-            onClick={() => {
-              if (stat.action) {
-                stat.action();
-              } else {
-                onSelectStat?.(stat.key);
-              }
-            }}
-            className={`flex items-center justify-between gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border transition-all cursor-pointer group h-9 sm:h-9.5 min-h-[36px] whitespace-nowrap shrink-0 shadow-[0_4px_14px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,227,148,0.22)] ${
-              isActive
-                ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_15px_rgba(197,160,89,0.35),inset_0_1px_1px_rgba(255,227,148,0.4)]"
-                : "bg-[#05142B]/90 border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
-            }`}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className={`w-5.5 h-5.5 rounded-md border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 ${stat.iconColor}`}>
-                <Icon className="h-3 w-3" />
+    <div className="max-w-5xl mx-auto w-full px-2 sm:px-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 w-full">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          const isActive = activeFilter === stat.key;
+          return (
+            <div
+              key={stat.key}
+              onClick={() => {
+                if (stat.action) {
+                  stat.action();
+                } else {
+                  onSelectStat?.(stat.key);
+                }
+              }}
+              className={`flex flex-col justify-between p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer group min-h-[72px] sm:min-h-[78px] shrink-0 shadow-[0_6px_18px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
+                isActive
+                  ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_18px_rgba(197,160,89,0.35),inset_0_1px_2px_rgba(255,227,148,0.4)]"
+                  : "bg-[#05142B]/92 border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1 w-full">
+                <div className={`w-6 h-6 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 ${stat.iconColor}`}>
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
+                {stat.isAnchorLink && (
+                  <ArrowDown
+                    className="h-3 w-3 text-[#A69371] group-hover:text-[#FFE394] transition-all shrink-0 animate-bounce"
+                  />
+                )}
               </div>
-              <div className="flex items-baseline gap-1.5 min-w-0">
-                <span className="text-sm font-serif font-bold text-[#FFF4D4] leading-none shrink-0">
+              <div className="mt-2 min-w-0">
+                <div className="text-xl sm:text-2xl font-serif font-bold text-[#FFF4D4] leading-none">
                   {stat.count}
-                </span>
-                <span className="text-[10px] sm:text-[11px] font-medium text-[#C6B697] truncate leading-none">
+                </div>
+                <div className="text-[10.5px] sm:text-[11px] font-medium text-[#C6B697] truncate mt-1 leading-tight">
                   {stat.label}
-                </span>
+                </div>
               </div>
             </div>
-            {stat.isAnchorLink && (
-              <ArrowDown
-                className="h-3 w-3 text-[#A69371] group-hover:text-[#FFE394] transition-all shrink-0 animate-bounce ml-0.5"
-              />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

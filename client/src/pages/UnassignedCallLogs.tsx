@@ -307,22 +307,22 @@ export default function UnassignedCallLogs() {
           isConfigured={quoStatus?.configured ?? true}
         />
 
-        {/* Main Body Content — Brought UP to where Call Center was (right under shelf) */}
+        {/* Main Body Content — Dropped down below shelf */}
         <div
           className="px-3 sm:px-5 lg:px-6 space-y-4 relative z-10"
-          style={{ paddingTop: "calc(100% * 228 / 1024)" }}
+          style={{ paddingTop: "calc(100% * 248 / 1024)" }}
         >
           {/* ─── UNDER-SHELF RECESSED LIGHTING GLOW ─── */}
           {/* Casts downward warm amber architectural illumination onto the statistics buttons */}
           <div className="relative w-full">
-            <div className="absolute -top-3 left-0 right-0 h-28 pointer-events-none select-none overflow-hidden">
+            <div className="absolute -top-5 left-0 right-0 h-36 pointer-events-none select-none overflow-hidden">
               {/* Warm LED strip along the underside of the shelf */}
-              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFE394]/70 to-transparent blur-[1px]" />
-              {/* Downward warm ambient light beam shining onto the buttons */}
-              <div className="w-full h-full bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(255,215,130,0.34)_0%,rgba(217,160,60,0.13)_45%,transparent_75%)]" />
+              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFE394]/75 to-transparent blur-[1px]" />
+              {/* Downward warm ambient light beam shining onto the dropped-down buttons */}
+              <div className="w-full h-full bg-[radial-gradient(ellipse_75%_65%_at_50%_0%,rgba(255,215,130,0.36)_0%,rgba(217,160,60,0.14)_45%,transparent_75%)]" />
             </div>
 
-            {/* Top 6 Metric & Statistics Boxes in Horizontal Row */}
+            {/* Top 6 Taller Metric & Statistics Boxes (safely centered, not going under leaves) */}
             <CallCenterStats
               callsTodayCount={callsTodayCount}
               missedCallsCount={missedCount}

@@ -30,30 +30,33 @@ export function CallCenterHeader({
   const userInit = (user?.name ? user.name[0] : "B").toUpperCase();
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-40 pt-2 sm:pt-2.5 px-3 sm:px-5 lg:px-6 pointer-events-auto">
-      {/* Written directly on the wall — No container, sleek, smaller */}
-      <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
-        {/* Left: Written on the Navy Wood Wall */}
-        <div className="flex items-center gap-2.5">
+    <header className="absolute top-0 left-0 right-0 z-40 pt-2 sm:pt-2.5 px-3 sm:px-6 pointer-events-auto">
+      {/* Written directly on the wall — Centered title, sleek wall typography */}
+      <div className="w-full relative flex items-center justify-between min-h-[36px]">
+        {/* Left balance spacer on wide viewports */}
+        <div className="hidden lg:flex w-44 shrink-0" />
+
+        {/* Center: Headset Icon + Call Center Title + Badge + Subtitle */}
+        <div className="flex items-center justify-center gap-2.5 mx-auto text-center sm:text-left">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#05142B]/70 border border-[#C5A059]/40 flex items-center justify-center text-[#FFE394] shadow-sm shrink-0">
             <Headset className="h-4 w-4 text-[#FFE394] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]" />
           </div>
 
-          <div className="space-y-0 min-w-0">
+          <div className="space-y-0 min-w-0 text-left">
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-serif font-bold tracking-wider text-[#FFF8E7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] whitespace-nowrap leading-tight">
                 Call Center
               </h1>
               <PageIdBadge id="PG-018" />
             </div>
-            <div className="text-[9.5px] sm:text-[10px] font-serif font-medium text-[#D8C7A5]/85 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-wide">
+            <div className="text-[9.5px] sm:text-[10px] font-serif font-medium text-[#D8C7A5]/85 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-wide whitespace-nowrap">
               Inbound & Outbound Telephony · Live Advocacy Dispatch
             </div>
           </div>
         </div>
 
         {/* Right Controls: Minimalist wall-floating controls */}
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+        <div className="flex items-center justify-end gap-2 shrink-0">
           {onRefresh && (
             <Button
               variant="ghost"
