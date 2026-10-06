@@ -38,10 +38,6 @@ export function NoActiveCallHero({ onOpenQuoPhone, onOpenCallWorkspace }: NoActi
         />
       </svg>
 
-      {/* Script Motto Flourish in Upper Right */}
-      <div className="absolute top-3 right-4 text-xs sm:text-sm font-serif italic text-[#FFE394]/90 pointer-events-none select-none tracking-wide">
-        People first. Always.
-      </div>
 
       <div className="relative z-10 max-w-lg mx-auto flex flex-col items-center">
         {/* Headphone Icon Circle with Soft Glowing Pulse */}
