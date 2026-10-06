@@ -387,19 +387,6 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       isActive: (loc) => loc === "/advocacy-pipeline" || loc.startsWith("/advocacy-pipeline") || loc === "/meeting-workspace" || loc.startsWith("/meeting-workspace") || loc === "/workspace" || loc.startsWith("/post-meeting-review"),
     },
     {
-      id: "state-complaint",
-      icon: Shield,
-      label: "State Complaint",
-      path: "/state-complaint-builder",
-      isActive: (loc) =>
-        loc === "/state-complaint-builder" ||
-        loc.startsWith("/state-complaint-builder") ||
-        loc === "/tools/state-complaint-builder" ||
-        loc.startsWith("/tools/state-complaint-builder") ||
-        loc === "/complaint" ||
-        loc.startsWith("/complaint"),
-    },
-    {
       id: "documents",
       icon: FileSignature,
       label: "Documents",
@@ -1477,17 +1464,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => {
-                        if (
-                          item.path.startsWith("/state-complaint-builder") ||
-                          item.path.startsWith("/tools/state-complaint-builder") ||
-                          item.id === "state-complaint"
-                        ) {
-                          setOpen(false);
-                          if (isMobile) setOpenMobile(false);
-                        }
-                        setLocation(item.path);
-                      }}
+                      onClick={() => setLocation(item.path)}
                       tooltip={item.label}
                       className={cn(
                         "h-10 w-full px-3 rounded-lg text-[13.5px] cursor-pointer transition-all duration-150 flex items-center gap-3.5 select-none",

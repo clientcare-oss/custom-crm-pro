@@ -41,12 +41,12 @@ export function BinderCoverPage({
   sectionNumber,
   coverPageNumber,
   totalDocketPages,
-  studentName = "JORDAN SMITH",
+  studentName = "ELIJAH SANTIAGO",
   studentDob,
-  grade,
-  school = "Clarkdale Elementary School",
-  district = "Cobb County School District",
-  preparedBy,
+  grade = "10th Grade",
+  school = "Midtown High School",
+  district = "Atlanta Public Schools",
+  preparedBy = "Waypoint Advocates",
   submissionDate,
   agencyName = "Georgia Department of Education",
   coverDetails,
@@ -213,16 +213,17 @@ export function BinderCoverPage({
       {/* ── CENTER BLOCK: SECTION/EXHIBIT BADGE, TITLE & PURPOSE BOX ── */}
       <div className="my-auto py-6 sm:py-8 flex flex-col items-center text-center w-full max-w-[680px] mx-auto">
         
-        {/* Section / Exhibit Label (e.g. EXHIBIT 05) */}
-        <div className="font-serif uppercase font-bold text-sm sm:text-base tracking-[0.25em] text-[#9E7A38]">
-          {exhibitOrSectionLabel}
+        {/* Section / Exhibit Label (e.g. SECTION 02) with flanking horizontal decorative lines */}
+        <div className="flex items-center justify-center gap-3.5 mb-2.5">
+          <div className="w-12 h-[1px] bg-[#9E7A38]" />
+          <span className="font-serif uppercase font-bold text-xs sm:text-sm tracking-[0.28em] text-[#9E7A38]">
+            {exhibitOrSectionLabel}
+          </span>
+          <div className="w-12 h-[1px] bg-[#9E7A38]" />
         </div>
 
-        {/* Small Accent Underline */}
-        <div className="w-14 h-[1px] bg-[#9E7A38] my-2.5" />
-
         {/* Level / Subtitle */}
-        <div className="font-serif uppercase text-[11px] sm:text-xs tracking-[0.22em] text-[#1A120A] font-semibold mb-6 sm:mb-8">
+        <div className="font-serif uppercase text-[10.5px] sm:text-xs tracking-[0.22em] text-[#1A120A] font-semibold mb-6 sm:mb-8">
           STATE ADMINISTRATIVE COMPLAINT
         </div>
 

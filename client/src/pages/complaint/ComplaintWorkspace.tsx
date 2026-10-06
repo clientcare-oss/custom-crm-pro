@@ -131,14 +131,14 @@ const DEFAULT_PAGES: DocumentPage[] = [
     content: `BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
 DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
 
-ALEXANDER, SHANDERIOUS JR.
+ELIJAH SANTIAGO
 STUDENT WITH A DISABILITY,
 BY AND THROUGH PARENT / GUARDIAN,
     Complainant,
 
 v.
 
-COBB COUNTY SCHOOL DISTRICT,
+ATLANTA PUBLIC SCHOOLS,
     Local Educational Agency.
 ____________________________________________/
 
@@ -146,7 +146,7 @@ CLARITY CONTROL RESTATEMENT OF ISSUES & STATUTORY VIOLATIONS
 UNDER 34 C.F.R. § 300.153 AND GA. COMP. R. & REGS. 160-4-7-.12
 
 I. RESTATEMENT OF JURISDICTION & FILING TIMELINESS
-Complainant files this Clarity Control Restatement on behalf of Alexander, Shanderious Jr., a 4th grade student eligible for special education and related services under the Individuals with Disabilities Education Act (IDEA), 20 U.S.C. § 1400 et seq.
+Complainant files this Clarity Control Restatement on behalf of Elijah Santiago, a 10th grade student eligible for special education and related services under the Individuals with Disabilities Education Act (IDEA), 20 U.S.C. § 1400 et seq.
 
 This complaint is timely filed within the one-year statute of limitations provided by 34 C.F.R. § 300.153(c) and Ga. Comp. R. & Regs. 160-4-7-.12(2)(c). All violations alleged herein occurred within the preceding twelve-month period.
 
@@ -154,18 +154,18 @@ II. CLARITY CONTROL RESTATEMENT OF CAUSES OF ACTION
 
 COUNT I: FAILURE TO IMPLEMENT OPERATIVE IEP SERVICES & DENIAL OF FAPE
 (34 C.F.R. § 300.323(c)(2) · Ga. Comp. R. & Regs. 160-4-7-.06)
-The District failed to implement Alexander's operative IEP as written by withholding mandated specialized reading instruction (240 minutes) and speech-language services, depriving the student of a Free Appropriate Public Education. (Supported by Exhibit A & Exhibit C).
+The District failed to implement Elijah's operative IEP as written by withholding mandated specialized instruction (240 minutes) and accommodations, depriving the student of a Free Appropriate Public Education. (Supported by Exhibit A & Exhibit C).
 
 COUNT II: FAILURE TO TIMELY RE-EVALUATE & AFFIRMATIVE CHILD FIND VIOLATION
 (34 C.F.R. § 300.111, § 300.301 · Ga. Comp. R. & Regs. 160-4-7-.03)
-The District ignored formal written parental requests for sensory and functional behavioral assessments, violating its affirmative statutory duty to evaluate in all suspected disability areas. (Supported by Exhibit B).
+The District ignored formal written parental requests for comprehensive functional and psychological evaluations, violating its affirmative statutory duty to evaluate in all suspected disability areas. (Supported by Exhibit B).
 
 COUNT III: UNLAWFUL REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE (PWN)
 (34 C.F.R. § 300.503 · Ga. Comp. R. & Regs. 160-4-7-.14)
 The District altered service delivery schedules and refused evaluation requests without providing written explanation or mandatory statutory justifications. (Supported by Exhibit C).
 
 III. PROPOSED RESOLUTION & CORRECTIVE ACTIONS
-1. Award 60 hours of 1-on-1 certified reading tutoring and 20 hours of speech therapy.
+1. Award 60 hours of 1-on-1 certified academic instruction and compensatory support.
 2. Fund an Independent Educational Evaluation (IEE) at public expense.
 3. Order the IEP team to reconvene within 15 school days to integrate compensatory hours.
 4. Mandate administrative training for school-based special education personnel.`
@@ -177,25 +177,25 @@ III. PROPOSED RESOLUTION & CORRECTIVE ACTIONS
     category: "facts", 
     content: `CHRONOLOGICAL SUMMARY OF FACTS & TIMELINE
 
-ALEXANDER, SHANDERIOUS JR.
-LOCAL EDUCATIONAL AGENCY: COBB COUNTY SCHOOL DISTRICT
+ELIJAH SANTIAGO
+LOCAL EDUCATIONAL AGENCY: ATLANTA PUBLIC SCHOOLS
 
 A chronological summary of relevant events and factual milestones occurring within the one-year statutory filing period (October 2025 – October 2026):
 
 1. AUGUST 28, 2025 — ANNUAL IEP CONVENED (EXHIBIT A)
-The Cobb County School District IEP team convened to develop Alexander's operative 4th grade IEP. The IEP committed the District to 150 minutes weekly of specialized reading instruction in general education, 90 minutes weekly of pull-out reading intervention, and 60 minutes weekly of speech-language therapy.
+The Atlanta Public Schools IEP team convened to develop Elijah's operative 10th grade IEP. The IEP committed the District to 150 minutes weekly of specialized instruction, accommodations, and related support services.
 
 2. OCTOBER 12, 2025 — FORMAL RE-EVALUATION REQUEST (EXHIBIT B)
-Documented academic regression and sensory dysregulation prompted Parent to deliver a formal written request for comprehensive psychoeducational and sensory evaluations to the LEA Special Education Lead via timestamped email at 8:42 AM.
+Documented academic regression and accommodations withholding prompted Parent to deliver a formal written request for comprehensive evaluations to the LEA Special Education Lead via timestamped email.
 
 3. OCTOBER 26, 2025 — EXPIRATION OF STATUTORY TIMELINE WITHOUT CONSENT
 The District failed to provide an evaluation consent form or Prior Written Notice explaining refusal within the mandatory statutory window, violating 34 C.F.R. § 300.300.
 
 4. NOVEMBER 1, 2025 TO JANUARY 15, 2026 — SERVICE DELIVERY WITHHOLDING (EXHIBIT C)
-District service logs demonstrate that Alexander missed 18 scheduled specialized reading intervention sessions (totaling 27 hours) without notice, make-up scheduling, or compensatory plan.
+District service logs demonstrate that Elijah missed scheduled specialized support sessions without notice, make-up scheduling, or compensatory plan.
 
 5. DECEMBER 12, 2025 — CASE MANAGER ADMISSION OF STAFF SHORTAGES
-In written correspondence, the school case manager acknowledged staff shortages and confirmed that intervention minutes were not delivered as stipulated in Section 6 of the IEP.
+In written correspondence, the school case manager acknowledged staff shortages and confirmed that minutes were not delivered as stipulated in the IEP.
 
 6. MARCH 3, 2026 — FORMAL DISPUTE NOTICE
 Parent notified district administration of ongoing service deprivation and requested immediate compensatory scheduling, which the District failed to provide.`
@@ -590,14 +590,14 @@ export default function ComplaintWorkspace() {
   // CRM Contacts for Student Selection & Auto-fill
   const contactsQuery = trpc.contacts.list.useQuery();
 
-  // State: Case Data
+  // State: Case Data (Defaults to primary student Elijah Santiago)
   const [caseDetails, setCaseDetails] = useState<ComplaintCaseDetails>({
-    studentName: "Alexander, Shanderious Jr.",
-    studentDob: "04/12/2015",
-    grade: "4th grade",
-    school: "Clarkdale Elementary School",
-    district: "Cobb County School District",
-    parentName: "Parent / Guardian",
+    studentName: "Elijah Santiago",
+    studentDob: "05/18/2008",
+    grade: "10th Grade",
+    school: "Midtown High School",
+    district: "Atlanta Public Schools",
+    parentName: "Marcus Santiago",
     preparedBy: "Waypoint Advocates",
     submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
     showLogo: true,
@@ -685,6 +685,15 @@ export default function ComplaintWorkspace() {
         isAutoLoaded.current = true;
         applyStudentToComplaint(matched);
       }
+    } else {
+      // Default to Elijah Santiago if available in contacts
+      const elijah = contactsQuery.data.find(
+        (c) => c.firstName?.toLowerCase().includes("elijah") || c.lastName?.toLowerCase().includes("santiago")
+      );
+      if (elijah) {
+        isAutoLoaded.current = true;
+        applyStudentToComplaint(elijah);
+      }
     }
   }, [contactsQuery.data, params?.id]);
 
@@ -701,7 +710,7 @@ export default function ComplaintWorkspace() {
   const [isIndexCollapsed, setIsIndexCollapsed] = useState<boolean>(false);
   const [isToolsCollapsed, setIsToolsCollapsed] = useState<boolean>(true);
   const [lastSavedText, setLastSavedText] = useState<string>("Auto-saved just now");
-  const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Alexander");
+  const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Elijah Santiago");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
 
   // Automatically collapse the global sidebar to maximize the legal document workspace
