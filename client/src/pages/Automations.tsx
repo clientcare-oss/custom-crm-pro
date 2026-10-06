@@ -17,6 +17,8 @@ import PageIdBadge from "@/components/PageIdBadge";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import AiPromptVault from "@/components/automations/AiPromptVault";
 import { cn } from "@/lib/utils";
+import { broadcastPageId } from "@/lib/pageIdRegistry";
+import { VAULT_LOCK_STATUS_KEY } from "@/components/automations/defaultAiPrompts";
 
 // ============ TYPES & SCHEMAS ============
 interface AutomationStep {
@@ -270,7 +272,49 @@ export default function Automations() {
   const simulateMutation = trpc.automations.simulate.useMutation();
 
   const [automations, setAutomations] = useState<Automation[]>([]);
-  const [pageTab, setPageTab] = useState<"workflows" | "ai-vault">("workflows");
+  const [pageTab, setPageTab] = useState<"workflows" | "ai-vault">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "ai-vault" || tab === "ai" || tab === "prompts" || tab === "vault") {
+        return "ai-vault";
+      }
+    }
+    return "workflows";
+  });
+  const [isVaultUnlocked, setIsVaultUnlocked] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem(VAULT_LOCK_STATUS_KEY) === "true";
+    }
+    return false;
+  });
+
+  // Keep page ID broadcasted appropriately when tab changes
+  const handleTabSwitch = (tab: "workflows" | "ai-vault") => {
+    setPageTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "ai-vault") {
+      params.set("tab", "ai-vault");
+      broadcastPageId({
+        id: "PG-013-AI",
+        name: "Locked AI Prompt Vault",
+        category: "Automation",
+        description: "Secure executive library prompts and AI model configuration"
+      });
+    } else {
+      params.delete("tab");
+      setActiveView("list");
+      broadcastPageId({
+        id: "PG-013",
+        name: "Automations Engine",
+        category: "Automation",
+        description: "Trigger-based action sequences, smart file routing, and workflows"
+      });
+    }
+    const newSearch = params.toString() ? `?${params.toString()}` : "";
+    window.history.replaceState(null, "", `${window.location.pathname}${newSearch}`);
+  };
+
   const [activeView, setActiveView] = useState<"list" | "edit" | "simulate">("list");
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
@@ -622,22 +666,46 @@ export default function Automations() {
           <div className="w-full flex flex-col gap-4 border-b border-[#3A2C18] pb-5">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 text-left">
               <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418]">
-                    PG-013 · Autonomous Systems
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418] flex items-center gap-1.5 shadow-sm">
+                    <span className="font-mono text-[#FFE394] font-bold">
+                      {pageTab === "ai-vault" ? "PG-013-AI" : "PG-013"}
+                    </span>
+                    <span>·</span>
+                    <span>
+                      {pageTab === "ai-vault"
+                        ? (isVaultUnlocked ? "Authorized AI Backend" : "Locked AI Backend")
+                        : "Autonomous Systems"}
+                    </span>
                   </span>
+                  {pageTab === "ai-vault" && (
+                    <span className={cn(
+                      "inline-flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border shadow-sm",
+                      isVaultUnlocked
+                        ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/40"
+                        : "bg-amber-950/80 text-amber-300 border-amber-500/40"
+                    )}>
+                      <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isVaultUnlocked ? "bg-emerald-400" : "bg-amber-400")} />
+                      {isVaultUnlocked ? "Sub-Page Active" : "PIN Authorization Required"}
+                    </span>
+                  )}
                 </div>
                 <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-wide leading-none bg-gradient-to-b from-[#FFF2D9] via-[#F3D193] to-[#C79641] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
-                  Automations Engine
+                  {pageTab === "ai-vault" ? "Locked AI Prompt Vault" : "Automations Engine"}
                 </h1>
                 <p className="font-serif text-xs sm:text-sm text-[#E8D1A7] leading-relaxed max-w-2xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                  Trigger-based action sequences, smart file routing, and executive AI prompt libraries for Byron Honea.
+                  {pageTab === "ai-vault"
+                    ? "Sub-Page ID: PG-013-AI · Executive library prompts, Cloudflare Workers AI model parameters, and behavioral guardrails for Byron Honea."
+                    : "Trigger-based action sequences, smart file routing, and executive AI prompt libraries for Byron Honea."}
                 </p>
               </div>
 
               {/* Top Right: Page ID Badge (Rule E) */}
               <div className="shrink-0 flex items-center gap-2">
-                <PageIdBadge id="PG-013" name="Automations Engine" />
+                <PageIdBadge
+                  id={pageTab === "ai-vault" ? "PG-013-AI" : "PG-013"}
+                  name={pageTab === "ai-vault" ? "Locked AI Prompt Vault" : "Automations Engine"}
+                />
               </div>
             </div>
 
@@ -645,10 +713,7 @@ export default function Automations() {
             <div className="flex items-center gap-2 bg-[#020A17]/85 p-1.5 rounded-xl border border-[#3A2C18] w-fit shadow-inner">
               <button
                 type="button"
-                onClick={() => {
-                  setPageTab("workflows");
-                  setActiveView("list");
-                }}
+                onClick={() => handleTabSwitch("workflows")}
                 className={cn(
                   "py-2 px-4 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2",
                   pageTab === "workflows"
@@ -668,7 +733,7 @@ export default function Automations() {
 
               <button
                 type="button"
-                onClick={() => setPageTab("ai-vault")}
+                onClick={() => handleTabSwitch("ai-vault")}
                 className={cn(
                   "py-2 px-4 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative",
                   pageTab === "ai-vault"
@@ -678,9 +743,13 @@ export default function Automations() {
               >
                 <Lock className="w-3.5 h-3.5 text-amber-400" />
                 <span>Locked AI Backend</span>
-                <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  Prompt Vault
+                <span className={cn(
+                  "inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border",
+                  pageTab === "ai-vault"
+                    ? "bg-[#07162B]/30 text-[#07162B] border-[#07162B]/40 font-bold"
+                    : "bg-amber-950/80 text-amber-300 border-amber-500/40"
+                )}>
+                  PG-013-AI
                 </span>
               </button>
             </div>
@@ -688,7 +757,7 @@ export default function Automations() {
 
           {/* ─── CONDITIONAL TAB CONTENT ─── */}
           {pageTab === "ai-vault" ? (
-            <AiPromptVault />
+            <AiPromptVault onUnlockChange={(unlocked) => setIsVaultUnlocked(unlocked)} />
           ) : (
             <div className="w-full space-y-6">
 

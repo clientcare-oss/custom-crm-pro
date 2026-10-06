@@ -48,6 +48,9 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/lead-forms":                      { id: "PG-012", name: "Lead Forms Builder", category: "Marketing" },
   "/leads/forms":                     { id: "PG-012", name: "Lead Forms Builder", category: "Marketing", description: "Lead Center Form Studio" },
   "/automations":                     { id: "PG-013", name: "Automations Engine", category: "Automation" },
+  "/automations/ai-vault":            { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
+  "/automations/ai":                  { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
+  "/automations/prompts":             { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
   "/integrations":                    { id: "PG-014", name: "Integrations & API", category: "Settings" },
   "/integrations/quo":                { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
   "/settings/integrations/quo":       { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
@@ -344,6 +347,22 @@ export const CREW_QUARTERS_TAB_IDS: Record<string, PageIdInfo> = {
   "notes":        { id: "PG-038-NOT", name: "My Notes", category: "Employee", description: "Individual employee business thinking space, sticky notes, and idea capture" },
 };
 
+// ─── Automations Tab & Sub-ID Mappings ───────────────────────────────────────
+export const AUTOMATIONS_TAB_IDS: Record<string, PageIdInfo> = {
+  "workflows": { id: "PG-013", name: "Automations Engine", category: "Automation", description: "Trigger-based action sequences, smart file routing, and workflows" },
+  "ai-vault":  { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
+  "ai":        { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
+  "prompts":   { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
+  "vault":     { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
+};
+
+/**
+ * Resolves an Automations tab identifier (e.g. 'workflows', 'ai-vault', 'prompts') to its specific Sub-Page ID.
+ */
+export function resolveAutomationsTabId(tabId: string): PageIdInfo | null {
+  return AUTOMATIONS_TAB_IDS[tabId] || null;
+}
+
 /**
  * Resolves a Crew Quarters tab identifier (e.g. 'messages', 'tasks', 'schedule', 'resources') to its specific Sub-Page ID.
  */
@@ -372,6 +391,15 @@ export function broadcastPageId(idInfo: PageIdInfo) {
  */
 export function resolvePageId(pathname: string, search = ""): PageIdInfo {
   const cleanPath = pathname.split("?")[0].split("#")[0].replace(/\/+$/, "") || "/";
+
+  // Check URL query search for sub-tabs if on automations
+  if (cleanPath === "/automations") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab");
+    if (tabParam && AUTOMATIONS_TAB_IDS[tabParam]) {
+      return AUTOMATIONS_TAB_IDS[tabParam];
+    }
+  }
 
   // Check URL query search for sub-tabs if on portal
   if (cleanPath === "/portal" || cleanPath === "/client-portal") {

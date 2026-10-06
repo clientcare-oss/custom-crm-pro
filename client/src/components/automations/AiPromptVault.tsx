@@ -36,8 +36,13 @@ import {
 } from "./defaultAiPrompts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { broadcastPageId } from "@/lib/pageIdRegistry";
 
-export default function AiPromptVault() {
+interface AiPromptVaultProps {
+  onUnlockChange?: (unlocked: boolean) => void;
+}
+
+export default function AiPromptVault({ onUnlockChange }: AiPromptVaultProps = {}) {
   // Vault lock state: session-based
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     return sessionStorage.getItem(VAULT_LOCK_STATUS_KEY) === "true";
@@ -98,6 +103,19 @@ export default function AiPromptVault() {
     }
   }, [selectedPromptId]);
 
+  // Sync Page ID when unlock state changes or mounts
+  useEffect(() => {
+    if (isUnlocked) {
+      broadcastPageId({
+        id: "PG-013-AI",
+        name: "Locked AI Prompt Vault",
+        category: "Automation",
+        description: "Secure executive library prompts and AI model configuration"
+      });
+      onUnlockChange?.(true);
+    }
+  }, [isUnlocked]);
+
   // Unlock handlers
   const handleDigitPress = (digit: string) => {
     if (enteredPin.length < 4) {
@@ -110,7 +128,14 @@ export default function AiPromptVault() {
           setIsUnlocked(true);
           sessionStorage.setItem(VAULT_LOCK_STATUS_KEY, "true");
           setEnteredPin("");
-          toast.success("Executive AI Vault Unlocked — Authorized Session Active");
+          broadcastPageId({
+            id: "PG-013-AI",
+            name: "Locked AI Prompt Vault",
+            category: "Automation",
+            description: "Secure executive library prompts and AI model configuration"
+          });
+          onUnlockChange?.(true);
+          toast.success("Executive AI Vault Unlocked (PG-013-AI) — Authorized Session Active");
         } else {
           setPinError(true);
           toast.error("Incorrect Executive PIN. Access denied.");
@@ -132,13 +157,27 @@ export default function AiPromptVault() {
     setIsUnlocked(true);
     sessionStorage.setItem(VAULT_LOCK_STATUS_KEY, "true");
     setEnteredPin("");
-    toast.success("Executive Passkey Verified — Byron Honea Session Active");
+    broadcastPageId({
+      id: "PG-013-AI",
+      name: "Locked AI Prompt Vault",
+      category: "Automation",
+      description: "Secure executive library prompts and AI model configuration"
+    });
+    onUnlockChange?.(true);
+    toast.success("Executive Passkey Verified (PG-013-AI) — Byron Honea Session Active");
   };
 
   const handleRelock = () => {
     setIsUnlocked(false);
     sessionStorage.removeItem(VAULT_LOCK_STATUS_KEY);
     setEnteredPin("");
+    broadcastPageId({
+      id: "PG-013",
+      name: "Automations Engine",
+      category: "Automation",
+      description: "Trigger-based action sequences, smart file routing, and workflows"
+    });
+    onUnlockChange?.(false);
     toast.info("Executive AI Vault Re-Locked");
   };
 
@@ -267,9 +306,14 @@ Analyze the provided student documentation and provide clear, legally sound pare
               <Lock className="w-8 h-8 text-[#FFE394] drop-shadow-[0_0_8px_rgba(255,227,148,0.6)]" />
             </div>
 
-            <span className="text-[10px] font-serif font-bold uppercase tracking-[0.22em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404]/80 border border-[#8C6418]/60">
-              Executive AI Vault · Restricted Access
-            </span>
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FFE394] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418]">
+                PG-013-AI
+              </span>
+              <span className="text-[10px] font-serif font-bold uppercase tracking-[0.22em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404]/80 border border-[#8C6418]/60">
+                Executive AI Vault · Restricted Access
+              </span>
+            </div>
 
             <h2 className="font-serif text-2xl font-bold text-[#FFF4D4] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
               Locked AI Backend
@@ -372,7 +416,11 @@ Analyze the provided student documentation and provide clear, legally sound pare
             <ShieldCheck className="w-5 h-5 text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-[#1F1404] text-[#FFE394] border border-[#8C6418] shadow-[0_0_8px_rgba(197,160,89,0.3)]">
+                <KeyRound className="w-3 h-3 text-[#C5A059]" />
+                PG-013-AI
+              </span>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 shadow-[0_0_8px_rgba(52,211,153,0.25)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Executive Session Unlocked
@@ -381,8 +429,8 @@ Analyze the provided student documentation and provide clear, legally sound pare
                 {prompts.length} Master Prompts Active
               </span>
             </div>
-            <p className="text-xs text-[#A69371] font-serif mt-0.5">
-              Cloudflare Workers AI Prompts · @cf/meta/llama-3.1-8b & llama-3.3-70b
+            <p className="text-xs text-[#A69371] font-serif mt-1">
+              Sub-Page ID: <span className="font-mono text-[#FFE394] font-semibold">PG-013-AI</span> · Locked AI Backend & Executive Prompt Library
             </p>
           </div>
         </div>

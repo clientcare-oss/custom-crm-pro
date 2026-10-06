@@ -91,6 +91,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-011`: Templates (`/templates`)
   - `PG-012`: Lead Forms (`/leads/forms`, `/lead-forms`)
   - `PG-013`: Automations (`/automations`)
+  - `PG-013-AI`: Locked AI Prompt Vault (`/automations?tab=ai-vault`, `/automations/ai-vault`)
   - `PG-014`: Integrations (`/integrations`)
   - `PG-015`: Workflows (`/workflows`)
   - `PG-016`: Knowledge Base (`/knowledge-base`)
