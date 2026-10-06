@@ -441,135 +441,93 @@ export default function MeetingWorkspace() {
     <ScopedErrorBoundary>
       <div className="min-h-screen bg-[#07162B] bg-[radial-gradient(ellipse_at_50%_0%,#102B4E_0%,#07162B_55%,#030D1A_100%)] text-[#FFF4D4] pb-12 flex flex-col">
         {/* ── Top Panoramic Advocacy Strategy Library & Study Shelf Canopy (PG-043) ── */}
-        <MeetingWorkspaceAnimatedHeader />
-
-        {/* ── Main Workspace Content Deck (Trailing ivy vines drape gracefully over the deck) ── */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto w-full flex-1 -mt-6 sm:-mt-10 lg:-mt-14 relative z-30">
-          {/* Top Student Switcher Bar */}
-          <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-[#3A2C18]/80 rounded-2xl p-2.5 sm:p-3 bg-[#05142B]/80 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
-            <div className="flex items-center gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#05142B]/90 border border-[#3A2C18] text-xs font-semibold text-[#FFF4D4] hover:border-[#C5A059]/60 shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all cursor-pointer">
-                  <Users className="w-3.5 h-3.5 text-[#DFBE77]" />
-                  <span>Student: <strong className="text-[#FFE394]">{studentName}</strong></span>
-                  {caseId && (
-                    <span className="px-2 py-0.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[11px] font-mono font-bold text-[#FFE394]">
-                      Case #{caseId.replace(/^Case\s*#?/i, "")}
-                    </span>
-                  )}
-                  <ChevronDown className="w-3 h-3 text-[#A69371]" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] w-72 max-h-80 overflow-y-auto shadow-2xl">
-                {studentList?.map((c) => {
-                  const cCaseId = c.caseId || (c.id === 120034 ? "WP-2026-0029" : null);
-                  const isStudentItem =
-                    c.jobTitle === "Student" ||
-                    (c.jobTitle || "").toLowerCase().includes("student") ||
-                    (c.parentContactId != null && c.parentContactId > 0) ||
-                    Boolean(c.gradeLevel) ||
-                    c.id === 120040 ||
-                    c.id === 120038 ||
-                    c.id === 120034;
-
-                  return (
-                    <DropdownMenuItem
-                      key={c.id}
-                      onClick={() => handleStudentSwitch(c.id)}
-                      className="flex items-center justify-between gap-2 text-xs hover:bg-[#071E3D] hover:text-[#FFF4D4] cursor-pointer py-2 text-[#D8C7A5]"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-semibold text-[#FFF4D4]">{c.firstName} {c.lastName}</span>
-                          {isStudentItem && (
-                            <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#C5A059]/20 text-[#FFE394] border border-[#C5A059]/40 font-bold">
-                              Student
-                            </span>
-                          )}
-                          {c.gradeLevel && (
-                            <span className="text-[10px] text-[#A69371]">({c.gradeLevel})</span>
-                          )}
-                        </div>
-                        {cCaseId && (
-                          <span className="text-[10.5px] font-mono text-[#FFE394]/90 font-medium">
-                            Case #{cCaseId.replace(/^Case\s*#?/i, "")}
-                          </span>
-                        )}
-                      </div>
-                      {c.id === selectedStudentId && (
-                        <Badge className="bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40 text-[10px] py-0 shrink-0">Active</Badge>
-                      )}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {saveMutation.isPending && (
-              <span className="text-[11px] text-[#A69371] flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin text-[#FFE394]" />
-                Saving to D1...
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsImportModalOpen(true)}
-              className="text-xs h-8 border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 gap-1.5 cursor-pointer shadow-sm font-semibold"
-              title="Paste or drop an Advocate Ready document to import targets"
-            >
-              <Download className="w-3.5 h-3.5 text-[#DFBE77]" />
-              <span>📥 Import Advocate Ready</span>
-            </Button>
-            <Button
-              onClick={() => saveCurrentState()}
-              variant="outline"
-              size="sm"
-              className="text-xs h-8 border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 gap-1.5 cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5 text-[#DFBE77]" />
-              Save Workspace
-            </Button>
-            <PageIdBadge id="PG-043" name="⚡ Meeting Workspace" />
-          </div>
-        </div>
-
-        {/* Header Section (Title, Tabs, Status, Quick Live Launch, Live D1 Sync Pill) */}
-        <HeaderSection
+        <MeetingWorkspaceAnimatedHeader
           studentName={studentName}
+          selectedStudentId={selectedStudentId}
+          studentList={studentList}
           caseId={caseId}
-          meetingDate={meetingDate}
+          onSelectStudent={handleStudentSwitch}
           meetingType={meetingType}
-          status={meetingStatus}
+          meetingDate={meetingDate}
           activeTab={activeTab}
           onSelectTab={(tab) => {
             setActiveTab(tab);
+            if (tab === "ASSEMBLY") setPrepStep("iep_intel");
+            else if (tab === "BLUEPRINT") setPrepStep("blueprint");
             saveCurrentState({ activeTab: tab }, true);
           }}
           onBack={handleBack}
-          onStartLiveMeeting={() => {
-            setMeetingStatus("LIVE");
-            setActiveTab("MEETING_MODE");
-            saveCurrentState({ status: "LIVE" });
-            // Connect to Voyage Log background meeting recording infrastructure
-            const globalRec = (window as any).voyageGlobalRecorder;
-            if (globalRec) {
-              if (selectedStudentId) globalRec.setSelectedContactId(selectedStudentId);
-              globalRec.setTitle(`${studentName} — ${meetingType || "Annual IEP Meeting"} (${meetingDate})`);
-            }
-          }}
-          isSaving={saveMutation.isPending}
-          lastSavedAt={lastSavedAt}
-          onSave={() => {
+          onImportClick={() => setIsImportModalOpen(true)}
+          onSaveClick={() => {
             saveCurrentState();
             toast.success("Workspace saved to Cloudflare D1 & local storage");
           }}
+          isSaving={saveMutation.isPending}
+          lastSavedAt={lastSavedAt}
+          status={meetingStatus}
         />
+
+        {/* ── Main Workspace Content Deck (Trailing ivy vines drape gracefully over the deck) ── */}
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto w-full flex-1 -mt-4 sm:-mt-8 lg:-mt-12 relative z-30">
+          
+          {/* Status Bar & Live Meeting Command Bar (Only shows when Live, Ready, or syncing) */}
+          <div className="flex items-center justify-between gap-3 flex-wrap px-3.5 py-2 rounded-xl bg-[#05142B]/85 border border-[#3A2C18] shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-md">
+            {/* Live D1 Sync Pill */}
+            <div className="flex items-center gap-2 text-xs">
+              {saveMutation.isPending ? (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-[#FFE394] animate-ping" />
+                  <span className="text-[#FFE394] font-medium flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin text-[#FFE394]" />
+                    Syncing to Cloudflare D1...
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="text-emerald-300 font-medium flex items-center gap-1.5">
+                    <span>Saved to Cloudflare D1</span>
+                    {lastSavedAt && (
+                      <span className="text-[#A69371] font-mono text-[11px]">
+                        ({lastSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })})
+                      </span>
+                    )}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Quick Live Meeting Action & Page ID Badge */}
+            <div className="flex items-center gap-2.5">
+              {meetingStatus === "LIVE" ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-950/90 border border-emerald-500 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.35)] font-mono">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                  LIVE MEETING IN PROGRESS
+                </span>
+              ) : meetingStatus === "READY" ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setMeetingStatus("LIVE");
+                    setActiveTab("MEETING_MODE");
+                    saveCurrentState({ status: "LIVE", activeTab: "MEETING_MODE" });
+                    const globalRec = (window as any).voyageGlobalRecorder;
+                    if (globalRec) {
+                      if (selectedStudentId) globalRec.setSelectedContactId(selectedStudentId);
+                      globalRec.setTitle(`${studentName} — ${meetingType || "Annual IEP Meeting"} (${meetingDate})`);
+                    }
+                    toast.success("Live Meeting session initiated");
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer h-7 px-3"
+                >
+                  <Zap className="h-3.5 w-3.5 fill-[#07162B]" />
+                  Launch Live Meeting
+                </Button>
+              ) : null}
+
+              <PageIdBadge id="PG-043" name="⚡ Meeting Workspace" />
+            </div>
+          </div>
 
         {/* Loading state */}
         {workspaceLoading && (
