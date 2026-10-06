@@ -29,25 +29,22 @@ export function MeetingWorkspaceAnimatedHeader() {
           <div
             className="absolute flex flex-col items-center justify-center text-center pointer-events-none"
             style={{
-              left: "28%",
-              top: "24%",
-              width: "44%",
-              height: "22%",
+              left: "26%",
+              top: "16%",
+              width: "48%",
+              height: "17%",
             }}
           >
-            <div className="px-4 py-1.5 rounded-xl bg-[#05142B]/85 border border-[#C5A059]/40 shadow-[0_4px_20px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-sm">
+            <div className="px-3.5 py-1 rounded-xl bg-[#05142B]/85 border border-[#C5A059]/40 shadow-[0_4px_16px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-sm">
               <div className="flex items-center justify-center gap-2">
-                <span className="text-[#DFBE77] text-sm sm:text-base">⚡</span>
-                <span className="font-serif font-black text-xs sm:text-base lg:text-lg text-[#FFF4D4] tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                <span className="text-[#DFBE77] text-xs sm:text-base">⚡</span>
+                <span className="font-serif font-black text-xs sm:text-sm lg:text-base text-[#FFF4D4] tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                   Meeting Workspace
                 </span>
                 <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-[#C5A059]/20 text-[#FFE394] border border-[#C5A059]/40 font-mono font-bold">
                   PG-043
                 </span>
               </div>
-              <p className="text-[9px] sm:text-[11px] text-[#C6B697] tracking-wider hidden sm:block mt-0.5">
-                Strategic Assembly · Parent Blueprint · Live Meeting Navigation
-              </p>
             </div>
           </div>
         </div>
