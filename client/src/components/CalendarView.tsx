@@ -296,14 +296,14 @@ export default function CalendarView({
         <div className="flex items-center justify-between mb-1">
           <span
             className={`text-xs font-mono font-bold ${
-              isToday ? "text-[#FFE394] bg-[#020A17] px-1 rounded border border-[#C5A059]/50" : "text-[#A69371]"
+              isToday ? "text-[#FFE394] bg-[#020A17] px-1 rounded-[5px] border border-[#C5A059]/50" : "text-[#A69371]"
             }`}
           >
             {day}
           </span>
           {allDayClosure ? (
             <span
-              className="text-[9px] font-mono px-1 rounded bg-rose-950 text-rose-300 border border-rose-600/60 font-bold"
+              className="text-[9px] font-mono px-1 rounded-[5px] bg-rose-950 text-rose-300 border border-rose-600/60 font-bold"
               title="Office Closed"
             >
               CLOSED
@@ -331,7 +331,7 @@ export default function CalendarView({
                   onOperationalBlockClick?.(block);
                 }}
                 style={{ background: pDef.inlineBackground }}
-                className={`text-[9px] px-1.5 py-0.5 rounded cursor-pointer hover:opacity-90 transition-all border ${pDef.borderClass}`}
+                className={`text-[9px] px-1.5 py-0.5 rounded-[5px] cursor-pointer hover:opacity-90 transition-all border ${pDef.borderClass}`}
               >
                 <div className="font-serif font-bold truncate leading-tight text-[#FFE394]">
                   {pDef.patternSymbol} {block.title}
@@ -355,7 +355,7 @@ export default function CalendarView({
                   onEventClick?.(apt);
                 }}
                 style={{ background: patternDef.inlineBackground }}
-                className={`text-[10px] px-1.5 py-1 rounded-lg cursor-pointer hover:opacity-90 transition-all border ${
+                className={`text-[10px] px-1.5 py-1 rounded-[5px] cursor-pointer hover:opacity-90 transition-all border ${
                   isNeedsCoverage
                     ? "border-rose-600/80 shadow-sm shadow-rose-950"
                     : patternDef.borderClass

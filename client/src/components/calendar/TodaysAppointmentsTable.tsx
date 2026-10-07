@@ -231,13 +231,13 @@ export default function TodaysAppointmentsTable({
                     {/* Status Pill */}
                     <td className="py-3 px-3 whitespace-nowrap">
                       {isNeedsCoverage ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-rose-500/40 bg-rose-950/60 text-rose-300 font-semibold text-xs font-mono">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] border border-rose-500/40 bg-rose-950/60 text-rose-300 font-semibold text-xs font-mono">
                           <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                           <span>Needs Coverage</span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 font-semibold text-xs font-mono">
-                          <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 font-semibold text-xs font-mono">
+                          <div className="w-3.5 h-3.5 rounded-[3px] bg-emerald-500 flex items-center justify-center text-slate-950">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                           <span>Confirmed</span>
@@ -252,7 +252,7 @@ export default function TodaysAppointmentsTable({
                           <button
                             type="button"
                             onClick={() => onReassignClick(apt)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] font-semibold text-xs transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] font-semibold text-xs transition-colors cursor-pointer"
                           >
                             <Users className="w-3.5 h-3.5 text-[#C5A059]" />
                             <span>Reassign</span>
@@ -262,7 +262,7 @@ export default function TodaysAppointmentsTable({
                         <button
                           type="button"
                           onClick={() => onEventClick(apt)}
-                          className="h-7 w-8 rounded-lg border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
+                          className="h-7 w-8 rounded-[5px] border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
                         >
                           <MoreHorizontal className="w-4 h-4 text-[#A69371]" />
                         </button>

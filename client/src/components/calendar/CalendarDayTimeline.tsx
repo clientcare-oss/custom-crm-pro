@@ -345,10 +345,10 @@ export default function CalendarDayTimeline({
                         onOperationalBlockClick?.(block);
                       }}
                       style={{ background: bDef.inlineBackground }}
-                      className={`rounded-xl border p-3 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-sm ${bDef.borderClass}`}
+                      className={`rounded-[5px] border p-3 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-sm ${bDef.borderClass}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-1.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-[#FFE394] shrink-0">
+                        <div className="p-1.5 rounded-[5px] bg-[#020A17]/80 border border-[#3A2C18] text-[#FFE394] shrink-0">
                           {block.scope === "ENTIRE_COMPANY" ? (
                             <Building2 className="w-4 h-4 text-rose-400" />
                           ) : (
@@ -360,12 +360,12 @@ export default function CalendarDayTimeline({
                             <span className="font-serif font-bold text-[#FFF4D4] text-xs sm:text-sm">
                               {block.title}
                             </span>
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/50 text-[#FFE394] border border-[#3A2C18] uppercase">
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-[5px] bg-black/50 text-[#FFE394] border border-[#3A2C18] uppercase">
                               {bDef.label}
                             </span>
                             <Badge
                               variant="outline"
-                              className={`text-[9px] font-mono px-1.5 py-0 ${
+                              className={`text-[9px] font-mono px-1.5 py-0 rounded-[5px] ${
                                 block.schedulingEffect === "HARD_BLOCK"
                                   ? "bg-rose-950/80 text-rose-300 border-rose-500/60"
                                   : block.schedulingEffect === "SOFT_BLOCK"
@@ -452,15 +452,15 @@ export default function CalendarDayTimeline({
                         <div className="font-serif font-bold text-[#FFF4D4] text-sm tracking-tight leading-tight flex items-center gap-2">
                           <span>{apt.title}</span>
                           {isHold ? (
-                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-[5px] bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
                               {isParentSelected ? "PARENT SELECTED" : "TENTATIVE"}
                             </span>
                           ) : isNeedsCoverage ? (
-                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-500/60 uppercase">
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-[5px] bg-rose-950/80 text-rose-300 border border-rose-500/60 uppercase">
                               NEEDS COVERAGE
                             </span>
                           ) : (
-                            <span className="text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 border border-emerald-200 uppercase shadow-[0_0_12px_rgba(52,211,153,0.7)] flex items-center gap-1.5 tracking-wider">
+                            <span className="text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-[5px] bg-emerald-400 text-emerald-950 border border-emerald-200 uppercase shadow-[0_0_12px_rgba(52,211,153,0.7)] flex items-center gap-1.5 tracking-wider">
                               <span className="w-2 h-2 rounded-full bg-emerald-950 animate-pulse" />
                               CONFIRMED
                             </span>
@@ -469,7 +469,7 @@ export default function CalendarDayTimeline({
 
                         {isHold ? (
                           <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[#102B4E]/80 text-[#FFE394] border border-[#3A2C18]">
+                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-[5px] bg-[#102B4E]/80 text-[#FFE394] border border-[#3A2C18]">
                               {apt.siblingLabel || "1 OF 3 POSSIBLE DATES"}
                             </span>
                             <span className="text-xs text-[#C6B697]">
@@ -492,7 +492,7 @@ export default function CalendarDayTimeline({
 
                       {/* Right: Time Range & Action Button */}
                       <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                        <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-[5px] ${
                           isHold || isNeedsCoverage
                             ? "text-[#FFE394] bg-[#020A17]/60 border border-[#3A2C18]"
                             : "text-emerald-100 bg-emerald-900/80 border border-emerald-400/60 shadow-[0_0_8px_rgba(16,185,129,0.35)]"
@@ -503,7 +503,7 @@ export default function CalendarDayTimeline({
                         <button
                           type="button"
                           onClick={() => onEventClick(apt)}
-                          className="h-7 w-8 rounded-lg border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
+                          className="h-7 w-8 rounded-[5px] border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
                         >
                           <MoreHorizontal className="w-4 h-4 text-[#A69371]" />
                         </button>

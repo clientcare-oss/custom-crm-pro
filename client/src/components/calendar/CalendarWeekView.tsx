@@ -661,11 +661,11 @@ export default function CalendarWeekView({
                           {/* Top: Icon + Time + Title */}
                           <div className="flex items-center gap-1.5 mb-0.5">
                             {isHold ? (
-                              <div className="flex h-4 w-4 items-center justify-center rounded-[2px] bg-cyan-400 text-[#07162B] font-mono text-[9px] font-bold">
+                              <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-400 text-[#07162B] font-mono text-[9px] font-bold">
                                 {data.optionsCount || 3}
                               </div>
                             ) : (
-                              <div className="flex h-4 w-4 items-center justify-center rounded-[2px] bg-black/40 text-[#FFF4D4]">
+                              <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-black/40 text-[#FFF4D4]">
                                 {isCall ? (
                                   <Phone className="h-2.5 w-2.5 text-amber-300" />
                                 ) : (
@@ -699,7 +699,7 @@ export default function CalendarWeekView({
                         {isHold && (
                           <div className="mt-auto pt-1 flex items-center justify-between text-[9px] font-mono text-cyan-300">
                             <span>Hold #{data.currentOptionIndex || 1}</span>
-                            <span className="text-[8px] bg-cyan-950 px-1 py-0.2 rounded border border-cyan-500/50">
+                            <span className="text-[8px] bg-cyan-950 px-1 py-0.2 rounded-[5px] border border-cyan-500/50">
                               3 Slots
                             </span>
                           </div>

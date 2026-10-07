@@ -1102,17 +1102,17 @@ export default function Appointments() {
                   selectedApt.originalTimeZone || "America/New_York"
                 );
                 return (
-                  <div className="rounded-xl border border-[#3A2C18] bg-[#020A17]/80 p-3.5 space-y-3 shadow-md">
+                  <div className="rounded-[5px] border border-[#3A2C18] bg-[#020A17]/80 p-3.5 space-y-3 shadow-md">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold uppercase tracking-wider text-[#C6B697] flex items-center gap-1.5">
                         <Globe className="h-3.5 w-3.5 text-[#C5A059]" /> Multi-Zone Alignment
                       </span>
                       {dualTime.clientTime.isDifferent ? (
-                        <span className="text-[11px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.5 rounded-full">
+                        <span className="text-[11px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.5 rounded-[5px]">
                           {dualTime.clientTime.friendlyName} vs Eastern
                         </span>
                       ) : (
-                        <span className="text-[11px] font-medium text-emerald-300 bg-emerald-950/50 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                        <span className="text-[11px] font-medium text-emerald-300 bg-emerald-950/50 border border-emerald-500/40 px-2 py-0.5 rounded-[5px]">
                           Synchronized
                         </span>
                       )}
@@ -1120,13 +1120,13 @@ export default function Appointments() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {/* 🔴 CLIENT'S SCHEDULED TIME (RED) */}
-                      <div className="rounded-lg border-2 border-rose-500/70 bg-rose-950/40 p-3 flex flex-col justify-between shadow-sm">
+                      <div className="rounded-[5px] border-2 border-rose-500/70 bg-rose-950/40 p-3 flex flex-col justify-between shadow-sm">
                         <div className="flex items-center justify-between text-xs text-rose-300 font-semibold mb-1">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse inline-block" />
                             Client Time
                           </span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/40">
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-[5px] bg-rose-500/20 text-rose-200 border border-rose-500/40">
                             {dualTime.clientTime.tzAbbr}
                           </span>
                         </div>
@@ -1139,13 +1139,13 @@ export default function Appointments() {
                       </div>
 
                       {/* 🟢 WAYPOINT / ADVOCATE TIME (GREEN) */}
-                      <div className="rounded-lg border-2 border-emerald-500/70 bg-emerald-950/40 p-3 flex flex-col justify-between shadow-sm">
+                      <div className="rounded-[5px] border-2 border-emerald-500/70 bg-emerald-950/40 p-3 flex flex-col justify-between shadow-sm">
                         <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold mb-1">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
                             Waypoint Time
                           </span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-[5px] bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
                             {dualTime.waypointTime.tzAbbr}
                           </span>
                         </div>
@@ -1159,7 +1159,7 @@ export default function Appointments() {
                     </div>
 
                     {dualTime.clientTime.isDifferent && (
-                      <div className="text-xs text-[#C6B697] bg-[#05142B] rounded-md p-2.5 border border-[#3A2C18] flex items-center gap-2">
+                      <div className="text-xs text-[#C6B697] bg-[#05142B] rounded-[5px] p-2.5 border border-[#3A2C18] flex items-center gap-2">
                         <Clock className="h-4 w-4 text-[#C5A059] shrink-0" />
                         <span>{dualTime.explanation}</span>
                       </div>
@@ -1170,7 +1170,7 @@ export default function Appointments() {
 
               {/* Assigned Advocate */}
               {selectedApt.assignedAdvocateName && (
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-[#3A2C18] bg-[#020A17]/80">
+                <div className="flex items-center justify-between p-2.5 rounded-[5px] border border-[#3A2C18] bg-[#020A17]/80">
                   <span className="text-xs text-[#C6B697] flex items-center gap-1.5">
                     <UserCheck className="h-3.5 w-3.5 text-cyan-400" />
                     Assigned Advocate:
