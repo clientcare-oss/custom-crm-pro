@@ -159,7 +159,7 @@ export default function CalendarWeekView({
   }, [weekDays, filteredBlocks]);
 
   return (
-    <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
+    <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-[#3A2C18]/60">
         {weekDays.map((dayDate) => {
           const dateStr = dayDate.toISOString().split("T")[0];
@@ -305,7 +305,7 @@ export default function CalendarWeekView({
                       key={apt.id}
                       onClick={() => onEventClick(apt)}
                       style={{ background: weekCardBg }}
-                      className={`rounded-xl border p-2 text-xs cursor-pointer transition-all hover:scale-[1.01] shadow-md relative z-10 ${weekCardBorder}`}
+                      className={`rounded-[5px] border p-2 text-xs cursor-pointer transition-all hover:scale-[1.01] shadow-md relative z-10 ${weekCardBorder}`}
                     >
                       {/* Time Badges */}
                       <div className="flex items-center gap-1 font-mono text-[9px] mb-1 flex-wrap">

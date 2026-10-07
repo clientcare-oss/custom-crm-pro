@@ -213,7 +213,7 @@ export default function CalendarDayTimeline({
                 })
               ].inlineBackground,
           }}
-          className="mb-5 rounded-xl border border-rose-600/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg cursor-pointer hover:brightness-110 transition-all"
+          className="mb-5 rounded-[5px] border border-rose-600/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg cursor-pointer hover:brightness-110 transition-all"
         >
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-rose-950/80 border border-rose-500/60 text-rose-300 shrink-0">
@@ -307,7 +307,7 @@ export default function CalendarDayTimeline({
                 style={{
                   background: slotBackground,
                 }}
-                className={`flex-1 min-h-[50px] border-t border-[#3A2C18]/60 pt-2 space-y-2 rounded-lg transition-all p-2 ${
+                className={`flex-1 min-h-[50px] border-t border-[#3A2C18]/60 pt-2 space-y-2 rounded-[5px] transition-all p-2 ${
                   hasOperationalBlock
                     ? "border-l-2 border-l-[#C5A059]/50 shadow-inner"
                     : hourApts.length === 0
@@ -445,7 +445,7 @@ export default function CalendarDayTimeline({
                       key={apt.id}
                       onClick={() => onEventClick(apt)}
                       style={{ background: cardBackground }}
-                      className={`rounded-xl border p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-md relative z-10 ${cardBorderClass}`}
+                      className={`rounded-[5px] border p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-md relative z-10 ${cardBorderClass}`}
                     >
                       {/* Left: Title & Subtitle */}
                       <div>

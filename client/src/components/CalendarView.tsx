@@ -385,9 +385,9 @@ export default function CalendarView({
             setTableTab("my");
             setCurrentDate(new Date());
           }}
-          className="flex items-center gap-3.5 px-4 py-3 rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] cursor-pointer hover:border-[#C5A059]/80 transition-all shrink-0 group"
+          className="flex items-center gap-3.5 px-4 py-3 rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] cursor-pointer hover:border-[#C5A059]/80 transition-all shrink-0 group"
         >
-          <div className="p-2 rounded-xl bg-[#020A17] text-[#FFE394] border border-[#3A2C18] group-hover:scale-105 transition-transform">
+          <div className="p-2 rounded-[5px] bg-[#020A17] text-[#FFE394] border border-[#3A2C18] group-hover:scale-105 transition-transform">
             <CalendarIcon className="w-5 h-5 text-[#C5A059]" />
           </div>
           <div>
@@ -416,7 +416,7 @@ export default function CalendarView({
         <div>
           <Button
             onClick={() => onScheduleClick?.()}
-            className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-sm h-10 px-4 rounded-xl shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-sm h-10 px-4 rounded-[5px] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4 text-[#07162B] stroke-[3]" />
             <span>Schedule Appointment</span>
@@ -425,14 +425,14 @@ export default function CalendarView({
       </div>
 
       {/* ── CONTROLS ROW (Day|Week|Month + My Calendar|All Staff + Advocate + Date) ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="flex flex-wrap items-center gap-3">
           {/* Day | Week | Month */}
-          <div className="flex items-center p-0.5 rounded-xl bg-[#020A17] border border-[#3A2C18]">
+          <div className="flex items-center p-0.5 rounded-[5px] bg-[#020A17] border border-[#3A2C18]">
             <button
               type="button"
               onClick={() => setViewMode("day")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "day"
                   ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
                   : "text-[#C6B697] hover:text-[#FFF4D4]"
@@ -443,7 +443,7 @@ export default function CalendarView({
             <button
               type="button"
               onClick={() => setViewMode("week")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "week"
                   ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
                   : "text-[#C6B697] hover:text-[#FFF4D4]"
@@ -454,7 +454,7 @@ export default function CalendarView({
             <button
               type="button"
               onClick={() => setViewMode("month")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "month"
                   ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
                   : "text-[#C6B697] hover:text-[#FFF4D4]"
@@ -465,14 +465,14 @@ export default function CalendarView({
           </div>
 
           {/* My Calendar | All Staff */}
-          <div className="flex items-center p-0.5 rounded-xl bg-[#020A17] border border-[#3A2C18]">
+          <div className="flex items-center p-0.5 rounded-[5px] bg-[#020A17] border border-[#3A2C18]">
             <button
               type="button"
               onClick={() => {
                 setScope("my");
                 setTableTab("my");
               }}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
                 scope === "my"
                   ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
                   : "text-[#C6B697] hover:text-[#FFF4D4]"
@@ -486,7 +486,7 @@ export default function CalendarView({
                 setScope("all");
                 setTableTab("all");
               }}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
                 scope === "all"
                   ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
                   : "text-[#C6B697] hover:text-[#FFF4D4]"
@@ -502,7 +502,7 @@ export default function CalendarView({
             <select
               value={filterAdvocate}
               onChange={(e) => setFilterAdvocate(e.target.value)}
-              className="h-8 px-3 rounded-xl bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs font-medium focus:outline-none focus:border-[#C5A059] cursor-pointer"
+              className="h-8 px-3 rounded-[5px] bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs font-medium focus:outline-none focus:border-[#C5A059] cursor-pointer"
             >
               <option value="all">All Advocates</option>
               {staffList.map((s) => (
@@ -517,7 +517,7 @@ export default function CalendarView({
         {/* Right: Date selector matching reference */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-[#A69371] font-medium">Date</span>
-          <div className="flex items-center gap-2 h-8 px-3 rounded-xl bg-[#020A17] border border-[#3A2C18] text-[#FFE394] text-xs font-mono">
+          <div className="flex items-center gap-2 h-8 px-3 rounded-[5px] bg-[#020A17] border border-[#3A2C18] text-[#FFE394] text-xs font-mono">
             <span>{dateInputStr}</span>
             <CalendarIcon className="w-3.5 h-3.5 text-[#C5A059]" />
           </div>
@@ -577,7 +577,7 @@ export default function CalendarView({
       )}
 
       {viewMode === "month" && (
-        <Card className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
+        <Card className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
           <CardContent className="p-3">
             <div className="grid grid-cols-7 gap-0">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (

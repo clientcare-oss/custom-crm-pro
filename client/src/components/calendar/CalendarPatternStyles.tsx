@@ -759,7 +759,7 @@ export function CalendarPatternLegendBar({
   ];
 
   return (
-    <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/95 p-2.5 shadow-[0_6px_20px_rgba(0,0,0,0.85)]">
+    <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/95 p-2.5 shadow-[0_6px_20px_rgba(0,0,0,0.85)]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 mb-2">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-[#C5A059] animate-pulse" />

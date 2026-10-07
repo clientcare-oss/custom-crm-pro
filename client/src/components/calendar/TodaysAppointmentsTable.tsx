@@ -126,7 +126,7 @@ export default function TodaysAppointmentsTable({
   const displayList = tab === "my" ? myAppointments : dayAppointments;
 
   return (
-    <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+    <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
       {/* Header: Title + Inline Tabs exactly matching reference */}
       <div className="flex flex-wrap items-center gap-6 pb-4 border-b border-[#3A2C18]/60">
         <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">

@@ -1546,7 +1546,7 @@ export default function Appointments() {
       </div>
 
       {/* ── Visual Layer Filtering Bar (Visual only, does not alter real scheduling engine rules) ── */}
-      <div className="mb-4 p-3 rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="mb-4 p-3 rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-2 shrink-0">
           <Layers className="w-4 h-4 text-[#C5A059]" />
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FFE394]">
@@ -1577,7 +1577,7 @@ export default function Appointments() {
                   [layer.id]: !prev[layer.id as keyof CalendarLayerFilters],
                 }))
               }
-              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-[5px] border text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center gap-1 ${
                 layer.active
                   ? "bg-[#102B4E]/80 border-[#C5A059]/60 text-[#FFE394] shadow-sm"
                   : "bg-[#020A17] border-[#3A2C18] text-[#A69371]/60 hover:text-[#C6B697]"
@@ -1674,7 +1674,7 @@ export default function Appointments() {
       />
 
       {/* ── Upcoming Appointments ── */}
-      <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-xl">
+      <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-[5px]">
         <CardHeader className="border-b border-[#3A2C18]/60 pb-4">
           <CardTitle className="font-serif text-[#FFF4D4] text-xl font-normal">Upcoming Appointments</CardTitle>
         </CardHeader>
