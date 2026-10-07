@@ -306,7 +306,7 @@ export default function CalendarControlCommandBar({
             Show or hide scheduling layers
           </div>
 
-          <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-none">
+          <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-none overscroll-contain">
             {layerItems.map((item, idx) => (
               <div
                 key={`${item.label}-${idx}`}

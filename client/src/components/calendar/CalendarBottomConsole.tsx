@@ -236,7 +236,7 @@ export default function CalendarBottomConsole({
         </div>
 
         {/* Appointment Rows List */}
-        <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[460px] pr-1">
+        <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[460px] pr-1 overscroll-contain">
           {displayTodayAppointments.map((apt) => {
             const isConfirmed = apt.status === "Confirmed";
             const isHold = apt.status === "Pending" || apt.isHold;

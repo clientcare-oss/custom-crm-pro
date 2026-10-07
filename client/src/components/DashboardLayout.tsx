@@ -1101,7 +1101,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r-0 transition-all duration-[3000ms] ease-in-out"
+          className="border-r-0 transition-all duration-200 ease-in-out"
           disableTransition={isResizing}
         >
           {/* ── Header: Gold Shimmer + Circle Theme Toggle + Collapse Button + Logo & Wordmark ── */}
@@ -1586,7 +1586,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
         )}
-        <main className={cn(
+        <div className={cn(
           "flex-1 p-4 relative",
           (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
           (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
@@ -1637,7 +1637,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           )}
 
 
-        </main>
+        </div>
       </SidebarInset>
 
       {/* Voyage Minimized Floating Panel */}
