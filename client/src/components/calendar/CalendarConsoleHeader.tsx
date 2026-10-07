@@ -234,8 +234,8 @@ export default function CalendarConsoleHeader({
 
       {/* ── Interactive UI Overlay (Aligned with precision over the full picture) ── */}
       <div className="absolute inset-0 z-10 flex flex-col justify-between px-3 sm:px-5 lg:px-7 py-2 sm:py-3 pointer-events-none">
-        {/* ── 1. UPPER SHELF (Top ~37%): Centered Carved Plaque + Right Parchment Note ── */}
-        <div className="relative flex items-center justify-between pointer-events-auto" style={{ height: "37%" }}>
+        {/* ── 1. UPPER SHELF (Top ~25%): Centered Carved Plaque in brass frame + Right Parchment Note ── */}
+        <div className="relative flex items-center justify-between pointer-events-auto" style={{ height: "25%" }}>
           {/* Left Decorative Waypoint Compass Badge */}
           <div className="hidden lg:flex items-center gap-3 w-56 shrink-0">
             <div className="flex h-10 w-10 items-center justify-center rounded-[5px] border border-[#8C6D37]/70 bg-[#020A17]/85 backdrop-blur-sm shadow-[0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12)]">
@@ -252,7 +252,7 @@ export default function CalendarConsoleHeader({
           </div>
 
           {/* Central Carved Gold-Leaf Plaque (Positions directly inside the framed wooden sign in artwork) */}
-          <div className="flex-1 max-w-lg mx-auto text-center px-4 py-1 rounded-xl">
+          <div className="flex-1 max-w-xl mx-auto text-center px-4 py-1 rounded-xl">
             <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-[#FFF4D4] drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)]">
               Calendar
             </h1>
@@ -273,8 +273,8 @@ export default function CalendarConsoleHeader({
           </div>
         </div>
 
-        {/* ── 2. NAVIGATION TAB STRIP (Middle ~11%): Directly below wooden shelf rail ── */}
-        <div className="flex items-center justify-between gap-3 flex-wrap pointer-events-auto" style={{ height: "11%" }}>
+        {/* ── 2. NAVIGATION TAB STRIP (Middle ~9%): Directly below wooden shelf rail ── */}
+        <div className="flex items-center justify-between gap-3 flex-wrap pointer-events-auto" style={{ height: "9%" }}>
           {/* Navigation Pill Group */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
             {/* Tab 1: Calendar (Active by default) */}
@@ -282,17 +282,32 @@ export default function CalendarConsoleHeader({
               type="button"
               onClick={() => onNavTabChange("calendar")}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
                 activeNavTab === "calendar"
                   ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
               )}
             >
               <CalendarIcon className="h-3.5 w-3.5" />
               <span>Calendar</span>
             </button>
 
-            {/* Tab 2: My Schedule */}
+            {/* Tab 2: Session Types (PG-008) */}
+            <button
+              type="button"
+              onClick={() => onNavTabChange("session-types")}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                activeNavTab === "session-types"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
+              )}
+            >
+              <Clock className="h-3.5 w-3.5 text-[#C5A059]" />
+              <span>Session Types</span>
+            </button>
+
+            {/* Tab 3: My Schedule */}
             <button
               type="button"
               onClick={() => {
@@ -300,17 +315,17 @@ export default function CalendarConsoleHeader({
                 onScopeChange?.("my");
               }}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
                 scope === "my" && activeNavTab === "calendar"
                   ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
               )}
             >
               <CalendarIcon className="h-3.5 w-3.5 text-[#C5A059]" />
               <span>My Schedule</span>
             </button>
 
-            {/* Tab 3: Team Schedule */}
+            {/* Tab 4: Team Schedule */}
             <button
               type="button"
               onClick={() => {
@@ -319,17 +334,17 @@ export default function CalendarConsoleHeader({
                 onAdvocateFilterChange?.("ALL");
               }}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
                 scope === "all" && activeNavTab === "calendar" && selectedAdvocateFilter === "ALL"
                   ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
               )}
             >
               <Users className="h-3.5 w-3.5 text-[#C5A059]" />
               <span>Team Schedule</span>
             </button>
 
-            {/* Tab 4: Scheduling Requests */}
+            {/* Tab 5: Scheduling Requests */}
             <button
               type="button"
               onClick={() => {
@@ -338,10 +353,10 @@ export default function CalendarConsoleHeader({
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
                 activeNavTab === "requests"
                   ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
               )}
             >
               <Briefcase className="h-3.5 w-3.5 text-[#C5A059]" />
@@ -351,7 +366,7 @@ export default function CalendarConsoleHeader({
               </span>
             </button>
 
-            {/* Tab 5: Availability & Time Blocks */}
+            {/* Tab 6: Availability & Time Blocks */}
             <button
               type="button"
               onClick={() => {
@@ -359,17 +374,17 @@ export default function CalendarConsoleHeader({
                 onOpenAvailabilityClick?.();
               }}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
                 activeNavTab === "availability"
                   ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
               )}
             >
               <Clock className="h-3.5 w-3.5 text-[#C5A059]" />
               <span>Availability & Time Blocks</span>
             </button>
 
-            {/* Tab 6: Holidays & Closures */}
+            {/* Tab 7: Holidays & Closures */}
             <button
               type="button"
               onClick={() => {
@@ -377,10 +392,10 @@ export default function CalendarConsoleHeader({
                 onOpenClosuresClick?.();
               }}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
                 activeNavTab === "closures"
                   ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
               )}
             >
               <Building2 className="h-3.5 w-3.5 text-[#C5A059]" />
@@ -445,14 +460,14 @@ export default function CalendarConsoleHeader({
           </div>
         </div>
 
-        {/* ── 3. LOWER SHIPLAP DECK (Bottom ~48%): 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
-        <div className="flex flex-col lg:flex-row items-stretch gap-2.5 pointer-events-auto" style={{ height: "48%" }}>
+        {/* ── 3. LOWER SHIPLAP DECK (Bottom ~64%): 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
+        <div className="flex flex-col lg:flex-row items-stretch gap-2.5 pointer-events-auto" style={{ height: "64%" }}>
           {/* ── Left Column: KPI Cards + Bottom Range / View Control Bar ── */}
           <div className="flex-1 flex flex-col justify-between gap-2 min-w-0">
-            {/* Row of 5 KPI Cards */}
+            {/* Row of 5 KPI Cards (Glassmorphic so blue shiplap wood planks show through) */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {/* Card 1: Today */}
-              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-md">
                   <CalendarIcon className="h-5 w-5" />
                 </div>
@@ -475,7 +490,7 @@ export default function CalendarConsoleHeader({
               </div>
 
               {/* Card 2: This Week */}
-              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-md">
                   <CalendarIcon className="h-5 w-5" />
                 </div>
@@ -498,7 +513,7 @@ export default function CalendarConsoleHeader({
               </div>
 
               {/* Card 3: Tentative Holds */}
-              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-600/30 to-amber-900/50 border border-amber-500/50 text-amber-300 shadow-md">
                   <Hourglass className="h-5 w-5" />
                 </div>
@@ -521,7 +536,7 @@ export default function CalendarConsoleHeader({
               </div>
 
               {/* Card 4: Callbacks */}
-              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600/30 to-emerald-900/50 border border-emerald-500/50 text-emerald-300 shadow-md">
                   <Phone className="h-5 w-5" />
                 </div>
@@ -544,7 +559,7 @@ export default function CalendarConsoleHeader({
               </div>
 
               {/* Card 5: Tasks Due */}
-              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/40 border border-amber-400/50 text-amber-300 shadow-md">
                   <CheckSquare className="h-5 w-5" />
                 </div>
@@ -573,11 +588,11 @@ export default function CalendarConsoleHeader({
             {/* Bottom Row under KPI cards: Date Range + View Mode Pills + Advocate Selector */}
             <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
               {/* Left Group: Today + Chevrons + Date Range */}
-              <div className="rounded-xl border border-[#193B66] bg-[#061730]/95 p-1.5 flex items-center gap-2 shadow-lg">
+              <div className="rounded-xl border border-[#193B66]/80 bg-[#061730]/65 backdrop-blur-md p-1.5 flex items-center gap-2 shadow-lg">
                 <button
                   type="button"
                   onClick={handleToday}
-                  className="px-3 py-1 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-xs font-semibold text-[#D8C7A5] hover:text-white hover:border-[#C5A059] transition-all cursor-pointer"
+                  className="px-3 py-1 rounded-lg border border-[#1C3A60] bg-[#0A2244]/80 text-xs font-semibold text-[#D8C7A5] hover:text-white hover:border-[#C5A059] transition-all cursor-pointer"
                 >
                   Today
                 </button>
@@ -585,7 +600,7 @@ export default function CalendarConsoleHeader({
                   <button
                     type="button"
                     onClick={handlePrevStep}
-                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
                     title="Previous"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
@@ -593,7 +608,7 @@ export default function CalendarConsoleHeader({
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
                     title="Next"
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -605,9 +620,9 @@ export default function CalendarConsoleHeader({
               </div>
 
               {/* Right Group: Day / Week / Month / Agenda + Advocate Dropdown + Settings Gear */}
-              <div className="rounded-xl border border-[#193B66] bg-[#061730]/95 p-1.5 flex items-center gap-2 shadow-lg flex-wrap">
+              <div className="rounded-xl border border-[#193B66]/80 bg-[#061730]/65 backdrop-blur-md p-1.5 flex items-center gap-2 shadow-lg flex-wrap">
                 {/* View Mode Buttons */}
-                <div className="flex items-center gap-0.5 bg-[#030E1F] p-0.5 rounded-lg border border-[#1C3A60]/60">
+                <div className="flex items-center gap-0.5 bg-[#030E1F]/80 p-0.5 rounded-lg border border-[#1C3A60]/60">
                   <button
                     type="button"
                     onClick={() => onViewModeChange?.("day")}
@@ -664,7 +679,7 @@ export default function CalendarConsoleHeader({
                     value={selectedAdvocateFilter}
                     onValueChange={(val) => onAdvocateFilterChange?.(val)}
                   >
-                    <SelectTrigger className="h-7 text-xs bg-[#0A2244] border-[#1C3A60] text-[#FFF4D4] rounded-lg px-2.5 min-w-[130px] font-medium">
+                    <SelectTrigger className="h-7 text-xs bg-[#0A2244]/90 border-[#1C3A60] text-[#FFF4D4] rounded-lg px-2.5 min-w-[130px] font-medium">
                       <SelectValue placeholder="All Advocates" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#07162B] border-[#8C6D37]/70 text-[#FFF4D4]">
@@ -683,7 +698,7 @@ export default function CalendarConsoleHeader({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-amber-300 hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                      className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244]/90 text-[#D8C7A5] hover:text-amber-300 hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
                       title="Calendar Layer Filters"
                     >
                       <Settings className="h-3.5 w-3.5" />
@@ -793,13 +808,13 @@ export default function CalendarConsoleHeader({
           </div>
 
           {/* ── Right Column: Integrated Month Calendar Widget (Matches mockup right widget) ── */}
-          <div className="w-[230px] sm:w-[250px] lg:w-[265px] shrink-0 rounded-2xl border border-[#193B66] bg-[#061730]/95 p-2 sm:p-2.5 shadow-xl flex flex-col justify-between">
+          <div className="w-[230px] sm:w-[250px] lg:w-[265px] shrink-0 rounded-2xl border border-[#193B66]/80 bg-[#061730]/65 backdrop-blur-md p-2 sm:p-2.5 shadow-xl flex flex-col justify-between">
             {/* Calendar Widget Month Header */}
             <div className="flex items-center justify-between mb-1">
               <button
                 type="button"
                 onClick={handlePrevMiniMonth}
-                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
                 title="Previous Month"
               >
                 <ChevronLeft className="h-3 w-3" />
@@ -810,7 +825,7 @@ export default function CalendarConsoleHeader({
               <button
                 type="button"
                 onClick={handleNextMiniMonth}
-                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
                 title="Next Month"
               >
                 <ChevronRight className="h-3 w-3" />
