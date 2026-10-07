@@ -1596,6 +1596,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location.startsWith("/state-complaint-builder") || location.startsWith("/tools/state-complaint-builder")) && "p-0 bg-[#030D1A]",
           (location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#07162B]",
           (location.startsWith("/call-center") || location.startsWith("/call-logs")) && "p-0 bg-[#07162B]",
+          (location === "/calendar" || location.startsWith("/calendar") || location === "/appointments" || location.startsWith("/appointments")) && "p-0 bg-[#07162B]",
           (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#07162B]"
         )}>
           {currentForbiddenModule ? (

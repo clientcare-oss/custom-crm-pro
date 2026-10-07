@@ -15,10 +15,11 @@ export default function HoldsNeedingAttentionCard({
 
   // Fetch holds needing attention
   const { data: attentionItems, isLoading, refetch } = trpc.proposedMeetings.getHoldsNeedingAttention.useQuery(undefined, {
-    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
+    staleTime: 60000,
   });
 
-  if (isLoading) {
+  if (isLoading && !attentionItems) {
     return (
       <div className="rounded-xl border border-[#3A2C18]/60 bg-[#05142B]/70 p-4 animate-pulse">
         <div className="h-5 w-48 bg-[#102B4E]/60 rounded mb-2" />

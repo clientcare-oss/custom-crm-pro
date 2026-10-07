@@ -73,9 +73,12 @@ interface Appointment {
 export default function Appointments() {
   const { user } = useAuth();
   
-  // URL Query Parameters support for direct dashboard routing (e.g. /calendar?view=day&date=today&scope=my)
+  // URL Query Parameters support for direct dashboard routing (e.g. /calendar?view=month&date=today&scope=my)
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const initialView = (searchParams.get("view") as CalendarViewMode) || "day";
+  const initialView =
+    (searchParams.get("view") as CalendarViewMode) ||
+    (typeof localStorage !== "undefined" && (localStorage.getItem("waypoint_calendar_view_mode") as CalendarViewMode)) ||
+    "month";
   const initialScope = (searchParams.get("scope") as CalendarScope) || "my";
   const initialFilter = searchParams.get("advocate") || "all";
   const initialTab = searchParams.get("tab") === "coverage"
@@ -100,6 +103,13 @@ export default function Appointments() {
   };
 
   const [viewMode, setViewMode] = useState<CalendarViewMode>(initialView);
+
+  const handleViewModeChange = (mode: CalendarViewMode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem("waypoint_calendar_view_mode", mode);
+    } catch {}
+  };
   const [scope, setScope] = useState<CalendarScope>(initialScope);
   const [selectedAdvocateFilter, setSelectedAdvocateFilter] = useState<string>(initialFilter);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -241,15 +251,33 @@ export default function Appointments() {
     setShowMasterSchedule(true);
   };
 
-  const { data: appointments = [], refetch } = trpc.appointments.list.useQuery();
-  const { data: operationalBlocks = [], refetch: refetchOperationalBlocks } = trpc.operationalBlocks.list.useQuery();
+  const { data: appointments = [], refetch } = trpc.appointments.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 60000,
+  });
+  const { data: operationalBlocks = [], refetch: refetchOperationalBlocks } = trpc.operationalBlocks.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 60000,
+  });
   const { data: unifiedData, refetch: refetchUnified } = trpc.proposedMeetings.getUnifiedCalendarEvents.useQuery(
     { includeReleasedHolds: false },
-    { refetchInterval: 15000 }
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 60000,
+    }
   );
-  const { data: contacts = [] } = trpc.contacts.list.useQuery();
-  const { data: availability = [], refetch: refetchAvailability } = trpc.availability.get.useQuery();
-  const staffRosterQuery = trpc.appointments.getStaffRoster.useQuery();
+  const { data: contacts = [] } = trpc.contacts.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 300000,
+  });
+  const { data: availability = [], refetch: refetchAvailability } = trpc.availability.get.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 60000,
+  });
+  const staffRosterQuery = trpc.appointments.getStaffRoster.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 300000,
+  });
   const staffList = staffRosterQuery.data || [];
 
   const [activeOperationalBlock, setActiveOperationalBlock] = useState<OperationalBlock | null>(null);
@@ -1567,7 +1595,7 @@ export default function Appointments() {
         appointments={mergedAppointments as any}
         operationalBlocks={operationalBlocks}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={handleViewModeChange}
         scope={scope}
         onScopeChange={setScope}
         selectedAdvocateFilter={selectedAdvocateFilter}

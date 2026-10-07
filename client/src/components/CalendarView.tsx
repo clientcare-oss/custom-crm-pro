@@ -106,7 +106,7 @@ export default function CalendarView({
   },
 }: CalendarViewProps) {
   // Local state fallbacks if not controlled from parent
-  const [internalViewMode, setInternalViewMode] = useState<CalendarViewMode>("day");
+  const [internalViewMode, setInternalViewMode] = useState<CalendarViewMode>("month");
   const [internalScope, setInternalScope] = useState<CalendarScope>("my");
   const [internalFilter, setInternalFilter] = useState<string>("all");
   const [internalDate, setInternalDate] = useState<Date>(new Date());
@@ -358,12 +358,12 @@ export default function CalendarView({
                     : patternDef.borderClass
                 }`}
               >
-                <div className="font-serif font-bold truncate leading-tight text-[#FFF4D4]">{apt.title}</div>
-                <div className="flex items-center justify-between text-[9px] text-[#A69371] mt-0.5">
-                  <span className="truncate max-w-[85px] text-[#C6B697]">
+                <div className={`font-serif font-bold truncate leading-tight ${patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"}`}>{apt.title}</div>
+                <div className="flex items-center justify-between text-[9px] mt-0.5">
+                  <span className={`truncate max-w-[85px] ${patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"}`}>
                     {apt.studentName || apt.parentName || "Student"}
                   </span>
-                  <span className="text-[#FFE394] font-semibold">{advocateName}</span>
+                  <span className={`font-semibold ${patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"}`}>{advocateName}</span>
                 </div>
               </div>
             );

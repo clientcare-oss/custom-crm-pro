@@ -309,7 +309,7 @@ export default function CalendarWeekView({
                     >
                       {/* Time Badges */}
                       <div className="flex items-center gap-1 font-mono text-[9px] mb-1 flex-wrap">
-                        <span className="text-emerald-300 font-bold bg-emerald-950/80 px-1 py-0.5 rounded border border-emerald-800/50">
+                        <span className="text-emerald-950 font-extrabold bg-emerald-400 px-1.5 py-0.5 rounded shadow-[0_0_8px_rgba(52,211,153,0.5)]">
                           🟢 {dual.waypointTime.startTime} ET
                         </span>
                         {dual.clientTime.isDifferent && (
@@ -320,10 +320,10 @@ export default function CalendarWeekView({
                       </div>
 
                       {/* Title & Student */}
-                      <div className="font-serif font-bold text-[#FFF4D4] truncate leading-tight">
+                      <div className="font-serif font-bold text-white truncate leading-tight">
                         {apt.title}
                       </div>
-                      <div className="text-[11px] text-[#FFE394]/90 truncate">
+                      <div className="text-[11px] text-emerald-200/90 truncate font-medium">
                         {apt.studentName || apt.parentName || "Student"}
                       </div>
                       {isHold && (
@@ -342,9 +342,11 @@ export default function CalendarWeekView({
                             <AlertCircle className="w-2.5 h-2.5" /> Needs Coverage
                           </Badge>
                         ) : (
-                          <div className="flex items-center gap-1 text-[10px] text-[#A69371]">
-                            <User className="w-3 h-3 text-[#C5A059] shrink-0" />
-                            <span className="truncate max-w-[80px] text-[#C6B697]">{advocateName}</span>
+                          <div className="flex items-center gap-1.5 text-[10px]">
+                            <span className="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 border border-emerald-200 uppercase shadow-[0_0_8px_rgba(52,211,153,0.5)] tracking-wider">
+                              CONFIRMED
+                            </span>
+                            <span className="truncate max-w-[70px] text-emerald-200 font-medium">{advocateName}</span>
                           </div>
                         )}
 

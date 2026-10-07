@@ -173,14 +173,43 @@ export default function MasterScheduleModal({
   }, [initialDate]);
 
   // Load Contacts & Leads
-  const { data: contactsData } = trpc.contacts.list.useQuery();
+  const { data: contactsData, isLoading: isLoadingContacts } = trpc.contacts.list.useQuery();
   const { data: leadsData } = trpc.leads.list.useQuery(undefined);
 
-  const { parentsList, studentsList } = useMemo(() => {
-    const contacts = (contactsData as any)?.contacts || (Array.isArray(contactsData) ? contactsData : []);
-    const parents = contacts.filter((c: any) => c.contactType === "client" || c.contactType === "parent" || !c.contactType);
-    const students = contacts.filter((c: any) => c.contactType === "student");
-    return { parentsList: parents, studentsList: students };
+  const { parentsList, studentsList, parentMap } = useMemo(() => {
+    const contacts: any[] = (contactsData as any)?.contacts || (Array.isArray(contactsData) ? contactsData : []);
+
+    const isStudent = (c: any) => {
+      if (!c) return false;
+      const title = (c.jobTitle || "").toLowerCase().trim();
+      if (title.includes("student")) return true;
+      if (c.contactType === "student") return true;
+      if (c.parentContactId != null && Number(c.parentContactId) > 0) return true;
+      if (c.studentStatus || c.gradeLevel || c.schoolName || c.caseId) return true;
+      if (c.planType && c.planType !== "") return true;
+      return false;
+    };
+
+    const isParent = (c: any) => {
+      if (!c) return false;
+      const title = (c.jobTitle || "").toLowerCase().trim();
+      if (title.includes("parent") || title.includes("client")) return true;
+      if (c.contactType === "parent" || c.contactType === "client") return true;
+      return !isStudent(c);
+    };
+
+    const rawStudents = contacts.filter(isStudent);
+    const students = rawStudents.length > 0 ? rawStudents : contacts;
+
+    const rawParents = contacts.filter(isParent);
+    const parents = rawParents.length > 0 ? rawParents : contacts;
+
+    const pMap = new Map<number, any>();
+    contacts.forEach((c) => {
+      if (c.id) pMap.set(Number(c.id), c);
+    });
+
+    return { parentsList: parents, studentsList: students, parentMap: pMap };
   }, [contactsData]);
 
   // ==========================================
@@ -203,7 +232,9 @@ export default function MasterScheduleModal({
   const caFilteredStudents = useMemo(() => {
     if (!caParentId) return studentsList;
     const pid = Number(caParentId);
-    return studentsList.filter((s: any) => s.parentContactId === pid || s.parentId === pid);
+    const matching = studentsList.filter((s: any) => Number(s.parentContactId) === pid || Number(s.parentId) === pid);
+    if (matching.length > 0) return matching;
+    return studentsList;
   }, [studentsList, caParentId]);
 
   // ==========================================
@@ -232,7 +263,9 @@ export default function MasterScheduleModal({
   const pmFilteredStudents = useMemo(() => {
     if (!pmParentId) return studentsList;
     const pid = Number(pmParentId);
-    return studentsList.filter((s: any) => s.parentContactId === pid || s.parentId === pid);
+    const matching = studentsList.filter((s: any) => Number(s.parentContactId) === pid || Number(s.parentId) === pid);
+    if (matching.length > 0) return matching;
+    return studentsList;
   }, [studentsList, pmParentId]);
 
   // ==========================================
@@ -570,14 +603,14 @@ export default function MasterScheduleModal({
               {/* Row 1: Confirmed Appointment */}
               <div
                 onClick={() => handleSelectCategory("CONFIRMED_APPOINTMENT")}
-                className="group p-4 rounded-xl border border-[#3A2C18] bg-[#020A17]/85 hover:border-[#C5A059] hover:bg-[#07162B] transition-all cursor-pointer flex items-center justify-between gap-4 shadow-sm"
+                className="group p-4 rounded-xl border border-emerald-900/60 bg-[#020A17]/85 hover:border-emerald-400 hover:bg-emerald-950/25 transition-all cursor-pointer flex items-center justify-between gap-4 shadow-sm"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-950/70 border border-emerald-600/60 flex items-center justify-center text-emerald-300 group-hover:scale-105 transition-transform shrink-0">
-                    <CheckCircle2 className="w-5 h-5" />
+                  <div className="h-10 w-10 rounded-xl bg-emerald-900/80 border border-emerald-400/80 flex items-center justify-center text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.3)] group-hover:scale-105 transition-transform shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-300" />
                   </div>
                   <div>
-                    <div className="font-serif font-bold text-sm text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors">
+                    <div className="font-serif font-bold text-sm text-[#FFF4D4] group-hover:text-emerald-200 transition-colors">
                       Confirmed Appointment
                     </div>
                     <div className="text-xs text-[#C6B697] mt-0.5">
@@ -589,7 +622,7 @@ export default function MasterScheduleModal({
                   <div className="w-32 hidden sm:block">
                     <PatternPreviewBlock patternKey="confirmed" size="sm" />
                   </div>
-                  <Badge variant="outline" className="border-[#3A2C18] text-[#A69371] text-[10px] font-mono group-hover:border-[#C5A059] group-hover:text-[#FFE394]">
+                  <Badge variant="outline" className="border-emerald-800 text-emerald-300 text-[10px] font-mono group-hover:border-emerald-400 group-hover:text-emerald-100">
                     CLIENT MEETING
                   </Badge>
                 </div>
@@ -758,14 +791,26 @@ export default function MasterScheduleModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl border border-[#3A2C18] bg-[#020A17]/60">
                 <div>
                   <Label className="text-xs text-[#C6B697]">Client / Family</Label>
-                  <Select value={caParentId} onValueChange={setCaParentId}>
+                  <Select
+                    value={caParentId}
+                    onValueChange={(val) => {
+                      setCaParentId(val);
+                      const pNum = Number(val);
+                      const matching = studentsList.filter(
+                        (s: any) => Number(s.parentContactId) === pNum || Number(s.parentId) === pNum
+                      );
+                      if (matching.length === 1) {
+                        setCaStudentId(String(matching[0].id));
+                      }
+                    }}
+                  >
                     <SelectTrigger className="mt-1 bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] text-xs h-9">
                       <SelectValue placeholder="Select Parent / Client..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] max-h-56">
                       {parentsList.map((p: any) => (
                         <SelectItem key={p.id} value={String(p.id)} className="text-xs focus:bg-[#102B4E]">
-                          {p.firstName} {p.lastName}
+                          {p.firstName} {p.lastName} {p.company ? `(${p.company})` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -776,16 +821,43 @@ export default function MasterScheduleModal({
                   <Label className="text-xs text-[#C6B697]">
                     Student <span className="text-rose-400">*</span>
                   </Label>
-                  <Select value={caStudentId} onValueChange={setCaStudentId}>
+                  <Select
+                    value={caStudentId}
+                    onValueChange={(val) => {
+                      setCaStudentId(val);
+                      const student = studentsList.find((s: any) => String(s.id) === val);
+                      if (student?.parentContactId && !caParentId) {
+                        setCaParentId(String(student.parentContactId));
+                      }
+                      if (student?.assignedAdvocateName) {
+                        setCaAdvocate(student.assignedAdvocateName);
+                      }
+                    }}
+                  >
                     <SelectTrigger className="mt-1 bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] text-xs h-9">
                       <SelectValue placeholder="Select Student..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] max-h-56">
-                      {caFilteredStudents.map((s: any) => (
-                        <SelectItem key={s.id} value={String(s.id)} className="text-xs focus:bg-[#102B4E]">
-                          {s.firstName} {s.lastName}
+                      {isLoadingContacts && (
+                        <SelectItem value="__loading" disabled className="text-xs text-[#A69371]">
+                          Loading students...
                         </SelectItem>
-                      ))}
+                      )}
+                      {!isLoadingContacts && caFilteredStudents.length === 0 && (
+                        <SelectItem value="__none" disabled className="text-xs text-[#A69371]">
+                          No students found
+                        </SelectItem>
+                      )}
+                      {caFilteredStudents.map((s: any) => {
+                        const parent = s.parentContactId ? parentMap.get(Number(s.parentContactId)) : null;
+                        const parentLabel = parent ? ` · ${parent.firstName} ${parent.lastName}` : "";
+                        const grade = s.gradeLevel ? ` (${s.gradeLevel})` : "";
+                        return (
+                          <SelectItem key={s.id} value={String(s.id)} className="text-xs focus:bg-[#102B4E]">
+                            {s.firstName} {s.lastName}{grade}{parentLabel}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -971,14 +1043,26 @@ export default function MasterScheduleModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl border border-[#3A2C18] bg-[#020A17]/60">
                 <div>
                   <Label className="text-xs text-[#C6B697]">Client / Family</Label>
-                  <Select value={pmParentId} onValueChange={setPmParentId}>
+                  <Select
+                    value={pmParentId}
+                    onValueChange={(val) => {
+                      setPmParentId(val);
+                      const pNum = Number(val);
+                      const matching = studentsList.filter(
+                        (s: any) => Number(s.parentContactId) === pNum || Number(s.parentId) === pNum
+                      );
+                      if (matching.length === 1) {
+                        setPmStudentId(String(matching[0].id));
+                      }
+                    }}
+                  >
                     <SelectTrigger className="mt-1 bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] text-xs h-9">
                       <SelectValue placeholder="Select Parent / Client..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] max-h-56">
                       {parentsList.map((p: any) => (
                         <SelectItem key={p.id} value={String(p.id)} className="text-xs focus:bg-[#102B4E]">
-                          {p.firstName} {p.lastName}
+                          {p.firstName} {p.lastName} {p.company ? `(${p.company})` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -989,16 +1073,43 @@ export default function MasterScheduleModal({
                   <Label className="text-xs text-[#C6B697]">
                     Student <span className="text-rose-400">*</span>
                   </Label>
-                  <Select value={pmStudentId} onValueChange={setPmStudentId}>
+                  <Select
+                    value={pmStudentId}
+                    onValueChange={(val) => {
+                      setPmStudentId(val);
+                      const student = studentsList.find((s: any) => String(s.id) === val);
+                      if (student?.parentContactId && !pmParentId) {
+                        setPmParentId(String(student.parentContactId));
+                      }
+                      if (student?.assignedAdvocateName) {
+                        setPmAdvocate(student.assignedAdvocateName);
+                      }
+                    }}
+                  >
                     <SelectTrigger className="mt-1 bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] text-xs h-9">
                       <SelectValue placeholder="Select Student..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] max-h-56">
-                      {pmFilteredStudents.map((s: any) => (
-                        <SelectItem key={s.id} value={String(s.id)} className="text-xs focus:bg-[#102B4E]">
-                          {s.firstName} {s.lastName}
+                      {isLoadingContacts && (
+                        <SelectItem value="__loading" disabled className="text-xs text-[#A69371]">
+                          Loading students...
                         </SelectItem>
-                      ))}
+                      )}
+                      {!isLoadingContacts && pmFilteredStudents.length === 0 && (
+                        <SelectItem value="__none" disabled className="text-xs text-[#A69371]">
+                          No students found
+                        </SelectItem>
+                      )}
+                      {pmFilteredStudents.map((s: any) => {
+                        const parent = s.parentContactId ? parentMap.get(Number(s.parentContactId)) : null;
+                        const parentLabel = parent ? ` · ${parent.firstName} ${parent.lastName}` : "";
+                        const grade = s.gradeLevel ? ` (${s.gradeLevel})` : "";
+                        return (
+                          <SelectItem key={s.id} value={String(s.id)} className="text-xs focus:bg-[#102B4E]">
+                            {s.firstName} {s.lastName}{grade}{parentLabel}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

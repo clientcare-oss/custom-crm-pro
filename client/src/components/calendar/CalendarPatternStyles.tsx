@@ -64,15 +64,18 @@ export const CALENDAR_PATTERNS: Record<CalendarItemPatternKey, PatternDefinition
     label: "Confirmed Appointment",
     shortLabel: "Confirmed",
     sub: "Client/student meeting with set date & time",
-    patternName: "Solid Obsidian Navy + 24k Gold Bevel",
+    patternName: "Vibrant Emerald Green (Confirmed)",
     patternSymbol: "●●●●",
-    accentColor: "#C5A059",
-    borderColor: "#C5A059",
-    borderClass: "border-solid border-[#3A2C18] border-l-4 border-l-[#C5A059]",
-    badgeClass: "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/50",
+    accentColor: "#34D399",
+    borderColor: "#10B981",
+    borderClass:
+      "border-solid border-emerald-500 border-l-[8px] border-l-emerald-300 shadow-[0_4px_25px_rgba(16,185,129,0.35),inset_0_1px_1px_rgba(110,231,183,0.3)]",
+    badgeClass:
+      "bg-emerald-500 text-emerald-950 border-emerald-300 font-extrabold shadow-[0_0_10px_rgba(52,211,153,0.6)]",
     inlineBackground:
-      "linear-gradient(135deg, rgba(5,20,43,0.98) 0%, rgba(2,10,23,0.95) 100%)",
-    fabricBackground: "transparent",
+      "radial-gradient(ellipse at top left, rgba(52, 211, 153, 0.30) 0%, transparent 70%), linear-gradient(135deg, #065F46 0%, #047857 45%, #064E3B 100%)",
+    fabricBackground:
+      "repeating-linear-gradient(45deg, rgba(16, 185, 129, 0.25) 0px, rgba(16, 185, 129, 0.25) 8px, rgba(6, 78, 59, 0.65) 8px, rgba(6, 78, 59, 0.65) 16px)",
     sampleBadge: "CONFIRMED",
     sampleTitle: "IEP Annual Review",
     sampleTime: "10:00 AM",

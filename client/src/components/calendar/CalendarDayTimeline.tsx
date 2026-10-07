@@ -451,9 +451,18 @@ export default function CalendarDayTimeline({
                       <div>
                         <div className="font-serif font-bold text-[#FFF4D4] text-sm tracking-tight leading-tight flex items-center gap-2">
                           <span>{apt.title}</span>
-                          {isHold && (
+                          {isHold ? (
                             <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
                               {isParentSelected ? "PARENT SELECTED" : "TENTATIVE"}
+                            </span>
+                          ) : isNeedsCoverage ? (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-500/60 uppercase">
+                              NEEDS COVERAGE
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 border border-emerald-200 uppercase shadow-[0_0_12px_rgba(52,211,153,0.7)] flex items-center gap-1.5 tracking-wider">
+                              <span className="w-2 h-2 rounded-full bg-emerald-950 animate-pulse" />
+                              CONFIRMED
                             </span>
                           )}
                         </div>
@@ -468,10 +477,10 @@ export default function CalendarDayTimeline({
                             </span>
                           </div>
                         ) : (
-                          <div className="text-xs text-[#C6B697] mt-0.5">
-                            <span className="text-[#FFF4D4] font-medium">{studentName}</span>
-                            <span className="mx-2 text-[#3A2C18]">|</span>
-                            <span className="text-[#FFE394] font-medium">{advocateName}</span>
+                          <div className="text-xs text-emerald-100/90 mt-0.5 flex items-center gap-2">
+                            <span className="text-white font-bold text-xs">{studentName}</span>
+                            <span className="text-emerald-300/60">•</span>
+                            <span className="text-emerald-200 font-semibold">{advocateName}</span>
                             {isNeedsCoverage && (
                               <span className="ml-2 text-rose-400 font-semibold font-mono">
                                 (Needs Coverage)
@@ -483,7 +492,11 @@ export default function CalendarDayTimeline({
 
                       {/* Right: Time Range & Action Button */}
                       <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-[#FFE394] font-mono font-medium">
+                        <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                          isHold || isNeedsCoverage
+                            ? "text-[#FFE394] bg-[#020A17]/60 border border-[#3A2C18]"
+                            : "text-emerald-100 bg-emerald-900/80 border border-emerald-400/60 shadow-[0_0_8px_rgba(16,185,129,0.35)]"
+                        }`}>
                           {startStr} – {endStr}
                         </span>
 

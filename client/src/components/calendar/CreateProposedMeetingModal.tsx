@@ -138,18 +138,49 @@ export default function CreateProposedMeetingModal({
   const { data: leadsData } = trpc.leads.list.useQuery(undefined, { enabled: sourceType === "LEAD" });
 
   // Separate parent contacts and student contacts
-  const { parentsList, studentsList } = useMemo(() => {
-    const contacts = (contactsData as any)?.contacts || (Array.isArray(contactsData) ? contactsData : []);
-    const parents = contacts.filter((c: any) => c.contactType === "client" || c.contactType === "parent" || !c.contactType);
-    const students = contacts.filter((c: any) => c.contactType === "student");
-    return { parentsList: parents, studentsList: students };
+  const { parentsList, studentsList, parentMap } = useMemo(() => {
+    const contacts: any[] = (contactsData as any)?.contacts || (Array.isArray(contactsData) ? contactsData : []);
+
+    const isStudent = (c: any) => {
+      if (!c) return false;
+      const title = (c.jobTitle || "").toLowerCase().trim();
+      if (title.includes("student")) return true;
+      if (c.contactType === "student") return true;
+      if (c.parentContactId != null && Number(c.parentContactId) > 0) return true;
+      if (c.studentStatus || c.gradeLevel || c.schoolName || c.caseId) return true;
+      if (c.planType && c.planType !== "") return true;
+      return false;
+    };
+
+    const isParent = (c: any) => {
+      if (!c) return false;
+      const title = (c.jobTitle || "").toLowerCase().trim();
+      if (title.includes("parent") || title.includes("client")) return true;
+      if (c.contactType === "parent" || c.contactType === "client") return true;
+      return !isStudent(c);
+    };
+
+    const rawStudents = contacts.filter(isStudent);
+    const students = rawStudents.length > 0 ? rawStudents : contacts;
+
+    const rawParents = contacts.filter(isParent);
+    const parents = rawParents.length > 0 ? rawParents : contacts;
+
+    const pMap = new Map<number, any>();
+    contacts.forEach((c) => {
+      if (c.id) pMap.set(Number(c.id), c);
+    });
+
+    return { parentsList: parents, studentsList: students, parentMap: pMap };
   }, [contactsData]);
 
   // Filter students if parent is selected (or show all students)
   const filteredStudents = useMemo(() => {
     if (!selectedParentContactId) return studentsList;
     const parentIdNum = Number(selectedParentContactId);
-    return studentsList.filter((s: any) => s.parentContactId === parentIdNum || s.parentId === parentIdNum);
+    const matching = studentsList.filter((s: any) => Number(s.parentContactId) === parentIdNum || Number(s.parentId) === parentIdNum);
+    if (matching.length > 0) return matching;
+    return studentsList;
   }, [studentsList, selectedParentContactId]);
 
   // Handle Parent Selection
