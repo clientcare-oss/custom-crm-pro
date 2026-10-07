@@ -20,6 +20,7 @@ import HoldsNeedingAttentionCard from "@/components/calendar/HoldsNeedingAttenti
 import CreateProposedMeetingModal from "@/components/calendar/CreateProposedMeetingModal";
 import ProposedMeetingDetailModal from "@/components/calendar/ProposedMeetingDetailModal";
 import MasterScheduleModal, { ScheduleActionType } from "@/components/calendar/MasterScheduleModal";
+import ScheduleDispatchConsole from "@/components/calendar/ScheduleDispatchConsole";
 import OperationalBlockDetailDrawer from "@/components/calendar/OperationalBlockDetailDrawer";
 import { CalendarPatternLegendBar } from "@/components/calendar/CalendarPatternStyles";
 import CalendarConsoleHeader from "@/components/calendar/CalendarConsoleHeader";
@@ -91,17 +92,21 @@ export default function Appointments() {
     ? "coverage"
     : searchParams.get("tab") === "session-types" || searchParams.get("tab") === "scheduler"
     ? "session-types"
+    : searchParams.get("tab") === "dispatch"
+    ? "dispatch"
     : "calendar";
 
-  const [activeTab, setActiveTab] = useState<"calendar" | "session-types" | "coverage">(initialTab);
+  const [activeTab, setActiveTab] = useState<"calendar" | "session-types" | "coverage" | "dispatch">(initialTab);
 
-  const handleTabChange = (newTab: "calendar" | "session-types" | "coverage") => {
+  const handleTabChange = (newTab: "calendar" | "session-types" | "coverage" | "dispatch") => {
     setActiveTab(newTab);
     const url = new URL(window.location.href);
     if (newTab === "coverage") {
       url.searchParams.set("tab", "coverage");
     } else if (newTab === "session-types") {
       url.searchParams.set("tab", "session-types");
+    } else if (newTab === "dispatch") {
+      url.searchParams.set("tab", "dispatch");
     } else {
       url.searchParams.delete("tab");
     }
@@ -254,7 +259,7 @@ export default function Appointments() {
     setScheduleModalDate(date || selectedDate);
     if (time) setScheduleModalTime(time);
     setScheduleModalAction(action);
-    setShowMasterSchedule(true);
+    handleTabChange("dispatch");
   };
 
   const { data: appointments = [], refetch } = trpc.appointments.list.useQuery(undefined, {
@@ -750,6 +755,29 @@ export default function Appointments() {
     return [];
   }, [unifiedData]);
 
+  // ── PG-007 Schedule Dispatch Sub-Page View (Expansive full-screen command desk) ──
+  if (activeTab === "dispatch") {
+    return (
+      <ScopedErrorBoundary moduleName="Schedule Dispatch Sub-Page">
+        <div className="min-h-screen w-full bg-[#07162B] text-[#FFF4D4]">
+          <ScheduleDispatchConsole
+            initialDate={scheduleModalDate}
+            initialTime={scheduleModalTime}
+            advocateList={staffList}
+            defaultAction={scheduleModalAction}
+            onSuccess={() => {
+              refetch();
+              refetchUnified();
+              handleTabChange("calendar");
+            }}
+            onClose={() => handleTabChange("calendar")}
+            isSubPage={true}
+          />
+        </div>
+      </ScopedErrorBoundary>
+    );
+  }
+
   return (
     <ScopedErrorBoundary moduleName="Appointments & Calendar">
       <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4]">
@@ -757,15 +785,14 @@ export default function Appointments() {
         <CalendarConsoleHeader
           currentDate={selectedDate}
           onDateChange={setSelectedDate}
-          activeNavTab={
-            activeTab === "coverage"
-              ? "coverage"
-              : activeTab === "session-types"
-              ? "session-types"
-              : "calendar"
-          }
+          activeNavTab={activeTab}
           onNavTabChange={(tab) => {
-            if (tab === "coverage" || tab === "session-types" || tab === "calendar") {
+            if (
+              tab === "coverage" ||
+              tab === "session-types" ||
+              tab === "calendar" ||
+              tab === "dispatch"
+            ) {
               handleTabChange(tab);
             } else if (tab === "availability") {
               handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");

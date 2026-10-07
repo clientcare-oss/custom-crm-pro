@@ -292,6 +292,21 @@ export default function CalendarConsoleHeader({
               <span>Calendar</span>
             </button>
 
+            {/* Tab 1b: Schedule Dispatch (PG-007 Dispatch Desk) */}
+            <button
+              type="button"
+              onClick={() => onNavTabChange("dispatch")}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                activeNavTab === "dispatch"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
+              )}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-[#DFBE77]" />
+              <span>Schedule Dispatch</span>
+            </button>
+
             {/* Tab 2: Session Types (PG-008) */}
             <button
               type="button"
