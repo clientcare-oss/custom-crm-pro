@@ -820,8 +820,20 @@ export default function Appointments() {
           }}
         />
 
-        {/* ── Main Workspace Body (Padded) ── */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
+        {/* ── Under-Header Body Area: Continuous Dark Blue Wood Shiplap Background (Touching Left, Right, & Bottom) ── */}
+        <div
+          className="w-full min-h-[calc(100vh-280px)] flex-1 relative bg-[#07162B]"
+          style={{
+            backgroundImage: "url('/images/calendar-body-wood.png')",
+            backgroundRepeat: "repeat-y",
+            backgroundSize: "100% auto",
+            backgroundPosition: "top center",
+          }}
+        >
+          {/* Subtle maritime vignette overlay so calendar grids & cards maintain maximum visual legibility */}
+          <div className="w-full min-h-full bg-gradient-to-b from-[#07162B]/20 via-[#07162B]/10 to-[#030D1A]/50">
+            {/* ── Main Workspace Body (Padded) ── */}
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
 
         {/* ── Event Detail Popup ── */}
         {selectedApt && (
@@ -1956,6 +1968,8 @@ export default function Appointments() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+          </div>
         </div>
       </div>
     </ScopedErrorBoundary>
