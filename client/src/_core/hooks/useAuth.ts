@@ -1,5 +1,5 @@
 import { useUser, useClerk } from "@clerk/react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -9,6 +9,13 @@ type UseAuthOptions = {
 export function useAuth(options?: UseAuthOptions) {
   const { isLoaded, isSignedIn, user: clerkUser } = useUser();
   const { signOut } = useClerk();
+
+  // Once authentication has loaded and resolved initially, background Clerk token
+  // refreshes or session revalidations must NEVER flip loading back to true.
+  const hasLoadedOnce = useRef(false);
+  if (isLoaded) {
+    hasLoadedOnce.current = true;
+  }
 
   const user = useMemo(() => {
     if (!isSignedIn || !clerkUser) {
@@ -32,15 +39,25 @@ export function useAuth(options?: UseAuthOptions) {
     };
   }, [isSignedIn, clerkUser]);
 
+  // Keep a ref of the last valid authenticated user to prevent transient null flashes during revalidation
+  const lastUserRef = useRef(user);
+  if (user) {
+    lastUserRef.current = user;
+  }
+
+  const resolvedUser = user || (hasLoadedOnce.current ? lastUserRef.current : null);
+
   const logout = useCallback(async () => {
+    lastUserRef.current = null;
+    hasLoadedOnce.current = false;
     await signOut();
   }, [signOut]);
 
   return {
-    user,
-    loading: !isLoaded,
+    user: resolvedUser,
+    loading: !hasLoadedOnce.current && !isLoaded,
     error: null,
-    isAuthenticated: Boolean(isSignedIn),
+    isAuthenticated: Boolean(isSignedIn || resolvedUser),
     logout,
     refresh: () => {},
   };

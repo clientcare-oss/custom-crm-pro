@@ -191,9 +191,16 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    overflow-anchor: none;
+  }
+  html {
+    overflow-x: hidden;
+    overflow-anchor: none;
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    overflow-anchor: none;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

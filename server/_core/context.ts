@@ -162,6 +162,26 @@ export async function authenticateClerkOrSession(req: any): Promise<User | null>
     if (user) return user;
   } catch (_) {}
 
+  // 3. In local development, provide fallback admin user if unauthenticated
+  if (process.env.NODE_ENV === "development") {
+    return {
+      id: 1,
+      openId: "user_test_byron",
+      name: "Byron Honea",
+      email: "byron@waypointadvocates.com",
+      loginMethod: "clerk",
+      role: "admin",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+      phone: null,
+      quoWebhookSecret: null,
+      gmailUser: null,
+      gmailAppPassword: null,
+      portalDomain: null,
+    } as any;
+  }
+
   return null;
 }
 

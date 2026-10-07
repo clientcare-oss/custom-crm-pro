@@ -8,7 +8,7 @@ import { Calendar, Clock, ExternalLink, MapPin, Plus, Trash2, User, Video, X, Ba
 import { Checkbox } from "@/components/ui/checkbox";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import VoiceInput from "@/components/VoiceInput";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import CalendarView, { CalendarViewMode, CalendarScope, CalendarLayerFilters } from "@/components/CalendarView";
 import ReassignAppointmentModal from "@/components/calendar/ReassignAppointmentModal";
@@ -77,8 +77,18 @@ interface Appointment {
   updatedAt: Date;
 }
 
+import { logComponentMount, logComponentUnmount } from "@/lib/scrollDiagnostics";
+
 export default function Appointments() {
   const { user } = useAuth();
+
+  // Diagnostics: Track whether Appointments unmounts/remounts during scroll
+  useEffect(() => {
+    logComponentMount("Page:Appointments");
+    return () => {
+      logComponentUnmount("Page:Appointments");
+    };
+  }, []);
   
   // URL Query Parameters support for direct dashboard routing (e.g. /calendar?view=month&date=today&scope=my)
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
@@ -780,7 +790,7 @@ export default function Appointments() {
 
   return (
     <ScopedErrorBoundary moduleName="Appointments & Calendar">
-      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4]">
+      <div className="min-h-screen flex flex-col bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4]">
         {/* ── Admiralty Top Header Console (bumps flush to sidebar left, top-0, and right) ── */}
         <CalendarConsoleHeader
           currentDate={selectedDate}
@@ -849,7 +859,7 @@ export default function Appointments() {
 
         {/* ── Under-Header Body Area: Continuous Dark Blue Wood Shiplap Background (Touching Left, Right, & Bottom) ── */}
         <div
-          className="w-full min-h-[calc(100vh-280px)] flex-1 relative bg-[#07162B]"
+          className="w-full flex-1 relative bg-[#07162B]"
           style={{
             backgroundImage: "url('/images/calendar-body-wood.png')",
             backgroundRepeat: "repeat-y",

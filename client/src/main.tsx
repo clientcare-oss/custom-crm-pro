@@ -8,9 +8,11 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { initConsoleLogger } from "./lib/consoleLogger";
+import { initScrollDiagnostics } from "./lib/scrollDiagnostics";
 import "./index.css";
 
 initConsoleLogger();
+initScrollDiagnostics();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,10 +40,23 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 };
 
 queryClient.getQueryCache().subscribe(event => {
-  if (event.type === "updated" && event.action.type === "error") {
-    const error = event.query.state.error;
-    redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
+  if (event.type === "updated") {
+    if (event.action.type === "error") {
+      const error = event.query.state.error;
+      redirectToLoginIfUnauthorized(error);
+      console.error("[API Query Error]", error);
+    } else if (event.action.type === "success") {
+      const queryKey = JSON.stringify(event.query.queryKey);
+      if (typeof window !== "undefined" && (window as any).__scrollDiagnostics) {
+        (window as any).__scrollDiagnostics.getHistory().push({
+          time: Date.now(),
+          type: "QUERY_SUCCESS",
+          detail: queryKey,
+          scrollY: window.scrollY || document.documentElement.scrollTop || 0,
+          docHeight: document.documentElement.scrollHeight || 0,
+        });
+      }
+    }
   }
 });
 

@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { logComponentMount, logComponentUnmount } from "@/lib/scrollDiagnostics";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -446,12 +447,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { loading, user } = useAuth();
 
   useEffect(() => {
+    logComponentMount("Shell:DashboardLayout");
+    return () => {
+      logComponentUnmount("Shell:DashboardLayout");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (loading) {
+      console.warn("[DashboardLayout] Auth is loading! (Could cause skeleton flash)");
+    }
+  }, [loading]);
+
+  useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  if (loading) return <DashboardLayoutSkeleton />;
+  const initialAuthDone = useRef(false);
+  if (!loading && user) {
+    initialAuthDone.current = true;
+  }
 
-  if (!user) {
+  if (loading && !initialAuthDone.current) return <DashboardLayoutSkeleton />;
+
+  if (!user && !initialAuthDone.current) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0d1b2a]">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
@@ -1587,7 +1606,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           </div>
         )}
         <div className={cn(
-          "flex-1 p-4 relative",
+          "flex-1 min-w-0 p-4 relative",
           (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
           (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
           location === "/contacts" && "p-0 bg-[#07152B]",

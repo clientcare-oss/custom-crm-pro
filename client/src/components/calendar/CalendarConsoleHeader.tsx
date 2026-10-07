@@ -15,12 +15,12 @@ import {
   Briefcase,
   Layers,
   Target,
-  Compass,
   Settings,
   Users,
   Hourglass,
   ArrowRight,
   Check,
+  Filter,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -224,32 +224,23 @@ export default function CalendarConsoleHeader({
   }, [currentDate, viewMode]);
 
   return (
-    <header className="relative w-full border-b-2 border-[#5B4323] shadow-[0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] select-none">
+    <header className="relative w-full border-b-2 border-[#5B4323] shadow-[0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] select-none min-h-[460px] sm:min-h-[500px]">
       {/* ── Full Picture Background Canopy (100% visible, natural aspect ratio, 0px cut off, not behind sidebar or rightbar) ── */}
       <img
         src="/images/calendar-header-shelf.png"
         alt="PG-007 Appointments & Calendar Shelf Canopy"
-        className="w-full h-auto block select-none pointer-events-none"
+        width={1024}
+        height={576}
+        style={{ aspectRatio: "16 / 9" }}
+        className="w-full h-auto min-h-[460px] sm:min-h-[500px] object-cover block select-none pointer-events-none"
       />
 
       {/* ── Interactive UI Overlay (Aligned with precision over the full picture) ── */}
       <div className="absolute inset-0 z-10 flex flex-col justify-between px-3 sm:px-5 lg:px-7 py-2 sm:py-3 pointer-events-none">
         {/* ── 1. UPPER SHELF (Top ~25%): Centered Carved Plaque in brass frame + Right Parchment Note ── */}
-        <div className="relative flex items-center justify-between pointer-events-auto" style={{ height: "25%" }}>
-          {/* Left Decorative Waypoint Compass Badge */}
-          <div className="hidden lg:flex items-center gap-3 w-56 shrink-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[5px] border border-[#8C6D37]/70 bg-[#020A17]/85 backdrop-blur-sm shadow-[0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12)]">
-              <Compass className="h-5 w-5 text-[#E5B558] animate-pulse" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#FFE394] font-bold drop-shadow">
-                Waypoint
-              </span>
-              <span className="text-[9px] font-mono text-[#C6B697]/80 uppercase tracking-widest">
-                Advocates CRM
-              </span>
-            </div>
-          </div>
+        <div className="relative flex items-center justify-between pointer-events-auto shrink-0">
+          {/* Left spacer for centering balance */}
+          <div className="hidden lg:block w-56 shrink-0" />
 
           {/* Central Carved Gold-Leaf Plaque (Positions directly inside the framed wooden sign in artwork) */}
           <div className="flex-1 max-w-xl mx-auto text-center px-4 py-1 rounded-xl">
@@ -274,73 +265,10 @@ export default function CalendarConsoleHeader({
         </div>
 
         {/* ── 2. NAVIGATION TAB STRIP (Middle ~9%): Directly below wooden shelf rail ── */}
-        <div className="flex items-center justify-between gap-3 flex-wrap pointer-events-auto" style={{ height: "9%" }}>
-          {/* Navigation Pill Group */}
+        <div className="flex items-center justify-between gap-3 flex-wrap pointer-events-auto shrink-0">
+          {/* Navigation Pill Group — Clean & compact with Filter & Views Dropdown */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
-            {/* Tab 1: Calendar (Active by default) */}
-            <button
-              type="button"
-              onClick={() => onNavTabChange("calendar")}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                activeNavTab === "calendar"
-                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <CalendarIcon className="h-3.5 w-3.5" />
-              <span>Calendar</span>
-            </button>
-
-            {/* Tab 1b: Schedule Dispatch (PG-007 Dispatch Desk) */}
-            <button
-              type="button"
-              onClick={() => onNavTabChange("dispatch")}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                activeNavTab === "dispatch"
-                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-[#DFBE77]" />
-              <span>Schedule Dispatch</span>
-            </button>
-
-            {/* Tab 2: Session Types (PG-008) */}
-            <button
-              type="button"
-              onClick={() => onNavTabChange("session-types")}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                activeNavTab === "session-types"
-                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <Clock className="h-3.5 w-3.5 text-[#C5A059]" />
-              <span>Session Types</span>
-            </button>
-
-            {/* Tab 3: My Schedule */}
-            <button
-              type="button"
-              onClick={() => {
-                onNavTabChange("calendar");
-                onScopeChange?.("my");
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                scope === "my" && activeNavTab === "calendar"
-                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <CalendarIcon className="h-3.5 w-3.5 text-[#C5A059]" />
-              <span>My Schedule</span>
-            </button>
-
-            {/* Tab 4: Team Schedule */}
+            {/* Primary View: Calendar */}
             <button
               type="button"
               onClick={() => {
@@ -350,72 +278,171 @@ export default function CalendarConsoleHeader({
               }}
               className={cn(
                 "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                scope === "all" && activeNavTab === "calendar" && selectedAdvocateFilter === "ALL"
+                activeNavTab === "calendar" && scope === "all"
                   ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
+                  : "border border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 shadow-sm backdrop-blur-sm"
               )}
             >
-              <Users className="h-3.5 w-3.5 text-[#C5A059]" />
-              <span>Team Schedule</span>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>Calendar</span>
             </button>
 
-            {/* Tab 5: Scheduling Requests */}
-            <button
-              type="button"
-              onClick={() => {
-                onNavTabChange("requests");
-                const el = document.getElementById("bottom-console-anchor");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                activeNavTab === "requests"
-                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <Briefcase className="h-3.5 w-3.5 text-[#C5A059]" />
-              <span>Scheduling Requests</span>
-              <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-mono font-extrabold text-white shadow-sm">
-                {stats.pendingRequestsCount || 3}
-              </span>
-            </button>
+            {/* Active Sub-Console Pill (if not on base calendar) */}
+            {activeNavTab === "dispatch" && (
+              <button
+                type="button"
+                onClick={() => onNavTabChange("calendar")}
+                className="flex items-center gap-1.5 rounded-xl border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-3.5 py-1.5 text-xs font-serif font-bold text-[#07162B] shadow-md transition-all cursor-pointer whitespace-nowrap"
+                title="Click to return to Calendar"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-[#07162B]" />
+                <span>Schedule Dispatch</span>
+                <span className="ml-1 text-[10px] opacity-75">✕</span>
+              </button>
+            )}
+            {activeNavTab === "session-types" && (
+              <button
+                type="button"
+                onClick={() => onNavTabChange("calendar")}
+                className="flex items-center gap-1.5 rounded-xl border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-3.5 py-1.5 text-xs font-serif font-bold text-[#07162B] shadow-md transition-all cursor-pointer whitespace-nowrap"
+                title="Click to return to Calendar"
+              >
+                <Clock className="h-3.5 w-3.5 text-[#07162B]" />
+                <span>Session Types</span>
+                <span className="ml-1 text-[10px] opacity-75">✕</span>
+              </button>
+            )}
 
-            {/* Tab 6: Availability & Time Blocks */}
-            <button
-              type="button"
-              onClick={() => {
-                onNavTabChange("availability");
-                onOpenAvailabilityClick?.();
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                activeNavTab === "availability"
-                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <Clock className="h-3.5 w-3.5 text-[#C5A059]" />
-              <span>Availability & Time Blocks</span>
-            </button>
+            {/* Filter & Views Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap shadow-sm backdrop-blur-sm",
+                    scope === "my" || activeNavTab === "requests" || activeNavTab === "availability" || activeNavTab === "closures"
+                      ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                      : "border border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] hover:border-[#C5A059]/60"
+                  )}
+                >
+                  <Filter className="h-3.5 w-3.5 text-[#C5A059]" />
+                  <span>Filter & Views</span>
+                  {scope === "my" && (
+                    <span className="rounded bg-[#07162B]/90 px-1.5 py-0.5 text-[9px] font-mono text-[#FFE394] font-semibold border border-[#C5A059]/40">
+                      My Schedule
+                    </span>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="w-64 bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl rounded-xl p-2 space-y-1"
+              >
+                <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 py-1 font-bold border-b border-white/10">
+                  Schedule Scope Filter
+                </div>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onNavTabChange("calendar");
+                    onScopeChange?.("all");
+                    onAdvocateFilterChange?.("ALL");
+                  }}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5 text-[#C5A059]" />
+                    <span>Team Schedule (All Staff)</span>
+                  </div>
+                  {scope === "all" && activeNavTab === "calendar" && (
+                    <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onNavTabChange("calendar");
+                    onScopeChange?.("my");
+                  }}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-3.5 w-3.5 text-[#C5A059]" />
+                    <span>My Schedule (Byron)</span>
+                  </div>
+                  {scope === "my" && activeNavTab === "calendar" && (
+                    <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                  )}
+                </DropdownMenuItem>
 
-            {/* Tab 7: Holidays & Closures */}
-            <button
-              type="button"
-              onClick={() => {
-                onNavTabChange("closures");
-                onOpenClosuresClick?.();
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
-                activeNavTab === "closures"
-                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                  : "border border-[#193B66]/70 bg-[#061730]/75 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <Building2 className="h-3.5 w-3.5 text-[#C5A059]" />
-              <span>Holidays & Closures</span>
-            </button>
+                <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 pt-2 pb-1 font-bold border-t border-b border-white/10 mt-1">
+                  Desks & Consoles
+                </div>
+                <DropdownMenuItem
+                  onClick={() => onNavTabChange("dispatch")}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-[#DFBE77]" />
+                    <span>Schedule Dispatch Desk</span>
+                  </div>
+                  {activeNavTab === "dispatch" && (
+                    <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onNavTabChange("session-types")}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-[#C5A059]" />
+                    <span>Session Types (PG-008)</span>
+                  </div>
+                  {activeNavTab === "session-types" && (
+                    <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onNavTabChange("requests");
+                    const el = document.getElementById("bottom-console-anchor");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-3.5 w-3.5 text-[#C5A059]" />
+                    <span>Scheduling Requests</span>
+                  </div>
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-mono font-extrabold text-white shadow-sm">
+                    {stats.pendingRequestsCount || 3}
+                  </span>
+                </DropdownMenuItem>
+
+                <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 pt-2 pb-1 font-bold border-t border-b border-white/10 mt-1">
+                  Operations & Working Hours
+                </div>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onNavTabChange("availability");
+                    onOpenAvailabilityClick?.();
+                  }}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg"
+                >
+                  <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Availability & Time Blocks</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onNavTabChange("closures");
+                    onOpenClosuresClick?.();
+                  }}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg"
+                >
+                  <Building2 className="h-3.5 w-3.5 text-orange-400" />
+                  <span>Holidays & Office Closures</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Right: + Schedule Dropdown Button */}
@@ -476,138 +503,128 @@ export default function CalendarConsoleHeader({
         </div>
 
         {/* ── 3. LOWER SHIPLAP DECK (Bottom ~64%): 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
-        <div className="flex flex-col lg:flex-row items-stretch gap-2.5 pointer-events-auto" style={{ height: "64%" }}>
-          {/* ── Left Column: KPI Cards + Bottom Range / View Control Bar ── */}
-          <div className="flex-1 flex flex-col justify-between gap-2 min-w-0">
-            {/* Row of 5 KPI Cards (Glassmorphic so blue shiplap wood planks show through) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="flex flex-col lg:flex-row items-stretch gap-2.5 pointer-events-auto flex-1 min-h-0">
+          {/* ── Left Column: KPI Cards + Bottom Unified Command Bar ── */}
+          <div className="flex-1 flex flex-col justify-start gap-2 min-w-0">
+            {/* Row of 5 KPI Cards (Admiralty Executive Inset Cards: Icon + Number on top, Title on bottom) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5">
               {/* Card 1: Today */}
-              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-md">
-                  <CalendarIcon className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-white">
+              <button
+                type="button"
+                onClick={handleToday}
+                className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/70 hover:bg-[#07162B] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              >
+                {/* Top: Icon + Number */}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#1D4ED8] text-white shadow-md border border-blue-400/30 group-hover:scale-105 transition-transform">
+                    <CalendarIcon className="h-4 w-4" />
+                  </div>
+                  <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-[#FFF4D4]">
                     {stats.appointmentsCount || 5}
                   </div>
-                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
-                    Today
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleToday}
-                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
-                  >
-                    <span>View now</span>
-                    <span>→</span>
-                  </button>
                 </div>
-              </div>
+                {/* Under on bottom: Title */}
+                <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-[#FFF4D4] transition-colors">
+                  Today
+                </div>
+              </button>
 
               {/* Card 2: This Week */}
-              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-md">
-                  <CalendarIcon className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-white">
+              <button
+                type="button"
+                onClick={() => onViewModeChange?.("week")}
+                className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/70 hover:bg-[#07162B] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              >
+                {/* Top: Icon + Number */}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#B45309] to-[#D97706] text-white shadow-md border border-amber-400/30 group-hover:scale-105 transition-transform">
+                    <CalendarIcon className="h-4 w-4" />
+                  </div>
+                  <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-[#FFF4D4]">
                     {stats.weekAppointmentsCount || 10}
                   </div>
-                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
-                    This Week
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onViewModeChange?.("week")}
-                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
-                  >
-                    <span>View week</span>
-                    <span>→</span>
-                  </button>
                 </div>
-              </div>
+                {/* Under on bottom: Title */}
+                <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-[#FFF4D4] transition-colors">
+                  This Week
+                </div>
+              </button>
 
               {/* Card 3: Tentative Holds */}
-              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-600/30 to-amber-900/50 border border-amber-500/50 text-amber-300 shadow-md">
-                  <Hourglass className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-amber-300">
+              <button
+                type="button"
+                onClick={onProposeHoldsClick}
+                className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/70 hover:bg-[#07162B] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              >
+                {/* Top: Icon + Number */}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#78350F] to-[#92400E] text-[#FFE394] shadow-md border border-[#C5A059]/40 group-hover:scale-105 transition-transform">
+                    <Hourglass className="h-4 w-4" />
+                  </div>
+                  <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-amber-300">
                     {stats.holdsCount || 3}
                   </div>
-                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
-                    Tentative Holds
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onProposeHoldsClick}
-                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
-                  >
-                    <span>Review</span>
-                    <span>→</span>
-                  </button>
                 </div>
-              </div>
+                {/* Under on bottom: Title */}
+                <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-[#FFE394] transition-colors">
+                  Tentative Holds
+                </div>
+              </button>
 
               {/* Card 4: Callbacks */}
-              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600/30 to-emerald-900/50 border border-emerald-500/50 text-emerald-300 shadow-md">
-                  <Phone className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-emerald-300">
+              <button
+                type="button"
+                onClick={() => (onQuickAction ? onQuickAction("PARENT_CALL") : onScheduleClick())}
+                className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/70 hover:bg-[#07162B] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              >
+                {/* Top: Icon + Number */}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#065F46] to-[#047857] text-[#6EE7B7] shadow-md border border-emerald-400/30 group-hover:scale-105 transition-transform">
+                    <Phone className="h-4 w-4" />
+                  </div>
+                  <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-emerald-300">
                     {stats.callbacksCount || 2}
                   </div>
-                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
-                    Callbacks
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => (onQuickAction ? onQuickAction("PARENT_CALL") : onScheduleClick())}
-                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
-                  >
-                    <span>View</span>
-                    <span>→</span>
-                  </button>
                 </div>
-              </div>
+                {/* Under on bottom: Title */}
+                <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-emerald-200 transition-colors">
+                  Callbacks
+                </div>
+              </button>
 
               {/* Card 5: Tasks Due */}
-              <div className="rounded-2xl border border-[#193B66]/80 bg-[#061730]/60 backdrop-blur-md p-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)] hover:border-[#C5A059]/60 hover:bg-[#061730]/75 transition-all flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/40 border border-amber-400/50 text-amber-300 shadow-md">
-                  <CheckSquare className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-purple-300">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("bottom-console-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/70 hover:bg-[#07162B] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              >
+                {/* Top: Icon + Number */}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#4C1D95] to-[#5B21B6] text-[#C4B5FD] shadow-md border border-purple-400/30 group-hover:scale-105 transition-transform">
+                    <CheckSquare className="h-4 w-4" />
+                  </div>
+                  <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-purple-300">
                     {stats.tasksCount || 4}
                   </div>
-                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
-                    Tasks Due
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById("bottom-console-anchor");
-                      if (el) el.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
-                  >
-                    <span>View</span>
-                    <span>→</span>
-                  </button>
                 </div>
-              </div>
+                {/* Under on bottom: Title */}
+                <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-purple-200 transition-colors">
+                  Tasks Due
+                </div>
+              </button>
             </div>
 
-            {/* Bottom Row under KPI cards: Date Range + View Mode Pills + Advocate Selector */}
-            <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
-              {/* Left Group: Today + Chevrons + Date Range */}
-              <div className="rounded-xl border border-[#193B66]/80 bg-[#061730]/65 backdrop-blur-md p-1.5 flex items-center gap-2 shadow-lg">
+            {/* Unified Command Bar under KPI cards: Date Stepper & Range + View Mode Pills + Advocate Selector + Settings */}
+            <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] flex items-center justify-between gap-3 flex-wrap">
+              {/* Left Group: Today Jump + Stepper Chevrons + Date Range */}
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleToday}
-                  className="px-3 py-1 rounded-lg border border-[#1C3A60] bg-[#0A2244]/80 text-xs font-semibold text-[#D8C7A5] hover:text-white hover:border-[#C5A059] transition-all cursor-pointer"
+                  className="px-3 py-1 rounded-lg border border-[#3A2C18] bg-[#020A17]/90 text-xs font-semibold text-[#D8C7A5] hover:text-[#FFF4D4] hover:border-[#C5A059]/70 transition-all cursor-pointer shadow-sm active:scale-95"
                 >
                   Today
                 </button>
@@ -615,7 +632,7 @@ export default function CalendarConsoleHeader({
                   <button
                     type="button"
                     onClick={handlePrevStep}
-                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                    className="h-7 w-7 rounded-lg border border-[#3A2C18] bg-[#020A17]/90 text-[#D8C7A5] hover:text-[#FFF4D4] hover:border-[#C5A059]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
                     title="Previous"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
@@ -623,29 +640,29 @@ export default function CalendarConsoleHeader({
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                    className="h-7 w-7 rounded-lg border border-[#3A2C18] bg-[#020A17]/90 text-[#D8C7A5] hover:text-[#FFF4D4] hover:border-[#C5A059]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
                     title="Next"
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <div className="font-serif text-sm lg:text-base font-bold text-[#FFF4D4] px-2 whitespace-nowrap">
+                <div className="font-serif text-sm sm:text-base font-bold text-[#FFF4D4] px-1.5 whitespace-nowrap drop-shadow-sm">
                   {formattedRangeLabel}
                 </div>
               </div>
 
-              {/* Right Group: Day / Week / Month / Agenda + Advocate Dropdown + Settings Gear */}
-              <div className="rounded-xl border border-[#193B66]/80 bg-[#061730]/65 backdrop-blur-md p-1.5 flex items-center gap-2 shadow-lg flex-wrap">
+              {/* Right Group: View Mode Segmented Switch + Advocate Dropdown + Layer Settings */}
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* View Mode Buttons */}
-                <div className="flex items-center gap-0.5 bg-[#030E1F]/80 p-0.5 rounded-lg border border-[#1C3A60]/60">
+                <div className="flex items-center p-0.5 rounded-lg bg-[#020A17]/90 border border-[#3A2C18]">
                   <button
                     type="button"
                     onClick={() => onViewModeChange?.("day")}
                     className={cn(
-                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      "px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
                       viewMode === "day"
-                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
-                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
+                        : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
                     )}
                   >
                     Day
@@ -654,10 +671,10 @@ export default function CalendarConsoleHeader({
                     type="button"
                     onClick={() => onViewModeChange?.("week")}
                     className={cn(
-                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      "px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
                       viewMode === "week"
-                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
-                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
+                        : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
                     )}
                   >
                     Week
@@ -666,10 +683,10 @@ export default function CalendarConsoleHeader({
                     type="button"
                     onClick={() => onViewModeChange?.("month")}
                     className={cn(
-                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      "px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
                       viewMode === "month"
-                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
-                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
+                        : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
                     )}
                   >
                     Month
@@ -678,10 +695,10 @@ export default function CalendarConsoleHeader({
                     type="button"
                     onClick={() => onViewModeChange?.("agenda")}
                     className={cn(
-                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      "px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
                       viewMode === "agenda"
-                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
-                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
+                        : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
                     )}
                   >
                     Agenda
@@ -694,7 +711,7 @@ export default function CalendarConsoleHeader({
                     value={selectedAdvocateFilter}
                     onValueChange={(val) => onAdvocateFilterChange?.(val)}
                   >
-                    <SelectTrigger className="h-7 text-xs bg-[#0A2244]/90 border-[#1C3A60] text-[#FFF4D4] rounded-lg px-2.5 min-w-[130px] font-medium">
+                    <SelectTrigger className="h-7 text-xs bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] hover:border-[#C5A059]/70 rounded-lg px-2.5 min-w-[130px] font-medium shadow-sm">
                       <SelectValue placeholder="All Advocates" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#07162B] border-[#8C6D37]/70 text-[#FFF4D4]">
@@ -713,7 +730,7 @@ export default function CalendarConsoleHeader({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244]/90 text-[#D8C7A5] hover:text-amber-300 hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                      className="h-7 w-7 rounded-lg border border-[#3A2C18] bg-[#020A17]/90 text-[#D8C7A5] hover:text-amber-300 hover:border-[#C5A059]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
                       title="Calendar Layer Filters"
                     >
                       <Settings className="h-3.5 w-3.5" />
@@ -822,25 +839,25 @@ export default function CalendarConsoleHeader({
             </div>
           </div>
 
-          {/* ── Right Column: Integrated Month Calendar Widget (Matches mockup right widget) ── */}
-          <div className="w-[230px] sm:w-[250px] lg:w-[265px] shrink-0 rounded-2xl border border-[#193B66]/80 bg-[#061730]/65 backdrop-blur-md p-2 sm:p-2.5 shadow-xl flex flex-col justify-between">
+          {/* ── Right Column: Integrated Month Calendar Widget (Optimized Proportions with Zero Clipping) ── */}
+          <div className="w-[240px] sm:w-[250px] lg:w-[260px] shrink-0 rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between">
             {/* Calendar Widget Month Header */}
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between pb-1 border-b border-[#3A2C18]/60">
               <button
                 type="button"
                 onClick={handlePrevMiniMonth}
-                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                className="h-5.5 w-5.5 rounded border border-[#3A2C18] bg-[#020A17]/90 text-[#D8C7A5] hover:text-[#FFF4D4] hover:border-[#C5A059]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
                 title="Previous Month"
               >
                 <ChevronLeft className="h-3 w-3" />
               </button>
-              <div className="font-serif text-xs font-bold text-[#FFF4D4] tracking-wide">
+              <div className="font-serif text-xs font-bold text-[#FFF4D4] tracking-wider drop-shadow-sm">
                 {miniMonthYearLabel}
               </div>
               <button
                 type="button"
                 onClick={handleNextMiniMonth}
-                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244]/80 text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                className="h-5.5 w-5.5 rounded border border-[#3A2C18] bg-[#020A17]/90 text-[#D8C7A5] hover:text-[#FFF4D4] hover:border-[#C5A059]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
                 title="Next Month"
               >
                 <ChevronRight className="h-3 w-3" />
@@ -848,7 +865,7 @@ export default function CalendarConsoleHeader({
             </div>
 
             {/* Weekday headers */}
-            <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] font-mono text-[#A69371] mb-0.5">
+            <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-mono font-semibold text-[#A69371] py-1">
               <span>Su</span>
               <span>Mo</span>
               <span>Tu</span>
@@ -858,11 +875,11 @@ export default function CalendarConsoleHeader({
               <span>Sa</span>
             </div>
 
-            {/* Days grid */}
-            <div className="grid grid-cols-7 gap-0.5 text-center">
+            {/* Days grid — uniform comfortable square cells with guaranteed fit */}
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1 text-center">
               {miniCalDays.map((item, idx) => {
                 if (item.day === null) {
-                  return <div key={`empty-${idx}`} className="h-5 w-5 sm:h-6 sm:w-6" />;
+                  return <div key={`empty-${idx}`} className="h-5.5 w-5.5 sm:h-6 sm:w-6" />;
                 }
 
                 return (
@@ -874,12 +891,12 @@ export default function CalendarConsoleHeader({
                       onDateChange(next);
                     }}
                     className={cn(
-                      "h-5 w-5 sm:h-6 sm:w-6 rounded-md text-[10px] sm:text-[11px] font-mono font-medium flex items-center justify-center transition-all cursor-pointer mx-auto",
+                      "h-5.5 w-5.5 sm:h-6 sm:w-6 rounded text-[10px] sm:text-[11px] font-mono font-medium flex items-center justify-center transition-all cursor-pointer mx-auto",
                       item.isSelected
-                        ? "bg-[#FFE394] text-[#07162B] font-bold shadow-md scale-105"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md scale-105"
                         : item.isCurrent
-                        ? "border border-amber-400 text-amber-300 font-bold hover:bg-amber-400/20"
-                        : "text-white/80 hover:bg-white/10 hover:text-white"
+                        ? "border border-[#FFE394] text-[#FFE394] font-bold hover:bg-[#FFE394]/15"
+                        : "text-[#FFF4D4]/85 hover:bg-white/10 hover:text-white"
                     )}
                   >
                     {item.day}

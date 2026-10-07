@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation, Redirect } from "wouter";
@@ -128,7 +128,14 @@ function Router() {
     window.location.pathname.startsWith("/portal/receipt/") ||
     window.location.pathname.startsWith("/smart-files/response/");
 
-  if (loading && !isPublicRoute) {
+  // Ensure full-screen loading spinner is ONLY shown on initial app startup,
+  // never during background session checks or token refreshes which would unmount the CRM shell.
+  const initialLoadCompleted = useRef(false);
+  if (!loading && user) {
+    initialLoadCompleted.current = true;
+  }
+
+  if (loading && !initialLoadCompleted.current && !isPublicRoute) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -137,7 +144,7 @@ function Router() {
   }
 
   // Authenticated routes
-  if (user) {
+  if (user || initialLoadCompleted.current) {
 
     if (
       window.location.pathname === '/portal/book' ||
