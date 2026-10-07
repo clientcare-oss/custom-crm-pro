@@ -225,27 +225,17 @@ export default function CalendarConsoleHeader({
 
   return (
     <header className="relative w-full border-b-2 border-[#5B4323] shadow-[0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] select-none">
-      {/* ── Seamless Horizontal Wood Planks Texture (No stretch, natural repeat/cover) ── */}
-      <div
-        className="absolute inset-0 bg-[#061426] bg-cover bg-center pointer-events-none select-none opacity-95"
-        style={{ backgroundImage: `url('/images/calendar-wood-planks-bg.png')` }}
+      {/* ── Full Picture Background Canopy (100% visible, natural aspect ratio, 0px cut off, not behind sidebar or rightbar) ── */}
+      <img
+        src="/images/calendar-header-shelf.png"
+        alt="PG-007 Appointments & Calendar Shelf Canopy"
+        className="w-full h-auto block select-none pointer-events-none"
       />
-      {/* Ambient Maritime Radial Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#020B18]/30 to-[#020B18]/80 pointer-events-none" />
 
-      {/* ── 1. UPPER SHELF: Lanterns, Study Books, Framed Sign & Parchment (Exact 155px height, never stretched) ── */}
-      <div className="relative w-full h-[140px] sm:h-[155px] overflow-hidden border-b-2 border-[#5B4323] shadow-[0_6px_20px_rgba(0,0,0,0.85)] bg-[#020914]">
-        {/* Crisp, un-stretched shelf canopy (exact height, anchored top) */}
-        <img
-          src="/images/calendar-shelf-upper.png"
-          alt="PG-007 Appointments & Calendar Shelf Canopy"
-          className="w-full h-full object-cover object-top pointer-events-none select-none"
-        />
-        {/* Golden glow shimmer along the bottom oak shelf ledge */}
-        <div className="absolute bottom-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#DFBE77]/60 to-transparent pointer-events-none" />
-
-        {/* Foreground Content for Upper Shelf */}
-        <div className="absolute inset-0 z-10 flex items-center justify-between px-3 sm:px-6 lg:px-8">
+      {/* ── Interactive UI Overlay (Aligned with precision over the full picture) ── */}
+      <div className="absolute inset-0 z-10 flex flex-col justify-between px-3 sm:px-5 lg:px-7 py-2 sm:py-3 pointer-events-none">
+        {/* ── 1. UPPER SHELF (Top ~37%): Centered Carved Plaque + Right Parchment Note ── */}
+        <div className="relative flex items-center justify-between pointer-events-auto" style={{ height: "37%" }}>
           {/* Left Decorative Waypoint Compass Badge */}
           <div className="hidden lg:flex items-center gap-3 w-56 shrink-0">
             <div className="flex h-10 w-10 items-center justify-center rounded-[5px] border border-[#8C6D37]/70 bg-[#020A17]/85 backdrop-blur-sm shadow-[0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12)]">
@@ -261,7 +251,7 @@ export default function CalendarConsoleHeader({
             </div>
           </div>
 
-          {/* Central Carved Gold-Leaf Plaque (Positions directly inside the framed wooden sign) */}
+          {/* Central Carved Gold-Leaf Plaque (Positions directly inside the framed wooden sign in artwork) */}
           <div className="flex-1 max-w-lg mx-auto text-center px-4 py-1 rounded-xl">
             <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-[#FFF4D4] drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)]">
               Calendar
@@ -273,7 +263,7 @@ export default function CalendarConsoleHeader({
 
           {/* Right Hanging Parchment Note (Matches reference mockup) */}
           <div className="hidden lg:flex items-center justify-end w-56 shrink-0">
-            <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-b from-[#F7EED4] via-[#F2E5C4] to-[#E5D4AF] border border-[#8C6D37]/80 shadow-[0_8px_20px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.7)] text-center max-w-[190px] transform rotate-[1deg] hover:rotate-0 transition-transform">
+            <div className="p-2 sm:p-2.5 rounded-lg bg-gradient-to-b from-[#F7EED4] via-[#F2E5C4] to-[#E5D4AF] border border-[#8C6D37]/80 shadow-[0_8px_20px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.7)] text-center max-w-[190px] transform rotate-[1deg] hover:rotate-0 transition-transform">
               <p className="font-serif italic text-xs font-bold text-[#2C1D10] leading-snug drop-shadow-sm select-none">
                 “Right Meetings<br />
                 Right People<br />
@@ -282,13 +272,9 @@ export default function CalendarConsoleHeader({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── 2. LOWER DECK: Tab Strip + KPI Cards + Date Navigator + Month Calendar Widget ── */}
-      <div className="relative z-10 w-full px-3 sm:px-6 lg:px-8 py-3 space-y-3">
-
-        {/* ── 2. NAVIGATION TAB STRIP (Directly below shelf rail) ── */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+        {/* ── 2. NAVIGATION TAB STRIP (Middle ~11%): Directly below wooden shelf rail ── */}
+        <div className="flex items-center justify-between gap-3 flex-wrap pointer-events-auto" style={{ height: "11%" }}>
           {/* Navigation Pill Group */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
             {/* Tab 1: Calendar (Active by default) */}
@@ -459,12 +445,12 @@ export default function CalendarConsoleHeader({
           </div>
         </div>
 
-        {/* ── 3. LOWER SHIPLAP DECK: 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
-        <div className="flex flex-col lg:flex-row items-stretch gap-3">
+        {/* ── 3. LOWER SHIPLAP DECK (Bottom ~48%): 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
+        <div className="flex flex-col lg:flex-row items-stretch gap-2.5 pointer-events-auto" style={{ height: "48%" }}>
           {/* ── Left Column: KPI Cards + Bottom Range / View Control Bar ── */}
-          <div className="flex-1 flex flex-col justify-between gap-3 min-w-0">
+          <div className="flex-1 flex flex-col justify-between gap-2 min-w-0">
             {/* Row of 5 KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {/* Card 1: Today */}
               <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-md">
@@ -807,32 +793,32 @@ export default function CalendarConsoleHeader({
           </div>
 
           {/* ── Right Column: Integrated Month Calendar Widget (Matches mockup right widget) ── */}
-          <div className="w-full lg:w-[280px] shrink-0 rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3.5 shadow-xl flex flex-col justify-between">
+          <div className="w-[230px] sm:w-[250px] lg:w-[265px] shrink-0 rounded-2xl border border-[#193B66] bg-[#061730]/95 p-2 sm:p-2.5 shadow-xl flex flex-col justify-between">
             {/* Calendar Widget Month Header */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <button
                 type="button"
                 onClick={handlePrevMiniMonth}
-                className="h-6 w-6 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
                 title="Previous Month"
               >
-                <ChevronLeft className="h-3.5 w-3.5" />
+                <ChevronLeft className="h-3 w-3" />
               </button>
-              <div className="font-serif text-sm font-bold text-[#FFF4D4] tracking-wide">
+              <div className="font-serif text-xs font-bold text-[#FFF4D4] tracking-wide">
                 {miniMonthYearLabel}
               </div>
               <button
                 type="button"
                 onClick={handleNextMiniMonth}
-                className="h-6 w-6 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                className="h-5 w-5 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
                 title="Next Month"
               >
-                <ChevronRight className="h-3.5 w-3.5" />
+                <ChevronRight className="h-3 w-3" />
               </button>
             </div>
 
             {/* Weekday headers */}
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono text-[#A69371] mb-1">
+            <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] font-mono text-[#A69371] mb-0.5">
               <span>Su</span>
               <span>Mo</span>
               <span>Tu</span>
@@ -843,10 +829,10 @@ export default function CalendarConsoleHeader({
             </div>
 
             {/* Days grid */}
-            <div className="grid grid-cols-7 gap-1 text-center">
+            <div className="grid grid-cols-7 gap-0.5 text-center">
               {miniCalDays.map((item, idx) => {
                 if (item.day === null) {
-                  return <div key={`empty-${idx}`} className="h-7 w-7" />;
+                  return <div key={`empty-${idx}`} className="h-5 w-5 sm:h-6 sm:w-6" />;
                 }
 
                 return (
@@ -858,7 +844,7 @@ export default function CalendarConsoleHeader({
                       onDateChange(next);
                     }}
                     className={cn(
-                      "h-7 w-7 rounded-lg text-xs font-mono font-medium flex items-center justify-center transition-all cursor-pointer mx-auto",
+                      "h-5 w-5 sm:h-6 sm:w-6 rounded-md text-[10px] sm:text-[11px] font-mono font-medium flex items-center justify-center transition-all cursor-pointer mx-auto",
                       item.isSelected
                         ? "bg-[#FFE394] text-[#07162B] font-bold shadow-md scale-105"
                         : item.isCurrent
