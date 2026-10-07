@@ -22,6 +22,13 @@ import ProposedMeetingDetailModal from "@/components/calendar/ProposedMeetingDet
 import MasterScheduleModal, { ScheduleActionType } from "@/components/calendar/MasterScheduleModal";
 import OperationalBlockDetailDrawer from "@/components/calendar/OperationalBlockDetailDrawer";
 import { CalendarPatternLegendBar } from "@/components/calendar/CalendarPatternStyles";
+import CalendarConsoleHeader from "@/components/calendar/CalendarConsoleHeader";
+import CalendarControlCommandBar from "@/components/calendar/CalendarControlCommandBar";
+import CalendarScheduleLegendBar from "@/components/calendar/CalendarScheduleLegendBar";
+import CalendarBottomConsole, {
+  BottomConsoleAppointment,
+  BottomConsoleHoldGroup,
+} from "@/components/calendar/CalendarBottomConsole";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import PageIdBadge from "@/components/PageIdBadge";
 import type { OperationalBlock } from "../../../drizzle/schema";
@@ -623,54 +630,149 @@ export default function Appointments() {
     return [...sampleApts, ...rawList, ...holdList];
   }, [appointments, unifiedData, todayDateStr]);
 
+  const [showWeekends, setShowWeekends] = useState<boolean>(true);
+  const [showCanceled, setShowCanceled] = useState<boolean>(false);
+
+  const confirmSlotMutation = trpc.proposedMeetings.confirm.useMutation({
+    onSuccess: (data) => {
+      toast.success(
+        `Meeting Confirmed! ${data.releasedCount} other proposed hold(s) released automatically.`
+      );
+      refetch();
+      refetchUnified();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const todayAppointmentsCount = useMemo(() => {
+    const dStr = new Date(selectedDate).toISOString().split("T")[0];
+    return mergedAppointments.filter((a: any) => {
+      const s = new Date(a.startTime).toISOString().split("T")[0];
+      return s === dStr && a.status !== "Cancelled";
+    }).length;
+  }, [mergedAppointments, selectedDate]);
+
+  const bottomConsoleTodayApts: BottomConsoleAppointment[] = useMemo(() => {
+    const selStr = new Date(selectedDate).toISOString().split("T")[0];
+    const dayMatches = mergedAppointments.filter((a: any) => {
+      const s = new Date(a.startTime).toISOString().split("T")[0];
+      return s === selStr && (showCanceled || a.status !== "Cancelled");
+    });
+
+    return dayMatches.map((a: any) => {
+      const startTime = new Date(a.startTime);
+      const timeStr = startTime.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      const isHold = Boolean(a.isHold || a.proposedMeetingId);
+      let st: any = a.status;
+      if (isHold) st = "Pending";
+      else if (a.status === "Confirmed") st = "Confirmed";
+      else if (a.meetingType?.toLowerCase().includes("call")) st = "Scheduled";
+      else if (a.meetingType?.toLowerCase().includes("internal")) st = "Internal";
+      else if (a.meetingType?.toLowerCase().includes("personal")) st = "Personal";
+
+      return {
+        id: a.id,
+        timeStr,
+        title: a.title,
+        studentName: a.studentName,
+        parentName: a.parentName,
+        contextTag: a.studentName && a.meetingType ? `${a.studentName} • ${a.meetingType}` : a.location || undefined,
+        status: st,
+        meetingType: a.meetingType,
+        videoLink: a.videoLink,
+        isHold,
+        proposedMeetingId: a.proposedMeetingId,
+      };
+    });
+  }, [mergedAppointments, selectedDate, showCanceled]);
+
+  const bottomConsoleUpcomingApts: BottomConsoleAppointment[] = useMemo(() => {
+    const now = new Date();
+    const upMatches = mergedAppointments.filter((a: any) => {
+      return new Date(a.startTime) > now && a.status !== "Cancelled";
+    });
+
+    return upMatches.slice(0, 10).map((a: any) => ({
+      id: a.id,
+      timeStr: new Date(a.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+      title: a.title,
+      studentName: a.studentName,
+      parentName: a.parentName,
+      contextTag: new Date(a.startTime).toLocaleDateString([], { month: "short", day: "numeric" }),
+      status: a.status === "Confirmed" ? "Confirmed" : "Scheduled",
+      meetingType: a.meetingType,
+      videoLink: a.videoLink,
+    }));
+  }, [mergedAppointments]);
+
+  const bottomConsoleHolds: BottomConsoleHoldGroup[] = useMemo(() => {
+    const holdEvents = unifiedData?.holdEvents || [];
+    if (holdEvents.length > 0) {
+      const groups: Record<number, BottomConsoleHoldGroup> = {};
+      holdEvents.forEach((h: any) => {
+        const pmId = h.proposedMeetingId || 1;
+        if (!groups[pmId]) {
+          groups[pmId] = {
+            id: pmId,
+            studentName: h.studentName || h.parentName || "Student",
+            meetingType: h.meetingType || "IEP Meeting",
+            optionsCount: h.totalSiblingSlots || 3,
+            createdDateStr: "Recent",
+            status: "Pending Response",
+            slots: [],
+          };
+        }
+        groups[pmId].slots.push({
+          id: h.candidateSlotId || (typeof h.id === "number" ? h.id : 1),
+          dateFormatted: new Date(h.startTime).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }),
+          timeFormatted: `${new Date(h.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(h.endTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
+          isParentSelected: h.parentPreferred,
+          status: h.status || "Pending",
+        });
+      });
+      return Object.values(groups);
+    }
+    return [];
+  }, [unifiedData]);
+
   return (
     <ScopedErrorBoundary moduleName="Appointments & Calendar">
-      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto">
+      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
         {/* ── Admiralty Top Header Console ── */}
-        <div className="relative overflow-hidden rounded-2xl bg-[#05142B]/90 border border-[#3A2C18] p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
-          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#102B4E]/30 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#020A17] border border-[#3A2C18] text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
-                  <Calendar className="w-4 h-4 text-[#C5A059] shrink-0" />
-                  <span>Operations Deck</span>
-                </div>
-                <PageIdBadge
-                  id={activeTab === "coverage" ? "PG-041" : activeTab === "session-types" ? "PG-008" : "PG-007"}
-                  name={activeTab === "coverage" ? "National Coverage" : activeTab === "session-types" ? "Session Types" : "Appointments & Calendar"}
-                  inline
-                />
-                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Dual-Zone Sync Active</span>
-                </div>
-              </div>
-
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-serif text-[#FFF4D4] font-normal tracking-wide">
-                  Appointments & <span className="font-serif italic font-bold text-[#FFE394]">Calendar Console</span>
-                </h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <WaypointWaveIcon className="w-8 h-2 text-[#C5A059] shrink-0" />
-                  <p className="text-xs sm:text-sm text-[#C6B697] font-medium">
-                    Master scheduling, dual-zone advocacy alignment, and team coverage dispatch.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <Button
-                onClick={() => handleOpenSchedule()}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs sm:text-sm shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-110 transition-all gap-2 tracking-wide cursor-pointer px-4 sm:px-5 py-2"
-              >
-                <Plus className="w-4 h-4 text-[#07162B]" />
-                + SCHEDULE
-              </Button>
-            </div>
-          </div>
-        </div>
+        <CalendarConsoleHeader
+          currentDate={selectedDate}
+          onDateChange={setSelectedDate}
+          activeNavTab={
+            activeTab === "coverage"
+              ? "coverage"
+              : activeTab === "session-types"
+              ? "session-types"
+              : "calendar"
+          }
+          onNavTabChange={(tab) => {
+            if (tab === "coverage" || tab === "session-types" || tab === "calendar") {
+              handleTabChange(tab);
+            } else if (tab === "availability") {
+              handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
+            } else if (tab === "closures") {
+              handleOpenSchedule(selectedDate, undefined, "OFFICE_CLOSURE");
+            } else if (tab === "requests") {
+              const el = document.getElementById("bottom-console-anchor");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
+          stats={{
+            appointmentsCount: todayAppointmentsCount || 5,
+            holdsCount: (unifiedData?.holdEvents || []).length || 3,
+            callbacksCount: 1,
+            tasksCount: 2,
+            pendingRequestsCount: 3,
+          }}
+          onScheduleClick={() => handleOpenSchedule()}
+          onProposeHoldsClick={() => handleOpenSchedule(selectedDate, undefined, "PROPOSED_HOLDS")}
+          onOpenClosuresClick={() => handleOpenSchedule(selectedDate, undefined, "OFFICE_CLOSURE")}
+          onOpenAvailabilityClick={() => handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME")}
+        />
 
         {/* ── Event Detail Popup ── */}
         {selectedApt && (
@@ -1447,68 +1549,7 @@ export default function Appointments() {
           </DialogContent>
         </Dialog>
 
-      {/* ── Navigation Switcher (Admiralty Brass/Navy Tabs) ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-[#3A2C18]/60">
-        <div className="flex items-center gap-1.5 p-1 bg-[#020A17]/90 rounded-xl border border-[#3A2C18] shadow-inner">
-          <button
-            type="button"
-            onClick={() => handleTabChange("calendar")}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
-              activeTab === "calendar"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md border border-[#FFE394]/50"
-                : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]"
-            )}
-          >
-            <Calendar className={cn("w-4 h-4", activeTab === "calendar" ? "text-[#07162B]" : "text-[#C5A059]")} />
-            Calendar
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTabChange("session-types")}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
-              activeTab === "session-types"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md border border-[#FFE394]/50"
-                : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]"
-            )}
-          >
-            <CalendarClock className={cn("w-4 h-4", activeTab === "session-types" ? "text-[#07162B]" : "text-[#C5A059]")} />
-            Session Types
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTabChange("coverage")}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer",
-              activeTab === "coverage"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md border border-[#FFE394]/50"
-                : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]"
-            )}
-          >
-            <Globe className={cn("w-4 h-4", activeTab === "coverage" ? "text-[#07162B]" : "text-[#C5A059]")} />
-            National Coverage
-          </button>
-        </div>
-
-        {activeTab === "coverage" ? (
-          <div className="text-xs text-[#C6B697] flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Interactive US Coverage Map, Clocks & Safe Calling Guidance</span>
-          </div>
-        ) : activeTab === "session-types" ? (
-          <div className="text-xs text-[#C6B697] hidden sm:flex items-center gap-2">
-            <CalendarClock className="w-3.5 h-3.5 text-[#C5A059]" />
-            <span>Session Configuration & Client Portal Booking Settings</span>
-          </div>
-        ) : (
-          <div className="text-xs text-[#C6B697] hidden sm:flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-[#C5A059]" />
-            <span>Dual-Zone Schedule Alignment Active</span>
-          </div>
-        )}
-      </div>
-
+      {/* ── Main Tab Router (Coverage vs Session Types vs Operations Calendar Console) ── */}
       {activeTab === "coverage" ? (
         <div className="-mx-6 -mb-6">
           <NationalCoverage />
@@ -1519,106 +1560,146 @@ export default function Appointments() {
         </div>
       ) : (
         <>
-      {/* ── Holds Needing Attention Work Queue ── */}
-      <div className="mb-4">
-        <HoldsNeedingAttentionCard
-          onReviewMeeting={(id) => setActiveProposedMeetingId(id)}
-        />
-      </div>
-
-      {/* ── Visual Pattern Key & Small Block Legend ── */}
-      <div className="mb-4">
-        <CalendarPatternLegendBar
-          onSelectPattern={(key) => {
-            const action: ScheduleActionType =
-              key === "confirmed"
-                ? "CONFIRMED_APPOINTMENT"
-                : key === "proposed_hold"
-                ? "PROPOSED_HOLDS"
-                : key === "block_time"
-                ? "BLOCK_TIME"
-                : key === "office_closure"
-                ? "OFFICE_CLOSURE"
-                : "INTERNAL_EVENT";
-            handleOpenSchedule(selectedDate, undefined, action);
-          }}
-        />
-      </div>
-
-      {/* ── Visual Layer Filtering Bar (Visual only, does not alter real scheduling engine rules) ── */}
-      <div className="mb-4 p-3 rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 shrink-0">
-          <Layers className="w-4 h-4 text-[#C5A059]" />
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FFE394]">
-            Layer Visibility
-          </span>
-          <span className="text-[10px] text-[#A69371] font-mono hidden xl:inline">
-            (Visual toggles only — hidden items still strictly govern real scheduling availability)
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {[
-            { id: "showAppointments", label: "Appointments", active: layerFilters.showAppointments },
-            { id: "showProposedHolds", label: "Holds", active: layerFilters.showProposedHolds },
-            { id: "showClosures", label: "Closures", active: layerFilters.showClosures },
-            { id: "showHolidays", label: "Holidays", active: layerFilters.showHolidays },
-            { id: "showPto", label: "PTO / Sick", active: layerFilters.showPto },
-            { id: "showBlackouts", label: "Blackouts", active: layerFilters.showBlackouts },
-            { id: "showInternalEvents", label: "Internal", active: layerFilters.showInternalEvents },
-            { id: "showProtectedWork", label: "Protected", active: layerFilters.showProtectedWork },
-          ].map((layer) => (
-            <button
-              key={layer.id}
-              type="button"
-              onClick={() =>
-                setLayerFilters((prev) => ({
-                  ...prev,
-                  [layer.id]: !prev[layer.id as keyof CalendarLayerFilters],
-                }))
+          {/* ── 4-MODULE COMMAND BAR (Quick Actions, Layer Filters, View Options, Mini Calendar) ── */}
+          <CalendarControlCommandBar
+            viewMode={viewMode}
+            onViewModeChange={(mode) => {
+              if (mode === "agenda") {
+                setViewMode("day");
+              } else {
+                handleViewModeChange(mode);
               }
-              className={`px-2.5 py-1 rounded-[5px] border text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                layer.active
-                  ? "bg-[#102B4E]/80 border-[#C5A059]/60 text-[#FFE394] shadow-sm"
-                  : "bg-[#020A17] border-[#3A2C18] text-[#A69371]/60 hover:text-[#C6B697]"
-              }`}
-            >
-              {layer.active ? <Eye className="w-3 h-3 text-[#C5A059]" /> : <EyeOff className="w-3 h-3 text-[#A69371]" />}
-              <span>{layer.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+            }}
+            scope={scope}
+            onScopeChange={setScope}
+            selectedAdvocateFilter={selectedAdvocateFilter}
+            onAdvocateFilterChange={setSelectedAdvocateFilter}
+            advocateList={staffList}
+            currentDate={selectedDate}
+            onDateChange={setSelectedDate}
+            layerFilters={layerFilters}
+            onLayerFiltersChange={setLayerFilters}
+            showWeekends={showWeekends}
+            onToggleShowWeekends={setShowWeekends}
+            showCanceled={showCanceled}
+            onToggleShowCanceled={setShowCanceled}
+            onQuickAction={(action) => {
+              if (action === "NEW_MEETING") {
+                handleOpenSchedule(selectedDate, undefined, "CONFIRMED_APPOINTMENT");
+              } else if (action === "PROPOSE_3_OPTIONS") {
+                handleOpenSchedule(selectedDate, undefined, "PROPOSED_HOLDS");
+              } else if (action === "PARENT_CALL") {
+                handleOpenSchedule(selectedDate, undefined, "CONFIRMED_APPOINTMENT");
+              } else if (action === "BLOCK_TIME") {
+                handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
+              }
+            }}
+          />
 
-      {/* ── Calendar View ── */}
-      <CalendarView
-        appointments={mergedAppointments as any}
-        operationalBlocks={operationalBlocks}
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-        scope={scope}
-        onScopeChange={setScope}
-        selectedAdvocateFilter={selectedAdvocateFilter}
-        onAdvocateFilterChange={setSelectedAdvocateFilter}
-        currentDate={selectedDate}
-        onDateChange={setSelectedDate}
-        onDateClick={(d) => handleOpenSchedule(d)}
-        onSlotClick={(date, time) => handleOpenSchedule(date, time)}
-        onEventClick={(apt) => {
-          if ((apt as any).isHold || (apt as any).proposedMeetingId) {
-            setActiveProposedMeetingId((apt as any).proposedMeetingId);
-          } else {
-            setSelectedApt(apt as Appointment);
-          }
-        }}
-        onOperationalBlockClick={(block) => setActiveOperationalBlock(block)}
-        onReassignClick={(apt) => setReassignApt(apt as any)}
-        onScheduleClick={() => handleOpenSchedule()}
-        onManageStaffClick={() => setShowStaffStatusModal(true)}
-        loggedInAdvocateName={user?.name || "Byron Honea"}
-        staffList={staffList}
-        layerFilters={layerFilters}
-      />
+          {/* ── SCHEDULE LEGEND STRIP (9 Swatches) ── */}
+          <CalendarScheduleLegendBar
+            onSelectPattern={(key) => {
+              const action: ScheduleActionType =
+                key === "confirmed"
+                  ? "CONFIRMED_APPOINTMENT"
+                  : key === "tentative_hold"
+                  ? "PROPOSED_HOLDS"
+                  : key === "office_closed"
+                  ? "OFFICE_CLOSURE"
+                  : key === "internal_work"
+                  ? "INTERNAL_EVENT"
+                  : "BLOCK_TIME";
+              handleOpenSchedule(selectedDate, undefined, action);
+            }}
+          />
+
+          {/* ── MAIN CALENDAR GRID ── */}
+          <div className="w-full">
+            <CalendarView
+              appointments={mergedAppointments as any}
+              operationalBlocks={operationalBlocks}
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
+              scope={scope}
+              onScopeChange={setScope}
+              selectedAdvocateFilter={selectedAdvocateFilter}
+              onAdvocateFilterChange={setSelectedAdvocateFilter}
+              currentDate={selectedDate}
+              onDateChange={setSelectedDate}
+              onDateClick={(d) => handleOpenSchedule(d)}
+              onSlotClick={(date, time) => handleOpenSchedule(date, time)}
+              onEventClick={(apt) => {
+                if ((apt as any).isHold || (apt as any).proposedMeetingId) {
+                  setActiveProposedMeetingId((apt as any).proposedMeetingId);
+                } else {
+                  setSelectedApt(apt as Appointment);
+                }
+              }}
+              onOperationalBlockClick={(block) => setActiveOperationalBlock(block)}
+              onReassignClick={(apt) => setReassignApt(apt as any)}
+              onScheduleClick={() => handleOpenSchedule()}
+              onManageStaffClick={() => setShowStaffStatusModal(true)}
+              loggedInAdvocateName={user?.name || "Byron Honea"}
+              staffList={staffList}
+              layerFilters={layerFilters}
+              hideHeaderAndControls={true}
+            />
+          </div>
+
+          {/* ── BOTTOM DUAL CONSOLE (Today's Appts Tabs + Tentative Hold Manager + Availability Blocks) ── */}
+          <div id="bottom-console-anchor" className="pt-2">
+            <CalendarBottomConsole
+              todayAppointments={bottomConsoleTodayApts}
+              upcomingAppointments={bottomConsoleUpcomingApts}
+              tentativeHolds={bottomConsoleHolds}
+              tasksCount={2}
+              onEventClick={(aptId) => {
+                const found = mergedAppointments.find((a: any) => a.id === aptId);
+                if (found) {
+                  if (found.isHold || found.proposedMeetingId) {
+                    setActiveProposedMeetingId(found.proposedMeetingId);
+                  } else {
+                    setSelectedApt(found as any);
+                  }
+                }
+              }}
+              onJoinClick={(apt) => {
+                if (apt.videoLink) window.open(apt.videoLink, "_blank");
+              }}
+              onManageHoldClick={(holdId) => {
+                setActiveProposedMeetingId(holdId);
+              }}
+              onConfirmHoldSlot={(holdId, slotId) => {
+                confirmSlotMutation.mutate({
+                  proposedMeetingId: holdId,
+                  candidateSlotId: slotId,
+                });
+              }}
+              onEditHoldOptions={(holdId) => {
+                setActiveProposedMeetingId(holdId);
+              }}
+              onViewAllHolds={() => {
+                setActiveProposedMeetingId(1);
+              }}
+              onOpenSetAvailability={() => {
+                handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
+              }}
+              onOpenPtoBlock={() => {
+                handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
+              }}
+              onOpenPersonalBlock={() => {
+                handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
+              }}
+              onOpenOfficeClosure={() => {
+                handleOpenSchedule(selectedDate, undefined, "OFFICE_CLOSURE");
+              }}
+              onViewAllAvailability={() => {
+                handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
+              }}
+            />
+          </div>
+        </>
+      )}
 
       {/* ── Operational Block Detail Drawer ── */}
       <OperationalBlockDetailDrawer
@@ -1672,119 +1753,6 @@ export default function Appointments() {
         advocateList={staffList}
         defaultAction={scheduleModalAction}
       />
-
-      {/* ── Upcoming Appointments ── */}
-      <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-[5px]">
-        <CardHeader className="border-b border-[#3A2C18]/60 pb-4">
-          <CardTitle className="font-serif text-[#FFF4D4] text-xl font-normal">Upcoming Appointments</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {upcomingAppointments.length === 0 ? (
-            <p className="text-center text-[#A69371] py-8">No upcoming appointments</p>
-          ) : (
-            <div className="space-y-3">
-              {upcomingAppointments.map((apt: Appointment) => {
-                const dual = formatDualTimes(
-                  apt.startTime,
-                  apt.endTime,
-                  apt.clientTimeZone,
-                  apt.originalTimeZone || "America/New_York"
-                );
-                return (
-                  <div
-                    key={apt.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-[#3A2C18]/80 bg-[#020A17]/80 hover:border-[#C5A059]/60 hover:bg-[#07162B]/80 transition-all cursor-pointer"
-                    onClick={() => setSelectedApt(apt)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-[#07162B] border border-[#3A2C18] flex flex-col items-center justify-center shrink-0">
-                        <span className="text-[10px] font-bold text-[#C5A059] uppercase tracking-wider">
-                          {new Date(apt.startTime).toLocaleDateString([], { month: "short" })}
-                        </span>
-                        <span className="text-lg font-serif font-bold text-[#FFF4D4] leading-none">
-                          {new Date(apt.startTime).getDate()}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-sm text-[#FFF4D4]">{apt.title}</p>
-                          {apt.meetingType && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#07162B] text-[#FFE394] border border-[#3A2C18]">
-                              {apt.meetingType}
-                            </span>
-                          )}
-                          {apt.videoLink && <Video className="h-3.5 w-3.5 text-blue-400" aria-label="Video meeting" />}
-                        </div>
-
-                        {/* Dual-Time Display (Red for Client, Green for Waypoint) */}
-                        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                          {/* 🔴 RED BADGE: CLIENT SCHEDULED TIME */}
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-950/70 text-rose-300 border border-rose-500/50 shadow-sm"
-                            title={`Client's local scheduled time in ${dual.clientTime.friendlyName} Time`}
-                          >
-                            <span className="w-2 h-2 rounded-full bg-rose-500" />
-                            <span className="font-medium text-[10px] text-rose-400 uppercase tracking-wide">Client ({dual.clientTime.tzAbbr}):</span>
-                            <span className="font-mono">{dual.clientTime.startTime}</span>
-                          </span>
-
-                          {/* 🟢 GREEN BADGE: WAYPOINT ADVOCATE TIME */}
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-950/70 text-emerald-300 border border-emerald-500/50 shadow-sm"
-                            title="Waypoint Advocate's time in Atlanta, GA (Eastern)"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span className="font-medium text-[10px] text-emerald-400 uppercase tracking-wide">Waypoint ({dual.waypointTime.tzAbbr}):</span>
-                            <span className="font-mono">{dual.waypointTime.startTime}</span>
-                          </span>
-                        </div>
-
-                        {dual.clientTime.isDifferent && (
-                          <p className="text-[11px] text-[#C6B697] italic mt-1 flex items-center gap-1">
-                            <span>{dual.explanation}</span>
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {apt.parentName && (
-                            <span className="text-xs text-[#C6B697] flex items-center gap-1">
-                              <User className="h-3 w-3 text-[#C5A059]" />{apt.parentName}
-                            </span>
-                          )}
-                          {apt.studentName && (
-                            <span className="text-xs text-[#C6B697] flex items-center gap-1">
-                              <span className="text-[#3A2C18]">·</span>{apt.studentName}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
-                        {apt.status}
-                      </span>
-                      <Select
-                        value={apt.status}
-                        onValueChange={(v) => handleStatusChange(apt.id, v)}
-                      >
-                        <SelectTrigger className="w-[130px] h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
-                          <SelectItem value="Scheduled">Scheduled</SelectItem>
-                          <SelectItem value="Confirmed">Confirmed</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                          <SelectItem value="Cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* ── Availability Management ── */}
       <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-xl">
@@ -1908,8 +1876,6 @@ export default function Appointments() {
             </div>
           </CardContent>
         </Card>
-      )}
-        </>
       )}
 
       {/* ⚠️ SERVICE LIMIT WARNING DIALOG (Section 10) */}
