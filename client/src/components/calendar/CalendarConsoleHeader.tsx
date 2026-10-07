@@ -69,41 +69,49 @@ export default function CalendarConsoleHeader({
   };
 
   return (
-    <div className="relative w-full space-y-4 select-none">
-      {/* ── TOP ADMIRALTY CARVED MARITIME BANNER ── */}
-      <div className="relative overflow-hidden rounded-[5px] border-2 border-[#5B4323] bg-gradient-to-b from-[#0a1a33] via-[#05142B] to-[#020B18] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.95),inset_0_1px_3px_rgba(255,230,150,0.25)]">
-        {/* Subtle Lantern & Vignette Glows */}
-        <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-[#E5B558]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#E5B558]/10 blur-3xl" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(21,57,98,0.5)_0%,transparent_75%)]" />
+    <div className="relative w-full rounded-[5px] border-2 border-[#5B4323] shadow-[0_16px_45px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] select-none p-4 sm:p-6 lg:p-7 space-y-5">
+      {/* ── Background Shelf Canopy ── */}
+      <img
+        src="/images/calendar-header-shelf.png"
+        alt="PG-007 Appointments & Calendar Shelf Canopy"
+        className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+      />
+      {/* Subtle ambient lighting vignette overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-[#020B18]/75 pointer-events-none" />
 
-        <div className="relative flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-          {/* Left Decorative Maritime Anchor / Compass glint */}
-          <div className="hidden lg:flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[5px] border border-[#8C6D37] bg-[#020A17]/80 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-              <Compass className="h-6 w-6 text-[#E5B558] animate-pulse" />
+      {/* ── Foreground Interactive UI Container ── */}
+      <div className="relative z-10 space-y-5">
+        {/* ── UPPER SHELF HEADER AREA (Aligns with the central carved brass/wood plaque) ── */}
+        <div className="relative min-h-[110px] sm:min-h-[135px] flex items-center justify-between gap-4">
+          {/* Left Decorative Spacer for Lantern, Books & Ivy */}
+          <div className="hidden lg:flex items-center gap-3 w-40 shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[5px] border border-[#8C6D37]/60 bg-[#020A17]/80 backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+              <Compass className="h-5 w-5 text-[#E5B558] animate-pulse" />
+            </div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#FFE394]/90 font-bold drop-shadow">
+              Waypoint
             </div>
           </div>
 
-          {/* Central Carved Title & Subtitle */}
-          <div className="flex-1 px-2">
-            <div className="inline-flex items-center gap-2 mb-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#C5A059]" />
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#C5A059] font-bold">
-                Waypoint Advocates · Master Operations
+          {/* Central Carved Plaque Title (sits directly inside the framed wooden sign in the artwork) */}
+          <div className="flex-1 max-w-xl mx-auto text-center px-4 py-2 rounded-xl backdrop-blur-[1px]">
+            <div className="inline-flex items-center gap-2 mb-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#E5B558] shadow-[0_0_6px_#E5B558]" />
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#FFE394] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                PG-007 · Appointments & Calendar
               </span>
-              <span className="h-1.5 w-1.5 rounded-full bg-[#C5A059]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#E5B558] shadow-[0_0_6px_#E5B558]" />
             </div>
-            <h1 className="font-serif text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#FFF4D4] drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-              Appointments & Calendar Console
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#FFF4D4] drop-shadow-[0_3px_12px_rgba(0,0,0,0.95)]">
+              Calendar
             </h1>
-            <p className="mt-1 text-xs md:text-sm font-medium text-[#C6B697] tracking-wide">
+            <p className="text-xs sm:text-sm font-medium text-[#FFE394]/95 tracking-wide mt-0.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
               Schedule smarter. Keep cases moving. Protect your time.
             </p>
           </div>
 
           {/* Top Right Quick Schedule Dropdown Button */}
-          <div className="shrink-0 flex items-center gap-2">
+          <div className="shrink-0 flex items-center justify-end w-40">
             <button
               type="button"
               onClick={onScheduleClick}
@@ -115,7 +123,6 @@ export default function CalendarConsoleHeader({
             </button>
           </div>
         </div>
-      </div>
 
       {/* ── SECONDARY HORIZONTAL NAVIGATION TABS ── */}
       <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -319,5 +326,6 @@ export default function CalendarConsoleHeader({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
