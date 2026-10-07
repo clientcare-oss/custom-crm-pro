@@ -28,6 +28,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/agreements":                      { id: "PG-046", name: "Agreements Engine", category: "Business", description: "Canonical legal document, e-signature, and document integrity engine" },
   "/appointments":                    { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
   "/calendar":                        { id: "PG-007", name: "Appointments & Calendar", category: "Schedule" },
+  "/calendar/dispatch":               { id: "PG-007-DSP", name: "Schedule Dispatch Sub-Page", category: "Schedule", description: "Expansive purpose-driven calendar dispatch command desk" },
   "/national-coverage":               { id: "PG-041", name: "National Coverage", category: "Schedule", description: "Meetings and client time zones at a glance, nationwide map & calling guidance" },
   "/scheduler":                       { id: "PG-008", name: "Session Types (Redirects to Calendar)", category: "Schedule" },
   "/session-types":                   { id: "PG-008", name: "Session Types", category: "Schedule", description: "Create and manage the types of appointments people can book" },
@@ -425,6 +426,26 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
     const sectionParam = urlParams.get("section") || urlParams.get("tab");
     if (sectionParam === "receipts" || sectionParam === "receipt") {
       return PAGE_IDS["/settings/receipts"];
+    }
+  }
+
+  // Check URL query search for calendar sub-tabs (/calendar?tab=dispatch, coverage, session-types)
+  if (cleanPath === "/calendar" || cleanPath === "/appointments") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab");
+    if (tabParam === "dispatch") {
+      return PAGE_IDS["/calendar/dispatch"] || {
+        id: "PG-007-DSP",
+        name: "Schedule Dispatch Sub-Page",
+        category: "Schedule",
+        description: "Expansive purpose-driven calendar dispatch command desk",
+      };
+    }
+    if (tabParam === "coverage") {
+      return PAGE_IDS["/national-coverage"];
+    }
+    if (tabParam === "session-types" || tabParam === "scheduler") {
+      return PAGE_IDS["/session-types"];
     }
   }
 

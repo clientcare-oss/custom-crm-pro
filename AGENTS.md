@@ -81,6 +81,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-005`: Invoices (`/invoices`)
   - `PG-006`: Contracts (`/contracts`)
   - `PG-007`: Appointments & Calendar (`/appointments`, `/calendar`)
+  - `PG-007-DSP`: Schedule Dispatch Sub-Page (`/calendar?tab=dispatch`)
   - `PG-008`: Session Types (`/calendar?tab=session-types`, `/scheduler`)
   - `PG-009`: Tasks (`/tasks`)
   - `PG-010`: Tools Hub (`/tools`)

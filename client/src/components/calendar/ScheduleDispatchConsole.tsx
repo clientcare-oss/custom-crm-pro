@@ -46,6 +46,7 @@ import {
   getMeetingOptionByName,
 } from "./scheduleDispatchRegistry";
 import type { ScheduleActionType } from "./MasterScheduleModal";
+import { broadcastPageId } from "@/lib/pageIdRegistry";
 
 export interface ScheduleDispatchConsoleProps {
   initialDate?: Date;
@@ -283,6 +284,23 @@ export default function ScheduleDispatchConsole({
       setActiveMode(resolveInitialMode(defaultAction));
     }
   }, [defaultAction]);
+
+  // Broadcast PG-007-DSP to the bottom-right PageIdBadge micro-dock
+  useEffect(() => {
+    broadcastPageId({
+      id: "PG-007-DSP",
+      name: "Schedule Dispatch Sub-Page",
+      category: "Schedule",
+      description: "Expansive purpose-driven calendar dispatch command desk",
+    });
+    return () => {
+      broadcastPageId({
+        id: "PG-007",
+        name: "Appointments & Calendar",
+        category: "Schedule",
+      });
+    };
+  }, []);
 
   const baseDateStr = useMemo(() => {
     return initialDate
