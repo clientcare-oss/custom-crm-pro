@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -16,316 +16,864 @@ import {
   Layers,
   Target,
   Compass,
+  Settings,
+  Users,
+  Hourglass,
+  ArrowRight,
+  Check,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CalendarViewMode, CalendarScope, CalendarLayerFilters } from "@/components/CalendarView";
+import { cn } from "@/lib/utils";
 
 export interface CalendarConsoleHeaderProps {
   currentDate: Date;
   onDateChange: (date: Date) => void;
-  activeNavTab: "calendar" | "requests" | "availability" | "closures" | "session-types" | "coverage";
-  onNavTabChange: (tab: "calendar" | "requests" | "availability" | "closures" | "session-types" | "coverage") => void;
+  activeNavTab?: string;
+  onNavTabChange: (tab: any) => void;
   stats: {
     appointmentsCount: number;
+    weekAppointmentsCount?: number;
     holdsCount: number;
     callbacksCount: number;
     tasksCount: number;
     pendingRequestsCount?: number;
   };
+  viewMode?: CalendarViewMode | "agenda";
+  onViewModeChange?: (mode: CalendarViewMode | "agenda") => void;
+  scope?: CalendarScope;
+  onScopeChange?: (scope: CalendarScope) => void;
+  selectedAdvocateFilter?: string;
+  onAdvocateFilterChange?: (advocate: string) => void;
+  advocateList?: { id: string; name: string }[];
+  layerFilters?: CalendarLayerFilters;
+  onLayerFiltersChange?: (filters: CalendarLayerFilters) => void;
+  showWeekends?: boolean;
+  onToggleShowWeekends?: (show: boolean) => void;
+  showCanceled?: boolean;
+  onToggleShowCanceled?: (show: boolean) => void;
   onScheduleClick: () => void;
   onProposeHoldsClick: () => void;
   onOpenClosuresClick?: () => void;
   onOpenAvailabilityClick?: () => void;
+  onQuickAction?: (action: "NEW_MEETING" | "PROPOSE_3_OPTIONS" | "PARENT_CALL" | "BLOCK_TIME") => void;
 }
 
 export default function CalendarConsoleHeader({
   currentDate,
   onDateChange,
-  activeNavTab,
+  activeNavTab = "calendar",
   onNavTabChange,
   stats,
+  viewMode = "week",
+  onViewModeChange,
+  scope = "all",
+  onScopeChange,
+  selectedAdvocateFilter = "ALL",
+  onAdvocateFilterChange,
+  advocateList = [],
+  layerFilters,
+  onLayerFiltersChange,
+  showWeekends = true,
+  onToggleShowWeekends,
+  showCanceled = false,
+  onToggleShowCanceled,
   onScheduleClick,
   onProposeHoldsClick,
   onOpenClosuresClick,
   onOpenAvailabilityClick,
+  onQuickAction,
 }: CalendarConsoleHeaderProps) {
-  // Format current date display
-  const dateFormatted = currentDate.toLocaleDateString("en-US", {
-    weekday: "long",
+  // Mini calendar month state
+  const [miniCalMonth, setMiniCalMonth] = useState<Date>(() => new Date(currentDate));
+  const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
+
+  // Synchronize mini calendar with currentDate if month differs
+  React.useEffect(() => {
+    if (
+      currentDate.getFullYear() !== miniCalMonth.getFullYear() ||
+      currentDate.getMonth() !== miniCalMonth.getMonth()
+    ) {
+      setMiniCalMonth(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1));
+    }
+  }, [currentDate]);
+
+  // Mini calendar month & year label
+  const miniMonthYearLabel = miniCalMonth.toLocaleDateString("en-US", {
     month: "long",
-    day: "numeric",
     year: "numeric",
   });
 
-  const handlePrevDay = () => {
+  const handlePrevMiniMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMiniCalMonth(new Date(miniCalMonth.getFullYear(), miniCalMonth.getMonth() - 1, 1));
+  };
+
+  const handleNextMiniMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMiniCalMonth(new Date(miniCalMonth.getFullYear(), miniCalMonth.getMonth() + 1, 1));
+  };
+
+  // Generate mini calendar days (7 columns, 5-6 rows)
+  const miniCalDays = useMemo(() => {
+    const year = miniCalMonth.getFullYear();
+    const month = miniCalMonth.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+    const currentDayNum = today.getDate();
+
+    const isSelectedMonth = currentDate.getFullYear() === year && currentDate.getMonth() === month;
+    const selectedDayNum = currentDate.getDate();
+
+    const days: { day: number | null; isCurrent: boolean; isSelected: boolean }[] = [];
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push({ day: null, isCurrent: false, isSelected: false });
+    }
+    for (let d = 1; d <= totalDays; d++) {
+      days.push({
+        day: d,
+        isCurrent: isCurrentMonth && d === currentDayNum,
+        isSelected: isSelectedMonth && d === selectedDayNum,
+      });
+    }
+    return days;
+  }, [miniCalMonth, currentDate]);
+
+  // Date step navigation based on current viewMode
+  const handlePrevStep = () => {
     const next = new Date(currentDate);
-    next.setDate(next.getDate() - 1);
+    if (viewMode === "day") {
+      next.setDate(next.getDate() - 1);
+    } else if (viewMode === "week") {
+      next.setDate(next.getDate() - 7);
+    } else if (viewMode === "month") {
+      next.setMonth(next.getMonth() - 1);
+    } else {
+      next.setDate(next.getDate() - 1);
+    }
     onDateChange(next);
   };
 
-  const handleNextDay = () => {
+  const handleNextStep = () => {
     const next = new Date(currentDate);
-    next.setDate(next.getDate() + 1);
+    if (viewMode === "day") {
+      next.setDate(next.getDate() + 1);
+    } else if (viewMode === "week") {
+      next.setDate(next.getDate() + 7);
+    } else if (viewMode === "month") {
+      next.setMonth(next.getMonth() + 1);
+    } else {
+      next.setDate(next.getDate() + 1);
+    }
     onDateChange(next);
   };
+
+  const handleToday = () => {
+    onDateChange(new Date());
+  };
+
+  // Formatted date range label for the bottom navigator (e.g. "Oct 4 – Oct 10, 2026")
+  const formattedRangeLabel = useMemo(() => {
+    if (viewMode === "day") {
+      return currentDate.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+    if (viewMode === "month") {
+      return currentDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+    }
+    // Week or Agenda view
+    const curr = new Date(currentDate);
+    const day = curr.getDay();
+    const start = new Date(curr);
+    start.setDate(curr.getDate() - day);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+
+    const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+    const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+    const startDay = start.getDate();
+    const endDay = end.getDate();
+    const year = end.getFullYear();
+
+    if (startMonth === endMonth) {
+      return `${startMonth} ${startDay} – ${endDay}, ${year}`;
+    }
+    return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`;
+  }, [currentDate, viewMode]);
 
   return (
-    <div className="relative w-full rounded-[5px] border-2 border-[#5B4323] shadow-[0_16px_45px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] select-none p-4 sm:p-6 lg:p-7 space-y-5">
-      {/* ── Background Shelf Canopy ── */}
-      <img
-        src="/images/calendar-header-shelf.png"
-        alt="PG-007 Appointments & Calendar Shelf Canopy"
-        className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+    <header className="relative w-full border-b-2 border-[#5B4323] shadow-[0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] select-none">
+      {/* ── Seamless Horizontal Wood Planks Texture (No stretch, natural repeat/cover) ── */}
+      <div
+        className="absolute inset-0 bg-[#061426] bg-cover bg-center pointer-events-none select-none opacity-95"
+        style={{ backgroundImage: `url('/images/calendar-wood-planks-bg.png')` }}
       />
-      {/* Subtle ambient lighting vignette overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-[#020B18]/75 pointer-events-none" />
+      {/* Ambient Maritime Radial Vignette */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#020B18]/30 to-[#020B18]/80 pointer-events-none" />
 
-      {/* ── Foreground Interactive UI Container ── */}
-      <div className="relative z-10 space-y-5">
-        {/* ── UPPER SHELF HEADER AREA (Aligns with the central carved brass/wood plaque) ── */}
-        <div className="relative min-h-[110px] sm:min-h-[135px] flex items-center justify-between gap-4">
-          {/* Left Decorative Spacer for Lantern, Books & Ivy */}
-          <div className="hidden lg:flex items-center gap-3 w-40 shrink-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-[5px] border border-[#8C6D37]/60 bg-[#020A17]/80 backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+      {/* ── 1. UPPER SHELF: Lanterns, Study Books, Framed Sign & Parchment (Exact 155px height, never stretched) ── */}
+      <div className="relative w-full h-[140px] sm:h-[155px] overflow-hidden border-b-2 border-[#5B4323] shadow-[0_6px_20px_rgba(0,0,0,0.85)] bg-[#020914]">
+        {/* Crisp, un-stretched shelf canopy (exact height, anchored top) */}
+        <img
+          src="/images/calendar-shelf-upper.png"
+          alt="PG-007 Appointments & Calendar Shelf Canopy"
+          className="w-full h-full object-cover object-top pointer-events-none select-none"
+        />
+        {/* Golden glow shimmer along the bottom oak shelf ledge */}
+        <div className="absolute bottom-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#DFBE77]/60 to-transparent pointer-events-none" />
+
+        {/* Foreground Content for Upper Shelf */}
+        <div className="absolute inset-0 z-10 flex items-center justify-between px-3 sm:px-6 lg:px-8">
+          {/* Left Decorative Waypoint Compass Badge */}
+          <div className="hidden lg:flex items-center gap-3 w-56 shrink-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[5px] border border-[#8C6D37]/70 bg-[#020A17]/85 backdrop-blur-sm shadow-[0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12)]">
               <Compass className="h-5 w-5 text-[#E5B558] animate-pulse" />
             </div>
-            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#FFE394]/90 font-bold drop-shadow">
-              Waypoint
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#FFE394] font-bold drop-shadow">
+                Waypoint
+              </span>
+              <span className="text-[9px] font-mono text-[#C6B697]/80 uppercase tracking-widest">
+                Advocates CRM
+              </span>
             </div>
           </div>
 
-          {/* Central Carved Plaque Title (sits directly inside the framed wooden sign in the artwork) */}
-          <div className="flex-1 max-w-xl mx-auto text-center px-4 py-2 rounded-xl backdrop-blur-[1px]">
-            <div className="inline-flex items-center gap-2 mb-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#E5B558] shadow-[0_0_6px_#E5B558]" />
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#FFE394] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                PG-007 · Appointments & Calendar
-              </span>
-              <span className="h-1.5 w-1.5 rounded-full bg-[#E5B558] shadow-[0_0_6px_#E5B558]" />
-            </div>
-            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#FFF4D4] drop-shadow-[0_3px_12px_rgba(0,0,0,0.95)]">
+          {/* Central Carved Gold-Leaf Plaque (Positions directly inside the framed wooden sign) */}
+          <div className="flex-1 max-w-lg mx-auto text-center px-4 py-1 rounded-xl">
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-[#FFF4D4] drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)]">
               Calendar
             </h1>
-            <p className="text-xs sm:text-sm font-medium text-[#FFE394]/95 tracking-wide mt-0.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
+            <p className="text-[11px] sm:text-xs font-serif italic text-[#FFE394]/95 tracking-wide mt-0.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
               Schedule smarter. Keep cases moving. Protect your time.
             </p>
           </div>
 
-          {/* Top Right Quick Schedule Dropdown Button */}
-          <div className="shrink-0 flex items-center justify-end w-40">
-            <button
-              type="button"
-              onClick={onScheduleClick}
-              className="inline-flex items-center gap-2 rounded-[5px] border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-4 py-2.5 text-xs font-bold text-[#07162B] shadow-[0_4px_16px_rgba(0,0,0,0.7),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all hover:brightness-110 active:scale-95 cursor-pointer"
-            >
-              <Plus className="h-4 w-4 stroke-[3]" />
-              <span>Schedule</span>
-              <ChevronDown className="h-3.5 w-3.5 opacity-80" />
-            </button>
+          {/* Right Hanging Parchment Note (Matches reference mockup) */}
+          <div className="hidden lg:flex items-center justify-end w-56 shrink-0">
+            <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-b from-[#F7EED4] via-[#F2E5C4] to-[#E5D4AF] border border-[#8C6D37]/80 shadow-[0_8px_20px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.7)] text-center max-w-[190px] transform rotate-[1deg] hover:rotate-0 transition-transform">
+              <p className="font-serif italic text-xs font-bold text-[#2C1D10] leading-snug drop-shadow-sm select-none">
+                “Right Meetings<br />
+                Right People<br />
+                Brighter Futures”
+              </p>
+            </div>
           </div>
         </div>
-
-      {/* ── SECONDARY HORIZONTAL NAVIGATION TABS ── */}
-      <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => onNavTabChange("calendar")}
-          className={`flex items-center gap-2 rounded-[5px] border px-3.5 py-2 text-xs font-serif font-bold transition-all cursor-pointer ${
-            activeNavTab === "calendar"
-              ? "border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
-              : "border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4]"
-          }`}
-        >
-          <CalendarIcon className="h-3.5 w-3.5" />
-          <span>Calendar</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onNavTabChange("requests")}
-          className={`flex items-center gap-2 rounded-[5px] border px-3.5 py-2 text-xs font-serif font-bold transition-all cursor-pointer ${
-            activeNavTab === "requests"
-              ? "border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
-              : "border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4]"
-          }`}
-        >
-          <Briefcase className="h-3.5 w-3.5" />
-          <span>Scheduling Requests</span>
-          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-mono font-extrabold text-white shadow-sm">
-            {stats.pendingRequestsCount || 3}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            onNavTabChange("availability");
-            onOpenAvailabilityClick?.();
-          }}
-          className={`flex items-center gap-2 rounded-[5px] border px-3.5 py-2 text-xs font-serif font-bold transition-all cursor-pointer ${
-            activeNavTab === "availability"
-              ? "border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
-              : "border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4]"
-          }`}
-        >
-          <Clock className="h-3.5 w-3.5" />
-          <span>Availability</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            onNavTabChange("closures");
-            onOpenClosuresClick?.();
-          }}
-          className={`flex items-center gap-2 rounded-[5px] border px-3.5 py-2 text-xs font-serif font-bold transition-all cursor-pointer ${
-            activeNavTab === "closures"
-              ? "border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
-              : "border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4]"
-          }`}
-        >
-          <Building2 className="h-3.5 w-3.5" />
-          <span>Office & Holidays</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onNavTabChange("session-types")}
-          className={`flex items-center gap-2 rounded-[5px] border px-3.5 py-2 text-xs font-serif font-bold transition-all cursor-pointer ${
-            activeNavTab === "session-types"
-              ? "border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
-              : "border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4]"
-          }`}
-        >
-          <Shield className="h-3.5 w-3.5" />
-          <span>Session Types</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onNavTabChange("coverage")}
-          className={`flex items-center gap-2 rounded-[5px] border px-3.5 py-2 text-xs font-serif font-bold transition-all cursor-pointer ${
-            activeNavTab === "coverage"
-              ? "border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)]"
-              : "border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4]"
-          }`}
-        >
-          <Globe className="h-3.5 w-3.5" />
-          <span>National Coverage</span>
-        </button>
       </div>
 
-      {/* ── TOP STATS & QUICK KPI STRIP ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
-        {/* Card 1: Today Navigator */}
-        <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 p-3 shadow-[0_6px_16px_rgba(0,0,0,0.85)] flex items-center justify-between gap-2 col-span-2 sm:col-span-1 md:col-span-1">
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs font-serif font-bold text-[#FFF4D4]">
-              <CalendarIcon className="h-3.5 w-3.5 text-[#C5A059] shrink-0" />
-              <span>Today</span>
-            </div>
-            <div className="truncate text-[10px] text-[#A69371] font-mono mt-0.5">
-              {dateFormatted}
-            </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
+      {/* ── 2. LOWER DECK: Tab Strip + KPI Cards + Date Navigator + Month Calendar Widget ── */}
+      <div className="relative z-10 w-full px-3 sm:px-6 lg:px-8 py-3 space-y-3">
+
+        {/* ── 2. NAVIGATION TAB STRIP (Directly below shelf rail) ── */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          {/* Navigation Pill Group */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
+            {/* Tab 1: Calendar (Active by default) */}
             <button
               type="button"
-              onClick={handlePrevDay}
-              className="flex h-6 w-6 items-center justify-center rounded-[5px] border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4] cursor-pointer"
+              onClick={() => onNavTabChange("calendar")}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                activeNavTab === "calendar"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+              )}
             >
-              <ChevronLeft className="h-3 w-3" />
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>Calendar</span>
             </button>
+
+            {/* Tab 2: My Schedule */}
             <button
               type="button"
-              onClick={handleNextDay}
-              className="flex h-6 w-6 items-center justify-center rounded-[5px] border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:border-[#C5A059] hover:text-[#FFF4D4] cursor-pointer"
+              onClick={() => {
+                onNavTabChange("calendar");
+                onScopeChange?.("my");
+              }}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                scope === "my" && activeNavTab === "calendar"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+              )}
             >
-              <ChevronRight className="h-3 w-3" />
+              <CalendarIcon className="h-3.5 w-3.5 text-[#C5A059]" />
+              <span>My Schedule</span>
+            </button>
+
+            {/* Tab 3: Team Schedule */}
+            <button
+              type="button"
+              onClick={() => {
+                onNavTabChange("calendar");
+                onScopeChange?.("all");
+                onAdvocateFilterChange?.("ALL");
+              }}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                scope === "all" && activeNavTab === "calendar" && selectedAdvocateFilter === "ALL"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+              )}
+            >
+              <Users className="h-3.5 w-3.5 text-[#C5A059]" />
+              <span>Team Schedule</span>
+            </button>
+
+            {/* Tab 4: Scheduling Requests */}
+            <button
+              type="button"
+              onClick={() => {
+                onNavTabChange("requests");
+                const el = document.getElementById("bottom-console-anchor");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                activeNavTab === "requests"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+              )}
+            >
+              <Briefcase className="h-3.5 w-3.5 text-[#C5A059]" />
+              <span>Scheduling Requests</span>
+              <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-mono font-extrabold text-white shadow-sm">
+                {stats.pendingRequestsCount || 3}
+              </span>
+            </button>
+
+            {/* Tab 5: Availability & Time Blocks */}
+            <button
+              type="button"
+              onClick={() => {
+                onNavTabChange("availability");
+                onOpenAvailabilityClick?.();
+              }}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                activeNavTab === "availability"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+              )}
+            >
+              <Clock className="h-3.5 w-3.5 text-[#C5A059]" />
+              <span>Availability & Time Blocks</span>
+            </button>
+
+            {/* Tab 6: Holidays & Closures */}
+            <button
+              type="button"
+              onClick={() => {
+                onNavTabChange("closures");
+                onOpenClosuresClick?.();
+              }}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                activeNavTab === "closures"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#193B66] bg-[#061730]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] shadow-sm"
+              )}
+            >
+              <Building2 className="h-3.5 w-3.5 text-[#C5A059]" />
+              <span>Holidays & Closures</span>
             </button>
           </div>
-        </div>
 
-        {/* Card 2: Appointments */}
-        <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 p-3 shadow-[0_6px_16px_rgba(0,0,0,0.85)] flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[5px] border border-[#3A2C18] bg-[#020A17] text-[#FFE394]">
-            <CalendarIcon className="h-4 w-4 text-[#C5A059]" />
-          </div>
-          <div>
-            <div className="font-serif text-lg font-bold leading-none text-[#FFF4D4]">
-              {stats.appointmentsCount}
-            </div>
-            <div className="text-[10px] font-mono text-[#A69371] uppercase tracking-wider mt-0.5">
-              Appointments
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Tentative Holds */}
-        <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 p-3 shadow-[0_6px_16px_rgba(0,0,0,0.85)] flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[5px] border border-[#3A2C18] bg-[#020A17] text-amber-400">
-            <Clock className="h-4 w-4 text-amber-400" />
-          </div>
-          <div>
-            <div className="font-serif text-lg font-bold leading-none text-amber-300">
-              {stats.holdsCount}
-            </div>
-            <div className="text-[10px] font-mono text-[#A69371] uppercase tracking-wider mt-0.5">
-              Tentative Holds
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: Callback */}
-        <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 p-3 shadow-[0_6px_16px_rgba(0,0,0,0.85)] flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[5px] border border-[#3A2C18] bg-[#020A17] text-sky-400">
-            <Phone className="h-4 w-4 text-sky-400" />
-          </div>
-          <div>
-            <div className="font-serif text-lg font-bold leading-none text-sky-300">
-              {stats.callbacksCount}
-            </div>
-            <div className="text-[10px] font-mono text-[#A69371] uppercase tracking-wider mt-0.5">
-              Callback
-            </div>
-          </div>
-        </div>
-
-        {/* Card 5: Tasks Due */}
-        <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 p-3 shadow-[0_6px_16px_rgba(0,0,0,0.85)] flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[5px] border border-[#3A2C18] bg-[#020A17] text-purple-400">
-            <CheckSquare className="h-4 w-4 text-purple-400" />
-          </div>
-          <div>
-            <div className="font-serif text-lg font-bold leading-none text-purple-300">
-              {stats.tasksCount}
-            </div>
-            <div className="text-[10px] font-mono text-[#A69371] uppercase tracking-wider mt-0.5">
-              Tasks Due
-            </div>
+          {/* Right: + Schedule Dropdown Button */}
+          <div className="shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-4 py-2 text-xs font-bold text-[#07162B] shadow-[0_4px_16px_rgba(0,0,0,0.7),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all hover:brightness-110 active:scale-95 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                  <span>Schedule</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-[#07162B] border border-[#8C6D37]/70 text-[#FFF4D4] shadow-2xl rounded-xl p-1"
+              >
+                <DropdownMenuItem
+                  onClick={() => (onQuickAction ? onQuickAction("NEW_MEETING") : onScheduleClick())}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg"
+                >
+                  <CalendarIcon className="h-3.5 w-3.5 text-amber-400" />
+                  <span>New Appointment</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => (onQuickAction ? onQuickAction("PROPOSE_3_OPTIONS") : onProposeHoldsClick())}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg"
+                >
+                  <Target className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Propose 3 Options (Holds)</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => (onQuickAction ? onQuickAction("PARENT_CALL") : onScheduleClick())}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg"
+                >
+                  <Phone className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Parent Call</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onOpenAvailabilityClick?.()}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg"
+                >
+                  <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Block Time / Availability</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onOpenClosuresClick?.()}
+                  className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg border-t border-white/10 mt-1 pt-2"
+                >
+                  <Building2 className="h-3.5 w-3.5 text-orange-400" />
+                  <span>Office Holiday / Closure</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {/* Card 6: Schedule CTAs */}
-        <div className="rounded-[5px] border border-[#3A2C18] bg-[#020A17] p-2 shadow-[0_6px_16px_rgba(0,0,0,0.85)] flex flex-col justify-center gap-1.5 col-span-2 sm:col-span-2 md:col-span-1">
-          <button
-            type="button"
-            onClick={onScheduleClick}
-            className="flex items-center justify-center gap-1 rounded-[5px] border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-2 py-1.5 text-[11px] font-bold text-[#07162B] shadow-sm hover:brightness-110 active:scale-95 cursor-pointer"
-          >
-            <Plus className="h-3 w-3 stroke-[3]" />
-            <span>Schedule Appointment</span>
-          </button>
-          <button
-            type="button"
-            onClick={onProposeHoldsClick}
-            className="flex items-center justify-center gap-1 text-[10px] font-mono text-[#FFE394] hover:text-white hover:underline transition-colors cursor-pointer"
-          >
-            <Target className="h-3 w-3 text-[#C5A059]" />
-            <span>Propose 3 Options</span>
-          </button>
+        {/* ── 3. LOWER SHIPLAP DECK: 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
+        <div className="flex flex-col lg:flex-row items-stretch gap-3">
+          {/* ── Left Column: KPI Cards + Bottom Range / View Control Bar ── */}
+          <div className="flex-1 flex flex-col justify-between gap-3 min-w-0">
+            {/* Row of 5 KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+              {/* Card 1: Today */}
+              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-md">
+                  <CalendarIcon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-white">
+                    {stats.appointmentsCount || 5}
+                  </div>
+                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
+                    Today
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleToday}
+                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <span>View now</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 2: This Week */}
+              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-md">
+                  <CalendarIcon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-white">
+                    {stats.weekAppointmentsCount || 10}
+                  </div>
+                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
+                    This Week
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onViewModeChange?.("week")}
+                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <span>View week</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 3: Tentative Holds */}
+              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-600/30 to-amber-900/50 border border-amber-500/50 text-amber-300 shadow-md">
+                  <Hourglass className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-amber-300">
+                    {stats.holdsCount || 3}
+                  </div>
+                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
+                    Tentative Holds
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onProposeHoldsClick}
+                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <span>Review</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 4: Callbacks */}
+              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600/30 to-emerald-900/50 border border-emerald-500/50 text-emerald-300 shadow-md">
+                  <Phone className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-emerald-300">
+                    {stats.callbacksCount || 2}
+                  </div>
+                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
+                    Callbacks
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => (onQuickAction ? onQuickAction("PARENT_CALL") : onScheduleClick())}
+                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <span>View</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 5: Tasks Due */}
+              <div className="rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)] hover:border-[#C5A059]/60 transition-all flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/40 border border-amber-400/50 text-amber-300 shadow-md">
+                  <CheckSquare className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-serif text-2xl lg:text-3xl font-bold leading-none text-purple-300">
+                    {stats.tasksCount || 4}
+                  </div>
+                  <div className="text-xs text-[#C6B697] font-medium mt-0.5">
+                    Tasks Due
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("bottom-console-anchor");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="text-[11px] font-medium text-[#FFE394] hover:text-white underline transition-colors mt-0.5 inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <span>View</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Row under KPI cards: Date Range + View Mode Pills + Advocate Selector */}
+            <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+              {/* Left Group: Today + Chevrons + Date Range */}
+              <div className="rounded-xl border border-[#193B66] bg-[#061730]/95 p-1.5 flex items-center gap-2 shadow-lg">
+                <button
+                  type="button"
+                  onClick={handleToday}
+                  className="px-3 py-1 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-xs font-semibold text-[#D8C7A5] hover:text-white hover:border-[#C5A059] transition-all cursor-pointer"
+                >
+                  Today
+                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                    title="Previous"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                    title="Next"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="font-serif text-sm lg:text-base font-bold text-[#FFF4D4] px-2 whitespace-nowrap">
+                  {formattedRangeLabel}
+                </div>
+              </div>
+
+              {/* Right Group: Day / Week / Month / Agenda + Advocate Dropdown + Settings Gear */}
+              <div className="rounded-xl border border-[#193B66] bg-[#061730]/95 p-1.5 flex items-center gap-2 shadow-lg flex-wrap">
+                {/* View Mode Buttons */}
+                <div className="flex items-center gap-0.5 bg-[#030E1F] p-0.5 rounded-lg border border-[#1C3A60]/60">
+                  <button
+                    type="button"
+                    onClick={() => onViewModeChange?.("day")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      viewMode === "day"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
+                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onViewModeChange?.("week")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      viewMode === "week"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
+                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    Week
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onViewModeChange?.("month")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      viewMode === "month"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
+                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    Month
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onViewModeChange?.("agenda")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                      viewMode === "agenda"
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm font-bold"
+                        : "text-[#C6B697] hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    Agenda
+                  </button>
+                </div>
+
+                {/* Advocate Selector Dropdown */}
+                {advocateList.length > 0 && (
+                  <Select
+                    value={selectedAdvocateFilter}
+                    onValueChange={(val) => onAdvocateFilterChange?.(val)}
+                  >
+                    <SelectTrigger className="h-7 text-xs bg-[#0A2244] border-[#1C3A60] text-[#FFF4D4] rounded-lg px-2.5 min-w-[130px] font-medium">
+                      <SelectValue placeholder="All Advocates" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#07162B] border-[#8C6D37]/70 text-[#FFF4D4]">
+                      <SelectItem value="ALL">All Advocates</SelectItem>
+                      {advocateList.map((adv) => (
+                        <SelectItem key={adv.id} value={adv.name}>
+                          {adv.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {/* Layer Settings Gear Modal / Dropdown */}
+                <DropdownMenu open={isLayerMenuOpen} onOpenChange={setIsLayerMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="h-7 w-7 rounded-lg border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-amber-300 hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                      title="Calendar Layer Filters"
+                    >
+                      <Settings className="h-3.5 w-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 bg-[#07162B] border border-[#8C6D37]/70 text-[#FFF4D4] shadow-2xl rounded-xl p-2 space-y-1"
+                  >
+                    <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 py-1 font-bold border-b border-white/10">
+                      Layer Display Filters
+                    </div>
+                    {layerFilters && onLayerFiltersChange && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onLayerFiltersChange({
+                              ...layerFilters,
+                              showAppointments: !layerFilters.showAppointments,
+                            })
+                          }
+                          className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
+                        >
+                          <span>Appointments</span>
+                          {layerFilters.showAppointments && <Check className="h-3.5 w-3.5 text-emerald-400" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onLayerFiltersChange({
+                              ...layerFilters,
+                              showProposedHolds: !layerFilters.showProposedHolds,
+                            })
+                          }
+                          className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
+                        >
+                          <span>Tentative Holds</span>
+                          {layerFilters.showProposedHolds && <Check className="h-3.5 w-3.5 text-amber-400" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onLayerFiltersChange({
+                              ...layerFilters,
+                              showClosures: !layerFilters.showClosures,
+                            })
+                          }
+                          className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
+                        >
+                          <span>Office Closures</span>
+                          {layerFilters.showClosures && <Check className="h-3.5 w-3.5 text-rose-400" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onLayerFiltersChange({
+                              ...layerFilters,
+                              showPto: !layerFilters.showPto,
+                            })
+                          }
+                          className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
+                        >
+                          <span>Staff PTO</span>
+                          {layerFilters.showPto && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onLayerFiltersChange({
+                              ...layerFilters,
+                              showInternalEvents: !layerFilters.showInternalEvents,
+                            })
+                          }
+                          className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
+                        >
+                          <span>Internal Work</span>
+                          {layerFilters.showInternalEvents && <Check className="h-3.5 w-3.5 text-purple-400" />}
+                        </button>
+                        <div className="border-t border-white/10 my-1" />
+                        {onToggleShowWeekends && (
+                          <button
+                            type="button"
+                            onClick={() => onToggleShowWeekends(!showWeekends)}
+                            className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
+                          >
+                            <span>Show Weekends</span>
+                            {showWeekends && <Check className="h-3.5 w-3.5 text-[#C5A059]" />}
+                          </button>
+                        )}
+                        {onToggleShowCanceled && (
+                          <button
+                            type="button"
+                            onClick={() => onToggleShowCanceled(!showCanceled)}
+                            className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
+                          >
+                            <span>Show Canceled</span>
+                            {showCanceled && <Check className="h-3.5 w-3.5 text-[#C5A059]" />}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right Column: Integrated Month Calendar Widget (Matches mockup right widget) ── */}
+          <div className="w-full lg:w-[280px] shrink-0 rounded-2xl border border-[#193B66] bg-[#061730]/95 p-3.5 shadow-xl flex flex-col justify-between">
+            {/* Calendar Widget Month Header */}
+            <div className="flex items-center justify-between mb-2">
+              <button
+                type="button"
+                onClick={handlePrevMiniMonth}
+                className="h-6 w-6 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                title="Previous Month"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <div className="font-serif text-sm font-bold text-[#FFF4D4] tracking-wide">
+                {miniMonthYearLabel}
+              </div>
+              <button
+                type="button"
+                onClick={handleNextMiniMonth}
+                className="h-6 w-6 rounded border border-[#1C3A60] bg-[#0A2244] text-[#D8C7A5] hover:text-white hover:border-[#C5A059] flex items-center justify-center transition-all cursor-pointer"
+                title="Next Month"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono text-[#A69371] mb-1">
+              <span>Su</span>
+              <span>Mo</span>
+              <span>Tu</span>
+              <span>We</span>
+              <span>Th</span>
+              <span>Fr</span>
+              <span>Sa</span>
+            </div>
+
+            {/* Days grid */}
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {miniCalDays.map((item, idx) => {
+                if (item.day === null) {
+                  return <div key={`empty-${idx}`} className="h-7 w-7" />;
+                }
+
+                return (
+                  <button
+                    key={`day-${item.day}`}
+                    type="button"
+                    onClick={() => {
+                      const next = new Date(miniCalMonth.getFullYear(), miniCalMonth.getMonth(), item.day!);
+                      onDateChange(next);
+                    }}
+                    className={cn(
+                      "h-7 w-7 rounded-lg text-xs font-mono font-medium flex items-center justify-center transition-all cursor-pointer mx-auto",
+                      item.isSelected
+                        ? "bg-[#FFE394] text-[#07162B] font-bold shadow-md scale-105"
+                        : item.isCurrent
+                        ? "border border-amber-400 text-amber-300 font-bold hover:bg-amber-400/20"
+                        : "text-white/80 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    {item.day}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-);
+    </header>
+  );
 }

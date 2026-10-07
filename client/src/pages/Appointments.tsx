@@ -23,7 +23,6 @@ import MasterScheduleModal, { ScheduleActionType } from "@/components/calendar/M
 import OperationalBlockDetailDrawer from "@/components/calendar/OperationalBlockDetailDrawer";
 import { CalendarPatternLegendBar } from "@/components/calendar/CalendarPatternStyles";
 import CalendarConsoleHeader from "@/components/calendar/CalendarConsoleHeader";
-import CalendarControlCommandBar from "@/components/calendar/CalendarControlCommandBar";
 import CalendarScheduleLegendBar from "@/components/calendar/CalendarScheduleLegendBar";
 import CalendarBottomConsole, {
   BottomConsoleAppointment,
@@ -652,6 +651,22 @@ export default function Appointments() {
     }).length;
   }, [mergedAppointments, selectedDate]);
 
+  const thisWeekAppointmentsCount = useMemo(() => {
+    const curr = new Date(selectedDate);
+    const day = curr.getDay();
+    const start = new Date(curr);
+    start.setDate(curr.getDate() - day);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    return mergedAppointments.filter((a: any) => {
+      const s = new Date(a.startTime);
+      return s >= start && s <= end && a.status !== "Cancelled";
+    }).length;
+  }, [mergedAppointments, selectedDate]);
+
   const bottomConsoleTodayApts: BottomConsoleAppointment[] = useMemo(() => {
     const selStr = new Date(selectedDate).toISOString().split("T")[0];
     const dayMatches = mergedAppointments.filter((a: any) => {
@@ -737,8 +752,8 @@ export default function Appointments() {
 
   return (
     <ScopedErrorBoundary moduleName="Appointments & Calendar">
-      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
-        {/* ── Admiralty Top Header Console ── */}
+      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4]">
+        {/* ── Admiralty Top Header Console (bumps flush to sidebar left, top-0, and right) ── */}
         <CalendarConsoleHeader
           currentDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -763,16 +778,50 @@ export default function Appointments() {
           }}
           stats={{
             appointmentsCount: todayAppointmentsCount || 5,
+            weekAppointmentsCount: thisWeekAppointmentsCount || 10,
             holdsCount: (unifiedData?.holdEvents || []).length || 3,
             callbacksCount: 1,
             tasksCount: 2,
             pendingRequestsCount: 3,
           }}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => {
+            if (mode === "agenda") {
+              setViewMode("day");
+            } else {
+              handleViewModeChange(mode);
+            }
+          }}
+          scope={scope}
+          onScopeChange={setScope}
+          selectedAdvocateFilter={selectedAdvocateFilter}
+          onAdvocateFilterChange={setSelectedAdvocateFilter}
+          advocateList={staffList}
+          layerFilters={layerFilters}
+          onLayerFiltersChange={setLayerFilters}
+          showWeekends={showWeekends}
+          onToggleShowWeekends={setShowWeekends}
+          showCanceled={showCanceled}
+          onToggleShowCanceled={setShowCanceled}
           onScheduleClick={() => handleOpenSchedule()}
           onProposeHoldsClick={() => handleOpenSchedule(selectedDate, undefined, "PROPOSED_HOLDS")}
           onOpenClosuresClick={() => handleOpenSchedule(selectedDate, undefined, "OFFICE_CLOSURE")}
           onOpenAvailabilityClick={() => handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME")}
+          onQuickAction={(action) => {
+            if (action === "NEW_MEETING") {
+              handleOpenSchedule(selectedDate, undefined, "CONFIRMED_APPOINTMENT");
+            } else if (action === "PROPOSE_3_OPTIONS") {
+              handleOpenSchedule(selectedDate, undefined, "PROPOSED_HOLDS");
+            } else if (action === "PARENT_CALL") {
+              handleOpenSchedule(selectedDate, undefined, "CONFIRMED_APPOINTMENT");
+            } else if (action === "BLOCK_TIME") {
+              handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
+            }
+          }}
         />
+
+        {/* ── Main Workspace Body (Padded) ── */}
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
 
         {/* ── Event Detail Popup ── */}
         {selectedApt && (
@@ -1560,42 +1609,6 @@ export default function Appointments() {
         </div>
       ) : (
         <>
-          {/* ── 4-MODULE COMMAND BAR (Quick Actions, Layer Filters, View Options, Mini Calendar) ── */}
-          <CalendarControlCommandBar
-            viewMode={viewMode}
-            onViewModeChange={(mode) => {
-              if (mode === "agenda") {
-                setViewMode("day");
-              } else {
-                handleViewModeChange(mode);
-              }
-            }}
-            scope={scope}
-            onScopeChange={setScope}
-            selectedAdvocateFilter={selectedAdvocateFilter}
-            onAdvocateFilterChange={setSelectedAdvocateFilter}
-            advocateList={staffList}
-            currentDate={selectedDate}
-            onDateChange={setSelectedDate}
-            layerFilters={layerFilters}
-            onLayerFiltersChange={setLayerFilters}
-            showWeekends={showWeekends}
-            onToggleShowWeekends={setShowWeekends}
-            showCanceled={showCanceled}
-            onToggleShowCanceled={setShowCanceled}
-            onQuickAction={(action) => {
-              if (action === "NEW_MEETING") {
-                handleOpenSchedule(selectedDate, undefined, "CONFIRMED_APPOINTMENT");
-              } else if (action === "PROPOSE_3_OPTIONS") {
-                handleOpenSchedule(selectedDate, undefined, "PROPOSED_HOLDS");
-              } else if (action === "PARENT_CALL") {
-                handleOpenSchedule(selectedDate, undefined, "CONFIRMED_APPOINTMENT");
-              } else if (action === "BLOCK_TIME") {
-                handleOpenSchedule(selectedDate, undefined, "BLOCK_TIME");
-              }
-            }}
-          />
-
           {/* ── SCHEDULE LEGEND STRIP (9 Swatches) ── */}
           <CalendarScheduleLegendBar
             onSelectPattern={(key) => {
@@ -1943,7 +1956,8 @@ export default function Appointments() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </div>
     </ScopedErrorBoundary>
   );
 }
