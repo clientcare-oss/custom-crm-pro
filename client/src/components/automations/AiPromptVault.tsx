@@ -393,7 +393,7 @@ export default function AiPromptVault({ onUnlockChange, onSwitchToWorkflows }: A
               Waypoint AI · Prompt Library
             </h2>
             <p className="text-xs text-[#C6B697] max-w-xs leading-relaxed">
-              Confidential prompt libraries, legal guardrails, and behavioral models for Byron Honea (Master IEP Coach®).
+              Confidential prompt libraries, legal guardrails, and behavioral models for Byron Honea (Lead Special Education Advocate).
             </p>
           </div>
 
@@ -648,7 +648,7 @@ export default function AiPromptVault({ onUnlockChange, onSwitchToWorkflows }: A
                 description: "Describe new prompt functionality.",
                 purpose: "Define primary purpose and expected advocacy outcomes.",
                 usedIn: ["Meeting Workspace"],
-                systemPrompt: `You are an expert Special Education Advocate AI assisting Byron Honea (Master IEP Coach®).`,
+                systemPrompt: `You are an expert Special Education Advocate AI assisting Byron Honea (Lead Special Education Advocate).`,
                 outputFormat: `Structured markdown summary with action items and statutory citations.`,
                 variables: [{ name: "student_name", type: "string", description: "Name of student", example: "Lucas" }],
                 history: [

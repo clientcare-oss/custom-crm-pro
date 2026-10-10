@@ -199,7 +199,7 @@ export function PortalMembershipTab({
             Membership Plan Configured ($55.00 / month per student)
           </h3>
           <p className="text-blue-200/70 leading-relaxed">
-            Your monthly advocacy membership is staged and active. Auto-billing commences upon conclusion of your scheduled Discovery Call with Master IEP Coach® Byron Honea.
+            Your monthly advocacy membership is staged and active. Auto-billing commences upon conclusion of your scheduled Discovery Call with Lead Advocate Byron Honea.
           </p>
         </div>
       </div>
@@ -255,7 +255,7 @@ export function PortalMembershipTab({
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Direct priority portal messaging & strategic advisory with Master IEP Coach® Byron Honea</span>
+                    <span>Direct priority portal messaging & strategic advisory with Lead Advocate Byron Honea</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />

@@ -653,7 +653,7 @@ async function main() {
       INSERT INTO case_activity_timeline (
         studentContactId, caseId, eventType, title, description, whyReason, ownerName, ownerRole, sources, isCompleted, eventDate, createdAt, updatedAt
       ) VALUES (
-        ?, ?, 'CASE_INITIALIZED', ?, ?, ?, 'Byron Honea', 'Master IEP Coach', ?, 1, '2026-10-06', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        ?, ?, 'CASE_INITIALIZED', ?, ?, ?, 'Byron Honea', 'Lead IEP Advocate', ?, 1, '2026-10-06', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
     `;
     const tlD1Args = [

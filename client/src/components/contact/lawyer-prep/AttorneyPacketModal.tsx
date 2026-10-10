@@ -73,7 +73,7 @@ export function AttorneyPacketModal({
     out += `=====================================================\n`;
     out += `Student: ${studentName}\n`;
     out += `Prepared For: ${attorneyName || "Legal Counsel"} (${attorneyFirm || "Legal Firm"})\n`;
-    out += `Lead Advocate: Byron Honea, Master IEP Coach®\n`;
+    out += `Lead Advocate: Byron Honea\n`;
     out += `Date: ${generatedDate}\n`;
     out += `=====================================================\n\n`;
 

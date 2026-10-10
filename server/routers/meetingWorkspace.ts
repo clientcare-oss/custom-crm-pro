@@ -186,7 +186,7 @@ export const meetingWorkspaceRouter = router({
       const school = contact?.schoolName || "Local School District";
       const grade = contact?.gradeLevel || "Elementary";
 
-      const systemPrompt = `You are Waypoint Advocates' Senior Master IEP Coach & IEP Intel Unit.
+      const systemPrompt = `You are Waypoint Advocates' Lead Special Education Advocate & IEP Intel Unit.
 Analyze the student's IEP profile and produce:
 1. "detectedOrder": array of detected IEP section names in the realistic order of this IEP document.
 2. "findings": array of extracted IEP Intel items. Each finding must have:
@@ -427,7 +427,7 @@ Extract 3-5 grounded parent concerns with source attribution.`;
         .map((c, i) => `${i + 1}. ${c.topic}: ${c.concern}`)
         .join("\n");
 
-      const systemPrompt = `You are Waypoint Advocates' Lead Master IEP Coach.
+      const systemPrompt = `You are Waypoint Advocates' Lead Special Education Advocate.
 Draft a professional, authoritative, child-centered Parent Concern Statement (PCS) based strictly on the approved family concerns provided.
 Format in clean, structured paragraphs with clear headings.
 Tone: Collaborative, clear, legally sound, and focused on meaningful educational benefit and FAPE.`;
@@ -493,7 +493,7 @@ We ask that these concerns be incorporated directly into the Present Levels and 
       const contact = await db.getContactById(studentContactId);
       const studentName = contact ? `${contact.firstName} ${contact.lastName}` : "Student";
 
-      const systemPrompt = `You are Waypoint Advocates' Master IEP Blueprint Architect.
+      const systemPrompt = `You are Waypoint Advocates' Lead IEP Blueprint Architect.
 Your task is to transform approved IEP intel, parent concerns, and PCS draft into distinct, razor-sharp MEETING TARGETS.
 
 HARD RULES:
@@ -746,7 +746,7 @@ Build 5-8 distinct meeting targets.`;
             title: `IEP Meeting Completed: ${studentName}`,
             description: `IEP Meeting concluded. ${summary.raisedTargets} of ${summary.totalTargets} requests raised. ${agreedText}${pwnText}.`,
             ownerName: "Byron Honea",
-            ownerRole: "Master IEP Coach®",
+            ownerRole: "Lead IEP Advocate",
             isCompleted: true,
           });
         } catch (err) {

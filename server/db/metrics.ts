@@ -136,7 +136,7 @@ export async function getLeadJourneyMetrics(filters?: MetricsFilter) {
     overallConversionRate: 47.4,
     leadsByReferralSource: [
       { name: "Website Organic", count: 28, pct: 29.5, convRate: 53.6 },
-      { name: "Master IEP Coach Referral", count: 24, pct: 25.3, convRate: 75.0 },
+      { name: "Advocate Partner Referral", count: 24, pct: 25.3, convRate: 75.0 },
       { name: "Parent Support Group", count: 16, pct: 16.8, convRate: 50.0 },
       { name: "Pediatrician / Clinic", count: 12, pct: 12.6, convRate: 41.7 },
       { name: "Past Client Word of Mouth", count: 10, pct: 10.5, convRate: 80.0 },
@@ -171,14 +171,14 @@ export async function getLeadJourneyMetrics(filters?: MetricsFilter) {
     ],
     conversionRateBySource: [
       { source: "Past Client Word of Mouth", leads: 10, converted: 8, rate: 80.0 },
-      { source: "Master IEP Coach Referral", leads: 24, converted: 18, rate: 75.0 },
+      { source: "Advocate Partner Referral", leads: 24, converted: 18, rate: 75.0 },
       { source: "Website Organic", leads: 28, converted: 15, rate: 53.6 },
       { source: "Parent Support Group", leads: 16, converted: 8, rate: 50.0 },
       { source: "Pediatrician / Clinic", leads: 12, converted: 5, rate: 41.7 },
       { source: "Social Media", leads: 5, converted: 2, rate: 40.0 },
     ],
     conversionRateByEmployee: [
-      { employeeName: "Byron Honea", role: "Master Coach", leads: 48, converted: 29, rate: 60.4 },
+      { employeeName: "Byron Honea", role: "Lead IEP Advocate", leads: 48, converted: 29, rate: 60.4 },
       { employeeName: "Wyatt Smith", role: "Senior IEP Advocate", leads: 47, converted: 27, rate: 57.4 },
     ],
     nonConversionReasons: [
@@ -311,7 +311,7 @@ export async function getTimeAndWorkloadMetrics(filters?: MetricsFilter) {
       {
         advocateId: 1,
         advocateName: "Byron Honea",
-        role: "Master IEP Coach",
+        role: "Lead IEP Advocate",
         totalHours: 218,
         activeCases: 38,
         meetingsThisMonth: 19,
@@ -620,7 +620,7 @@ export async function getMetricDrilldown(metricKey: string, filters?: MetricsFil
       {
         id: 1001,
         title: "Melissa Vance (Mother of Liam Vance)",
-        subtitle: "Referral: Master IEP Coach • Case: Initial IEP Eligibility",
+        subtitle: "Referral: Advocate Network • Case: Initial IEP Eligibility",
         responsibleName: "Byron Honea",
         status: "New Lead",
         date: "Today, 10:45 AM",

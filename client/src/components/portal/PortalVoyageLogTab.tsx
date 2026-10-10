@@ -598,7 +598,7 @@ export default function PortalVoyageLogTab({ isAdminView = false, isLight = fals
               {/* Top watermark overlay */}
               <div className="p-3 text-[10px] tracking-widest text-white/50 uppercase font-semibold relative z-10 flex items-center gap-1.5">
                 <Shield className="h-3.5 w-3.5 text-amber-400" />
-                Secure Encrypted Stream • Master IEP Coach®
+                Secure Encrypted Stream • Waypoint Advocates
               </div>
 
               {/* Video control bar at the bottom */}

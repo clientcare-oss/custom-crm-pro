@@ -116,7 +116,7 @@ export function OnboardingChoiceModal({
           managerApprovalStatus: "approved",
           planTier: "Scholarship",
           billingStatus: "Scholarship",
-          approvingManager: "Byron Honea (Master IEP Coach®)",
+          approvingManager: "Byron Honea (Lead IEP Advocate)",
           currentPrimaryAction: "Continue Onboarding",
           currentActionDestination: "onboarding",
           currentActionHelperText: "Scholarship awarded. Proceed with parent onboarding.",

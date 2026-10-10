@@ -167,7 +167,7 @@ export interface OfficialComplaintFormState {
 export const INITIAL_GADOE_FORM_STATE: OfficialComplaintFormState = {
   stateCode: "GA",
   publicAgency: "Cobb County School District",
-  complainantName: "Byron Honea, Master IEP Coach®",
+  complainantName: "Byron Honea, Lead Special Education Advocate",
   complainantRelationship: "Authorized Special Education Advocate / Representative",
   complainantAddress: "PO Box 724944",
   complainantCity: "Atlanta",
@@ -203,7 +203,7 @@ export const INITIAL_GADOE_FORM_STATE: OfficialComplaintFormState = {
   serviceDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }),
   serviceRecipient: "Special Education Director & Superintendent",
   serviceMethod: "Certified Mail & Electronic Delivery",
-  signatureName: "Byron Honea, Master IEP Coach®",
+  signatureName: "Byron Honea, Lead Special Education Advocate",
   signatureDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }),
 };
 

@@ -19,7 +19,7 @@ export interface UserLike {
 
 /**
  * Determines whether the user has the "Can Guide Clients Live" permission.
- * - System Admins, Master Coaches, and Advocates have this permission by default
+ * - System Admins, Lead Advocates, and Advocates have this permission by default
  * - Custom employee permission overrides are respected via user.permissions or metadata
  */
 export function canGuideClientsLive(user?: UserLike | null): boolean {
@@ -38,11 +38,12 @@ export function canGuideClientsLive(user?: UserLike | null): boolean {
     return true;
   }
 
-  // Standard roles: admin, master coach, advocate, staff
+  // Standard roles: admin, lead advocate, advocate, staff
   const normalizedRole = (user.role || "").toLowerCase();
   if (
     normalizedRole === "admin" ||
-    normalizedRole === "master coach" ||
+    normalizedRole === "lead advocate" ||
+    normalizedRole === "lead iep advocate" ||
     normalizedRole === "advocate" ||
     normalizedRole === "staff"
   ) {

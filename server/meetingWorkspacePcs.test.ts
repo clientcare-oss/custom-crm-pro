@@ -105,7 +105,7 @@ describe("PG-043 Parent Concern Statement (PCS) Workspace Specifications", () =>
       {
         id: "hist-2",
         timestamp: new Date().toISOString(),
-        employee: "Byron Honea (Master IEP Coach®)",
+        employee: "Byron Honea (Lead IEP Advocate)",
         action: "Statement replaced by pasted version",
         snapshot: externalRewritten,
       },
@@ -139,7 +139,7 @@ describe("PG-043 Parent Concern Statement (PCS) Workspace Specifications", () =>
     const emailHistoryEntry: PcsVersionHistoryItem = {
       id: "hist-email",
       timestamp: new Date().toISOString(),
-      employee: "Byron Honea (Master IEP Coach®)",
+      employee: "Byron Honea (Lead IEP Advocate)",
       action: "Draft emailed to parent",
       snapshot: initialAiResult,
     };

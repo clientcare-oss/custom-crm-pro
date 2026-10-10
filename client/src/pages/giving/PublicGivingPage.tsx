@@ -114,7 +114,7 @@ export default function PublicGivingPage() {
             to the extent permitted by law. No goods or services were provided in exchange for this contribution.
           </p>
           <div className="pt-2 text-[10px] text-white/30">
-            © {new Date().getFullYear()} Waypoint Advocates. Master IEP Coach® is a registered trademark of Catherine Whitcher, LLC.
+            © {new Date().getFullYear()} Waypoint Advocates. All rights reserved.
           </div>
         </div>
       </footer>

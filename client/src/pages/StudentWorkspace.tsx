@@ -27,16 +27,10 @@ import { StudentWorkspaceMoreTab } from "@/components/students/StudentWorkspaceM
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
-  const studentId = parseInt(params.id ?? "0", 10);
+  const parsedId = parseInt(params.id ?? "0", 10);
+  const routeIdentifier = !isNaN(parsedId) && parsedId > 0 ? parsedId : (params.id ?? "");
+  const studentId = typeof routeIdentifier === "number" ? routeIdentifier : 0;
   const [, setLocation] = useLocation();
-
-  // Store active student profile route for safe return from nested tools
-  if (studentId > 0 && typeof window !== "undefined") {
-    try {
-      sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
-      sessionStorage.setItem("lastStudentProfileId", String(studentId));
-    } catch {}
-  }
 
   // Active top index tab
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "communication" | "tasks" | "notes" | "documents" | "more">("overview");
@@ -82,8 +76,8 @@ export default function StudentWorkspace() {
 
   // Queries
   const { data, isLoading } = trpc.contacts.detail.useQuery(
-    { id: studentId },
-    { enabled: !!studentId }
+    { id: routeIdentifier },
+    { enabled: Boolean(routeIdentifier) }
   );
 
   const student = data?.contact;
@@ -91,7 +85,16 @@ export default function StudentWorkspace() {
   const compass = data?.compass;
   const appointments = data?.appointments || [];
   const projects = (data as any)?.projects || [];
-  const effectiveProjectId = (data as any)?.projects?.[0]?.id || studentId;
+  const effectiveStudentId = student?.id || studentId;
+  const effectiveProjectId = (data as any)?.projects?.[0]?.id || effectiveStudentId;
+
+  // Store active student profile route for safe return from nested tools
+  if (effectiveStudentId > 0 && typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem("lastStudentProfileUrl", `/students/${effectiveStudentId}`);
+      sessionStorage.setItem("lastStudentProfileId", String(effectiveStudentId));
+    } catch {}
+  }
 
   // Toggle action checkbox
   const toggleAction = (key: string) => {
@@ -119,47 +122,92 @@ export default function StudentWorkspace() {
   }, []);
 
   const studentInitials = useMemo(() => {
-    if (!student) return "AS";
+    if (!student) return "S";
     const first = student.firstName?.[0] || "";
     const last = student.lastName?.[0] || "";
     return (first + last).toUpperCase() || "S";
   }, [student]);
 
-  const fullName = student ? `${student.firstName} ${student.lastName}` : "Alex Smith";
-  const parentName = parent ? `${parent.firstName} ${parent.lastName}` : (student?.parentName || "Sarah Smith");
-  const parentPhone = parent?.phone || student?.phone || "(404) 555-0199";
+  const fullName = student ? `${student.firstName} ${student.lastName}` : "Student Record";
+  const parentName = parent ? `${parent.firstName} ${parent.lastName}` : (student?.parentName || "Parent on File");
+  const parentPhone = parent?.phone || student?.phone || "No phone listed";
 
   const calculatedAge = useMemo(() => {
-    if (!student?.dateOfBirth) return "14";
+    if (!student?.dateOfBirth) return "--";
     const dob = new Date(student.dateOfBirth);
-    if (isNaN(dob.getTime())) return student.dateOfBirth || "14";
+    if (isNaN(dob.getTime())) return student.dateOfBirth || "--";
     const diffMs = Date.now() - dob.getTime();
     const ageDt = new Date(diffMs);
     return Math.abs(ageDt.getUTCFullYear() - 1970).toString();
   }, [student?.dateOfBirth]);
 
   const cleanGrade = useMemo(() => {
-    if (!student?.gradeLevel) return "5th Grade";
+    if (!student?.gradeLevel) return "Grade Not Specified";
     const g = student.gradeLevel.trim();
     if (/^\d+$/.test(g)) return `${g}th Grade`;
     return g;
   }, [student?.gradeLevel]);
 
   const displayEligibility = useMemo(() => {
-    return (student as any)?.iepEligibility || (student as any)?.eligibilityCategory || (student as any)?.primaryEligibility || "Autism";
+    return (student as any)?.iepEligibility || (student as any)?.eligibilityCategory || (student as any)?.primaryEligibility || "Assessment Pending";
   }, [student]);
 
   const displayMedicalDiagnoses = useMemo(() => {
-    return (student as any)?.medicalDiagnoses || (student as any)?.diagnosis || "ADHD & Specific Learning Disability (Dyslexia)";
+    return (student as any)?.medicalDiagnoses || (student as any)?.diagnosis || "Advocacy Client";
   }, [student]);
 
   const transferSchool = useMemo(() => {
-    return student?.previousSchool || "The Lovett School";
-  }, [student?.previousSchool]);
+    return student?.schoolName || student?.previousSchool || "School Not Set";
+  }, [student?.schoolName, student?.previousSchool]);
 
   const gtidValue = useMemo(() => {
-    return (student as any)?.gtid || (student as any)?.studentIdNumber || "1";
+    return (student as any)?.gtid || (student as any)?.studentIdNumber || (student?.caseId ? student.caseId.replace(/[^0-9]/g, "") : "1");
   }, [student]);
+
+  if (isLoading) {
+    return (
+      <div className="relative w-full min-h-screen flex items-center justify-center bg-[#07162B] text-amber-100 font-sans">
+        <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-[#030D1A]/95 border border-[#3A2C18] shadow-2xl">
+          <div className="w-10 h-10 border-3 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+          <p className="font-serif text-lg tracking-wide text-[#FAD77B]">Loading Student Dossier...</p>
+          <p className="text-xs text-amber-200/50">Retrieving case records for #{params.id}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="relative w-full min-h-screen flex items-center justify-center bg-[#07162B] text-amber-100 font-sans p-6">
+        <div className="max-w-md w-full flex flex-col items-center gap-5 p-8 rounded-2xl bg-[#030D1A]/95 border border-[#3A2C18] shadow-2xl text-center">
+          <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <User className="w-7 h-7" />
+          </div>
+          <div>
+            <h2 className="font-serif text-2xl text-[#FFE394] mb-2">Student Dossier Not Found</h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              No active student record could be located matching <span className="font-mono text-amber-300 font-bold">#{params.id}</span>.
+            </p>
+          </div>
+          <div className="flex gap-3 w-full justify-center pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setLocation("/students")}
+              className="border-[#3A2C18] bg-[#020A17] text-amber-200 hover:bg-[#102B4E] cursor-pointer"
+            >
+              Back to Students
+            </Button>
+            <Button
+              onClick={() => setLocation("/settings?section=import")}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold cursor-pointer"
+            >
+              Express Setup
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full min-h-screen overflow-x-hidden overflow-y-auto select-none bg-[#0b0d16] text-slate-100 transition-all font-sans">
@@ -876,7 +924,7 @@ export default function StudentWorkspace() {
               </div>
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">School</span>
-                <span className="text-white font-medium">{student?.schoolName || "Lincoln Elementary"}</span>
+                <span className="text-white font-medium">{student?.schoolName || student?.previousSchool || "School Not Set"}</span>
               </div>
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">Case ID</span>

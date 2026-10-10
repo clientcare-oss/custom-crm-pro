@@ -46,7 +46,7 @@ export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
         description: "Connect with parent, establish warmth and empathy, and frame the 20-30 minute consultation.",
         instructions: [
           "Verify parent's name and confirm they have 20-30 minutes for an uninterrupted conversation.",
-          "Introduce Byron Honea / Waypoint Master IEP Coach® methodology.",
+          "Introduce Byron Honea / Waypoint special education advocacy methodology.",
           "State the goal: Learn their story, assess IEP challenges, and determine if Waypoint is the right partner.",
         ],
         suggestedPhrasing:
@@ -68,14 +68,14 @@ export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
       {
         id: "step-3",
         title: "How Waypoint Works",
-        description: "Explain our Master IEP Coach® advocacy model, document review, and meeting strategy.",
+        description: "Explain our special education advocacy model, document review, and meeting strategy.",
         instructions: [
           "Explain our non-adversarial, data-focused, collaborative approach.",
           "Describe how we analyze comprehensive school records and prior evaluations.",
           "Explain Byron's role: sitting beside the family at the table to ensure procedural compliance and child-centered outcomes.",
         ],
         suggestedPhrasing:
-          "“We don't go in with guns blazing. We use objective data, state educational regulations, and Master IEP Coach strategies to help the district give your child what they truly need.”",
+          "“We don't go in with guns blazing. We use objective data, state educational regulations, and expert advocacy strategies to help the district give your child what they truly need.”",
       },
       {
         id: "step-4",
@@ -126,7 +126,7 @@ export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
         "Upcoming meeting dates and deadlines",
         "Parent primary contact preferences",
       ],
-      howToExplain: "Waypoint brings professional Master IEP Coach® advocacy to the IEP table, turning stressful school meetings into collaborative student victories.",
+      howToExplain: "Waypoint brings professional special education advocacy to the IEP table, turning stressful school meetings into collaborative student victories.",
       pricingGuidance: "Anchor Advocacy plans typically range from $105/mo on 12-month agreements. Standalone reviews start at $250.",
       whatNotToPromise: [
         "Do not guarantee specific school placements or private school tuition reimbursement.",
@@ -180,14 +180,14 @@ export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
       {
         id: "step-3",
         title: "Explain Waypoint & Advocate Model",
-        description: "Introduce Byron Honea and Waypoint's student-centered, non-adversarial Master IEP Coach methodology.",
+        description: "Introduce Byron Honea and Waypoint's student-centered, non-adversarial advocacy methodology.",
         instructions: [
-          "Highlight that Byron is a Master IEP Coach® dedicated to building collaborative school partnerships.",
+          "Highlight that Byron is a Lead Special Education Advocate dedicated to building collaborative school partnerships.",
           "Explain our philosophy: 'People first. Always.'",
           "Clarify our role: Expert advocacy, procedural compliance, document analysis, and meeting presence.",
         ],
         suggestedPhrasing:
-          "“At Waypoint Advocates, Byron Honea works alongside families as a Master IEP Coach®. We prepare the data, analyze school evaluations, and attend meetings so your child receives the accommodations they deserve under IDEA.”",
+          "“At Waypoint Advocates, Byron Honea works alongside families as a Lead Special Education Advocate. We prepare the data, analyze school evaluations, and attend meetings so your child receives the accommodations they deserve under IDEA.”",
         whatNotToPromise: "Do not give formal legal advice. Clarify that we provide educational advocacy and coaching.",
       },
       {
@@ -263,7 +263,7 @@ export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
         "Key dispute points (Speech, OT, Behavior, Resource vs Inclusion)",
       ],
       howToExplain:
-        "Explain that Waypoint bridges the gap between parents and school districts with data-backed Master IEP coaching, ensuring meetings are productive and focused on measurable goals.",
+        "Explain that Waypoint bridges the gap between parents and school districts with data-backed special education advocacy, ensuring meetings are productive and focused on measurable goals.",
       pricingGuidance:
         "Discovery Assessment: $250. Comprehensive IEP Audit: $750. Full Case Representation: Retainer based on scope.",
       whatNotToPromise: [
@@ -413,7 +413,7 @@ export const CALL_FLOWS: Record<string, CallFlowDefinition> = {
       {
         id: "step-2",
         title: "Triage the Advocacy Need",
-        description: "Determine whether staff can resolve or if Master IEP Coach review is needed.",
+        description: "Determine whether staff can resolve or if Lead Advocate review is needed.",
         instructions: [
           "Ask parent to state the exact dilemma.",
           "Check: Can staff handle? Advocate review needed? Callback needed? Urgent?",

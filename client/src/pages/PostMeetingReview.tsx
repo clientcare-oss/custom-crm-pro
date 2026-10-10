@@ -290,7 +290,7 @@ export default function PostMeetingReview() {
                 </button>
               </div>
 
-              {/* Portmaster IEP Agreement Verification Emblem */}
+              {/* Portmaster Agreement Verification Emblem */}
               <div className="flex items-center gap-2.5 pl-2 sm:pl-4 border-l border-[#0F355E]">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0F3D78] to-[#061933] border border-[#F5B544] flex items-center justify-center shadow-md">
                   <Anchor className="h-4 w-4 text-[#F5B544]" />

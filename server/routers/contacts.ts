@@ -45,6 +45,74 @@ export const contactsRouter = router({
         return await db.createContact(input, ownerId);
       }),
 
+    bulkImport: publicProcedure
+      .input(
+        z.object({
+          sourceCrm: z.string().default("Generic CSV"),
+          duplicateStrategy: z.enum(["skip", "update", "create_new"]).default("skip"),
+          defaultPlanTier: z.string().optional(),
+          defaultPipelineStage: z.string().optional(),
+          clients: z.array(
+            z.object({
+              firstName: z.string().min(1),
+              lastName: z.string().min(1),
+              email: z.string().optional(),
+              phone: z.string().optional(),
+              company: z.string().optional(),
+              jobTitle: z.string().optional(),
+              address: z.string().optional(),
+              city: z.string().optional(),
+              state: z.string().optional(),
+              zipCode: z.string().optional(),
+              country: z.string().optional(),
+              notes: z.string().optional(),
+              studentFirstName: z.string().optional(),
+              studentLastName: z.string().optional(),
+              schoolName: z.string().optional(),
+              gradeLevel: z.string().optional(),
+              dateOfBirth: z.string().optional(),
+              diagnosis: z.string().optional(),
+              iepEligibility: z.string().optional(),
+              planType: z.string().optional(),
+              pipelineStage: z.string().optional(),
+              planTier: z.string().optional(),
+              accountStatus: z.string().optional(),
+              billingStatus: z.string().optional(),
+              hourlyRate: z.union([z.number(), z.string()]).optional(),
+              howHeardAboutUs: z.string().optional(),
+              referredBy: z.string().optional(),
+              caseId: z.string().optional(),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ownerId = ctx.user?.id || 1;
+        return await db.bulkImportContacts(input, ownerId);
+      }),
+
+    expressSetup: publicProcedure
+      .input(
+        z.object({
+          parentName: z.string().min(1, "Parent name is required"),
+          studentName: z.string().min(1, "Student name is required"),
+          email: z.string().optional(),
+          phone: z.string().optional(),
+          schoolName: z.string().optional(),
+          gradeLevel: z.string().optional(),
+          diagnosis: z.string().optional(),
+          planType: z.string().optional(),
+          planTier: z.string().optional(),
+          city: z.string().optional(),
+          state: z.string().optional(),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ownerId = ctx.user?.id || 1;
+        return await db.expressStudentSetup(input, ownerId);
+      }),
+
     update: publicProcedure
       .input(
         z.object({
@@ -247,17 +315,18 @@ export const contactsRouter = router({
 
     // Contact detail hub: all data for one contact
     detail: adminProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.union([z.number(), z.string()]) }))
       .query(async ({ ctx, input }) => {
-        const contact = await db.getContactById(input.id, ctx.user.id);
+        const contact = await db.getContactByIdOrCaseId(input.id, ctx.user.id);
         if (!contact) throw new TRPCError({ code: "NOT_FOUND" });
+        const contactId = contact.id;
         const [projects, invoices, contracts, appointments, files, messages, parentContact] = await Promise.all([
-          db.getProjectsByClient(input.id),
-          db.getInvoicesByClient(input.id),
-          db.getContractsByClient(input.id),
-          db.getAppointmentsByClient(input.id),
-          db.getClientFilesByClient(input.id),
-          db.getMessagesBetween(ctx.user.id, input.id),
+          db.getProjectsByClient(contactId),
+          db.getInvoicesByClient(contactId),
+          db.getContractsByClient(contactId),
+          db.getAppointmentsByClient(contactId),
+          db.getClientFilesByClient(contactId),
+          db.getMessagesBetween(ctx.user.id, contactId),
           contact.parentContactId
             ? db.getContactById(contact.parentContactId, ctx.user.id)
             : Promise.resolve(null),

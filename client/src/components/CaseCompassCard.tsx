@@ -184,7 +184,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
     id: 1,
     caseId: caseId || "demo-case",
     currentStatus: "IEP Annual Review Preparation & Independent Evaluation Review in progress. Advocating for 1:1 Paraprofessional support & Speech-Language Therapy increase.",
-    nextStep: "Submit formal written request for Independent Educational Evaluation (IEE) & Schedule Pre-IEP Strategy Session with Byron Honea (Master IEP Coach®).",
+    nextStep: "Submit formal written request for Independent Educational Evaluation (IEE) & Schedule Pre-IEP Strategy Session with Byron Honea (Lead IEP Advocate).",
     whoHasBall: "School District (Special Ed Director), Parent, Waypoint Advocates",
     lastMeetingSummary: "Moderate to High — School district delaying Assistive Technology assessment response past statutory 30-day timeline.",
     nextMeetingDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -567,7 +567,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
             ) : (
               <div className="text-center py-4">
                 <p className="text-sm text-white/70 italic font-medium">No details registered for this phase yet.</p>
-                <p className="text-xs text-white/40 mt-1">Your Master IEP Coach® will update this section as the case progresses.</p>
+                <p className="text-xs text-white/40 mt-1">Your lead advocate will update this section as the case progresses.</p>
               </div>
             )}
           </div>

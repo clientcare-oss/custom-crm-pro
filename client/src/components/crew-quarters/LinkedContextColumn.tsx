@@ -51,7 +51,7 @@ export default function LinkedContextColumn({
 
   const members = linkedContext?.members || [
     { id: 1, name: "Emily", role: "Paperwork & Administration", initials: "ED" },
-    { id: 2, name: "Byron", role: "Master Coach", initials: "BH" },
+    { id: 2, name: "Byron", role: "Lead Advocate", initials: "BH" },
   ];
 
   const createdDate = linkedContext?.createdAt

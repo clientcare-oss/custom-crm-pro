@@ -1,6 +1,6 @@
 # Custom CRM Pro — AI Agent & Developer Guidelines (`AGENTS.md`)
 
-Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an owned IEP advocacy CRM platform built for Byron Honea (Master IEP Coach®, Atlanta GA).
+Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an owned IEP advocacy CRM platform built for Byron Honea (Lead Special Education Advocate & Practice Owner, Atlanta GA).
 
 ## Tech Stack Overview
 - **Frontend**: React 19, Vite, Tailwind CSS v4, Radix UI, tRPC Client, Wouter Routing.
@@ -108,6 +108,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-023-TRN`: Plan Transition (`/portal?tab=plan-transition`)
   - `PG-024`: Settings (`/settings`)
   - `PG-024-REC`: Company Settings → Receipts (`/settings?section=receipts`)
+  - `PG-024-IMP`: Settings → Client CRM Import (`/settings?section=import`, `/settings/import`)
   - `PG-025`: Case Compass Console (`/case-compass`, `/tools/case-compass`)
   - `PG-026`: Page ID Showcase (`/page-id-showcase`)
   - `PG-027`: Portal Experience Management (`/portal-management`, `/manage-experiences`)
@@ -147,6 +148,10 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-046`: Agreements Engine (`/agreements`)
   - `PG-047`: Waypoint Payment Receipt Experience (`/receipt/:id`, `/portal/receipt/:id`)
   - `PG-404`: Not Found (`/404`)
+
+### 🚫 Rule F: Mandatory Brand Terminology Guardrail — Strict Prohibition of "Master Coach"
+- **Strict Prohibition**: NEVER use "Master Coach", "Master IEP Coach", "Master Coaching", or any variant thereof anywhere in the application, database, prompts, UI, email templates, tests, or documentation.
+- **Approved Terminology**: Always use "Lead Special Education Advocate", "Lead IEP Advocate", "Advocate", "Special Education Advocate", or "Waypoint Advocates".
 
 ---
 

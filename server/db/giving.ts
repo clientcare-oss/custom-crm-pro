@@ -40,7 +40,7 @@ export let storedOrgSettings: Org501c3Settings = {
   defaultAcknowledgment:
     "Thank you for your generous contribution to Waypoint Foundation. Your tax-deductible gift empowers Georgia families with life-changing special education IEP advocacy, evaluations, and due process protection. No goods or services were provided in exchange for this contribution.",
   logoUrl: "https://d2xsxrembyk66g.cloudfront.net/brand/waypoint_crest_gold.png",
-  authorizedSigner: "Byron Honea, Master IEP Coach® & Executive Director",
+  authorizedSigner: "Byron Honea, Lead Special Education Advocate & Executive Director",
   receiptFooter:
     "Waypoint Foundation Inc. is an exempt organization as described in Section 501(c)(3) of the Internal Revenue Code. Contributions are tax-deductible to the fullest extent permitted by law.",
   taxDeductibleText: "100% Tax-Deductible Contribution under IRC Section 170(c)(2).",
@@ -421,7 +421,7 @@ export let storedWebsiteTools: WebsiteTool[] = [
     status: "active",
     headline: "Rise & Thrive: IEP Family Advocacy Scholarship Campaign",
     description:
-      "Empower underserved Georgia children with professional Master IEP Coach® advocacy and specialized evaluations.",
+      "Empower underserved Georgia children with professional special education advocacy and specialized evaluations.",
     settings: {
       goalAmountCents: 5000000, // $50,000
       suggestedAmounts: [2500, 5000, 10500, 25000],

@@ -10,10 +10,11 @@ import {
   ChevronRight,
   Plug,
   Archive,
+  UploadCloud,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export type SettingsSectionKey = "receipts" | "portal" | "admin" | "operations" | "integrations" | "ai" | "colors" | "archived";
+export type SettingsSectionKey = "receipts" | "portal" | "admin" | "import" | "operations" | "integrations" | "ai" | "colors" | "archived";
 
 interface SettingsBoxConfig {
   key: SettingsSectionKey;
@@ -72,6 +73,20 @@ export const SETTINGS_BOXES: SettingsBoxConfig[] = [
     glowActive: "shadow-[0_0_24px_rgba(16,185,129,0.22)]",
     description: "Configure practice terminology (Student / Case / Project), company business phone, logo asset, and client referral credits.",
     highlights: ["Custom Case Terminology", "Practice Phone & Logo Upload", "Referral Program ($25 Credit)"],
+  },
+  {
+    key: "import",
+    title: "Client CRM Import",
+    shortLabel: "Import Clients",
+    badge: "PG-024-IMP",
+    badgeClass: "bg-amber-500/15 text-[#FFE394] border-[#FFE394]/30",
+    icon: UploadCloud,
+    iconBg: "bg-amber-500/10",
+    iconColor: "text-[#FFE394]",
+    borderActive: "border-[#FFE394] ring-2 ring-[#FFE394]/20",
+    glowActive: "shadow-[0_0_24px_rgba(255,227,148,0.22)]",
+    description: "Import existing client rosters and student records from external CRMs (HoneyBook, Dubsado, HubSpot, Clio, Practice Better, or CSV).",
+    highlights: ["HoneyBook & Dubsado Presets", "Smart Auto-Column Mapping", "Duplicate Email & Phone Guard"],
   },
   {
     key: "operations",
@@ -163,11 +178,11 @@ export function SettingsCommandBoxes({
           <span className="text-[#DFBE77]">Click a command box to open configuration</span>
         </h2>
         <span className="text-[11px] text-[#A69371] font-mono px-2 py-0.5 rounded-md bg-[#020A17] border border-[#3A2C18]">
-          8 Core Systems
+          9 Core Systems
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 2xl:grid-cols-8 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-9 gap-3">
         {SETTINGS_BOXES.map((box) => {
           const isActive = activeSection === box.key;
           const Icon = box.icon;

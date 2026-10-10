@@ -171,7 +171,7 @@ export async function getAvailableEmployees(currentUserId: number): Promise<Avai
       id: u.id,
       name,
       email: u.email || "",
-      role: u.role === "admin" ? "Master Coach / Owner" : "Senior IEP Advocate",
+      role: u.role === "admin" ? "Lead Advocate / Owner" : "Senior IEP Advocate",
       presence,
       initials: initials || "WA",
       jobTitle: u.role === "admin" ? "Practice Owner" : "IEP Advocate",
@@ -1248,7 +1248,7 @@ export async function getLinkedContext(conversationId: number) {
     members: members.map((m) => ({
       id: m.id,
       name: m.name || (m.email ? m.email.split("@")[0] : "Advocate"),
-      role: m.role === "admin" ? "Master IEP Coach" : "Senior Advocate",
+      role: m.role === "admin" ? "Lead IEP Advocate" : "Senior Advocate",
       initials: (m.name || "WA")
         .split(" ")
         .map((p) => p[0])

@@ -35,7 +35,7 @@ const DEFAULT_STAFF: StaffMember[] = [
     id: "byron-honea",
     name: "Byron Honea",
     email: "byron@waypointadvocates.com",
-    role: "Master IEP Coach® / Practice Owner",
+    role: "Lead Special Education Advocate / Practice Owner",
     status: "Available",
     statusNote: "In office & active coaching",
     weeklyHours: {

@@ -77,7 +77,7 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
               </Badge>
               <Badge variant="outline" className="text-xs font-mono border-blue-900/40 text-blue-200/90 bg-[#030C22]">
                 <ShieldCheck className="h-3 w-3 mr-1 inline text-emerald-400" />
-                Master IEP Coach® Blueprint
+                IEP Advocacy Blueprint
               </Badge>
             </div>
 

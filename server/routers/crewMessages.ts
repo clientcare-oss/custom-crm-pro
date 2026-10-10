@@ -322,7 +322,7 @@ export const crewMessagesRouter = router({
         description: input.notes || "Flagged note from internal crew messaging",
         whyReason: input.whyReason || "Important advocacy communication record",
         ownerName: actorName,
-        ownerRole: ctx.user.role === "admin" ? "Master IEP Coach" : "Senior Advocate",
+        ownerRole: ctx.user.role === "admin" ? "Lead IEP Advocate" : "Senior Advocate",
       });
 
       return { success: true };

@@ -282,7 +282,7 @@ export default function CrewQuarters() {
   // Derive employee details
   const employeeName = user?.name || "Wyatt Smith";
   const firstName = employeeName.split(" ")[0] || "Advocate";
-  const employeeRole = user?.role === "admin" ? "Master Coach / Practice Owner" : "Senior IEP Advocate";
+  const employeeRole = user?.role === "admin" ? "Lead Advocate / Practice Owner" : "Senior IEP Advocate";
   const userInitials = employeeName
     .split(" ")
     .map((n) => n[0])
@@ -1131,7 +1131,7 @@ export default function CrewQuarters() {
           </div>
 
           <div className="pt-2 text-center text-[11px] text-[#A69371]">
-            Master IEP Coach® internal library
+            Waypoint Advocates internal library
           </div>
         </Card>
 
@@ -1480,7 +1480,7 @@ export default function CrewQuarters() {
                 <PageIdBadge id="PG-038-RES" name="Employee Resources" inline />
               </div>
               <p className="text-xs text-[#C6B697]">
-                Master IEP Coach® internal field guides, standard operating procedures, and professional training.
+                Waypoint Advocates internal field guides, standard operating procedures, and professional training.
               </p>
             </div>
 

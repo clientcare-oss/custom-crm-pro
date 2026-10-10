@@ -213,7 +213,7 @@ export default function NationalCoverage() {
                   {(user as any)?.name || "Jordan Davis"}
                 </div>
                 <div className="text-[10px] text-slate-400">
-                  {(user as any)?.role === "admin" ? "Master IEP Coach®" : "Educational Advocate"}
+                  {(user as any)?.role === "admin" ? "Lead IEP Advocate" : "Educational Advocate"}
                 </div>
               </div>
             </div>

@@ -188,7 +188,7 @@ export default function EmployeeEmploymentTab({
           <Input
             value={certifications}
             onChange={(e) => setCertifications(e.target.value)}
-            placeholder="e.g. Master IEP Coach® (MIPC-2024-884), GA Special Ed Teaching Certificate"
+            placeholder="e.g. Special Ed Advocacy Certification (SEA-2024-884), GA Special Ed Teaching Certificate"
             className="bg-[#000d2b] border-blue-900/60 text-white text-xs h-9 rounded-xl"
           />
         </div>

@@ -33,7 +33,7 @@ export function RequestCallbackModal({
   defaultStudentName = "",
 }: RequestCallbackModalProps) {
   const { call, updateCall } = useActiveCall();
-  const [selectedAdvocate, setSelectedAdvocate] = useState("Byron Honea (Master IEP Coach)");
+  const [selectedAdvocate, setSelectedAdvocate] = useState("Byron Honea (Lead Special Education Advocate)");
   const [priority, setPriority] = useState<"Normal" | "Important" | "Urgent">("Important");
   const [reason, setReason] = useState("");
   const [bestPhone, setBestPhone] = useState(defaultPhone || call.callerInfo.phone || "");
@@ -119,7 +119,7 @@ export function RequestCallbackModal({
               onChange={(e) => setSelectedAdvocate(e.target.value)}
               className="w-full bg-[#040D1A] border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:border-amber-400 outline-none"
             >
-              <option value="Byron Honea (Master IEP Coach)">Byron Honea (Master IEP Coach®)</option>
+              <option value="Byron Honea (Lead Special Education Advocate)">Byron Honea (Lead Special Education Advocate)</option>
               {team.map((member: any) => (
                 <option key={member.id} value={`${member.name} (${member.role || "Advocate"})`}>
                   {member.name} — {member.role || "Advocate"}

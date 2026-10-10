@@ -903,7 +903,7 @@ export default function ScheduleDispatchConsole({
       badgeHeader: "Blueprint Timeline",
       title: bpType,
       description:
-        "Master IEP Coach® connected work timeline around an advocacy milestone.",
+        "Special education advocacy connected work timeline around an advocacy milestone.",
       typicalDuration: "Multi-week advocacy sequence",
       waypointRole:
         "Waypoint systematically executes statutory deadlines (-7d records, -3d draft IEP, Day 0 meeting, +1d follow-up, +3d amended review).",
@@ -2709,7 +2709,7 @@ export default function ScheduleDispatchConsole({
 
             {/* Stamp footer */}
             <div className="pt-4 mt-6 border-t border-[#D6C498] text-[10px] uppercase tracking-widest text-[#8A713E] font-bold text-center">
-              Waypoint Master IEP Coach® Protocol
+              Waypoint Special Education Advocacy Protocol
             </div>
           </div>
         </div>

@@ -81,7 +81,7 @@ Please use the following booking link to select a date for our 60-minute Case St
 If you have any initial concerns, please log in and write them in the "Notes" section of your portal.
 
 Best regards,
-Byron Honea, Master IEP Coach®
+Byron Honea, Lead Special Education Advocate
 Waypoint Advocates`
   },
   "iep-parent-prep": {
@@ -98,7 +98,7 @@ Key things to consider:
 Please submit the form at least 48 hours before the scheduled meeting date so we can review it together.
 
 Best regards,
-Byron Honea, Master IEP Coach®`
+Byron Honea, Lead Special Education Advocate`
   },
   "pwn-review": {
     subject: "IEP Meeting Debrief & PWN Document Audit for {{studentName}}",
@@ -114,7 +114,7 @@ The school will follow up by issuing a **Prior Written Notice (PWN)** document d
 I have created an internal check task to follow up on this with you next week.
 
 Warmly,
-Byron Honea, Master IEP Coach®`
+Byron Honea, Lead Special Education Advocate`
   },
   "review-request": {
     subject: "How did we do? Support other families with {{studentName}}'s story",
@@ -122,7 +122,7 @@ Byron Honea, Master IEP Coach®`
 
 Thank you for choosing Waypoint Advocates to support you and {{studentName}}! 
 
-We recently completed our consultation / IEP meeting milestone, and we would love to hear about your experience. Your feedback helps us refine our coaching and guides other Atlanta families searching for master advocacy support.
+We recently completed our consultation / IEP meeting milestone, and we would love to hear about your experience. Your feedback helps us refine our advocacy and guides other Atlanta families searching for dedicated advocacy support.
 
 Could you take 2 minutes to leave us a Google review?
 Google Review: {{googleReviewUrl}}
@@ -130,7 +130,7 @@ Google Review: {{googleReviewUrl}}
 Thank you so much for your trust and partnership!
 
 Warmly,
-Byron Honea, Master IEP Coach®`
+Byron Honea, Lead Special Education Advocate`
   }
 };
 

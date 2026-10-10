@@ -231,7 +231,7 @@ export default function EmployeeDocumentsTab({
               <Input
                 value={docName}
                 onChange={(e) => setDocName(e.target.value)}
-                placeholder="e.g. Master IEP Coach Certificate 2026, W-4 Form"
+                placeholder="e.g. Advocacy Credentials Verification 2026, W-4 Form"
                 className="bg-[#000d2b] border-blue-900/60 text-white text-xs h-9 rounded-xl"
                 required
               />

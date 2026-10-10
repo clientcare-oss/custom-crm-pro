@@ -458,7 +458,7 @@ function buildDeterministicSnapshot(raw: any, customAdvocateNotes?: string): Law
       dateOfRecentIep: raw.iepDocs?.currentUploadedAt ? String(raw.iepDocs.currentUploadedAt) : "2026-09-10",
       nextKnownMeeting: raw.compass?.nextMeetingDate ? String(raw.compass.nextMeetingDate) : "2026-10-15",
       attorneyInvolvement: `${attorneyName} (${attorneyFirm}) — Represents: ${student.attorneyRepresents || "Parent/Student"}`,
-      advocateInvolvement: "Waypoint Advocates (Lead Advocate: Byron Honea, Master IEP Coach®)",
+      advocateInvolvement: "Waypoint Advocates (Lead Advocate: Byron Honea)",
     },
     primaryIssues: [
       {
@@ -721,7 +721,7 @@ export async function generateLawyerPrep(
     snapshot = buildDeterministicSnapshot(rawContext, options?.customAdvocateNotes);
   } else {
     try {
-      const systemPrompt = `You are the specialized AI Lawyer Prep engine for Waypoint Advocates (Master IEP Coach Byron Honea).
+      const systemPrompt = `You are the specialized AI Lawyer Prep engine for Waypoint Advocates (Lead Advocate: Byron Honea).
 Your job is to synthesize all available case records for this student and generate a rigorous, objective, attorney-ready case summary.
 
 CRITICAL GUARDRAILS & STANDARDS:

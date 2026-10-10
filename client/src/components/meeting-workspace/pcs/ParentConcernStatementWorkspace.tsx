@@ -242,7 +242,7 @@ export function ParentConcernStatementWorkspace({
         {
           id: `hist-${Date.now()}`,
           timestamp: now,
-          employee: "Byron Honea (Master IEP Coach®)",
+          employee: "Byron Honea (Lead IEP Advocate)",
           action: "Edited by employee",
           snapshot: content,
         },
@@ -276,7 +276,7 @@ export function ParentConcernStatementWorkspace({
         {
           id: `hist-${Date.now()}`,
           timestamp: now,
-          employee: "Byron Honea (Master IEP Coach®)",
+          employee: "Byron Honea (Lead IEP Advocate)",
           action: "Statement replaced by pasted version",
           snapshot: newPastedStatement,
         },
@@ -317,7 +317,7 @@ export function ParentConcernStatementWorkspace({
         {
           id: `hist-${Date.now()}`,
           timestamp: now,
-          employee: "Byron Honea (Master IEP Coach®)",
+          employee: "Byron Honea (Lead IEP Advocate)",
           action: "Draft emailed to parent",
           snapshot: content,
         },
@@ -365,7 +365,7 @@ export function ParentConcernStatementWorkspace({
         {
           id: `hist-${Date.now()}`,
           timestamp: now,
-          employee: "Byron Honea (Master IEP Coach®)",
+          employee: "Byron Honea (Lead IEP Advocate)",
           action: "Restored from version history",
           snapshot,
         },

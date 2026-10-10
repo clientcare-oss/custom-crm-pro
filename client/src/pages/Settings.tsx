@@ -14,6 +14,7 @@ import { ColorPaletteTokensTab } from "@/components/settings/ColorPaletteTokensT
 import BusinessOperationsSection from "@/components/settings/BusinessOperationsSection";
 import { ReceiptSettingsTab } from "@/components/settings/ReceiptSettingsTab";
 import { ArchivedPagesSettingsTab } from "@/components/settings/ArchivedPagesSettingsTab";
+import { ClientCrmImportTab } from "@/components/settings/ClientCrmImportTab";
 import Integrations from "./Integrations";
 import AiConnections from "./AiConnections";
 
@@ -49,6 +50,7 @@ export default function Settings() {
     if (raw === "ai" || raw === "ai-connections" || raw === "llm") return "ai";
     if (raw === "colors" || raw === "palette" || raw === "tokens") return "colors";
     if (raw === "archived" || raw === "archived-pages" || raw === "legacy") return "archived";
+    if (raw === "import" || raw === "crm-import" || raw === "clients-import" || raw === "import-clients") return "import";
     if (raw === "admin" || raw === "crm") return "admin";
     // Default to clean Admin CRM / Company Profile base rather than raw color dump
     return "admin";
@@ -163,7 +165,17 @@ export default function Settings() {
 
         {/* SECTION 3: Admin CRM (What Byron & Staff See) */}
         {activeSection === "admin" && (
-          <AdminCrmSettingsTab onPhoneUpdated={handlePhoneUpdated} />
+          <AdminCrmSettingsTab
+            onPhoneUpdated={handlePhoneUpdated}
+            onOpenImport={() => handleSectionChange("import")}
+          />
+        )}
+
+        {/* SECTION 4: Client CRM Import (PG-024-IMP) */}
+        {activeSection === "import" && (
+          <div className="space-y-4">
+            <ClientCrmImportTab />
+          </div>
         )}
 
         {/* SECTION 4: Business Operations & Workflow Designer */}

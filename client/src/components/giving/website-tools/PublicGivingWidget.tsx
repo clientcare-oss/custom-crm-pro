@@ -592,7 +592,7 @@ export function CampaignPageWidget({ tool, isEmbed }: { tool: any; isEmbed?: boo
             </h1>
             <p className="text-sm md:text-base text-white/75 leading-relaxed">
               {tool.description ||
-                "Funding Master IEP Coach® advocacy retainers, psychoeducational evaluations, and dispute resolution for underserved Georgia families."}
+                "Funding special education advocacy retainers, psychoeducational evaluations, and dispute resolution for underserved Georgia families."}
             </p>
 
             {/* Campaign Progress Inline */}

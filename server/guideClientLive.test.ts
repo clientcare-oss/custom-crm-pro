@@ -20,9 +20,9 @@ describe("Guide Client Live (PG-030-GCL) Feature Suite", () => {
   const TEST_EMPLOYEE_NAME = "Byron Honea";
 
   describe("1. Staff Permissions Guardrail (Section 12)", () => {
-    it("allows authorized staff roles (Admin, Master Coach, Advocate) by default", () => {
+    it("allows authorized staff roles (Admin, Lead Advocate, Advocate) by default", () => {
       expect(canGuideClientsLive({ id: "1", role: "admin" })).toBe(true);
-      expect(canGuideClientsLive({ id: "2", role: "Master Coach" })).toBe(true);
+      expect(canGuideClientsLive({ id: "2", role: "Lead Advocate" })).toBe(true);
       expect(canGuideClientsLive({ id: "3", role: "Advocate" })).toBe(true);
       expect(canGuideClientsLive({ id: "4", role: "Staff" })).toBe(true);
     });

@@ -77,7 +77,7 @@ Student: Liam Jenkins (DOB: 05/14/2016)
 
 Dear IEP Team Members,
 
-This letter serves as formal notification that we have retained Byron Honea (Master IEP Coach®, Waypoint Advocates) to assist our family with all educational planning, ARD/IEP committee meetings, and 504 accommodation reviews.
+This letter serves as formal notification that we have retained Byron Honea (Lead Special Education Advocate, Waypoint Advocates) to assist our family with all educational planning, ARD/IEP committee meetings, and 504 accommodation reviews.
 
 Please include Byron Honea (byron@waypointadvocates.com) on all written notices, meeting invitations, evaluations, and progress reports regarding Liam.
 

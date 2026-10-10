@@ -55,7 +55,7 @@ export const DEFAULT_AI_PROMPTS: AiPromptRecord[] = [
     temperature: 0.2,
     maxTokens: 2500,
     isIndividualLocked: true,
-    systemPrompt: `You are the Waypoint Child File Analysis Engine built for Byron Honea (Master IEP Coach®, Atlanta GA).
+    systemPrompt: `You are the Waypoint Child File Analysis Engine built for Byron Honea (Lead Special Education Advocate, Atlanta GA).
 Your mandate is to perform an exhaustive, multi-year longitudinal audit of a student's educational record, psychological evaluations, medical disclosures, and historical IEPs.
 
 CORE AUDIT PILLARS:

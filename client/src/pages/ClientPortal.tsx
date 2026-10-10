@@ -1110,7 +1110,7 @@ export default function ClientPortal() {
 
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
   const parentDisplayName = portalUser?.name ?? (studentDetail?.parentContact ? `${studentDetail.parentContact.firstName} ${studentDetail.parentContact.lastName}` : "Client");
-  const advocateDisplayName = user?.name ? (user.name.toLowerCase().includes("byron") ? "Master IEP Coach Byron Honea" : `Advocate ${user.name}`) : "Advocate";
+  const advocateDisplayName = user?.name ? (user.name.toLowerCase().includes("byron") ? "Byron Honea (Lead Advocate)" : `Advocate ${user.name}`) : "Advocate";
   const displayName = isAdminView ? advocateDisplayName : parentDisplayName;
   const parentContactId = isAdminView ? null : (studentDetail?.contact?.parentContactId ?? effectiveStudent?.parentContactId);
 

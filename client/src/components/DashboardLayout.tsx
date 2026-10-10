@@ -1805,6 +1805,7 @@ const PAGE_LIST = [
   { id: "PG-022", name: "Bill Guardian", path: "/bill-guardian" },
   { id: "PG-023", name: "Client Portal", path: "/client-portal" },
   { id: "PG-024", name: "Settings", path: "/settings" },
+  { id: "PG-024-IMP", name: "Client CRM Import (Settings)", path: "/settings/import" },
   { id: "PG-025", name: "Case Compass", path: "/case-compass" },
   { id: "PG-026", name: "Page ID Showcase", path: "/page-id-showcase" },
   { id: "PG-027", name: "Portal Management", path: "/portal-management" },

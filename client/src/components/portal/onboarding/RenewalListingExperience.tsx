@@ -78,7 +78,7 @@ export function RenewalListingExperience({
         "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
         "Quarterly IEP goal progress audit & school compliance monitoring",
         "Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior",
-        "Direct priority portal messaging & strategic advisory with Master IEP Coach® Byron Honea",
+        "Direct priority portal messaging & strategic advisory with Lead Advocate Byron Honea",
         "Full access to Document Vault, IEP Comparator, and Case Compass™"
       ],
       idealFor: "Families wanting continuous IEP oversight, draft reviews, and expert coaching between school meetings.",
@@ -143,7 +143,7 @@ export function RenewalListingExperience({
               Advocacy Plan Renewed for {studentName}!
             </h1>
             <p className="text-sm sm:text-base text-blue-200/70 max-w-xl mx-auto leading-relaxed">
-              Thank you for trusting Waypoint Advocates. Byron Honea's master coaching coverage is active for <strong className="text-amber-300">{studentName}</strong> at <strong className="text-white">${monthlyTotal}/month</strong>.
+              Thank you for trusting Waypoint Advocates. Byron Honea's advocacy coverage is active for <strong className="text-amber-300">{studentName}</strong> at <strong className="text-white">${monthlyTotal}/month</strong>.
             </p>
           </div>
 
@@ -371,7 +371,7 @@ export function RenewalListingExperience({
                 Renewal Summary for {studentName}
               </CardTitle>
               <CardDescription className="text-xs text-blue-200/70 mt-0.5">
-                Master IEP Coach® Byron Honea Representation Coverage
+                Lead Advocate Byron Honea Representation Coverage
               </CardDescription>
             </div>
             <Badge className="bg-[#F5B544] text-[#07152B] font-bold text-xs px-3 py-1 self-start sm:self-auto">

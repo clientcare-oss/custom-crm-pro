@@ -919,7 +919,7 @@ export default function SmartFileEditor() {
         starterBlocks = [
           { id: `start-1-${timestamp}`, blockOrder: 0, type: "heading", content: { text: "Advocacy Services Agreement" }, settings: {} },
           { id: `start-2-${timestamp}`, blockOrder: 1, type: "text", content: { text: "This agreement is entered into by and between Waypoint Advocates and the parent/client." }, settings: {} },
-          { id: `start-3-${timestamp}`, blockOrder: 2, type: "contract", content: { text: "1. Scope of Representation\nWaypoint Advocates will provide Master IEP Coach consulting, document review, and meeting advocacy services as requested.\n\n2. Fees and Billing\nClient agrees to pay the package rates in full or in agreed installments before services are rendered." }, settings: {} },
+          { id: `start-3-${timestamp}`, blockOrder: 2, type: "contract", content: { text: "1. Scope of Representation\nWaypoint Advocates will provide special education advocacy consulting, document review, and meeting advocacy services as requested.\n\n2. Fees and Billing\nClient agrees to pay the package rates in full or in agreed installments before services are rendered." }, settings: {} },
           { id: `start-4-${timestamp}`, blockOrder: 3, type: "initial", content: { label: "I have read and agree to Section 1 & 2" }, settings: {} },
           { id: `start-5-${timestamp}`, blockOrder: 4, type: "signature", content: { label: "Advocate Signature" }, settings: {} },
           { id: `start-6-${timestamp}`, blockOrder: 5, type: "signature", content: { label: "Parent/Client Signature" }, settings: {} }

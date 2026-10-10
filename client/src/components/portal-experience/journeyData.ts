@@ -486,7 +486,7 @@ export const SAMPLE_CLIENT_PERSONAS: SampleClientPersona[] = [
     appointment: {
       date: "Tuesday, September 15, 2026",
       time: "2:00 PM - 2:30 PM EDT",
-      coach: "Byron Honea, Master IEP Coach®",
+      coach: "Byron Honea, Lead Special Education Advocate",
       type: "Discovery Call (Video via Google Meet)",
       meetLink: "https://meet.google.com/waypoint-demo"
     }

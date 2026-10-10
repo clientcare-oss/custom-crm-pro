@@ -24,6 +24,9 @@ import {
   FileText,
   Layers,
   Sparkles,
+  UploadCloud,
+  FileSpreadsheet,
+  ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -220,9 +223,10 @@ function ReferralProgramSettingsCard() {
 
 export interface AdminCrmSettingsTabProps {
   onPhoneUpdated?: (phone: string) => void;
+  onOpenImport?: () => void;
 }
 
-export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps = {}) {
+export function AdminCrmSettingsTab({ onPhoneUpdated, onOpenImport }: AdminCrmSettingsTabProps = {}) {
   const { projectLabel, setProjectLabel, presetOptions, projectIconKey, setProjectIconKey } = useTerminology();
   const [customValue, setCustomValue] = useState(
     presetOptions.some((o) => o.value === projectLabel) ? "" : projectLabel
@@ -347,6 +351,75 @@ export function AdminCrmSettingsTab({ onPhoneUpdated }: AdminCrmSettingsTabProps
           </Button>
         </a>
       </div>
+
+      {/* ── CLIENT CRM IMPORT FEATURE CARD (PG-024-IMP) ────────────────── */}
+      <Card className="rounded-xl border-2 border-[#C5A059]/40 bg-gradient-to-r from-[#05142B] via-[#071E3D] to-[#05142B] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
+        <div className="p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="bg-[#020A17] text-[#FFE394] border-[#3A2C18] text-[10px] font-bold">
+                PG-024-IMP
+              </Badge>
+              <span className="text-[10px] uppercase font-bold text-[#DFBE77] tracking-wider">
+                Practice Rosters & Migration Engine
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 font-bold">
+                Universal Parser Ready
+              </span>
+            </div>
+            <h3 className="text-base md:text-lg font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+              <UploadCloud className="h-5 w-5 text-[#FFE394]" />
+              Import Existing Clients from Other CRM
+            </h3>
+            <p className="text-xs text-[#C6B697] leading-relaxed">
+              Transitioning from HoneyBook, Dubsado, HubSpot, Clio, Practice Better, or a spreadsheet? Use Waypoint&apos;s intelligent CSV import engine to migrate parent contacts, student profiles, diagnostic histories, and case notes with automated geocoding and duplicate protection.
+            </p>
+            <div className="flex items-center gap-2 pt-1 flex-wrap text-[11px] text-[#A69371]">
+              <span className="font-semibold text-[#DFBE77]">Supported Formats:</span>
+              <Badge variant="outline" className="text-[10px] bg-[#020A17] text-[#FFF4D4] border-[#3A2C18]">HoneyBook</Badge>
+              <Badge variant="outline" className="text-[10px] bg-[#020A17] text-[#FFF4D4] border-[#3A2C18]">Dubsado</Badge>
+              <Badge variant="outline" className="text-[10px] bg-[#020A17] text-[#FFF4D4] border-[#3A2C18]">HubSpot</Badge>
+              <Badge variant="outline" className="text-[10px] bg-[#020A17] text-[#FFF4D4] border-[#3A2C18]">Clio</Badge>
+              <Badge variant="outline" className="text-[10px] bg-[#020A17] text-[#FFE394] border-[#3A2C18]">Universal CSV / Excel</Badge>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
+            <Button
+              onClick={() => {
+                if (onOpenImport) {
+                  onOpenImport();
+                } else if (typeof window !== "undefined") {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("section", "import");
+                  window.history.pushState(null, "", url.toString());
+                  window.dispatchEvent(new PopStateEvent("popstate"));
+                }
+              }}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-10 px-6 shadow-[0_4px_16px_rgba(0,0,0,0.8)] border border-[#FFE394]/60 hover:brightness-105 cursor-pointer whitespace-nowrap"
+            >
+              <UploadCloud className="h-4 w-4 mr-2" />
+              Launch Client CRM Importer
+              <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
+            <button
+              onClick={() => {
+                if (onOpenImport) {
+                  onOpenImport();
+                } else if (typeof window !== "undefined") {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("section", "import");
+                  window.history.pushState(null, "", url.toString());
+                  window.dispatchEvent(new PopStateEvent("popstate"));
+                }
+              }}
+              className="text-center text-[11px] text-[#C6B697] hover:text-[#FFE394] underline decoration-[#3A2C18] cursor-pointer"
+            >
+              Open Dedicated Import Workspace (PG-024-IMP)
+            </button>
+          </div>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Practice Phone Number Section */}

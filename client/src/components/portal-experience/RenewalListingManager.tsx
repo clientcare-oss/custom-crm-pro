@@ -188,7 +188,7 @@ export function RenewalListingManager({ onOpenPreviewStage }: RenewalListingMana
   const handleOpenOfferModal = (record: RenewalRecord) => {
     setSelectedRenewal(record);
     setCustomOfferNote(
-      `Hi ${record.parentName.split(" ")[0]},\n\nAs we prepare for the 2026–2027 school year, we'd love to continue advocating for ${record.studentName} as they transition into ${record.studentGrade}. Your current representation plan expires on ${record.contractEnd}.\n\nWe've prepared your renewal options with our 10% loyalty savings rate. You can review your customized renewal proposal and secure your spot on Byron's 2026–2027 caseload here:\nhttps://waypointadvocates.com/portal/renewal\n\nWarm regards,\nByron Honea, Master IEP Coach®`
+      `Hi ${record.parentName.split(" ")[0]},\n\nAs we prepare for the 2026–2027 school year, we'd love to continue advocating for ${record.studentName} as they transition into ${record.studentGrade}. Your current representation plan expires on ${record.contractEnd}.\n\nWe've prepared your renewal options with our 10% loyalty savings rate. You can review your customized renewal proposal and secure your spot on Byron's 2026–2027 caseload here:\nhttps://waypointadvocates.com/portal/renewal\n\nWarm regards,\nByron Honea, Lead Special Education Advocate`
     );
     setOfferModalOpen(true);
   };

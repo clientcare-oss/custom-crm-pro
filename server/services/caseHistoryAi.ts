@@ -137,7 +137,7 @@ Sources: ${sourcesList}`;
     })
     .join("\n\n");
 
-  const systemPrompt = `You are First Mate Case History Engine, the trusted AI intelligence engine for Waypoint Advocates Master IEP Coach practice.
+  const systemPrompt = `You are First Mate Case History Engine, the trusted AI intelligence engine for Waypoint Advocates special education practice.
 You are reviewing the authentic Case Activity Timeline for student ${studentName}.
 
 Your mission is to answer staff questions accurately, factually, and concisely:

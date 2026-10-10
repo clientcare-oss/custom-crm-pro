@@ -20,12 +20,12 @@ export default function EmployeeProfileTab() {
   const [profile, setProfile] = useState({
     name: user?.name || "Byron Honea",
     email: user?.email || "byron@waypointadvocates.com",
-    title: "Master IEP Coach® & Founder",
+    title: "Lead Special Education Advocate & Founder",
     phone: "(404) 555-0192",
     states: "Georgia (Primary), Florida, North Carolina",
-    certNumber: "MIPC-2024-884",
+    certNumber: "SEA-2024-884",
     emergencyContact: "Angela Honea (Spouse) — (404) 555-0193",
-    bio: "Passionate special education advocate and Master IEP Coach® dedicated to ensuring neurodivergent students receive authentic, individualized support and meaningful FAPE in Georgia public schools.",
+    bio: "Passionate special education advocate dedicated to ensuring neurodivergent students receive authentic, individualized support and meaningful FAPE in Georgia public schools.",
   });
 
   const handleSave = () => {
@@ -45,7 +45,7 @@ export default function EmployeeProfileTab() {
             <PageIdBadge id="PG-038-CRD" name="Employee Profile" inline />
           </div>
           <p className="text-xs text-[#C6B697]">
-            Professional certifications, Master IEP Coach® verification, state coverage, and personal details.
+            Professional certifications, advocacy credentials verification, state coverage, and personal details.
           </p>
         </div>
 
@@ -144,7 +144,7 @@ export default function EmployeeProfileTab() {
 
             <div className="space-y-3">
               {[
-                { title: "Master IEP Coach®", issuer: "Master IEP Coach Network", id: profile.certNumber },
+                { title: "Special Education Advocacy Certification", issuer: "COPAA / Advocacy Registry", id: profile.certNumber },
                 { title: "FERPA Special Education Certified", issuer: "Student Privacy Consortium", id: "FERPA-2024-912" },
                 { title: "Georgia State Advocacy Credential", issuer: "GA Advocacy Registry", id: "GA-SED-5501" },
               ].map((c, i) => (

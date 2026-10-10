@@ -24,7 +24,7 @@ async function seedMetricsData() {
 
   // 1. Seed CRM Lifecycle Events (Lead Funnel History)
   console.log("Seeding CRM Lifecycle Events (7-stage lead journey)...");
-  const referralSources = ["Website Organic", "Master IEP Coach Referral", "Pediatrician", "Parent Support Group", "Social Media", "School Referral", "Past Client Word of Mouth"];
+  const referralSources = ["Website Organic", "Advocate Partner Referral", "Pediatrician", "Parent Support Group", "Social Media", "School Referral", "Past Client Word of Mouth"];
   const nonConversionReasons = [
     "Price",
     "Attorney needed",

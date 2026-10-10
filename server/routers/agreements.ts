@@ -95,7 +95,7 @@ function resolveTokens(
     // STAFF
     advocate_name: advocate?.name || student?.assignedAdvocateName || ownerUser?.name || "Lead Special Education Advocate",
     employee_name: advocate?.name || ownerUser?.name || "Staff Advocate",
-    employee_title: advocate?.jobTitle || "Master IEP Coach® & Special Education Advocate",
+    employee_title: advocate?.jobTitle || "Lead Special Education Advocate",
   };
 
   let renderedContent = templateContent;

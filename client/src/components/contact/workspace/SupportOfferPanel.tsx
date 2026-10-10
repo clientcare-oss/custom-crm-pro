@@ -226,7 +226,7 @@ export default function SupportOfferPanel({
 
           if (items.length === 0) {
             items = [
-              "Direct Master IEP Coach® representation",
+              "Direct special education advocacy representation",
               "Written case analysis & action plan",
               "Confidential documentation review",
             ];

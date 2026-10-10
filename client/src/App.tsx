@@ -61,6 +61,7 @@ import PublicGivingPage from "./pages/giving/PublicGivingPage";
 import Services from "./pages/Services";
 import NationalCoverage from "./pages/NationalCoverage";
 import PageIdShowcase from "./pages/PageIdShowcase";
+import ClientCrmImportPage from "./pages/ClientCrmImportPage";
 import PortalBook from "./pages/PortalBook";
 import Agreements from "./pages/Agreements";
 import SmartFiles from "./pages/SmartFiles";
@@ -267,6 +268,8 @@ function Router() {
               <Route path="/bill-guardian" component={BillGuardian} />
           <Route path="/page-id-showcase" component={PageIdShowcase} />
           <Route path="/portal/book" component={PortalBook} />
+          <Route path="/settings/import" component={ClientCrmImportPage} />
+          <Route path="/settings/clients-import" component={ClientCrmImportPage} />
           <Route path="/settings" component={Settings} />
           <Route path="/portal-management" component={PortalManagement} />
           <Route path="/manage-experiences" component={PortalManagement} />

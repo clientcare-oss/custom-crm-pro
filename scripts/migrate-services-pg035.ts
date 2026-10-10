@@ -230,7 +230,7 @@ async function runMigration() {
       clientFacingTitle = 'Advocacy Only',
       name = 'Advocacy Only',
       shortDescription = 'Ongoing advocacy and unlimited virtual meeting support.',
-      fullDescription = 'Continuous Master IEP Coach support providing unlimited virtual attendance at IEP, 504, and evaluation meetings, plus Parent Portal case messaging and documentation prep.',
+      fullDescription = 'Continuous special education advocacy support providing unlimited virtual attendance at IEP, 504, and evaluation meetings, plus Parent Portal case messaging and documentation prep.',
       internalInstructions = 'Assigned lead coach attends scheduled district sessions virtually. Track prep time in Case Compass.',
       standardPrice = 5500,
       price = 5500,
@@ -252,7 +252,7 @@ async function runMigration() {
       deliveryTimeUnit = 'calendar_days',
       deliveryTimeLabel = 'Ongoing monthly',
       planEligibility = '{"plan_55":"included","plan_105":"unavailable","scholarship":"unavailable","pay_per_use":"unavailable","standalone":"unavailable"}',
-      includedItems = '[{"id":"item-1","text":"Dedicated Master IEP Coach guidance","sortOrder":1,"isActive":true},{"id":"item-2","text":"Unlimited virtual meeting attendance (IEP, 504, eligibility)","sortOrder":2,"isActive":true},{"id":"item-3","text":"Parent Portal communications and strategy support","sortOrder":3,"isActive":true}]'
+      includedItems = '[{"id":"item-1","text":"Dedicated special education advocacy guidance","sortOrder":1,"isActive":true},{"id":"item-2","text":"Unlimited virtual meeting attendance (IEP, 504, eligibility)","sortOrder":2,"isActive":true},{"id":"item-3","text":"Parent Portal communications and strategy support","sortOrder":3,"isActive":true}]'
     WHERE id = 1;
   `);
 
@@ -265,7 +265,7 @@ async function runMigration() {
       clientFacingTitle = 'Advocacy + State Complaints',
       name = 'Advocacy + State Complaints',
       shortDescription = 'Ongoing advocacy, meeting support, email assistance, and state complaint help.',
-      fullDescription = 'Comprehensive Master IEP Coach support covering full meeting attendance, priority school correspondence assistance, and state administrative complaint drafting and filing oversight.',
+      fullDescription = 'Comprehensive special education advocacy support covering full meeting attendance, priority school correspondence assistance, and state administrative complaint drafting and filing oversight.',
       internalInstructions = 'Full tier membership. Prioritize communications and schedule complaint drafting sessions promptly.',
       standardPrice = 10500,
       price = 10500,
@@ -633,7 +633,7 @@ async function runMigration() {
       internalName: "Virtual IEP Meeting Attendance (2 Hours)",
       clientFacingTitle: "Virtual IEP Meeting Attendance (2 Hours)",
       shortDescription: "Live advocate presence, note-taking, and strategic advocacy during virtual district meeting.",
-      fullDescription: "An experienced Master IEP Coach joins your virtual IEP, 504, or manifestation determination meeting to ensure procedural compliance, active parent voice, and appropriate accommodations.",
+      fullDescription: "An experienced special education advocate joins your virtual IEP, 504, or manifestation determination meeting to ensure procedural compliance, active parent voice, and appropriate accommodations.",
       standardPrice: 50000,
       billingType: "one_time",
       folderSlug: "meeting_support",

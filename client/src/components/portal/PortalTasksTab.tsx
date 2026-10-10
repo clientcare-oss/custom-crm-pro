@@ -96,7 +96,7 @@ export default function PortalTasksTab({
       isCompleted: false,
       payload: {
         emailSubject: `Notice of Parent Advocate Attendance - ${studentName}`,
-        emailBody: `Dear IEP Case Manager & Team,\n\nPlease note that Byron Honea (Master IEP Coach®) will be attending ${studentName}'s upcoming IEP meeting with us as our advocate. Please ensure the meeting link and all draft goals/evaluations are sent to our family at least 3 business days prior.\n\nThank you,\nParent`
+        emailBody: `Dear IEP Case Manager & Team,\n\nPlease note that Byron Honea (Lead Special Education Advocate) will be attending ${studentName}'s upcoming IEP meeting with us as our advocate. Please ensure the meeting link and all draft goals/evaluations are sent to our family at least 3 business days prior.\n\nThank you,\nParent`
       }
     },
     {

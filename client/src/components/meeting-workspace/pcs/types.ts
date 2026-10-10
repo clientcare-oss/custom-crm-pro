@@ -32,7 +32,7 @@ export interface PcsConcernBreakdownItem {
 export interface PcsVersionHistoryItem {
   id: string;
   timestamp: string; // ISO date string
-  employee: string;  // e.g. "Byron Honea (Master IEP Coach®)"
+  employee: string;  // e.g. "Byron Honea (Lead IEP Advocate)"
   action:
     | "AI draft created"
     | "Edited by employee"

@@ -163,7 +163,7 @@ export function PlanTransitionExperience({
       highlights: [
         "Full access to all Waypoint tools & Case Compass™ portfolio",
         "Live advocate attendance & co-chairing at all IEP, 504 & MDR school conferences",
-        "Direct priority messaging & strategic advisory with Master IEP Coach® Byron Honea",
+        "Direct priority messaging & strategic advisory with Lead Advocate Byron Honea",
         "Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior",
         "Priority rapid document turnarounds (PWNs, evaluation requests, dissents)",
         "Uninterrupted advocacy continuity (no gap in student defense)"
@@ -186,7 +186,7 @@ export function PlanTransitionExperience({
         "Advocate meeting attendance & special education coaching included",
         "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
         "Quarterly IEP goal progress audit & school compliance monitoring",
-        "Direct strategic advisory with Master IEP Coach® Byron Honea",
+        "Direct strategic advisory with Lead Advocate Byron Honea",
         "Parent meeting prep briefs and customized strategy roadmaps"
       ],
       recommendedFor: "Families wanting expert coaching, draft audits, and goal monitoring between school meetings."
