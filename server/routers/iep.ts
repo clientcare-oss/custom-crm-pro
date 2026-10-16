@@ -258,5 +258,56 @@ export const iepRouter = router({
           .where(dand(deq(draftIepHistory.id, input.id), deq(draftIepHistory.ownerId, ctx.user.id)));
         return { success: true };
       }),
+
+    // ── Smart Hybrid Profile Sync Endpoints ─────────────────────────────────
+    // Extract student data from IEP and execute Smart Hybrid sync
+    extractStudentData: adminProcedure
+      .input(z.object({
+        contactId: z.number(),
+        extractedText: z.string(),
+        sourceDocument: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { syncIepToStudentProfile } = await import("../services/iepExtractionService");
+        return await syncIepToStudentProfile({
+          contactId: input.contactId,
+          extractedText: input.extractedText,
+          sourceDocument: input.sourceDocument,
+        });
+      }),
+
+    // Retrieve pending review updates for student overview bubble
+    getPendingUpdates: adminProcedure
+      .input(z.object({ contactId: z.number() }))
+      .query(async ({ input }) => {
+        const { getPendingIepUpdates } = await import("../services/iepExtractionService");
+        const pending = getPendingIepUpdates(input.contactId);
+        return { pending };
+      }),
+
+    // Apply advocate-confirmed updates to student profile
+    applyPendingUpdates: adminProcedure
+      .input(z.object({
+        contactId: z.number(),
+        acceptedFields: z.record(z.string(), z.string()),
+        dismissRemaining: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { applyConfirmedIepUpdates } = await import("../services/iepExtractionService");
+        return await applyConfirmedIepUpdates({
+          contactId: input.contactId,
+          acceptedFields: input.acceptedFields,
+          dismissRemaining: input.dismissRemaining,
+        });
+      }),
+
+    // Dismiss pending updates without changing student profile
+    dismissPendingUpdates: adminProcedure
+      .input(z.object({ contactId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { dismissIepUpdates } = await import("../services/iepExtractionService");
+        dismissIepUpdates(input.contactId);
+        return { success: true };
+      }),
   
 });

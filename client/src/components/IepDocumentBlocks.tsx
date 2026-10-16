@@ -7,10 +7,32 @@ import VoiceTextarea from "@/components/VoiceTextarea";
 import {
   FileText, Upload, GitCompare, CheckCircle2, Lock, Loader2,
   ExternalLink, FilePen, Trash2, Pencil, Clock, ChevronDown, ChevronUp,
-  ShieldCheck,
+  ShieldCheck, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+
+async function extractTextFromPdfData(arrayBuffer: ArrayBuffer): Promise<string> {
+  try {
+    const pdfjsLib = await import("pdfjs-dist");
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+    }
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+    let fullText = "";
+    const maxPages = Math.min(pdf.numPages, 10);
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageStr = textContent.items.map((item: any) => item.str || "").join(" ");
+      fullText += `\n--- Page ${i} ---\n` + pageStr;
+    }
+    return fullText;
+  } catch (err) {
+    console.warn("[PDF Text Extraction] Error:", err);
+    return "";
+  }
+}
 
 interface IepDocumentBlocksProps {
   contactId: number;
@@ -23,6 +45,7 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
   const draftFileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingDraft, setUploadingDraft] = useState(false);
+  const [syncingProfile, setSyncingProfile] = useState(false);
   // Per-row notes editing state: { [draftId]: string }
   const [editingNotes, setEditingNotes] = useState<Record<number, string | null>>({});
   // Expand/collapse draft history
@@ -94,6 +117,74 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
     onError: (e) => toast.error("Failed to save notes: " + e.message),
   });
 
+  // ── Smart Hybrid Extraction Mutation ──────────────────────────────────────
+  const extractMutation = trpc.iep.extractStudentData.useMutation({
+    onSuccess: (res) => {
+      setSyncingProfile(false);
+      if (res.autoApplied.length > 0) {
+        const fieldsSummary = res.autoApplied.map((a) => a.label).join(", ");
+        toast.success(`✨ Smart Hybrid: Updated empty profile fields (${fieldsSummary}) from IEP!`, {
+          duration: 6000,
+        });
+        utils.contacts.detail.invalidate({ id: contactId });
+      }
+      if (res.pendingReview.length > 0) {
+        toast.info(
+          `📋 ${res.pendingReview.length} field(s) differ from current profile. Review bubble available on Overview tab.`,
+          { duration: 7000 }
+        );
+        utils.iep.getPendingUpdates.invalidate({ contactId });
+      } else if (res.autoApplied.length === 0) {
+        toast.info("IEP profile information is already up-to-date with current profile.");
+      }
+    },
+    onError: (err) => {
+      setSyncingProfile(false);
+      console.warn("[IEP Extraction Error]", err);
+    },
+  });
+
+  // Re-sync current IEP
+  const handleSyncCurrentIep = async () => {
+    if (!iepDoc?.currentFileUrl) {
+      toast.error("No current IEP URL available");
+      return;
+    }
+    setSyncingProfile(true);
+    toast.info("Extracting student profile information from current IEP...");
+    try {
+      let arrayBuffer: ArrayBuffer;
+      if (iepDoc.currentFileUrl.startsWith("data:")) {
+        const base64 = iepDoc.currentFileUrl.split(",")[1];
+        const binaryString = atob(base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        arrayBuffer = bytes.buffer;
+      } else {
+        const resp = await fetch(iepDoc.currentFileUrl);
+        arrayBuffer = await resp.arrayBuffer();
+      }
+
+      const text = await extractTextFromPdfData(arrayBuffer);
+      if (!text || text.trim().length === 0) {
+        toast.error("Could not extract readable text from document. Scanned images may require manual entry.");
+        setSyncingProfile(false);
+        return;
+      }
+
+      extractMutation.mutate({
+        contactId,
+        extractedText: text,
+        sourceDocument: iepDoc.currentFileName || "Current IEP",
+      });
+    } catch (err: any) {
+      toast.error("Failed to read IEP document: " + (err?.message || "Unknown error"));
+      setSyncingProfile(false);
+    }
+  };
+
   // ── File upload helpers ─────────────────────────────────────────────────────
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,6 +219,23 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
       setUploading(false);
     };
     reader.readAsDataURL(file);
+
+    // Extract text in parallel for Smart Hybrid profile sync
+    try {
+      file.arrayBuffer().then((buf) => {
+        extractTextFromPdfData(buf).then((extractedText) => {
+          if (extractedText && extractedText.trim().length > 0) {
+            extractMutation.mutate({
+              contactId,
+              extractedText,
+              sourceDocument: file.name,
+            });
+          }
+        });
+      });
+    } catch (e) {
+      console.warn("Async text extraction skipped:", e);
+    }
 
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -211,14 +319,31 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
                   Uploaded {new Date(iepDoc!.currentUploadedAt).toLocaleDateString()}
                 </p>
               )}
-              <a
-                href={iepDoc!.currentFileUrl!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-auto inline-flex items-center gap-1 text-xs text-accent hover:underline font-semibold pt-1"
-              >
-                <ExternalLink className="h-3 w-3" /> Open
-              </a>
+              <div className="flex items-center gap-2 mt-auto pt-1 flex-wrap">
+                <a
+                  href={iepDoc!.currentFileUrl!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-accent hover:underline font-semibold"
+                >
+                  <ExternalLink className="h-3 w-3" /> Open
+                </a>
+                <span className="text-muted-foreground/30 text-xs">|</span>
+                <button
+                  type="button"
+                  onClick={handleSyncCurrentIep}
+                  disabled={syncingProfile}
+                  className="inline-flex items-center gap-1 text-xs text-amber-500 hover:text-amber-400 font-semibold cursor-pointer transition-colors"
+                  title="Extract demographics & sync student profile"
+                >
+                  {syncingProfile ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3 text-amber-400" />
+                  )}
+                  <span>Sync Profile</span>
+                </button>
+              </div>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground flex-1">No IEP/504 on file yet.</p>

@@ -24,6 +24,7 @@ import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { StudentTasksWorkspace } from "@/components/students/StudentTasksWorkspace";
 import { StudentCommunicationWorkspace } from "@/components/students/StudentCommunicationWorkspace";
 import { StudentWorkspaceMoreTab } from "@/components/students/StudentWorkspaceMoreTab";
+import { IepProfileUpdateBubble } from "@/components/students/IepProfileUpdateBubble";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -134,11 +135,31 @@ export default function StudentWorkspace() {
 
   const calculatedAge = useMemo(() => {
     if (!student?.dateOfBirth) return "--";
-    const dob = new Date(student.dateOfBirth);
-    if (isNaN(dob.getTime())) return student.dateOfBirth || "--";
-    const diffMs = Date.now() - dob.getTime();
-    const ageDt = new Date(diffMs);
-    return Math.abs(ageDt.getUTCFullYear() - 1970).toString();
+    const clean = student.dateOfBirth.trim();
+    let dob: Date | null = null;
+    const parts = clean.split(/[\/\-.]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // YYYY-MM-DD
+        dob = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      } else {
+        // MM/DD/YYYY
+        const year = parseInt(parts[2], 10);
+        const fullYear = year < 100 ? (year > 50 ? 1900 + year : 2000 + year) : year;
+        dob = new Date(fullYear, parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+      }
+    } else {
+      const parsed = new Date(clean);
+      if (!isNaN(parsed.getTime())) dob = parsed;
+    }
+    if (!dob || isNaN(dob.getTime())) return clean;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return `${age}`;
   }, [student?.dateOfBirth]);
 
   const cleanGrade = useMemo(() => {
@@ -535,7 +556,11 @@ export default function StudentWorkspace() {
                   className="w-full h-full"
                 >
             {activeTab === "overview" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
+              <div className="flex flex-col min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8">
+                {/* ─── Smart Hybrid IEP Review Bubble ────────────────────────────── */}
+                <IepProfileUpdateBubble contactId={effectiveStudentId} studentName={fullName} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 w-full">
                 
                 {/* ─── LEFT PANEL: Student Profile & Family (~38% width) ────── */}
                 <div className="lg:col-span-5 relative py-1 sm:py-2">
@@ -720,6 +745,7 @@ export default function StudentWorkspace() {
 
                 </div>
               </div>
+            </div>
             )}
 
             {/* ─── MORE TAB WORKSPACE: Categorized Student Workspace Hub (PG-030-MORE) ── */}
