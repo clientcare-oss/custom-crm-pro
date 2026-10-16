@@ -15,7 +15,8 @@ export interface StudentProfileDossierProps {
   calculatedAge: string;
   cleanGrade: string;
   displayDistrict?: string;
-  transferSchool: string;
+  currentSchool?: string;
+  transferSchool?: string;
   gtidValue: string;
   displayEligibility: string;
   displayMedicalDiagnoses: string;
@@ -33,6 +34,7 @@ export function StudentProfileDossier({
   calculatedAge,
   cleanGrade,
   displayDistrict,
+  currentSchool,
   transferSchool,
   gtidValue,
   displayEligibility,
@@ -141,27 +143,32 @@ export function StudentProfileDossier({
           </span>
         </div>
 
-        {/* School */}
+        {/* Current School */}
         <div className="flex items-center justify-between gap-1.5 py-0.5">
           <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
             <School className="h-3 w-3 text-[#38BDF8] shrink-0" />
-            <span>School:</span>
+            <span>Current School:</span>
           </div>
-          <span className="font-bold text-white truncate max-w-[145px] text-right" title={student?.schoolName || "Lincoln Elementary"}>
-            {student?.schoolName || "Lincoln Elementary"}
+          <span 
+            className="font-bold text-white truncate max-w-[145px] text-right" 
+            title={student?.schoolName || currentSchool || transferSchool || "Connie Dugan Elementary"}
+          >
+            {student?.schoolName || currentSchool || transferSchool || "Connie Dugan Elementary"}
           </span>
         </div>
 
-        {/* Transfer School */}
-        <div className="flex items-center justify-between gap-1.5 py-0.5">
-          <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
-            <ArrowRight className="h-3 w-3 text-[#38BDF8] shrink-0" />
-            <span>Transfer School:</span>
+        {/* Previous School (if recorded and distinct from current school) */}
+        {student?.previousSchool && student.previousSchool !== (student?.schoolName || currentSchool) && (
+          <div className="flex items-center justify-between gap-1.5 py-0.5">
+            <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+              <ArrowRight className="h-3 w-3 text-[#38BDF8] shrink-0" />
+              <span>Previous School:</span>
+            </div>
+            <span className="font-bold text-white truncate max-w-[130px] text-right" title={student.previousSchool}>
+              {student.previousSchool}
+            </span>
           </div>
-          <span className="font-bold text-white truncate max-w-[130px] text-right" title={transferSchool}>
-            {transferSchool}
-          </span>
-        </div>
+        )}
 
         {/* GTID */}
         <div className="flex items-center justify-between gap-1.5 py-0.5">

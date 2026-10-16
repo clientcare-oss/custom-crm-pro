@@ -201,9 +201,10 @@ export default function StudentWorkspace() {
     return (student as any)?.medicalDiagnoses || (student as any)?.diagnosis || "Advocacy Client";
   }, [student]);
 
-  const transferSchool = useMemo(() => {
+  const currentSchool = useMemo(() => {
     return student?.schoolName || student?.previousSchool || "School Not Set";
   }, [student?.schoolName, student?.previousSchool]);
+  const transferSchool = currentSchool;
 
   const displayDistrict = useMemo(() => {
     if ((student as any)?.countyDistrict) return (student as any).countyDistrict;
@@ -489,6 +490,7 @@ export default function StudentWorkspace() {
                     calculatedAge={calculatedAge}
                     cleanGrade={cleanGrade}
                     displayDistrict={displayDistrict}
+                    currentSchool={currentSchool}
                     transferSchool={transferSchool}
                     gtidValue={gtidValue}
                     displayEligibility={displayEligibility}
@@ -874,7 +876,7 @@ export default function StudentWorkspace() {
                 <span className="text-white font-medium">{student?.gradeLevel || "5th Grade"}</span>
               </div>
               <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">School</span>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">Current School</span>
                 <span className="text-white font-medium">{student?.schoolName || student?.previousSchool || "School Not Set"}</span>
               </div>
               <div>

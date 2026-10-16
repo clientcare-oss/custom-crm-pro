@@ -392,20 +392,22 @@ export function PortalStudentDetailsTab({
               </div>
               <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
                 <span className="text-sky-300 flex items-center gap-2">
-                  <School className="w-3.5 h-3.5 text-sky-400" /> School:
+                  <School className="w-3.5 h-3.5 text-sky-400" /> Current School:
                 </span>
                 <span className="font-semibold text-white truncate max-w-[140px] text-right" title={studentSchool}>
                   {studentSchool}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
-                <span className="text-sky-300 flex items-center gap-2">
-                  <RefreshCw className="w-3.5 h-3.5 text-sky-400" /> Transfer School:
-                </span>
-                <span className="font-semibold text-white truncate max-w-[140px] text-right" title={transferSchool}>
-                  {transferSchool}
-                </span>
-              </div>
+              {effectiveStudent?.previousSchool && effectiveStudent.previousSchool !== studentSchool && (
+                <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
+                  <span className="text-sky-300 flex items-center gap-2">
+                    <RefreshCw className="w-3.5 h-3.5 text-sky-400" /> Previous School:
+                  </span>
+                  <span className="font-semibold text-white truncate max-w-[140px] text-right" title={transferSchool}>
+                    {transferSchool}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
                 <span className="text-sky-300 flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-sky-400" /> GTID:
