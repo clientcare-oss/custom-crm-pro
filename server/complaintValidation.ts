@@ -1,4 +1,4 @@
-import { isWithinLookback } from "../shared/complaintEngine";
+import { isWithinLookback, containsProhibitedComplaintTerms } from "../shared/complaintEngine";
 import type { Allegation, ComplaintCase, EvidenceLink, RequestedRemedy, TimelineEvent } from "../drizzle/schema";
 
 export type ReadinessItem = {
@@ -154,6 +154,32 @@ export function buildReadinessReport(input: {
     detail: input.remedies.filter(r => r.accepted).length
       ? `${input.remedies.filter(r => r.accepted).length} remedy item(s) selected.`
       : "Georgia asks for a proposed resolution to the extent known. Add at least one requested remedy.",
+  });
+
+  // Prohibited terminology check (State agency regulations prohibit "Master IEP Coach")
+  const prohibitedIssues: string[] = [];
+  const checkText = (fieldLabel: string, val: string | null | undefined) => {
+    if (val && containsProhibitedComplaintTerms(val)) {
+      prohibitedIssues.push(fieldLabel);
+    }
+  };
+  checkText("Complainant Name", c.complainantName);
+  checkText("Complainant Relationship", c.complainantRelationship);
+  checkText("Advocate Name", c.advocateName);
+  checkText("Signature Name", c.signatureName);
+  for (const a of accepted) {
+    checkText(`Allegation ${String(a.seqNumber).padStart(2, "0")} Title`, a.formalTitle || a.plainTitle);
+    checkText(`Allegation ${String(a.seqNumber).padStart(2, "0")} Statement`, a.draftStatement);
+    checkText(`Allegation ${String(a.seqNumber).padStart(2, "0")} Facts`, a.draftFacts);
+  }
+  wr.push({
+    key: "prohibited_terms",
+    label: "Professional advocacy title compliance",
+    sectionKey: "complaint-draft",
+    status: prohibitedIssues.length ? "error" : "ok",
+    detail: prohibitedIssues.length
+      ? `Prohibited term ("Master IEP Coach") found in: ${prohibitedIssues.join(", ")}. In state complaints, advocates must strictly be identified as "Lead Special Education Advocate" or "Advocate".`
+      : "No prohibited coaching terminology detected. Title complies with IDEA & GaDOE standards.",
   });
 
   // --- Filing Logistics ---

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useWorkspace } from "../workspaceContext";
 import { BuiltFrom, GhostButton, GoldButton, SectionCard, selectCls } from "@/components/complaint/atoms";
-import { ISSUE_CATEGORIES, calcAge } from "@shared/complaintEngine";
+import { ISSUE_CATEGORIES, calcAge, sanitizeComplaintText } from "@shared/complaintEngine";
 import { Check, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -235,7 +235,14 @@ function AllegationDraft({ allegation: a, tone }: { allegation: AllegationRow; t
                 className={areaCls} rows={4} value={val}
                 placeholder={field === "statement" ? "State the violation: what the district was required to do, and what it failed to do…" : "Chronological facts supporting this allegation, citing exhibits where possible…"}
                 onChange={e => setVal(e.target.value)}
-                onBlur={() => { if (val !== (saved ?? "")) update.mutate({ id: a.id, data: field === "statement" ? { draftStatement: val || null } : { draftFacts: val || null } }); }}
+                onBlur={() => {
+                  const clean = sanitizeComplaintText(val);
+                  if (clean !== val) {
+                    setVal(clean);
+                    toast.info("State agency rule: 'Master IEP Coach' is not permitted in formal state complaints. Converted to 'Lead Special Education Advocate'.");
+                  }
+                  if (clean !== (saved ?? "")) update.mutate({ id: a.id, data: field === "statement" ? { draftStatement: clean || null } : { draftFacts: clean || null } });
+                }}
               />
               {pendingAi?.field === field && (
                 <div className="mt-2 rounded-md border border-[#D9A441]/40 bg-[#D9A441]/5 p-3">
@@ -306,7 +313,14 @@ function EditableBlock({ sectionKey, label, tone, blocks, placeholder, noAi }: {
         value={text}
         placeholder={placeholder}
         onChange={e => setText(e.target.value)}
-        onBlur={() => { if (text !== (existing?.content ?? "")) persist(text, builtFrom, aiGenerated); }}
+        onBlur={() => {
+          const clean = sanitizeComplaintText(text);
+          if (clean !== text) {
+            setText(clean);
+            toast.info("State agency rule: 'Master IEP Coach' is not permitted in formal state complaints. Converted to 'Lead Special Education Advocate'.");
+          }
+          if (clean !== (existing?.content ?? "")) persist(clean, builtFrom, aiGenerated);
+        }}
       />
       {aiGenerated && <BuiltFrom sources={builtFrom} />}
 

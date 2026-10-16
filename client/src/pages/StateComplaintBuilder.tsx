@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { sanitizeComplaintText } from "@shared/complaintEngine";
 
 export default function StateComplaintBuilder() {
   const [location] = useLocation();
@@ -64,7 +65,12 @@ export default function StateComplaintBuilder() {
       toast.error("Please select a student first.");
       return;
     }
-    generate.mutate({ contactId, violationSummary, desiredResolution, additionalContext: additionalContext || undefined });
+    generate.mutate({
+      contactId,
+      violationSummary: sanitizeComplaintText(violationSummary),
+      desiredResolution: sanitizeComplaintText(desiredResolution),
+      additionalContext: additionalContext ? sanitizeComplaintText(additionalContext) : undefined,
+    });
   };
 
   const handleCopy = () => {
@@ -125,12 +131,17 @@ export default function StateComplaintBuilder() {
         </div>
       </div>
 
-      {/* Disclaimer */}
+      {/* Disclaimer & Regulatory Title Guardrail */}
       <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-950/20 px-5 py-4 flex gap-3">
         <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-          This tool generates a draft complaint for review purposes only. Always review the output carefully, verify all citations and facts, and consult with a qualified special education attorney before filing. The generated document is not legal advice.
-        </p>
+        <div className="space-y-1">
+          <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed font-medium">
+            Professional Title Standard: In state complaints filed with state departments of education (e.g. GaDOE), non-attorney representatives must strictly use <strong className="font-semibold text-foreground dark:text-amber-200">"Lead Special Education Advocate"</strong> or <strong className="font-semibold text-foreground dark:text-amber-200">"Advocate"</strong>. The designation <em>"Master IEP Coach"</em> is strictly prohibited in formal state complaints.
+          </p>
+          <p className="text-xs text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
+            This tool generates a draft complaint for review purposes only. Always review the output carefully, verify all citations and facts, and consult with a qualified special education attorney before filing. The generated document is not legal advice.
+          </p>
+        </div>
       </div>
 
       {/* Student picker — shown when no contactId was passed via URL */}

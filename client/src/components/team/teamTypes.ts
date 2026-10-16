@@ -185,7 +185,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
     icon: Users,
     badgeClass: "bg-sky-400/15 text-sky-300 border-sky-400/30",
     dotColor: "bg-sky-400",
-    description: "Special education advocate and IEP Coach managing student cases, meetings, and strategies.",
+    description: "Special education advocate managing student cases, meetings, and strategies.",
     defaultModules: [
       "crew_quarters",
       "calendar",
@@ -697,7 +697,7 @@ export const INITIAL_EMPLOYEES: EmployeeRecord[] = [
     emergencyContact: "David Jenkins (Spouse) — (404) 555-0145",
     bio: "Former special educator with 12 years of public school experience, specializing in autism spectrum supports and manifestation determinations.",
     statesCovered: "Georgia",
-    certifications: "GA Special Ed Certified (P-12), IEP Coach Verified",
+    certifications: "GA Special Ed Certified (P-12), Special Education Advocate Verified",
     availabilityStatus: "In Meeting",
     normalScheduleSummary: "Mon–Fri 8:30 AM – 4:30 PM",
     nextTimeOff: "Oct 10 – Oct 14, 2026",

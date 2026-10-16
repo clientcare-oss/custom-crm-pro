@@ -111,7 +111,7 @@ const FALLBACK_SERVICES = [
     name: "Full IEP Representation Package",
     clientFacingTitle: "Full IEP Representation Package",
     description:
-      "End-to-end IEP coaching, record analysis, strategy agendas, and live advocate attendance at all school meetings.",
+      "End-to-end IEP advocacy, record analysis, strategy agendas, and live advocate attendance at all school meetings.",
     price: 185000, // cents ($1,850)
     standardPrice: 185000,
     deliveryTime: "5 business days",

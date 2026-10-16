@@ -1,5 +1,5 @@
 import { invokeLLM } from "./_core/llm";
-import { AUTHORITY_LIBRARY, ISSUE_CATEGORIES } from "../shared/complaintEngine";
+import { AUTHORITY_LIBRARY, ISSUE_CATEGORIES, sanitizeComplaintText } from "../shared/complaintEngine";
 
 function parseJson<T>(raw: unknown): T {
   const text = typeof raw === "string" ? raw : JSON.stringify(raw);
@@ -9,7 +9,8 @@ function parseJson<T>(raw: unknown): T {
 const GUARDRAILS = `STRICT RULES:
 - You may only use facts explicitly present in the provided material. Never invent dates, quotations, evidence, services, personnel, events, or legal conclusions.
 - Do not make statements sound more certain than the material supports. Use "reported", "according to the parent", or "the records indicate" where appropriate.
-- Do not add citations, names, or factual details that are absent from the provided material.`;
+- Do not add citations, names, or factual details that are absent from the provided material.
+- MANDATORY TERMINOLOGY GUARDRAIL: Under IDEA regulations and State Education Agency rules (GaDOE, etc.), advocates file formal state complaints as advocates, not coaches. You MUST NEVER use the terms "Master Coach", "Master IEP Coach", "Master Coaching", or "IEP Coach". Always refer to Byron Honea and representatives strictly as "Lead Special Education Advocate" or "Special Education Advocate". Never use the words "coach" or "coaching".`;
 
 // ---------- Story intake fact extraction ----------
 export type ExtractedFactOut = {
@@ -152,7 +153,13 @@ Suggest at most 5 allegations. Fewer, well-grounded suggestions are better. Retu
   });
   const content = res.choices[0]?.message?.content;
   try {
-    return parseJson<{ suggestions: AllegationSuggestion[] }>(content).suggestions;
+    const rawSuggestions = parseJson<{ suggestions: AllegationSuggestion[] }>(content).suggestions;
+    return rawSuggestions.map(s => ({
+      ...s,
+      plainTitle: sanitizeComplaintText(s.plainTitle),
+      formalTitle: sanitizeComplaintText(s.formalTitle),
+      reasonSuggested: sanitizeComplaintText(s.reasonSuggested),
+    }));
   } catch {
     return [];
   }
@@ -277,5 +284,5 @@ Also list which source indexes you actually used.`,
   const builtFrom = parsed.usedSourceIndexes
     .filter(i => i >= 0 && i < input.sources.length)
     .map(i => ({ type: input.sources[i].type, refId: input.sources[i].refId, label: input.sources[i].label }));
-  return { text: parsed.text, builtFrom };
+  return { text: sanitizeComplaintText(parsed.text), builtFrom };
 }

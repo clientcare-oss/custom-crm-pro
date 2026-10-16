@@ -910,7 +910,7 @@ export default function SmartFileEditor() {
         starterBlocks = [
           { id: `start-1-${timestamp}`, blockOrder: 0, type: "heading", content: { text: "Invoice & Payment" }, settings: {} },
           { id: `start-2-${timestamp}`, blockOrder: 1, type: "text", content: { text: "Thank you for choosing Waypoint Advocates. Below you will find your invoice and payment terms for our advocacy services." }, settings: {} },
-          { id: `start-3-${timestamp}`, blockOrder: 2, type: "service", content: { title: "IEP Coaching & Consultation Package", description: "Comprehensive coaching package including document reviews, strategy sessions, and school meeting advocacy representation.", price: "$2,400", showDescription: true, showPrice: true, showSubItems: false }, settings: {} },
+          { id: `start-3-${timestamp}`, blockOrder: 2, type: "service", content: { title: "IEP Advocacy & Consultation Package", description: "Comprehensive advocacy package including document reviews, strategy sessions, and school meeting advocacy representation.", price: "$2,400", showDescription: true, showPrice: true, showSubItems: false }, settings: {} },
           { id: `start-4-${timestamp}`, blockOrder: 3, type: "payment", content: { oneTimeLabel: "Pay in Full", oneTimeAmount: "2400", monthlyLabel: "3-Month Installments", monthlyAmount: "800", months: 3, dueDate: "" }, settings: { required: true } },
           { id: `start-5-${timestamp}`, blockOrder: 4, type: "signature", content: { label: "Client Authorization" }, settings: {} }
         ];

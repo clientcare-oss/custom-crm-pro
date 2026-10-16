@@ -6,6 +6,7 @@ import {
 } from "./stateFormsData";
 import { cn } from "@/lib/utils";
 import { type ImportedPdfPage } from "@/lib/pdfImporter";
+import { sanitizeComplaintText } from "@shared/complaintEngine";
 
 interface StateComplaintFormViewProps {
   formState: OfficialComplaintFormState;
@@ -61,9 +62,10 @@ export function StateComplaintFormView({
 
       const setIfField = (name: string, value: string | undefined | null) => {
         if (!value) return;
+        const clean = sanitizeComplaintText(String(value));
         try {
           const field = form.getTextField(name);
-          if (field) field.setText(String(value));
+          if (field) field.setText(clean);
         } catch (e) {
           // ignore if field name mismatch
         }

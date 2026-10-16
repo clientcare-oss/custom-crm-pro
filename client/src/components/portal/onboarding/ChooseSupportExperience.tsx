@@ -60,7 +60,7 @@ export function ChooseSupportExperience({
       name: "Full IEP Representation",
       badge: "Most Popular",
       price: fullRepPrice,
-      description: "End-to-end IEP coaching, record analysis, strategy agendas, and live advocate attendance at all school meetings.",
+      description: "End-to-end IEP advocacy, record analysis, strategy agendas, and live advocate attendance at all school meetings.",
       features: [
         "Complete historical IEP & eval audit",
         "Pre-meeting strategy agenda & talking points",

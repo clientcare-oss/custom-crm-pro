@@ -37,7 +37,7 @@ const DEFAULT_STAFF: StaffMember[] = [
     email: "byron@waypointadvocates.com",
     role: "Lead Special Education Advocate / Practice Owner",
     status: "Available",
-    statusNote: "In office & active coaching",
+    statusNote: "In office & active advocacy",
     weeklyHours: {
       1: [{ start: "09:00", end: "16:00" }], // Mon
       2: [{ start: "09:00", end: "16:00" }], // Tue

@@ -85,6 +85,7 @@ import {
 } from "@/components/complaint/stateFormsData";
 import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter";
 import { PDFDocument } from "pdf-lib";
+import { sanitizeComplaintText, containsProhibitedComplaintTerms } from "@shared/complaintEngine";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
 export const STATE_FORM_PAGE_COUNT = 4;
@@ -779,7 +780,17 @@ export default function ComplaintWorkspace() {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem(`complaint_form_state_${params?.id || "active"}`);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return {
+            ...parsed,
+            complainantName: sanitizeComplaintText(parsed.complainantName),
+            complainantRelationship: sanitizeComplaintText(parsed.complainantRelationship),
+            statementOfViolations: sanitizeComplaintText(parsed.statementOfViolations),
+            factsRelatingToViolations: sanitizeComplaintText(parsed.factsRelatingToViolations),
+            signatureName: sanitizeComplaintText(parsed.signatureName),
+          };
+        }
       } catch (e) {}
     }
     return INITIAL_GADOE_FORM_STATE;
@@ -1190,8 +1201,13 @@ export default function ComplaintWorkspace() {
 
   // Content edits handler
   const handleUpdatePageContent = (text: string) => {
+    let cleanText = text;
+    if (containsProhibitedComplaintTerms(text)) {
+      cleanText = sanitizeComplaintText(text);
+      toast.info("State agency rule: 'Master IEP Coach' is not permitted in formal state complaints. Converted to 'Lead Special Education Advocate'.");
+    }
     setPages((prev) =>
-      prev.map((p) => (p.id === activePageId ? { ...p, content: text } : p))
+      prev.map((p) => (p.id === activePageId ? { ...p, content: cleanText } : p))
     );
     setLastSavedText("Draft saved just now");
   };
@@ -1214,7 +1230,8 @@ export default function ComplaintWorkspace() {
 
   // Quick field updates on Cover
   const handleQuickFieldUpdate = (field: keyof ComplaintCaseDetails, value: string) => {
-    setCaseDetails((prev) => ({ ...prev, [field]: value }));
+    const cleanValue = sanitizeComplaintText(value);
+    setCaseDetails((prev) => ({ ...prev, [field]: cleanValue }));
     setLastSavedText("Draft saved just now");
   };
 

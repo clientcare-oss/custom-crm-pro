@@ -176,3 +176,28 @@ export function isWithinLookback(eventDate: Date | string | null | undefined, as
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
   return d >= oneYearAgo;
 }
+
+/**
+ * Prohibited Terminology Guardrail in State Complaints:
+ * Under IDEA (34 C.F.R. § 300.153) and State Education Agency complaint regulations (GaDOE, etc.),
+ * non-attorney representatives must NOT be identified as "Master Coach", "Master IEP Coach",
+ * or "IEP Coach". Only approved professional advocacy titles are permitted:
+ * "Lead Special Education Advocate", "Special Education Advocate", or "Authorized Advocate".
+ */
+export const PROHIBITED_COMPLAINT_TERMS_REGEX = /\b(master\s+(?:iep\s+)?coach(?:ing)?|master\s+coach(?:ing)?|master\s+iep\s+advocate|iep\s+coach(?:ing)?)\b/i;
+
+export function containsProhibitedComplaintTerms(text: string | null | undefined): boolean {
+  if (!text) return false;
+  return PROHIBITED_COMPLAINT_TERMS_REGEX.test(text);
+}
+
+export function sanitizeComplaintText(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    .replace(/\bMaster\s+(?:IEP\s+)?Coach(?:ing)?\b/gi, "Lead Special Education Advocate")
+    .replace(/\bMaster\s+IEP\s+Advocate\b/gi, "Lead Special Education Advocate")
+    .replace(/\bMaster\s+Coach(?:ing)?\b/gi, "Lead Special Education Advocate")
+    .replace(/\bIEP\s+Coach(?:ing)?\b/gi, "Special Education Advocate")
+    .replace(/\b(?:an?|the|our|lead)\s+coach\b/gi, "$1 advocate")
+    .replace(/\bcoaching\b/gi, "advocacy");
+}

@@ -3,7 +3,7 @@ import type { Express, Request, Response } from "express";
 import PDFDocument from "pdfkit";
 import * as cdb from "./complaintDb";
 import { buildReadinessReport } from "./complaintValidation";
-import { ISSUE_CATEGORIES, calcAge } from "../shared/complaintEngine";
+import { ISSUE_CATEGORIES, calcAge, sanitizeComplaintText } from "../shared/complaintEngine";
 
 const NAVY = "#07162B";
 const GOLD = "#B8860B";
@@ -58,7 +58,7 @@ export function registerComplaintExportRoute(app: Express) {
         ["Case ID", c.caseId],
         ["Student", c.studentName ?? "—"],
         ["District", c.studentDistrict ?? c.agencyName ?? "—"],
-        ["Complainant", c.complainantName ?? "—"],
+        ["Complainant", sanitizeComplaintText(c.complainantName ?? "—")],
         ["Date Prepared", fmtDate(new Date())],
       ];
       for (const [k, v] of coverRows) {
@@ -80,8 +80,9 @@ export function registerComplaintExportRoute(app: Express) {
         doc.moveDown(0.6);
       };
       const para = (text: string, opts: { bold?: boolean; color?: string } = {}) => {
+        const clean = sanitizeComplaintText(text);
         doc.font(opts.bold ? "Helvetica-Bold" : "Helvetica").fontSize(11).fill(opts.color ?? BODY)
-          .text(text, { lineGap: 3 });
+          .text(clean, { lineGap: 3 });
         doc.moveDown(0.4);
       };
 

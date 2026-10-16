@@ -232,7 +232,7 @@ export function PortalMembershipTab({
 
             <CardContent className="p-5 sm:p-6 space-y-4 text-xs">
               <p className="text-white/80 leading-relaxed">
-                Provides continuous IEP coaching, draft document audits, and direct strategy access with Byron Honea throughout your child's academic year.
+                Provides continuous IEP advocacy, draft document audits, and direct strategy access with Byron Honea throughout your child's academic year.
               </p>
 
               {/* What's Included list */}
