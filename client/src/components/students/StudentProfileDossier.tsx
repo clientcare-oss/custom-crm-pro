@@ -1,7 +1,8 @@
 import React from "react";
 import { 
   User, Pencil, GraduationCap, School, 
-  ArrowRight, ShieldCheck, Award, Activity, Globe 
+  ArrowRight, ShieldCheck, Award, Activity, Globe,
+  Landmark
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -13,6 +14,7 @@ export interface StudentProfileDossierProps {
   parentPhone: string;
   calculatedAge: string;
   cleanGrade: string;
+  displayDistrict?: string;
   transferSchool: string;
   gtidValue: string;
   displayEligibility: string;
@@ -30,6 +32,7 @@ export function StudentProfileDossier({
   parentPhone,
   calculatedAge,
   cleanGrade,
+  displayDistrict,
   transferSchool,
   gtidValue,
   displayEligibility,
@@ -121,6 +124,20 @@ export function StudentProfileDossier({
           </div>
           <span className="font-bold text-white text-right">
             {student?.state || "Georgia"}
+          </span>
+        </div>
+
+        {/* District */}
+        <div className="flex items-center justify-between gap-1.5 py-0.5">
+          <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+            <Landmark className="h-3 w-3 text-[#38BDF8] shrink-0" />
+            <span>District:</span>
+          </div>
+          <span 
+            className="font-bold text-white truncate max-w-[145px] text-right" 
+            title={displayDistrict || student?.countyDistrict || "Paulding County School District"}
+          >
+            {displayDistrict || student?.countyDistrict || "Paulding County School District"}
           </span>
         </div>
 

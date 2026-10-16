@@ -205,6 +205,17 @@ export default function StudentWorkspace() {
     return student?.schoolName || student?.previousSchool || "School Not Set";
   }, [student?.schoolName, student?.previousSchool]);
 
+  const displayDistrict = useMemo(() => {
+    if ((student as any)?.countyDistrict) return (student as any).countyDistrict;
+    if ((student as any)?.district) return (student as any).district;
+    if (student?.notes && /county|district|system/i.test(student.notes)) {
+      const match = student.notes.match(/([A-Za-z0-9\s.,'&-]+?County(?:\s+School\s+District|\s+Schools?)?)/i);
+      if (match) return match[1].trim();
+      return student.notes.trim();
+    }
+    return "Paulding County School District";
+  }, [student]);
+
   const gtidValue = useMemo(() => {
     return (student as any)?.gtid || (student as any)?.studentIdNumber || (student?.caseId ? student.caseId.replace(/[^0-9]/g, "") : "1");
   }, [student]);
@@ -477,6 +488,7 @@ export default function StudentWorkspace() {
                     parentPhone={parentPhone}
                     calculatedAge={calculatedAge}
                     cleanGrade={cleanGrade}
+                    displayDistrict={displayDistrict}
                     transferSchool={transferSchool}
                     gtidValue={gtidValue}
                     displayEligibility={displayEligibility}
@@ -864,6 +876,14 @@ export default function StudentWorkspace() {
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">School</span>
                 <span className="text-white font-medium">{student?.schoolName || student?.previousSchool || "School Not Set"}</span>
+              </div>
+              <div>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">District</span>
+                <span className="text-sky-300 font-medium">{displayDistrict}</span>
+              </div>
+              <div>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">State</span>
+                <span className="text-white font-medium">{student?.state || "Georgia"}</span>
               </div>
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">Case ID</span>

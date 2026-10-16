@@ -132,4 +132,48 @@ Case Manager: Sarah Jenkins
     expect(dismissed).toBe(true);
     expect(getPendingIepUpdates(999)).toBeNull();
   });
+
+  it("extracts school district across varied IEP formats (System, LEA, School District, County)", () => {
+    const text1 = "System: Paulding County\nSchool: Connie Dugan Elementary\nGrade: 5th";
+    expect(extractIepFieldsHeuristic(text1).countyDistrict).toBe("Paulding County");
+
+    const text2 = "Local Educational Agency: Atlanta Public Schools\nGrade: 3rd";
+    expect(extractIepFieldsHeuristic(text2).countyDistrict).toBe("Atlanta Public Schools");
+
+    const text3 = "School District: Cobb County School District\nEligibility: Autism";
+    expect(extractIepFieldsHeuristic(text3).countyDistrict).toBe("Cobb County School District");
+
+    const text4 = "Student attends Connie Dugan Elementary in Paulding County.";
+    expect(extractIepFieldsHeuristic(text4).countyDistrict).toBe("Paulding County School District");
+  });
+
+  it("auto-populates empty countyDistrict during Smart Hybrid sync", async () => {
+    const mockStudent = {
+      id: 1001,
+      firstName: "Brooklyn",
+      lastName: "Smith",
+      countyDistrict: "", // EMPTY
+      gradeLevel: "5th Grade",
+    };
+    inMemoryContacts.set(1001, mockStudent);
+
+    const iepText = `
+      STUDENT: Brooklyn Smith
+      System: Paulding County School District
+      School: Connie Dugan Elementary
+      Grade: 5th Grade
+    `;
+
+    const result = await syncIepToStudentProfile({
+      contactId: 1001,
+      extractedText: iepText,
+      sourceDocument: "Brooklyn-IEP.pdf",
+    });
+
+    const appliedFields = result.autoApplied.map(a => a.field);
+    expect(appliedFields).toContain("countyDistrict");
+    const districtUpdate = result.autoApplied.find(a => a.field === "countyDistrict");
+    expect(districtUpdate?.value).toBe("Paulding County School District");
+  });
 });
+

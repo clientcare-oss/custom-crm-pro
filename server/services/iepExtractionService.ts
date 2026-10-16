@@ -208,10 +208,26 @@ export function extractIepFieldsHeuristic(text: string): ExtractedIepData {
     result.schoolName = schoolMatch[1].trim().replace(/\s{2,}/g, " ");
   }
 
-  // District / County: e.g. "District: Fulton County Schools", "LEA: Atlanta Public Schools"
-  const districtMatch = text.match(/(?:district|lea|county|public\s*agency|system)\s*[:\-]?\s*([A-Z0-9\s.,'&-]+?(?:County\s*Schools?|Public\s*Schools?|School\s*District|City\s*Schools?|County|LEA))/i);
-  if (districtMatch) {
-    result.countyDistrict = districtMatch[1].trim().replace(/\s{2,}/g, " ");
+  // District / County: e.g. "District: Fulton County Schools", "LEA: Atlanta Public Schools", "System: Paulding County", "School System: Paulding County"
+  const districtLineMatch = text.match(/(?:school\s*district|district|local\s*education(?:al)?\s*agency(?:\s*\(lea\))?|lea|system\s*name|school\s*system|system|public\s*agency|county)\s*[:\-]\s*([^\n\r,;]+)/i);
+  if (districtLineMatch) {
+    const rawVal = districtLineMatch[1].trim().replace(/\s{2,}/g, " ");
+    if (rawVal.length >= 3 && rawVal.length < 80) {
+      result.countyDistrict = rawVal;
+    }
+  }
+
+  // Fallback: direct detection of school districts or Georgia counties
+  if (!result.countyDistrict) {
+    const directDistrictMatch = text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+(?:County\s+School\s+District|County\s+Schools?|County\s+Public\s+Schools?|County\s+School\s+System|City\s+Schools?|Public\s+Schools?))\b/);
+    if (directDistrictMatch) {
+      result.countyDistrict = directDistrictMatch[1].trim();
+    } else {
+      const gaCountyMatch = text.match(/\b(Paulding|Cobb|Gwinnett|Fulton|Cherokee|Forsyth|DeKalb|Douglas|Clayton|Henry|Coweta|Carroll|Bartow|Pickens|Hall|Clarke|Columbia|Richmond|Muscogee|Bibb|Chatham|Houston|Lowndes|Floyd|Gordon|Jackson|Barrow|Walton|Newton|Rockdale|Fayette|Spalding)\s*County\b/i);
+      if (gaCountyMatch) {
+        result.countyDistrict = `${gaCountyMatch[1]} County School District`;
+      }
+    }
   }
 
   // Eligibility: e.g. "Eligibility: Autism", "Primary Disability: Other Health Impairment"
@@ -295,7 +311,7 @@ CRITICAL INSTRUCTIONS:
   "dateOfBirth": string | null,
   "gradeLevel": string | null,
   "schoolName": string | null,
-  "countyDistrict": string | null,
+  "countyDistrict": string | null, // School District, System, LEA, or County name (e.g., "Paulding County School District", "Paulding County", "Fulton County Schools", "Atlanta Public Schools")
   "iepEligibility": string | null,
   "medicalDiagnoses": string | null,
   "planType": "IEP" | "504 Plan" | null,
