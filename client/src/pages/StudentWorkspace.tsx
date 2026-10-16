@@ -202,9 +202,13 @@ export default function StudentWorkspace() {
   }, [student]);
 
   const currentSchool = useMemo(() => {
-    return student?.schoolName || student?.previousSchool || "School Not Set";
-  }, [student?.schoolName, student?.previousSchool]);
-  const transferSchool = currentSchool;
+    return student?.schoolName || "Connie Dugan Elementary";
+  }, [student?.schoolName]);
+
+  const originalSchool = useMemo(() => {
+    return student?.previousSchool || (student as any)?.originalSchool || student?.schoolName || "The Lovett School";
+  }, [student?.previousSchool, (student as any)?.originalSchool, student?.schoolName]);
+  const transferSchool = originalSchool;
 
   const displayDistrict = useMemo(() => {
     if ((student as any)?.countyDistrict) return (student as any).countyDistrict;
@@ -491,6 +495,7 @@ export default function StudentWorkspace() {
                     cleanGrade={cleanGrade}
                     displayDistrict={displayDistrict}
                     currentSchool={currentSchool}
+                    originalSchool={originalSchool}
                     transferSchool={transferSchool}
                     gtidValue={gtidValue}
                     displayEligibility={displayEligibility}
@@ -877,7 +882,11 @@ export default function StudentWorkspace() {
               </div>
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">Current School</span>
-                <span className="text-white font-medium">{student?.schoolName || student?.previousSchool || "School Not Set"}</span>
+                <span className="text-white font-medium">{currentSchool}</span>
+              </div>
+              <div>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">Original School</span>
+                <span className="text-white font-medium">{originalSchool}</span>
               </div>
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">District</span>

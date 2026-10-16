@@ -16,6 +16,7 @@ export interface StudentProfileDossierProps {
   cleanGrade: string;
   displayDistrict?: string;
   currentSchool?: string;
+  originalSchool?: string;
   transferSchool?: string;
   gtidValue: string;
   displayEligibility: string;
@@ -35,6 +36,7 @@ export function StudentProfileDossier({
   cleanGrade,
   displayDistrict,
   currentSchool,
+  originalSchool,
   transferSchool,
   gtidValue,
   displayEligibility,
@@ -151,24 +153,25 @@ export function StudentProfileDossier({
           </div>
           <span 
             className="font-bold text-white truncate max-w-[145px] text-right" 
-            title={student?.schoolName || currentSchool || transferSchool || "Connie Dugan Elementary"}
+            title={student?.schoolName || currentSchool || "Connie Dugan Elementary"}
           >
-            {student?.schoolName || currentSchool || transferSchool || "Connie Dugan Elementary"}
+            {student?.schoolName || currentSchool || "Connie Dugan Elementary"}
           </span>
         </div>
 
-        {/* Previous School (if recorded and distinct from current school) */}
-        {student?.previousSchool && student.previousSchool !== (student?.schoolName || currentSchool) && (
-          <div className="flex items-center justify-between gap-1.5 py-0.5">
-            <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
-              <ArrowRight className="h-3 w-3 text-[#38BDF8] shrink-0" />
-              <span>Previous School:</span>
-            </div>
-            <span className="font-bold text-white truncate max-w-[130px] text-right" title={student.previousSchool}>
-              {student.previousSchool}
-            </span>
+        {/* Original School */}
+        <div className="flex items-center justify-between gap-1.5 py-0.5">
+          <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+            <ArrowRight className="h-3 w-3 text-[#38BDF8] shrink-0" />
+            <span>Original School:</span>
           </div>
-        )}
+          <span 
+            className="font-bold text-white truncate max-w-[130px] text-right" 
+            title={originalSchool || student?.previousSchool || student?.schoolName || "The Lovett School"}
+          >
+            {originalSchool || student?.previousSchool || student?.schoolName || "The Lovett School"}
+          </span>
+        </div>
 
         {/* GTID */}
         <div className="flex items-center justify-between gap-1.5 py-0.5">

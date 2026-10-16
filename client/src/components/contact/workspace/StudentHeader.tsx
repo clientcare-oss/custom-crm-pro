@@ -392,18 +392,16 @@ export function StudentHeader({
               </span>
             </div>
 
-            {/* Previous School (if recorded and distinct from current school) */}
-            {contact.previousSchool && contact.previousSchool !== (contact.schoolName || contact.goingToSchool) && (
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                  <ArrowRight className="h-4 w-4 text-[#38BDF8] shrink-0" />
-                  <span>Previous School:</span>
-                </div>
-                <span className="font-bold text-white truncate max-w-[190px] text-right" title={contact.previousSchool}>
-                  {contact.previousSchool}
-                </span>
+            {/* Original School */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                <ArrowRight className="h-4 w-4 text-[#38BDF8] shrink-0" />
+                <span>Original School:</span>
               </div>
-            )}
+              <span className="font-bold text-white truncate max-w-[190px] text-right" title={contact.previousSchool || contact.schoolName || "The Lovett School"}>
+                {contact.previousSchool || contact.schoolName || "The Lovett School"}
+              </span>
+            </div>
 
             {/* GTID */}
             <div className="flex items-center justify-between gap-2">
