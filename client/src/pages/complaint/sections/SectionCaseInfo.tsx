@@ -56,19 +56,25 @@ export function SectionCaseInfo() {
     toast.success(`✓ Synced from Business Settings (PG-024-BIZ): ${addr} • ${phone} • ${email}`);
   };
 
+  const [isParentAddressCustom, setIsParentAddressCustom] = useState(false);
   const [f, setF] = useState<Record<string, string | boolean | string[]>>({});
   useEffect(() => {
     if (!c) return;
+    const sAddr = c.studentAddress ?? "";
+    const pAddr = c.parentAddress ?? "";
+    const isCustom = Boolean(pAddr && sAddr && pAddr.trim() !== "" && pAddr.trim() !== sAddr.trim());
+    setIsParentAddressCustom(isCustom);
     setF({
       complainantName: c.complainantName ?? "", complainantRelationship: c.complainantRelationship ?? "",
       complainantAddress: c.complainantAddress ?? "", complainantPhone: c.complainantPhone ?? "",
       complainantEmail: c.complainantEmail ?? "",
-      studentName: c.studentName ?? "", studentDob: d2s(c.studentDob), studentAddress: c.studentAddress ?? "",
+      studentName: c.studentName ?? "", studentDob: d2s(c.studentDob), studentAddress: sAddr,
       studentGrade: c.studentGrade ?? "", studentGtid: c.studentGtid ?? "", studentSchool: c.studentSchool ?? "",
       studentDistrict: c.studentDistrict ?? "",
       disabilityCategories: (c.disabilityCategories ?? []) as string[],
       isHomeless: c.isHomeless, homelessContactInfo: c.homelessContactInfo ?? "",
-      parentDifferent: c.parentDifferent, parentName: c.parentName ?? "", parentAddress: c.parentAddress ?? "",
+      parentDifferent: c.parentDifferent, parentName: c.parentName ?? "", 
+      parentAddress: pAddr || sAddr || "",
       parentPhone: c.parentPhone ?? "", parentEmail: c.parentEmail ?? "",
       agencyName: c.agencyName ?? "", agencyContact: c.agencyContact ?? "", agencyAddress: c.agencyAddress ?? "",
       advocateName: c.advocateName ?? "", complaintOwner: c.complaintOwner ?? "",
@@ -167,7 +173,26 @@ export function SectionCaseInfo() {
           <Field label="District" required><input {...txt("studentDistrict")} /></Field>
           <div className="md:col-span-2">
             <Field label="Student address" required>
-              <VoiceTextarea rows={2} value={(f.studentAddress as string) ?? ""} onChange={set("studentAddress")} onBlur={save(["studentAddress"])} />
+              <VoiceTextarea
+                rows={2}
+                value={(f.studentAddress as string) ?? ""}
+                onChange={(val) => {
+                  setF((prev) => {
+                    const next: Record<string, any> = { ...prev, studentAddress: val };
+                    if (!isParentAddressCustom) {
+                      next.parentAddress = val;
+                    }
+                    return next;
+                  });
+                }}
+                onBlur={() => {
+                  if (!isParentAddressCustom) {
+                    save(["studentAddress", "parentAddress"])();
+                  } else {
+                    save(["studentAddress"])();
+                  }
+                }}
+              />
             </Field>
           </div>
         </div>
@@ -204,7 +229,38 @@ export function SectionCaseInfo() {
         )}
       </SectionCard>
 
-      <SectionCard title="Parent / Guardian" subtitle="Only needed when the parent differs from the complainant.">
+      <SectionCard
+        title={
+          <div className="flex items-center justify-between w-full">
+            <span>Parent / Guardian</span>
+            {!!f.parentDifferent && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#A69371]">
+                  {!isParentAddressCustom
+                    ? "✓ Address matches student"
+                    : "Custom parent address"}
+                </span>
+                {isParentAddressCustom && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsParentAddressCustom(false);
+                      const sAddr = (f.studentAddress as string) ?? "";
+                      setF((prev) => ({ ...prev, parentAddress: sAddr }));
+                      update.mutate({ id: caseDbId, data: { parentAddress: sAddr } });
+                      toast.success("✓ Parent address synced to match student address");
+                    }}
+                    className="text-[11px] text-[#FFE394] hover:underline cursor-pointer bg-[#071E3D] px-2 py-0.5 rounded border border-[#FFE394]/30"
+                  >
+                    Match Student Address
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        }
+        subtitle="Only needed when the parent differs from the complainant."
+      >
         <label className="flex items-center gap-2 text-sm text-slate-300">
           <input type="checkbox" checked={!!f.parentDifferent} onChange={e => { set("parentDifferent")(e.target.checked); update.mutate({ id: caseDbId, data: { parentDifferent: e.target.checked } }); }} />
           Parent/guardian is different from the complainant
@@ -214,7 +270,21 @@ export function SectionCaseInfo() {
             <Field label="Parent name" required><input {...txt("parentName")} /></Field>
             <Field label="Parent phone"><input {...txt("parentPhone")} /></Field>
             <Field label="Parent email"><input {...txt("parentEmail")} /></Field>
-            <Field label="Parent address"><input {...txt("parentAddress")} /></Field>
+            <Field
+              label="Parent address"
+              hint={!isParentAddressCustom ? "Matches student address unless changed" : "Custom address entered"}
+            >
+              <input
+                value={(f.parentAddress as string) ?? ""}
+                onChange={(e) => {
+                  setIsParentAddressCustom(true);
+                  set("parentAddress")(e.target.value);
+                }}
+                onBlur={save(["parentAddress"])}
+                className={inputCls}
+                placeholder="Matches student address unless changed"
+              />
+            </Field>
           </div>
         )}
       </SectionCard>

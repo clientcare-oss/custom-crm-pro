@@ -27,6 +27,20 @@ export interface ExtractedIepData {
   iepMeetingDate?: string;
   caseManager?: string;
   challenges?: string;
+  // Student address & demographics
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  gtid?: string;
+  // Parent / Guardian info
+  parentName?: string;
+  parentAddress?: string;
+  parentCity?: string;
+  parentState?: string;
+  parentZip?: string;
+  parentPhone?: string;
+  parentEmail?: string;
 }
 
 /**
@@ -132,6 +146,11 @@ export const IEP_FIELD_LABELS: Record<string, string> = {
   medicalDiagnoses: "Medical Diagnoses",
   planType: "Plan Type",
   challenges: "Primary Challenges",
+  address: "Student Street Address",
+  city: "City",
+  state: "State",
+  zipCode: "Zip Code",
+  gtid: "Student GTID / Case ID",
 };
 
 // In-memory store for pending IEP reviews per student contact
@@ -281,6 +300,73 @@ export function extractIepFieldsHeuristic(text: string): ExtractedIepData {
     result.iepMeetingDate = meetingMatch[1].trim();
   }
 
+  // Student Address: e.g. "Address: 742 Evergreen Terrace", "Student Address: 123 Maple St", "Home Address: ..."
+  const addressMatch = text.match(/(?:student(?:\s+home)?\s*address|home\s*address|residence(?:\s*address)?|physical\s*address|street\s*address|\baddress)\s*[:\-]\s*([^\n\r]+)/i);
+  if (addressMatch) {
+    const rawAddr = addressMatch[1].trim().replace(/\s{2,}/g, " ");
+    const cleanedAddr = rawAddr.split(/(?:phone|telephone|tel|dob|date of birth|grade|school|parent|guardian|gtid|student id):/i)[0].trim().replace(/[,;]+$/, "");
+    if (cleanedAddr.length >= 4 && cleanedAddr.length <= 150) {
+      result.address = cleanedAddr;
+
+      // Extract City, State, Zip if in "Marietta, GA 30064" format
+      const csZipMatch = cleanedAddr.match(/,\s*([A-Za-z\s]+),\s*([A-Z]{2})\s+([0-9]{5}(?:-[0-9]{4})?)/);
+      if (csZipMatch) {
+        result.city = csZipMatch[1].trim();
+        result.state = csZipMatch[2].trim();
+        result.zipCode = csZipMatch[3].trim();
+        result.address = cleanedAddr.split(",")[0].trim();
+      }
+    }
+  }
+
+  // City fallback
+  if (!result.city) {
+    const cityMatch = text.match(/(?:student\s*city|\bcity)\s*[:\-]\s*([A-Za-z\s]+?)(?=\s+(?:state|ga|zip|\n|\r|,|;|$))/i);
+    if (cityMatch && cityMatch[1].trim().length >= 2 && cityMatch[1].trim().length < 40) {
+      result.city = cityMatch[1].trim();
+    }
+  }
+
+  // State fallback
+  if (!result.state) {
+    const stateMatch = text.match(/(?:student\s*state|\bstate)\s*[:\-]\s*([A-Z]{2})\b/i);
+    if (stateMatch) {
+      result.state = stateMatch[1].trim().toUpperCase();
+    }
+  }
+
+  // Zip Code fallback
+  if (!result.zipCode) {
+    const zipMatch = text.match(/(?:zip(?:\s*code)?|postal(?:\s*code)?)\s*[:\-]\s*([0-9]{5}(?:-[0-9]{4})?)/i);
+    if (zipMatch) {
+      result.zipCode = zipMatch[1].trim();
+    }
+  }
+
+  // GTID / Student ID: e.g. "GTID: 9001234567", "Student ID: 123456"
+  const gtidMatch = text.match(/(?:gtid|state\s*id|student\s*id(?:\s*number)?|system\s*id)\s*[:\-#]\s*([0-9A-Z]{5,15})/i);
+  if (gtidMatch) {
+    result.gtid = gtidMatch[1].trim();
+  }
+
+  // Parent / Guardian Name: e.g. "Parent/Guardian: Jane Doe", "Parent: John Smith"
+  const parentMatch = text.match(/(?:parent(?:\s*\/\s*guardian)?|guardian|mother|father)\s*[:\-]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+  if (parentMatch) {
+    result.parentName = parentMatch[1].trim();
+  }
+
+  // Parent Phone: e.g. "Parent Phone: (404) 919-8664"
+  const parentPhoneMatch = text.match(/(?:parent\s*phone|home\s*phone|cell(?:\s*phone)?|primary\s*phone|contact\s*number)\s*[:\-]\s*(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i);
+  if (parentPhoneMatch) {
+    result.parentPhone = parentPhoneMatch[1].trim();
+  }
+
+  // Parent Email: e.g. "Parent Email: parent@domain.com"
+  const parentEmailMatch = text.match(/(?:parent\s*email|guardian\s*email|contact\s*email)\s*[:\-]\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+  if (parentEmailMatch) {
+    result.parentEmail = parentEmailMatch[1].trim();
+  }
+
   return result;
 }
 
@@ -312,6 +398,15 @@ CRITICAL INSTRUCTIONS:
   "gradeLevel": string | null,
   "schoolName": string | null,
   "countyDistrict": string | null, // School District, System, LEA, or County name (e.g., "Paulding County School District", "Paulding County", "Fulton County Schools", "Atlanta Public Schools")
+  "address": string | null, // Student street address if found on IEP
+  "city": string | null,
+  "state": string | null,
+  "zipCode": string | null,
+  "gtid": string | null, // Student GTID or State ID number
+  "parentName": string | null,
+  "parentAddress": string | null,
+  "parentPhone": string | null,
+  "parentEmail": string | null,
   "iepEligibility": string | null,
   "medicalDiagnoses": string | null,
   "planType": "IEP" | "504 Plan" | null,
@@ -346,6 +441,15 @@ CRITICAL INSTRUCTIONS:
         gradeLevel: parsed.gradeLevel || fallback.gradeLevel,
         schoolName: parsed.schoolName || fallback.schoolName,
         countyDistrict: parsed.countyDistrict || fallback.countyDistrict,
+        address: parsed.address || fallback.address,
+        city: parsed.city || fallback.city,
+        state: parsed.state || fallback.state,
+        zipCode: parsed.zipCode || fallback.zipCode,
+        gtid: parsed.gtid || fallback.gtid,
+        parentName: parsed.parentName || fallback.parentName,
+        parentAddress: parsed.parentAddress || fallback.parentAddress,
+        parentPhone: parsed.parentPhone || fallback.parentPhone,
+        parentEmail: parsed.parentEmail || fallback.parentEmail,
         iepEligibility: parsed.iepEligibility || fallback.iepEligibility,
         medicalDiagnoses: parsed.medicalDiagnoses || fallback.medicalDiagnoses,
         planType: parsed.planType || fallback.planType,
@@ -405,6 +509,11 @@ export async function syncIepToStudentProfile(params: {
     { key: "medicalDiagnoses", contactKey: "medicalDiagnoses", label: "Medical Diagnoses" },
     { key: "planType", contactKey: "planType", label: "Plan Type" },
     { key: "challenges", contactKey: "challenges", label: "Primary Challenges" },
+    { key: "address", contactKey: "address", label: "Student Street Address" },
+    { key: "city", contactKey: "city", label: "City" },
+    { key: "state", contactKey: "state", label: "State" },
+    { key: "zipCode", contactKey: "zipCode", label: "Zip Code" },
+    { key: "gtid", contactKey: "caseId", label: "Student GTID / Case ID" },
   ];
 
   for (const { key, contactKey, label } of fieldsToCheck) {

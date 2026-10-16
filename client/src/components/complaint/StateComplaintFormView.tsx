@@ -61,11 +61,12 @@ export function StateComplaintFormView({
       const form = pdfDoc.getForm();
 
       const setIfField = (name: string, value: string | undefined | null) => {
-        if (!value) return;
-        const clean = sanitizeComplaintText(String(value));
         try {
           const field = form.getTextField(name);
-          if (field) field.setText(clean);
+          if (field) {
+            const clean = value ? sanitizeComplaintText(String(value)) : "";
+            field.setText(clean);
+          }
         } catch (e) {
           // ignore if field name mismatch
         }
@@ -94,12 +95,46 @@ export function StateComplaintFormView({
       setIfField("GTID", formState.studentGtid);
       setIfField("Current School", formState.currentSchool);
 
-      // Page 1: Parent
+      // Page 1: Parent (matches student address unless physically customized by user)
+      const parentHasCustomAddress =
+        Boolean(formState.parentAddress) &&
+        formState.parentAddress.trim() !== "" &&
+        !formState.parentAddress.includes("[Not Found");
+
+      const studentHasAddress =
+        Boolean(formState.studentAddress) &&
+        formState.studentAddress.trim() !== "" &&
+        !formState.studentAddress.includes("[Not Found");
+
+      const effectiveParentAddress = parentHasCustomAddress
+        ? formState.parentAddress
+        : studentHasAddress
+        ? formState.studentAddress
+        : (formState.parentAddress || "[Not Found on Record]");
+
+      const effectiveParentCity =
+        (parentHasCustomAddress ? formState.parentCity : null) ||
+        formState.studentCity ||
+        formState.parentCity ||
+        "";
+
+      const effectiveParentState =
+        (parentHasCustomAddress ? formState.parentState : null) ||
+        formState.studentState ||
+        formState.parentState ||
+        "GA";
+
+      const effectiveParentZip =
+        (parentHasCustomAddress ? formState.parentZip : null) ||
+        formState.studentZip ||
+        formState.parentZip ||
+        "";
+
       setIfField("Parent if not the complainant", formState.parentName);
-      setIfField("Parent Address", formState.parentAddress);
-      setIfField("City_3", formState.parentCity);
-      setIfField("State_3", formState.parentState || "GA");
-      setIfField("Zip Code_3", formState.parentZip);
+      setIfField("Parent Address", effectiveParentAddress);
+      setIfField("City_3", effectiveParentCity);
+      setIfField("State_3", effectiveParentState);
+      setIfField("Zip Code_3", effectiveParentZip);
       setIfField("Parent Phone Numbers", formState.parentPhone);
       setIfField("Parent Email Address", formState.parentEmail);
 
@@ -154,8 +189,20 @@ export function StateComplaintFormView({
   }, [
     formState.studentName,
     formState.studentDob,
+    formState.studentAddress,
+    formState.studentCity,
+    formState.studentState,
+    formState.studentZip,
+    formState.studentGtid,
     formState.publicAgency,
     formState.currentSchool,
+    formState.parentName,
+    formState.parentAddress,
+    formState.parentCity,
+    formState.parentState,
+    formState.parentZip,
+    formState.parentPhone,
+    formState.parentEmail,
     formState.complainantName,
     formState.complainantRelationship,
     formState.complainantAddress,

@@ -354,5 +354,102 @@ export const iepRouter = router({
           sourceDocument: docName,
         });
       }),
+
+    // Query IEP-extracted student demographics (address, dob, gtid, parent details)
+    getStudentIepDemographics: protectedProcedure
+      .input(z.object({ contactId: z.number() }))
+      .query(async ({ input }) => {
+        const { iepDocuments, clientFiles, documentVaultAnalyses } = await import("../../drizzle/schema");
+        const { eq, desc } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) return null;
+
+        // 1. Check documentVaultAnalyses
+        try {
+          const analyses = await dbConn
+            .select()
+            .from(documentVaultAnalyses)
+            .where(eq(documentVaultAnalyses.studentContactId, input.contactId))
+            .orderBy(desc(documentVaultAnalyses.createdAt))
+            .limit(5);
+
+          for (const a of analyses) {
+            if (a.rawAnalysisJson) {
+              try {
+                const parsed = JSON.parse(a.rawAnalysisJson);
+                if (parsed.address || parsed.studentAddress || parsed.gtid || parsed.studentGtid) {
+                  return {
+                    address: (parsed.address || parsed.studentAddress || null) as string | null,
+                    city: (parsed.city || parsed.studentCity || null) as string | null,
+                    state: (parsed.state || parsed.studentState || null) as string | null,
+                    zipCode: (parsed.zipCode || parsed.studentZip || null) as string | null,
+                    dob: (parsed.dateOfBirth || parsed.studentDob || null) as string | null,
+                    gtid: (parsed.gtid || parsed.studentGtid || null) as string | null,
+                    parentName: (parsed.parentName || null) as string | null,
+                    parentAddress: (parsed.parentAddress || null) as string | null,
+                    parentPhone: (parsed.parentPhone || null) as string | null,
+                    parentEmail: (parsed.parentEmail || null) as string | null,
+                  };
+                }
+              } catch {}
+            }
+            if (a.extractedText) {
+              const { extractIepFieldsHeuristic } = await import("../services/iepExtractionService");
+              const h = extractIepFieldsHeuristic(a.extractedText);
+              if (h.address || h.gtid) {
+                return {
+                  address: h.address || null,
+                  city: h.city || null,
+                  state: h.state || null,
+                  zipCode: h.zipCode || null,
+                  dob: h.dateOfBirth || null,
+                  gtid: h.gtid || null,
+                  parentName: h.parentName || null,
+                  parentAddress: h.parentAddress || null,
+                  parentPhone: h.parentPhone || null,
+                  parentEmail: h.parentEmail || null,
+                };
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("[getStudentIepDemographics] Error checking vault analyses:", err);
+        }
+
+        // 2. Check clientFiles with extractedText
+        try {
+          const cFiles = await dbConn
+            .select()
+            .from(clientFiles)
+            .where(eq(clientFiles.studentContactId, input.contactId))
+            .orderBy(desc(clientFiles.uploadedAt))
+            .limit(5);
+
+          for (const cf of cFiles) {
+            if (cf.extractedText) {
+              const { extractIepFieldsHeuristic } = await import("../services/iepExtractionService");
+              const h = extractIepFieldsHeuristic(cf.extractedText);
+              if (h.address || h.gtid) {
+                return {
+                  address: h.address || null,
+                  city: h.city || null,
+                  state: h.state || null,
+                  zipCode: h.zipCode || null,
+                  dob: h.dateOfBirth || null,
+                  gtid: h.gtid || null,
+                  parentName: h.parentName || null,
+                  parentAddress: h.parentAddress || null,
+                  parentPhone: h.parentPhone || null,
+                  parentEmail: h.parentEmail || null,
+                };
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("[getStudentIepDemographics] Error checking clientFiles:", err);
+        }
+
+        return null;
+      }),
   
 });

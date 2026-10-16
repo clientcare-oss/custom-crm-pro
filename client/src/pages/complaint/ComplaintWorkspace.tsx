@@ -64,6 +64,9 @@ import {
   Highlighter,
   Trash2,
   Building2,
+  GraduationCap,
+  FileSearch,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -370,8 +373,8 @@ Parent notified district administration of ongoing service deprivation and reque
 BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
 DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
 
-STUDENT: ALEXANDER, SHANDERIOUS JR.
-AGENCY: COBB COUNTY SCHOOL DISTRICT
+STUDENT: ELIJAH SANTIAGO
+AGENCY: ATLANTA PUBLIC SCHOOLS
 
 ================================================================================
 TABLE OF COMPLAINT FILING SECTIONS:
@@ -748,6 +751,15 @@ export default function ComplaintWorkspace() {
     { enabled: !!activeStudentId }
   );
 
+  // Active Student IEP Demographics (pulls address, DOB, GTID, and parent info directly from IEP records)
+  const iepDemographicsQuery = trpc.iep.getStudentIepDemographics.useQuery(
+    { contactId: activeStudentId! },
+    { enabled: !!activeStudentId }
+  );
+
+  // Track if parent address was physically customized by the advocate (defaults to matching student address)
+  const [isParentAddressCustom, setIsParentAddressCustom] = useState(false);
+
   const uploadToVaultMutation = trpc.iep.upload.useMutation({
     onSuccess: () => {
       toast.success("Document uploaded to Student Document Vault (PG-023-VAULT)");
@@ -755,6 +767,7 @@ export default function ComplaintWorkspace() {
         utils.clientFiles.listForAdmin.invalidate({ clientId: activeStudentId });
         utils.iep.get.invalidate({ contactId: activeStudentId });
         utils.iep.listDraftHistory.invalidate({ contactId: activeStudentId });
+        utils.iep.getStudentIepDemographics.invalidate({ contactId: activeStudentId });
       }
     },
     onError: (err) => {
@@ -783,8 +796,27 @@ export default function ComplaintWorkspace() {
         const saved = localStorage.getItem(`complaint_form_state_${params?.id || "active"}`);
         if (saved) {
           const parsed = JSON.parse(saved);
+          const sanitizeMock = (v?: string) => {
+            if (
+              !v ||
+              v.trim() === "" ||
+              v.includes("1234 Heritage") ||
+              v.includes("555-0192") ||
+              v.includes("parent@example.com") ||
+              v.includes("9004812736")
+            ) {
+              return "[Not Found on Record]";
+            }
+            return v;
+          };
+
           return {
             ...parsed,
+            studentAddress: sanitizeMock(parsed.studentAddress),
+            studentGtid: sanitizeMock(parsed.studentGtid),
+            parentAddress: sanitizeMock(parsed.parentAddress),
+            parentPhone: sanitizeMock(parsed.parentPhone),
+            parentEmail: sanitizeMock(parsed.parentEmail),
             complainantName: formatFirstLastName(parsed.complainantName) || "Byron Honea",
             complainantRelationship: sanitizeComplaintText(parsed.complainantRelationship),
             statementOfViolations: sanitizeComplaintText(parsed.statementOfViolations),
@@ -869,63 +901,295 @@ export default function ComplaintWorkspace() {
     }
   }, [businessProfile]);
 
+  // Helper to pull address and demographics from student's uploaded IEP document
+  const pullAddressFromIep = async (showToast = true) => {
+    if (!activeStudentId) {
+      if (showToast) toast.error("Please select a student contact first");
+      return;
+    }
+    const res = await iepDemographicsQuery.refetch();
+    const demo = res.data || iepDemographicsQuery.data;
+    if (!demo || (!demo.address && !demo.gtid && !demo.dob)) {
+      if (showToast) toast.warning("No residential address found on student's uploaded IEP. Retaining [Not Found on Record].");
+      return;
+    }
+
+    setOfficialFormState((prev) => {
+      const next = { ...prev };
+      if (demo.address) {
+        next.studentAddress = demo.address;
+        if (demo.city) next.studentCity = demo.city;
+        if (demo.state) next.studentState = demo.state;
+        if (demo.zipCode) next.studentZip = demo.zipCode;
+
+        // Parent address matches student address unless physically customized
+        if (!isParentAddressCustom) {
+          next.parentAddress = demo.address;
+          if (demo.city) next.parentCity = demo.city;
+          if (demo.state) next.parentState = demo.state;
+          if (demo.zipCode) next.parentZip = demo.zipCode;
+        }
+      }
+      if (demo.dob) next.studentDob = demo.dob;
+      if (demo.gtid) next.studentGtid = demo.gtid;
+      if (demo.parentName && (!next.parentName || next.parentName.includes("[Not Found"))) {
+        next.parentName = demo.parentName;
+      }
+      if (demo.parentPhone && (!next.parentPhone || next.parentPhone.includes("[Not Found"))) {
+        next.parentPhone = demo.parentPhone;
+      }
+      if (demo.parentEmail && (!next.parentEmail || next.parentEmail.includes("[Not Found"))) {
+        next.parentEmail = demo.parentEmail;
+      }
+      return next;
+    });
+
+    if (showToast) {
+      toast.success(`✓ Pulled address from Student IEP: ${demo.address || "Demographics Updated"}`);
+    }
+  };
+
+  // Auto-fill student address and match parent address from IEP when available
+  useEffect(() => {
+    if (!iepDemographicsQuery.data) return;
+    const iepDemo = iepDemographicsQuery.data;
+
+    setOfficialFormState((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      const isMissing = (val?: string) =>
+        !val ||
+        val.trim() === "" ||
+        val.includes("[Not Found") ||
+        val.includes("1234 Heritage") ||
+        val.includes("555-0192");
+
+      if (iepDemo.address && isMissing(prev.studentAddress)) {
+        next.studentAddress = iepDemo.address;
+        if (iepDemo.city) next.studentCity = iepDemo.city;
+        if (iepDemo.state) next.studentState = iepDemo.state;
+        if (iepDemo.zipCode) next.studentZip = iepDemo.zipCode;
+
+        // Parent address matches student address unless physically customized
+        if (!isParentAddressCustom || isMissing(prev.parentAddress)) {
+          next.parentAddress = iepDemo.address;
+          if (iepDemo.city) next.parentCity = iepDemo.city;
+          if (iepDemo.state) next.parentState = iepDemo.state;
+          if (iepDemo.zipCode) next.parentZip = iepDemo.zipCode;
+        }
+        changed = true;
+      }
+      if (iepDemo.dob && isMissing(prev.studentDob)) {
+        next.studentDob = iepDemo.dob;
+        changed = true;
+      }
+      if (iepDemo.gtid && isMissing(prev.studentGtid)) {
+        next.studentGtid = iepDemo.gtid;
+        changed = true;
+      }
+      if (iepDemo.parentName && isMissing(prev.parentName)) {
+        next.parentName = iepDemo.parentName;
+        changed = true;
+      }
+      if (iepDemo.parentPhone && isMissing(prev.parentPhone)) {
+        next.parentPhone = iepDemo.parentPhone;
+        changed = true;
+      }
+      if (iepDemo.parentEmail && isMissing(prev.parentEmail)) {
+        next.parentEmail = iepDemo.parentEmail;
+        changed = true;
+      }
+
+      if (changed) {
+        toast.success(`✓ Pulled address from Student IEP: ${iepDemo.address || "Demographics Updated"}`);
+        return next;
+      }
+      return prev;
+    });
+  }, [iepDemographicsQuery.data, isParentAddressCustom]);
+
   // Apply a CRM student record to the complaint workspace and official form
-  const applyStudentToComplaint = (student: any) => {
+  const applyStudentToComplaint = (student: any, iepDemoOverride?: any) => {
     if (student?.id) {
       setActiveStudentId(student.id);
     }
     const sName = `${student.firstName || ""} ${student.lastName || ""}`.trim();
     const stateCode = detectStateCode(student.state);
     const districtName =
-      student.countyDistrict ||
-      (student.company?.includes("District") ? student.company : "") ||
-      "Cobb County School District";
+      student.countyDistrict?.trim() ||
+      (student.company?.includes("District") ? student.company.trim() : "") ||
+      "[District Not Found on Record]";
+
+    const iepDemo = iepDemoOverride || iepDemographicsQuery.data;
+
+    // Helper to test if a string contains actual value or is missing/mocked
+    const hasValue = (val?: string | null): val is string =>
+      Boolean(val && val.trim() !== "" && !val.includes("[Not Found") && !val.includes("1234 Heritage") && !val.includes("555-0192"));
+
+    // Student Address: Check CRM student contact first, then pull from IEP document
+    const sAddress =
+      (hasValue(student.address) ? student.address.trim() : null) ||
+      (hasValue(iepDemo?.address) ? iepDemo.address.trim() : null) ||
+      "[Not Found on Record]";
+
+    const sCity =
+      (hasValue(student.city) ? student.city.trim() : null) ||
+      (hasValue(iepDemo?.city) ? iepDemo.city.trim() : null) ||
+      "";
+
+    const sState =
+      (hasValue(student.state) ? (student.state.length === 2 ? student.state.toUpperCase() : "GA") : null) ||
+      (hasValue(iepDemo?.state) ? iepDemo.state.trim() : null) ||
+      "GA";
+
+    const sZip =
+      (hasValue(student.zipCode) ? student.zipCode.trim() : null) ||
+      (hasValue(iepDemo?.zipCode) ? iepDemo.zipCode.trim() : null) ||
+      "";
+
+    const sDob =
+      (hasValue(student.dateOfBirth) ? student.dateOfBirth.trim() : null) ||
+      (hasValue(iepDemo?.dob) ? iepDemo.dob.trim() : null) ||
+      "[Not Found on Record]";
+
+    const sGtid =
+      (hasValue(student.caseId) ? student.caseId.trim() : null) ||
+      (hasValue(iepDemo?.gtid) ? iepDemo.gtid.trim() : null) ||
+      "[Not Found on Record]";
+
+    const sSchool =
+      (hasValue(student.schoolName) ? student.schoolName.trim() : null) ||
+      "[Not Found on Record]";
+
+    const sGrade =
+      (hasValue(student.gradeLevel) ? student.gradeLevel.trim() : null) ||
+      "[Not Found on Record]";
+
+    // Parent Address & Info: By default matches student address unless physically customized
+    let pName = "";
+    let pAddress = "";
+    let pCity = "";
+    let pState = "";
+    let pZip = "";
+    let pPhone = "";
+    let pEmail = "";
+
+    if (student.parentContactId && contactsQuery.data) {
+      const parent = contactsQuery.data.find((c) => c.id === student.parentContactId);
+      if (parent) {
+        const foundPName = `${parent.firstName || ""} ${parent.lastName || ""}`.trim();
+        if (hasValue(foundPName)) pName = foundPName;
+        if (hasValue(parent.phone)) pPhone = parent.phone.trim();
+        if (hasValue(parent.email)) pEmail = parent.email.trim();
+
+        // If parent has a recorded distinct address in CRM that differs from student, treat as custom
+        if (hasValue(parent.address) && parent.address.trim() !== sAddress) {
+          pAddress = parent.address.trim();
+          pCity = hasValue(parent.city) ? parent.city.trim() : sCity;
+          pState = hasValue(parent.state) ? (parent.state.length === 2 ? parent.state.toUpperCase() : "GA") : sState;
+          pZip = hasValue(parent.zipCode) ? parent.zipCode.trim() : sZip;
+          setIsParentAddressCustom(true);
+        }
+      }
+    }
+
+    // Check IEP extracted demographics for parent info if not found in CRM parent contact
+    if (!pName && hasValue(iepDemo?.parentName)) pName = iepDemo.parentName.trim();
+    if (!pPhone && hasValue(iepDemo?.parentPhone)) pPhone = iepDemo.parentPhone.trim();
+    if (!pEmail && hasValue(iepDemo?.parentEmail)) pEmail = iepDemo.parentEmail.trim();
+
+    // Secondary fallback to student contact record for phone/email if parent phone/email empty
+    if (!pName && hasValue(student.secondParentName)) pName = student.secondParentName.trim();
+    if (!pPhone && hasValue(student.phone)) pPhone = student.phone.trim();
+    if (!pEmail && hasValue(student.email)) pEmail = student.email.trim();
+
+    // Parent address & city/state/zip match student address unless physically customized
+    if (!pAddress) {
+      if (hasValue(sAddress)) {
+        pAddress = sAddress;
+        pCity = sCity;
+        pState = sState;
+        pZip = sZip;
+        setIsParentAddressCustom(false);
+      } else if (hasValue(iepDemo?.parentAddress)) {
+        pAddress = iepDemo.parentAddress.trim();
+        pCity = hasValue(iepDemo.parentCity) ? iepDemo.parentCity.trim() : sCity;
+        pState = hasValue(iepDemo.parentState) ? iepDemo.parentState.trim() : sState;
+        pZip = hasValue(iepDemo.parentZip) ? iepDemo.parentZip.trim() : sZip;
+      } else {
+        // Only if not found on IEP or records from us
+        pAddress = "[Not Found on Record]";
+        pCity = sCity;
+        pState = sState;
+        pZip = sZip;
+      }
+    }
+
+    if (!pName) pName = "[Not Found on Record]";
+    if (!pPhone) pPhone = "[Not Found on Record]";
+    if (!pEmail) pEmail = "[Not Found on Record]";
 
     setComplaintTitle(`State Complaint – ${student.lastName || sName || "Student"}`);
 
     setCaseDetails((prev) => ({
       ...prev,
-      studentName: sName || prev.studentName,
-      studentDob: student.dateOfBirth || prev.studentDob,
-      grade: student.gradeLevel || prev.grade,
-      school: student.schoolName || prev.school,
+      studentName: sName || "[Student Name Not Found]",
+      studentDob: sDob,
+      grade: sGrade,
+      school: sSchool,
       district: districtName,
       state: stateCode,
+      parentName: pName,
     }));
 
     setOfficialFormState((prev) => ({
       ...prev,
       stateCode: stateCode,
       publicAgency: districtName,
-      studentName: sName || prev.studentName,
-      studentDob: student.dateOfBirth || prev.studentDob,
-      studentAddress: student.address || prev.studentAddress,
-      studentCity: student.city || prev.studentCity,
-      studentState: student.state ? (student.state.length === 2 ? student.state.toUpperCase() : "GA") : "GA",
-      studentZip: student.zipCode || prev.studentZip,
-      currentSchool: student.schoolName || prev.currentSchool,
-      grade: student.gradeLevel || prev.grade,
-      studentGtid: student.caseId || prev.studentGtid,
+      studentName: sName || "[Student Name Not Found]",
+      studentDob: sDob,
+      studentAddress: sAddress,
+      studentCity: sCity,
+      studentState: sState,
+      studentZip: sZip,
+      currentSchool: sSchool,
+      grade: sGrade,
+      studentGtid: sGtid,
+      parentName: pName,
+      parentAddress: pAddress,
+      parentCity: pCity,
+      parentState: pState,
+      parentZip: pZip,
+      parentPhone: pPhone,
+      parentEmail: pEmail,
     }));
 
-    if (student.parentContactId && contactsQuery.data) {
-      const parent = contactsQuery.data.find((c) => c.id === student.parentContactId);
-      if (parent) {
-        const pName = `${parent.firstName || ""} ${parent.lastName || ""}`.trim();
-        setOfficialFormState((prev) => ({
-          ...prev,
-          parentName: pName || prev.parentName,
-          parentAddress: parent.address || prev.parentAddress,
-          parentCity: parent.city || prev.parentCity,
-          parentState: parent.state || "GA",
-          parentZip: parent.zipCode || prev.parentZip,
-          parentPhone: parent.phone || prev.parentPhone,
-          parentEmail: parent.email || prev.parentEmail,
-        }));
-      }
-    }
+    // Update document pages content with real student and district
+    setPages((prevPages) =>
+      prevPages.map((pg) => {
+        let content = pg.content;
+        if (content) {
+          if (sName) {
+            content = content.replace(/ALEXANDER, SHANDERIOUS JR\./gi, sName.toUpperCase());
+            content = content.replace(/Elijah Santiago/gi, sName);
+          }
+          if (districtName && districtName !== "[District Not Found on Record]") {
+            content = content.replace(/COBB COUNTY SCHOOL DISTRICT/gi, districtName.toUpperCase());
+            content = content.replace(/ATLANTA PUBLIC SCHOOLS/gi, districtName.toUpperCase());
+          }
+        }
+        return { ...pg, content };
+      })
+    );
 
-    toast.success(`Loaded ${sName}'s record into ${SUPPORTED_STATE_FORMS[stateCode]?.name || "Georgia"} State Complaint Form`);
+    const addressSource = student.address?.trim()
+      ? "Student Contact Record"
+      : iepDemo?.address?.trim()
+      ? "Student IEP Document"
+      : "Not Found on Record";
+
+    toast.success(`Loaded ${sName}'s record into ${SUPPORTED_STATE_FORMS[stateCode]?.name || "Georgia"} State Complaint Form (Address: ${addressSource})`);
   };
 
   // Auto-detect student from URL query (?studentId=... or ?contactId=... or params.id)
@@ -1301,11 +1565,96 @@ export default function ComplaintWorkspace() {
     toast.success("Inserted citation into document");
   };
 
-  // Quick field updates on Cover
+  // Quick field updates on Cover & State Form
   const handleQuickFieldUpdate = (field: keyof ComplaintCaseDetails, value: string) => {
     const cleanValue = sanitizeComplaintText(value);
     setCaseDetails((prev) => ({ ...prev, [field]: cleanValue }));
     setLastSavedText("Draft saved just now");
+
+    // Keep officialFormState in sync
+    setOfficialFormState((prev) => {
+      const next = { ...prev };
+      if (field === "studentName") next.studentName = cleanValue;
+      if (field === "studentDob") next.studentDob = cleanValue;
+      if (field === "grade") next.grade = cleanValue;
+      if (field === "school") next.currentSchool = cleanValue;
+      if (field === "district") next.publicAgency = cleanValue;
+      if (field === "parentName") next.parentName = cleanValue;
+      return next;
+    });
+  };
+
+  // Student address change automatically updates parent address unless physically customized
+  const handleStudentAddressUpdate = (val: string) => {
+    setOfficialFormState((prev) => {
+      const next = { ...prev, studentAddress: val };
+      if (!isParentAddressCustom) {
+        next.parentAddress = val;
+      }
+      return next;
+    });
+  };
+
+  const handleStudentCityUpdate = (val: string) => {
+    setOfficialFormState((prev) => {
+      const next = { ...prev, studentCity: val };
+      if (!isParentAddressCustom) {
+        next.parentCity = val;
+      }
+      return next;
+    });
+  };
+
+  const handleStudentStateUpdate = (val: string) => {
+    setOfficialFormState((prev) => {
+      const next = { ...prev, studentState: val };
+      if (!isParentAddressCustom) {
+        next.parentState = val;
+      }
+      return next;
+    });
+  };
+
+  const handleStudentZipUpdate = (val: string) => {
+    setOfficialFormState((prev) => {
+      const next = { ...prev, studentZip: val };
+      if (!isParentAddressCustom) {
+        next.parentZip = val;
+      }
+      return next;
+    });
+  };
+
+  const handleParentAddressUpdate = (val: string) => {
+    setIsParentAddressCustom(true);
+    setOfficialFormState((prev) => ({ ...prev, parentAddress: val }));
+  };
+
+  const handleParentCityUpdate = (val: string) => {
+    setIsParentAddressCustom(true);
+    setOfficialFormState((prev) => ({ ...prev, parentCity: val }));
+  };
+
+  const handleParentStateUpdate = (val: string) => {
+    setIsParentAddressCustom(true);
+    setOfficialFormState((prev) => ({ ...prev, parentState: val }));
+  };
+
+  const handleParentZipUpdate = (val: string) => {
+    setIsParentAddressCustom(true);
+    setOfficialFormState((prev) => ({ ...prev, parentZip: val }));
+  };
+
+  const matchParentAddressToStudent = () => {
+    setIsParentAddressCustom(false);
+    setOfficialFormState((prev) => ({
+      ...prev,
+      parentAddress: prev.studentAddress,
+      parentCity: prev.studentCity,
+      parentState: prev.studentState,
+      parentZip: prev.studentZip,
+    }));
+    toast.success("✓ Parent address synced to match Student address");
   };
 
   // Helper to load and convert any attached PDF into high-res page images
@@ -2901,6 +3250,190 @@ This document is incorporated herein and submitted in direct support of Complain
                     onChange={(e) => handleQuickFieldUpdate("submissionDate", e.target.value)}
                     className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
                   />
+                </div>
+              </div>
+
+              {/* Student Residential Information & IEP Pull */}
+              <div className="pt-2 border-t border-[#3A2C18]/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-serif font-bold text-xs text-[#FFE394] flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5 text-[#DFBE77]" />
+                      Student Residential Information (Page 1)
+                    </span>
+                    <span className="text-[10px] text-[#A69371] block">
+                      Residential address pulled from CRM contact or uploaded IEP document.
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => pullAddressFromIep(true)}
+                    className="h-6 text-[10px] border-[#DFBE77]/50 bg-[#071E3D] hover:bg-[#0C2A52] text-[#FFE394] px-2 gap-1 cursor-pointer"
+                    title="Pull address and demographics directly from student's uploaded IEP"
+                  >
+                    <FileSearch className="w-3 h-3" />
+                    <span>Pull from IEP</span>
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <Label className="text-[#C6B697] text-[11px]">Student Residential Street Address</Label>
+                    <Input
+                      value={officialFormState.studentAddress}
+                      onChange={(e) => handleStudentAddressUpdate(e.target.value)}
+                      placeholder="Street address (or [Not Found on Record])"
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">GTID Number</Label>
+                    <Input
+                      value={officialFormState.studentGtid}
+                      onChange={(e) => setOfficialFormState((prev) => ({ ...prev, studentGtid: e.target.value }))}
+                      placeholder="10-digit GTID"
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">City</Label>
+                    <Input
+                      value={officialFormState.studentCity}
+                      onChange={(e) => handleStudentCityUpdate(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">State</Label>
+                    <Input
+                      value={officialFormState.studentState}
+                      onChange={(e) => handleStudentStateUpdate(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">ZIP</Label>
+                    <Input
+                      value={officialFormState.studentZip}
+                      onChange={(e) => handleStudentZipUpdate(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Parent / Guardian Contact & Address */}
+              <div className="pt-2 border-t border-[#3A2C18]/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-serif font-bold text-xs text-[#FFE394] flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-[#DFBE77]" />
+                      Parent / Guardian (Page 1)
+                    </span>
+                    <span className="text-[10px] text-[#A69371] block">
+                      Matches student residential info unless physically customized.
+                    </span>
+                  </div>
+                  {!isParentAddressCustom ? (
+                    <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
+                      ✓ Matches Student Address
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-amber-300 bg-amber-950/40 border border-amber-500/30 px-1.5 py-0.5 rounded font-medium">
+                        Custom Address
+                      </span>
+                      <button
+                        type="button"
+                        onClick={matchParentAddressToStudent}
+                        className="text-[10px] text-[#FFE394] hover:underline cursor-pointer bg-[#071E3D] px-2 py-0.5 rounded border border-[#FFE394]/30"
+                      >
+                        Match Student
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Parent Name</Label>
+                    <Input
+                      value={officialFormState.parentName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setOfficialFormState((prev) => ({ ...prev, parentName: val }));
+                        setCaseDetails((prev) => ({ ...prev, parentName: val }));
+                      }}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Parent Phone</Label>
+                    <Input
+                      value={officialFormState.parentPhone}
+                      onChange={(e) => setOfficialFormState((prev) => ({ ...prev, parentPhone: e.target.value }))}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Parent Email</Label>
+                    <Input
+                      value={officialFormState.parentEmail}
+                      onChange={(e) => setOfficialFormState((prev) => ({ ...prev, parentEmail: e.target.value }))}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[#C6B697] text-[11px]">Parent Residential Address</Label>
+                      {!isParentAddressCustom && (
+                        <span className="text-[10px] text-emerald-400 font-normal">
+                          (Synchronized with student address)
+                        </span>
+                      )}
+                    </div>
+                    <Input
+                      value={officialFormState.parentAddress}
+                      onChange={(e) => handleParentAddressUpdate(e.target.value)}
+                      placeholder="Matches student address unless physically customized"
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">City</Label>
+                    <Input
+                      value={officialFormState.parentCity}
+                      onChange={(e) => handleParentCityUpdate(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">State</Label>
+                    <Input
+                      value={officialFormState.parentState}
+                      onChange={(e) => handleParentStateUpdate(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">ZIP</Label>
+                    <Input
+                      value={officialFormState.parentZip}
+                      onChange={(e) => handleParentZipUpdate(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
                 </div>
               </div>
 

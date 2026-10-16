@@ -21,6 +21,16 @@ export interface NativeTextResult {
 
 export interface StructuredDocumentAnalysis {
   studentName: string | null;
+  studentAddress?: string | null;
+  studentCity?: string | null;
+  studentState?: string | null;
+  studentZip?: string | null;
+  studentDob?: string | null;
+  studentGtid?: string | null;
+  parentName?: string | null;
+  parentAddress?: string | null;
+  parentPhone?: string | null;
+  parentEmail?: string | null;
   documentType:
     | "Annual IEP"
     | "Initial IEP"
@@ -208,6 +218,16 @@ CRITICAL INSTRUCTIONS:
 Required JSON Schema:
 {
   "studentName": string or null,
+  "studentAddress": string or null, // Street address if found on document
+  "studentCity": string or null,
+  "studentState": string or null,
+  "studentZip": string or null,
+  "studentDob": string or null,
+  "studentGtid": string or null, // Student GTID or State ID number
+  "parentName": string or null,
+  "parentAddress": string or null,
+  "parentPhone": string or null,
+  "parentEmail": string or null,
   "documentType": "Annual IEP" | "Initial IEP" | "IEP Amendment" | "Revised IEP" | "504 Plan" | "Evaluation / Assessment" | "Progress Report" | "Prior Written Notice" | "Other" | "Unknown",
   "iepMeetingDate": string (YYYY-MM-DD or formatted date) or null,
   "annualReviewDate": string or null,
@@ -247,6 +267,16 @@ Required JSON Schema:
 
     return {
       studentName: parsed.studentName || null,
+      studentAddress: parsed.studentAddress || null,
+      studentCity: parsed.studentCity || null,
+      studentState: parsed.studentState || null,
+      studentZip: parsed.studentZip || null,
+      studentDob: parsed.studentDob || null,
+      studentGtid: parsed.studentGtid || null,
+      parentName: parsed.parentName || null,
+      parentAddress: parsed.parentAddress || null,
+      parentPhone: parsed.parentPhone || null,
+      parentEmail: parsed.parentEmail || null,
       documentType: parsed.documentType || "Unknown",
       iepMeetingDate: parsed.iepMeetingDate || null,
       annualReviewDate: parsed.annualReviewDate || null,
@@ -331,12 +361,54 @@ export function runLocalHeuristicAnalysis(
   const iepDateNeedsReview = !iepMeetingDate && !amendmentDate;
   const schoolYear = deriveSchoolYear(iepMeetingDate || amendmentDate);
 
-  // Student name heuristic (looks for "Student Name: [First Last]" or "Student: [First Last]")
-  const studentMatch = text.match(/(?:student(?:\s+name)?|child(?:\s+name)?):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
-  const studentName = studentMatch ? studentMatch[1].trim() : null;
+  // Heuristic extraction of address and demographics
+  const nameMatch = text.match(/(?:student(?:\s*name)?|name of student|child(?:'s)?\s*name)\s*[:\-]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+  const studentName = nameMatch ? nameMatch[1].trim() : null;
+
+  const addrMatch = text.match(/(?:student(?:\s+home)?\s*address|home\s*address|residence(?:\s*address)?|physical\s*address|street\s*address|\baddress)\s*[:\-]\s*([^\n\r]+)/i);
+  let studentAddress: string | null = null;
+  let studentCity: string | null = null;
+  let studentState: string | null = null;
+  let studentZip: string | null = null;
+
+  if (addrMatch) {
+    const raw = addrMatch[1].trim().replace(/\s{2,}/g, " ").split(/(?:phone|tel|dob|date of birth|grade|school|parent|guardian|gtid):/i)[0].trim().replace(/[,;]+$/, "");
+    if (raw.length >= 4 && raw.length <= 150) {
+      studentAddress = raw;
+      const csZipMatch = raw.match(/,\s*([A-Za-z\s]+),\s*([A-Z]{2})\s+([0-9]{5}(?:-[0-9]{4})?)/);
+      if (csZipMatch) {
+        studentCity = csZipMatch[1].trim();
+        studentState = csZipMatch[2].trim();
+        studentZip = csZipMatch[3].trim();
+        studentAddress = raw.split(",")[0].trim();
+      }
+    }
+  }
+
+  const gtidMatch = text.match(/(?:gtid|state\s*id|student\s*id(?:\s*number)?|system\s*id)\s*[:\-#]\s*([0-9A-Z]{5,15})/i);
+  const studentGtid = gtidMatch ? gtidMatch[1].trim() : null;
+
+  const parentMatch = text.match(/(?:parent(?:\s*\/\s*guardian)?|guardian|mother|father)\s*[:\-]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+  const parentName = parentMatch ? parentMatch[1].trim() : null;
+
+  const parentPhoneMatch = text.match(/(?:parent\s*phone|home\s*phone|cell(?:\s*phone)?|primary\s*phone|contact\s*number)\s*[:\-]\s*(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i);
+  const parentPhone = parentPhoneMatch ? parentPhoneMatch[1].trim() : null;
+
+  const parentEmailMatch = text.match(/(?:parent\s*email|guardian\s*email|contact\s*email)\s*[:\-]\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+  const parentEmail = parentEmailMatch ? parentEmailMatch[1].trim() : null;
 
   return {
     studentName,
+    studentAddress,
+    studentCity,
+    studentState,
+    studentZip,
+    studentDob: foundDates[0] || null,
+    studentGtid,
+    parentName,
+    parentAddress: null,
+    parentPhone,
+    parentEmail,
     documentType,
     iepMeetingDate,
     annualReviewDate: foundDates[1] || null,
