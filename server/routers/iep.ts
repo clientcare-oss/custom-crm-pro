@@ -36,6 +36,7 @@ export const iepRouter = router({
         fileData: z.string().optional(),
         fileSize: z.number().optional(),
         mimeType: z.string().optional(),
+        extractedText: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { iepDocuments, contacts, clientFiles } = await import("../../drizzle/schema");
@@ -138,7 +139,22 @@ export const iepRouter = router({
           console.warn("[IEP Upload] Optional clientFiles insert skipped:", cfErr);
         }
 
-        return { success: true, fileKey, fileUrl };
+        // Automatic Smart Hybrid sync if extracted text was provided with upload
+        let syncResult: any = null;
+        if (input.extractedText && input.extractedText.trim().length > 0) {
+          try {
+            const { syncIepToStudentProfile } = await import("../services/iepExtractionService");
+            syncResult = await syncIepToStudentProfile({
+              contactId: input.contactId,
+              extractedText: input.extractedText,
+              sourceDocument: input.fileName,
+            });
+          } catch (syncErr) {
+            console.warn("[IEP Upload] Auto sync failed:", syncErr);
+          }
+        }
+
+        return { success: true, fileKey, fileUrl, syncResult };
       }),
     // ── Draft IEP History (completely separate from official IEP records) ──
     // Upload a draft IEP — creates a NEW row in draftIepHistory (never overwrites)
@@ -308,6 +324,35 @@ export const iepRouter = router({
         const { dismissIepUpdates } = await import("../services/iepExtractionService");
         dismissIepUpdates(input.contactId);
         return { success: true };
+      }),
+
+    // Re-sync student profile from stored document or provided fallback
+    reSyncFromStoredIep: adminProcedure
+      .input(z.object({
+        contactId: z.number(),
+        fallbackText: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { syncIepToStudentProfile } = await import("../services/iepExtractionService");
+        let text = input.fallbackText || "";
+        let docName = "Stored IEP Document";
+        if (!text) {
+          const { iepDocuments } = await import("../../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const dbConn = await db.getDb();
+          if (dbConn) {
+            const doc = await dbConn.select().from(iepDocuments).where(eq(iepDocuments.contactId, input.contactId)).limit(1);
+            if (doc[0]?.currentFileName) {
+              docName = doc[0].currentFileName;
+              text = `Document File: ${doc[0].currentFileName}\n`;
+            }
+          }
+        }
+        return await syncIepToStudentProfile({
+          contactId: input.contactId,
+          extractedText: text,
+          sourceDocument: docName,
+        });
       }),
   
 });

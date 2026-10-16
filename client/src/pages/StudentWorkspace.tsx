@@ -136,22 +136,63 @@ export default function StudentWorkspace() {
   const calculatedAge = useMemo(() => {
     if (!student?.dateOfBirth) return "--";
     const clean = student.dateOfBirth.trim();
-    let dob: Date | null = null;
-    const parts = clean.split(/[\/\-.]/);
-    if (parts.length === 3) {
-      if (parts[0].length === 4) {
-        // YYYY-MM-DD
-        dob = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      } else {
-        // MM/DD/YYYY
-        const year = parseInt(parts[2], 10);
-        const fullYear = year < 100 ? (year > 50 ? 1900 + year : 2000 + year) : year;
-        dob = new Date(fullYear, parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
-      }
-    } else {
-      const parsed = new Date(clean);
-      if (!isNaN(parsed.getTime())) dob = parsed;
+
+    // 1. Plain numeric age like "11", "11 yrs", "11 yo", "Age: 11"
+    const plainAgeMatch = clean.match(/^(?:age\s*[:\-\s]*)?(\d{1,2})(?:\s*(?:years?|yrs?|yo|y\/o))?$/i);
+    if (plainAgeMatch) {
+      return plainAgeMatch[1];
     }
+
+    // 2. Chronological age like "11-2" (11 years, 2 months)
+    const chronoMatch = clean.match(/^(\d{1,2})[-–:]\s*(\d{1,2})/);
+    if (chronoMatch) {
+      return chronoMatch[1];
+    }
+
+    // 3. Named month formats like "1 Sept 2015" or "September 1, 2015"
+    let dob: Date | null = null;
+    const monthMap: Record<string, number> = {
+      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+      jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11
+    };
+    const namedMatch1 = clean.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+    const namedMatch2 = clean.match(/([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?[\s,]+(\d{4})/);
+
+    if (namedMatch1) {
+      const day = parseInt(namedMatch1[1], 10);
+      const mStr = namedMatch1[2].toLowerCase().slice(0, 3);
+      const year = parseInt(namedMatch1[3], 10);
+      if (monthMap[mStr] !== undefined) {
+        dob = new Date(year, monthMap[mStr], day);
+      }
+    } else if (namedMatch2) {
+      const mStr = namedMatch2[1].toLowerCase().slice(0, 3);
+      const day = parseInt(namedMatch2[2], 10);
+      const year = parseInt(namedMatch2[3], 10);
+      if (monthMap[mStr] !== undefined) {
+        dob = new Date(year, monthMap[mStr], day);
+      }
+    }
+
+    // 4. Standard numeric dates
+    if (!dob) {
+      const parts = clean.split(/[\/\-.]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          // YYYY-MM-DD
+          dob = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        } else {
+          // MM/DD/YYYY
+          const year = parseInt(parts[2], 10);
+          const fullYear = year < 100 ? (year > 50 ? 1900 + year : 2000 + year) : year;
+          dob = new Date(fullYear, parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+        }
+      } else {
+        const parsed = new Date(clean);
+        if (!isNaN(parsed.getTime())) dob = parsed;
+      }
+    }
+
     if (!dob || isNaN(dob.getTime())) return clean;
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
@@ -804,7 +845,7 @@ export default function StudentWorkspace() {
 
                   {/* IEP Document Management Workspace */}
                   <div className="bg-[#020b18]/70 rounded-xl border border-white/15 p-4 sm:p-6 shadow-xl backdrop-blur-xs">
-                    <IepDocumentBlocks contactId={studentId} />
+                    <IepDocumentBlocks contactId={effectiveStudentId} />
                   </div>
 
                   {/* Quick Action Tiles for IEP Tools */}
@@ -943,7 +984,15 @@ export default function StudentWorkspace() {
           </DialogHeader>
 
           <div className="space-y-4 pt-4 text-xs">
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-black/30 border border-white/10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-black/30 border border-white/10">
+              <div>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">Age</span>
+                <span className="text-amber-300 font-bold text-sm">{calculatedAge} yrs</span>
+              </div>
+              <div>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">Date of Birth</span>
+                <span className="text-white font-medium">{student?.dateOfBirth || "Not recorded"}</span>
+              </div>
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">Grade</span>
                 <span className="text-white font-medium">{student?.gradeLevel || "5th Grade"}</span>
@@ -959,6 +1008,17 @@ export default function StudentWorkspace() {
               <div>
                 <span className="text-white/40 block text-[10px] uppercase font-bold">Status</span>
                 <span className="text-emerald-300 font-medium">{student?.studentStatus || "Active"}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-xl bg-black/30 border border-white/10">
+              <div>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">Primary Eligibility</span>
+                <span className="text-white font-medium">{displayEligibility}</span>
+              </div>
+              <div>
+                <span className="text-white/40 block text-[10px] uppercase font-bold">Medical Diagnoses</span>
+                <span className="text-white font-medium">{displayMedicalDiagnoses}</span>
               </div>
             </div>
 

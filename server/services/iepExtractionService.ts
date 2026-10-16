@@ -35,21 +35,64 @@ export interface ExtractedIepData {
 export function calculateAgeFromDob(dobString?: string | null): { age: number | null; ageDisplay: string } {
   if (!dobString) return { age: null, ageDisplay: "--" };
   const clean = dobString.trim();
+
+  // 1. If already a plain age number like "11", "11 yrs", "11 yo", "Age: 11"
+  const plainAgeMatch = clean.match(/^(?:age\s*[:\-\s]*)?(\d{1,2})(?:\s*(?:years?|yrs?|yo|y\/o))?$/i);
+  if (plainAgeMatch) {
+    const ageNum = parseInt(plainAgeMatch[1], 10);
+    return { age: ageNum, ageDisplay: `${ageNum}` };
+  }
+
+  // 2. If chronological age like "11-2" or "11:2" (11 years, 2 months)
+  const chronoMatch = clean.match(/^(\d{1,2})[-–:]\s*(\d{1,2})/);
+  if (chronoMatch) {
+    const ageNum = parseInt(chronoMatch[1], 10);
+    return { age: ageNum, ageDisplay: `${ageNum}` };
+  }
+
   let dob: Date | null = null;
-  const parts = clean.split(/[\/\-.]/);
-  if (parts.length === 3) {
-    if (parts[0].length === 4) {
-      // YYYY-MM-DD
-      dob = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    } else {
-      // MM/DD/YYYY
-      const year = parseInt(parts[2], 10);
-      const fullYear = year < 100 ? (year > 50 ? 1900 + year : 2000 + year) : year;
-      dob = new Date(fullYear, parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+
+  // 3. Named month formats like "1 Sept 2015", "September 1, 2015", "Sept 1, 2015"
+  const monthMap: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11
+  };
+  const namedMatch1 = clean.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  const namedMatch2 = clean.match(/([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?[\s,]+(\d{4})/);
+
+  if (namedMatch1) {
+    const day = parseInt(namedMatch1[1], 10);
+    const mStr = namedMatch1[2].toLowerCase().slice(0, 3);
+    const year = parseInt(namedMatch1[3], 10);
+    if (monthMap[mStr] !== undefined) {
+      dob = new Date(year, monthMap[mStr], day);
     }
-  } else {
-    const parsed = new Date(clean);
-    if (!isNaN(parsed.getTime())) dob = parsed;
+  } else if (namedMatch2) {
+    const mStr = namedMatch2[1].toLowerCase().slice(0, 3);
+    const day = parseInt(namedMatch2[2], 10);
+    const year = parseInt(namedMatch2[3], 10);
+    if (monthMap[mStr] !== undefined) {
+      dob = new Date(year, monthMap[mStr], day);
+    }
+  }
+
+  // 4. Standard numeric dates (MM/DD/YYYY or YYYY-MM-DD)
+  if (!dob) {
+    const parts = clean.split(/[\/\-.]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // YYYY-MM-DD
+        dob = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      } else {
+        // MM/DD/YYYY
+        const year = parseInt(parts[2], 10);
+        const fullYear = year < 100 ? (year > 50 ? 1900 + year : 2000 + year) : year;
+        dob = new Date(fullYear, parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+      }
+    } else {
+      const parsed = new Date(clean);
+      if (!isNaN(parsed.getTime())) dob = parsed;
+    }
   }
 
   if (!dob || isNaN(dob.getTime())) return { age: null, ageDisplay: clean };
@@ -107,7 +150,7 @@ export function extractIepFieldsHeuristic(text: string): ExtractedIepData {
   if (!text) return result;
 
   // Grade: e.g. "Grade: 5th", "Grade Level: Kindergarten", "Grade: 5"
-  const gradeMatch = text.match(/(?:grade|grade\s*level|placement)\s*[:\-]\s*([0-9Kk]+(?:st|nd|rd|th)?|Kindergarten|Pre-?K|First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth|Eleventh|Twelfth)/i);
+  const gradeMatch = text.match(/(?:grade|grade\s*level|placement)\s*[:\-]?\s*([0-9Kk]+(?:st|nd|rd|th)?|Kindergarten|Pre-?K|First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth|Eleventh|Twelfth)/i);
   if (gradeMatch) {
     const rawGrade = gradeMatch[1].trim();
     if (/^[0-9]+$/i.test(rawGrade)) {
@@ -121,8 +164,9 @@ export function extractIepFieldsHeuristic(text: string): ExtractedIepData {
     }
   }
 
-  // DOB: e.g. "DOB: 05/14/2014", "Date of Birth: 2014-05-14"
-  const dobMatch = text.match(/(?:dob|date\s*of\s*birth|birth\s*date)\s*[:\-]\s*(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}|\d{4}[\/\-.]\d{1,2}[\/\-.]\d{1,2})/i);
+  // DOB 1: Standard numeric date e.g. "DOB: 05/14/2014", "Date of Birth 09/01/2015", "Birthdate: 2015-09-01"
+  // Accepts colons, hyphens, or whitespace delimiters (for tabular PDF layouts)
+  const dobMatch = text.match(/(?:dob|date\s*of\s*birth|birth\s*date|birthdate)\s*[:\-\s]\s*([0-9]{1,2}[\/\-.][0-9]{1,2}[\/\-.][0-9]{2,4}|[0-9]{4}[\/\-.][0-9]{1,2}[\/\-.][0-9]{1,2})/i);
   if (dobMatch) {
     result.dateOfBirth = dobMatch[1].trim();
     const { age } = calculateAgeFromDob(result.dateOfBirth);
@@ -131,20 +175,47 @@ export function extractIepFieldsHeuristic(text: string): ExtractedIepData {
     }
   }
 
+  // DOB 2: Named month format e.g. "Date of Birth: September 1, 2015", "DOB: 1 Sept 2015", "1Sept2015"
+  if (!result.dateOfBirth) {
+    const namedDobMatch = text.match(/(?:dob|date\s*of\s*birth|birth\s*date|birthdate)\s*[:\-\s]\s*([0-9]{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|October|Nov|Dec)[a-z]*\s+[0-9]{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|October|Nov|Dec)[a-z]*\s+[0-9]{1,2}(?:st|nd|rd|th)?[\s,]+[0-9]{4})/i);
+    if (namedDobMatch) {
+      result.dateOfBirth = namedDobMatch[1].trim();
+      const { age } = calculateAgeFromDob(result.dateOfBirth);
+      if (age !== null) {
+        result.calculatedAge = age;
+      }
+    }
+  }
+
+  // DOB 3: Chronological Age in IEP / reevaluation documents (e.g. "Chronological Age: 11", "Age: 11", "Age: 11-2", "Student Age: 11 yrs")
+  const ageMatch = text.match(/(?:chronological\s*age|student\s*age|\bage\b)\s*[:\-\s]\s*([0-9]{1,2}(?:[-–][0-9]{1,2})?(?:\s*(?:years?|yrs?|yo|y\/o))?)(?=\s|\n|\r|,|\.|$)/i);
+  if (ageMatch) {
+    const rawAge = ageMatch[1].trim();
+    const { age } = calculateAgeFromDob(rawAge);
+    if (age !== null && age >= 2 && age <= 26) {
+      result.calculatedAge = age;
+      if (!result.dateOfBirth) {
+        // Derive estimated DOB based on September 1 school cutoff year
+        const estYear = new Date().getFullYear() - age;
+        result.dateOfBirth = `09/01/${estYear}`;
+      }
+    }
+  }
+
   // School Name: e.g. "School: Centennial High School", "Attending School: Manning Oaks Elementary"
-  const schoolMatch = text.match(/(?:school|attending\s*school|current\s*school|assigned\s*school)\s*[:\-]\s*([A-Z0-9\s.,'&-]+?(?:Elementary|Middle|High|Academy|Charter|School|Primary))/i);
+  const schoolMatch = text.match(/(?:school|attending\s*school|current\s*school|assigned\s*school)\s*[:\-]?\s*([A-Z0-9\s.,'&-]+?(?:Elementary|Middle|High|Academy|Charter|School|Primary))/i);
   if (schoolMatch) {
     result.schoolName = schoolMatch[1].trim().replace(/\s{2,}/g, " ");
   }
 
   // District / County: e.g. "District: Fulton County Schools", "LEA: Atlanta Public Schools"
-  const districtMatch = text.match(/(?:district|lea|county|public\s*agency|system)\s*[:\-]\s*([A-Z0-9\s.,'&-]+?(?:County\s*Schools?|Public\s*Schools?|School\s*District|City\s*Schools?|County|LEA))/i);
+  const districtMatch = text.match(/(?:district|lea|county|public\s*agency|system)\s*[:\-]?\s*([A-Z0-9\s.,'&-]+?(?:County\s*Schools?|Public\s*Schools?|School\s*District|City\s*Schools?|County|LEA))/i);
   if (districtMatch) {
     result.countyDistrict = districtMatch[1].trim().replace(/\s{2,}/g, " ");
   }
 
   // Eligibility: e.g. "Eligibility: Autism", "Primary Disability: Other Health Impairment"
-  const eligibilityMatch = text.match(/(?:primary\s*disability|eligibility\s*category|eligibility|disability)\s*[:\-]\s*([A-Za-z\s/()\-]+?)(?=\n|\r|secondary|related|date|$)/i);
+  const eligibilityMatch = text.match(/(?:primary\s*disability|eligibility\s*category|eligibility|disability)\s*[:\-]?\s*([A-Za-z\s/()\-]+?)(?=\n|\r|secondary|related|date|$)/i);
   if (eligibilityMatch) {
     const rawElig = eligibilityMatch[1].trim();
     if (rawElig.length > 2 && rawElig.length < 80) {
@@ -176,6 +247,7 @@ export function extractIepFieldsHeuristic(text: string): ExtractedIepData {
   if (/\bsensory\s*processing/i.test(text)) medicalMatches.push("Sensory Processing Disorder");
   if (/\bepilepsy\b|\bseizure/i.test(text)) medicalMatches.push("Seizure Disorder");
   if (/\basthma\b/i.test(text)) medicalMatches.push("Asthma");
+  if (/\btourette/i.test(text)) medicalMatches.push("Tourette Syndrome");
   if (medicalMatches.length > 0) {
     result.medicalDiagnoses = medicalMatches.join(", ");
   }
@@ -188,7 +260,7 @@ export function extractIepFieldsHeuristic(text: string): ExtractedIepData {
   }
 
   // Meeting Date: e.g. "Meeting Date: 10/14/2026"
-  const meetingMatch = text.match(/(?:meeting\s*date|iep\s*meeting|annual\s*review\s*date)\s*[:\-]\s*(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/i);
+  const meetingMatch = text.match(/(?:meeting\s*date|iep\s*meeting|annual\s*review\s*date)\s*[:\-]?\s*(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/i);
   if (meetingMatch) {
     result.iepMeetingDate = meetingMatch[1].trim();
   }
@@ -249,9 +321,12 @@ CRITICAL INSTRUCTIONS:
       const parsed = JSON.parse(jsonMatch[0]) as ExtractedIepData;
       // Merge with heuristics to fill any blanks
       const fallback = extractIepFieldsHeuristic(text);
+      const finalDob = parsed.dateOfBirth || fallback.dateOfBirth;
+      const { age: calcAge } = calculateAgeFromDob(finalDob);
       return {
         studentName: parsed.studentName || fallback.studentName,
-        dateOfBirth: parsed.dateOfBirth || fallback.dateOfBirth,
+        dateOfBirth: finalDob,
+        calculatedAge: calcAge ?? fallback.calculatedAge,
         gradeLevel: parsed.gradeLevel || fallback.gradeLevel,
         schoolName: parsed.schoolName || fallback.schoolName,
         countyDistrict: parsed.countyDistrict || fallback.countyDistrict,

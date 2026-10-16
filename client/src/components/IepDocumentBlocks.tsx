@@ -71,13 +71,52 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
   );
 
   // ── Mutations ───────────────────────────────────────────────────────────────
+  // ── Smart Hybrid Re-Sync Mutation ─────────────────────────────────────────
+  const reSyncMutation = trpc.iep.reSyncFromStoredIep.useMutation({
+    onSuccess: (res) => {
+      setSyncingProfile(false);
+      if (res.autoApplied.length > 0) {
+        const fieldsSummary = res.autoApplied.map((a) => a.label).join(", ");
+        toast.success(`✨ Smart Hybrid: Auto-populated profile fields (${fieldsSummary}) from IEP!`, {
+          duration: 6000,
+        });
+        utils.contacts.detail.invalidate();
+      }
+      if (res.pendingReview.length > 0) {
+        toast.info(
+          `📋 ${res.pendingReview.length} field(s) differ from current profile. Review bubble available on Overview tab.`,
+          { duration: 7000 }
+        );
+        utils.iep.getPendingUpdates.invalidate({ contactId });
+      } else if (res.autoApplied.length === 0) {
+        toast.info("IEP profile information is already up-to-date with current profile.");
+      }
+    },
+    onError: (err) => {
+      setSyncingProfile(false);
+      toast.error("Profile sync error: " + err.message);
+    },
+  });
+
   const uploadMutation = trpc.iep.upload.useMutation({
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success("Current IEP/504 uploaded and secured in Document Vault");
       utils.iep.get.invalidate({ contactId });
       utils.clientFiles.listForAdmin.invalidate();
       utils.clientFiles.listVault.invalidate();
-      utils.contacts.detail.invalidate({ id: contactId });
+      utils.contacts.detail.invalidate();
+      if ((res as any)?.syncResult) {
+        const sync = (res as any).syncResult;
+        if (sync.autoApplied?.length > 0) {
+          const fieldsSummary = sync.autoApplied.map((a: any) => a.label).join(", ");
+          toast.success(`✨ Smart Hybrid: Populated student profile fields (${fieldsSummary}) from IEP!`, {
+            duration: 6000,
+          });
+        }
+        if (sync.pendingReview?.length > 0) {
+          utils.iep.getPendingUpdates.invalidate({ contactId });
+        }
+      }
       setUploading(false);
     },
     onError: (e) => {
@@ -126,7 +165,7 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
         toast.success(`✨ Smart Hybrid: Updated empty profile fields (${fieldsSummary}) from IEP!`, {
           duration: 6000,
         });
-        utils.contacts.detail.invalidate({ id: contactId });
+        utils.contacts.detail.invalidate();
       }
       if (res.pendingReview.length > 0) {
         toast.info(
@@ -146,42 +185,56 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
 
   // Re-sync current IEP
   const handleSyncCurrentIep = async () => {
-    if (!iepDoc?.currentFileUrl) {
-      toast.error("No current IEP URL available");
+    if (!iepDoc?.currentFileUrl && !iepDoc?.currentFileName) {
+      toast.error("No current IEP record found for this student");
       return;
     }
     setSyncingProfile(true);
     toast.info("Extracting student profile information from current IEP...");
     try {
-      let arrayBuffer: ArrayBuffer;
-      if (iepDoc.currentFileUrl.startsWith("data:")) {
-        const base64 = iepDoc.currentFileUrl.split(",")[1];
-        const binaryString = atob(base64);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
+      let extractedText = "";
+      if (iepDoc.currentFileUrl) {
+        try {
+          let arrayBuffer: ArrayBuffer | null = null;
+          if (iepDoc.currentFileUrl.startsWith("data:")) {
+            const base64 = iepDoc.currentFileUrl.split(",")[1];
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            arrayBuffer = bytes.buffer;
+          } else {
+            const resp = await fetch(iepDoc.currentFileUrl);
+            if (resp.ok) {
+              arrayBuffer = await resp.arrayBuffer();
+            }
+          }
+          if (arrayBuffer) {
+            extractedText = await extractTextFromPdfData(arrayBuffer);
+          }
+        } catch (fetchErr) {
+          console.warn("[IEP Fetch] Browser fetch skipped, falling back to server re-sync:", fetchErr);
         }
-        arrayBuffer = bytes.buffer;
+      }
+
+      if (extractedText && extractedText.trim().length > 0) {
+        extractMutation.mutate({
+          contactId,
+          extractedText,
+          sourceDocument: iepDoc.currentFileName || "Current IEP",
+        });
       } else {
-        const resp = await fetch(iepDoc.currentFileUrl);
-        arrayBuffer = await resp.arrayBuffer();
+        // Fall back to server-side stored document sync
+        reSyncMutation.mutate({
+          contactId,
+        });
       }
-
-      const text = await extractTextFromPdfData(arrayBuffer);
-      if (!text || text.trim().length === 0) {
-        toast.error("Could not extract readable text from document. Scanned images may require manual entry.");
-        setSyncingProfile(false);
-        return;
-      }
-
-      extractMutation.mutate({
-        contactId,
-        extractedText: text,
-        sourceDocument: iepDoc.currentFileName || "Current IEP",
-      });
     } catch (err: any) {
-      toast.error("Failed to read IEP document: " + (err?.message || "Unknown error"));
-      setSyncingProfile(false);
+      // Graceful fallback
+      reSyncMutation.mutate({
+        contactId,
+      });
     }
   };
 
@@ -197,6 +250,18 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
     }
 
     setUploading(true);
+    toast.info("Extracting student profile data and securing document...");
+
+    // 1. Read arrayBuffer and extract text first
+    let extractedText = "";
+    try {
+      const buf = await file.arrayBuffer();
+      extractedText = await extractTextFromPdfData(buf);
+    } catch (pdfErr) {
+      console.warn("[PDF Text Extraction] Error:", pdfErr);
+    }
+
+    // 2. Read base64 for file storage and invoke upload with extracted text
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -208,6 +273,7 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
           fileData: base64,
           fileSize: file.size,
           mimeType: file.type || "application/pdf",
+          extractedText: extractedText || undefined,
         });
       } catch (err: any) {
         toast.error("Failed to process file: " + (err?.message ?? "Unknown error"));
@@ -220,21 +286,13 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
     };
     reader.readAsDataURL(file);
 
-    // Extract text in parallel for Smart Hybrid profile sync
-    try {
-      file.arrayBuffer().then((buf) => {
-        extractTextFromPdfData(buf).then((extractedText) => {
-          if (extractedText && extractedText.trim().length > 0) {
-            extractMutation.mutate({
-              contactId,
-              extractedText,
-              sourceDocument: file.name,
-            });
-          }
-        });
+    // 3. Also trigger extraction mutation for reactive UI toasts
+    if (extractedText && extractedText.trim().length > 0) {
+      extractMutation.mutate({
+        contactId,
+        extractedText,
+        sourceDocument: file.name,
       });
-    } catch (e) {
-      console.warn("Async text extraction skipped:", e);
     }
 
     if (fileInputRef.current) fileInputRef.current.value = "";
