@@ -148,7 +148,7 @@ export function StateComplaintFormView({
     }
   };
 
-  // Initial load auto-population with student data
+  // Initial load auto-population with student data & business profile credentials
   useEffect(() => {
     generateFilledPdf();
   }, [
@@ -157,6 +157,13 @@ export function StateComplaintFormView({
     formState.publicAgency,
     formState.currentSchool,
     formState.complainantName,
+    formState.complainantRelationship,
+    formState.complainantAddress,
+    formState.complainantCity,
+    formState.complainantState,
+    formState.complainantZip,
+    formState.complainantPhone,
+    formState.complainantEmail,
     formState.statementOfViolations,
     formState.proposedResolution,
   ]);

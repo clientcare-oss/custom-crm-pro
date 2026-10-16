@@ -62,7 +62,8 @@ import {
   Paperclip,
   Loader2,
   Highlighter,
-  Trash2
+  Trash2,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -795,6 +796,78 @@ export default function ComplaintWorkspace() {
     }
     return INITIAL_GADOE_FORM_STATE;
   });
+
+  // Authoritative Business Profile from PG-024-BIZ
+  const businessProfileQuery = trpc.system.getBusinessProfile.useQuery();
+  const businessProfile = businessProfileQuery.data;
+
+  // Sync Complainant and Practice information from PG-024-BIZ
+  const syncFromBusinessProfile = (showToast = true) => {
+    if (!businessProfile) {
+      toast.info("Loading business profile credentials from PG-024-BIZ...");
+      return;
+    }
+    const advName = formatFirstLastName(businessProfile.leadAdvocate || "Byron Honea");
+    const stAddress = businessProfile.street || businessProfile.address || "PO Box 724944";
+    const city = businessProfile.city || "Atlanta";
+    const st = businessProfile.state || "GA";
+    const zip = businessProfile.zip || "31139";
+    const phone = businessProfile.phone || "(404) 919-8664";
+    const email = businessProfile.email || "clientcare@waypointadvocates.com";
+    const company = businessProfile.companyName || "Waypoint Advocates";
+
+    setOfficialFormState((prev) => ({
+      ...prev,
+      complainantName: advName,
+      complainantRelationship: prev.complainantRelationship || "Authorized Special Education Advocate / Representative",
+      complainantAddress: stAddress,
+      complainantCity: city,
+      complainantState: st,
+      complainantZip: zip,
+      complainantPhone: phone,
+      complainantEmail: email,
+      signatureName: advName,
+    }));
+
+    setCaseDetails((prev) => ({
+      ...prev,
+      preparedBy: company,
+    }));
+
+    if (showToast) {
+      toast.success(`✓ Synced from Business Settings (PG-024-BIZ): ${stAddress}, ${city}, ${st} ${zip} • ${phone} • ${email}`);
+    }
+  };
+
+  // Auto-sync business info on initial load if complainant info is empty or uses default placeholder
+  const hasAutoSyncedBusinessRef = useRef(false);
+  useEffect(() => {
+    if (businessProfile && !hasAutoSyncedBusinessRef.current) {
+      hasAutoSyncedBusinessRef.current = true;
+      setOfficialFormState((prev) => {
+        const isDefaultAddress = !prev.complainantAddress || prev.complainantAddress === "PO Box 724944";
+        const isDefaultPhone = !prev.complainantPhone || prev.complainantPhone === "(404) 919-8664";
+        const isDefaultEmail = !prev.complainantEmail || prev.complainantEmail === "advocate@waypointadvocates.com";
+
+        return {
+          ...prev,
+          complainantName: prev.complainantName || formatFirstLastName(businessProfile.leadAdvocate || "Byron Honea"),
+          complainantAddress: isDefaultAddress ? (businessProfile.street || businessProfile.address || "PO Box 724944") : prev.complainantAddress,
+          complainantCity: !prev.complainantCity || prev.complainantCity === "Atlanta" ? (businessProfile.city || "Atlanta") : prev.complainantCity,
+          complainantState: !prev.complainantState || prev.complainantState === "GA" ? (businessProfile.state || "GA") : prev.complainantState,
+          complainantZip: !prev.complainantZip || prev.complainantZip === "31139" ? (businessProfile.zip || "31139") : prev.complainantZip,
+          complainantPhone: isDefaultPhone ? (businessProfile.phone || "(404) 919-8664") : prev.complainantPhone,
+          complainantEmail: isDefaultEmail ? (businessProfile.email || "clientcare@waypointadvocates.com") : prev.complainantEmail,
+          signatureName: prev.signatureName || formatFirstLastName(businessProfile.leadAdvocate || "Byron Honea"),
+        };
+      });
+
+      setCaseDetails((prev) => ({
+        ...prev,
+        preparedBy: businessProfile.companyName || prev.preparedBy || "Waypoint Advocates",
+      }));
+    }
+  }, [businessProfile]);
 
   // Apply a CRM student record to the complaint workspace and official form
   const applyStudentToComplaint = (student: any) => {
@@ -1697,6 +1770,19 @@ This document is incorporated herein and submitted in direct support of Complain
 
           {/* Right: Actions */}
           <div className="flex items-center justify-end gap-2 sm:gap-2.5 min-w-0 sm:min-w-[140px] md:min-w-[190px]">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => syncFromBusinessProfile(true)}
+              className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)]"
+              title="Connect & sync official practice address, phone, and email from Business Settings (PG-024-BIZ)"
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#FFE394]" />
+              <span className="hidden sm:inline">Sync PG-024-BIZ</span>
+              <span className="sm:hidden">PG-024</span>
+            </Button>
+
             <Button
               type="button"
               variant="outline"
@@ -2815,6 +2901,110 @@ This document is incorporated herein and submitted in direct support of Complain
                     onChange={(e) => handleQuickFieldUpdate("submissionDate", e.target.value)}
                     className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
                   />
+                </div>
+              </div>
+
+              {/* Complainant & Business Credentials Connected to PG-024-BIZ */}
+              <div className="pt-2 border-t border-[#3A2C18]/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-serif font-bold text-xs text-[#FFE394] flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-[#DFBE77]" />
+                      Complainant & Practice Credentials (PG-024-BIZ)
+                    </span>
+                    <span className="text-[10px] text-[#A69371] block">
+                      Authoritative practice info on Page 1 of the official complaint form.
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => syncFromBusinessProfile(true)}
+                    className="h-6 text-[10px] border-[#DFBE77]/50 bg-[#071E3D] hover:bg-[#0C2A52] text-[#FFE394] px-2 gap-1 cursor-pointer"
+                    title="Refresh address, phone, and email from PG-024-BIZ"
+                  >
+                    <Building2 className="w-3 h-3" />
+                    <span>Sync PG-024-BIZ</span>
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Complainant Name (First & Last only)</Label>
+                    <Input
+                      value={officialFormState.complainantName}
+                      onChange={(e) => {
+                        const clean = formatFirstLastName(e.target.value);
+                        setOfficialFormState((prev) => ({ ...prev, complainantName: clean }));
+                      }}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Relationship to Student</Label>
+                    <Input
+                      value={officialFormState.complainantRelationship}
+                      onChange={(e) => setOfficialFormState((prev) => ({ ...prev, complainantRelationship: e.target.value }))}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Mailing Address</Label>
+                    <Input
+                      value={officialFormState.complainantAddress}
+                      onChange={(e) => setOfficialFormState((prev) => ({ ...prev, complainantAddress: e.target.value }))}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <div>
+                      <Label className="text-[#C6B697] text-[11px]">City</Label>
+                      <Input
+                        value={officialFormState.complainantCity}
+                        onChange={(e) => setOfficialFormState((prev) => ({ ...prev, complainantCity: e.target.value }))}
+                        className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[#C6B697] text-[11px]">State</Label>
+                      <Input
+                        value={officialFormState.complainantState}
+                        onChange={(e) => setOfficialFormState((prev) => ({ ...prev, complainantState: e.target.value }))}
+                        className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[#C6B697] text-[11px]">ZIP</Label>
+                      <Input
+                        value={officialFormState.complainantZip}
+                        onChange={(e) => setOfficialFormState((prev) => ({ ...prev, complainantZip: e.target.value }))}
+                        className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Practice Phone</Label>
+                    <Input
+                      value={officialFormState.complainantPhone}
+                      onChange={(e) => setOfficialFormState((prev) => ({ ...prev, complainantPhone: e.target.value }))}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#C6B697] text-[11px]">Practice Email</Label>
+                    <Input
+                      value={officialFormState.complainantEmail}
+                      onChange={(e) => setOfficialFormState((prev) => ({ ...prev, complainantEmail: e.target.value }))}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -5,6 +5,7 @@ import { Field, SectionCard, inputCls } from "@/components/complaint/atoms";
 import { VoiceTextarea } from "@/components/complaint/VoiceTextarea";
 import { DISABILITY_CATEGORIES, calcAge, formatFirstLastName } from "@shared/complaintEngine";
 import { toast } from "sonner";
+import { Building2 } from "lucide-react";
 
 function d2s(d: Date | string | null | undefined): string {
   if (!d) return "";
@@ -15,10 +16,45 @@ export function SectionCaseInfo() {
   const { caseDbId } = useWorkspace();
   const utils = trpc.useUtils();
   const { data: c } = trpc.complaintEngine.getCase.useQuery({ id: caseDbId });
+  const { data: bizProfile } = trpc.system.getBusinessProfile.useQuery();
   const update = trpc.complaintEngine.updateCase.useMutation({
     onSuccess: () => { utils.complaintEngine.getCase.invalidate({ id: caseDbId }); utils.complaintEngine.readiness.invalidate({ caseId: caseDbId }); },
     onError: (e) => toast.error(e.message),
   });
+
+  const handleSyncBusiness = () => {
+    if (!bizProfile) {
+      toast.info("Loading business profile credentials from PG-024-BIZ...");
+      return;
+    }
+    const name = formatFirstLastName(bizProfile.leadAdvocate || "Byron Honea");
+    const addr = bizProfile.street || bizProfile.address || "PO Box 724944, Atlanta, GA 31139";
+    const phone = bizProfile.phone || "(404) 919-8664";
+    const email = bizProfile.email || "clientcare@waypointadvocates.com";
+    const relationship = "Authorized Special Education Advocate / Representative";
+
+    setF((prev) => ({
+      ...prev,
+      complainantName: name,
+      complainantRelationship: relationship,
+      complainantAddress: addr,
+      complainantPhone: phone,
+      complainantEmail: email,
+    }));
+
+    update.mutate({
+      id: caseDbId,
+      data: {
+        complainantName: name,
+        complainantRelationship: relationship,
+        complainantAddress: addr,
+        complainantPhone: phone,
+        complainantEmail: email,
+      },
+    });
+
+    toast.success(`✓ Synced from Business Settings (PG-024-BIZ): ${addr} • ${phone} • ${email}`);
+  };
 
   const [f, setF] = useState<Record<string, string | boolean | string[]>>({});
   useEffect(() => {
@@ -70,7 +106,23 @@ export function SectionCaseInfo() {
         <p className="mt-1 text-sm text-slate-400">Georgia's complaint form requires the fields marked with <span className="text-[#D9A441]">*</span>. Everything autosaves when you leave a field.</p>
       </div>
 
-      <SectionCard title="Complainant" subtitle="The person filing this complaint.">
+      <SectionCard
+        title={
+          <div className="flex items-center justify-between w-full">
+            <span>Complainant</span>
+            <button
+              type="button"
+              onClick={handleSyncBusiness}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#071E3D] hover:bg-[#0C2A52] border border-[#FFE394]/50 text-[#FFE394] font-serif font-bold text-xs shadow-xs transition-all cursor-pointer"
+              title="Auto-fill with official practice address, phone, and email from PG-024-BIZ"
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#FFE394]" />
+              <span>Use PG-024-BIZ Info</span>
+            </button>
+          </div>
+        }
+        subtitle="The person filing this complaint on behalf of the student."
+      >
         <div className="grid gap-4 md:grid-cols-2">
           <Field
             label="Name of Complainant (First and Last Name only)"

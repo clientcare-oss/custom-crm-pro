@@ -41,11 +41,56 @@ export const stateComplaintRouter = router({
           ? `The student has a current IEP on file: "${iep.currentFileName}".`
           : "No IEP document is currently on file.";
 
+        // Resolve practice business credentials from PG-024-BIZ
+        const { receiptSettings } = await import("../../drizzle/schema");
+        let practicePhone = "(404) 919-8664";
+        let practiceEmail = "clientcare@waypointadvocates.com";
+        let practiceAddress = "PO Box 724944, Atlanta, GA 31139";
+        let practiceName = "Waypoint Advocates";
+        let advocateName = "Byron Honea";
+
+        try {
+          const [receiptRow] = await database.select().from(receiptSettings).limit(1);
+          if (receiptRow) {
+            if (receiptRow.businessPhone) practicePhone = receiptRow.businessPhone;
+            if (receiptRow.contactEmail) practiceEmail = receiptRow.contactEmail;
+            if (receiptRow.businessAddress) practiceAddress = receiptRow.businessAddress;
+            if (receiptRow.companyName) practiceName = receiptRow.companyName;
+          }
+        } catch (e) {}
+
         const { invokeLLM } = await import("../_core/llm");
         const { sanitizeComplaintText } = await import("../../shared/complaintEngine");
         const systemContent: string = `You are an expert special education advocate helping draft a formal state complaint letter to a State Education Agency (SEA) under IDEA (Individuals with Disabilities Education Act). Your output must be a complete, professional, and legally structured state complaint document. Use clear section headers. Be specific, cite IDEA regulations where applicable (e.g., 34 CFR Part 300), and maintain a formal but assertive tone. Do not include placeholder brackets — write complete sentences using the information provided.
 STRICT TERMINOLOGY RULE: NEVER use the terms "Master Coach", "Master IEP Coach", "Master Coaching", or "IEP Coach". In state complaints and IDEA proceedings, advocates and non-attorney representatives must strictly be identified as "Lead Special Education Advocate" or "Special Education Advocate". Never use "coach" or "coaching".`;
-        const userContent: string = `Please draft a formal state complaint for the following student:\n\nStudent Name: ${studentName}\n${student.caseId ? `Case ID: ${student.caseId}` : ""}\n${iepContext}\n\nAlleged Violations / Summary of Concerns:\n${input.violationSummary}\n\nDesired Resolution:\n${input.desiredResolution}\n\n${input.additionalContext ? `Additional Context:\n${input.additionalContext}` : ""}\n\nPlease structure the complaint with the following sections:\n1. Introduction & Parties\n2. Jurisdiction & Legal Basis\n3. Statement of Facts\n4. Alleged Violations (cite specific IDEA regulations)\n5. Requested Relief / Corrective Actions\n6. Conclusion`;
+        const userContent: string = `Please draft a formal state complaint for the following student:
+
+Student Name: ${studentName}
+${student.caseId ? `Case ID: ${student.caseId}` : ""}
+${iepContext}
+
+Advocate / Complainant Representative (PG-024-BIZ):
+Representative: ${advocateName}, Lead Special Education Advocate
+Practice: ${practiceName}
+Official Address: ${practiceAddress}
+Phone: ${practicePhone}
+Email: ${practiceEmail}
+
+Alleged Violations / Summary of Concerns:
+${input.violationSummary}
+
+Desired Resolution:
+${input.desiredResolution}
+
+${input.additionalContext ? `Additional Context:\n${input.additionalContext}` : ""}
+
+Please structure the complaint with the following sections:
+1. Introduction & Parties (include the official advocate practice credentials above)
+2. Jurisdiction & Legal Basis
+3. Statement of Facts
+4. Alleged Violations (cite specific IDEA regulations)
+5. Requested Relief / Corrective Actions
+6. Conclusion`;
         const response = await invokeLLM({
           messages: [
             { role: "system" as const, content: systemContent },
