@@ -268,8 +268,18 @@ function Router() {
               <Route path="/bill-guardian" component={BillGuardian} />
           <Route path="/page-id-showcase" component={PageIdShowcase} />
           <Route path="/portal/book" component={PortalBook} />
+          <Route path="/settings/business" component={Settings} />
+          <Route path="/settings/receipts" component={Settings} />
+          <Route path="/settings/portal" component={Settings} />
+          <Route path="/settings/admin" component={Settings} />
+          <Route path="/settings/operations" component={Settings} />
+          <Route path="/settings/integrations" component={Settings} />
+          <Route path="/settings/ai" component={Settings} />
+          <Route path="/settings/colors" component={Settings} />
+          <Route path="/settings/archived" component={Settings} />
           <Route path="/settings/import" component={ClientCrmImportPage} />
           <Route path="/settings/clients-import" component={ClientCrmImportPage} />
+          <Route path="/settings/:section?" component={Settings} />
           <Route path="/settings" component={Settings} />
           <Route path="/portal-management" component={PortalManagement} />
           <Route path="/manage-experiences" component={PortalManagement} />

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Settings2, Building, Phone, ShieldCheck, Laptop, Receipt, GitBranch, Palette, ArrowRight } from "lucide-react";
+import { Settings2, Building, Phone, ShieldCheck, Laptop, Receipt, GitBranch, Palette, ArrowRight, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import PageIdBadge from "@/components/PageIdBadge";
+import { SETTINGS_SECTION_IDS, broadcastPageId, type PageIdInfo } from "@/lib/pageIdRegistry";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { useTerminology } from "@/contexts/TerminologyContext";
 import {
   SettingsCommandBoxes,
@@ -39,11 +41,23 @@ export default function Settings() {
 
   const displayPhone = livePhone || phoneData?.phone || "Not Set";
 
-  // Resolve initial section from URL query parameter
+  // Resolve initial section from URL path or query parameter
   const resolveInitialSection = (): SettingsSectionKey => {
     if (typeof window === "undefined") return "business";
+    const pathname = (window.location.pathname || "").toLowerCase();
+    if (pathname.includes("/settings/business")) return "business";
+    if (pathname.includes("/settings/receipts") || pathname.includes("/settings/receipt")) return "receipts";
+    if (pathname.includes("/settings/portal")) return "portal";
+    if (pathname.includes("/settings/admin") || pathname.includes("/settings/crm")) return "admin";
+    if (pathname.includes("/settings/import")) return "import";
+    if (pathname.includes("/settings/operations") || pathname.includes("/settings/workflows")) return "operations";
+    if (pathname.includes("/settings/integrations") || pathname.includes("/settings/quo")) return "integrations";
+    if (pathname.includes("/settings/ai")) return "ai";
+    if (pathname.includes("/settings/colors") || pathname.includes("/settings/tokens")) return "colors";
+    if (pathname.includes("/settings/archived") || pathname.includes("/settings/legacy")) return "archived";
+
     const params = new URLSearchParams(window.location.search);
-    const raw = params.get("section") || params.get("tab");
+    const raw = (params.get("section") || params.get("tab") || "").toLowerCase();
     if (raw === "business" || raw === "business-settings" || raw === "company" || raw === "profile" || raw === "contact") return "business";
     if (raw === "receipts" || raw === "receipt") return "receipts";
     if (raw === "portal" || raw === "client-portal") return "portal";
@@ -59,21 +73,46 @@ export default function Settings() {
 
   const [activeSection, setActiveSection] = useState<SettingsSectionKey>(resolveInitialSection);
 
-  // Sync tab change with browser history URL
+  // Derive active PageIdInfo (PG-024-BIZ for business, PG-024-REC for receipts, etc.)
+  const currentBadgeInfo: PageIdInfo = SETTINGS_SECTION_IDS[activeSection] || {
+    id: "PG-024",
+    name: "Company Settings Hub",
+    category: "Settings",
+  };
+
+  // Broadcast page ID update on section change so global floating corner dock reflects it
+  useEffect(() => {
+    broadcastPageId(currentBadgeInfo);
+  }, [activeSection, currentBadgeInfo]);
+
+  // Sync tab change with browser history URL and broadcast
   const handleSectionChange = (section: SettingsSectionKey) => {
     setActiveSection(section);
+    const info = SETTINGS_SECTION_IDS[section] || { id: "PG-024", name: "Company Settings" };
+    broadcastPageId(info);
+
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
+      url.pathname = "/settings";
       url.searchParams.set("section", section);
       url.searchParams.delete("tab");
-      window.history.replaceState(null, "", url.toString());
+      window.history.pushState(null, "", url.toString());
+
+      // Smoothly scroll to the active workspace container so the opened tab is immediately in view
+      const el = document.getElementById("settings-active-workspace");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
   };
 
   // Listen for browser popstate
   useEffect(() => {
     const handlePopState = () => {
-      setActiveSection(resolveInitialSection());
+      const resolved = resolveInitialSection();
+      setActiveSection(resolved);
+      const info = SETTINGS_SECTION_IDS[resolved] || { id: "PG-024", name: "Company Settings" };
+      broadcastPageId(info);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -100,11 +139,30 @@ export default function Settings() {
                   Company Settings Dashboard
                 </h1>
                 <p className="text-[#C6B697] text-xs md:text-sm mt-0.5 font-sans">
-                  Executive command center for Waypoint Advocates. Configure billing receipts, client portal, CRM operations, and master tokens.
+                  Executive command center for Waypoint Advocates. Configure business profile, billing receipts, client portal, CRM operations, and master tokens.
                 </p>
               </div>
             </div>
-            <PageIdBadge id="PG-024" name="Company Settings Hub" />
+
+            {/* Dynamic Active Page ID Badge with 1-Click Copy and Tab Identification */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(currentBadgeInfo.id);
+                  toast.success(`Copied ${currentBadgeInfo.id} (${currentBadgeInfo.name}) to clipboard`);
+                }}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#020A17] border border-[#FFE394]/50 text-[#FFE394] font-mono text-xs font-bold hover:bg-[#071E3D] hover:border-[#FFE394] transition-all cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.6)] group"
+                title={`Active Page ID: ${currentBadgeInfo.id} — Click to copy`}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="tracking-wide">{currentBadgeInfo.id}</span>
+                <span className="text-[11px] text-[#C6B697] font-sans font-medium border-l border-[#3A2C18] pl-2 ml-1 hidden sm:inline group-hover:text-[#FFE394] transition-colors">
+                  {currentBadgeInfo.name}
+                </span>
+                <Copy className="w-3.5 h-3.5 text-[#A69371] group-hover:text-[#FFE394] ml-1 transition-colors" />
+              </button>
+              <PageIdBadge id={currentBadgeInfo.id} name={currentBadgeInfo.name} />
+            </div>
           </div>
 
           {/* Live Practice Telemetry Pill Bar */}
@@ -157,7 +215,10 @@ export default function Settings() {
         />
 
       {/* ── ACTIVE SECTION WORKSPACE ──────────────────────────────────────── */}
-      <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+      <div
+        id="settings-active-workspace"
+        className="pt-1 scroll-mt-6 animate-in fade-in slide-in-from-top-2 duration-200"
+      >
         {/* SECTION: Business Settings (PG-024-BIZ) */}
         {activeSection === "business" && (
           <div className="space-y-4">

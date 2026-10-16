@@ -389,46 +389,60 @@ export function broadcastPageId(idInfo: PageIdInfo) {
   }
 }
 
+// ─── Settings Section Sub-ID Mappings ─────────────────────────────────────────
+export const SETTINGS_SECTION_IDS: Record<string, PageIdInfo> = {
+  "business":          { id: "PG-024-BIZ", name: "Company Settings → Business Profile", category: "Settings", description: "Consolidated business address, email, phone, and practice identity" },
+  "business-profile":  { id: "PG-024-BIZ", name: "Company Settings → Business Profile", category: "Settings" },
+  "business-settings": { id: "PG-024-BIZ", name: "Company Settings → Business Profile", category: "Settings" },
+  "company":           { id: "PG-024-BIZ", name: "Company Settings → Business Profile", category: "Settings" },
+  "profile":           { id: "PG-024-BIZ", name: "Company Settings → Business Profile", category: "Settings" },
+  "receipts":          { id: "PG-024-REC", name: "Company Settings → Receipts", category: "Settings", description: "Administrative control center for Waypoint payment receipt experience" },
+  "receipt":           { id: "PG-024-REC", name: "Company Settings → Receipts", category: "Settings" },
+  "admin":             { id: "PG-024", name: "Company Settings → Admin CRM", category: "Settings", description: "Administrative staff terminology, practice defaults, and CRM settings" },
+  "crm":               { id: "PG-024", name: "Company Settings → Admin CRM", category: "Settings" },
+  "portal":            { id: "PG-023", name: "Client Portal Experience Settings", category: "Portal Admin" },
+  "client-portal":     { id: "PG-023", name: "Client Portal Experience Settings", category: "Portal Admin" },
+  "import":            { id: "PG-024-IMP", name: "Settings → Client CRM Import", category: "Settings", description: "Import existing client rosters and case records from external CRMs or CSV spreadsheets" },
+  "crm-import":        { id: "PG-024-IMP", name: "Settings → Client CRM Import", category: "Settings" },
+  "operations":        { id: "PG-015", name: "Workflow Pipelines & Operations", category: "Automation" },
+  "workflows":         { id: "PG-015", name: "Workflow Pipelines & Operations", category: "Automation" },
+  "integrations":      { id: "PG-014", name: "Integrations & API Settings", category: "Settings" },
+  "quo":               { id: "PG-014-QUO", name: "Quo Telephony Settings", category: "Integrations" },
+  "ai":                { id: "PG-032", name: "AI Connections & Directives", category: "AI" },
+  "ai-connections":    { id: "PG-032", name: "AI Connections & Directives", category: "AI" },
+  "colors":            { id: "PG-024-TOK", name: "Master Color Tokens & Palette", category: "Design Tokens" },
+  "palette":           { id: "PG-024-TOK", name: "Master Color Tokens & Palette", category: "Design Tokens" },
+  "tokens":            { id: "PG-024-TOK", name: "Master Color Tokens & Palette", category: "Design Tokens" },
+  "archived":          { id: "PG-030-ARC", name: "Archived Workspaces Reference", category: "Archived" },
+  "legacy":            { id: "PG-030-ARC", name: "Archived Workspaces Reference", category: "Archived" },
+};
+
+/**
+ * Resolves a settings section identifier to its specific Sub-Page ID.
+ */
+export function resolveSettingsSectionId(section: string): PageIdInfo | null {
+  return SETTINGS_SECTION_IDS[section] || null;
+}
+
 /**
  * Resolves any browser pathname to its corresponding Page ID and title.
  */
 export function resolvePageId(pathname: string, search = ""): PageIdInfo {
   const cleanPath = pathname.split("?")[0].split("#")[0].replace(/\/+$/, "") || "/";
 
-  // Check URL query search for sub-tabs if on automations
-  if (cleanPath === "/automations") {
-    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
-    const tabParam = urlParams.get("tab");
-    if (tabParam && AUTOMATIONS_TAB_IDS[tabParam]) {
-      return AUTOMATIONS_TAB_IDS[tabParam];
+  // Check Settings sections (either via path /settings/section or via search param ?section=...)
+  if (cleanPath.startsWith("/settings")) {
+    const subPath = cleanPath.replace(/^\/settings\/?/, "");
+    if (subPath && SETTINGS_SECTION_IDS[subPath]) {
+      return SETTINGS_SECTION_IDS[subPath];
     }
-  }
-
-  // Check URL query search for sub-tabs if on portal
-  if (cleanPath === "/portal" || cleanPath === "/client-portal") {
-    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
-    const tabParam = urlParams.get("tab");
-    if (tabParam && PORTAL_TAB_IDS[tabParam]) {
-      return PORTAL_TAB_IDS[tabParam];
-    }
-  }
-
-  // Check URL query search for sub-tabs if on crew quarters
-  if (cleanPath === "/crew-quarters" || cleanPath === "/") {
-    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
-    const tabParam = urlParams.get("tab");
-    if (tabParam && CREW_QUARTERS_TAB_IDS[tabParam]) {
-      return CREW_QUARTERS_TAB_IDS[tabParam];
-    }
-  }
-
-  // Check URL query search for receipts in settings
-  if (cleanPath === "/settings") {
     const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
     const sectionParam = urlParams.get("section") || urlParams.get("tab");
-    if (sectionParam === "receipts" || sectionParam === "receipt") {
-      return PAGE_IDS["/settings/receipts"];
+    if (sectionParam && SETTINGS_SECTION_IDS[sectionParam]) {
+      return SETTINGS_SECTION_IDS[sectionParam];
     }
+    // Default settings view is Business Profile (PG-024-BIZ)
+    return SETTINGS_SECTION_IDS["business"];
   }
 
   // Check URL query search for calendar sub-tabs (/calendar?tab=dispatch, coverage, session-types)
